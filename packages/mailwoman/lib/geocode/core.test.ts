@@ -192,7 +192,7 @@ describe("ExtractGeocodeResult — ranked candidates for limit>1", () => {
 		expect(r.candidates[2]).toMatchObject({ lat: 39.77, placeID: "wof:202" })
 	})
 
-	it("collapses same-coordinate duplicates (a city + its coincident township)", () => {
+	it("keeps a coincident township and drops a repeated place ID", () => {
 		const tree: AddressTree = {
 			raw: "springfield",
 			roots: [
@@ -214,14 +214,14 @@ describe("ExtractGeocodeResult — ranked candidates for limit>1", () => {
 						},
 
 						{ id: 201, name: "Springfield", placetype: "locality", lat: 42.115503, lon: -72.53952, country: "US" },
+						{ id: 100, name: "Springfield", placetype: "locality", lat: 37.194291, lon: -93.291579, country: "US" },
 					],
 				}),
 			],
 		}
 
 		const r = extractGeocodeResult("springfield", tree)
-		expect(r.candidates).toHaveLength(2)
-		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:201"])
+		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:101", "wof:201"])
 	})
 
 	it("is a single entry for an unambiguous result (no alternatives)", () => {

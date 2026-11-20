@@ -241,7 +241,11 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 				label: `  ${candidate.tag}`,
 				tag: candidate.tag,
 				value: candidate.name,
-				detail: [candidate.countryCode, formatCoordinate(candidate.lat, candidate.lon)]
+				detail: [
+					candidate.placetype === candidate.tag ? null : candidate.placetype,
+					candidate.countryCode,
+					formatCoordinate(candidate.lat, candidate.lon),
+				]
 					.filter((part) => part != null && part.length)
 					.join(" "),
 			})

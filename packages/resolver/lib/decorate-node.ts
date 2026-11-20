@@ -7,7 +7,8 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import { isPresent } from "@mailwoman/core/objects"
+import { EMPTY_PLACE_FIELDS, type ResolvedPlace, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
 
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
@@ -37,6 +38,7 @@ export function isResolvedWithCoord(n: AddressNode): boolean {
  */
 export const PICK_METADATA_KEYS = [
 	"resolver_score",
+	"resolver_score_unmeasured",
 	"resolver_name",
 	"resolver_prominence",
 	"resolver_country",
@@ -56,6 +58,54 @@ export const PICK_METADATA_KEYS = [
 ] as const
 
 /**
+ * The most places {@linkcode decorateNode} keeps on a node's `considered` list.
+ *
+ * A default lookup retrieves 5 rows and the bare-toponym race adds 2, so 10 holds one
+ * re-pick's displaced place and runner-ups beside the probe losers.
+ * Passes that re-pick the same node repeatedly drop the oldest entries first.
+ */
+export const CONSIDERED_LIMIT = 10
+
+/**
+ * The place a resolver-decorated node holds, read back from its decoration, or null
+ * when the node holds no located place with an identifier.
+ *
+ * `sourceID` is `<placetype>:<id>` as {@linkcode decorateNode} writes it.
+ */
+export function placeOfNode(node: AddressNode): ResolvedPlace | null {
+	if (node.source !== "resolver" || !node.sourceID || !isResolvedWithCoord(node)) return null
+
+	const separator = node.sourceID.indexOf(":")
+	const rawID = node.sourceID.slice(separator + 1)
+
+	if (separator < 1 || !rawID || rawID === "0") return null
+
+	const meta = node.metadata ?? {}
+	const number = (key: string): number | null => (typeof meta[key] === "number" ? (meta[key] as number) : null)
+	const unmeasured = meta["resolver_score_unmeasured"]
+
+	return {
+		...EMPTY_PLACE_FIELDS,
+		id: /^\d+$/u.test(rawID) ? Number(rawID) : rawID,
+		name: typeof meta["resolver_name"] === "string" ? meta["resolver_name"] : node.value,
+		placetype: node.sourceID.slice(0, separator),
+		country: typeof meta["resolver_country"] === "string" ? meta["resolver_country"] : null,
+		lat: node.lat!,
+		lon: node.lon!,
+		score: number("resolver_score") ?? 0,
+		scoreUnmeasured:
+			typeof unmeasured === "string"
+				? (unmeasured as ScoreUnmeasuredReason)
+				: number("resolver_score") == null
+					? ScoreUnmeasuredReason.Unrecorded
+					: null,
+		prominence: number("resolver_prominence"),
+		importance: number("resolver_importance"),
+		...(meta["resolver_matched_alias"] ? { matchedAlias: true as const } : {}),
+	}
+}
+
+/**
  * Stamp a node with resolver-supplied attribution, displacing any prior classifier `source`
  * / `sourceID` into `metadata.classifier_source` / `metadata.classifier_source_id`
  * and surfacing runner-up candidates on `alternatives`.
@@ -63,15 +113,24 @@ export const PICK_METADATA_KEYS = [
  * A node the resolver already decorated keeps its classifier stamps as the first decoration wrote them.
  * When the new place differs from the one the node holds, the {@linkcode PICK_METADATA_KEYS}
  * and `alternatives` of the previous place are removed before the new place is written.
+ *
+ * The previous place and its alternatives move to `considered`, with the `considered`
+ * places the caller passes, so the geocode result still reports them.
+ * No ranking stage reads `considered`, so moving a place there changes no answer.
  */
 export function decorateNode(
 	node: AddressNode,
 	resolved: CoordinateOptionalPlace,
-	alternatives: ResolvedPlace[]
+	alternatives: ResolvedPlace[],
+	considered: readonly ResolvedPlace[] = []
 ): void {
+	let displaced: readonly unknown[] = []
+
 	if (node.source === "resolver") {
 		// A pass can decorate a node again with the place it already holds, and that place's stamps stay true.
 		if (node.placeID !== `wof:${resolved.id}`) {
+			displaced = [placeOfNode(node), ...(node.alternatives ?? [])].filter(isPresent)
+
 			const meta = { ...node.metadata }
 
 			for (const key of PICK_METADATA_KEYS) {
@@ -120,6 +179,12 @@ export function decorateNode(
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
 
+	// `resolver_score` keeps the ranking key the passes compare.
+	// This stamp records that the key is unmeasured.
+	if (resolved.scoreUnmeasured) {
+		node.metadata["resolver_score_unmeasured"] = resolved.scoreUnmeasured
+	}
+
 	if (resolved.country) {
 		node.metadata["resolver_country"] = resolved.country
 	}
@@ -166,4 +231,38 @@ export function decorateNode(
 	if (alternatives.length) {
 		node.alternatives = alternatives
 	}
+
+	const kept = consideredPlaces([...considered, ...displaced, ...(node.considered ?? [])], resolved.id, alternatives)
+
+	if (kept.length) {
+		node.considered = kept
+	} else {
+		delete node.considered
+	}
+}
+
+/**
+ * The places of `candidates` that aren't the node's pick or one of its alternatives,
+ * first occurrence of each identifier kept, at most {@linkcode CONSIDERED_LIMIT}.
+ */
+function consideredPlaces(
+	candidates: readonly unknown[],
+	pickID: number | string,
+	alternatives: readonly ResolvedPlace[]
+): unknown[] {
+	const seen = new Set([String(pickID), ...alternatives.map((a) => String(a.id))])
+	const kept: unknown[] = []
+
+	for (const candidate of candidates) {
+		const id = (candidate as Partial<ResolvedPlace> | null)?.id
+
+		if (id == null || seen.has(String(id))) continue
+
+		seen.add(String(id))
+		kept.push(candidate)
+
+		if (kept.length === CONSIDERED_LIMIT) break
+	}
+
+	return kept
 }

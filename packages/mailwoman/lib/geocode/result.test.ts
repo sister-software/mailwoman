@@ -10,7 +10,13 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { isOpenStreetMapSource } from "@mailwoman/core/geocode"
-import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
+import {
+	type AddressPointHit,
+	type AddressPointLookup,
+	EMPTY_PLACE_FIELDS,
+	type ResolvedPlace,
+} from "@mailwoman/core/resolver"
+import { decorateNode } from "@mailwoman/resolver/decorate-node"
 import { applyAddressPoint } from "@mailwoman/resolver/street/tier"
 import { describe, expect, it } from "vitest"
 
@@ -226,12 +232,71 @@ describe("candidate scores", () => {
 		expect(candidates[0]?.score).toBeNull()
 	})
 
+	it("reports a score ranked from an unrecorded population as null with the reason", () => {
+		const { candidates } = extractGeocodeResult(
+			SPRINGFIELD,
+			springfieldTree({ resolver_score: 0, resolver_score_unmeasured: "population_unrecorded" })
+		)
+
+		expect(candidates[0]).toMatchObject({ score: null, scoreUnmeasured: "population_unrecorded" })
+		expect(candidates[1]).toMatchObject({ score: 5.1 })
+		expect(candidates[1]).not.toHaveProperty("scoreUnmeasured")
+	})
+
 	it("states an alias win on the winner and leaves a primary-name win without the field", () => {
 		const alias = extractGeocodeResult(SPRINGFIELD, springfieldTree({ resolver_matched_alias: true }))
 		const primary = extractGeocodeResult(SPRINGFIELD, springfieldTree({}))
 
 		expect(alias.candidates[0]?.matchedAlias).toBe(true)
 		expect(primary.candidates[0]).not.toHaveProperty("matchedAlias")
+	})
+})
+
+describe("candidates across spans and re-picks", () => {
+	const CAMDEN_NJ = "Camden, New Jersey"
+
+	const camden = (id: number, placetype: string, lat: number, lon: number): ResolvedPlace => ({
+		...EMPTY_PLACE_FIELDS,
+		id,
+		name: "Camden",
+		placetype,
+		country: "US",
+		lat,
+		lon,
+		score: 4.85,
+	})
+
+	function tree(): AddressTree {
+		const locality: AddressNode = { tag: "locality", value: "Camden", start: 0, end: 6, confidence: 1, children: [] }
+		const region: AddressNode = { tag: "region", value: "New Jersey", start: 8, end: 18, confidence: 1, children: [] }
+
+		// The walk's pick, with a localadmin runner-up at the same coordinate.
+		decorateNode(locality, camden(85_921_237, "locality", 33.567931, -92.839659), [
+			camden(404_477_989, "localadmin", 39.936906, -75.11261),
+		])
+
+		// A later pass replaces the pick.
+		decorateNode(locality, camden(85_975_673, "locality", 39.936906, -75.11261), [])
+
+		decorateNode(
+			region,
+			{ ...camden(85_688_747, "region", 40.1, -74.6), name: "New Jersey" },
+			[],
+			[{ ...camden(1_108_804_011, "county", 40.5, -74.3), name: "New Jersey County" }]
+		)
+
+		return { raw: CAMDEN_NJ, roots: [locality, region] }
+	}
+
+	it("lists the replaced pick, a same-coordinate runner-up, and another span's probe loser under their own spans", () => {
+		const { candidates } = extractGeocodeResult(CAMDEN_NJ, tree())
+
+		expect(candidates.map((c) => [c.tag, c.value, c.placetype, c.placeID])).toEqual([
+			["locality", "Camden", "locality", "wof:85975673"],
+			["locality", "Camden", "locality", "wof:85921237"],
+			["locality", "Camden", "localadmin", "wof:404477989"],
+			["region", "New Jersey", "county", "wof:1108804011"],
+		])
 	})
 })
 
