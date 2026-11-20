@@ -7,15 +7,15 @@ import { gitSync } from "@mailwoman/core/git"
 import { FontFamilies } from "@sister.software/theme"
 import { themes as prismThemes } from "prism-react-renderer"
 
-import type { CodeSnippetPluginOptions } from "./plugins/code-snippet/plugin.ts"
+import type { CodeSnippetPluginOptions } from "#plugins/code-snippet/plugin"
 // Fills a ` ```ts file=./x.snippet.mts ` fence from the snippet file (see plugins/code-snippet/remark.ts).
-import remarkCodeSnippet from "./plugins/code-snippet/remark.ts"
-import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
+import remarkCodeSnippet from "#plugins/code-snippet/remark"
+import type { GlossaryPluginOptions } from "#plugins/glossary/plugin"
 // Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
-import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
-import { createSidebarMegaMenu } from "./plugins/navbar-menus.ts"
+import glossaryRemarkPlugin from "#plugins/glossary/remark"
+import { createSidebarMegaMenu } from "#plugins/navbar-menus"
 // Substitutes `{{release.version}}` in code with the synced release version (see plugins/release-version/remark.ts).
-import remarkReleaseVersion from "./plugins/release-version/remark.ts"
+import remarkReleaseVersion from "#plugins/release-version/remark"
 
 /**
  * Surfaces the glossary auto-linker must never link, whatever term claims them.
