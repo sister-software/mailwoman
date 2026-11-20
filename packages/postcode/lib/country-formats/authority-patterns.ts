@@ -28,6 +28,9 @@ export const COUNTRY_POSTCODE_AUTHORITY_PATTERNS: Readonly<Record<string, string
 	 *
 	 * The unique identifier draws from the digits and the fifteen letters A, C, D, E, F, H,
 	 * K, N, P, R, T, V, W, X and Y, so no Eircode holds B, G, I, J, L, M, O, Q, S, U or Z.
+	 *
+	 * Checked against the routing keys Eircode publishes, as listed in Wikipedia's "List of
+	 * Eircode routing areas in Ireland", and the character set at https://www.eircode.ie/faqs.
 	 */
 	IE: "(?:[ACDEFHKNPRTV-Y]\\d{2}|D6W) ?[\\dACDEFHKNPRTV-Y]{4}",
 }

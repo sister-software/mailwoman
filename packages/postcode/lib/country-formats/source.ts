@@ -81,8 +81,7 @@ export function tolerateSpacing(pattern: string): string {
 }
 
 /**
- * The postcode syntax libaddressinput states for `countryCode`, as pattern text,
- * or null when it states none.
+ * The postcode syntax of `countryCode` as pattern text, or null when libaddressinput states none.
  *
  * The pattern is the country's entry in `COUNTRY_POSTCODE_AUTHORITY_PATTERNS`
  * where it has one, and the libaddressinput pattern otherwise, followed by each form
