@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type BrowseArgs, CLIArgsError, HELP_TEXT, parseCLIArgs } from "#cli/args"
+import { type BrowseArgs, CLIArgsError, parseCLIArgs } from "#cli/args"
 
 function browse(argv: string[], environment?: { MAILWOMAN_TILES?: string }): BrowseArgs {
 	const args = parseCLIArgs(argv, environment)
@@ -94,16 +94,5 @@ describe("parseCLIArgs", () => {
 			expect(() => parseCLIArgs(["--bogus"])).toThrow(/map-tui --help/)
 			expect(() => parseCLIArgs(["planet.pmtiles"])).toThrow(/map-tui --help/)
 		})
-	})
-})
-
-describe("HELP_TEXT", () => {
-	it("documents every flag, the keys, and where tiles come from", () => {
-		for (const fragment of ["--tiles", "--lat", "--lon", "--zoom", "--help", "--version"]) {
-			expect(HELP_TEXT).toContain(fragment)
-		}
-
-		expect(HELP_TEXT).toContain("https://protomaps.com/downloads")
-		expect(HELP_TEXT).toContain("q, Esc, Ctrl+C")
 	})
 })

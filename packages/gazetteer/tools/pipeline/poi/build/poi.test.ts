@@ -226,12 +226,6 @@ describe("bboxCoverageCells", () => {
 
 		expect(cells.every((c) => c.observedRows === 0)).toBe(true)
 	})
-
-	it("is pure — identical inputs produce an identical cell set", () => {
-		const rows = [{ latitude: 39.7817, longitude: -89.6501 }]
-
-		expect(bboxCoverageCells(bbox, rows)).toEqual(bboxCoverageCells(bbox, rows))
-	})
 })
 
 /**

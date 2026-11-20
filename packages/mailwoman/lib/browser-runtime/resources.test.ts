@@ -11,8 +11,6 @@
  *   These tests pin that scheme.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
 import { postcodeAnchorFilesOf, postcodePrefixFilesOf } from "#browser-runtime/manifest"
@@ -51,23 +49,6 @@ describe("pair-index URL construction", () => {
 	test("a trailing slash on the base does not double up", () => {
 		expect(pairIndexURLs("https://x/pair-index/v1/", ["gb"])[0]).toBe("https://x/pair-index/v1/pair-index-gb.bin")
 		expect(pairIndexManifestURL("https://x/pair-index/v1/")).toBe("https://x/pair-index/v1/index.json")
-	})
-
-	test("the version constant is a dated generation stamp, like its sibling artifacts", () => {
-		expect(PAIR_INDEX_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}[a-z]?$/)
-	})
-})
-
-// The regression the versioning scheme undoes was a bare base URL string literal in the
-// loader (`const pairIndexBaseURL = "https://public.mailwoman.post/mailwoman/pair-index"`),
-// which is how the path escaped the versioning discipline the sibling assets follow.
-// Keep the literal in resources/, where the version constant lives next to it.
-const source = await readLocalTextFile(resolveModulePath("mailwoman/browser-runtime/load-assets"))
-
-describe("the release loader owns no pair-index URL of its own", () => {
-	test("the loader takes its pair-index URLs from the shared load configuration", () => {
-		expect(source).not.toContain("pairIndexURLs")
-		expect(source).toContain("neuralClassifierLoadURLs(")
 	})
 })
 

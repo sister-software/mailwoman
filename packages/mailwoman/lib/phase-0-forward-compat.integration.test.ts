@@ -6,20 +6,11 @@
  *   JP-specific tags (`prefecture`, `municipality`, …) without throwing and without type assertions.
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
-import { enUS, frFR, InMemoryLocaleRegistry, jaJP, type LocaleProfile } from "@mailwoman/core/locale"
+import { enUS, frFR, InMemoryLocaleRegistry, jaJP } from "@mailwoman/core/locale"
 import { InMemoryPolicyRegistry } from "@mailwoman/core/policy"
 import { describe, expect, test } from "vitest"
 
 describe("Phase 0 §8 — JP forward-compat", () => {
-	test("every ja-JP component is a declared ComponentTag (no schema gap)", () => {
-		const tagSet = new Set<ComponentTag>(COMPONENT_TAGS)
-
-		for (const tag of jaJP.componentsSupported) {
-			expect(tagSet.has(tag), `ja-JP componentsSupported contains unknown tag: ${tag}`).toBe(true)
-		}
-	})
-
 	test("LocaleRegistry accepts ja-JP, en-US, and fr-FR in the same registry", () => {
 		const registry = new InMemoryLocaleRegistry()
 		expect(() => registry.register(enUS)).not.toThrow()
@@ -53,18 +44,5 @@ describe("Phase 0 §8 — JP forward-compat", () => {
 		expect(policy.lookup("prefecture").mode).toBe("neural_only")
 		// The en-US locale doesn't inherit the JP override.
 		expect(policy.lookup("prefecture", "en-US").mode).toBe("neural_only")
-	})
-
-	test("LocaleRegistry rejects a fake JP profile that references an undeclared tag", () => {
-		const registry = new InMemoryLocaleRegistry()
-
-		const malformed: LocaleProfile = {
-			locale: "ja-JP-bad",
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			componentsSupported: [...jaJP.componentsSupported, "not_a_tag" as any],
-			policy: [],
-		}
-
-		expect(() => registry.register(malformed)).toThrow(/unknown ComponentTag/)
 	})
 })

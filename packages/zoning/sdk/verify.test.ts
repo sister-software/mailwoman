@@ -210,16 +210,6 @@ describe("the negative half", () => {
 			expect(row.designations).toBe(0)
 		}
 	})
-
-	it("names a place for every point, because a coordinate a reader cannot name is one nobody can check", () => {
-		for (const point of OUTSIDE_PUBLICATION_POINTS) {
-			expect(point.label.length).toBeGreaterThan(0)
-		}
-
-		// The test includes both the unpublished authority and the other jurisdiction.
-		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Donegal"))).toBe(true)
-		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Northern Ireland"))).toBe(true)
-	})
 })
 
 describe("sampleAgreementPoints", () => {

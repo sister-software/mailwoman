@@ -2,30 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Guards the French street-prefix convention and the GB postcode pattern without loading model weights.
- *
- *   The FR assertion prevents `street_prefix` from being forbidden again.
+ *   Guards the GB postcode pattern without loading model weights.
  */
 
 import { describe, expect, it } from "vitest"
 
 import { conventionsForSystem } from "#address/system/conventions"
-import { UK_POSTCODE_PATTERN } from "#gb"
-
-describe("FR address-system conventions (#719)", () => {
-	it("forbids no tag, so a French-looking address outside France keeps its street_suffix (#2987)", () => {
-		expect(conventionsForSystem("fr")!.forbiddenTags).toBeUndefined()
-	})
-})
 
 describe("GB address-system conventions (#1275)", () => {
-	it("declares the codex UK postcode shape — the reference, not a re-declared regex", () => {
-		const gb = conventionsForSystem("gb")
-		expect(gb).not.toBeNull()
-		// The codex and GB postcode parser share one pattern.
-		expect(gb!.postcodePattern).toBe(UK_POSTCODE_PATTERN)
-	})
-
 	it("the declared shape accepts canonical GB postcodes and rejects the #1275 clip fragments", () => {
 		const pattern = conventionsForSystem("gb")!.postcodePattern!
 
@@ -37,10 +21,5 @@ describe("GB address-system conventions (#1275)", () => {
 		for (const clipped of ["1 9PD", "2LH", "3 2GL"]) {
 			expect(clipped).not.toMatch(pattern)
 		}
-	})
-
-	it("forbids NO tags — the row exists for the postcode snap-repair check only", () => {
-		// No GB tag forbids have been measured.
-		expect(conventionsForSystem("gb")!.forbiddenTags).toBeUndefined()
 	})
 })

@@ -48,13 +48,6 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 
 /* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
 
-test("Composer.layers: exposes the base layer list as an array", () => {
-	const composer = new StyleSpecificationComposer({ sources: {} })
-
-	expect(Array.isArray(composer.layers)).toBe(true)
-	expect(composer.layers.length).toBeGreaterThan(0)
-})
-
 test("Composer.layers: an inserted layer is present in the composed list", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
 

@@ -41,13 +41,6 @@ test("placetypeDepth: unknown / never-resolved placetypes map to 0 (sort coarses
 	expect(placetypeDepth("locality")).toBeGreaterThan(placetypeDepth("continent"))
 })
 
-test("placetypeDepth: descending-depth sort yields nearest-first (deepest placetype first)", () => {
-	// The lineage walk sorts by placetypeDepth(b) - placetypeDepth(a); reproduce that ordering.
-	const mixed = ["country", "neighbourhood", "region", "locality"]
-	const nearestFirst = [...mixed].toSorted((a, b) => placetypeDepth(b) - placetypeDepth(a))
-	expect(nearestFirst).toEqual(["neighbourhood", "locality", "region", "country"])
-})
-
 test("PLACETYPE_DEPTH: no two placetypes share a depth", () => {
 	const depths = Object.values(PLACETYPE_DEPTH)
 	expect(new Set(depths).size).toBe(depths.length)

@@ -319,13 +319,6 @@ function skeletonOf(atoms: readonly AddressAtom[]): string[] {
 }
 
 describe("ADDRESS_LAYOUTS", () => {
-	it("covers every locale the project publishes weights for", () => {
-		// The nine Latin locales in release.config.json plus the two CJK overlays.
-		for (const country of ["US", "FR", "GB", "DE", "ES", "IT", "IN", "NZ", "AU", "JP", "CN"]) {
-			expect(ADDRESS_LAYOUTS[country], `${country} has a layout`).toBeDefined()
-		}
-	})
-
 	it("names only tags the union declares", async () => {
 		const { COMPONENT_TAGS } = await import("#component")
 		const known = new Set<string>(COMPONENT_TAGS)

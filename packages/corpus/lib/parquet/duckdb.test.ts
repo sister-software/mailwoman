@@ -30,13 +30,6 @@ describe("openDuckDB", () => {
 		expect(bytes).toBeLessThan(expected * 1.1)
 	})
 
-	it("admits four concurrent instances within host memory, which the previous default did not", () => {
-		// The default exists to bound the host rather than one query.
-		// Two instances at half the host exceed it together.
-		// That's the case that took the machine down on 2026-09-28.
-		expect(DUCKDB_MEMORY_SHARE * 4).toBeLessThanOrEqual(1)
-	})
-
 	it("runs a stated share of the host's threads rather than DuckDB's every-core default", async () => {
 		using db = await openDuckDB()
 

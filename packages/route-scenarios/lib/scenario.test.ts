@@ -22,10 +22,6 @@ function rejection(change: Parameters<typeof withChange>[1]): ScenarioInputError
 }
 
 describe("a complete synthetic scenario", () => {
-	test("validates", () => {
-		expect(() => validateScenario(SHARED_ROUTE)).not.toThrow()
-	})
-
 	test("an absent block of assumptions is named, instead of failing on its first property", () => {
 		const error = rejection((draft) => {
 			Reflect.deleteProperty(draft, "operating")

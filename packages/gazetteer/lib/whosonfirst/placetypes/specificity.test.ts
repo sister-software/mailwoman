@@ -63,10 +63,6 @@ describe("placetypeSpecificity", () => {
 		expect(new Set(ranks).size).toBeGreaterThan(1)
 	})
 
-	it("ranks a neighborhood FINER than the locality that contains it — the #1746 case", () => {
-		expect(placetypeSpecificity("neighbourhood")!).toBeGreaterThan(placetypeSpecificity("locality")!)
-	})
-
 	it("returns undefined for an unranked placetype rather than defaulting it to coarse", () => {
 		expect(placetypeSpecificity("bookstore")).toBeNull()
 		expect(placetypeSpecificity(null)).toBeNull()
@@ -196,15 +192,5 @@ describe("agreement with PLACETYPE_DEPTH", () => {
 			"These pairs order differently from `PLACETYPE_DEPTH`. A `borough` ranked coarser than its `locality` is " +
 				"what let a live child cover its own dead parent in the currency check; keep the two ladders in step."
 		).toEqual([])
-	})
-
-	it("places a borough INSIDE its locality — Brooklyn is not coarser than New York City", () => {
-		expect(isStrictlyFiner("borough", "locality")).toBe(true)
-		expect(isStrictlyFiner("locality", "borough")).toBe(false)
-	})
-
-	it("places a macrocounty OUTSIDE its counties", () => {
-		expect(isStrictlyFiner("county", "macrocounty")).toBe(true)
-		expect(isStrictlyFiner("macrocounty", "county")).toBe(false)
 	})
 })

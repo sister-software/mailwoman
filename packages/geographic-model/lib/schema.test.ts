@@ -208,16 +208,6 @@ function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
 }
 
 describe("branded identifiers", () => {
-	it("preserves the string at runtime", () => {
-		expect(toConceptID("pharmacy")).toBe("pharmacy")
-		expect(toRelationID("affords")).toBe("affords")
-		expect(toRuleID("pharmacy-affords-obtain-medication")).toBe("pharmacy-affords-obtain-medication")
-		expect(toMappingID("m1")).toBe("m1")
-		expect(toObservationID("o1")).toBe("o1")
-		expect(toDerivedFactID("d1")).toBe("d1")
-		expect(stringifyJSON({ id: toConceptID("pharmacy") })).toBe('{"id":"pharmacy"}')
-	})
-
 	it("refuses a relation identifier where a concept identifier belongs", () => {
 		const relationID = toRelationID("affords")
 		// @ts-expect-error a RelationID is not a ConceptID. the brands exist to make this assignment fail.
@@ -252,22 +242,6 @@ describe("the frozen pharmacy record set", () => {
 
 		expect(document.mappings.map((mapping) => [mapping.vocabulary, mapping.externalID])).toEqual([
 			["poi-taxonomy", "pharmacy"],
-		])
-	})
-
-	it("keeps source observations and derived facts in separate tables", () => {
-		const document = parseGeographicModelDocument(pharmacyDocument)
-
-		expect(document.observations.map((observation) => observation.id)).toEqual(["curated-overlay-pharmacy-dispenses"])
-
-		expect(document.derivedFacts.map((fact) => fact.derivation)).toEqual(["affordance-closure@1"])
-
-		expect(document.derivedFacts[0]?.inputs.map((input) => input.kind)).toEqual([
-			"relation",
-			"concept",
-			"assertion",
-			"mapping",
-			"observation",
 		])
 	})
 

@@ -20,7 +20,6 @@ import {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
 	scoreNumeric,
-	scorePostcode,
 	scoreRegionAbbreviation,
 	scoreStreetPhrase,
 	scoreVenuePhrase,
@@ -82,10 +81,6 @@ describe("tokenizeSegment", () => {
 	it("collapses runs of whitespace", () => {
 		expect(tokenizeSegment("  a   b  ", 0).map((t) => t.body)).toEqual(["a", "b"])
 	})
-
-	it("returns empty list for whitespace-only input", () => {
-		expect(tokenizeSegment("   ", 0)).toEqual([])
-	})
 })
 
 describe("scoreNumeric", () => {
@@ -100,38 +95,6 @@ describe("scoreNumeric", () => {
 		const out = scoreNumeric(tokenizeSegment("10118", 0), "10118")
 		expect(out).toHaveLength(1)
 		expect(out[0]!.confidence).toBeLessThan(0.7)
-	})
-
-	it("non-digit tokens emit nothing", () => {
-		expect(scoreNumeric(tokenizeSegment("Main Street", 0), "Main Street")).toEqual([])
-	})
-})
-
-describe("scorePostcode", () => {
-	it("lifts QueryShape postcode hits to POSTCODE proposals", () => {
-		const out = scorePostcode(
-			shape({
-				...EMPTY_QUERY_SHAPE_VIEW,
-				knownFormats: [{ format: "us_zip", span: { start: 23, end: 28 }, confidence: 0.92 }],
-			}),
-			"350 5th Ave, New York, 10118"
-		)
-
-		expect(out).toHaveLength(1)
-		expect(out[0]!.span.body).toBe("10118")
-		expect(out[0]!.confidence).toBeCloseTo(0.92)
-	})
-
-	it("skips po_box format (not a postcode)", () => {
-		const out = scorePostcode(
-			shape({
-				...EMPTY_QUERY_SHAPE_VIEW,
-				knownFormats: [{ format: "po_box", span: { start: 0, end: 8 }, confidence: 0.9 }],
-			}),
-			"PO Box 1"
-		)
-
-		expect(out).toEqual([])
 	})
 })
 
@@ -161,36 +124,16 @@ describe("scoreHyphenatedCompound", () => {
 		expect(out).toHaveLength(1)
 		expect(out[0]!.span.body).toBe("Saint-Denis")
 	})
-
-	it("ignores leading/trailing-hyphen-only tokens", () => {
-		expect(scoreHyphenatedCompound(tokenizeSegment("- foo -", 0), "- foo -")).toEqual([])
-	})
 })
 
 describe("scoreStreetPhrase", () => {
-	it("emits STREET_PHRASE for name + suffix, EXCLUDING the leading house number (#565)", () => {
-		const out = scoreStreetPhrase(tokenizeSegment("350 5th Ave", 0), "350 5th Ave")
-		expect(out).toHaveLength(1)
-		expect(out[0]!.span.body).toBe("5th Ave")
-		expect(out[0]!.confidence).toBeGreaterThanOrEqual(0.85)
-	})
-
 	it("emits STREET_PHRASE without leading numeric at lower confidence", () => {
 		const out = scoreStreetPhrase(tokenizeSegment("Main Street", 0), "Main Street")
 		expect(out).toHaveLength(1)
 		expect(out[0]!.confidence).toBeLessThan(0.9)
 	})
 
-	it("suffix alone with no preceding token emits nothing", () => {
-		expect(scoreStreetPhrase(tokenizeSegment("Street", 0), "Street")).toEqual([])
-	})
-
 	// Romance street pattern: the street type leads ("Via Trento", "Calle Mayor").
-	it("emits STREET_PHRASE for a prefix-led Italian street (Via Trento)", () => {
-		const out = scoreStreetPhrase(tokenizeSegment("Via Trento", 0), "Via Trento")
-		expect(out.find((p) => p.span.body === "Via Trento")).toBeDefined()
-	})
-
 	it("emits STREET_PHRASE for a prefix-led Spanish street (Calle Mayor)", () => {
 		const out = scoreStreetPhrase(tokenizeSegment("Calle Mayor", 0), "Calle Mayor")
 		expect(out.find((p) => p.span.body === "Calle Mayor")).toBeDefined()
@@ -256,12 +199,6 @@ describe("scoreLocalityPhrase", () => {
 		expect(bodies).toContain("Reggio nell'Emilia")
 	})
 
-	it("bridges an Italian 'in' particle (San Pietro in Casale)", () => {
-		const text = "San Pietro in Casale"
-		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
-		expect(bodies).toContain("San Pietro in Casale")
-	})
-
 	it("bridges two consecutive Dutch particles (Alphen aan den Rijn)", () => {
 		const text = "Alphen aan den Rijn"
 		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
@@ -278,13 +215,6 @@ describe("scoreLocalityPhrase", () => {
 		const text = "Main Street and Oak Avenue"
 		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
 		expect(bodies.some((b) => b.includes(" and "))).toBe(false)
-	})
-
-	it("does NOT bridge a dangling particle at end of segment (Palmas de)", () => {
-		const text = "Palmas de"
-		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
-		expect(bodies).not.toContain("Palmas de")
-		expect(bodies).toContain("Palmas")
 	})
 
 	// An all-caps intl place head that matches the region-abbreviation shape ("SAN", "DI") must

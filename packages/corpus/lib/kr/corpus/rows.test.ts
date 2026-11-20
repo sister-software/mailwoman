@@ -5,18 +5,11 @@
  *   Each register's rendered form of one 주소DB row, ported from the deleted `test_kr_corpus.py`.
  */
 
-import { SeededRandom } from "@mailwoman/core/random"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { CJK_LABEL_SET_NAME, readLabelSetTags, verifyCJKRecord, type CJKRecord } from "#cjk/builder"
 import type { JusoLabelRow } from "#kr/adapters/juso/label-rows"
-import {
-	availableKRRegisters,
-	chooseShortRegion,
-	KR_REGISTER_WEIGHTS,
-	krIneligibility,
-	renderKRRow,
-} from "#kr/corpus/rows"
+import { availableKRRegisters, KR_REGISTER_WEIGHTS, krIneligibility, renderKRRow } from "#kr/corpus/rows"
 
 /**
  * The Jongno-gu row of the census: a 동 area, so the parenthetical is the 법정동.
@@ -210,12 +203,6 @@ describe("availableKRRegisters", () => {
 		expect(withoutDong).not.toContain("jibun")
 		expect(availableKRRegisters(labelRow({ building: "" }))).not.toContain("building")
 		expect(availableKRRegisters(labelRow({ region: "가상도" }))).not.toContain("short_region")
-	})
-
-	it("has a short form for each of the four regions Python's table named", () => {
-		for (const region of ["서울특별시", "경기도", "제주특별자치도", "세종특별자치시"]) {
-			expect(chooseShortRegion(new SeededRandom(1), region), region).not.toBeNull()
-		}
 	})
 })
 

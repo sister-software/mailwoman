@@ -72,13 +72,6 @@ function* random(seed = 0x12_34_56_78): Generator<number> {
 
 // #region Encoding & Decoding
 
-test("encodes coordinates into 10-character DIGIPINs", () => {
-	const pin = getDIGIPIN(13.11179621, 80.20264269)
-
-	expect(pin).toBe(referenceEncode(13.11179621, 80.20264269))
-	expect(pin).toMatch(/^[23456789CJKLMPFT]{10}$/)
-})
-
 test.each([
 	[2.5, 63.5],
 	[2.5, 99.5],
@@ -92,15 +85,6 @@ test.each([
 	[22.5726, 88.3639],
 ])("matches reference encoder at (%f, %f)", (lat, lon) => {
 	expect(getDIGIPIN(lat, lon)).toBe(referenceEncode(lat, lon))
-})
-
-test.each([
-	[2.5, 63.5],
-	[2.5, 99.5],
-	[38.5, 63.5],
-	[38.5, 99.5],
-])("accepts inclusive geographic boundaries (%f, %f)", (lat, lon) => {
-	expect(getDIGIPIN(lat, lon)).toHaveLength(10)
 })
 
 test.each([

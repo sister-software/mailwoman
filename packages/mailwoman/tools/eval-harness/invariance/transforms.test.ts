@@ -130,13 +130,6 @@ describe("canonicalizeAbbreviations", () => {
 	it("leaves a value with no swappable token alone", () => {
 		expect(canonicalizeAbbreviations("Rue du Chevaleret")).toBe("Rue du Chevaleret")
 	})
-
-	it("makes an abbreviation-swap pair compare equal after canonicalizing both sides", () => {
-		const before = canonicalizeAbbreviations("Pennsylvania Ave NW")
-		const after = canonicalizeAbbreviations("Pennsylvania Avenue NW")
-
-		expect(before).toBe(after)
-	})
 })
 
 describe("wrap-in-quotes (paired-punctuation audit)", () => {

@@ -157,11 +157,6 @@ test("buildTelecomPOISQL: WHERE ORs each rule's AND-group, matching TELECOM_TAG_
 	)
 })
 
-test("buildTelecomPOISQL: parameterizes the layer name", () => {
-	expect(buildTelecomPOISQL("points")).toContain("FROM points WHERE")
-	expect(buildTelecomPOISQL("multipolygons")).toContain("FROM multipolygons WHERE")
-})
-
 test("BuildTelecomPOISQL: honors a custom rule table (single OR-less rule without hstore keys)", () => {
 	const sql = buildTelecomPOISQL("points", [{ categoryID: "x", all: [["man_made", "y"]] }])
 

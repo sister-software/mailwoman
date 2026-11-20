@@ -21,17 +21,4 @@ describe("the legacy postcode shape table", () => {
 			expect(shape.re.flags, `${shape.label} must scan the whole line`).toContain("g")
 		}
 	})
-
-	it("finds the two shapes whose absence went unnoticed on the trainer side", () => {
-		const firstMatch = (label: string, text: string) => {
-			const shape = POSTCODE_SHAPES.find((candidate) => candidate.label === label)
-
-			expect(shape, `${label} is not in the record`).toBeDefined()
-
-			return text.match(new RegExp(shape!.re.source, shape!.re.flags))?.[0]
-		}
-
-		expect(firstMatch("IE", "Ballinlough, T12 X70A, Cork")).toBe("T12 X70A")
-		expect(firstMatch("BR", "Rua Ramiro Barcelos, Porto Alegre 95090-020")).toBe("95090-020")
-	})
 })

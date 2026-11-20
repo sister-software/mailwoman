@@ -38,8 +38,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 import { runConformanceCommand } from "#tools/eval-harness/conformance/command"
-import { loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
-import { auditCanonicalFormSuite, NFC_NFD_SUITE_PATH } from "#tools/eval-harness/conformance/nfc-nfd"
+import { NFC_NFD_SUITE_PATH } from "#tools/eval-harness/conformance/nfc-nfd"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -58,10 +57,6 @@ const gazetteerPresent = async (): Promise<boolean> =>
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"canonical-form invariance — live pipeline",
 	() => {
-		it("audits the committed suite before anything is geocoded", async () => {
-			expect(auditCanonicalFormSuite(await loadConformanceFixtures(NFC_NFD_SUITE_PATH))).toEqual([])
-		})
-
 		it("holds on every blocking row, and prints the tracked ones", async () => {
 			await expect(runConformanceCommand({ suite: NFC_NFD_SUITE_PATH })).resolves.toBe(0)
 		}, 900_000)

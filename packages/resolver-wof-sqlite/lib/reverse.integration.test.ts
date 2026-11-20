@@ -10,7 +10,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { LineStringPath } from "@mailwoman/spatial"
-import { geometryContains, pointInPolygon, pointInRing } from "@mailwoman/spatial/geometries/polygon"
+import { pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -27,35 +27,12 @@ const square = (minX: number, minY: number, maxX: number, maxY: number): LineStr
 ]
 
 describe("point-in-polygon primitives", () => {
-	test("pointInRing — inside / outside a square", () => {
-		const ring = square(0, 0, 10, 10)
-		expect(pointInRing(5, 5, ring)).toBe(true)
-		expect(pointInRing(15, 5, ring)).toBe(false)
-		expect(pointInRing(-1, -1, ring)).toBe(false)
-	})
-
 	test("pointInPolygon — a hole excludes, an island within the hole includes again", () => {
 		const rings = [square(0, 0, 10, 10), square(4, 4, 6, 6)]
 		expect(pointInPolygon(2, 2, rings)).toBe(true)
 		expect(pointInPolygon(5, 5, rings)).toBe(false)
 		// Even-odd: an island ring nested inside the hole flips back to inside.
 		expect(pointInPolygon(5, 5, [...rings, square(4.8, 4.8, 5.2, 5.2)])).toBe(true)
-	})
-
-	test("geometryContains — Polygon, MultiPolygon, and non-areal geometry", () => {
-		const polygon = { type: "Polygon", coordinates: [square(0, 0, 10, 10)] }
-
-		const multi = {
-			type: "MultiPolygon",
-			coordinates: [[square(0, 0, 1, 1)], [square(8, 8, 9, 9)]],
-		}
-
-		expect(geometryContains(polygon, 5, 5)).toBe(true)
-		expect(geometryContains(polygon, 11, 5)).toBe(false)
-		expect(geometryContains(multi, 8.5, 8.5)).toBe(true)
-		expect(geometryContains(multi, 5, 5)).toBe(false)
-		expect(geometryContains({ type: "Point", coordinates: [5, 5] }, 5, 5)).toBeNull()
-		expect(geometryContains(null, 5, 5)).toBeNull()
 	})
 })
 

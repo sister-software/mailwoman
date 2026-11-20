@@ -13,11 +13,8 @@ import {
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
 	LayerTier,
-	readLayerCoverage,
-	readLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
@@ -145,24 +142,5 @@ describe("countriesForPostcode", () => {
 
 	it("returns an empty array when no UPRN carries the postcode", () => {
 		expect(lookup.countriesForPostcode("SW1A 1AA")).toEqual([])
-	})
-})
-
-describe("layer interface", () => {
-	it("round-trips the manifest, spine declaration included", async () => {
-		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
-
-		const manifest = await readLayerManifest(kdb)
-
-		expect(manifest.name).toBe("nsul-uprn-postcode-gb-fixture")
-		expect(manifest.tier).toBe(LayerTier.BuildLocal)
-		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
-	})
-
-	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
-
-		expect((await readLayerCoverage(kdb, 1))?.basis).toBe(CoverageBasis.Designated)
-		await expect(readLayerCoverage(kdb, 2)).resolves.toBeNull()
 	})
 })

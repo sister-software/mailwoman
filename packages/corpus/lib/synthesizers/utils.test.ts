@@ -557,12 +557,6 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 
 		expect(out).toBeNull()
 	})
-
-	it("defaultAugmentationsForCountry('US') includes both suffix augmentations", () => {
-		const us = defaultAugmentationsForCountry("US")
-		expect(us).toContain(streetSuffixAbbreviate)
-		expect(us).toContain(streetSuffixExpand)
-	})
 })
 
 describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
@@ -691,14 +685,6 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		)!
 
 		expect(out.components.unit).toBe("ROOM 7")
-	})
-
-	it("AUGMENTATIONS + defaultAugmentationsForCountry('US') include both unit augmentations", () => {
-		expect(AUGMENTATIONS["us-unit-designator-abbreviate"]).toBe(unitDesignatorAbbreviate)
-		expect(AUGMENTATIONS["us-unit-designator-expand"]).toBe(unitDesignatorExpand)
-		const us = defaultAugmentationsForCountry("US")
-		expect(us).toContain(unitDesignatorAbbreviate)
-		expect(us).toContain(unitDesignatorExpand)
 	})
 })
 

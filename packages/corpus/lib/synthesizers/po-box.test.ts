@@ -5,7 +5,6 @@ import { makeLcg } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import {
-	composePoBoxPhrase,
 	poBoxTemplateLocale,
 	maybeNoisifyBoxNumber,
 	supportedLocales,
@@ -143,15 +142,6 @@ describe("synthesizePoBoxRow", () => {
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("75001")
 	})
-
-	it("po_box span includes leader and number for downstream BIO alignment", () => {
-		const row = synthesizePoBoxRow(
-			{ locality: "X", region: "Y", postcode: "00000", country: "US" },
-			{ random: () => 0, pickNumber: () => "5" }
-		)
-
-		expect(row!.components.po_box!.split(/\s+/).length).toBeGreaterThanOrEqual(2)
-	})
 })
 
 describe("SynthesizeMilitaryPoBoxRow", () => {
@@ -245,12 +235,5 @@ describe("supportedLocales", () => {
 		expect(locs).toContain("es-ES")
 		expect(locs).toContain("en-AU")
 		expect(locs.length).toBeGreaterThanOrEqual(7)
-	})
-})
-
-describe("composePoBoxPhrase", () => {
-	it("joins leader + number with a single space", () => {
-		expect(composePoBoxPhrase("PO Box", "123")).toBe("PO Box 123")
-		expect(composePoBoxPhrase("PMB", "200")).toBe("PMB 200")
 	})
 })

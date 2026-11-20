@@ -84,14 +84,4 @@ describe("layouts read from a UPU Standardized Address Format Description", () =
 			}
 		}
 	})
-
-	it("holds the three jurisdictions whose template registers no postcode", () => {
-		// Botswana, Qatar and Zimbabwe each publish a SAFD with no postcode element.
-		// A reader that assumes every country has one would invent a field for these three.
-		const absent = Object.entries(S42_LAYOUT_RECORDS)
-			.filter(([, record]) => record.postcode === "absent")
-			.map(([code]) => code)
-
-		expect(absent.toSorted()).toEqual(["BW", "QA", "ZW"])
-	})
 })

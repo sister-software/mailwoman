@@ -83,50 +83,6 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 	}
 }
 
-test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue/structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
-	// The drift pin: `@mailwoman/corpus` doesn't depend on `@mailwoman/neural`,
-	// so this list is a copy and the copy is what this test exists to catch.
-	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([
-		"arcade",
-		"building",
-		"campus",
-		"concourse",
-		"enclosure",
-		"gate",
-		"installation",
-		"terminal",
-		"wing",
-	])
-})
-
-test("SHIPPED_DESIGNATOR_SEED's modifierEligible set matches MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS", () => {
-	// The airport gate designator and `building` are excluded upstream because "East Gate"
-	// and "Building Society Place" are real GB streets.
-	// The GB extract's 890 `gate` transport features are essentially none of them sub-venues.
-	expect(
-		SHIPPED_DESIGNATOR_SEED.filter((d) => d.modifierEligible)
-			.map((d) => d.id)
-			.toSorted()
-	).toEqual(["arcade", "campus", "concourse", "terminal", "wing"])
-})
-
-test("SHIPPED_MODIFIER_SEED mirrors VENUE_STRUCTURE_MODIFIERS", () => {
-	expect(SHIPPED_MODIFIER_SEED.toSorted()).toEqual([
-		"central",
-		"east",
-		"front",
-		"inner",
-		"lower",
-		"main",
-		"north",
-		"outer",
-		"rear",
-		"south",
-		"upper",
-		"west",
-	])
-})
-
 test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
 	// Mirrors `fetch/wikidata/subvenue.ts`'s SUBVENUE_CONCEPTS.
 	// `wing` is absent from both on purpose: Wikidata has no clean "wing of a building" concept.

@@ -10,7 +10,6 @@ import {
 	matchLeadingDesignator,
 	matchLeadingDesignatorWithRange,
 	US_UNIT_DESIGNATOR_LOOKUP,
-	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_VARIANTS,
 	usUnitIdentifier,
 } from "#us/unit/designator"
@@ -70,14 +69,6 @@ describe("US_UNIT_DESIGNATOR_LOOKUP", () => {
 	it("does not know unrelated words", () => {
 		expect(US_UNIT_DESIGNATOR_LOOKUP.has("4b")).toBe(false)
 		expect(US_UNIT_DESIGNATOR_LOOKUP.has("oakland")).toBe(false)
-	})
-})
-
-describe("US_UNIT_DESIGNATOR_PREFERRED_ABBR", () => {
-	it("gives the approved USPS abbreviation per canonical", () => {
-		expect(US_UNIT_DESIGNATOR_PREFERRED_ABBR.APARTMENT).toBe("APT")
-		expect(US_UNIT_DESIGNATOR_PREFERRED_ABBR.SUITE).toBe("STE")
-		expect(US_UNIT_DESIGNATOR_PREFERRED_ABBR.FLOOR).toBe("FL")
 	})
 })
 

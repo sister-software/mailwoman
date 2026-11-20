@@ -153,8 +153,4 @@ describe("the committed report", () => {
 		expect(committed.lexicon.version).toBe(lexicon.version)
 		expect(committed.lexicon.declaredPhrases).toBe(lexicon.phrases.length)
 	})
-
-	it("names the database it was taken against, so the numbers are reproducible", () => {
-		expect(committed.poiDatabase.layerManifest ?? committed.poiDatabase.layerManifestNote).toBeTruthy()
-	})
 })

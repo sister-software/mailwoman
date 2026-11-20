@@ -410,18 +410,4 @@ describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => 
 
 		expect(o).toBe(bytes.length)
 	})
-
-	it("the parent byte costs exactly one byte per pair versus the schema-2 record shape", () => {
-		const bytes = serializePairIndex(HEADER, ENTRIES)
-		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-		const headerLen = view.getUint32(4, true)
-		const encoder = new TextEncoder()
-
-		const recordBytes = ENTRIES.reduce(
-			(sum, e) => sum + 2 + encoder.encode(e.child).length + 2 + encoder.encode(e.parent).length + 2,
-			0
-		)
-
-		expect(bytes).toHaveLength(4 + 4 + headerLen + 4 + recordBytes)
-	})
 })

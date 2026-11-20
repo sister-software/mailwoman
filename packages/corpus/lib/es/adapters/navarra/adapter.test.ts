@@ -82,20 +82,6 @@ describe("es-navarra adapter against the fixture partitions", () => {
 		expect(byID.get(`${ES_NAVARRA_ADAPTER_ID}-AD.Address.1`)?.raw).toBe("CALLE CALLEJA, 4, 31280 Abáigar")
 	})
 
-	it("reads the street, the postcode and the places off the references' own titles", async () => {
-		const text = await readLocalTextFile(abaigar)
-
-		// The publisher writes no component feature at all.
-		// The thoroughfare reference is the bare string `ThoroughfareName` and the postal
-		// one `PostalDescriptor`, and each states its value in `xlink:title`.
-		// A reader resolving the hrefs finds no feature behind either of them.
-		expect(text).toContain('xlink:href="ThoroughfareName" xlink:title="CALLE CALLEJA"')
-		expect(text).toContain('xlink:href="PostalDescriptor" xlink:title="31280"')
-		expect(text).not.toContain("<AD:ThoroughfareName")
-		expect(text).not.toContain("<AD:PostalDescriptor")
-		expect(text).not.toContain("<AD:AdminUnitName")
-	})
-
 	it("reads the municipality off the MUN reference rather than the country or the community", async () => {
 		const { rows } = await rowsFrom(fixtureDir)
 

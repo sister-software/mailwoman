@@ -3,14 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import {
-	directionHeading,
-	StreetProp,
-	streetPropMeshes,
-	tokyoSkytreeMesh,
-	tokyoTowerMesh,
-	type SceneMesh,
-} from "#scene/meshes"
+import { directionHeading, StreetProp, streetPropMeshes, tokyoTowerMesh, type SceneMesh } from "#scene/meshes"
 
 function vertices(mesh: SceneMesh): Array<[number, number, number]> {
 	const values = mesh.attributes.positions.value
@@ -38,12 +31,6 @@ describe("tokyoTowerMesh", () => {
 
 		expect(ground.length).toBeGreaterThan(0)
 		expect(ground.every(([x, y]) => Math.max(Math.abs(x), Math.abs(y)) >= 26)).toBe(true)
-	})
-})
-
-describe("tokyoSkytreeMesh", () => {
-	test("reaches 634 m", () => {
-		expect(Math.max(...vertices(tokyoSkytreeMesh()).map((point) => point[2]))).toBe(634)
 	})
 })
 

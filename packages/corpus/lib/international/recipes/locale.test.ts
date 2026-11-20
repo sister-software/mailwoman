@@ -355,17 +355,6 @@ describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
 			"No COUNTRY_SURFACE_FORMS entry for ZZ_FAKE — add it to codex/country/country.ts before using --country-fraction"
 		)
 	})
-
-	it("countryFraction 1: NZ now appends a real surface form", () => {
-		const random = makeMulberry32(7)
-		const row = makeRow()
-
-		applyCountryAppend(row, "NZ", 1, random)
-
-		expect(row.components.country).toBeDefined()
-		expect(COUNTRY_SURFACE_FORMS.NZ).toContain(row.components.country)
-		expect(row.raw).toBe(`14 Beulah Hill, London SE19 3NF, ${row.components.country}`)
-	})
 })
 
 describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", () => {

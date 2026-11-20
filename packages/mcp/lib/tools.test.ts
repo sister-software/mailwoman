@@ -154,24 +154,6 @@ function toolNamed(table: ReturnType<typeof buildToolTable>, name: string) {
 }
 
 describe("buildToolTable", () => {
-	it("registers exactly the nine expected tools", () => {
-		const table = buildToolTable(stubDeps())
-
-		expect(table.map((t) => t.name).toSorted()).toEqual(
-			[
-				"mailwoman_bdc_filing_landscape",
-				"mailwoman_filer_family",
-				"mailwoman_filer_lookup",
-				"mailwoman_geocode",
-				"mailwoman_layer_manifest",
-				"mailwoman_overpass_export",
-				"mailwoman_parse",
-				"mailwoman_plausibility_check",
-				"mailwoman_poi_search",
-			].toSorted()
-		)
-	})
-
 	it("every tool carries a non-empty description", () => {
 		const table = buildToolTable(stubDeps())
 

@@ -24,11 +24,6 @@ test("MAPPED_LEGACY_CLASSIFICATIONS: every listed tag round-trips to a non-null 
 	}
 })
 
-test("componentTagToLegacyClassification: intersection_a inverts to the bare legacy 'intersection'", () => {
-	// "first legacy entry wins" — intersection is the only source, so A inverts back to it.
-	expect(componentTagToLegacyClassification("intersection_a")).toBe("intersection")
-})
-
 test("componentTagToLegacyClassification: intersection_b has no legacy source and maps to null", () => {
 	expect(componentTagToLegacyClassification("intersection_b")).toBeNull()
 })

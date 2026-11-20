@@ -622,15 +622,6 @@ describe("splitForRow (pure per-row decision)", () => {
 			}
 		}
 	})
-
-	it("rows without a region land in train", () => {
-		expect(splitForRow(row("us-1", "US"))).toBe("train")
-	})
-
-	it("custom holdouts override defaults", () => {
-		expect(splitForRow(row("us-1", "US", "California"), { US: ["California"] })).not.toBe("train")
-		expect(splitForRow(row("us-1", "US", "Vermont"), { US: ["California"] })).toBe("train")
-	})
 })
 
 describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {

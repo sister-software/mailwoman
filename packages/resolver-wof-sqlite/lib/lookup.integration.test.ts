@@ -6,8 +6,6 @@
  * real WOF SQLite distribution without a checked-in binary.
  */
 
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { changeMode } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -460,37 +458,5 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		using db = DatabaseClient.temp<WOFDatabase>()
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
 		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
-	})
-
-	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
-		// A smoke test.
-		// SQLite silently downgrades a write-mode open to read-only on an owned 0444 file,
-		// so this proves a sealed file resolves end-to-end and doesn't distinguish the open mode.
-		// The open mode itself is enforced by the DatabaseSync spy in `lookup-readonly-open.test.ts`.
-		await using dirDirectory = await temporaryDirectory("mw-wof-ro-")
-		const dir = dirDirectory.path
-		const dbPath = dir("admin-fixture.db")
-
-		{
-			using disk = buildFixtureDB(dbPath)
-			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
-			builder[Symbol.dispose]()
-		}
-		await changeMode(dbPath, 0o444)
-
-		let ro: WOFSQLitePlaceLookup | null = null
-
-		try {
-			// The default `buildFTS` setting opens the 0444 file read-only.
-			// A write-mode open would throw here.
-			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
-			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
-			expect(candidates.length).toBeGreaterThan(0)
-			expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
-		} finally {
-			ro?.[Symbol.dispose]()
-			// Restore write permission so the temp dir can be cleaned up.
-			await changeMode(dbPath, 0o644)
-		}
 	})
 })

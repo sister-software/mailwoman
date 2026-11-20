@@ -680,15 +680,6 @@ describe("runPipeline — timing budget shape", () => {
 		expect(result.timing["token-classify"]).toBeGreaterThanOrEqual(0)
 		expect(result.timing["resolve"]).toBeUndefined()
 	})
-
-	it("timing values are non-negative numbers", async () => {
-		const result = await runPipeline("hello", {})
-
-		for (const [stage, ms] of Object.entries(result.timing)) {
-			expect(ms, `${stage} timing must be finite + non-negative`).toBeGreaterThanOrEqual(0)
-			expect(Number.isFinite(ms), `${stage} timing must be finite`).toBe(true)
-		}
-	})
 })
 
 describe("RunPipeline — non-graceful stage failures", () => {

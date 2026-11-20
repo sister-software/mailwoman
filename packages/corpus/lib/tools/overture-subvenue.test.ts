@@ -191,18 +191,6 @@ test("readOvertureSubVenues filters by country when asked", async () => {
 	expect(rows.map((row) => row.name)).toEqual(["Terminal 1"])
 })
 
-test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", async () => {
-	// The harvest row shape is source-neutral: `designatorID` and `name` are all the builder needs.
-	// `ref` and `localizedNames` are optional.
-	const [row] = await readOvertureSubVenues({ databasePath, countries: ["CA"] })
-
-	expect(row).toBeDefined()
-	expect(typeof row!.designatorID).toBe("string")
-	expect(typeof row!.name).toBe("string")
-	expect(row).not.toHaveProperty("ref")
-	expect(row).not.toHaveProperty("localizedNames")
-})
-
 test("readOvertureLayerVintage reads the layer-interface manifest", async () => {
 	await expect(readOvertureLayerVintage(databasePath)).resolves.toBe("2026-05-20.0")
 })

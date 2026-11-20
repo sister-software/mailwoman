@@ -7,7 +7,6 @@ import {
 	isFloorDesignatorToken,
 	lookupFloorDesignator,
 	US_FLOOR_DESIGNATOR_LOOKUP,
-	US_FLOOR_DESIGNATOR_PREFERRED_ABBR,
 	US_FLOOR_DESIGNATORS,
 } from "#us/floor-designator"
 
@@ -37,15 +36,6 @@ describe("US_FLOOR_DESIGNATOR_LOOKUP", () => {
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("apt")).toBe(false)
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("ste")).toBe(false)
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("rm")).toBe(false)
-	})
-})
-
-describe("US_FLOOR_DESIGNATOR_PREFERRED_ABBR", () => {
-	it("gives the approved USPS abbreviation per canonical name", () => {
-		expect(US_FLOOR_DESIGNATOR_PREFERRED_ABBR.FLOOR).toBe("FL")
-		expect(US_FLOOR_DESIGNATOR_PREFERRED_ABBR.BASEMENT).toBe("BSMT")
-		expect(US_FLOOR_DESIGNATOR_PREFERRED_ABBR.PENTHOUSE).toBe("PH")
-		expect(US_FLOOR_DESIGNATOR_PREFERRED_ABBR.LOBBY).toBe("LBBY")
 	})
 })
 

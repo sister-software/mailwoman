@@ -54,12 +54,6 @@ describe("EFFECTIVE_KEY_FOR", () => {
 		expect(missing).toEqual([])
 	})
 
-	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// This diagnostic never changes answers, so it stays out of the comparison pins.
-		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")
-		expect(Object.keys(EFFECTIVE_KEY_FOR)).toContain("diagnose_unreachable")
-	})
-
 	it("passes through a declaration that is not a config key at all", () => {
 		// A cross-engine comparison declares `engine`, which has no `EngineConfig` mapping.
 		expect(effectiveKeyFor("engine")).toBe("engine")

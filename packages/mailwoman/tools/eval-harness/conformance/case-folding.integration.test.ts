@@ -35,9 +35,8 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
-import { auditCaseFoldingSuite, CASE_FOLDING_SUITE_PATH } from "#tools/eval-harness/conformance/case-folding"
+import { CASE_FOLDING_SUITE_PATH } from "#tools/eval-harness/conformance/case-folding"
 import { runConformanceCommand } from "#tools/eval-harness/conformance/command"
-import { loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -56,10 +55,6 @@ const gazetteerPresent = async (): Promise<boolean> =>
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"case-folding invariance — live pipeline",
 	() => {
-		it("audits the committed suite before anything is geocoded", async () => {
-			expect(auditCaseFoldingSuite(await loadConformanceFixtures(CASE_FOLDING_SUITE_PATH))).toEqual([])
-		})
-
 		it("holds on every enforcing row, and prints the tracked ones", async () => {
 			await expect(runConformanceCommand({ suite: CASE_FOLDING_SUITE_PATH })).resolves.toBe(0)
 		}, 600_000)

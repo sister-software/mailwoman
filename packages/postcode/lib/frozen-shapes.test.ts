@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { POSTCODE_SHAPES, WHOLE_POSTCODE_SHAPES, wholePostcodeShape } from "#frozen-shapes"
+import { POSTCODE_SHAPES, wholePostcodeShape } from "#frozen-shapes"
 
 /**
  * One spaced postcode per label that states an anchored form, written as a person writes it.
@@ -16,10 +16,6 @@ const SPACED: ReadonlyArray<readonly [label: string, postcode: string]> = [
 ]
 
 describe("WHOLE_POSTCODE_SHAPES", () => {
-	it("states an anchored form for every label a row gives one", () => {
-		expect([...WHOLE_POSTCODE_SHAPES.keys()].toSorted()).toEqual(["CA", "GB", "IE", "NL"])
-	})
-
 	it.each(SPACED)("the %s scan and anchored forms both accept %s", (label, postcode) => {
 		const scan = POSTCODE_SHAPES.find((shape) => shape.label === label)
 

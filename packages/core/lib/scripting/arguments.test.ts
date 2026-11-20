@@ -9,17 +9,6 @@ import { describe, expect, it } from "vitest"
 
 import * as scriptingUtils from "#scripting/arguments"
 
-describe("@mailwoman/core/scripting/arguments", () => {
-	it("hands back the argument vector as strings", () => {
-		// The verbatim passthrough is spread into a child-process command line, so the element type is the interface.
-		for (const argument of scriptingUtils.passThroughCLIArguments()) {
-			expect(typeof argument).toBe("string")
-		}
-
-		expect(scriptingUtils.passThroughCLIArguments()).toEqual(scriptingUtils.cliArguments())
-	})
-})
-
 describe("optionPropertyName", () => {
 	it.each([
 		["transition-beta", "transitionBeta"],

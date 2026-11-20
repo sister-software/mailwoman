@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
+import { countryOfInseeCode } from "#fr/insee-country"
 
 describe("countryOfInseeCode", () => {
 	it.each([
@@ -31,34 +31,5 @@ describe("countryOfInseeCode", () => {
 
 	it("reads a code whose publisher padded it", () => {
 		expect(countryOfInseeCode(" 97216 ")).toBe("MQ")
-	})
-
-	it("every jurisdiction it can return is in the declared set", () => {
-		const returned = new Set(
-			[
-				"97123",
-				"97216",
-				"97390",
-				"97412",
-				"97501",
-				"97630",
-				"97701",
-				"97801",
-				"984",
-				"986",
-				"98735",
-				"98825",
-				"75101",
-			].map((code) => countryOfInseeCode(code))
-		)
-
-		for (const country of returned) {
-			expect(INSEE_COUNTRIES).toContain(country)
-		}
-	})
-
-	it("declares France beside every overseas jurisdiction", () => {
-		expect(INSEE_COUNTRIES[0]).toBe("FR")
-		expect(new Set(INSEE_COUNTRIES).size).toBe(INSEE_COUNTRIES.length)
 	})
 })

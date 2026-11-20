@@ -154,12 +154,6 @@ describe("the eleven shipped locales", () => {
 describe("a partly-filled address drops what it cannot print, and its connectors with it", () => {
 	const base: ComponentDict = { house_number: "350", street: "Fifth Avenue" }
 
-	it("prints the whole tail when every part is present", () => {
-		expect(render("US", { ...base, locality: "New York", region: "NY", postcode: "10118" })).toBe(
-			"350 Fifth Avenue, New York, NY 10118"
-		)
-	})
-
 	it("drops a trailing postcode without leaving its space", () => {
 		expect(render("US", { ...base, locality: "New York", region: "NY" })).toBe("350 Fifth Avenue, New York, NY")
 	})

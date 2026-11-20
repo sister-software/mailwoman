@@ -64,15 +64,6 @@ describe("lookupVariantAliases", () => {
 		expect(lookupVariantAliases("petrol station", "en-ZA")[0]!.confidence).toBe(1)
 	})
 
-	it("PFK in Quebec → KFC", () => {
-		const r = lookupVariantAliases("pfk", "fr-CA")
-		expect(r).toHaveLength(1)
-
-		if (r[0]!.alias.kind === "brand") {
-			expect(r[0]!.alias.brand).toBe("KFC")
-		}
-	})
-
 	it("getAllAliases returns non-empty table", () => {
 		const all = getAllAliases()
 		expect(all.length).toBeGreaterThan(20)

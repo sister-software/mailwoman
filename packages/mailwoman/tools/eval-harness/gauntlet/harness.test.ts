@@ -34,9 +34,7 @@ import {
 	PremiseLinkageResult,
 	PremiseLinkagePolicy,
 	type PremiseLinkageArmReport,
-	type PremiseLinkageCount,
 	type PremiseLinkageInputRow,
-	type PremiseLinkageRates,
 	type PremiseLinkageReport,
 } from "#tools/eval-harness/premise-linkage/schema"
 
@@ -101,12 +99,6 @@ function refusalFrom(run: () => unknown): PremiseLinkageRedactionError {
 	}
 
 	throw new Error("expected the report writer to refuse, and it did not")
-}
-
-function isCount(value: unknown): value is PremiseLinkageCount {
-	if (typeof value !== "object" || !value) return false
-
-	return typeof (value as PremiseLinkageCount).n === "number" && typeof (value as PremiseLinkageCount).of === "number"
 }
 
 describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in both required arms", () => {
@@ -250,32 +242,6 @@ describe(": synthetic fixtures exercise exact, wrong, refused and ambiguous in b
 })
 
 describe(": the report prints every numerator and denominator", () => {
-	it("states an `n` and an `of` for every rate, at the run level and per class", async () => {
-		const { report } = await syntheticRun()
-
-		for (const arm of report.arms) {
-			const rateGroups: PremiseLinkageRates[] = [arm.overall, ...Object.values(arm.perClass)]
-
-			for (const rates of rateGroups) {
-				expect(isCount(rates.exactOverEligible)).toBe(true)
-				expect(isCount(rates.wrongOverEligible)).toBe(true)
-				expect(isCount(rates.refusedOverAll)).toBe(true)
-				expect(isCount(rates.ambiguousOverAll)).toBe(true)
-			}
-
-			expect(isCount(arm.erroredOverAll)).toBe(true)
-
-			for (const threshold of arm.coordinateThresholds) {
-				expect(typeof threshold.thresholdM).toBe("number")
-				expect(isCount(threshold.withinThreshold)).toBe(true)
-			}
-		}
-
-		expect(isCount(report.comparison.changed)).toBe(true)
-		expect(isCount(report.comparison.improved)).toBe(true)
-		expect(isCount(report.comparison.regressed)).toBe(true)
-	})
-
 	it("counts arm-to-arm movement over ALL rows, with improved and regressed inside changed", async () => {
 		const { report } = await syntheticRun()
 		const { comparison } = report

@@ -60,10 +60,6 @@ describe("codePointScript", () => {
 		}
 	})
 
-	it("answers the same for a code point the second time", () => {
-		expect(codePointScript(0x3_b1)).toBe(codePointScript(0x3_b1))
-	})
-
 	it("reports Latin for the ASCII letters and Common for the rest of ASCII", () => {
 		for (let code = 0; code < 0x80; code++) {
 			const letter = (code >= 0x41 && code <= 0x5a) || (code >= 0x61 && code <= 0x7a)

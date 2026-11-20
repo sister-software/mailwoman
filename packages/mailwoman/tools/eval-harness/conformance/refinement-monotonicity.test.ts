@@ -13,7 +13,6 @@ import {
 	REFINEMENT_MONOTONICITY_LAW,
 	refinementChains,
 	refinementCoverage,
-	REFINEMENT_STEPS,
 	statableSteps,
 } from "#tools/eval-harness/conformance/refinement-monotonicity"
 
@@ -35,14 +34,6 @@ function row(
 }
 
 describe("the named coarsenings", () => {
-	it("is a closed set with a derivation for every member", () => {
-		expect(new Set(REFINEMENT_STEPS).size).toBe(REFINEMENT_STEPS.length)
-
-		for (const step of REFINEMENT_STEPS) {
-			expect(typeof REFINEMENT_DERIVATION_BY_STEP[step]).toBe("function")
-		}
-	})
-
 	it("peels the first comma part off the front", () => {
 		expect(REFINEMENT_DERIVATION_BY_STEP["drop-leading-segment"]("Neusser Str. 12, Nippes, 50733 Köln")).toBe(
 			"Nippes, 50733 Köln"

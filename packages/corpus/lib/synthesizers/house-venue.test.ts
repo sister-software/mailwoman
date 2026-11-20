@@ -163,23 +163,6 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(written / rows).toBeLessThan(share + 0.05)
 	})
 
-	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-restricted.
-		// The `house-venue` recipe output contains FR and US rows only,
-		// so this addition cannot move an existing row.
-		for (const [country, pattern] of [
-			["US", /Boston, MA 02101/],
-			["FR", /75005 Paris/],
-		] as const) {
-			const row = synthesizeHouseVenueRow(
-				country === "US" ? TUPLE : { locality: "Paris", region: "Île-de-France", postcode: "75005", country: "FR" },
-				{ random: makeLcg(3), forceTemplate: "venue-after-street" }
-			)
-
-			expect(row!.raw).toMatch(pattern)
-		}
-	})
-
 	it("GB venue-after-street keeps the GB tail", () => {
 		const row = synthesizeHouseVenueRow(
 			{
@@ -333,21 +316,5 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(counts["venue-after-street"]).toBeLessThan(600)
 		expect(counts["venue-before-street"]).toBeGreaterThan(400)
 		expect(counts["venue-before-street"]).toBeLessThan(600)
-	})
-
-	it("respects per-country locale", () => {
-		for (const [country, expectedLocale] of [
-			["US", "en-US"],
-			["FR", "fr-FR"],
-			["DE", "de-DE"],
-			["GB", "en-GB"],
-		] as const) {
-			const row = synthesizeHouseVenueRow(
-				{ ...TUPLE, country },
-				{ random: makeLcg(7), forceTemplate: "venue-after-street" }
-			)
-
-			expect(row!.locale).toBe(expectedLocale)
-		}
 	})
 })

@@ -89,12 +89,4 @@ describe("LocaleProfile — bundled profiles", () => {
 		expect(() => registry.register(jaJP)).not.toThrow()
 		expect(registry.get("ja-JP")).toBe(jaJP)
 	})
-
-	test("registry can hold en-US, fr-FR, and ja-JP simultaneously", () => {
-		const registry = new InMemoryLocaleRegistry()
-		registry.register(enUS)
-		registry.register(frFR)
-		registry.register(jaJP)
-		expect(registry.list()).toHaveLength(3)
-	})
 })

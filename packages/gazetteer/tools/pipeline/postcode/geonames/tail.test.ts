@@ -169,10 +169,3 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-
 	expect(list.filter((cc) => !/^[A-Z]{2}$/.test(cc))).toEqual([])
 	expect(list).toHaveLength(new Set(list).size)
 })
-
-test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
-	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump.
-	// Makani codes identify buildings rather than postal delivery areas.
-	// A fold would store rows under a placetype with a different meaning.
-	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
-})

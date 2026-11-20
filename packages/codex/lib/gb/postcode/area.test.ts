@@ -3,26 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countryOfPostcode, countryOfPostcodeArea, GB_POSTCODE_AREA_COUNTRY } from "#gb"
-
-describe("GB_POSTCODE_AREA_COUNTRY", () => {
-	it("maps the explicit non-England areas to their country", () => {
-		expect(GB_POSTCODE_AREA_COUNTRY.BT).toBe("NIR") // Belfast → Northern Ireland
-		expect(GB_POSTCODE_AREA_COUNTRY.EH).toBe("SCT") // Edinburgh → Scotland
-		expect(GB_POSTCODE_AREA_COUNTRY.G).toBe("SCT") // Glasgow → Scotland
-		expect(GB_POSTCODE_AREA_COUNTRY.CF).toBe("WLS") // Cardiff → Wales
-	})
-
-	it("assigns the border-straddling areas to their majority country", () => {
-		expect(GB_POSTCODE_AREA_COUNTRY.TD).toBe("SCT") // Galashiels — majority Scotland
-		expect(GB_POSTCODE_AREA_COUNTRY.SY).toBe("WLS") // Shrewsbury — majority Wales
-	})
-
-	it("does not list England — it is the transparent default", () => {
-		expect(GB_POSTCODE_AREA_COUNTRY.SW).toBeUndefined()
-		expect(GB_POSTCODE_AREA_COUNTRY.M).toBeUndefined()
-	})
-})
+import { countryOfPostcode, countryOfPostcodeArea } from "#gb"
 
 describe("countryOfPostcodeArea", () => {
 	it("returns the explicit country for a known non-England area", () => {

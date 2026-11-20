@@ -17,11 +17,6 @@ describe("buildGraticule", () => {
 	const collection = buildGraticule(15)
 	const lines = collection.features[0]!.geometry.coordinates
 
-	test("is one MultiLineString feature", () => {
-		expect(collection.features).toHaveLength(1)
-		expect(collection.features[0]!.geometry.type).toBe("MultiLineString")
-	})
-
 	test("draws a meridian every step and a parallel every step", () => {
 		// 360/15 = 24 meridians.
 		// Parallels run from -70 to +80 inclusive of neither pole = 11.
@@ -44,9 +39,5 @@ describe("buildGraticule", () => {
 				expect(Math.abs(lat!)).toBeLessThanOrEqual(85)
 			}
 		}
-	})
-
-	test("is stable — the same step gives the same geometry", () => {
-		expect(buildGraticule(15)).toEqual(collection)
 	})
 })

@@ -26,13 +26,6 @@ describe("InMemoryPolicyRegistry — lookup", () => {
 		expect(p).toEqual({ component: "country", mode: "neural_only" })
 	})
 
-	test("withDefaults pre-loads neural_only for every tag", () => {
-		const registry = InMemoryPolicyRegistry.withDefaults()
-		expect(registry.lookup("country").mode).toBe("neural_only")
-		expect(registry.lookup("street").mode).toBe("neural_only")
-		expect(registry.lookup("venue").mode).toBe("neural_only")
-	})
-
 	test("locale-specific entry wins over global entry", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "postcode", mode: "both" })

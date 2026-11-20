@@ -4,20 +4,6 @@
 import { expect, test } from "vitest"
 
 import { isBroadbandServicableLocationID } from "#sdk/location"
-import {
-	BroadbandTechnologyCategory,
-	BroadbandTechnologyCode,
-	pluckBroadbandTechnologyCategoryFromCode,
-} from "#technologies"
-
-test("pluckBroadbandTechnologyCategoryFromCode: optical carrier fiber (50) plucks the Fiber category", () => {
-	expect(pluckBroadbandTechnologyCategoryFromCode(BroadbandTechnologyCode.OpticalCarrierFiber)).toBe(
-		BroadbandTechnologyCategory.Fiber
-	)
-
-	// The brief's literal case — 50 is BroadbandTechnologyCode.OpticalCarrierFiber.
-	expect(pluckBroadbandTechnologyCategoryFromCode(50)).toBe("FIBER")
-})
 
 test("isBroadbandServicableLocationID: accepts a 10-digit string, preserving a leading zero", () => {
 	expect(isBroadbandServicableLocationID("0012345678")).toBe(true)

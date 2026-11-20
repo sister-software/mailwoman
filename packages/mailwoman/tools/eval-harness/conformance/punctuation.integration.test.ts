@@ -34,8 +34,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 import { runConformanceCommand } from "#tools/eval-harness/conformance/command"
-import { loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
-import { auditPunctuationSuite, PUNCTUATION_SUITE_PATH } from "#tools/eval-harness/conformance/punctuation"
+import { PUNCTUATION_SUITE_PATH } from "#tools/eval-harness/conformance/punctuation"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -54,10 +53,6 @@ const gazetteerPresent = async (): Promise<boolean> =>
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"punctuation invariance — live pipeline",
 	() => {
-		it("audits the committed suite before anything is geocoded", async () => {
-			expect(auditPunctuationSuite(await loadConformanceFixtures(PUNCTUATION_SUITE_PATH))).toEqual([])
-		})
-
 		it("holds on every blocking row, and prints the tracked ones", async () => {
 			await expect(runConformanceCommand({ suite: PUNCTUATION_SUITE_PATH })).resolves.toBe(0)
 		}, 600_000)

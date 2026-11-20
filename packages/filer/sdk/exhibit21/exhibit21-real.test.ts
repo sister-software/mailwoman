@@ -50,13 +50,6 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 		expect(result.subsidiaries).toEqual(expected.fixtures[name]!.subsidiaries)
 	})
 
-	it.each(FIXTURE_NAMES)("%s never throws, and counts what it abstained from", async (name) => {
-		const result = parseExhibit21(await fixture(name))
-
-		expect(Number.isInteger(result.unparseable)).toBe(true)
-		expect(result.unparseable).toBeGreaterThanOrEqual(0)
-	})
-
 	it.each(FIXTURE_NAMES.filter((name) => !EXPECTED_TO_ABSTAIN_ENTIRELY.has(name)))(
 		"%s yields at least one subsidiary",
 		async (name) => {

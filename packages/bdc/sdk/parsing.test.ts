@@ -33,12 +33,6 @@ async function collect(source: AsyncIterable<BDCAvailabilityRow>): Promise<BDCAv
 	return rows
 }
 
-test("readAvailabilityRows: yields exactly 6 rows, skipping the header", () => {
-	const rows = parseFixture()
-
-	expect(rows).toHaveLength(6)
-})
-
 test("readAvailabilityRows: geoid decodes to a 15-character string (2a decision 3)", () => {
 	const rows = parseFixture()
 

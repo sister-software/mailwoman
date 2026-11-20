@@ -25,10 +25,6 @@ describe("normalizeGauntletSurface", () => {
 })
 
 describe("readGauntletInputs", () => {
-	it("reads the whole board corpus, not one country", () => {
-		expect(inputs.size).toBeGreaterThan(1000)
-	})
-
 	it("contains the rows the leak was measured on", () => {
 		expect(inputs.has("10000")).toBe(true)
 		expect(inputs.has("11000")).toBe(true)

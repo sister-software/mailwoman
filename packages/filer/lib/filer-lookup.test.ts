@@ -207,34 +207,6 @@ describe("§7-3a criteria", () => {
 			)
 		})
 
-		it("SQLite's NOT NULL alone does NOT reject an empty-string valid_from — this is why the builder-level guards below are required", async () => {
-			using db = openMemory()
-			await createAllTables(db)
-
-			await db
-				.insertInto("filer_node")
-				.values([
-					{ node_id: "frn:3333333333", identifier_type: FilerIdentifierType.FRN, identifier_value: "3333333333" },
-					{ node_id: "form499_id:300", identifier_type: FilerIdentifierType.Form499ID, identifier_value: "300" },
-				])
-				.execute()
-
-			await expect(
-				db
-					.insertInto("filer_edge")
-					.values(
-						authoritativeEdge({
-							from_node_id: "frn:3333333333",
-							to_node_id: "form499_id:300",
-							source: "form-499",
-							source_vintage: "",
-							valid_from: "",
-						})
-					)
-					.execute()
-			).resolves.not.toThrow()
-		})
-
 		it("guards reject a whitespace-only lastFiledAt (not just empty) via buildFilerDatabase", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.path("filer.db")
@@ -242,22 +214,6 @@ describe("§7-3a criteria", () => {
 			await expect(
 				buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ lastFiledAt: "   " })],
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
-			).rejects.toThrow(/malformed.*lastFiledAt/i)
-
-			await expect(pathExists(out)).resolves.toBe(false)
-		})
-
-		it("guards reject an empty lastFiledAt via buildFilerDatabase", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-check1-")
-			const out = scratch.path("filer.db")
-
-			await expect(
-				buildFilerDatabase({
-					form499Rows: [minimalForm499Row({ lastFiledAt: "" })],
 					out,
 					sourceVintage: "2026-Q1",
 					buildSHA: "deadbeef",

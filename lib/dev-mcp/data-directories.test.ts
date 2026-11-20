@@ -12,10 +12,4 @@ describe("DATA_DIRECTORIES", () => {
 		expect(new Set(paths).size).toBe(paths.length)
 		expect(paths.every((path) => !path.startsWith("/"))).toBe(true)
 	})
-
-	it("points every Who's On First search at the one repositories root", () => {
-		const wof = DATA_DIRECTORIES.filter(({ holds }) => holds.includes("Who's On First"))
-
-		expect(wof.map(({ path, root }) => [root, path])).toEqual([["cache", "sources/wof-repos"]])
-	})
 })

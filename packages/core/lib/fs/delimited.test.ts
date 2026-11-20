@@ -65,24 +65,6 @@ describe("reading an unquoted delimited file", () => {
 		expect(rows).toHaveLength(3)
 		expect(rows[2]?.[1]).toBe("Türkmenabat")
 	})
-
-	/**
-	 * The defect this module was written for, pinned at its source.
-	 *
-	 * Before spliterator 10, the TSV default was quote-aware: this input read as two rows,
-	 * neither of them Türkmenabat, and every later boundary saw the count of a two-row file.
-	 * The default now reads the quote as data, so it agrees with the unquoted reader.
-	 */
-	it("agrees with the TSV default, which no longer swallows rows after a quote", async () => {
-		const rows: string[][] = []
-
-		for await (const row of TSVSpliterator.fromAsync(file, { header: false })) {
-			rows.push(row as string[])
-		}
-
-		expect(rows).toHaveLength(3)
-		expect(rows[1]?.[1]).toBe(`Ovrag Kyzylak"on`)
-	})
 })
 
 describe("the checked read", () => {

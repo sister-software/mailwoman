@@ -8,14 +8,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
 	type CORDISArchiveManifest,
 	cordisArchiveFilename,
 	cordisArchiveURL,
-	cordisInputPath,
 	CORDIS_PROGRAMMES,
 	downloadCORDIS,
 	isCORDISArchiveCurrent,
@@ -44,12 +43,6 @@ describe("cordisArchiveURL", () => {
 		])
 
 		expect(cordisArchiveFilename("h2020")).toBe("cordis-h2020projects-csv.zip")
-	})
-})
-
-describe("cordisInputPath", () => {
-	it("answers the directory the adapter reads", () => {
-		expect(cordisInputPath(PathBuilder.from("/tmp/sources")).toString()).toBe("/tmp/sources/cordis")
 	})
 })
 

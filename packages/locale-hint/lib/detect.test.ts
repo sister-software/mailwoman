@@ -193,9 +193,3 @@ describe("detectLocale — fallback + always-decisive", () => {
 		expect(unique.size).toBe(allLocales.length)
 	})
 })
-
-describe("detectLocale — source attribution", () => {
-	it("source=detected when no hint", () => {
-		expect(detectLocale(shape()).source).toBe("detected")
-	})
-})

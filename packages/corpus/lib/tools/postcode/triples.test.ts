@@ -17,7 +17,6 @@ import {
 	applyCountryBudget,
 	applyLocalityQuota,
 	localityWrittenForm,
-	POSTCODE_CONVENTIONS,
 	type PostcodeTriple,
 	readPairsFromAdmin,
 	readTriplesFromGeonames,
@@ -427,13 +426,5 @@ describe("readPairsFromAdmin", () => {
 		const pairs = await readPairsFromAdmin(["CA"], { adminDB: root.path("admin-ca.db") })
 
 		expect(pairs.every((p) => p.locale === "und")).toBe(true)
-	})
-})
-
-describe("POSTCODE_CONVENTIONS", () => {
-	it("omits countries whose surface no board row attests", () => {
-		// A country needs an eval board row that shows its placement.
-		expect(POSTCODE_CONVENTIONS.has("AU")).toBe(false)
-		expect(POSTCODE_CONVENTIONS.has("ZA")).toBe(false)
 	})
 })

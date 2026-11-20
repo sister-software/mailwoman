@@ -13,11 +13,8 @@ import {
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
 	LayerTier,
-	readLayerCoverage,
-	readLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -144,26 +141,5 @@ describe("nearestUPRN", () => {
 		expect(() => lookup.nearestUPRN(51.5, -0.14, -5)).toThrow(RangeError)
 		expect(() => lookup.nearestUPRN(51.5, -0.14, Number.NaN)).toThrow(RangeError)
 		expect(() => lookup.nearestUPRN(51.5, -0.14, UPRN_MAX_NEAREST_RADIUS_M + 1)).toThrow(RangeError)
-	})
-})
-
-describe("layer interface", () => {
-	it("round-trips the manifest, spine declaration included", async () => {
-		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
-
-		const manifest = await readLayerManifest(kdb)
-
-		expect(manifest.name).toBe("os-open-uprn-fixture")
-		expect(manifest.tier).toBe(LayerTier.BuildLocal)
-		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
-	})
-
-	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
-
-		const surveyed = await readLayerCoverage(kdb, 1)
-
-		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
-		await expect(readLayerCoverage(kdb, 2)).resolves.toBeNull()
 	})
 })

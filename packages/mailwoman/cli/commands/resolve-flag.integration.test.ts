@@ -7,10 +7,8 @@ import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
-import { parseCommand } from "#cli/native/spec"
 import { $public } from "#env"
 import { mailwomanCLIPath } from "#metadata"
 
@@ -21,16 +19,6 @@ const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH.toString()
 const hasWOFDB = await pathExists(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
-
-describe("--resolve option validation", () => {
-	test("--resolve accepts true", () => {
-		expect(parseCommand(parseSpec, ["--resolve", "--neural", "address"]).values.resolve).toBe(true)
-	})
-
-	test("--resolve-db accepts an arbitrary path string", () => {
-		expect(parseCommand(parseSpec, ["--resolve-db", "/tmp/wof.db", "address"]).values["resolve-db"]).toBe("/tmp/wof.db")
-	})
-})
 
 describe("npx mailwoman parse --resolve error paths", () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {

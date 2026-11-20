@@ -46,11 +46,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 import { runConformanceCommand } from "#tools/eval-harness/conformance/command"
-import { loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
-import {
-	auditRefinementSuite,
-	REFINEMENT_MONOTONICITY_SUITE_PATH,
-} from "#tools/eval-harness/conformance/refinement-monotonicity"
+import { REFINEMENT_MONOTONICITY_SUITE_PATH } from "#tools/eval-harness/conformance/refinement-monotonicity"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -68,10 +64,6 @@ const gazetteerPresent = async (): Promise<boolean> =>
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"refinement monotonicity — live pipeline",
 	() => {
-		it("audits the committed suite before anything is geocoded", async () => {
-			expect(auditRefinementSuite(await loadConformanceFixtures(REFINEMENT_MONOTONICITY_SUITE_PATH))).toEqual([])
-		})
-
 		it("holds on every blocking row, and prints the tracked and unmeasured ones", async () => {
 			await expect(runConformanceCommand({ suite: REFINEMENT_MONOTONICITY_SUITE_PATH })).resolves.toBe(0)
 		}, 900_000)

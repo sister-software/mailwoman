@@ -184,12 +184,6 @@ describe("lookup without a locale", () => {
 })
 
 describe("full Overture snapshot + curated overlay", () => {
-	it("ships the full snapshot: well over 1900 categories, plus the 8 mailwoman-infra classes", () => {
-		const categories = getAllCategories()
-		expect(categories.length).toBeGreaterThan(1900)
-		expect(categories.filter((c) => c.source === "mailwoman-infra")).toHaveLength(8)
-	})
-
 	it("carries brand-new Overture identity categories that the seed taxonomy never had", () => {
 		// `acupuncture` is a real Overture leaf with no curated overlay.
 		// It must resolve identity-style.

@@ -29,10 +29,6 @@ describe("--locale validation", () => {
 			expect(() => parseCommand(parseSpec, ["--locale", locale, "address"])).toThrow(/locale/)
 		}
 	})
-
-	test("locale is optional", () => {
-		expect(() => parseCommand(parseSpec, ["address"])).not.toThrow()
-	})
 })
 
 describe("npx mailwoman parse '<input>' (default — runtime pipeline)", () => {

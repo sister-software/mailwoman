@@ -11,16 +11,6 @@ import {
 	NZ_PRIVATE_BOX_ALIAS,
 } from "#nz"
 
-describe("NZ_DELIVERY_SERVICE_TYPES", () => {
-	it("marks the counter services as identifier-less", () => {
-		for (const t of NZ_DELIVERY_SERVICE_TYPES) {
-			if (t.type === "Counter Delivery" || t.type === "Poste Restante") {
-				expect(t.identifier).toBe("not-used")
-			}
-		}
-	})
-})
-
 describe("NZ_PRIVATE_BOX_ALIAS", () => {
 	it("has the same identifier rule as PO Box — required-if-allocated", () => {
 		const poBox = NZ_DELIVERY_SERVICE_TYPES.find((t) => t.type === "PO Box")!

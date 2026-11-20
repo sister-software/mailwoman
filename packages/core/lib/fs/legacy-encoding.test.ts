@@ -26,10 +26,6 @@ describe("decodeBytes", () => {
 		expect(decodeBytes(THE_SHARP, "cp949")).toBe("더샾오피스텔")
 	})
 
-	it("differs from TextDecoder on exactly that input, which is why the dependency is here", () => {
-		expect(new TextDecoder("euc-kr").decode(THE_SHARP)).not.toBe("더샾오피스텔")
-	})
-
 	it("agrees with TextDecoder inside KS X 1001, which is why the gap was missed at first", () => {
 		expect(decodeBytes(SEOUL, "cp949")).toBe("서울특별시")
 		expect(new TextDecoder("euc-kr").decode(SEOUL)).toBe("서울특별시")

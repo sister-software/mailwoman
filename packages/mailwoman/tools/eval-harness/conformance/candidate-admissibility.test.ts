@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest"
 import {
 	accountRefinement,
 	CANDIDATE_ACCOUNTS,
-	CANDIDATE_DIRECTIONS,
 	foldLookups,
 } from "#tools/eval-harness/conformance/candidate-admissibility"
 
@@ -68,14 +67,6 @@ function lookup(spec: LookupSpec): ResolveNodeTrace {
 		reachableIn: null,
 	}
 }
-
-describe("the account vocabularies", () => {
-	it("are closed and disjoint from one another", () => {
-		expect(new Set(CANDIDATE_ACCOUNTS).size).toBe(CANDIDATE_ACCOUNTS.length)
-		expect(new Set(CANDIDATE_DIRECTIONS).size).toBe(CANDIDATE_DIRECTIONS.length)
-		expect(CANDIDATE_ACCOUNTS).toContain("unexplained")
-	})
-})
 
 describe("folding a run's lookups", () => {
 	it("Collapses repeats of one lookup into a single pool, keeping the BEST rank observed", () => {

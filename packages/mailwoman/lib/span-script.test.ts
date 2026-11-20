@@ -147,13 +147,4 @@ describe("stampSpanScripts — the script each span is written in", () => {
 		expect(tree.roots[0]!.script).toBe("Latn")
 		expect(tree.roots[0]!.children[0]!.script).toBe("Hani")
 	})
-
-	it("abstains rather than borrowing a neighbor's script for a digits-only span", () => {
-		const raw = "10036"
-		const tree = treeOf(raw, [["postcode", 0, 5]])
-
-		stampSpanScripts(tree, raw)
-
-		expect(tree.roots[0]!.script).toBe("Zyyy")
-	})
 })

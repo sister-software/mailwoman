@@ -6,7 +6,6 @@
  *   of the build that produced it rather than merely populated.
  */
 
-import { LayerTier } from "@mailwoman/core/layers"
 import { describe, expect, it } from "vitest"
 
 import { adminLayerManifest } from "#tools/pipeline/admin/manifest"
@@ -66,13 +65,6 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 
 		expect(manifest.license).toBe("CC-BY-4.0")
 		expect(manifest.license).not.toContain("ODbL")
-	})
-
-	it("is never `shipped`, because the Overture Divisions grant is share-alike", () => {
-		// The same reason packages/osm is held out of the release list: the builder ships, the artifact doesn't.
-		expect(adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } }).tier).toBe(
-			LayerTier.BuildLocal
-		)
 	})
 })
 

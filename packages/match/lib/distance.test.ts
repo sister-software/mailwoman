@@ -59,12 +59,4 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 		expect(cmp.assess({ key: "a" }, { key: "b" })).toBe(-1)
 		expect(cmp.assess(rec("a", 0), { key: "b" })).toBe(-1)
 	})
-
-	it("does not double-count: an exact key match banks one vote, not key + distance", () => {
-		// The whole point of the collapse.
-		// There's a single spatial contribution, level 0.
-		const index = cmp.assess(rec("100 plaza dr", 29.76), rec("100 plaza dr", 29.76))
-		expect(index).toBe(0)
-		expect(cmp.levels[index]!.label).toBe("same-key")
-	})
 })

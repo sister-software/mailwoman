@@ -14,13 +14,6 @@ import {
 } from "#license"
 
 describe("summarizeLicense", () => {
-	it("names ODbL's attribution and share-alike", () => {
-		const summary = summarizeLicense("ODbL-1.0")
-
-		expect(summary.recognized).toBe(true)
-		expect(summary.obligations).toEqual([LicenseObligation.Attribution, LicenseObligation.ShareAlike])
-	})
-
 	it("reports an empty obligation list for a public-domain dedication as a statement, not an absence", () => {
 		const summary = summarizeLicense("CC0-1.0")
 

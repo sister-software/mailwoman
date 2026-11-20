@@ -46,19 +46,6 @@ describe("the structure family equals the frozen legacy output", () => {
 
 		expect(differences.slice(0, 5)).toEqual([])
 	})
-
-	it("on every category the generators and the sources drew", async () => {
-		const fixture = await readFrozenFixture()
-		const categories = new Set(fixture.cases.map(({ category }) => category.split(":")[0]))
-
-		expect([...categories].toSorted()).toEqual([
-			"gauntlet",
-			"generated-known-formats",
-			"generated-structure",
-			"golden",
-			"quirk",
-		])
-	})
 })
 
 describe("the structure family's invariants on fresh generated inputs", () => {

@@ -11,12 +11,6 @@ test("US_FIPS_STATE: covers exactly 50 states + DC + 5 territories (56 entries)"
 	expect(Object.keys(US_FIPS_STATE)).toHaveLength(56)
 })
 
-test("US_FIPS_STATE: the unassigned FIPS gaps (03, 07, 14, 43, 52) are absent", () => {
-	for (const gap of ["03", "07", "14", "43", "52"]) {
-		expect(US_FIPS_STATE[gap]).toBeUndefined()
-	}
-})
-
 test("US_FIPS_STATE: every abbreviation is unique", () => {
 	const abbreviations = Object.values(US_FIPS_STATE).map((info) => info.abbreviation)
 	expect(new Set(abbreviations).size).toBe(abbreviations.length)

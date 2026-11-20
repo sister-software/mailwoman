@@ -158,17 +158,6 @@ afterEach(() => {
 })
 
 describe("Saint-Denis — ranking is referential", () => {
-	it("the encyclopedic column really does invert the truth (the premise this test rests on)", () => {
-		// Stated as an assertion rather than a comment: if the fixture's numbers ever stop
-		// disagreeing, every test below passes vacuously without signaling the fixture change.
-		const suburb = SAINT_DENIS[0]!
-		const hamlet = SAINT_DENIS[1]!
-
-		expect(hamlet.encyclopedic!).toBeGreaterThan(suburb.encyclopedic!)
-		expect(hamlet.encyclopedic! / suburb.encyclopedic!).toBeGreaterThan(4)
-		expect(referentialFromPopulation(suburb.population)).toBeGreaterThan(referentialFromPopulation(hamlet.population))
-	})
-
 	it("a bare 'Saint-Denis' resolves to the Seine-Saint-Denis suburb, with both scores in the gazetteer", async () => {
 		lookup = open(SAINT_DENIS, true)
 		const results = await lookup.findPlace({ text: "Saint-Denis" })

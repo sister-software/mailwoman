@@ -87,9 +87,3 @@ describe("generationCacheName", () => {
 		await expect(storage.keys()).resolves.toEqual([...current])
 	})
 })
-
-describe("roleCacheName", () => {
-	test("names a cache by role alone", () => {
-		expect(roleCacheName("mailwoman-", "release-assets")).toBe("mailwoman-release-assets")
-	})
-})

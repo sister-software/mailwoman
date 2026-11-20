@@ -6,7 +6,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
-import { createPOISearchFTS, createPOIStagingTables, createPOITable, POI_FTS_TABLE, type POIDatabase } from "#poi"
+import { createPOIStagingTables, createPOITable, type POIDatabase } from "#poi"
 import { normalizeLocalityForKey } from "#street"
 
 function openMemory(): { raw: DatabaseClient<POIDatabase>; kdb: DatabaseClient<POIDatabase> } {
@@ -57,13 +57,5 @@ describe("poi schema", () => {
 		expect(row.name).toBe("McDonald's")
 		expect(row.h3_cell).toBe(1001)
 		expect(row.confidence).toBe(0.93)
-	})
-
-	it("creates the FTS5 name index (raw DDL — Kysely cannot express virtual tables)", async () => {
-		const { raw, kdb } = openMemory()
-		await createPOITable(kdb)
-		createPOISearchFTS(raw)
-		const found = raw.prepare("select name from sqlite_master where name = ?").get(POI_FTS_TABLE)
-		expect(found).toBeDefined()
 	})
 })

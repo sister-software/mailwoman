@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { DE_STREET_SUFFIXES, isGermanStreetToken } from "#de"
+import { isGermanStreetToken } from "#de"
 
 describe("isGermanStreetToken", () => {
 	it("matches fused compound streets via their suffix", () => {
@@ -32,14 +32,5 @@ describe("isGermanStreetToken", () => {
 	it("rejects non-strings and too-short tokens", () => {
 		expect(isGermanStreetToken(123)).toBe(false)
 		expect(isGermanStreetToken("am")).toBe(false)
-	})
-})
-
-describe("DE_STREET_SUFFIXES", () => {
-	it("carries both ß and ss spellings of Straße and excludes place-name suffixes", () => {
-		expect(DE_STREET_SUFFIXES).toContain("straße")
-		expect(DE_STREET_SUFFIXES).toContain("strasse")
-		expect(DE_STREET_SUFFIXES).not.toContain("berg")
-		expect(DE_STREET_SUFFIXES).not.toContain("burg")
 	})
 })

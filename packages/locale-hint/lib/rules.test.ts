@@ -14,26 +14,6 @@ const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ ...EMPTY_QUERY_SHAPE_VIEW, ...o })
 
-test("scoreByScript: each non-Latin script maps to its default locale", () => {
-	expect(scoreByScript(shape({ characterClass: "cjk" }))).toEqual({
-		locale: "ja-JP",
-		confidence: 0.8,
-		reason: "characterClass=cjk",
-	})
-
-	expect(scoreByScript(shape({ characterClass: "cyrillic" }))).toEqual({
-		locale: "ru-RU",
-		confidence: 0.85,
-		reason: "characterClass=cyrillic",
-	})
-
-	expect(scoreByScript(shape({ characterClass: "arabic" }))).toEqual({
-		locale: "ar",
-		confidence: 0.85,
-		reason: "characterClass=arabic",
-	})
-})
-
 test("scoreByScript: Latin script classes commit nothing (other scorers decide)", () => {
 	expect(scoreByScript(shape({ characterClass: "alpha" }))).toBeNull()
 	expect(scoreByScript(shape({ characterClass: "alphanumeric" }))).toBeNull()

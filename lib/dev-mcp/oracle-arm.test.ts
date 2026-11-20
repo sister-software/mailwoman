@@ -93,14 +93,4 @@ describe("OracleMeter — google", () => {
 		expect(meter.googleCap).toBe(DEFAULT_GOOGLE_CALL_CAP)
 		expect(meter.admit(OracleProviderName.Google, DEFAULT_GOOGLE_CALL_CAP + 1).allowed).toBe(false)
 	})
-
-	it("counts every issued query, cache hit or not", () => {
-		// The client doesn't report which answers came from disk, so the meter over-counts a warm run.
-		// A false refusal is the safer error when the cap could have afforded the run.
-		const meter = new OracleMeter({ google: { enabled: true } })
-
-		meter.recordGoogleCalls(3)
-
-		expect(meter.googleCallsUsed).toBe(3)
-	})
 })

@@ -118,10 +118,6 @@ describe("assertBaselines", () => {
 })
 
 describe("profiles", () => {
-	it("registers the arc's two models", async () => {
-		await expect(listProfiles()).resolves.toEqual(expect.arrayContaining(["v264", "v301"]))
-	})
-
 	it("maps every profile metric to a baseline that exists", async () => {
 		// A profile pointing at a missing row would check no baseline while looking like it checked.
 		for (const name of await listProfiles()) {

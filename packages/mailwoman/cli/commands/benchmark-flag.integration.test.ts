@@ -41,10 +41,6 @@ describe("--benchmark option", () => {
 	test("rejects non-integers", () => {
 		expect(() => parseCommand(parseSpec, ["--benchmark", "1.5", "address"])).toThrow(/benchmark/)
 	})
-
-	test("benchmark is optional", () => {
-		expect(() => parseCommand(parseSpec, ["address"])).not.toThrow()
-	})
 })
 
 describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {

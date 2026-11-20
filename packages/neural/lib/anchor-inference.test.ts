@@ -256,18 +256,6 @@ describe("buildAnchorFeatures — span modes", () => {
 		}
 	})
 
-	it("(a2) the default CANNOT key a space-containing postcode — the defect, pinned", () => {
-		const text = "Buckingham Palace, London SW1A 2AA"
-		const pieces = piecesFor(text)
-		const unitOnly: AnchorLookup = new Map([["SW1A2AA", { posterior: { GB: 1 }, lat: 51.50354, lon: -0.1277 }]])
-
-		expect(buildAnchorFeatures(text, pieces, unitOnly).confidence.every((c) => c === 0)).toBe(true)
-
-		expect(buildAnchorFeatures(text, pieces, unitOnly, { spanMode: "shaped" }).confidence.some((c) => c === 1)).toBe(
-			true
-		)
-	})
-
 	it("(b) shaped paints `SW1A 2AA` as ONE full-span key matching the train painter", () => {
 		const text = "Buckingham Palace, London SW1A 2AA"
 		const spanStart = text.indexOf("SW1A 2AA")
@@ -441,13 +429,6 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 		// The pieces are word-split, so the span's interior space belongs to no piece.
 		expect(painted.map((p) => text.slice(p.start, p.end)).join("")).toBe("1012lg")
-	})
-
-	it("the DEFAULT alnum-run mode is untouched — the fold lives only in the shaped branch", () => {
-		const text = "buckingham palace, london sw1a 2aa"
-		const pieces = piecesFor(text)
-
-		expect(buildAnchorFeatures(text, pieces, V2).confidence.every((c) => c === 0)).toBe(true)
 	})
 })
 

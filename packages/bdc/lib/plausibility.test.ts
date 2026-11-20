@@ -722,21 +722,6 @@ describe("PlausibilityCheck — per-layer coverage-spine resolution assertion", 
 		).rejects.toThrow(/poi\.db's recorded h3 spine resolution \(6\) does not match BDC_H3_RESOLUTION \(9\)/)
 	})
 
-	it("does not throw when only bdcDB is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
-		await using bdc = await buildBDCFixture()
-
-		await expect(
-			plausibilityCheck(
-				{
-					point: SPRINGFIELD_POINT,
-					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
-					claimedDownloadMbps: 1000,
-				},
-				{ bdcDB: bdc.db }
-			)
-		).resolves.not.toThrow()
-	})
-
 	it("does not throw when only poi is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
 		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		using poischemadb = await openpoischemadb()

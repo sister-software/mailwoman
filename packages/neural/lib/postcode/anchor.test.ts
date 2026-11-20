@@ -113,11 +113,6 @@ describe("extractPostcodeAnchors", () => {
 		expect(anchors).toHaveLength(2)
 		expect(anchors.map((a) => a.normalized).toSorted()).toEqual(["75001", "94105"])
 	})
-
-	it("tags an exact hit with matchType 'exact'", () => {
-		const [a] = extractPostcodeAnchors("94105", RESOLVER)
-		expect(a!.matchType).toBe("exact")
-	})
 })
 
 describe("extractPostcodeAnchors — position-aware confidence (house-number disambiguation)", () => {

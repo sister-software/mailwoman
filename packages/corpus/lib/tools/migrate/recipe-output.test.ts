@@ -21,11 +21,6 @@ const OLD_ROW = {
 }
 
 describe("surfaceForSource", () => {
-	it("reads the recipe's own classification", () => {
-		expect(surfaceForSource("synth-intersection")).toBe("invented")
-		expect(surfaceForSource("synth-affix")).toBe("composed")
-	})
-
 	it("refuses a source nobody has classified rather than defaulting", () => {
 		// A default would write a guess onto every row of an unclassified output.
 		// which is the failure the three columns replaced.

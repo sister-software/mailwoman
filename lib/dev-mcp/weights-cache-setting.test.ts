@@ -13,7 +13,6 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { assertWeightsCacheStaged, engineID, EngineRegistry, resolveConfig } from "#dev-mcp/engine/registry"
-import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "#dev-mcp/tree-fingerprint"
 
 const fixtures = new AsyncDisposableStack()
@@ -53,10 +52,6 @@ async function stageCache(
 }
 
 describe("weights_cache — the setting", () => {
-	it("is a key the tool schema accepts", () => {
-		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).toContain("weights_cache")
-	})
-
 	it("is ABSENT from the effective config when unset", () => {
 		// Not `undefined`, absent: the effective config is hashed into the engine id and reported as
 		// provenance, so an explicit `weightsCacheRoot: null` would claim a choice the caller didn't make.

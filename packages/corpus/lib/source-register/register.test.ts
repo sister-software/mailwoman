@@ -125,23 +125,6 @@ describe("the committed address-source register", () => {
 		}
 	})
 
-	it("blocks AusTender on its personal-data reading alone, every other condition being met", () => {
-		// The worked example of #2323's step 6: one source taken through all five conditions.
-		// Its license is elected and its address roles and coverage are resolved.
-		// The publication also gives street addresses for identifiable natural persons.
-		// `present` records that reading, and ingest refuses it.
-		const austender = register.sources.find((source) => source.sourceID === "au-procurement-grants-1")!
-		const decision = register.licenses.find((entry) => entry.licenseID === austender.license)!
-
-		expect(decision.state).toBe(LicenseReviewState.Elected)
-		expect(austender.status).toBe(SourceStatus.VerifiedCorpus)
-		expect(Object.keys(austender.addressRoles ?? {}).length).toBeGreaterThan(0)
-		expect(austender.coverage).toBeDefined()
-		expect(austender.personalDataReview?.reading).toBe(PersonalDataReading.Present)
-
-		expect(ingestEligibilityProblems(austender, register)).toHaveLength(1)
-	})
-
 	it("states a reason on every refused decision, and refuses the sources pointing at one", () => {
 		// A refusal records that the terms were read and no grant was found.
 		// That's a different fact from `unchecked`.

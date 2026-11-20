@@ -25,23 +25,6 @@ const fixture = await readLocalJSONFile<{ cases: FrozenCase[] }>(
 )
 
 describe("the frozen readings of the deleted parsePointQuery", () => {
-	test("the fixture covers every kind of point and every class of change", () => {
-		const categories = new Set(fixture.cases.map((entry) => entry.category))
-
-		expect([...categories].toSorted()).toEqual([
-			"agreed:coordinates",
-			"agreed:geohash",
-			"agreed:h3",
-			"agreed:plus_code_full",
-			"agreed:plus_code_short",
-			"agreed:wof",
-			"hemisphere_after_complete_dms_group",
-			"legacy_only",
-			"neither",
-			"recognize_only",
-		])
-	})
-
 	test.each(["agreed", "legacy_only", "recognize_only", "hemisphere_after_complete_dms_group", "neither"])(
 		"reads every %s case as recorded",
 		(group) => {

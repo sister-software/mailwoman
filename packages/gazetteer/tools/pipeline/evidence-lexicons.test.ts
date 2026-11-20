@@ -56,10 +56,6 @@ describe("three-law selectivity — pure units", () => {
 		expect(clearsProminenceFloor("smallville", ONE_TOKEN_IMPORTANCE_FLOOR, personNames)).toBe(true)
 	})
 
-	it("floors are ordered: person-name tier is strictly higher", () => {
-		expect(PERSON_NAME_IMPORTANCE_FLOOR).toBeGreaterThan(ONE_TOKEN_IMPORTANCE_FLOOR)
-	})
-
 	it("law-3 guard: parent prominence never launders a person-name surface", () => {
 		// A neighborhood whose name is "Joseph" inside a metropolis (parent 0.9) is still the
 		// Rue-Joseph hazard — only own metropolis-tier importance clears a person-name surface.

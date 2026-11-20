@@ -5,7 +5,6 @@ import { isNoopStep } from "@mailwoman/core/state-machine"
 import { describe, expect, it } from "vitest"
 
 import {
-	declarationMachine,
 	EMAIL_EVENTS,
 	EMAIL_STATES,
 	emailMachine,
@@ -103,15 +102,6 @@ describe("licenseMachine", () => {
 			subscriptionState: "canceled",
 		})
 	})
-})
-
-describe("declarationMachine", () => {
-	it.each(LICENSE_STATES.flatMap((from) => LICENSE_STATES.map((to) => [from, to] as const)))(
-		"moves from %s to %s on the operator's word",
-		(from, to) => {
-			expect(declarationMachine.transition(from, { kind: "operator-set", to }).next).toBe(to)
-		}
-	)
 })
 
 const EMAIL_TABLE: Record<EmailState, Record<keyof typeof EMAIL_EVENTS, EmailState>> = {

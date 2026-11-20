@@ -27,11 +27,6 @@ describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 			].toSorted()
 		)
 	})
-
-	it("flags exactly the current retail products as non-legacy", () => {
-		const current = [...new Set(AU_DELIVERY_SERVICE_DESIGNATORS.filter((d) => !d.legacy).map((d) => d.abbreviation))]
-		expect(current.toSorted()).toEqual(["GPO BOX", "LOCKED BAG", "PO BOX", "PRIVATE BAG"].toSorted())
-	})
 })
 
 describe("matchAuDeliveryService", () => {

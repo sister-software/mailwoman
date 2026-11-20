@@ -137,15 +137,6 @@ describe("haversine (sanity)", () => {
 })
 
 describe("bboxAround (sanity)", () => {
-	test("100 km radius around Paris,FR is roughly ±0.9° lat, ±1.4° lon", () => {
-		const b = bboxAround(48.85, 2.34, 100)
-		expect(b.maxLat - b.minLat).toBeGreaterThan(1.7)
-		expect(b.maxLat - b.minLat).toBeLessThan(1.9)
-
-		expect(b.maxLon - b.minLon).toBeGreaterThan(2.6)
-		expect(b.maxLon - b.minLon).toBeLessThan(2.9)
-	})
-
 	test("doesn't divide-by-zero at the pole", () => {
 		expect(() => bboxAround(90, 0, 100)).not.toThrow()
 		expect(() => bboxAround(-90, 0, 100)).not.toThrow()

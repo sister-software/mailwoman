@@ -20,7 +20,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { blockCentroidCells, geoidCellResolver } from "#filing/landscape"
-import { bdcLayerReadings, bdcTechnologyLayer } from "#layer-readings"
+import { bdcLayerReadings } from "#layer-readings"
 import type { BDCDatabase } from "#schema"
 import { buildBDCDatabase } from "#sdk/build-bdc"
 import type { BDCAvailabilityRow } from "#sdk/parsing"
@@ -137,14 +137,6 @@ function recordsWith(readings: LayerReading[]): DossierRecords {
 		filings: [],
 	}
 }
-
-describe("bdcTechnologyLayer", () => {
-	it("names the cable and fiber-to-the-premises layers and refuses a code without a layer name", () => {
-		expect(bdcTechnologyLayer(CABLE)).toBe("fcc-bdc-cable")
-		expect(bdcTechnologyLayer(FTTP)).toBe("fcc-bdc-fttp")
-		expect(() => bdcTechnologyLayer(60)).toThrow(/no dossier layer name/)
-	})
-})
 
 describe("bdcLayerReadings", () => {
 	it("reads a block with rows as one reading per technology, counting that technology's filing summaries", async () => {

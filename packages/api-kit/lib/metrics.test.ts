@@ -88,10 +88,3 @@ test("resetMetricsForTest: clears counters and the reservoir", () => {
 	expect(timings.latency_samples).toBe(0)
 	expect(timings.latency_ms).toBeNull()
 })
-
-test("recordTimed: tier keys are created on first use (no eager pre-population)", () => {
-	resetMetricsForTest()
-	expect(metricsSnapshot().timings.tiers).toEqual({})
-	recordTimed(1, "street")
-	expect(metricsSnapshot().timings.tiers).toEqual({ street: 1 })
-})

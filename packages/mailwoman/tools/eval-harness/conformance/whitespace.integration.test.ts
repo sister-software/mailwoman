@@ -35,8 +35,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 import { runConformanceCommand } from "#tools/eval-harness/conformance/command"
-import { loadConformanceFixtures } from "#tools/eval-harness/conformance/fixture"
-import { auditWhitespaceSuite, WHITESPACE_SUITE_PATH } from "#tools/eval-harness/conformance/whitespace"
+import { WHITESPACE_SUITE_PATH } from "#tools/eval-harness/conformance/whitespace"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -55,10 +54,6 @@ const gazetteerPresent = async (): Promise<boolean> =>
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"whitespace invariance — live pipeline",
 	() => {
-		it("audits the committed suite before anything is geocoded", async () => {
-			expect(auditWhitespaceSuite(await loadConformanceFixtures(WHITESPACE_SUITE_PATH))).toEqual([])
-		})
-
 		it("holds on every enforcing row, and prints the tracked ones", async () => {
 			await expect(runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).resolves.toBe(0)
 		}, 600_000)

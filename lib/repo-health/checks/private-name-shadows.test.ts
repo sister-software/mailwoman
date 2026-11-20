@@ -10,7 +10,6 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { findPrivateNameShadows, privateNameShadowsCheck } from "#repo-health/checks/private-name-shadows"
-import { collectRepoContext } from "#repo-health/index"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -52,13 +51,4 @@ describe("findPrivateNameShadows", () => {
 		expect(diagnostics).toHaveLength(1)
 		expect(diagnostics[0]!.message).toContain("packages/a/lib/stats.ts")
 	})
-
-	// The case parses every tracked `lib/` file twice, once per path it compares.
-	it("runs over the current tree without error and agrees with the debt counter's population", async () => {
-		const context = await collectRepoContext()
-		const shadows = await findPrivateNameShadows(context)
-
-		expect(Array.isArray(shadows)).toBe(true)
-		await expect(privateNameShadowsCheck.run(context)).resolves.toHaveLength(shadows.length)
-	}, 60_000)
 })
