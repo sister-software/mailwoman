@@ -99,8 +99,15 @@ const { values } = parseArguments({
 		"decoder-arm-every": { type: "string" },
 		// Skip the FST vote-rule arms, for a run that measures only decoder settings.
 		"decoder-only": { type: "boolean" },
+		// A weights cache the base parse loads from, in place of the installed packages.
+		"weights-cache": { type: "string" },
+		// A weights cache whose packages differ from the base parse's only in their pair indexes.
+		// Each row the base pair prior fired on is re-parsed with it, as the arm `pairIndexCache`.
+		"pair-index-cache": { type: "string" },
 	},
 })
+
+const pairIndexCache = values["pair-index-cache"] ?? null
 
 const decoderArms = (values["decoder-arm"] ?? []) as DecoderSettingKey[]
 
@@ -225,9 +232,10 @@ interface RowReceipt {
 	flips: FlipReceipt[]
 	arms: Partial<Record<Arm, ArmReceipt>>
 	/**
-	 * Each decoder setting that changed the row's path, with the setting on against the default.
+	 * Each decoder setting that changed the row's path, with the setting on against the default,
+	 * and `pairIndexCache` when the `--pair-index-cache` parse changed it.
 	 */
-	decoderArms: Partial<Record<DecoderSettingKey, ArmReceipt>>
+	decoderArms: Partial<Record<DecoderSettingKey | "pairIndexCache", ArmReceipt>>
 }
 
 function voterReceipt(vote: FSTVote | null, count: number): VoterReceipt | null {
@@ -303,6 +311,7 @@ const armKeys = [
 	"C",
 	...decoderArms.map((name) => `decoder:${name}`),
 	...decoderArms.map((name) => `decoder:${name}:outside`),
+	...(pairIndexCache ? ["decoder:pairIndexCache", "decoder:pairIndexCache:outside"] : []),
 ]
 
 function emptyTally(): CountryTally {
@@ -384,7 +393,8 @@ async function checkpoint(final: boolean): Promise<void> {
 	await writeLocalJSONLFile(receipts, `${outDir}/${label}-rows.jsonl`)
 }
 
-using deps = await buildGauntletDeps()
+using deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
+using indexDeps = pairIndexCache ? await buildGauntletDeps({ weightsCacheRoot: pairIndexCache }) : null
 
 for await (const row of readDecodeCensusRows({
 	...(values.heldout ? { heldout: values.heldout } : {}),
@@ -407,7 +417,7 @@ for await (const row of readDecodeCensusRows({
 	const pieceTruth = pieceTruthTags(trace.pieces, trace.text, truth.spans, truth.complete)
 
 	// The decoder arms: each re-parses the rows its setting can change, and every k-th other row as a check.
-	const decoderReceipts: Partial<Record<DecoderSettingKey, ArmReceipt>> = {}
+	const decoderReceipts: RowReceipt["decoderArms"] = {}
 	const pairApplied = trace.priors.some((prior) => prior.kind === "placetypePair" && prior.applied)
 
 	const routeCountry = overlayLocale(caseOpts.caseCountry ?? null)
@@ -431,6 +441,18 @@ for await (const row of readDecodeCensusRows({
 
 		if (receipt.changedPieces.length) {
 			decoderReceipts[name] = receipt
+		}
+	}
+
+	// A pair index with entries left out can only fire on fewer rows, so the rows the base index fired on bound it.
+	if (indexDeps && (pairApplied || (decoderArmEvery > 0 && processed % decoderArmEvery === 0))) {
+		const arm = await indexDeps.diagnoseParse(row.input, caseOpts)
+		const receipt = armReceipt(trace, baseLabels, pathLabels(arm.trace), pieceTruth)
+
+		addArm(tally, pairApplied ? "decoder:pairIndexCache" : "decoder:pairIndexCache:outside", receipt)
+
+		if (receipt.changedPieces.length) {
+			decoderReceipts.pairIndexCache = receipt
 		}
 	}
 

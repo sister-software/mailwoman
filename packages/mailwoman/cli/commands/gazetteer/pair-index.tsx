@@ -113,8 +113,50 @@ export const spec = {
 		"borough-db": { type: "string", description: "WOF admin DB" },
 		"ban-dir": { type: "string", description: "BAN source directory" },
 		"holdout-seed": { type: "number", default: 42, description: "Holdout seed" },
+		"drop-postal-children": {
+			type: "boolean",
+			default: false,
+			description: "Leave out a pair whose child is the GeoNames postcode place name at its own WOF location (#3165)",
+		},
+		"postal-locations-db": {
+			type: "string",
+			description: "WOF admin DB that locates each child for --drop-postal-children (default: --borough-db)",
+		},
+		"geonames-postal-dir": {
+			type: "string",
+			description: "GeoNames postal exports for --drop-postal-children (default: $MAILWOMAN_DATA_ROOT/geonames-postal)",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The postal-child test for one country: its GeoNames postcode points
+ * and the WOF records that locate each child.
+ *
+ * @throws When no WOF admin DB is given, since the test needs each child's own location.
+ */
+async function postalChildrenFor(country: string, wofDB: string | undefined, postalDirectory: string | undefined) {
+	if (!wofDB) {
+		throw new Error(
+			"pair-index: --drop-postal-children locates each child in a WOF admin DB; pass --postal-locations-db or --borough-db"
+		)
+	}
+
+	const [{ dataRootPath }, { partitionPostalChildren, readChildLocations, readPostalPoints }] = await Promise.all([
+		import("@mailwoman/core/data-root"),
+		import("@mailwoman/gazetteer/tools/pipeline/pair/postal-children"),
+	])
+
+	const points = await readPostalPoints(postalDirectory ?? dataRootPath("geonames-postal"), country)
+	const locations = readChildLocations(wofDB, country)
+
+	return {
+		artifact: points.artifact,
+		wofDB,
+		partition: <Entry extends { child: string; parent: string }>(entries: readonly Entry[]) =>
+			partitionPostalChildren(entries, points, locations),
+	}
+}
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -240,9 +282,21 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const built = builder.finish()
 		const { rowsKept, rowsSkipped, distribution } = built
 
+		const postal = options.dropPostalChildren
+			? await postalChildrenFor(country, options.postalLocationsDB ?? options.boroughDB, options.geonamesPostalDir)
+			: null
+
+		const buildEntries = postal ? postal.partition(built.entries) : { kept: built.entries, dropped: [] }
+
+		if (postal) {
+			console.error(
+				`pair-index: left out ${buildEntries.dropped.length} postal-child pairs of ${built.entries.length} (${postal.artifact})`
+			)
+		}
+
 		// The holdout deterministically withholds a fraction of pairs so an evaluation can test unseen pairs.
 		const { kept: entries, heldOut } = applyPairIndexHoldout(
-			built.entries,
+			buildEntries.kept,
 			options.holdoutFraction,
 			options.holdoutSeed
 		)
@@ -259,6 +313,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
 			...(await Promise.all(splitPathList(options.pairsJSONL).map((path) => md5File(path)))),
 			...(banFileDigests.length ? [md5Hex(banFileDigests.join("\n"))] : []),
+			...(postal ? [await md5File(postal.artifact), await md5File(postal.wofDB)] : []),
 		]
 
 		// An omitted flag writes no header key.
@@ -332,6 +387,17 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 				(options.parentDelta ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
+			...(postal
+				? [
+						`POSTAL CHILDREN: left out ${buildEntries.dropped.length.toLocaleString()} of ${built.entries.length.toLocaleString()} pairs` +
+							(buildEntries.dropped.length
+								? `, first ${buildEntries.dropped
+										.slice(0, 5)
+										.map((entry) => `${entry.child} / ${entry.parent}`)
+										.join(", ")}`
+								: ""),
+					]
+				: []),
 			...(holdoutLine ? [holdoutLine] : []),
 			checkLine,
 			...distLines,
