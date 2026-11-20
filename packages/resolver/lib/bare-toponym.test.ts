@@ -367,15 +367,16 @@ describe("importance key in the admin walk (#17)", () => {
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 
-	it("loses the ranking-only prior to a measured importance, and keeps the retrieval prior after it", async () => {
+	it("promotes the in-scope namesake after the rerank, and holds a measured importance lead", async () => {
+		const promoted = await walk(WHITBY, { defaultCountry: SOFT_GB, scopeCountryRetrieval: true })
+
+		// Melbourne, Australia against Melbourne, Florida under a US scope is this shape.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5496 : 0.5089 }))
+		const held = await walk(withScores, { defaultCountry: SOFT_GB, scopeCountryRetrieval: true })
 
-		const rankingOnly = await walk(withScores, { defaultCountry: SOFT_GB })
-		const retrieval = await walk(withScores, { defaultCountry: SOFT_GB, scopeCountryRetrieval: true })
-
-		expect(rankingOnly.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
-		expect(retrieval.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
-		expect(retrieval.roots[0]?.metadata?.["soft_country_promotion"]).toBe("GB")
+		expect(promoted.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
+		expect(promoted.roots[0]?.metadata?.["soft_country_promotion"]).toBe("GB")
+		expect(held.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 })
 

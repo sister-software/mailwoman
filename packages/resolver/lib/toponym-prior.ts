@@ -176,11 +176,15 @@ export function rankByCountryPrior<T extends Rankable>(
 }
 
 /**
- * Moves the first candidate in `country` within the leading match tier above each preceding
- * candidate that's at most `weight` larger, stopping at a national capital.
+ * Moves the first candidate in `country` within the leading match tier above each
+ * preceding candidate that's at most `weight` larger, stopping at a national capital
+ * and at a candidate whose measured importance exceeds the promoted one's.
  *
- * It runs after {@link rankByImportance} and capital promotion, so neither can undo it.
+ * It runs after {@link rankByImportance} and capital promotion, so neither reorders the result.
  * The bonus is bounded by size, so a place more than `weight` log10-population units larger still leads.
+ *
+ * A measured importance lead also holds, as Melbourne, Australia holds against
+ * Melbourne, Florida under a US scope.
  *
  * A place without a recorded population sizes as 0, and such a place stays behind
  * any populated namesake more than `weight` units above 0.
@@ -198,7 +202,9 @@ export function promoteScopedCountry<T extends Rankable & Pick<ResolvedPlace, "n
 	return promoteInLeadingTier(
 		candidates,
 		(c) => c.country?.toUpperCase() === target,
-		(c) => !!level && level(c) >= PROMOTABLE_CAPITAL_LEVEL,
+		(above, moved) =>
+			(!!level && level(above) >= PROMOTABLE_CAPITAL_LEVEL) ||
+			(measured(above) && measured(moved) && above.importance! > moved.importance!),
 		weight
 	)
 }
@@ -243,7 +249,7 @@ export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" 
 function promoteInLeadingTier<T extends Rankable>(
 	candidates: readonly T[],
 	promote: (c: T) => boolean,
-	barrier: (c: T) => boolean,
+	barrier: (above: T, moved: T) => boolean,
 	margin: number
 ): T[] {
 	if (candidates.length < 2) return [...candidates]
@@ -265,7 +271,7 @@ function promoteInLeadingTier<T extends Rankable>(
 	while (target > 0) {
 		const above = tier[target - 1]!
 
-		if (barrier(above)) break
+		if (barrier(above, tier[best]!)) break
 
 		if (size(tier[best]!) + margin < size(above)) break
 
