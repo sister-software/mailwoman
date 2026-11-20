@@ -18,7 +18,7 @@ Use this procedure when an application already calls Nominatim, Photon or a libp
 Install the compatibility package for your client next to the parser packages:
 
 ```sh
-npm install mailwoman@{{release.version}} @mailwoman/nominatim@{{release.version}} @mailwoman/photon@{{release.version}} @mailwoman/libpostal@{{release.version}}
+npm install mailwoman @mailwoman/nominatim @mailwoman/photon @mailwoman/libpostal
 ```
 
 The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. The examples query Washington, DC:

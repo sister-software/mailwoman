@@ -18,7 +18,7 @@ Use this procedure to find the places that contain a coordinate, such as the nei
 Install the published 11.0.0 packages:
 
 ```sh
-npm install mailwoman@{{release.version}} @mailwoman/resolver-wof-sqlite@{{release.version}}
+npm install mailwoman @mailwoman/resolver-wof-sqlite
 ```
 
 The reverse geocoder reads an admin gazetteer: a Who's On First SQLite database with a `place_bbox` spatial index. The 11.0.0 data bundles ship without one, and the `candidate.db` file from `mailwoman data pull candidate` lacks that index. Build the gazetteer from local clones of the Who's On First repositories, then add its search and spatial indexes:

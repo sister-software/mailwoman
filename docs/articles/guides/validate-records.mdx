@@ -20,7 +20,7 @@ The check returns `pass` when all required components appear once and the postco
 Install the parser and the codex package, which holds the ZIP Code shape check:
 
 ```sh
-npm install mailwoman@{{release.version}} @mailwoman/codex@{{release.version}}
+npm install mailwoman @mailwoman/codex
 ```
 
 The parser and ZIP Code shape check run without a geocoding database. Take `countryCode: "US"` from your application's own country field before using this policy, because a country inferred from the postcode shape would make the policy circular. Adapt the required tags and postcode check for other address types or countries.

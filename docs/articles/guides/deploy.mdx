@@ -21,8 +21,8 @@ Each release publishes an image tagged with its version, such as `{{release.vers
 The example installs the global place candidates and the Washington, DC address points into a data root of its own:
 
 ```sh
-npx mailwoman@{{release.version}} data pull candidate --data-root ./mailwoman-data
-npx mailwoman@{{release.version}} data pull us --only dc --data-root ./mailwoman-data
+npx mailwoman data pull candidate --data-root ./mailwoman-data
+npx mailwoman data pull us --only dc --data-root ./mailwoman-data
 ```
 
 `--only` filters every bundle in the same command, so the candidate bundle is pulled on its own. On the host used for this page, the candidate pull took 672 s and the DC pull took 23 s.

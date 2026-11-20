@@ -19,7 +19,7 @@ Use this procedure when a <Country code="US" /> street-address intake needs a co
 Install the published parser packages:
 
 ```sh
-npm install --save-exact mailwoman@{{release.version}}
+npm install --save-exact mailwoman
 ```
 
 The seven labels in the script below are illustrative application decisions stated before this rule is evaluated. The first three complete street-address strings are labeled `ready`. The PO box, intersection, isolated unit, and row with an unsupported region string are labeled `review`. These labels describe this intake's desired routing, as opposed to a postal authority's judgment or a verified location. The example reads no geographic database.
