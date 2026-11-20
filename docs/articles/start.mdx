@@ -18,11 +18,10 @@ You'll make a small TypeScript script that parses one address and prints each la
 
 ## 1. Set up the project
 
-Run these commands in the empty project directory. The second one marks the project as an ECMAScript module project. Node needs that setting to run the script's `import` statements and top-level `await`:
+Run this command in the empty project directory. It creates a `package.json` that marks the project as an ECMAScript module project. Node needs that setting to run the script's `import` statements and top-level `await`:
 
 ```sh
-npm init -y
-npm pkg set type=module
+npm init -y --init-type=module
 ```
 
 ## 2. Install the package
