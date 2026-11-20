@@ -482,6 +482,11 @@
 			"node": "./lib/layers/manifest.ts",
 			"default": "./out/layers/manifest.js"
 		},
+		"./layers/provenance": {
+			"types": "./out/layers/provenance.d.ts",
+			"node": "./lib/layers/provenance.ts",
+			"default": "./out/layers/provenance.js"
+		},
 		"./layers/schema": {
 			"types": "./out/layers/schema.d.ts",
 			"node": "./lib/layers/schema.ts",

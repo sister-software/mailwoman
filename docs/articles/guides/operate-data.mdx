@@ -91,6 +91,8 @@ The `scope` objects are reformatted onto one line each here. Each pull adds its 
 
 `npx mailwoman data status` reports each artifact of each bundle as `active` or `missing`, with its path. Add `--json` for the same report as JSON, including the active `generation`. The command exits 1 while any requested artifact is missing, so name the bundles you installed, for example `npx mailwoman data status us`. The US bundle still exits 1 when you've installed only some states. Add `--check-remote` to compare installed files with the published sizes.
 
+`npx mailwoman data inventory` reports every database under the data root, including the files you built yourself. For each database it states whether its `layer_manifest` was read, and for a read manifest the license expression, the obligations that license carries, each source the manifest records and where to obtain that source. The summary counts the read and unread databases in each layer family, lists each license identifier with its obligations, lists each source with its location, and lists every unread database with the reason. A database without a readable manifest states no license, so the report lists it as unread rather than as unencumbered. Add `--all` to print those fields beneath each database, or `--json` for the whole report, whose `layers` member holds the per-database fields. The command exits 0 when the report completes, including when some databases are unread.
+
 ## 3. Roll back to the previous selection
 
 ```sh

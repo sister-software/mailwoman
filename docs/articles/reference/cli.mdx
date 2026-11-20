@@ -365,18 +365,18 @@ mailwoman data coverage [options]
 
 ### `mailwoman data inventory`
 
-Report every database in the data root and whether it records how it was built. `layer_manifest` is the interface (docs/engineering/reference/layer-interface.mdx). This report shows how much of the root implements it.
+Report every database in the data root and whether it records how it was built. `layer_manifest` is the interface (docs/engineering/reference/layer-interface.mdx). This report shows how much of the root implements it, each license the manifests record with its obligations, and where a user obtains each source.
 
 ```
 mailwoman data inventory [options]
 ```
 
-| Flag                      | Type    | Default | Description                                             |
-| ------------------------- | ------- | ------- | ------------------------------------------------------- |
-| `--data-root [data-root]` | string  | —       | Override the data root                                  |
-| `--depth [depth]`         | string  | —       | Directory levels to walk. Default 2                     |
-| `--all`                   | boolean | `false` | List every artifact. The default shows only the summary |
-| `--json`                  | boolean | `false` | Emit the report as JSON                                 |
+| Flag                      | Type    | Default | Description                                                                                                               |
+| ------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `--data-root [data-root]` | string  | —       | Override the data root                                                                                                    |
+| `--depth [depth]`         | string  | —       | Directory levels to walk. Default 3. The db/ group is walked 4 levels, or to this depth when deeper                       |
+| `--all`                   | boolean | `false` | List every artifact with its build command, license, obligations and source locations. The default shows only the summary |
+| `--json`                  | boolean | `false` | Emit the report as JSON, with each database's license, obligations and source locations under `layers`                    |
 
 ### `mailwoman data migrate`
 

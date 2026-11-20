@@ -35,6 +35,7 @@ import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
+import { GNAF_SOURCE_NAME } from "@mailwoman/corpus/au/adapters/gnaf/source"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
 import {
 	createSpineAddressPointIndexes,
@@ -355,7 +356,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 			tier: LayerTier.BuildLocal,
 			license: "CC-BY-4.0",
 			attribution: "© Geoscape Australia — G-NAF, CC BY 4.0",
-			source: "gnaf:au",
+			source: `${GNAF_SOURCE_NAME}:au`,
 			sourceVintage: release,
 			buildCmd: "mailwoman gazetteer build gnaf-rooftop",
 			buildSHA: options.buildSHA,

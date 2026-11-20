@@ -19,6 +19,7 @@ import { isoDate, isoSeconds } from "@mailwoman/core/utils"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { AsyncSpliterator } from "spliterator"
 
+import { OPENADDRESSES_BATCH_URL } from "#adapters/openaddresses/source"
 import { openAddressesSourceCacheName } from "#address-records/openaddresses"
 import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
@@ -30,8 +31,6 @@ const HTTP_OK = 200
  * Below this size the file is a stub or an error body rather than an archive.
  */
 const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
-
-const OA_BASE = "https://batch.openaddresses.io"
 
 /**
  * OA assigns stable integer collection IDs.
@@ -147,7 +146,9 @@ export interface OpenAddressesJobRecord {
  * One job's record as the batch API returns it.
  */
 export async function readOpenAddressesJob(client: APIClient, id: number): Promise<OpenAddressesJobRecord> {
-	return (await client.fetch<OpenAddressesJobRecord>({ url: `${OA_BASE}/api/job/${id}`, timeout: 30_000 })).data
+	return (
+		await client.fetch<OpenAddressesJobRecord>({ url: `${OPENADDRESSES_BATCH_URL}/api/job/${id}`, timeout: 30_000 })
+	).data
 }
 
 /**
@@ -155,7 +156,7 @@ export async function readOpenAddressesJob(client: APIClient, id: number): Promi
  */
 export async function listOpenAddressesLayerJobs(client: APIClient, layer: string): Promise<OaDataEntry[]> {
 	const response = await client.fetch<OaDataEntry[]>({
-		url: `${OA_BASE}/api/data`,
+		url: `${OPENADDRESSES_BATCH_URL}/api/data`,
 		params: { layer },
 		timeout: 120_000,
 	})
@@ -349,7 +350,7 @@ export async function fetchOpenAddressesSources(
 				: latestMemberJob(
 						(
 							await client.fetch<OaDataEntry[]>({
-								url: `${OA_BASE}/api/data`,
+								url: `${OPENADDRESSES_BATCH_URL}/api/data`,
 								params: { source: member, layer: "addresses" },
 								timeout: 30_000,
 							})
@@ -379,15 +380,22 @@ export async function fetchOpenAddressesSources(
 			continue
 		}
 
-		const job = (await client.fetch<OaJob>({ url: `${OA_BASE}/api/job/${latest.job}`, timeout: 30_000 })).data
+		const job = (
+			await client.fetch<OaJob>({ url: `${OPENADDRESSES_BATCH_URL}/api/job/${latest.job}`, timeout: 30_000 })
+		).data
+
 		const partial = resolvePath(options.cache, `${name}.partial`)
 
-		const status = await streamDownload(`${OA_BASE}/api/job/${latest.job}/output/source.geojson.gz`, partial, {
-			headers,
-			timeoutMs: 7_200_000,
-			retries: 3,
-			retryDelayMs: 30_000,
-		})
+		const status = await streamDownload(
+			`${OPENADDRESSES_BATCH_URL}/api/job/${latest.job}/output/source.geojson.gz`,
+			partial,
+			{
+				headers,
+				timeoutMs: 7_200_000,
+				retries: 3,
+				retryDelayMs: 30_000,
+			}
+		)
 
 		if (status !== HTTP_OK) {
 			await removePathIfPresent(partial)
@@ -498,7 +506,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		})
 			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and returns `fail(country)`, a graceful path this mustn't turn into an exception.
 			.fetch<OaCollection[]>({
-				url: `${OA_BASE}/api/collections`,
+				url: `${OPENADDRESSES_BATCH_URL}/api/collections`,
 				timeout: 30_000,
 				validateStatus: () => true,
 			})
@@ -533,7 +541,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 
 	const tmpGz = destDir("collection.geojsonl.gz.tmp")
 	const tmpRaw = destDir("collection.geojsonl.tmp")
-	const sourceURL = `${OA_BASE}/api/collections/${collectionID}/download`
+	const sourceURL = `${OPENADDRESSES_BATCH_URL}/api/collections/${collectionID}/download`
 
 	let httpStatus = await streamDownload(sourceURL, tmpGz, {
 		headers: { Authorization: `Bearer ${token}` },
@@ -543,11 +551,15 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	})
 
 	if (httpStatus !== HTTP_OK) {
-		httpStatus = await streamDownload(`${OA_BASE}/api/collections/${collectionID}/geojsonl.gz?token=${token}`, tmpGz, {
-			timeoutMs: 7_200_000,
-			retries: 3,
-			retryDelayMs: 30_000,
-		})
+		httpStatus = await streamDownload(
+			`${OPENADDRESSES_BATCH_URL}/api/collections/${collectionID}/geojsonl.gz?token=${token}`,
+			tmpGz,
+			{
+				timeoutMs: 7_200_000,
+				retries: 3,
+				retryDelayMs: 30_000,
+			}
+		)
 	}
 
 	if (httpStatus !== HTTP_OK) {
@@ -567,7 +579,7 @@ Manual download (after logging in to batch.openaddresses.io):
   - Click "GeoJSON+LD" to download the collection.
   - Save as: ${outputFile}
 
-URL tried: ${OA_BASE}/api/collections/${collectionID}/download
+URL tried: ${OPENADDRESSES_BATCH_URL}/api/collections/${collectionID}/download
 `)
 
 		return fail(country)

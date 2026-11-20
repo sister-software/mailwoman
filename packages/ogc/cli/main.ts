@@ -15,6 +15,7 @@ import { serveNode } from "@mailwoman/api-kit"
 import { worldCountries } from "@mailwoman/codex/country/sets"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
@@ -29,6 +30,7 @@ import {
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { parseObligationRefusals } from "mailwoman/data/obligations"
+import { readSourceLocations, type SourceLocations } from "mailwoman/data/source-locations"
 import { $public } from "mailwoman/env"
 import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
@@ -46,7 +48,6 @@ import {
 	type OGCEngine,
 	itemsRefusal,
 	type OGCItemSource,
-	type OGCLayerTerms,
 	type OGCServedCollection,
 	placeItemSource,
 	regionLayerFiles,
@@ -80,7 +81,7 @@ interface PlaceItems {
  *
  * An artifact without a readable manifest keeps the role the server opened it for and records no terms.
  */
-function layerTermsOf(artifact: ArtifactFreshness): OGCLayerTerms {
+function layerTermsOf(artifact: ArtifactFreshness): LayerTerms {
 	return {
 		name: artifact.version?.split("@")[0] ?? artifact.name,
 		license: artifact.license,
@@ -97,15 +98,18 @@ function layerTermsOf(artifact: ArtifactFreshness): OGCLayerTerms {
  * record the same license and source.
  * A file whose `layer_manifest` is absent or unreadable contributes no terms,
  * and its region is counted as unread.
+ *
+ * @param sourceLocations Every owner's source table, under the provider's own table for each file.
  */
 async function regionLayerTerms(
-	probes: readonly RegionLayerProbe[]
+	probes: readonly RegionLayerProbe[],
+	sourceLocations: SourceLocations["table"]
 ): Promise<Map<OGCCollectionID, Pick<OGCServedCollection, "layers" | "unreadRegions">>> {
 	const files = regionLayerFiles(probes)
 	const paths = [...new Set(files.map(({ path }) => path))]
 	const { artifacts } = await readFreshness(paths.map((path) => ({ name: path, path })))
 	const byPath = new Map(artifacts.map((artifact) => [artifact.path, artifact]))
-	const terms = new Map<OGCCollectionID, { layers: Map<string, OGCLayerTerms>; unread: Set<string> }>()
+	const terms = new Map<OGCCollectionID, { layers: Map<string, LayerTerms>; unread: Set<string> }>()
 
 	for (const file of files) {
 		const entry = terms.get(file.collection) ?? { layers: new Map(), unread: new Set() }
@@ -119,7 +123,7 @@ async function regionLayerTerms(
 			continue
 		}
 
-		const layer = { ...layerTermsOf(artifact), sourceLocations: file.sourceLocations }
+		const layer = { ...layerTermsOf(artifact), sourceLocations: { ...sourceLocations, ...file.sourceLocations } }
 		const key = `${layer.license} ${layer.source?.split(":")[0]} ${layer.attribution}`
 
 		if (!entry.layers.has(key)) {
@@ -246,7 +250,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// The gazetteer collections read the manifests above, and the address and street
 	// collections read the manifests of the region files their providers report.
 	// Plus codes have no layer.
-	const regional = await regionLayerTerms(probes)
+	const regional = await regionLayerTerms(probes, (await readSourceLocations()).table)
 
 	const layersOf = (id: OGCCollectionID): Pick<OGCServedCollection, "layers" | "unreadRegions"> => {
 		switch (id) {

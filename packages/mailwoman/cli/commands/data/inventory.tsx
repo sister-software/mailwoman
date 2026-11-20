@@ -21,11 +21,14 @@ import {
 	sourceRecordsHint,
 	takeInventory,
 } from "#data/inventory"
+import { buildLayerReport, layerFamily, layerReportEntryLines, layerReportSummaryLines } from "#data/layer-report"
+import { readSourceLocations } from "#data/source-locations"
 import { readInstallationState } from "#data/state"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
-	"the interface (docs/engineering/reference/layer-interface.mdx). This report shows how much of the root implements it."
+	"the interface (docs/engineering/reference/layer-interface.mdx). This report shows how much of the root implements it, " +
+	"each license the manifests record with its obligations, and where a user obtains each source."
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -35,15 +38,29 @@ export const spec = {
 	description,
 	options: {
 		"data-root": { type: "string", description: "Override the data root" },
-		depth: { type: "string", description: "Directory levels to walk. Default 2" },
-		all: { type: "boolean", default: false, description: "List every artifact. The default shows only the summary" },
-		json: { type: "boolean", default: false, description: "Emit the report as JSON" },
+		depth: {
+			type: "string",
+			description:
+				"Directory levels to walk. Default 3. The db/ group is walked 4 levels, or to this depth when deeper",
+		},
+		all: {
+			type: "boolean",
+			default: false,
+			description:
+				"List every artifact with its build command, license, obligations and source locations. The default shows only the summary",
+		},
+		json: {
+			type: "boolean",
+			default: false,
+			description:
+				"Emit the report as JSON, with each database's license, obligations and source locations under `layers`",
+		},
 	},
 } as const satisfies CommandSpec
 
 /**
  * The rollup is the actionable view: one builder's identical defect across several
- * artifacts reads as one problem per directory rather than one problem per file.
+ * artifacts reads as one problem per layer family rather than one problem per file.
  */
 function rollup(entries: readonly InventoryEntry[]): string[] {
 	const by = new Map<string, { total: number; manifested: number; bytes: number }>()
@@ -51,7 +68,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 	for (const entry of entries) {
 		if (entry.provenance === Provenance.Foreign) continue
 
-		const dir = entry.path.split("/")[0] ?? ""
+		const dir = layerFamily(entry.path)
 		const current = by.get(dir) ?? { total: 0, manifested: 0, bytes: 0 }
 
 		current.total++
@@ -83,8 +100,10 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 			installation: await readInstallationState(dataRoot),
 		})
 
+		const layers = buildLayerReport(report, await readSourceLocations())
+
 		if (options.json) {
-			writeRawStdout(report)
+			writeRawStdout({ ...report, layers })
 
 			return { ok: true }
 		}
@@ -94,8 +113,10 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 			``,
 			inventorySentence(report),
 			``,
-			`by directory:`,
+			`by layer family:`,
 			...rollup(report.entries),
+			``,
+			...layerReportSummaryLines(layers),
 		]
 
 		// A manifest whose build command cannot run documents no usable build, reported
@@ -132,6 +153,8 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.all) {
 			lines.push(``, `every artifact:`)
 
+			const layerEntries = new Map(layers.entries.map((entry) => [entry.path, entry]))
+
 			for (const entry of report.entries) {
 				lines.push(
 					`  ${entry.provenance.padEnd(14)} ${ByteFormatter.formatSI(entry.bytes).padStart(10)}  ${entry.path}${entry.selection ? `  (${entry.selection})` : ""}`
@@ -150,9 +173,18 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 				if (inputs) {
 					lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ input records: ${inputs}`)
 				}
+
+				const layer = layerEntries.get(entry.path)
+
+				for (const line of layer ? layerReportEntryLines(layer) : []) {
+					lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${line}`)
+				}
 			}
 		} else {
-			lines.push(``, `Pass --all to list every artifact with the command that would rebuild it.`)
+			lines.push(
+				``,
+				`Pass --all to list every artifact with the command that would rebuild it, its license and its sources.`
+			)
 		}
 
 		writeRawStdout(`${lines.join("\n")}\n`)

@@ -4,14 +4,11 @@
 /**
  *   The license and source links of a collection, read from the manifests of its layers.
  *
- *   Each identifier in a layer's license expression whose text has a known URL becomes a
- *   `license` link (RFC 4946: "Refers to a license associated with this context").
- *   Each source the manifest records with a known location becomes a `via` link
+ *   {@linkcode resolveLayerTerms} reads the manifests.
+ *   Its license links become `license` links (RFC 4946: "Refers to a license
+ *   associated with this context"), and its source links become `via` links
  *   (the RFC 4287 relation for the source of the information in the link's context).
  *
- *   A source that matches another opened layer, as the candidate gazetteer's manifest
- *   records the admin gazetteer, contributes that layer as a whole: its license links,
- *   its sources and its credit, so a collection that credits a source links its license too.
  *   A license that requires credit adds an `attribution`, the member OGC API Common Part
  *   2 gives a collection for "a short attribution for data being visualized".
  *
@@ -20,12 +17,10 @@
  *   adds one sentence to the description rather than a link.
  */
 
-import { manifestSourceNames } from "@mailwoman/core/layers"
-import { LicenseObligation, licenseIdentifiers, summarizeLicense } from "@mailwoman/core/license/obligations"
-import { licenseTextURL } from "@mailwoman/core/license/text-url"
+import { type LayerTerms, ProvenanceLinkKind, resolveLayerTerms } from "@mailwoman/core/layers/provenance"
 import { gazetteerSourceLocation } from "@mailwoman/resolver-wof-sqlite/sources"
 
-import type { OGCLayerTerms, OGCServedCollection } from "#engine"
+import type { OGCServedCollection } from "#engine"
 import { OGCLinkRelation, OGCMediaType, type OGCLink } from "#schema"
 
 /**
@@ -50,12 +45,11 @@ function countPhrase(count: number, singular: string, plural: string): string {
 /**
  * The license and source links of `served`, from its own layers' manifests.
  *
+ * A source that neither the layer's provider nor the gazetteer's source table locates is stated in a note.
+ *
  * @param knownLayers Every layer the engine opened, so a source that matches a layer resolves to that layer.
  */
-export function collectionTerms(
-	served: OGCServedCollection,
-	knownLayers: readonly OGCLayerTerms[]
-): OGCCollectionTerms {
+export function collectionTerms(served: OGCServedCollection, knownLayers: readonly LayerTerms[]): OGCCollectionTerms {
 	const unread = served.unreadRegions
 		? `${countPhrase(served.unreadRegions, "region has", "regions have")} a layer without a readable layer_manifest, so ${served.unreadRegions === 1 ? "it contributes" : "they contribute"} no link.`
 		: null
@@ -67,90 +61,26 @@ export function collectionTerms(
 		}
 	}
 
-	const links: OGCLink[] = []
-	const credits: string[] = []
-	const hrefs = new Set<string>()
-	const unlinkedLicenses = new Set<string>()
-	const unlocatedSources = new Set<string>()
-	let withoutLicense = 0
-	let withoutSource = 0
-	let attributionRequired = false
+	const provenance = resolveLayerTerms(served.layers, { knownLayers, locate: gazetteerSourceLocation })
 
-	const push = (link: OGCLink) => {
-		if (hrefs.has(`${link.rel} ${link.href}`)) return
+	const links: OGCLink[] = provenance.links.map((link) => ({
+		href: link.href,
+		rel: link.kind === ProvenanceLinkKind.License ? OGCLinkRelation.License : OGCLinkRelation.Via,
+		type: OGCMediaType.HTML,
+		title: link.title,
+	}))
 
-		hrefs.add(`${link.rel} ${link.href}`)
-		links.push(link)
-	}
-
-	const credit = (text: string | null) => {
-		if (text && !credits.includes(text)) {
-			credits.push(text)
-		}
-	}
-
-	const addLayer = (layer: OGCLayerTerms, visited: Set<string>) => {
-		if (!layer.license) {
-			withoutLicense++
-		} else {
-			if (summarizeLicense(layer.license).obligations.includes(LicenseObligation.Attribution)) {
-				attributionRequired = true
-			}
-
-			for (const identifier of licenseIdentifiers(layer.license)) {
-				const href = licenseTextURL(identifier)
-
-				if (href) {
-					push({ href, rel: OGCLinkRelation.License, type: OGCMediaType.HTML, title: identifier })
-				} else {
-					unlinkedLicenses.add(identifier)
-				}
-			}
-		}
-
-		if (!layer.source) {
-			withoutSource++
-			credit(layer.attribution)
-
-			return
-		}
-
-		const names = manifestSourceNames(layer.source)
-
-		for (const name of names) {
-			const location = layer.sourceLocations?.[name] ?? gazetteerSourceLocation(name)
-			const upstream = knownLayers.find((known) => known.name === name)
-
-			if (location) {
-				push({ href: location.url, rel: OGCLinkRelation.Via, type: OGCMediaType.HTML, title: location.title })
-				// A layer of one source records that source's own credit line, so it's credited in the publisher's words.
-				credit(names.length === 1 && layer.attribution ? layer.attribution : location.title)
-			} else if (upstream && !visited.has(upstream.name)) {
-				visited.add(upstream.name)
-				addLayer(upstream, visited)
-			} else if (!upstream) {
-				unlocatedSources.add(name)
-				// A source without a location is credited through the layer's own recorded attribution.
-				credit(layer.attribution)
-			}
-		}
-	}
-
-	for (const layer of served.layers) {
-		addLayer(layer, new Set([layer.name]))
-	}
+	const { withoutLicense, withoutSource, unlinkedLicenses, unlocatedSources, credits } = provenance
 
 	const notes = [
 		...(unread ? [unread] : []),
 		...(withoutLicense ? [`${countPhrase(withoutLicense, "layer records", "layers record")} no license.`] : []),
 		...(withoutSource ? [`${countPhrase(withoutSource, "layer records", "layers record")} no source.`] : []),
-		...(unlinkedLicenses.size
-			? [`No published text is linked for the license ${[...unlinkedLicenses].join(", ")}.`]
-			: []),
-		...(unlocatedSources.size
-			? [`The server knows no location for the source ${[...unlocatedSources].join(", ")}.`]
-			: []),
+		...(unlinkedLicenses.length ? [`No published text is linked for the license ${unlinkedLicenses.join(", ")}.`] : []),
+		...(unlocatedSources.length ? [`The server knows no location for the source ${unlocatedSources.join(", ")}.`] : []),
 	]
 
-	return attributionRequired && credits.length ? { links, notes, attribution: credits.join("; ") } : { links, notes }
+	return provenance.attributionRequired && credits.length
+		? { links, notes, attribution: credits.join("; ") }
+		: { links, notes }
 }

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { describe, expect, test } from "vitest"
 
 import {
@@ -18,7 +19,6 @@ import {
 	type OGCItemFeature,
 	type OGCItemSource,
 	type OGCItemsResponse,
-	type OGCLayerTerms,
 	OGC_ITEMS_MAX_LIMIT,
 	type OGCLandingPage,
 	OGCLinkRelation,
@@ -102,7 +102,7 @@ const PLACE_ITEMS: OGCItemSource = {
 /**
  * A stub admin gazetteer manifest, in the shape the admin build writes.
  */
-const ADMIN_LAYER: OGCLayerTerms = {
+const ADMIN_LAYER: LayerTerms = {
 	name: "admin-global-priority",
 	license: "LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0",
 	attribution: "whosonfirst, overture-divisions, geonames",
@@ -113,7 +113,7 @@ const ADMIN_LAYER: OGCLayerTerms = {
  * A stub candidate gazetteer manifest.
  * Its source is the admin layer by name and version.
  */
-const CANDIDATE_LAYER: OGCLayerTerms = {
+const CANDIDATE_LAYER: LayerTerms = {
 	name: "candidate",
 	license: "CC-BY-4.0 AND LicenseRef-Undeclared-Input",
 	attribution: null,
