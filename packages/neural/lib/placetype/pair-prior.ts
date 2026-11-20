@@ -124,8 +124,9 @@ export interface PlacetypePairPriorOpts {
 	 */
 	parentDelta?: number
 	/**
-	 * Whether a window's bias skips its separator pieces, those without a letter or digit,
-	 * such as the `,` the segment path takes after a child name.
+	 * Whether a window's bias skips the separator pieces at its ends, those without a letter
+	 * or digit, such as the `,` the segment path takes after a child name.
+	 * A separator inside the name keeps its bias.
 	 *
 	 * Off by default.
 	 * Off, every piece of the window takes the bias (#3165).
@@ -149,6 +150,27 @@ export interface PlacetypePairPriorOpts {
  */
 function isWordPiece(piece: string): boolean {
 	return /[\p{L}\p{N}]/u.test(piece)
+}
+
+/**
+ * A window's pieces without the separator pieces at either end.
+ *
+ * A separator inside the name, such as the apostrophe in `Hell's Kitchen`
+ * or a hyphen in `Stratford-upon-Avon`, stays.
+ */
+function trimSeparatorPieces(indices: readonly number[], isWord: (pi: number) => boolean): readonly number[] {
+	let start = 0
+	let end = indices.length
+
+	while (start < end && !isWord(indices[start]!)) {
+		start++
+	}
+
+	while (end > start && !isWord(indices[end - 1]!)) {
+		end--
+	}
+
+	return start === 0 && end === indices.length ? indices : indices.slice(start, end)
 }
 
 /**
@@ -472,8 +494,8 @@ export function buildPlacetypePairPriors(
 	const labelToCol = labelColumnIndex(labels)
 
 	// The pieces each write covers: the whole window unless a setting narrows it.
-	const keepPiece = opts.wordPiecesOnly ? (pi: number) => isWordPiece(pieces[pi]!.piece) : null
-	const biasedPieces = (indices: readonly number[]) => (keepPiece ? indices.filter(keepPiece) : indices)
+	const biasedPieces = (indices: readonly number[]) =>
+		opts.wordPiecesOnly ? trimSeparatorPieces(indices, (pi) => isWordPiece(pieces[pi]!.piece)) : indices
 
 	const childPieces = (window: CandidateWindow) =>
 		biasedPieces(opts.childKeyPiecesOnly ? (window.keyPieceIndices ?? window.pieceIndices) : window.pieceIndices)

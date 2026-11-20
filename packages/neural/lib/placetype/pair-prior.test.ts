@@ -1200,6 +1200,30 @@ describe("buildPlacetypePairPriors — wordPiecesOnly (#3165 separator defect)",
 
 		expect(words[4]!.every((v) => v === 0)).toBe(true)
 	})
+
+	it("the apostrophe inside `Hell's Kitchen` keeps its bias, so the name stays one span", () => {
+		const index = mockPairIndex({ "hells kitchen|new york": "dependent_locality" }, 10)
+
+		const pieces = [
+			{ piece: "▁Hell", start: 0, end: 4 },
+			{ piece: "'", start: 4, end: 5 },
+			{ piece: "s", start: 5, end: 6 },
+			{ piece: "▁Kitchen", start: 7, end: 14 },
+			{ piece: ",", start: 14, end: 15 },
+			{ piece: "▁New", start: 16, end: 19 },
+			{ piece: "▁York", start: 20, end: 24 },
+		]
+
+		const { matrix } = buildPlacetypePairPriors(
+			{ index, inputText: "Hell's Kitchen, New York", wordPiecesOnly: true },
+			pieces,
+			LABELS
+		)
+
+		expect(matrix[1]![labelCol("I-dependent_locality")]).toBe(10)
+		expect(matrix[3]![labelCol("I-dependent_locality")]).toBe(10)
+		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
+	})
 })
 
 describe("buildPlacetypePairPriors — childKeyPiecesOnly (#3165 child postcode defect)", () => {
