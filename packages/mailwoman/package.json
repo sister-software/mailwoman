@@ -250,9 +250,9 @@
 		"@sister.software/h3": "^1.1.0",
 		"async-init": "^1.1.0",
 		"chalk": "^6.0.1",
-		"d3-scale-chromatic": "^3.1.0",
+		"d3-scale-chromatic": "^3.1.1",
 		"ink": "^8.0.0",
-		"kysely": "^0.29.7",
+		"kysely": "^0.29.9",
 		"onnxruntime-node": "^1.31.1",
 		"path-ts": "^2.5.0",
 		"react": "^19.3.1",
@@ -263,8 +263,8 @@
 		"@mailwoman/osm": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"modal": "0.11.1",
-		"oxc-parser": "^0.155.0",
-		"oxfmt": "0.75.0"
+		"oxc-parser": "^0.159.0",
+		"oxfmt": "0.79.0"
 	},
 	"peerDependencies": {
 		"@duckdb/node-api": "^2.0.0-r.1",
