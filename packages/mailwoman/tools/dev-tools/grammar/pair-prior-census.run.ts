@@ -28,6 +28,9 @@
  *   each fired edge whose child and parent windows both take the edge's tags, decoded exactly.
  * - `jointDropPostal@J` and `jointRetag@J`: `joint@J` over the edges `dropPostal` and `retag` keep.
  *
+ * `--decoder-setting <name>` adds the arm `setting:<name>`: the row re-parsed
+ * through the decoder with that placetype-pair setting on.
+ *
  * Each arm is graded against the base decode, over every piece and over pieces with word content.
  *
  * This command isn't a release eval.
@@ -88,6 +91,7 @@ import {
 	type PostalVerdict,
 } from "#tools/eval-harness/grammar/census/postal-evidence"
 import { readDecodeCensusRows, truthInText } from "#tools/eval-harness/grammar/census/rows"
+import { HELDOUT_ARM_DECODER_SWITCHES } from "#tools/eval-harness/heldout/per/arm"
 
 const JOINT_BONUSES = [5, 10, 15, 20] as const
 
@@ -106,8 +110,20 @@ const { values } = parseArguments({
 		"postal-dir": { type: "string" },
 		"wof-db": { type: "string" },
 		"inventory-only": { type: "boolean" },
+		// A placetype-pair decoder setting to re-parse each fired row with, as the arm `setting:<name>`, repeatable.
+		"decoder-setting": { type: "string", multiple: true },
 	},
 })
+
+const decoderSettings = (values["decoder-setting"] ?? []) as Array<(typeof HELDOUT_ARM_DECODER_SWITCHES)[number]>
+
+for (const name of decoderSettings) {
+	if (!(HELDOUT_ARM_DECODER_SWITCHES as readonly string[]).includes(name)) {
+		throw new Error(
+			`unknown --decoder-setting ${name}; the placetype-pair settings are ${HELDOUT_ARM_DECODER_SWITCHES.join(", ")}`
+		)
+	}
+}
 
 const outDir = values["out-dir"] ?? "/mnt/mw/audits/pair-prior-census"
 const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY
@@ -315,6 +331,7 @@ const ARM_KEYS = [
 	"words",
 	"retagWords",
 	...JOINT_BONUSES.flatMap((j) => [`joint@${j}`, `jointDropPostal@${j}`, `jointRetag@${j}`]),
+	...decoderSettings.map((name) => `setting:${name}`),
 ]
 
 /**
@@ -624,6 +641,15 @@ for await (const row of readDecodeCensusRows({
 		armPaths[`joint@${bonus}`] = jointDecode(without, decoder, trace.labels, edges, bonus)
 		armPaths[`jointDropPostal@${bonus}`] = jointDecode(without, decoder, trace.labels, kept, bonus)
 		armPaths[`jointRetag@${bonus}`] = jointDecode(without, decoder, trace.labels, retaggedEdges, bonus)
+	}
+
+	// A setting arm re-parses through the decoder itself rather than re-decoding the captured emissions.
+	for (const name of decoderSettings) {
+		const parsed = await deps.diagnoseParse(row.input, row.country ? { caseCountry: row.country } : {}, undefined, {
+			[name]: true,
+		})
+
+		armPaths[`setting:${name}`] = parsed.trace.path
 	}
 
 	const armReceipts: RowReceipt["arms"] = {}
