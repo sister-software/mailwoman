@@ -232,6 +232,21 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
 	})
 
+	it("rejects a namesake verified by a ZIP row keyed on the city name (#3136)", async () => {
+		// A US ZIP row answers to its city's name, so a city tagged as a postcode would verify itself.
+		const resolver = createWOFResolver(
+			await makeBackend([
+				{ ...PLACES[0]!, id: 10, name: "Toronto", country: "US", lat: 40.457, lon: -80.606 },
+				{ ...PLACES[1]!, id: 11, name: "Toronto", country: "US", lat: 40.46, lon: -80.61 },
+			])
+		)
+
+		const tree: AddressTree = { raw: "Toronto", roots: [node({ tag: "postcode", value: "Toronto", start: 0, end: 7 })] }
+		const out = await resolver.resolveTree(tree, { defaultCountry: { country: "GB", source: "caller" } })
+
+		expect(out.roots.filter((n) => n.placeID && n.lat === 40.457)).toHaveLength(0)
+	})
+
 	it("never cross-promotes without a postcode present (no unrestricted wandering)", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 

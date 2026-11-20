@@ -373,6 +373,18 @@ describe("RecognizeBarePostcode", () => {
 			expect(out.roots[0]?.tag).toBe("street")
 		}
 	})
+
+	it("leaves a bare seven-letter city name a locality (#3136)", () => {
+		for (const value of ["Toronto", "Glasgow", "Chicago", "Bristol", "Hamburg"]) {
+			const out = recognizeBarePostcode(tree([node({ tag: "locality", value })], value))
+			expect(out.roots[0]?.tag).toBe("locality")
+		}
+	})
+
+	it("retags a bare Eircode", () => {
+		const out = recognizeBarePostcode(tree([node({ tag: "street", value: "A65 F4E2" })], "A65 F4E2"))
+		expect(out.roots[0]?.tag).toBe("postcode")
+	})
 })
 
 describe("ExtractGeocodeResult — unit-grade postcodes lead the admin ladder ( NL, GB)", () => {
