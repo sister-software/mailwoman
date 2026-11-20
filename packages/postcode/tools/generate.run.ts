@@ -192,12 +192,12 @@ async function generate(
 	)
 
 	await settleFormatted(
-		postcode("lib", "recognize", `${family}.generated.ts`),
+		postcode("lib", "recognizer", `${family}.generated.ts`),
 		await readLocalTextFile(`${out}/ts/${family}.generated.ts`)
 	)
 
 	await settleFormatted(
-		postcode("lib", "recognize", "artifacts", `${family}.generated.ts`),
+		postcode("lib", "recognizer", "artifacts", `${family}.generated.ts`),
 		await readLocalTextFile(`${out}/ts/artifacts/${family}.generated.ts`)
 	)
 
