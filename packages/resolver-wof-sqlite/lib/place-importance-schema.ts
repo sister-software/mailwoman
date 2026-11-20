@@ -73,6 +73,87 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
 }
 
 /**
+ * Describes one row of the `place_population_estimate` table: a sub-locality's population estimated
+ * from the settlement that contains it, for a place the admin database records no population for.
+ *
+ * The estimate is the containing settlement's population divided by one more than the
+ * number of places of the same placetype that settlement contains.
+ * The `+ 1` keeps a share for the part of the settlement no recorded child covers,
+ * so an estimate is always smaller than its parent's population.
+ */
+export interface PlacePopulationEstimateTable {
+	id: number
+
+	/**
+	 * The point estimate.
+	 */
+	population: number
+
+	/**
+	 * The value the candidate table ranks the place by: the point estimate scaled by the lower decile
+	 * of measured / estimated population over every sub-locality that has a measured population.
+	 *
+	 * A ranked estimate outranks a measured place only where nine in ten measured sub-localities would.
+	 */
+	rank_population: number
+
+	/**
+	 * The settlement whose population the estimate divides: the place's `parent_id`.
+	 */
+	parent_id: number
+
+	/**
+	 * The parent's current children with this place's placetype, the place included.
+	 */
+	siblings: number
+}
+
+/**
+ * Types the `place_population_estimate` table of an importance database.
+ */
+export interface PlacePopulationEstimateDatabase {
+	place_population_estimate: PlacePopulationEstimateTable
+}
+
+/**
+ * Drops and recreates the `place_population_estimate` table.
+ */
+export async function createPlacePopulationEstimateTable(db: Kysely<PlacePopulationEstimateDatabase>): Promise<void> {
+	await db.schema.dropTable("place_population_estimate").ifExists().execute()
+
+	await db.schema
+		.createTable("place_population_estimate")
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("population", "real", (c) => c.notNull())
+		.addColumn("rank_population", "real", (c) => c.notNull())
+		.addColumn("parent_id", "integer", (c) => c.notNull())
+		.addColumn("siblings", "integer", (c) => c.notNull())
+		.execute()
+}
+
+/**
+ * Reads every estimate's ranking population (`rank_population`) from an
+ * importance database, keyed by WOF id.
+ *
+ * @throws When the database has no `place_population_estimate` table, because the
+ * importance build that wrote it ran without sub-locality estimates.
+ */
+export function loadPopulationEstimates<DB>(db: DatabaseClient<DB>): Map<number, number> {
+	if (!tableColumns(db, "place_population_estimate").has("rank_population")) {
+		throw new Error(
+			"place_population_estimate: the importance database has no estimates table. " +
+				"Rebuild it with `mailwoman gazetteer importance --sub-locality-estimates`."
+		)
+	}
+
+	const rows = allRows<{ id: number; rank_population: number }>(
+		db.prepare("SELECT id, rank_population FROM place_population_estimate")
+	)
+
+	return new Map(rows.map((row) => [Number(row.id), Number(row.rank_population)]))
+}
+
+/**
  * Caps how far the encyclopedic score may raise a place's blended importance above its referential score.
  *
  * Merely having an article scores about 0.25 to 0.35, above a mid-size town's referential score,

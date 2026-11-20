@@ -86,6 +86,18 @@ export interface BuildCandidateOptions {
 	importance?: PathBuilderLike
 
 	/**
+	 * Rank each place with no population by the importance database's
+	 * `place_population_estimate`, when it has an estimate there.
+	 *
+	 * The estimate sets `neg_rank` only; `population` stays NULL, because no source measured it.
+	 *
+	 * Requires {@link BuildCandidateOptions.importance}, built with sub-locality estimates.
+	 *
+	 * @defaultValue false
+	 */
+	populationEstimates?: boolean
+
+	/**
 	 * Receives a phase name and a message as each build step runs.
 	 */
 	onProgress?: (phase: string, message: string) => void
@@ -182,6 +194,11 @@ export interface BuildCandidateResult {
 	importanceFiltered: number | null
 
 	/**
+	 * The count of places ranked by a population estimate, or `null` when estimates weren't asked for.
+	 */
+	populationEstimated: number | null
+
+	/**
 	 * The count of alias rows the gloss anomaly detector stamped `name_role = 'gloss'`.
 	 */
 	roleGloss: number
@@ -201,6 +218,30 @@ export interface BuildCandidateResult {
 	 * The count of places in `keyTailPlaces` with at least one stamped role row.
 	 */
 	keyTailWithRole: number
+}
+
+/**
+ * Each place's region from the admin database's `ancestors`, the lowest id
+ * when it has more than one, with the count of places that have more than one.
+ */
+function loadRegionAncestry(src: DatabaseClient<WOFDatabase>): { regionOf: Map<number, number>; multiRegion: number } {
+	const regionOf = new Map<number, number>()
+	let multiRegion = 0
+
+	for (const r of src
+		.prepare(
+			"SELECT id, MIN(ancestor_id) AS ancestor_id, COUNT(DISTINCT ancestor_id) AS n" +
+				" FROM ancestors WHERE ancestor_placetype='region' GROUP BY id"
+		)
+		.iterate()) {
+		regionOf.set(Number(r.id), Number(r.ancestor_id))
+
+		if (Number(r.n) > 1) {
+			multiRegion++
+		}
+	}
+
+	return { regionOf, multiRegion }
 }
 
 /**
@@ -254,33 +295,24 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	if (opts.importance) {
 		progress("importance", `loading place_importance from ${opts.importance}`)
-		importance = loadImportanceIndex(opts.importance)
+		importance = loadImportanceIndex(opts.importance, { populationEstimates: opts.populationEstimates === true })
 
 		progress(
 			"importance",
 			`${importance.stats.places.toLocaleString()} scored places in ${importance.stats.keys.toLocaleString()} (name, country, placetype) groups` +
-				(importance.stats.unkeyable ? `; ${importance.stats.unkeyable.toLocaleString()} unkeyable names skipped` : "")
+				(importance.stats.unkeyable ? `; ${importance.stats.unkeyable.toLocaleString()} unkeyable names skipped` : "") +
+				(typeof importance.stats.estimates === "number"
+					? `; ${importance.stats.estimates.toLocaleString()} population estimates to rank unmeasured places by`
+					: "")
 		)
+	} else if (opts.populationEstimates) {
+		throw new Error("buildCandidateTable: populationEstimates reads the importance database; pass importance too")
 	} else {
 		progress("importance", "no score source given — `importance` will be NULL on every row")
 	}
 
 	progress("region", "loading region ancestry")
-	const regionOf = new Map<number, number>()
-	let multiRegion = 0
-
-	for (const r of src
-		.prepare(
-			"SELECT id, MIN(ancestor_id) AS ancestor_id, COUNT(DISTINCT ancestor_id) AS n" +
-				" FROM ancestors WHERE ancestor_placetype='region' GROUP BY id"
-		)
-		.iterate()) {
-		regionOf.set(Number(r.id), Number(r.ancestor_id))
-
-		if (Number(r.n) > 1) {
-			multiRegion++
-		}
-	}
+	const { regionOf, multiRegion } = loadRegionAncestry(src)
 
 	progress(
 		"region",
@@ -316,7 +348,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			POPULATION_CORRECTIONS[sid]?.population ??
 			(wofPop === null && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? null) : wofPop)
 
-		const neg = -Math.log10((pop ?? 0) + 1)
+		const neg = -Math.log10((pop ?? importance?.estimatedPopulation(sid) ?? 0) + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)
 		const lat = r.lat as number
@@ -607,5 +639,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		...roles,
 		importanceScored: importance ? importance.matched : null,
 		importanceFiltered: importance ? importance.refused : null,
+		populationEstimated: typeof importance?.stats.estimates === "number" ? importance.estimated : null,
 	}
 }

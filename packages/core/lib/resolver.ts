@@ -44,6 +44,7 @@ export {
 	hardCountryOf,
 	landmarkPlaceID,
 	OSM_LANDMARK_PREFIX,
+	populationScoreUnmeasured,
 	RESOLVE_SWITCH_DEFAULTS,
 	resolveSwitches,
 	ScopeStrength,

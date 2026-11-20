@@ -17,14 +17,32 @@ import type {
  *
  * `population_unrecorded`: the backend ranks by population and the gazetteer records
  * none for the place, so its score is the rank an unknown population sorts to.
+ * `population_estimated`: the gazetteer records no population for the place,
+ * and its score ranks a population estimated from the settlement that contains it.
  * `unrecorded`: the resolver recorded no score for the place.
  */
 export const ScoreUnmeasuredReason = {
 	PopulationUnrecorded: "population_unrecorded",
+	PopulationEstimated: "population_estimated",
 	Unrecorded: "unrecorded",
 } as const
 
 export type ScoreUnmeasuredReason = (typeof ScoreUnmeasuredReason)[keyof typeof ScoreUnmeasuredReason]
+
+/**
+ * Why a candidate-table row's score, `-neg_rank` with `neg_rank = -log10(population + 1)`,
+ * has no measured population behind it, or null when it has one.
+ *
+ * A row with no population and a negative `neg_rank` was ranked by a population estimate.
+ */
+export function populationScoreUnmeasured(
+	population: number | null | undefined,
+	negRank: number
+): ScoreUnmeasuredReason | null {
+	if (typeof population === "number" && population > 0) return null
+
+	return negRank < 0 ? ScoreUnmeasuredReason.PopulationEstimated : ScoreUnmeasuredReason.PopulationUnrecorded
+}
 
 export interface ResolvedPlace {
 	/**
