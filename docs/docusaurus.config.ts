@@ -381,7 +381,10 @@ const config: Config = {
 		},
 		prism: {
 			// The brand's framed dark code block in both themes (okaidia on --ss-color-code-bg).
-			theme: { ...prismThemes.okaidia, plain: { ...prismThemes.okaidia.plain, backgroundColor: "#272823" } },
+			theme: {
+				...prismThemes.okaidia,
+				plain: { ...prismThemes.okaidia.plain, backgroundColor: "#272823" },
+			},
 		},
 	} satisfies Preset.ThemeConfig,
 }
