@@ -61,7 +61,8 @@ import {
 	STREET_CENTROID_COVERAGE_RESOLUTION,
 	wholeCommunes,
 } from "#sdk/coverage"
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
+import { BAN_ATTRIBUTION, BAN_LICENSE } from "#sdk/fetch"
+import { BAN_CSV_BASE, BAN_SOURCE_NAME } from "#source"
 import { streetLocaleForBANCountry } from "#street-locale"
 
 interface BuildArgs {
@@ -114,7 +115,7 @@ async function sourceMD5(country: string): Promise<string | null> {
 
 async function main(): Promise<void> {
 	const args = await parse()
-	const source = `ban:${args.country}`
+	const source = `${BAN_SOURCE_NAME}:${args.country}`
 	const tmp = `${args.output}.building-${process.pid}.db`
 
 	await makeDirectories(dirname(args.output))

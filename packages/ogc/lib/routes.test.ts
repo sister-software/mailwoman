@@ -519,8 +519,56 @@ describe("collection sources and terms", () => {
 			"https://download.geonames.org/export/dump/",
 		])
 
-		expect(places.attribution).toBe("Who's On First, Overture Maps divisions theme, GeoNames")
+		expect(places.attribution).toBe("Who's On First; Overture Maps divisions theme; GeoNames")
 		expect(places.description).toContain("LicenseRef-Undeclared-Input")
+	})
+
+	test("a collection whose layer records another opened layer as its source links that layer's licenses too", async () => {
+		const derived = createOGCApp({
+			...engine,
+			collections: [
+				{ id: OGCCollectionID.Places, regions: null, layers: [CANDIDATE_LAYER, ADMIN_LAYER] },
+				{ id: OGCCollectionID.Postcodes, regions: null, layers: [CANDIDATE_LAYER] },
+			],
+		})
+
+		const postcodes = (await (await derived.request("/collections/postcodes?f=json")).json()) as OGCCollection
+		const licenses = postcodes.links.filter((link) => link.rel === OGCLinkRelation.License).map((link) => link.href)
+
+		// The credit names Who's On First, so the license text that requires the link back is linked.
+		expect(postcodes.attribution).toContain("Who's On First")
+		expect(licenses).toContain("https://github.com/whosonfirst-data/whosonfirst-data/blob/master/LICENSE.md")
+		expect(licenses).toContain("https://spdx.org/licenses/ODbL-1.0.html")
+	})
+
+	test("regional layers link each license and provider-located source once, and count the regions without a manifest", async () => {
+		const regional = createOGCApp({
+			...engine,
+			collections: [
+				{
+					id: OGCCollectionID.Addresses,
+					regions: ["DE", "NL", "US-AK", "US-AL"],
+					unreadRegions: 2,
+					layers: ["de", "nl"].map((cc) => ({
+						name: `osm-address-points-${cc}-${cc}`,
+						license: "ODbL-1.0",
+						attribution: "© OpenStreetMap contributors",
+						source: `openstreetmap:${cc}`,
+						sourceLocations: { openstreetmap: { title: "OpenStreetMap", url: "https://example.org/build-osm" } },
+					})),
+				},
+			],
+		})
+
+		const addresses = (await (await regional.request("/collections/addresses?f=json")).json()) as OGCCollection
+		const relsAndHrefs = addresses.links.slice(2).map(({ rel, href }) => `${rel} ${href}`)
+
+		expect(relsAndHrefs).toEqual([
+			"license https://spdx.org/licenses/ODbL-1.0.html",
+			"via https://example.org/build-osm",
+		])
+
+		expect(addresses.description).toContain("2 regions have a layer without a readable layer_manifest")
 	})
 
 	test("a manifest without a license or a source yields no link for it, and the description says so", async () => {

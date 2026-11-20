@@ -9,6 +9,8 @@
  *   collections its opened layers serve.
  */
 
+import type { SourceLocation } from "@mailwoman/core/resolver"
+
 import type { OGCBBox } from "#bbox"
 import type { OGCCollectionID } from "#collections"
 
@@ -84,6 +86,12 @@ export interface OGCLayerTerms {
 	 * or null when it records none.
 	 */
 	source: string | null
+	/**
+	 * Where a user obtains each source, as the layer's provider records it.
+	 *
+	 * A source missing here falls back to the gazetteer's own source table.
+	 */
+	sourceLocations?: Readonly<Record<string, SourceLocation>>
 }
 
 /**
@@ -109,6 +117,12 @@ export interface OGCServedCollection {
 	 * Absent means the engine read no manifest for it, and the description states that.
 	 */
 	layers?: readonly OGCLayerTerms[]
+	/**
+	 * The regions with a layer database whose `layer_manifest` the engine couldn't read, absent or unreadable.
+	 *
+	 * Such a layer contributes no link, and the description states the count.
+	 */
+	unreadRegions?: number
 }
 
 /**

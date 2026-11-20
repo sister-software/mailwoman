@@ -8,11 +8,12 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
+import type { RegionDatabaseProvider, RegionDatabases, RegionLayerDatabase } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { PathBuilder } from "path-ts"
 
 import { banDatabaseRoot } from "#paths"
+import { BAN_SOURCE_LOCATIONS } from "#source"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#street-locale"
 
 /**
@@ -132,6 +133,29 @@ export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string,
 		this.#cache.set(cc, entry)
 
 		return entry
+	}
+
+	/**
+	 * The address-point and street-centroid files `for(country)` reads, from the record `warm` made.
+	 */
+	readonly layerDatabases = (country: string): RegionLayerDatabase[] => {
+		const cc = country.toLowerCase()
+
+		if (!supportedBANCountries().includes(cc)) return []
+
+		const files: RegionLayerDatabase[] = []
+		const points = this.#addressPointsPath(cc).toString()
+		const streets = this.#streetCentroidPath(cc).toString()
+
+		if (this.#onDisk.has(points)) {
+			files.push({ tier: "addressPoints", path: points, sourceLocations: BAN_SOURCE_LOCATIONS })
+		}
+
+		if (this.#onDisk.has(streets)) {
+			files.push({ tier: "streetCentroids", path: streets, sourceLocations: BAN_SOURCE_LOCATIONS })
+		}
+
+		return files
 	}
 
 	public [Symbol.dispose](): void {

@@ -8,10 +8,7 @@
  * extract under Licence Ouverte / Etalab 2.0.
  */
 
-/**
- * Root URL for the latest BAN CSV exports.
- */
-export const BAN_CSV_BASE = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
+import { BAN_CSV_BASE } from "#source"
 
 /**
  * BAN's Licence Ouverte / Open Licence 2.0 (Etalab).

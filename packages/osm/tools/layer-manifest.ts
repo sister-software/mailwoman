@@ -16,6 +16,7 @@ import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/addr
 
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
 import type { ExtractProvenance } from "#sdk/extract/receipt"
+import { OSM_SOURCE_NAME } from "#source"
 
 /**
  * The build facts {@link osmAddressPointLayerManifest} records.
@@ -56,7 +57,7 @@ export function osmAddressPointLayerManifest(build: OSMAddressPointBuild): Layer
 		schemaVersion: 1,
 		...distribution,
 		attribution: OSM_ATTRIBUTION,
-		source: `openstreetmap:${build.country}`,
+		source: `${OSM_SOURCE_NAME}:${build.country}`,
 		sourceVintage: build.provenance.snapshotDate ?? build.release,
 		buildCmd: build.buildCmd,
 		buildSHA: build.buildSHA,

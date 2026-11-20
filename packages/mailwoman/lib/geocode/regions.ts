@@ -14,6 +14,7 @@ import type {
 	InterpolationLookup,
 	RegionDatabaseProvider,
 	RegionDatabases,
+	RegionLayerDatabase,
 } from "@mailwoman/core/resolver"
 import type { AddressLayerCountryManifest } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -236,11 +237,32 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 		}
 	}
 
-	#open(stateSlug: string): RegionDatabaseCacheEntry {
+	/**
+	 * The address layer, address-point and interpolation files a state reads, as `#open` chooses them.
+	 */
+	#filesOf(stateSlug: string): { layerPath: string | undefined; apPath: string | null; ipPath: string | null } {
 		const paths = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
 		const layerPath = this.#factory.openAddressLayerLookup ? this.#layerPaths.get(stateSlug.toLowerCase()) : undefined
-		const apPath = layerPath ?? paths.apPath
-		const { ipPath } = paths
+
+		return { layerPath, apPath: layerPath ?? paths.apPath, ipPath: paths.ipPath }
+	}
+
+	/**
+	 * The files `for(stateSlug)` reads.
+	 *
+	 * The US layers record no source this package can locate, so each file's location table is empty.
+	 */
+	readonly layerDatabases = (stateSlug: string): RegionLayerDatabase[] => {
+		const { apPath, ipPath } = this.#filesOf(stateSlug)
+
+		return [
+			...(apPath ? [{ tier: "addressPoints" as const, path: apPath, sourceLocations: {} }] : []),
+			...(ipPath ? [{ tier: "interpolation" as const, path: ipPath, sourceLocations: {} }] : []),
+		]
+	}
+
+	#open(stateSlug: string): RegionDatabaseCacheEntry {
+		const { layerPath, apPath, ipPath } = this.#filesOf(stateSlug)
 
 		const ap = layerPath
 			? this.#factory.openAddressLayerLookup!(layerPath, "US")

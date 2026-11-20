@@ -10,6 +10,8 @@
  *   One table serves both, so a name the build writes always has its location here.
  */
 
+import type { SourceLocation } from "@mailwoman/core/resolver"
+
 /**
  * The name each gazetteer source goes by in a manifest's `source`.
  */
@@ -22,20 +24,6 @@ export const GazetteerSourceName = {
 export type GazetteerSourceName = (typeof GazetteerSourceName)[keyof typeof GazetteerSourceName]
 
 /**
- * Where a user obtains one source.
- */
-export interface GazetteerSourceLocation {
-	/**
-	 * The source's name for a reader, such as `Who's On First`.
-	 */
-	title: string
-	/**
-	 * A page that explains how to obtain the source, or lists its downloads.
-	 */
-	url: string
-}
-
-/**
  * The location of each gazetteer source.
  *
  * Who's On First points to the `mailwoman` organization.
@@ -43,7 +31,7 @@ export interface GazetteerSourceLocation {
  *
  * Each fork's upstream is the repository of the same name under `whosonfirst-data`.
  */
-export const GAZETTEER_SOURCE_LOCATIONS: Readonly<Record<GazetteerSourceName, GazetteerSourceLocation>> = {
+export const GAZETTEER_SOURCE_LOCATIONS: Readonly<Record<GazetteerSourceName, SourceLocation>> = {
 	[GazetteerSourceName.WhosOnFirst]: { title: "Who's On First", url: "https://github.com/mailwoman" },
 	[GazetteerSourceName.OvertureDivisions]: {
 		title: "Overture Maps divisions theme",
@@ -55,21 +43,8 @@ export const GAZETTEER_SOURCE_LOCATIONS: Readonly<Record<GazetteerSourceName, Ga
 /**
  * The location of a source a manifest records, or null when the name has none here.
  */
-export function gazetteerSourceLocation(name: string): GazetteerSourceLocation | null {
+export function gazetteerSourceLocation(name: string): SourceLocation | null {
 	return Object.hasOwn(GAZETTEER_SOURCE_LOCATIONS, name)
 		? GAZETTEER_SOURCE_LOCATIONS[name as GazetteerSourceName]
 		: null
-}
-
-/**
- * The source names in a manifest's `source`, which the admin build joins with `+`.
- *
- * A name with a version, such as `admin-global-priority@2026-11-18`, keeps the name
- * before the `@`, because the name is what a reader matches against another layer's manifest.
- */
-export function manifestSourceNames(source: string): string[] {
-	return source
-		.split("+")
-		.map((part) => part.trim().split("@")[0]!.trim())
-		.filter((part) => part.length > 0)
 }

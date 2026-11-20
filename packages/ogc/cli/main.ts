@@ -28,9 +28,9 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { obligationFindings, ObligationRefusal, parseObligationRefusals } from "mailwoman/data/obligations"
+import { parseObligationRefusals } from "mailwoman/data/obligations"
 import { $public } from "mailwoman/env"
-import type { ArtifactFreshness } from "mailwoman/freshness"
+import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { openServingRooftopProviders } from "mailwoman/geocode/serving-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
@@ -44,9 +44,12 @@ import {
 	OGC_DOC_INFO,
 	OGCCollectionID,
 	type OGCEngine,
+	itemsRefusal,
 	type OGCItemSource,
 	type OGCLayerTerms,
+	type OGCServedCollection,
 	placeItemSource,
+	regionLayerFiles,
 	type RegionLayerProbe,
 	servedCollections,
 } from "#index"
@@ -87,6 +90,52 @@ function layerTermsOf(artifact: ArtifactFreshness): OGCLayerTerms {
 }
 
 /**
+ * The manifest terms of the region files each street-tier collection reads,
+ * and its regions without a readable manifest.
+ *
+ * A collection lists a layer's terms once, whatever the count of regions that
+ * record the same license and source.
+ * A file whose `layer_manifest` is absent or unreadable contributes no terms,
+ * and its region is counted as unread.
+ */
+async function regionLayerTerms(
+	probes: readonly RegionLayerProbe[]
+): Promise<Map<OGCCollectionID, Pick<OGCServedCollection, "layers" | "unreadRegions">>> {
+	const files = regionLayerFiles(probes)
+	const paths = [...new Set(files.map(({ path }) => path))]
+	const { artifacts } = await readFreshness(paths.map((path) => ({ name: path, path })))
+	const byPath = new Map(artifacts.map((artifact) => [artifact.path, artifact]))
+	const terms = new Map<OGCCollectionID, { layers: Map<string, OGCLayerTerms>; unread: Set<string> }>()
+
+	for (const file of files) {
+		const entry = terms.get(file.collection) ?? { layers: new Map(), unread: new Set() }
+		const artifact = byPath.get(file.path)
+
+		terms.set(file.collection, entry)
+
+		if (artifact?.manifest !== ManifestState.Present) {
+			entry.unread.add(file.region)
+
+			continue
+		}
+
+		const layer = { ...layerTermsOf(artifact), sourceLocations: file.sourceLocations }
+		const key = `${layer.license} ${layer.source?.split(":")[0]} ${layer.attribution}`
+
+		if (!entry.layers.has(key)) {
+			entry.layers.set(key, layer)
+		}
+	}
+
+	return new Map(
+		[...terms].map(([collection, { layers, unread }]) => [
+			collection,
+			{ layers: [...layers.values()], ...(unread.size ? { unreadRegions: unread.size } : {}) },
+		])
+	)
+}
+
+/**
  * Open the admin gazetteer as the `places` collection's item source, when the operator asked for items.
  *
  * The items routes serve the gazetteer in pages, so the operator's `MAILWOMAN_REFUSE_OBLIGATIONS`
@@ -112,24 +161,10 @@ async function openPlaceItems(
 
 	const adminDBPath = admin.path
 	const license = admin.license
-	const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
-	const findings = license ? obligationFindings(license, refuse) : []
+	const refusal = itemsRefusal(license, parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""]))
 
-	if (!license && refuse.includes(ObligationRefusal.Unresolved)) {
-		findings.push({
-			refusal: ObligationRefusal.Unresolved,
-			identifier: "(none)",
-			reason: "the database records no license",
-		})
-	}
-
-	if (findings.length) {
-		return {
-			source: null,
-			bannerLines: [
-				`  places items: none, because MAILWOMAN_REFUSE_OBLIGATIONS refuses ${findings.map(({ reason }) => reason).join("; ")} in ${adminDBPath}`,
-			],
-		}
+	if (refusal) {
+		return { source: null, bannerLines: [`  places items: none, because ${refusal} in ${adminDBPath}`] }
 	}
 
 	try {
@@ -208,30 +243,30 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const placeLayers = artifacts.map(layerTermsOf)
 	const placeItems = await openPlaceItems(values["serve-items"], admin, ancestorsOf)
 
-	// The gazetteer collections read the manifests above.
+	// The gazetteer collections read the manifests above, and the address and street
+	// collections read the manifests of the region files their providers report.
 	// Plus codes have no layer.
-	// The address and street layers are opened per region, and the server reads none of their manifests.
-	const layersOf = (id: OGCCollectionID): readonly OGCLayerTerms[] | undefined => {
+	const regional = await regionLayerTerms(probes)
+
+	const layersOf = (id: OGCCollectionID): Pick<OGCServedCollection, "layers" | "unreadRegions"> => {
 		switch (id) {
 			case OGCCollectionID.Places:
-				return placeLayers
+				return { layers: placeLayers }
 			case OGCCollectionID.Postcodes:
-				return searchLayers
+				return { layers: searchLayers }
 			case OGCCollectionID.PlusCodes:
-				return []
+				return { layers: [] }
 			case OGCCollectionID.Addresses:
 			case OGCCollectionID.Streets:
-				return undefined
+				return regional.get(id) ?? { layers: [] }
 		}
 	}
 
 	const engine: OGCEngine = {
 		collections: servedCollections(probes).map((collection) => {
-			const layers = layersOf(collection.id)
-
 			return {
 				...collection,
-				...(layers ? { layers } : {}),
+				...layersOf(collection.id),
 				...(collection.id === OGCCollectionID.Places && placeItems.source ? { items: placeItems.source } : {}),
 			}
 		}),

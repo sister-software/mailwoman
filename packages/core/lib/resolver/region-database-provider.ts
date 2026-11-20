@@ -54,4 +54,37 @@ export interface RegionDatabaseProvider<
 	 * A region with no database on disk yields a bundle with no members.
 	 */
 	for(key: TKey): TDatabases
+
+	/**
+	 * The database files `for(key)` reads, one per tier, and where a user obtains
+	 * the sources their manifests record.
+	 *
+	 * A caller reads each file's `layer_manifest` to state the region's terms and sources.
+	 * A region with no database on disk yields an empty array.
+	 */
+	layerDatabases?(key: TKey): readonly RegionLayerDatabase[]
+}
+
+/**
+ * Where a user obtains one data source: a page that explains how, or lists its downloads.
+ */
+export interface SourceLocation {
+	/**
+	 * The source's name for a reader, such as `Base Adresse Nationale`.
+	 */
+	title: string
+	url: string
+}
+
+/**
+ * One database file a region provider reads for a region.
+ */
+export interface RegionLayerDatabase {
+	tier: keyof RegionDatabases
+	path: string
+	/**
+	 * Where a user obtains each source the provider's layers record, keyed by the source's
+	 * name in a manifest's `source`: the part before any `:` scope, such as `ban` in `ban:fr`.
+	 */
+	sourceLocations: Readonly<Record<string, SourceLocation>>
 }

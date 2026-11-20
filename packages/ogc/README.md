@@ -71,17 +71,21 @@ Every collection also links where its data comes from, read from the `layer_mani
   license expression whose text has a known URL: SPDX's page for an SPDX identifier, and Who's On First's own
   license text for `LicenseRef-WhosOnFirst-Mixed`, because that text requires the link back.
 - A `via` link ([RFC 4287](https://www.rfc-editor.org/rfc/rfc4287), "the source of the information") for each
-  source the manifest records, to the page where a user obtains it. The table is `GAZETTEER_SOURCE_LOCATIONS` in
-  `@mailwoman/resolver-wof-sqlite/sources`, and the admin build writes its source identifiers from the same table.
-  The Who's On First entry points to the
-  [`mailwoman` organization](https://github.com/mailwoman), whose `whosonfirst-data-admin-<cc>` repositories are the
-  forks the build clones from `whosonfirst-data`.
+  source the manifest records, to the page where a user obtains it. Each source's location belongs to the package
+  that builds its layers: `GAZETTEER_SOURCE_LOCATIONS` in `@mailwoman/resolver-wof-sqlite/sources` for the
+  gazetteer, `BAN_SOURCE_LOCATIONS` in `@mailwoman/ban/source`, and `OSM_SOURCE_LOCATIONS` in
+  `@mailwoman/osm/source`. Each build writes its source names from the same table. The Who's On First entry points to
+  the [`mailwoman` organization](https://github.com/mailwoman), whose `whosonfirst-data-admin-<cc>` repositories are
+  the forks the build clones from `whosonfirst-data`. The OpenStreetMap entry points to the `@mailwoman/osm` build
+  documentation, because the project publishes the builder and a user builds the database.
 - An `attribution`, the member OGC API Common Part 2 defines, when a recorded license requires credit.
 
-A manifest that records no license or no source, a source without a known location, and a license identifier
-without published text add a sentence to the description in place of a link. `plus-codes` has no layer. The
-address and street layers open per region, and the server reads none of their manifests, so those two
-descriptions say so.
+A source that matches another opened layer, as the candidate gazetteer's manifest records the admin gazetteer,
+contributes that layer's license links, sources and credit. The address and street collections read the manifest
+of every region file their providers report, and list each license and source once. A manifest that records no
+license or no source, a source without a known location, and a license identifier without published text add a
+sentence to the description in place of a link. A region file without a readable `layer_manifest` contributes no
+link, and the description counts those regions. `plus-codes` has no layer.
 
 ## Where the data comes from
 

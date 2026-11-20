@@ -12,7 +12,7 @@
  */
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import type { RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import type { RegionDatabaseProvider, RegionLayerDatabase } from "@mailwoman/core/resolver"
 
 import type { OGCServedCollection } from "#engine"
 
@@ -100,12 +100,51 @@ export function collectionOfPlacetype(placetype: string): OGCCollectionID {
  * One region-keyed provider of street-tier layers, and the keys to ask it for.
  */
 export interface RegionLayerProbe {
-	provider: Pick<RegionDatabaseProvider, "for">
+	provider: Pick<RegionDatabaseProvider, "for" | "layerDatabases">
 	keys: Iterable<string>
 	/**
 	 * The region code a key names in a collection description, such as `US-TX` for the key `tx`.
 	 */
 	regionOf: (key: string) => string
+}
+
+/**
+ * One database file a region's layer reads, and the collection it serves.
+ */
+export interface RegionLayerFile extends RegionLayerDatabase {
+	collection: OGCCollectionID
+	/**
+	 * The region code, such as `US-TX`.
+	 */
+	region: string
+}
+
+/**
+ * The collection each street-tier database serves.
+ */
+const COLLECTION_OF_TIER: Readonly<Record<RegionLayerDatabase["tier"], OGCCollectionID>> = {
+	addressPoints: OGCCollectionID.Addresses,
+	interpolation: OGCCollectionID.Addresses,
+	streetCentroids: OGCCollectionID.Streets,
+}
+
+/**
+ * The database files every probed region reads, from providers that report them.
+ *
+ * A provider without `layerDatabases` reports none, and its regions count as unread.
+ */
+export function regionLayerFiles(probes: readonly RegionLayerProbe[]): RegionLayerFile[] {
+	const files: RegionLayerFile[] = []
+
+	for (const { provider, keys, regionOf } of probes) {
+		for (const key of keys) {
+			for (const database of provider.layerDatabases?.(key) ?? []) {
+				files.push({ ...database, collection: COLLECTION_OF_TIER[database.tier], region: regionOf(key) })
+			}
+		}
+	}
+
+	return files
 }
 
 /**

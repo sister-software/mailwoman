@@ -22,12 +22,13 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type LayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
-import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
+import type { RegionDatabaseProvider, RegionDatabases, RegionLayerDatabase } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 
 import { osmDatabaseRoot } from "#paths"
+import { OSM_SOURCE_LOCATIONS } from "#source"
 import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale"
 
 /**
@@ -175,6 +176,19 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 		this.#cache.set(cc, entry)
 
 		return entry
+	}
+
+	/**
+	 * The address-point file `for(country)` reads, from the record `warm` made.
+	 */
+	readonly layerDatabases = (country: string): RegionLayerDatabase[] => {
+		const cc = country.toLowerCase()
+
+		if (!supportedOSMCountries().includes(cc)) return []
+
+		const path = this.#addressPointsPath(cc)
+
+		return this.#onDisk.has(path) ? [{ tier: "addressPoints", path, sourceLocations: OSM_SOURCE_LOCATIONS }] : []
 	};
 
 	[Symbol.dispose](): void {

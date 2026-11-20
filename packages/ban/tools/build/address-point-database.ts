@@ -42,7 +42,8 @@ import { Globerator } from "spliterator/node/fs"
 
 import { banDatabasePath } from "#paths"
 import { extractBANAddrPoints } from "#sdk/extract"
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
+import { BAN_ATTRIBUTION, BAN_LICENSE } from "#sdk/fetch"
+import { BAN_CSV_BASE, BAN_SOURCE_NAME } from "#source"
 import { streetLocaleForBANCountry } from "#street-locale"
 
 interface BuildArgs {
@@ -113,7 +114,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 async function main(): Promise<void> {
 	const args = await parse()
 	const locale = streetLocaleForBANCountry(args.country)
-	const source = `ban:${args.country}`
+	const source = `${BAN_SOURCE_NAME}:${args.country}`
 	const files = await departementFiles(args.csvDir, args.depts)
 
 	if (!files.size) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
