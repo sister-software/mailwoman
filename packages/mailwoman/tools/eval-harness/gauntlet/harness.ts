@@ -65,8 +65,15 @@ export interface GauntletDeps extends Disposable {
 	 * and FST selected by the Gauntlet path.
 	 *
 	 * It performs no resolution and doesn't alter the check's geocode path.
+	 * `wrapFST` replaces the case's gazetteer FST for this one parse with the matcher it returns,
+	 * so a census can decode a candidate FST rule without changing the decoder.
+	 * The returned `fst` is always the unwrapped matcher.
 	 */
-	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
+	diagnoseParse(
+		input: string,
+		opts?: GauntletGeocodeOpts,
+		wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike
+	): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 	/**
 	 * Whether a row routed to `caseCountry` graded without that country's weights overlay. a
 	 * base-only pass isn't evidence that the production path passes, so a caller turning a passing
@@ -757,7 +764,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	}
 
 	return {
-		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+		diagnoseParse: async (
+			input: string,
+			geoOpts?: GauntletGeocodeOpts,
+			wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike
+		) => {
 			const { caseCountry } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
 
@@ -766,7 +777,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				streetMorphologyPrior,
 			}
 
-			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)
+			const parseFST = priorDeps.fst && wrapFST ? wrapFST(priorDeps.fst) : priorDeps.fst
+
+			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, {
+				...priorDeps,
+				...(parseFST ? { fst: parseFST } : {}),
+			})
 
 			return {
 				trace: await caseClassifier.traceParse(parseInput, parseOpts),
