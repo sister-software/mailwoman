@@ -16,6 +16,9 @@ import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { orderedJSON } from "@mailwoman/core/json"
+import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
+
+import { hostPath } from "#tools/training/sampler"
 
 /**
  * How a report is serialized, as the Python audit that wrote it serialized it.
@@ -133,12 +136,28 @@ async function fileSHA256(path: string): Promise<string> {
 
 /**
  * The receipt key: a digest of the version, the config's sha256 and the manifest's file sha256 set.
+ *
+ * A config that sets a prominent-places table (`data.prominent_place_coverage`)
+ * adds the digest of that table's `PLACES.json`.
+ * The record holds the table's own sha256, so a receipt never outlives the
+ * places table its coverage audit read.
  */
 export async function preflightKey(configPath: string, corpusDir: string): Promise<string> {
+	const config = typedTrainingConfig(await readTrainingConfig(configPath), configPath)
+	const places = config.data.prominent_place_coverage
+	const placesLines: string[] = []
+
+	if (places) {
+		const { prominentPlacesRecordDigest } = await import("#tools/training/audits/prominent/coverage")
+
+		placesLines.push(`prominent-places ${await prominentPlacesRecordDigest(hostPath(places))}\n`)
+	}
+
 	const lines = [
 		`preflight-v${PREFLIGHT_RECEIPT_VERSION}\n`,
 		`config ${await fileSHA256(configPath)}\n`,
 		...(await manifestFileDigests(corpusDir)).map((digest) => `file ${digest}\n`),
+		...placesLines,
 	]
 
 	return sha256Hex(lines.join(""))

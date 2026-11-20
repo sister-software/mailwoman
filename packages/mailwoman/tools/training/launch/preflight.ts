@@ -33,6 +33,7 @@ import { volumePathOnHost } from "#tools/training/sampler"
 export const PreflightAudit = {
 	CorpusFiles: "corpus_files",
 	CorpusReceipts: "corpus_receipts",
+	ProminentPlaceCoverage: "prominent_place_coverage",
 	ValidationCoverage: "validation_coverage",
 	ValidationLabelSupport: "validation_label_support",
 	WallClock: "wall_clock",
@@ -59,6 +60,13 @@ const AUDIT_COMMANDS: ReadonlyArray<{
 		script: "epoch/mixture.run.ts",
 		report: "epoch-mixture",
 		args: (config, json) => ["--config", config, "--json", json],
+	},
+	{
+		audit: PreflightAudit.ProminentPlaceCoverage,
+		declared: (data) => data.prominent_place_coverage != null,
+		script: "prominent/coverage.run.ts",
+		report: "prominent-place-coverage",
+		args: (config, json) => [config, "--json", json],
 	},
 	{
 		audit: PreflightAudit.ValidationCoverage,

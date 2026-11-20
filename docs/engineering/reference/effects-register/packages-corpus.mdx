@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 252 of the group's 432 library and tool modules.
+This page lists 253 of the group's 433 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -1025,6 +1025,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | -------------------------- | --------------------------- | ----- |
 | read | `pathExists`               | `data-root:geonames-postal` | 2     |
 | read | `TSVSpliterator.fromAsync` | `unresolved (call)`         | 1     |
+
+## `packages/corpus/lib/recipes/prominent/places.ts`
+
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/recipes/scaffold.ts`
 

@@ -22,7 +22,7 @@ node packages/mailwoman/tools/training/launch/launch.run.ts restart <run key>
    digits of the sha256 of the run's checkpoint directory.
 3. It runs the preflight (`launch/preflight.ts`) against the copy of the volume under `MAILWOMAN_DATA_ROOT`. The
    preflight runs each audit the config declares (`required_corpus_receipts`, `required_validation_coverage`,
-   `required_validation_label_support`) on a copy of the config re-rooted at the host copy, checks the wall clock
+   `required_validation_label_support`, `prominent_place_coverage`) on a copy of the config re-rooted at the host copy, checks the wall clock
    (`launch/wall-clock.ts`), and writes the receipt under `<data root>/audits`.
 4. It publishes or reuses the trainer image (`launch/image.ts`) and starts one detached sandbox, then records the run
    under `<data root>/launch/runs/<run key>.json`.
@@ -105,4 +105,13 @@ The audits under `audits/` read the corpus through the `mtf-node` addon on a hos
 node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts --config <yaml> --json <path>
 node packages/mailwoman/tools/training/audits/validation/coverage.run.ts <yaml> --json <path>
 node packages/mailwoman/tools/training/audits/label/support.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/prominent/coverage.run.ts <yaml> --json <path>
 ```
+
+The prominent-place coverage receipt (#3156) reads the places table that
+`tools/dev-tools/corpus/prominent/places.run.ts places` writes for one candidate database, named by
+`data.prominent_place_coverage`, and scans the corpus's short admin train rows itself, in about two minutes. It
+fails when a required prominent place has no train row in a required shape, when a country's decile 1 holds less
+than half its population share of a shape's rows, or when a short admin row writes a dependent locality without a
+locality. The receipt key binds the table's `PLACES.json`. The census's `tuples` step writes the
+`prominent-places` recipe's input from the same tables, against the base corpus the recipe joins.

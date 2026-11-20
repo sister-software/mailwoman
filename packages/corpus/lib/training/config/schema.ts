@@ -151,6 +151,11 @@ export const LABEL_SUPPORT_SECTION = {
  *
  * `unshippable_reason` admits a source whose register rows lack an elected decision
  * permitting transform and train, and marks the run not shippable.
+ *
+ * `prominent_place_coverage` is the path of the prominent-places census's `places.parquet`.
+ * Its `PLACES.json` sits beside it.
+ *
+ * A config that sets it runs the `prominent_place_coverage` receipt in the launch preflight (#3156).
  */
 export const DATA_SECTION = {
 	className: "DataConfig",
@@ -168,6 +173,7 @@ export const DATA_SECTION = {
 		required_corpus_receipts: sectionList(CORPUS_RECEIPT_SECTION),
 		required_validation_coverage: sectionList(VALIDATION_COVERAGE_SECTION),
 		required_validation_label_support: sectionList(LABEL_SUPPORT_SECTION),
+		prominent_place_coverage: optionalStr(),
 		train_rows_per_epoch: optionalInt(),
 		val_rows: optionalInt(4096n),
 		coarse_filter: bool(true),
