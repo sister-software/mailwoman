@@ -65,7 +65,12 @@ Anything else is silently dropped.
 | `region`             | `self`, `with-country`                                                        |
 | `subregion` (county) | `self`                                                                        |
 | `locality`           | `self`, `with-region`, `with-region-country` (or `with-country` if no region) |
-| `dependent_locality` | Same as `locality`                                                            |
+| `dependent_locality` | Every variant that writes its parent locality (`Camden, London`)              |
+
+A dependent locality is written only beside its parent locality, the label policy of #3156. WOF
+doesn't record whether `Camden` or `Camden, England` is that place's postal form or a district of
+another post town, so the adapter renders no row without the locality. A record with no locality
+ancestor, or a localized name whose locality has no name in that language, renders none.
 
 ## Name-variant slots (Phase 1.5.1)
 

@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 6040,
+	"properties": {
+		"wof:id": 6040,
+		"wof:name": "Fen Ditton Fields",
+		"wof:placetype": "neighbourhood",
+		"wof:country": "GB",
+		"wof:parent_id": 6010,
+		"wof:hierarchy": [{ "country_id": 6001, "region_id": 6010, "neighbourhood_id": 6040 }],
+		"mz:is_current": 1,
+		"geom:latitude": 52.22,
+		"geom:longitude": 0.16
+	},
+	"geometry": null
+}

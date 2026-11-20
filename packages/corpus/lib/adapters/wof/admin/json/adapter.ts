@@ -191,8 +191,29 @@ const LANGUAGE_LAYOUTS = new Map<string, string | null>()
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the
  * OpenCage template produces the canonicalized form (`"United States of America"`),
  * matching the legacy SQLite adapter's behavior.
+ *
+ * Every variant that writes a dependent locality also writes its parent locality
+ * ({@linkcode writesParentLocality}), so a record without a locality ancestor renders no row.
  */
 export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: NameSlot): WOFVariantSpec[] {
+	return candidateVariants(row, ancestry, slot).filter((variant) => writesParentLocality(variant.components))
+}
+
+/**
+ * Whether a row's components write a dependent locality only beside its locality.
+ *
+ * The #3156 label policy writes `dependent_locality` beside a verified parent locality.
+ * A bare `Camden` or `Camden, England` is the postal form of some places
+ * and a district of another post town for others.
+ *
+ * The WOF record states neither, so the adapter writes no row for that form
+ * rather than a dependent locality with no locality.
+ */
+export function writesParentLocality(components: Partial<Record<ComponentTag, string>>): boolean {
+	return components.dependent_locality == null || components.locality != null
+}
+
+function candidateVariants(row: WOFRecord, ancestry: AncestorRecords, slot: NameSlot): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
@@ -438,6 +459,9 @@ function structuralVariants(
 		const subset = levels.filter((_, i) => mask & (1 << i))
 
 		if (localized?.keep && !localized.keep(subset, levels)) continue
+
+		// The form hash below reads `mask`, so a skipped chain leaves every kept chain's forms unchanged.
+		if (selfTag === "dependent_locality" && !subset.includes("locality")) continue
 
 		const suffix = subset.length ? `with-${subset.join("-")}` : "self"
 		const canonical: Partial<Record<ComponentTag, string>> = { [selfTag]: selfName }

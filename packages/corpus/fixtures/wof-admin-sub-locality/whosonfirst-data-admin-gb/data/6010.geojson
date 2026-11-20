@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 6010,
+	"properties": {
+		"wof:id": 6010,
+		"wof:name": "England",
+		"wof:placetype": "region",
+		"wof:country": "GB",
+		"wof:parent_id": 6001,
+		"wof:hierarchy": [{ "country_id": 6001, "region_id": 6010 }],
+		"mz:is_current": 1,
+		"geom:latitude": 52.8,
+		"geom:longitude": -1.6
+	},
+	"geometry": null
+}
