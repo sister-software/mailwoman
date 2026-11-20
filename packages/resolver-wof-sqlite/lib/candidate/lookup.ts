@@ -3,7 +3,12 @@
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { type Ancestor, type GazetteerArtifactCoverage, referentialFromPopulation } from "@mailwoman/core/resolver"
+import {
+	type Ancestor,
+	type GazetteerArtifactCoverage,
+	referentialFromPopulation,
+	ScoreUnmeasuredReason,
+} from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { partitionByContainment } from "@mailwoman/resolver"
@@ -682,6 +687,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				parent_id: parent ? Number(parent.id) : null,
 
 				score: -Number(row.neg_rank),
+				// `neg_rank` is -log10(population + 1), so a place without a population ranks at 0 unmeasured.
+				scoreUnmeasured: hasPopulation ? null : ScoreUnmeasuredReason.PopulationUnrecorded,
 				distanceKm: null,
 
 				prominence: -Number(row.effectiveNegRank),

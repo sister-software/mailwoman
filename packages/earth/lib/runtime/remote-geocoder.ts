@@ -87,7 +87,7 @@ function candidateView(candidate: GeocodeCandidate): ResolvedPlaceView {
 	return {
 		id: wofNumber(candidate.placeID),
 		name: candidate.name,
-		placetype: candidate.tag,
+		placetype: candidate.placetype,
 		lat: candidate.lat,
 		lon: candidate.lon,
 		score: candidate.score,
@@ -116,7 +116,7 @@ export function candidatesFromGeocode(response: GeocodeResponse): ResolvedPlaceV
 	const answer: ResolvedPlaceView = {
 		id: top ? wofNumber(top.placeID) : 0,
 		name: top?.name ?? response.entity?.name ?? (street || response.input),
-		placetype: top?.tag ?? tier,
+		placetype: top?.placetype ?? tier,
 		lat: response.lat,
 		lon: response.lon,
 		score: top?.score ?? null,

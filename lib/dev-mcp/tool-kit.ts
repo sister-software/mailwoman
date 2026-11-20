@@ -491,8 +491,11 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 
 			const picked = record.picked && record.picked.id === c.id ? " ◀ PICKED" : ""
 
-			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${c.score}${
-				c.prominence != null ? ` prom=${c.prominence.toFixed(2)}` : ""
+			// An unmeasured score prints as null with its reason, beside the key it ranked at.
+			const score = c.scoreUnmeasured ? `null (${c.scoreUnmeasured}, ranked as ${c.score})` : String(c.score)
+
+			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${score}${
+				c.prominence != null && !c.scoreUnmeasured ? ` prom=${c.prominence.toFixed(2)}` : ""
 			}${c.importance != null ? ` imp=${c.importance.toFixed(2)}` : ""}${
 				c.population != null ? ` pop=${c.population}` : ""
 			}${c.containedByQualifier != null ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`

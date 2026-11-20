@@ -60,6 +60,8 @@ const RESULT = {
 		{
 			name: "Portland",
 			tag: "locality",
+			value: "Portland",
+			placetype: "locality",
 			lat: 45.5,
 			lon: -122.6,
 			countryCode: "US",
@@ -69,6 +71,8 @@ const RESULT = {
 		{
 			name: "Portland",
 			tag: "locality",
+			value: "Portland",
+			placetype: "locality",
 			lat: 43.66,
 			lon: -70.25,
 			countryCode: "US",

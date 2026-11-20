@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
 import type { LatLon, LatLonBounds } from "@mailwoman/spatial"
 
 /**
@@ -44,6 +45,10 @@ export interface PlaceCandidate {
 	 */
 	parent_id: number | null
 	score: number
+	/**
+	 * Why `score` is unmeasured: the candidate table ranks by a population the place doesn't record.
+	 */
+	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	distanceKm: number | null
 
 	/**

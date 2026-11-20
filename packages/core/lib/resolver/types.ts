@@ -12,6 +12,20 @@ import type {
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
 
+/**
+ * Why a place's ranking score is a rank without a measurement behind it.
+ *
+ * `population_unrecorded`: the backend ranks by population and the gazetteer records
+ * none for the place, so its score is the rank an unknown population sorts to.
+ * `unrecorded`: the resolver recorded no score for the place.
+ */
+export const ScoreUnmeasuredReason = {
+	PopulationUnrecorded: "population_unrecorded",
+	Unrecorded: "unrecorded",
+} as const
+
+export type ScoreUnmeasuredReason = (typeof ScoreUnmeasuredReason)[keyof typeof ScoreUnmeasuredReason]
+
 export interface ResolvedPlace {
 	/**
 	 * Resolver-specific place identifier.
@@ -43,8 +57,17 @@ export interface ResolvedPlace {
 	parent_id: number | string | null
 	/**
 	 * Resolver-defined ranking score.
+	 *
+	 * The ranking stages compare it whether or not `scoreUnmeasured` is set.
 	 */
 	score: number
+	/**
+	 * Why `score` and `prominence` are unmeasured for this place: each value is
+	 * the rank an unmeasured input sorts to.
+	 *
+	 * Null or absent when the backend measured the score.
+	 */
+	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	/**
 	 * Optional backend prominence score.
 	 */
@@ -556,7 +579,17 @@ export interface ResolveCandidateTrace {
 	 */
 	country: string | null
 	placetype: string
+	/**
+	 * The ranking key the stages compared.
+	 * It is unmeasured when `scoreUnmeasured` is set.
+	 */
 	score: number
+	/**
+	 * Why `score` and `prominence` are unmeasured, or null when they're measured.
+	 *
+	 * Optional because a trace recorded before the field existed holds no such entry.
+	 */
+	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	prominence: number | null
 	importance: number | null
 	population: number | null

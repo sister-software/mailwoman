@@ -17,7 +17,7 @@ import {
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
-import { decorateNode, isResolvedWithCoord } from "#decorate-node"
+import { decorateNode, isResolvedWithCoord, placeOfNode } from "#decorate-node"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 const TRACE_CANDIDATE_CAP = 10
@@ -134,6 +134,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 				country: c.country,
 				placetype: c.placetype,
 				score: c.score,
+				scoreUnmeasured: c.scoreUnmeasured ?? null,
 				prominence: c.prominence ?? null,
 				importance: c.importance ?? null,
 				population: c.population ?? null,
@@ -491,7 +492,7 @@ async function reconcileLocalitiesToAnchor(
 		}
 
 		if (reconciling) {
-			const displaced: ResolvedPlace = {
+			const displaced: ResolvedPlace = placeOfNode(node) ?? {
 				...EMPTY_PLACE_FIELDS,
 				id: 0,
 				name: String(node.metadata?.["resolver_name"] ?? node.value),

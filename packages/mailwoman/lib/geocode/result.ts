@@ -3,9 +3,9 @@
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
-import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
+import type { CoordinateSource, GeocodeCandidate, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { isPresent } from "@mailwoman/core/objects"
-import { landmarkPlaceID } from "@mailwoman/core/resolver"
+import { landmarkPlaceID, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
@@ -173,10 +173,18 @@ function venueWordsLast(nodes: readonly AddressNode[], input: string): AddressNo
 }
 
 /**
- * A candidate's resolver score, or null when the resolver recorded none.
+ * A candidate's score, or null with the reason the score is unmeasured.
+ *
+ * The resolver keeps an unmeasured score as a ranking key, so the reason decides before the value does.
  */
-function scoreOf(value: unknown): number | null {
-	return typeof value === "number" && Number.isFinite(value) ? value : null
+function scoreFieldsOf(value: unknown, unmeasured: unknown): Pick<GeocodeCandidate, "score" | "scoreUnmeasured"> {
+	if (typeof unmeasured === "string") {
+		return { score: null, scoreUnmeasured: unmeasured as ScoreUnmeasuredReason }
+	}
+
+	return typeof value === "number" && Number.isFinite(value)
+		? { score: value }
+		: { score: null, scoreUnmeasured: ScoreUnmeasuredReason.Unrecorded }
 }
 
 /**
@@ -187,57 +195,100 @@ interface CandidateAlternative {
 	placetype?: string
 	lat?: number
 	lon?: number
-	country?: string
+	country?: string | null
 	id?: number | string
 	score?: number
+	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	matchedAlias?: true | null
 }
 
 /**
- * The candidate list for the query's primary place: the winner first, then each runner-up
- * at a coordinate no earlier candidate holds, rounded to four decimal places.
+ * The most places the candidate list reports for one parsed span, its winner included.
+ *
+ * A default lookup retrieves 5 rows and the bare-toponym race probes 2 more,
+ * so 10 holds every place a default lookup weighed plus one re-pick's displaced place.
+ * A caller that raises the retrieval count past that sees the span's top 10.
+ */
+const CANDIDATES_PER_SPAN = 10
+
+/**
+ * The most places the candidate list reports across all spans.
+ *
+ * It bounds the response for an input with several resolved spans: the primary span's
+ * 10 plus up to 15 places from the region, county and postcode spans beside it.
+ */
+const CANDIDATE_LIMIT = 25
+
+/**
+ * The places the resolver weighed, grouped by parsed span: the primary node's winner
+ * and the places it passed over, then the passed-over places of every other resolved node.
+ *
+ * Within a span, the ranked runner-ups (`alternatives`) precede the probe losers
+ * and replaced places (`considered`), each in the order the resolver kept them.
+ * A place reported under an earlier span is skipped by place ID.
+ *
+ * A synthetic place without an ID is skipped by coordinate instead.
  *
  * A primary node without a coordinate answers an empty list.
  */
-function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidates"] {
+function candidatesOf(primaryNode: AddressNode | null, allNodes: readonly AddressNode[]): GeocodeCandidate[] {
 	if (primaryNode?.lat == null || primaryNode.lon == null) return []
 
-	const coordKey = (lt: number, ln: number): string => `${lt.toFixed(4)},${ln.toFixed(4)}`
-	const seen = new Set([coordKey(primaryNode.lat, primaryNode.lon)])
 	const metadata = primaryNode.metadata ?? {}
+	const winnerPlacetype = primaryNode.sourceID?.split(":")[0] || primaryNode.tag
 
-	const candidates: GeocodeResult["candidates"] = [
+	const candidates: GeocodeCandidate[] = [
 		{
 			name: (metadata["resolver_name"] as string | null)?.trim() || primaryNode.value.trim(),
 			tag: primaryNode.tag,
+			value: primaryNode.value,
+			placetype: winnerPlacetype,
 			lat: primaryNode.lat,
 			lon: primaryNode.lon,
 			countryCode: (metadata["resolver_country"] as string | null)?.trim()?.toUpperCase() ?? null,
 			placeID: primaryNode.placeID || null,
-			score: scoreOf(metadata["resolver_score"]),
+			...scoreFieldsOf(metadata["resolver_score"], metadata["resolver_score_unmeasured"]),
 			...(metadata["resolver_matched_alias"] ? { matchedAlias: true as const } : {}),
 		},
 	]
 
-	for (const a of (primaryNode.alternatives as ReadonlyArray<CandidateAlternative> | null) ?? []) {
-		if (a.lat == null || a.lon == null || !a.name) continue
+	const seen = new Set([primaryNode.placeID || `${primaryNode.lat},${primaryNode.lon}`])
 
-		const key = coordKey(a.lat, a.lon)
+	const spans = [primaryNode, ...allNodes.filter((n) => n !== primaryNode && n.lat != null && n.lon != null)]
 
-		if (seen.has(key)) continue
+	for (const node of spans) {
+		let listed = node === primaryNode ? 1 : 0
 
-		seen.add(key)
+		const weighed = [...(node.alternatives ?? []), ...(node.considered ?? [])] as ReadonlyArray<CandidateAlternative>
 
-		candidates.push({
-			name: String(a.name).trim(),
-			tag: a.placetype ?? primaryNode.tag,
-			lat: a.lat,
-			lon: a.lon,
-			countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
-			placeID: a.id == null ? null : a.placetype === "venue" ? landmarkPlaceID(a.id) : `wof:${a.id}`,
-			score: scoreOf(a.score),
-			...(a.matchedAlias ? { matchedAlias: true as const } : {}),
-		})
+		for (const a of weighed) {
+			if (listed === CANDIDATES_PER_SPAN || candidates.length === CANDIDATE_LIMIT) break
+
+			if (a.lat == null || a.lon == null || !a.name) continue
+
+			const hasID = a.id != null && a.id !== 0 && a.id !== ""
+			const placeID = hasID ? (a.placetype === "venue" ? landmarkPlaceID(a.id!) : `wof:${a.id}`) : null
+			const key = placeID ?? `${a.lat},${a.lon}`
+
+			if (seen.has(key)) continue
+
+			seen.add(key)
+
+			listed++
+
+			candidates.push({
+				name: String(a.name).trim(),
+				tag: node.tag,
+				value: node.value,
+				placetype: a.placetype || node.tag,
+				lat: a.lat,
+				lon: a.lon,
+				countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
+				placeID,
+				...scoreFieldsOf(a.score, a.scoreUnmeasured),
+				...(a.matchedAlias ? { matchedAlias: true as const } : {}),
+			})
+		}
 	}
 
 	return candidates
@@ -391,7 +442,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		adminWinnerNode ? hierarchySourceNodeOf(adminWinnerNode) : lineageAnchorNode(sourceNodes)
 	)
 
-	const candidates = candidatesOf(primaryNode)
+	const candidates = candidatesOf(primaryNode, allNodes)
 
 	const extracted: GeocodeResult = {
 		input,

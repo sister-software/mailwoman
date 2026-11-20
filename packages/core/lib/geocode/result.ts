@@ -15,6 +15,7 @@ import { z } from "zod"
 import { DroppedSpanSchema } from "#decoder/serialize/json"
 import { ComponentTagSchema } from "#decoder/types"
 import { QueryIntentMarkerSchema } from "#pipeline/types"
+import { ScoreUnmeasuredReason } from "#resolver/types"
 
 /**
  * The geocoder resolution tier that produced a coordinate.
@@ -51,12 +52,33 @@ export const HierarchyEntrySchema = z
 export type HierarchyEntry = z.infer<typeof HierarchyEntrySchema>
 
 /**
- * One ranked alternative place: the winner first, then same-query runner-ups.
+ * Why a candidate's `score` is null.
+ */
+export const ScoreUnmeasuredReasonSchema = z
+	.enum(Object.values(ScoreUnmeasuredReason))
+	.meta({ id: "ScoreUnmeasuredReason", description: "Why a candidate's score is null." })
+
+/**
+ * One place the resolver weighed for a parsed span: the winner first, then the places it passed over.
  */
 export const GeocodeCandidateSchema = z
 	.object({
+		/**
+		 * The resolved gazetteer name.
+		 */
 		name: z.string(),
+		/**
+		 * The parsed span's component tag.
+		 */
 		tag: z.string(),
+		/**
+		 * The raw parsed span.
+		 */
+		value: z.string(),
+		/**
+		 * The gazetteer placetype of the place, such as `locality` or `region`.
+		 */
+		placetype: z.string(),
 		lat: z.number(),
 		lon: z.number(),
 		countryCode: z.string().nullable(),
@@ -64,10 +86,18 @@ export const GeocodeCandidateSchema = z
 		/**
 		 * The resolver's ranking score for this candidate, larger ranking higher.
 		 *
-		 * Scores compare candidates within one answer and have no unit across answers.
-		 * The field is null when the resolver recorded no score for the candidate.
+		 * Scores compare candidates within one span and have no unit across spans or answers.
+		 * The field is null when the score is a rank without a measurement behind it.
+		 * `scoreUnmeasured` then holds the reason.
 		 */
 		score: z.number().nullable(),
+		/**
+		 * Why `score` is null: `population_unrecorded` when the gazetteer ranks by a population
+		 * it doesn't record for the place, `unrecorded` when the resolver recorded no score.
+		 *
+		 * The field is absent when `score` holds a value.
+		 */
+		scoreUnmeasured: ScoreUnmeasuredReasonSchema.optional(),
 		/**
 		 * True when the input matched an alias of this place, such as a former name, and differs from `name`.
 		 *
@@ -75,7 +105,7 @@ export const GeocodeCandidateSchema = z
 		 */
 		matchedAlias: z.literal(true).optional(),
 	})
-	.meta({ id: "GeocodeCandidate", description: "A ranked candidate place." })
+	.meta({ id: "GeocodeCandidate", description: "A place the resolver weighed for one parsed span." })
 
 export type GeocodeCandidate = z.infer<typeof GeocodeCandidateSchema>
 
@@ -348,9 +378,16 @@ export const GeocodeResultSchema = z
 		hierarchy: z.array(HierarchyEntrySchema),
 
 		/**
-		 * Candidate places for the query's primary place.
+		 * The places the resolver weighed, grouped by parsed span.
 		 *
-		 * The winner comes first, followed by the resolver's alternatives with distinct coordinates.
+		 * The primary place's span comes first, its winner at the head of the list.
+		 * Each other resolved span follows with the places it passed over.
+		 *
+		 * Within a span, the resolver's ranked runner-ups come first, then the side-probe
+		 * winners and the places a later pass replaced.
+		 * A place appears once, under the first span that weighed it.
+		 *
+		 * A span lists at most 10 places and the list holds at most 25.
 		 */
 		candidates: z.array(GeocodeCandidateSchema),
 

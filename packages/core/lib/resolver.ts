@@ -40,6 +40,7 @@ export {
 	OSM_LANDMARK_PREFIX,
 	RESOLVE_SWITCH_DEFAULTS,
 	resolveSwitches,
+	ScoreUnmeasuredReason,
 } from "#resolver/types"
 
 export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"

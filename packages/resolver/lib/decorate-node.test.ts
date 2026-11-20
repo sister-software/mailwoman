@@ -244,4 +244,18 @@ describe("decorateNode replacing a place the resolver already wrote (#2994)", ()
 
 		expect(n.alternatives).toBeUndefined()
 	})
+
+	it("moves the replaced place and its alternatives to considered, which the next re-pick keeps", () => {
+		const n = walkPick()
+
+		decorateNode(n, arran, [], [place({ id: 2 })])
+
+		expect((n.considered as ResolvedPlace[]).map((p) => p.id)).toEqual([2, 85_861_711, 1])
+		expect(n.considered?.[1]).toMatchObject({ name: "King's Cross", placetype: "neighbourhood", lat: 51.536114 })
+
+		// Re-picking the London neighborhood removes it from considered and records Arran there.
+		decorateNode(n, place({ id: 85_861_711, placetype: "neighbourhood", country: "GB" }), [])
+
+		expect((n.considered as ResolvedPlace[]).map((p) => p.id)).toEqual([1_125_788_259, 2, 1])
+	})
 })

@@ -79,6 +79,14 @@ export interface AddressNode {
 	 */
 	alternatives?: ReadonlyArray<unknown>
 	/**
+	 * Places the resolver weighed for this span beyond `alternatives`: the bare-toponym race and
+	 * postcode-format probe losers, and each place a later pass replaced, with that place's runner-ups.
+	 *
+	 * Only the geocode result's candidate list reads it, so no ranking stage depends on its contents.
+	 * The type is `unknown` for the reason `alternatives` gives.
+	 */
+	considered?: ReadonlyArray<unknown>
+	/**
 	 * Other tags assigned to the same span, each with its own resolved place.
 	 */
 	interpretations?: ReadonlyArray<Interpretation>

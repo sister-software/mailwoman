@@ -33,7 +33,7 @@ The published `@mailwoman/neural-weights-en-us@11.0.0` package identifies its mo
 
 ## Place candidates and ambiguity markers
 
-A correctly labeled `locality` span can still refer to several places. A geocode result can list ranked `candidates`, with the selected place first. A candidate's `score` ranks places within that answer. Candidate scores have no shared unit across separate answers. A `null` candidate score means the resolver recorded no score for that candidate.
+A correctly labeled `locality` span can still refer to several places. A geocode result lists the `candidates` the resolver weighed for each parsed span, with the selected place first. A candidate's `score` ranks places within its span. Candidate scores have no shared unit across spans or separate answers. A `null` candidate score comes with `scoreUnmeasured`, which states why the resolver has no measured score for that place.
 
 For some bare place-name queries, the geocoder emits a `declared_ambiguity` intent marker when at least two distinct places can be ranked and the leading candidate doesn't meet its dominance test. The marker reports ambiguity while leaving the top-ranked answer in place. Its absence isn't a statement that the place is unique: the check can lack enough rankable candidates or the query can take another path. When the place identity matters, read the alternatives and the evidence behind the winner rather than interpreting the parse node's confidence as a place-match score.
 

@@ -11,6 +11,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
 import { collectNodes, isShapeExcludedPostcode, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
+import { isPresent } from "@mailwoman/core/objects"
 import {
 	type DefaultCountry,
 	type ResolveNodeTrace,
@@ -389,7 +390,7 @@ class WOFResolver implements Resolver {
 
 			if (picked) {
 				resolved = picked.top
-				decorateNode(decorated, picked.top, picked.alternatives)
+				decorateNode(decorated, picked.top, picked.alternatives, picked.considered)
 
 				if (picked.metadata) {
 					decorated.metadata = { ...decorated.metadata, ...picked.metadata }
@@ -546,6 +547,11 @@ class WOFResolver implements Resolver {
 	): Promise<{
 		top: CoordinateOptionalPlace
 		alternatives: ResolvedPlace[]
+		/**
+		 * The probe winners the pick passed over.
+		 * Only the geocode result's candidate list reads them.
+		 */
+		considered?: ResolvedPlace[]
 		metadata?: Record<string, unknown>
 	} | null> {
 		state.lookupsRemaining--
@@ -616,11 +622,16 @@ class WOFResolver implements Resolver {
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
 			rec.check("postcode_format_probe")
 			let best: ResolvedPlace | null = null
+			const countryWinners: ResolvedPlace[] = []
 
 			for (const impliedCountry of state.postcodeFormatCountries) {
 				try {
 					const hits = await this.#backend.findPlace({ ...query, country: impliedCountry })
 					const top = hits[0]
+
+					if (top) {
+						countryWinners.push(top)
+					}
 
 					// Keep the best per-country winner by score.
 					if (top && (!best || top.score > best.score)) {
@@ -634,7 +645,7 @@ class WOFResolver implements Resolver {
 			if (best) {
 				rec.emit({ id: best.id, name: best.name, source: "postcode_format_probe" })
 
-				return { top: best, alternatives: [] }
+				return { top: best, alternatives: [], considered: countryWinners.filter((c) => c !== best) }
 			}
 
 			candidates = []
@@ -686,6 +697,10 @@ class WOFResolver implements Resolver {
 		const bareCountry = isBareRace ? await bareCountryCandidate(this.#backend, node.value, query.country) : null
 		const bareRegion = isBareRace ? await bareRegionCandidate(this.#backend, node.value, query.country) : null
 
+		// The race probes a pick passes over, kept for the geocode result's candidate list.
+		const raceLosers = (picked: ResolvedPlace | null): ResolvedPlace[] =>
+			[bareCountry, bareRegion].filter(isPresent).filter((probe) => probe !== picked)
+
 		if (!candidates.length) {
 			// With no locality candidates, a bare name takes an admin or sub-locality namesake.
 			const pick = isBareRace
@@ -696,7 +711,7 @@ class WOFResolver implements Resolver {
 				rec.check(pick.check)
 				rec.emit({ id: pick.place.id, name: pick.place.name, source: pick.source })
 
-				return { top: pick.place, alternatives: [], metadata: pick.metadata }
+				return { top: pick.place, alternatives: [], considered: raceLosers(pick.place), metadata: pick.metadata }
 			}
 
 			rec.emit(null)
@@ -776,14 +791,24 @@ class WOFResolver implements Resolver {
 			rec.check("bare_country_repick")
 			rec.emit({ id: bareCountry.id, name: bareCountry.name, source: "bare_country" })
 
-			return { top: bareCountry, alternatives: ranked, metadata: { bare_country_repick: true } }
+			return {
+				top: bareCountry,
+				alternatives: ranked,
+				considered: raceLosers(bareCountry),
+				metadata: { bare_country_repick: true },
+			}
 		}
 
 		if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
 			rec.check("bare_region_repick")
 			rec.emit({ id: bareRegion.id, name: bareRegion.name, source: "bare_region" })
 
-			return { top: bareRegion, alternatives: ranked, metadata: { bare_region_repick: true } }
+			return {
+				top: bareRegion,
+				alternatives: ranked,
+				considered: raceLosers(bareRegion),
+				metadata: { bare_region_repick: true },
+			}
 		}
 
 		// Stamp fallback quality when a macro-type winner stands in.
@@ -808,6 +833,7 @@ class WOFResolver implements Resolver {
 		return {
 			top,
 			alternatives: ranked.slice(1),
+			considered: raceLosers(null),
 			...(Object.keys(pickMetadata).length ? { metadata: pickMetadata } : {}),
 		}
 	}
