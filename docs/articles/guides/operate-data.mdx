@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "#partials/runtime"
+import { NodeRequirement } from "#partials/runtime";
 
 # Install, check, roll back and prune local data
 
@@ -19,14 +19,15 @@ This guide uses the smallest <Country code="US" /> files so each step finishes i
 
 Install the published packages:
 
-````sh
-npm install mailwoman@{{release.version}}```
+```sh
+npm install mailwoman@{{release.version}}
+```
 
 Choose a data root. `data pull` creates the directory when it doesn't exist yet:
 
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
-````
+```
 
 Every `data` command reads `$MAILWOMAN_DATA_ROOT`, and each one also accepts `--data-root <path>` for a single run. To practice these steps without touching data you use, point `--data-root` at an empty directory.
 

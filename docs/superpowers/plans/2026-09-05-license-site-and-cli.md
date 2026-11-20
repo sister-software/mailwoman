@@ -984,6 +984,7 @@ end plus 14 days. The purchase page and the first email carry a refresh secret. 
 ```sh
 mailwoman license adopt "mwl1.…" --secret "<refresh secret>"
 ```
+````
 
 That writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key`, which mailwoman reads when `MAILWOMAN_LICENSE_KEY` is
 unset, and the secret to `refresh.json` beside it with owner-only permissions. After a renewal, fetch the current key:
@@ -1002,6 +1003,7 @@ until its date: it is a signed statement about a period that was paid for when i
 would break the installation of a customer whose dispute is later decided in their favor. A dispute decided in your
 favor returns the license to its subscription's state. Online checks are how a revocation reaches an installation
 before the key's date.
+
 ````
 
 Update the frontmatter description if the page's scope grew. Run `yarn workspace @mailwoman/docs lint:prose` (or the `.vale.ini` command the docs `package.json` names) over `docs/src/pages/license.mdx`.
@@ -1017,7 +1019,7 @@ git add docs/src
 git commit -m "feat(docs): the Purchase section, the refresh paragraph and the refunds explanation on /license
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
-```
+````
 
 ---
 

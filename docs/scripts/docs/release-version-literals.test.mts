@@ -27,11 +27,11 @@ describe("findReleaseVersionLiterals", () => {
 		const source = [
 			"Checked with published `mailwoman@11.0.0` on 9 November 2026.",
 			"",
-			"````md",
+			"```md",
 			"```",
 			"```",
 			"npm install mailwoman@{{release.version}}",
-			"````",
+			"```",
 			"mailwoman@11.0.0 after the fence closes",
 		].join("\n")
 

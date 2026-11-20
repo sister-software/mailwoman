@@ -5,7 +5,7 @@ role: guide
 verified-with: mailwoman v11.0.0
 ---
 
-import { CommonPrerequisites } from "#partials/runtime"
+import { CommonPrerequisites } from "#partials/runtime";
 
 # Batch geocode a file of records
 
@@ -19,8 +19,9 @@ Use this procedure to geocode a file of records that each have an ID. The script
 
 Install the published 11.0.0 packages:
 
-````sh
-npm install mailwoman@{{release.version}}```
+```sh
+npm install mailwoman@{{release.version}}
+```
 
 Install the data for the places your records cover. The example rows need the global place candidates, French address points, and the Washington, DC and Vermont address points:
 
@@ -29,7 +30,7 @@ export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
 npx mailwoman data pull us --only us-vt
-````
+```
 
 [Data and locales](../reference/data-and-locales.mdx) lists every bundle. The output below was captured with local builds of these bundles that are newer than the 11.0.0 registry entries.
 
@@ -56,36 +57,36 @@ Row `a3` has no address. The script reads everything after the first comma as th
 Save this file as `batch-geocode.ts`:
 
 ```ts
-import { spawn } from "node:child_process"
-import { appendFileSync, existsSync, readFileSync } from "node:fs"
-import { createInterface } from "node:readline"
+import { spawn } from "node:child_process";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { createInterface } from "node:readline";
 
 interface InputRow {
-	id: string
-	address: string
+	id: string;
+	address: string;
 }
 
 interface GeocodeResult {
-	input: string
-	lat: number | null
-	lon: number | null
-	resolution_tier: string
-	coordinate_source: { source: string } | null
+	input: string;
+	lat: number | null;
+	lon: number | null;
+	resolution_tier: string;
+	coordinate_source: { source: string } | null;
 }
 
 type OutputRecord =
 	| { id: string; status: "failed"; reason: string }
 	| {
-			id: string
-			status: "resolved" | "unresolved"
-			tier: string
-			lat: number | null
-			lon: number | null
-			source: string | null
-	  }
+			id: string;
+			status: "resolved" | "unresolved";
+			tier: string;
+			lat: number | null;
+			lon: number | null;
+			source: string | null;
+	  };
 
-const inputPath = process.argv[2] ?? "addresses.csv"
-const outputPath = process.argv[3] ?? "geocoded.jsonl"
+const inputPath = process.argv[2] ?? "addresses.csv";
+const outputPath = process.argv[3] ?? "geocoded.jsonl";
 
 // Each input line is `id,address`. The address is everything after the first comma.
 const rows: InputRow[] = readFileSync(inputPath, "utf8")
@@ -93,7 +94,7 @@ const rows: InputRow[] = readFileSync(inputPath, "utf8")
 	.slice(1)
 	.filter((line) => line.includes(","))
 	.map((line) => {
-		const comma = line.indexOf(",")
+		const comma = line.indexOf(",");
 
 		return {
 			id: line.slice(0, comma),
@@ -101,8 +102,8 @@ const rows: InputRow[] = readFileSync(inputPath, "utf8")
 				.slice(comma + 1)
 				.replaceAll(/\s+/g, " ")
 				.trim(),
-		}
-	})
+		};
+	});
 
 const done = new Set<string>(
 	existsSync(outputPath)
@@ -110,34 +111,39 @@ const done = new Set<string>(
 				.split("\n")
 				.filter(Boolean)
 				.map((line) => (JSON.parse(line) as OutputRecord).id)
-		: []
-)
+		: [],
+);
 
-const pending = rows.filter((row) => !done.has(row.id))
-const write = (record: OutputRecord) => appendFileSync(outputPath, `${JSON.stringify(record)}\n`)
+const pending = rows.filter((row) => !done.has(row.id));
+const write = (record: OutputRecord) =>
+	appendFileSync(outputPath, `${JSON.stringify(record)}\n`);
 
 for (const row of pending.filter((candidate) => candidate.address === "")) {
-	write({ id: row.id, status: "failed", reason: "empty address" })
+	write({ id: row.id, status: "failed", reason: "empty address" });
 }
 
-const work = pending.filter((row) => row.address !== "")
+const work = pending.filter((row) => row.address !== "");
 
 if (!work.length) {
-	console.log(`nothing to geocode; ${done.size} rows were already done`)
+	console.log(`nothing to geocode; ${done.size} rows were already done`);
 
-	process.exit(0)
+	process.exit(0);
 }
 
-const started = Date.now()
-const geocoder = spawn("npx", ["mailwoman", "geocode", "--stdin"], { stdio: ["pipe", "pipe", "ignore"] })
-let next = 0
+const started = Date.now();
+const geocoder = spawn("npx", ["mailwoman", "geocode", "--stdin"], {
+	stdio: ["pipe", "pipe", "ignore"],
+});
+let next = 0;
 
 createInterface({ input: geocoder.stdout }).on("line", (line) => {
-	const row = work[next++]
-	const result = JSON.parse(line) as GeocodeResult
+	const row = work[next++];
+	const result = JSON.parse(line) as GeocodeResult;
 
 	if (result.input !== row.address)
-		throw new Error(`result for "${result.input}" belongs to a row other than ${row.id}`)
+		throw new Error(
+			`result for "${result.input}" belongs to a row other than ${row.id}`,
+		);
 
 	write({
 		id: row.id,
@@ -146,26 +152,26 @@ createInterface({ input: geocoder.stdout }).on("line", (line) => {
 		lat: result.lat,
 		lon: result.lon,
 		source: result.coordinate_source?.source ?? null,
-	})
-})
+	});
+});
 
 for (const row of work) {
-	geocoder.stdin.write(`${row.address}\n`)
+	geocoder.stdin.write(`${row.address}\n`);
 }
 
-geocoder.stdin.end()
+geocoder.stdin.end();
 
 geocoder.on("close", (code) => {
-	const seconds = ((Date.now() - started) / 1000).toFixed(1)
+	const seconds = ((Date.now() - started) / 1000).toFixed(1);
 
 	console.log(
-		`geocoder exit ${code}: ${next} of ${work.length} rows written in ${seconds} s; ${done.size} rows were already done`
-	)
+		`geocoder exit ${code}: ${next} of ${work.length} rows written in ${seconds} s; ${done.size} rows were already done`,
+	);
 
 	if (code !== 0 || next !== work.length) {
-		process.exitCode = 1
+		process.exitCode = 1;
 	}
-})
+});
 ```
 
 The script appends each record to the output as soon as its result arrives. Each output record keeps `id`, `status`, `tier`, `lat`, `lon` and `source`, or `reason` for a failed row. Add fields from the [result schema](../reference/schema.mdx#geocode-result-and-provenance) as you need them.

@@ -1504,12 +1504,14 @@ mailwoman doctor
 ```
 ````
 
+```
+
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
 mailwoman.post still lists the key id as active. `doctor` reports the branch that applies and the
 obligations that branch imposes. With a valid key the notice is silent and `engine.license` reads
 `LicenseRef-Commercial`.
 
-````
+```
 
 Replace the contact address with whatever the operator names as the sales contact if the pricing page names a different one (`grep -n "mailto:" docs/articles/pricing.mdx`).
 
@@ -1527,7 +1529,7 @@ git add docs/src/pages/license.mdx
 git commit -m "docs: the /license page the notice, the engine stamp, and the Link header point at
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
-````
+```
 
 ---
 

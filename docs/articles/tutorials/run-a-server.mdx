@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { NodeRequirement } from "#partials/runtime"
+import { NodeRequirement } from "#partials/runtime";
 
 # Run the Mailwoman HTTP server
 
@@ -18,8 +18,9 @@ In this tutorial you start the native Mailwoman HTTP server on your machine and 
 
 Install the published 11.0.0 packages:
 
-````sh
-npm install mailwoman@{{release.version}}```
+```sh
+npm install mailwoman@{{release.version}}
+```
 
 The server doesn't start without geographic data. It exits with status 1 before listening when it finds neither a candidate database nor Who's On First databases. Download the global place candidates and the address points for Washington, DC:
 
@@ -27,7 +28,7 @@ The server doesn't start without geographic data. It exits with status 1 before 
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
-````
+```
 
 The two pulls download about 3 GB: `candidate` 2.9 GB and DC 127.5 MB. If you completed [Geocode a file of addresses](./geocode-a-file.mdx), you already have both. The responses below were captured with local builds of these bundles that are newer than the 11.0.0 registry entries, so a coordinate or source release in your responses can differ.
 
