@@ -36,10 +36,12 @@ export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-d
 
 export {
 	EMPTY_PLACE_FIELDS,
+	hardCountryOf,
 	landmarkPlaceID,
 	OSM_LANDMARK_PREFIX,
 	RESOLVE_SWITCH_DEFAULTS,
 	resolveSwitches,
+	ScopeStrength,
 	ScoreUnmeasuredReason,
 	wofIDFromPlaceID,
 } from "#resolver/types"
@@ -54,6 +56,7 @@ export type {
 	ResolveSwitches,
 	DefaultCountry,
 	DefaultCountrySource,
+	ParentPlaceScope,
 	ResolvedPlace,
 	Resolver,
 	ResolverBackend,

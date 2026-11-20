@@ -18,6 +18,8 @@ import type { SwitchPin } from "#tools/eval-harness/switch-pin"
  */
 export const HELDOUT_ARM_SWITCHES = [
 	"countyDesignatorFallback",
+	"scopeCountryRetrieval",
+	"siblingLocalityContainment",
 	"adminContainmentRerank",
 	"dependentLocalityContainment",
 	"postcodeCountryCoherence",

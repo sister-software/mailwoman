@@ -3,6 +3,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
+import type { ParentPlaceScope } from "@mailwoman/core/resolver"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 import type { PathBuilderLike } from "path-ts"
 
@@ -64,6 +65,24 @@ export interface GeocodeCommandOptions {
 	 */
 	countyDesignatorFallback: boolean
 	/**
+	 * A soft country scope acts inside retrieval, and a hard scope reports the places it excluded.
+	 * Off by default.
+	 *
+	 * `--scope-country-retrieval` opts in.
+	 */
+	scopeCountryRetrieval: boolean
+	/**
+	 * One of two `locality` spans resolves inside the other when the gazetteer contains it there.
+	 * Off by default.
+	 *
+	 * `--sibling-locality-containment` opts in.
+	 */
+	siblingLocalityContainment: boolean
+	/**
+	 * A parent place that scopes every lookup (`--parent <wof id>` with `--parent-scope hard|soft`).
+	 */
+	parentPlace?: ParentPlaceScope
+	/**
 	 * Capital-status ranking axis (`--capital-tier auto|required|off`).
 	 */
 	capitalTier: CapitalTier
@@ -101,6 +120,8 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 		dependentLocalityContainment: GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 		countyDesignatorFallback: GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
+		scopeCountryRetrieval: GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval,
+		siblingLocalityContainment: GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,

@@ -14,6 +14,8 @@ import { collectNodes, isShapeExcludedPostcode, type AddressNode, type AddressTr
 import { isPresent } from "@mailwoman/core/objects"
 import {
 	type DefaultCountry,
+	hardCountryOf,
+	ScopeStrength,
 	type ResolveNodeTrace,
 	type ResolvedPlace,
 	type ResolveOpts,
@@ -51,6 +53,12 @@ import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
 import { applyCountryCode, readRegionCodeAsCountry } from "#resolve/country-code"
 import { applyLandmark } from "#resolve/landmark"
 import {
+	agreesWithParent,
+	applyCallerParentQualifier,
+	applyParentPlaceCountry,
+	readParentPlace,
+} from "#resolve/parent-place"
+import {
 	applyPostcodeConsistency,
 	applyRooftopConsistency,
 	applySpanRescore,
@@ -69,7 +77,14 @@ import {
 	applyStreetAsTown,
 	applyVenueAsTown,
 } from "#resolve/region-city"
+import { applySiblingLocalityContainment } from "#resolve/sibling-locality"
 import { applyWholeInputPlace } from "#resolve/whole-input"
+import {
+	placesOutsideCountryScope,
+	promoteSoftCountry,
+	retrieveWithSoftCountry,
+	softScopeRetrieves,
+} from "#scope-retrieval"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -169,7 +184,12 @@ class WOFResolver implements Resolver {
 			minWinningScore: opts.minWinningScore ?? 0,
 			minScoreRefusals: 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
-			defaultCountry: opts.defaultCountry ?? null,
+			// One scope value: a hard scope filters, and a soft one ranks.
+			defaultCountry: hardCountryOf(opts.defaultCountry) ? opts.defaultCountry! : null,
+			softCountry: opts.defaultCountry?.strength === ScopeStrength.Soft ? opts.defaultCountry : null,
+			softCountryWeight: opts.softCountryWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT,
+			scopeCountryRetrieval: opts.scopeCountryRetrieval,
+			parentPlace: opts.parentPlace ? readParentPlace(this.#backend, opts.parentPlace) : null,
 			bareLocalityNode: loneBareLocalityNode(tree, opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP),
 			parentFallback: opts.parentFallback,
 			// Only enable unreachable diagnostics when a trace sink exists.
@@ -187,8 +207,6 @@ class WOFResolver implements Resolver {
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2,
-			localeCountryPrior: opts.localeCountryPrior,
-			localeCountryPriorWeight: opts.localeCountryPriorWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT,
 			capitalLevel: opts.capitalLevel,
 			hardCountry: opts.hardCountry,
 			includeAncestors: opts.includeAncestors,
@@ -199,6 +217,8 @@ class WOFResolver implements Resolver {
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 		}
+
+		applyParentPlaceCountry(state)
 
 		// Optional pre-walk postcode-country coherence pass.
 		// This is the only pass allowed to override `defaultCountry`.
@@ -241,6 +261,14 @@ class WOFResolver implements Resolver {
 
 		// A later pass that gives one of these nodes a different place removes the walk's ancestors with the old place.
 		const walkedWithAncestors = collectNodes(newRoots, (n) => n.metadata?.["ancestors"] != null)
+
+		if (opts.siblingLocalityContainment) {
+			await applySiblingLocalityContainment(newRoots, this.#backend, {
+				placetype: state.placetypeMap.locality ?? "locality",
+				limit: state.candidatesPerLookup,
+				traceSink: state.traceSink ?? null,
+			})
+		}
 
 		// Stamp metadata for postcode-country override.
 		if (postcodeScope) {
@@ -315,7 +343,14 @@ class WOFResolver implements Resolver {
 		// Span-rescore fallback tier (default on).
 		// Skip when a min-score refusal already occurred.
 		if (opts.spanRescore && state.minScoreRefusals === 0) {
-			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
+			await applySpanRescore(
+				newRoots,
+				tree.raw,
+				this.#backend,
+				// A hard parent's country filters the probes as a caller's default country does.
+				state.parentPlace && state.defaultCountry ? { ...opts, defaultCountry: state.defaultCountry } : opts,
+				!state.defaultCountry && softScopeRetrieves(state) ? state.softCountry!.country : null
+			)
 		}
 
 		// OpenStreetMap places answer after span rescore, so a town that holds the whole name keeps it.
@@ -455,6 +490,83 @@ class WOFResolver implements Resolver {
 	}
 
 	/**
+	 * A soft scope's own rows merged into an unscoped lookup's candidates, under scope retrieval.
+	 *
+	 * It returns `candidates` unchanged without a soft country, when the lookup already
+	 * has a country, or when the soft scope ranks only.
+	 */
+	async #withSoftCountryRows(
+		query: Parameters<ResolverBackend["findPlace"]>[0],
+		candidates: ResolvedPlace[],
+		softCountry: string | null,
+		state: ResolutionState,
+		rec: NodeTraceRecorder
+	): Promise<ResolvedPlace[]> {
+		if (!softCountry || query.country || !softScopeRetrieves(state)) return candidates
+
+		rec.check("soft_country_retrieval")
+		const merged = await retrieveWithSoftCountry(this.#backend, query, candidates, softCountry)
+
+		rec.stage("soft_country", merged)
+
+		return merged
+	}
+
+	/**
+	 * A hard caller parent's split of the ranked candidates into those its lineage agrees with
+	 * and the excluded rest, each marked `outsideScope`.
+	 *
+	 * Without a hard parent or an ancestors lookup, every candidate is kept.
+	 */
+	#applyHardParent(
+		ranked: ResolvedPlace[],
+		qualifierIsParent: boolean,
+		state: ResolutionState,
+		rec: NodeTraceRecorder
+	): { kept: ResolvedPlace[]; excluded: ResolvedPlace[] } {
+		const parent = state.parentPlace
+
+		if (parent?.scope.strength !== ScopeStrength.Hard || !this.#backend.ancestors) return { kept: ranked, excluded: [] }
+
+		const ancestors = this.#backend.ancestors.bind(this.#backend)
+		const agrees = (c: ResolvedPlace) => agreesWithParent(c, parent, ancestors, qualifierIsParent)
+		const kept = ranked.filter(agrees)
+
+		rec.stage("parent_scope", kept)
+
+		return {
+			kept,
+			excluded: ranked.filter((c) => !agrees(c)).map((c) => ({ ...c, outsideScope: true as const })),
+		}
+	}
+
+	/**
+	 * The same-name places outside a hard default country, for the node's
+	 * `considered` list, under scope retrieval.
+	 *
+	 * The probe changes no pick, so a backend error is traced and answers no places.
+	 */
+	async #placesOutsideScope(
+		query: Parameters<ResolverBackend["findPlace"]>[0],
+		state: ResolutionState,
+		rec: NodeTraceRecorder
+	): Promise<ResolvedPlace[]> {
+		if (!state.scopeCountryRetrieval || !query.country) return []
+
+		try {
+			const outside = await placesOutsideCountryScope(this.#backend, query, query.country)
+
+			rec.check(`outside_scope: ${outside.length}`)
+
+			return outside
+		} catch (error) {
+			rec.check(`outside_scope_error: ${(error as Error).message}`)
+
+			return []
+		}
+	}
+
+	/**
 	 * The county of a designated `locality` value's name in its region, when the locality
 	 * lookup found no locality known to be inside that region.
 	 *
@@ -569,6 +681,8 @@ class WOFResolver implements Resolver {
 
 		const parentContainment = applyParentScope(query, node, parentResolved, state)
 
+		const callerParentQualifies = applyCallerParentQualifier(query, state)
+
 		// Country scope precedence: parent -> default -> node hint -> hard country.
 		const countryHint = node.metadata?.["country_hint"]
 
@@ -595,7 +709,9 @@ class WOFResolver implements Resolver {
 			state.adminContainmentRerank &&
 			placetype === "locality" &&
 			state.regionQualifier != null &&
-			!isCallerScope(state.defaultCountry)
+			!isCallerScope(state.defaultCountry) &&
+			// The backend reads one qualifier, and the caller's parent outranks the parsed region.
+			!state.parentPlace
 
 		if (containmentEligible) {
 			query.regionQualifier = state.regionQualifier!
@@ -617,6 +733,16 @@ class WOFResolver implements Resolver {
 		rec.bind(node, placetype, { ...query }, state.candidatesPerLookup)
 
 		let candidates: ResolvedPlace[]
+
+		// The anchor posterior and both country scopes act on region and locality lookups only.
+		const anchorEligible = placetype === "region" || placetype === "locality"
+
+		// A soft scope ranks a lookup no hard country, tree parent or anchor posterior already scopes.
+		const softCountry =
+			anchorEligible && !state.defaultCountry && !state.anchorPosterior ? (state.softCountry?.country ?? null) : null
+
+		// The places a hard scope excluded, reported on `considered`.
+		let outsideScope: ResolvedPlace[] = []
 
 		// For unconstrained postalcodes, probe format-implied countries only.
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
@@ -667,6 +793,14 @@ class WOFResolver implements Resolver {
 					rec.stage("parent_fallback", candidates)
 				}
 
+				candidates = await this.#withSoftCountryRows(query, candidates, softCountry, state, rec)
+
+				// Only a lookup the default country filtered reports the same-name places outside it.
+				const filteredByDefault =
+					anchorEligible && !parentResolved && query.country != null && query.country === defaultCountryForLookup
+
+				outsideScope = filteredByDefault ? await this.#placesOutsideScope(query, state, rec) : []
+
 				// Optional diagnostics: record other bands that can resolve this value.
 				if (!candidates.length && state.diagnoseUnreachable) {
 					rec.reachable(await this.#probeOtherBands(query, placetype))
@@ -711,7 +845,12 @@ class WOFResolver implements Resolver {
 				rec.check(pick.check)
 				rec.emit({ id: pick.place.id, name: pick.place.name, source: pick.source })
 
-				return { top: pick.place, alternatives: [], considered: raceLosers(pick.place), metadata: pick.metadata }
+				return {
+					top: pick.place,
+					alternatives: [],
+					considered: [...raceLosers(pick.place), ...outsideScope],
+					metadata: pick.metadata,
+				}
 			}
 
 			rec.emit(null)
@@ -719,40 +858,12 @@ class WOFResolver implements Resolver {
 			return null
 		}
 
-		// Optional anchor-based rerank using postcode country posterior.
-		// Applied to region/locality and kept tier-safe by exact-match first.
-		const anchorEligible = placetype === "region" || placetype === "locality"
-		let ranked = candidates
-
-		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
-			ranked = rankByAnchorPosterior(candidates, state.anchorPosterior, state.anchorWeight)
-			rec.stage("anchor", ranked)
-			ranked = rankWithinPosteriorCountry(ranked, state.capitalLevel, node)
-			rec.stage("importance", ranked)
-		}
-
-		// Optional locale-country soft prior adds to candidate scores while retaining every candidate.
-		// Disabled when default country or anchor posterior is present.
-		if (state.localeCountryPrior && !state.defaultCountry && !state.anchorPosterior && anchorEligible) {
-			ranked = rankByCountryPrior(ranked, state.localeCountryPrior, state.localeCountryPriorWeight)
-			rec.stage("locale_prior", ranked)
-		}
-
-		// Importance-first rerank (the posterior branch above runs its own, within the winning country).
-		if (!state.anchorPosterior) {
-			ranked = rankByImportance(ranked)
-			rec.stage("importance", ranked)
-
-			// Optional bounded capital promotion.
-			if (state.capitalLevel) {
-				ranked = promoteCapitalsWithReceipt(ranked, state.capitalLevel, node)
-				rec.stage("capital", ranked)
-			}
-		}
+		const softPromotion = rankByPriors(candidates, anchorEligible, softCountry, node, state, rec)
+		let ranked = softPromotion.ranked
 
 		// Final containment partition.
 		// It reads the address's own qualifier and preserves the exact-match tier.
-		const qualifierPartition = containmentEligible || parentContainment
+		const qualifierPartition = containmentEligible || parentContainment || callerParentQualifies
 
 		if (qualifierPartition) {
 			ranked = partitionByContainment(
@@ -776,6 +887,18 @@ class WOFResolver implements Resolver {
 			rec.stage("exact_type", ranked)
 		}
 
+		const parentScoped = this.#applyHardParent(ranked, callerParentQualifies, state, rec)
+
+		ranked = parentScoped.kept
+		outsideScope = [...parentScoped.excluded, ...outsideScope]
+
+		if (!ranked.length) {
+			rec.check("parent_scope_excluded_all")
+			rec.emit(null)
+
+			return null
+		}
+
 		const top = ranked[0]!
 
 		if (top.score < state.minWinningScore) {
@@ -794,7 +917,7 @@ class WOFResolver implements Resolver {
 			return {
 				top: bareCountry,
 				alternatives: ranked,
-				considered: raceLosers(bareCountry),
+				considered: [...raceLosers(bareCountry), ...outsideScope],
 				metadata: { bare_country_repick: true },
 			}
 		}
@@ -806,7 +929,7 @@ class WOFResolver implements Resolver {
 			return {
 				top: bareRegion,
 				alternatives: ranked,
-				considered: raceLosers(bareRegion),
+				considered: [...raceLosers(bareRegion), ...outsideScope],
 				metadata: { bare_region_repick: true },
 			}
 		}
@@ -823,6 +946,8 @@ class WOFResolver implements Resolver {
 		const pickMetadata = {
 			...containmentStamps(qualifierPartition, parentContainment, ranked, top),
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
+			// The soft scope's promotion moved this place ahead of a larger namesake.
+			...(top === softPromotion.promoted ? { soft_country_promotion: softCountry } : {}),
 			// Mark picks admitted outside resolved parent scope.
 			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
 			top.regionScopeMiss === true
@@ -833,7 +958,7 @@ class WOFResolver implements Resolver {
 		return {
 			top,
 			alternatives: ranked.slice(1),
-			considered: raceLosers(null),
+			considered: [...raceLosers(null), ...outsideScope],
 			...(Object.keys(pickMetadata).length ? { metadata: pickMetadata } : {}),
 		}
 	}
@@ -887,6 +1012,51 @@ function containmentStamps(
 		admin_containment: adminContainmentVerdict(ranked),
 		...(parentContainment && top.containedByQualifier === true ? { contained_by_parent: true } : {}),
 	}
+}
+
+/**
+ * Ranks a lookup's candidates by its priors in order: the postcode anchor posterior,
+ * the ranking-only soft scope, importance with capital promotion, then the retrieval soft scope.
+ *
+ * `promoted` is the place the retrieval soft scope moved to the lead, or null.
+ */
+function rankByPriors(
+	candidates: ResolvedPlace[],
+	anchorEligible: boolean,
+	softCountry: string | null,
+	node: AddressNode,
+	state: ResolutionState,
+	rec: NodeTraceRecorder
+): { ranked: ResolvedPlace[]; promoted: ResolvedPlace | null } {
+	let ranked = candidates
+
+	// Optional anchor-based rerank using postcode country posterior, kept tier-safe by exact-match first.
+	if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
+		ranked = rankByAnchorPosterior(candidates, state.anchorPosterior, state.anchorWeight)
+		rec.stage("anchor", ranked)
+		ranked = rankWithinPosteriorCountry(ranked, state.capitalLevel, node)
+		rec.stage("importance", ranked)
+	}
+
+	// Without scope retrieval, the soft scope adds to candidate scores ahead of the importance rerank.
+	if (softCountry && !softScopeRetrieves(state)) {
+		ranked = rankByCountryPrior(ranked, softCountry, state.softCountryWeight)
+		rec.stage("locale_prior", ranked)
+	}
+
+	// Importance-first rerank (the posterior branch above runs its own, within the winning country).
+	if (!state.anchorPosterior) {
+		ranked = rankByImportance(ranked)
+		rec.stage("importance", ranked)
+
+		// Optional bounded capital promotion.
+		if (state.capitalLevel) {
+			ranked = promoteCapitalsWithReceipt(ranked, state.capitalLevel, node)
+			rec.stage("capital", ranked)
+		}
+	}
+
+	return promoteSoftCountry(ranked, softCountry, state, rec)
 }
 
 /**

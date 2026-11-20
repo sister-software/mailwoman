@@ -117,6 +117,13 @@ export interface ResolvedPlace {
 	 */
 	matchedAlias?: true | null
 	/**
+	 * True when a hard scope excluded this place: it lies outside the default country
+	 * or the caller's parent place.
+	 *
+	 * The resolver sets it only on a place it lists on a node's `considered` list.
+	 */
+	outsideScope?: true | null
+	/**
 	 * Optional stored extent.
 	 * A point-only row stores its coordinate as both corners.
 	 */
@@ -184,6 +191,10 @@ export interface ResolverBackend {
 	 * Optional ancestor lineage lookup.
 	 */
 	ancestors?(id: number | string): Ancestor[]
+	/**
+	 * Optional lookup of one place by its id, or null when the gazetteer holds no such place.
+	 */
+	place?(id: number): ResolvedPlace | null
 	/**
 	 * Optional artifact coverage facts.
 	 */
@@ -282,6 +293,21 @@ export interface LandmarkLookup {
 export type DefaultCountrySource = "caller" | "inferred"
 
 /**
+ * How a scope acts on a lookup.
+ *
+ * - `"hard"`: a filter.
+ *   A candidate outside the scope never answers.
+ * - `"soft"`: a bounded prior.
+ *   A candidate outside the scope still answers when it's much larger.
+ */
+export const ScopeStrength = {
+	Hard: "hard",
+	Soft: "soft",
+} as const
+
+export type ScopeStrength = (typeof ScopeStrength)[keyof typeof ScopeStrength]
+
+/**
  * A default top-level country scope for resolution.
  */
 export interface DefaultCountry {
@@ -290,6 +316,38 @@ export interface DefaultCountry {
 	 */
 	country: string
 	source: DefaultCountrySource
+	/**
+	 * How the scope acts on a lookup.
+	 *
+	 * Absent means `"hard"`.
+	 */
+	strength?: ScopeStrength
+}
+
+/**
+ * The country of a scope that filters lookups, or null when the scope is absent or soft.
+ */
+export function hardCountryOf(scope: DefaultCountry | null | undefined): string | null {
+	return scope && scope.strength !== ScopeStrength.Soft ? scope.country : null
+}
+
+/**
+ * A caller-supplied place that scopes every lookup of an address, such as a WOF borough or country.
+ *
+ * A hard parent keeps only candidates its ancestor lineage agrees with:
+ * the places inside it, the place itself and its ancestors.
+ * It also filters by the parent's country.
+ *
+ * A soft parent ranks the candidates it contains first and gives its country a soft scope.
+ * Both forms pass the parent to the backend as a containment qualifier.
+ */
+export interface ParentPlaceScope {
+	/**
+	 * The gazetteer id of the parent place.
+	 */
+	id: number
+	source: DefaultCountrySource
+	strength: ScopeStrength
 }
 
 /**
@@ -313,6 +371,8 @@ export interface ResolveSwitches {
 	adminContainmentRerank: boolean
 	dependentLocalityContainment: boolean
 	countyDesignatorFallback: boolean
+	scopeCountryRetrieval: boolean
+	siblingLocalityContainment: boolean
 	diagnoseUnreachable: boolean
 }
 
@@ -334,6 +394,8 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	adminContainmentRerank: true,
 	dependentLocalityContainment: true,
 	countyDesignatorFallback: false,
+	scopeCountryRetrieval: false,
+	siblingLocalityContainment: false,
 	diagnoseUnreachable: false,
 }
 
@@ -364,7 +426,7 @@ export interface ResolveOpts {
 	 */
 	candidatesPerLookup?: number
 	/**
-	 * Default top-level country scope, and who chose it.
+	 * Default top-level country scope, who chose it, and whether it filters or ranks.
 	 */
 	defaultCountry?: DefaultCountry
 	/**
@@ -398,13 +460,17 @@ export interface ResolveOpts {
 	 */
 	anchorWeight?: number
 	/**
-	 * Optional locale country prior.
+	 * The bonus a soft country scope gives a candidate in its country, in log10-population units.
+	 *
+	 * @defaultValue `DEFAULT_COUNTRY_PRIOR_WEIGHT` from `@mailwoman/resolver/toponym-prior` (2)
 	 */
-	localeCountryPrior?: string
+	softCountryWeight?: number
 	/**
-	 * Weight for localeCountryPrior.
+	 * A caller-supplied parent place that scopes every lookup.
+	 *
+	 * It needs a backend with `place` and `ancestors`, and the resolve throws without them.
 	 */
-	localeCountryPriorWeight?: number
+	parentPlace?: ParentPlaceScope
 	/**
 	 * Optional capital-level callback.
 	 */
@@ -569,6 +635,32 @@ export interface ResolveOpts {
 	 */
 	countyDesignatorFallback?: boolean
 	/**
+	 * Lets a soft country scope act inside retrieval.
+	 *
+	 * A region or locality lookup without a hard country also retrieves the soft
+	 * country's rows and merges them by place id.
+	 * A bounded bonus for that country then runs after the importance rerank, so the rerank can't undo it.
+	 *
+	 * The soft scope is the locale's country when the walk withholds it for a bare tree,
+	 * or the locale head's country when the head contradicts the inferred scope.
+	 * A lookup under a hard default country also probes without it and reports the
+	 * same-name places outside the scope on `considered`.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
+	 */
+	scopeCountryRetrieval?: boolean
+	/**
+	 * Resolves one of two `locality` spans inside the other when the gazetteer places
+	 * a candidate of it inside the other's resolved place.
+	 *
+	 * The inner span is retagged `dependent_locality` and looked up with the outer place
+	 * as its containment qualifier, as a written dependent locality is.
+	 * The gazetteer decides which span is inner, so token order doesn't.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
+	 */
+	siblingLocalityContainment?: boolean
+	/**
 	 * Optional sink for resolver-internal trace records.
 	 */
 	traceSink?: ((record: ResolveNodeTrace) => void) | null
@@ -652,6 +744,7 @@ export interface ResolveNodeTrace {
 			| "span_rescore"
 			| "postal_compound_recovery"
 			| "county_designator_fallback"
+			| "sibling_locality_containment"
 	} | null
 }
 

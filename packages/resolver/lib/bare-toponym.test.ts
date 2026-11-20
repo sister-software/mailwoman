@@ -348,26 +348,104 @@ describe("importance key in the admin walk (#17)", () => {
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 
+	const SOFT_GB = { country: "GB", source: "inferred", strength: "soft" } as const
+
 	it("promotes the in-locale-country namesake when the locale prior is supplied (#27)", async () => {
-		const out = await walk(WHITBY, { localeCountryPrior: "GB" })
+		const out = await walk(WHITBY, { defaultCountry: SOFT_GB })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
 	})
 
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
 		// The prior is additive, never a filter: `weight: 0` is the identity,
 		// so the prior cannot make a place the gazetteer never returned appear.
-		const out = await walk(WHITBY, { localeCountryPrior: "GB", localeCountryPriorWeight: 0 })
-		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
-	})
-
-	it("stands down under a hard country scope (a scope makes the prior a no-op by construction)", async () => {
-		const out = await walk(WHITBY, { localeCountryPrior: "GB", defaultCountry: { country: "CA", source: "caller" } })
+		const out = await walk(WHITBY, { defaultCountry: SOFT_GB, softCountryWeight: 0 })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 
 	it("stands down under a postcode anchor — evidence outranks a locale guess", async () => {
-		const out = await walk(WHITBY, { localeCountryPrior: "GB", anchorPosterior: { CA: 1 } })
+		const out = await walk(WHITBY, { defaultCountry: SOFT_GB, anchorPosterior: { CA: 1 } })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
+	})
+
+	it("promotes the in-scope namesake after the rerank, and holds a measured importance lead", async () => {
+		const promoted = await walk(WHITBY, { defaultCountry: SOFT_GB, scopeCountryRetrieval: true })
+
+		// Melbourne, Australia against Melbourne, Florida under a US scope is this shape.
+		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5496 : 0.5089 }))
+		const held = await walk(withScores, { defaultCountry: SOFT_GB, scopeCountryRetrieval: true })
+
+		expect(promoted.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
+		expect(promoted.roots[0]?.metadata?.["soft_country_promotion"]).toBe("GB")
+		expect(held.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
+	})
+})
+
+/**
+ * Scope-country retrieval: a population-ordered fetch can hold only another country's namesakes,
+ * so the soft scope's own rows are fetched and merged before any prior ranks them.
+ */
+describe("scope-country retrieval", () => {
+	const place = (id: number, country: string, prominence: number): ResolvedPlace => ({
+		...EMPTY_PLACE_FIELDS,
+		id,
+		name: "Camden",
+		placetype: "locality",
+		country,
+		lat: 51.54 + id / 1000,
+		lon: -0.14,
+		score: prominence,
+		prominence,
+		exactMatch: true,
+	})
+
+	// Five US rows fill the unscoped fetch, and the GB borough ranks below them.
+	const US_ROWS = [1, 2, 3, 4, 5].map((id) => place(id, "US", 4.8 - id / 10))
+	const BOROUGH = place(38, "GB", 0)
+
+	const backend: ResolverBackend = {
+		async findPlace(query) {
+			if (query.placetype !== "locality") return []
+
+			if (query.country === "GB") return [BOROUGH]
+
+			if (query.country) return []
+
+			return US_ROWS.map((c) => ({ ...c }))
+		},
+	}
+
+	const tree = {
+		raw: "Camden",
+		roots: [node({ tag: "locality", value: "Camden", start: 0, end: 6, confidence: 0.9 })],
+	}
+
+	const SOFT_GB = { country: "GB", source: "inferred", strength: "soft" } as const
+
+	it("retrieves the soft country's namesake that the unscoped fetch's limit left out", async () => {
+		const off = await createWOFResolver(backend).resolveTree(tree, { defaultCountry: SOFT_GB })
+
+		const on = await createWOFResolver(backend).resolveTree(tree, {
+			defaultCountry: SOFT_GB,
+			scopeCountryRetrieval: true,
+		})
+
+		const ids = (n: AddressNode | undefined) => (n?.alternatives ?? []).map((a) => (a as ResolvedPlace).id)
+
+		expect(ids(off.roots[0])).not.toContain(38)
+		expect(ids(on.roots[0])).toContain(38)
+	})
+
+	it("reports the same-name places a hard default country excluded", async () => {
+		const out = await createWOFResolver(backend).resolveTree(tree, {
+			defaultCountry: { country: "GB", source: "caller" },
+			scopeCountryRetrieval: true,
+		})
+
+		const considered = (out.roots[0]?.considered ?? []) as ResolvedPlace[]
+
+		expect(out.roots[0]?.placeID).toBe("wof:38")
+		expect(considered.map((c) => c.id)).toEqual([1, 2, 3, 4, 5])
+		expect(considered.every((c) => c.outsideScope === true)).toBe(true)
 	})
 })
 

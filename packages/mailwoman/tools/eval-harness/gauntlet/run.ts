@@ -111,6 +111,16 @@ export interface GauntletRunOptions {
 	 */
 	countyDesignatorFallback?: SwitchPin
 	/**
+	 * Pin scope-country retrieval for every layer.
+	 * @defaultValue `"production"`
+	 */
+	scopeCountryRetrieval?: SwitchPin
+	/**
+	 * Pin sibling-locality containment for every layer.
+	 * @defaultValue `"production"`
+	 */
+	siblingLocalityContainment?: SwitchPin
+	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
@@ -186,6 +196,8 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
 		dependentLocalityContainment: options.dependentLocalityContainment ?? "production",
 		countyDesignatorFallback: options.countyDesignatorFallback ?? "production",
+		scopeCountryRetrieval: options.scopeCountryRetrieval ?? "production",
+		siblingLocalityContainment: options.siblingLocalityContainment ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",
 		venueHeadPrior: options.venueHeadPrior ?? "production",

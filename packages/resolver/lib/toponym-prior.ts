@@ -176,6 +176,40 @@ export function rankByCountryPrior<T extends Rankable>(
 }
 
 /**
+ * Moves the first candidate in `country` within the leading match tier above each
+ * preceding candidate that's at most `weight` larger, stopping at a national capital
+ * and at a candidate whose measured importance exceeds the promoted one's.
+ *
+ * It runs after {@link rankByImportance} and capital promotion, so neither reorders the result.
+ * The bonus is bounded by size, so a place more than `weight` log10-population units larger still leads.
+ *
+ * A measured importance lead also holds, as Melbourne, Australia holds against
+ * Melbourne, Florida under a US scope.
+ *
+ * A place without a recorded population sizes as 0, and such a place stays behind
+ * any populated namesake more than `weight` units above 0.
+ */
+export function promoteScopedCountry<T extends Rankable & Pick<ResolvedPlace, "name" | "country" | "lat" | "lon">>(
+	candidates: readonly T[],
+	country: string | null,
+	weight: number = DEFAULT_COUNTRY_PRIOR_WEIGHT,
+	level?: CapitalLevelFn
+): T[] {
+	if (!country) return [...candidates]
+
+	const target = country.toUpperCase()
+
+	return promoteInLeadingTier(
+		candidates,
+		(c) => c.country?.toUpperCase() === target,
+		(above, moved) =>
+			(!!level && level(above) >= PROMOTABLE_CAPITAL_LEVEL) ||
+			(measured(above) && measured(moved) && above.importance! > moved.importance!),
+		weight
+	)
+}
+
+/**
  * Returns a place's capital status: 2 for a national capital, 1 for an admin-1 seat and 0 otherwise.
  *
  * The caller supplies it, so the resolver never loads a capitals reference itself.
@@ -201,7 +235,24 @@ export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" 
 	candidates: readonly T[],
 	level: CapitalLevelFn | undefined
 ): T[] {
-	if (!level || candidates.length < 2) return [...candidates]
+	if (!level) return [...candidates]
+
+	const isCapital = (c: T): boolean => level(c) >= PROMOTABLE_CAPITAL_LEVEL
+
+	return promoteInLeadingTier(candidates, isCapital, isCapital, NATIONAL_CAPITAL_MARGIN_LOG10)
+}
+
+/**
+ * Moves the first `promote` row of the leading match tier (the exact matches, or every row when none is exact)
+ * above each preceding row at most `margin` larger, stopping at a `barrier` row.
+ */
+function promoteInLeadingTier<T extends Rankable>(
+	candidates: readonly T[],
+	promote: (c: T) => boolean,
+	barrier: (above: T, moved: T) => boolean,
+	margin: number
+): T[] {
+	if (candidates.length < 2) return [...candidates]
 
 	const exact: T[] = []
 	const rest: T[] = []
@@ -211,7 +262,7 @@ export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" 
 	}
 
 	const tier = exact.length ? exact : rest
-	const best = tier.findIndex((c) => level(c) >= PROMOTABLE_CAPITAL_LEVEL)
+	const best = tier.findIndex(promote)
 
 	if (best <= 0) return [...candidates]
 
@@ -220,9 +271,9 @@ export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" 
 	while (target > 0) {
 		const above = tier[target - 1]!
 
-		if (level(above) >= PROMOTABLE_CAPITAL_LEVEL) break
+		if (barrier(above, tier[best]!)) break
 
-		if (size(tier[best]!) + NATIONAL_CAPITAL_MARGIN_LOG10 < size(above)) break
+		if (size(tier[best]!) + margin < size(above)) break
 
 		target--
 	}
@@ -230,9 +281,9 @@ export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" 
 	if (target === best) return [...candidates]
 
 	const reordered = [...tier]
-	const [capital] = reordered.splice(best, 1)
+	const [moved] = reordered.splice(best, 1)
 
-	reordered.splice(target, 0, capital!)
+	reordered.splice(target, 0, moved!)
 
 	return exact.length ? [...reordered, ...rest] : reordered
 }

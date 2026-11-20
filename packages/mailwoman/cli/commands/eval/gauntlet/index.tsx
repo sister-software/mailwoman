@@ -79,6 +79,18 @@ export const spec = {
 			default: "production",
 			description: "Pin the county-designator fallback",
 		},
+		"scope-country-retrieval": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin scope-country retrieval",
+		},
+		"sibling-locality-containment": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin sibling-locality containment",
+		},
 		"poi-venue-tier": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

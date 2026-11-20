@@ -104,6 +104,13 @@ export const GeocodeCandidateSchema = z
 		 * The field is absent when the input matched the primary name.
 		 */
 		matchedAlias: z.literal(true).optional(),
+		/**
+		 * True when a hard scope excluded this place: it lies outside the default country
+		 * or the caller's parent place, so it couldn't answer.
+		 *
+		 * The field is absent for a place inside the scope.
+		 */
+		outsideScope: z.literal(true).optional(),
 	})
 	.meta({ id: "GeocodeCandidate", description: "A place the resolver weighed for one parsed span." })
 

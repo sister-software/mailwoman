@@ -255,6 +255,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			const { result, tree } = await session.geocode(address, {
 				inputMode: init.inputMode,
 				bias: init.bias.map((point) => ({ ...point })),
+				...(init.parent ? { parentPlace: { id: init.parent.id, source: "caller", strength: init.parent.scope } } : {}),
 			})
 
 			return { ...result, tree: init.includeTree ? tree : null }

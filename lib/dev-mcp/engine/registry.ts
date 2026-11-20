@@ -78,6 +78,18 @@ export interface EngineConfig {
 	 */
 	county_designator_fallback?: SwitchPin
 	/**
+	 * Whether a soft country scope acts inside retrieval and a hard scope reports the places it excluded.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval`
+	 */
+	scope_country_retrieval?: SwitchPin
+	/**
+	 * Whether one of two `locality` spans resolves inside the other when the gazetteer contains it there.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment`
+	 */
+	sibling_locality_containment?: SwitchPin
+	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
@@ -137,6 +149,8 @@ export const EFFECTIVE_KEY_FOR = {
 	admin_containment_rerank: "adminContainmentRerank",
 	dependent_locality_containment: "dependentLocalityContainment",
 	county_designator_fallback: "countyDesignatorFallback",
+	scope_country_retrieval: "scopeCountryRetrieval",
+	sibling_locality_containment: "siblingLocalityContainment",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
 	variant_alias_exemption: "variantAliasExemption",
@@ -205,6 +219,14 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		countyDesignatorFallback: pinnedSwitch(
 			config.county_designator_fallback ?? "production",
 			production.countyDesignatorFallback
+		),
+		scopeCountryRetrieval: pinnedSwitch(
+			config.scope_country_retrieval ?? "production",
+			production.scopeCountryRetrieval
+		),
+		siblingLocalityContainment: pinnedSwitch(
+			config.sibling_locality_containment ?? "production",
+			production.siblingLocalityContainment
 		),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,

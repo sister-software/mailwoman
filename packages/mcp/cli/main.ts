@@ -31,7 +31,7 @@ import {
 	openPlausibilityPOIDeps,
 } from "#layer-guards"
 import { createMCPServer } from "#server"
-import type { MCPToolDeps } from "#tools"
+import type { MCPGeocodeParent, MCPToolDeps } from "#tools"
 
 const { values } = parseArguments({
 	options: {
@@ -136,10 +136,15 @@ async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	return pipeline
 }
 
-async function resolveGeocode(address: string) {
+async function resolveGeocode(address: string, parent: MCPGeocodeParent | null = null) {
 	const { classifier, resolver, databases } = await loadCore()
 
-	return geocodeAddress(address, { classifier, resolver, databases: databases.for })
+	return geocodeAddress(address, {
+		classifier,
+		resolver,
+		databases: databases.for,
+		...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
+	})
 }
 
 const deps: MCPToolDeps = {
@@ -149,8 +154,8 @@ const deps: MCPToolDeps = {
 		return pipeline(text)
 	},
 
-	async geocode(text) {
-		return resolveGeocode(text)
+	async geocode(text, opts) {
+		return resolveGeocode(text, opts?.parent ?? null)
 	},
 
 	async poiSearch(q) {

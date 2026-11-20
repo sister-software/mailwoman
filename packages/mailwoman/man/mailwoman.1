@@ -158,6 +158,18 @@ Options:
                                               county designator (Harris County, TX) as the region's
                                               county when no locality of that name is there.
                                               (default: false)
+  \-\-scope\-country\-retrieval                   Retrieve a soft country scope's own rows and promote
+                                              them after the importance rerank. A hard scope also
+                                              reports the same\-name places it excluded. (default:
+                                              false)
+  \-\-sibling\-locality\-containment              Resolve one of two locality spans inside the other
+                                              when the gazetteer contains it there (Kensington,
+                                              London). (default: false)
+  \-\-parent <wof id>                           A parent place that scopes every lookup, such as a
+                                              borough, city, region or country WOF id.
+  \-\-parent\-scope <string>                     How \-\-parent acts. Hard keeps only places its lineage
+                                              agrees with, and soft ranks the places inside it
+                                              first. (default: hard)
   \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
                                               auto (skip when the capitals reference is missing),
                                               required (fail when it is missing), or off. (default:
