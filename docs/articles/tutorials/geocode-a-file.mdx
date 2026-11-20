@@ -5,7 +5,7 @@ role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
-import { CommonPrerequisites } from "#partials/runtime";
+import { CommonPrerequisites } from "#partials/runtime"
 
 # Geocode a file of addresses
 
@@ -25,6 +25,7 @@ The geocoder reads geographic data from a local directory. Choose a data directo
 
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
 npx mailwoman data pull us --only us-vt
@@ -95,34 +96,27 @@ Open the first line of `results.jsonl`. These are the fields that describe its c
 Save this script as `summarize-results.ts`. It prints the tier, status, coordinate and source of each result. The `GeocodeRow` interface declares the fields the script reads:
 
 ```ts
-import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs"
 
 interface GeocodeRow {
-	input: string;
-	lat: number | null;
-	lon: number | null;
-	resolution_tier: string;
-	epistemic_status: string;
-	coordinate_source: { source: string; release: string } | null;
+	input: string
+	lat: number | null
+	lon: number | null
+	resolution_tier: string
+	epistemic_status: string
+	coordinate_source: { source: string; release: string } | null
 }
 
 const rows: GeocodeRow[] = readFileSync("results.jsonl", "utf8")
 	.trim()
 	.split("\n")
-	.map((line) => JSON.parse(line));
+	.map((line) => JSON.parse(line))
 
 for (const row of rows) {
-	const where =
-		row.lat == null || row.lon == null
-			? "no coordinate"
-			: `${row.lat.toFixed(5)}, ${row.lon.toFixed(5)}`;
-	const source = row.coordinate_source
-		? `${row.coordinate_source.source} ${row.coordinate_source.release}`
-		: "-";
+	const where = row.lat == null || row.lon == null ? "no coordinate" : `${row.lat.toFixed(5)}, ${row.lon.toFixed(5)}`
+	const source = row.coordinate_source ? `${row.coordinate_source.source} ${row.coordinate_source.release}` : "-"
 
-	console.log(
-		`${row.input}\n  ${row.resolution_tier} / ${row.epistemic_status} · ${where} · source: ${source}`,
-	);
+	console.log(`${row.input}\n  ${row.resolution_tier} / ${row.epistemic_status} · ${where} · source: ${source}`)
 }
 ```
 
