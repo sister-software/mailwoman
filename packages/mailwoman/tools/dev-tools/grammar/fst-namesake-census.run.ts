@@ -21,11 +21,20 @@
  *   by overriding the placetype map for the arm's parse only.
  *
  * This command isn't a release eval.
+ *
+ * Usage:
+ *
+ *     node packages/mailwoman/tools/dev-tools/grammar/fst-namesake-census.run.ts --out-dir <dir>
+ *     node packages/mailwoman/tools/dev-tools/grammar/fst-namesake-census.run.ts --heldout <manifest.json> --limit 200
+ *     node packages/mailwoman/tools/dev-tools/grammar/fst-namesake-census.run.ts --heldout <manifest.json> --country FR --base-route
+ *     node packages/mailwoman/tools/dev-tools/grammar/fst-namesake-census.run.ts --inputs <one-input-per-line.txt>
+ *
+ * With no `--heldout` or `--inputs`, it reads the Gauntlet board.
+ * It writes `<label>-summary.json` and `<label>-rows.jsonl` to `--out-dir`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
 import {
@@ -59,7 +68,8 @@ import {
 	type PathMove,
 	type TruthSpan,
 } from "#tools/eval-harness/grammar/census"
-import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { readHeldoutCollectionRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 
 const RULE_A_THRESHOLDS = [0.5, 0.8, 0.9, 0.95, 0.99, 0.999] as const
 const ARMS = ["A", "B0", "B1", "C"] as const
@@ -120,25 +130,20 @@ async function* censusRows(): AsyncGenerator<CensusRow> {
 		return
 	}
 
-	for (const manifestPath of manifests) {
-		const { manifest, rows } = await readHeldoutDatasetRows(manifestPath)
-		const collection = `${manifest.datasetID}@${manifest.version.slice(0, 16)}`
-
-		for (const [index, row] of rows.entries()) {
-			yield {
-				collection,
-				id: row.source_id ?? `${row.group}#${index}`,
-				input: row.raw,
-				country: row.country,
-				truth: {
-					spans: row.span_tags.map((tag, span) => ({
-						tag,
-						start: row.span_starts[span]!,
-						end: row.span_ends[span]!,
-					})),
-					complete: true,
-				},
-			}
+	for await (const { collection, row } of readHeldoutCollectionRows(manifests)) {
+		yield {
+			collection,
+			id: heldoutRowID(row),
+			input: row.raw,
+			country: row.country,
+			truth: {
+				spans: row.span_tags.map((tag, span) => ({
+					tag,
+					start: row.span_starts[span]!,
+					end: row.span_ends[span]!,
+				})),
+				complete: true,
+			},
 		}
 	}
 }
@@ -422,10 +427,7 @@ async function checkpoint(final: boolean): Promise<void> {
 
 	await writeLocalJSONFile(summary, `${outDir}/${label}-summary.json`)
 
-	await writeLocalTextFile(
-		receipts.map((receipt) => stringifyJSON(receipt)),
-		`${outDir}/${label}-rows.jsonl`
-	)
+	await writeLocalJSONLFile(receipts, `${outDir}/${label}-rows.jsonl`)
 }
 
 using deps = await buildGauntletDeps()

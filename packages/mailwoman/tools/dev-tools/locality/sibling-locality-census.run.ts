@@ -21,11 +21,19 @@
  * `--inputs` reads a tab-separated literal set (`input<TAB>country`) with no truth, geocoded on both routes.
  *
  * This command isn't a release eval.
+ *
+ * Usage:
+ *
+ *     node packages/mailwoman/tools/dev-tools/locality/sibling-locality-census.run.ts --heldout <manifest.json> --limit 200
+ *     node packages/mailwoman/tools/dev-tools/locality/sibling-locality-census.run.ts --heldout <manifest.json> --route country --outside-every 50
+ *     node packages/mailwoman/tools/dev-tools/locality/sibling-locality-census.run.ts --inputs <input-tab-country.tsv> --label probes
+ *
+ * It writes `<label>-summary.json` and `<label>-rows.jsonl` to `--out-dir`.
  */
 
 import { collectNodes, buildAddressTree } from "@mailwoman/core/decoder"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
@@ -38,7 +46,7 @@ import {
 	type GauntletDeps,
 	type GauntletGeocodeOpts,
 } from "#tools/eval-harness/gauntlet/harness"
-import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { readHeldoutCollectionRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { heldoutRowID, type HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 import { scoreGeocodeOutcome, type HeldoutGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode/outcome"
 
@@ -100,13 +108,8 @@ async function* censusRows(): AsyncGenerator<CensusRow> {
 		return
 	}
 
-	for (const manifestPath of values.heldout ?? []) {
-		const { manifest, rows } = await readHeldoutDatasetRows(manifestPath)
-		const collection = `${manifest.datasetID}@${manifest.version.slice(0, 16)}`
-
-		for (const row of rows) {
-			yield { collection, row, graded: true }
-		}
+	for await (const { collection, row } of readHeldoutCollectionRows(values.heldout ?? [])) {
+		yield { collection, row, graded: true }
 	}
 }
 
@@ -264,10 +267,7 @@ async function checkpoint(final: boolean): Promise<void> {
 		`${outDir}/${label}-summary.json`
 	)
 
-	await writeLocalTextFile(
-		receipts.map((receipt) => stringifyJSON(receipt)),
-		`${outDir}/${label}-rows.jsonl`
-	)
+	await writeLocalJSONLFile(receipts, `${outDir}/${label}-rows.jsonl`)
 }
 
 async function localitySpans(deps: GauntletDeps, input: string, opts: GauntletGeocodeOpts): Promise<string[]> {
