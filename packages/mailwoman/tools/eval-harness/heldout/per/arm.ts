@@ -2,19 +2,36 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A held-out arm: a weights cache root, and the resolver switches its geocode outcomes pin.
+ *   A held-out arm: a weights cache root, the resolver switches its geocode outcomes pin,
+ *   and the decoder settings its parses pin.
  *
  *   An arm is written `<weights cache root>` or `<weights cache root>#<switch>=<on|off>[,<switch>=<on|off>]`.
- *   The pins act only in the resolver, so they leave the arm's parse outcomes as the root's,
- *   and two arms that share a root and differ only in a pin isolate a resolver change.
+ *   A resolver pin leaves the arm's parse outcomes as the root's, so two arms that share
+ *   a root and differ only in a resolver pin isolate a resolver change.
+ *
+ *   A decoder pin changes the parses.
+ *   The parses are made once per root and decoder pin set.
  *
  *   The label is the arm's identity in a report, and a verdict identifies the arm by the same label.
  */
 
+import type { DecoderSettings } from "#geocode/core"
 import type { SwitchPin } from "#tools/eval-harness/switch-pin"
 
 /**
- * The resolver switches an arm may pin, the boolean pins of `GauntletResolverPins`.
+ * The decoder settings an arm may pin.
+ *
+ * `fstCountryRouting` is absent because the held-out parse feeds no gazetteer FST.
+ */
+export const HELDOUT_ARM_DECODER_SWITCHES = [
+	"pairPriorWordPieces",
+	"pairPriorChildPostcodeStrip",
+	"pairIndexCountryGate",
+] as const satisfies readonly (keyof DecoderSettings)[]
+
+/**
+ * The switches an arm may pin: the boolean resolver pins of `GauntletResolverPins`,
+ * then the decoder settings.
  */
 export const HELDOUT_ARM_SWITCHES = [
 	"countyDesignatorFallback",
@@ -24,7 +41,21 @@ export const HELDOUT_ARM_SWITCHES = [
 	"dependentLocalityContainment",
 	"postcodeCountryCoherence",
 	"poiVenueTier",
+	...HELDOUT_ARM_DECODER_SWITCHES,
 ] as const
+
+/**
+ * The decoder settings an arm pins, as the parse reads them.
+ */
+export function heldoutArmDecoderSettings(arm: Pick<HeldoutArm, "pins">): DecoderSettings {
+	return Object.fromEntries(
+		HELDOUT_ARM_DECODER_SWITCHES.flatMap((name) => {
+			const pin = arm.pins[name]
+
+			return pin ? [[name, pin === "on"]] : []
+		})
+	)
+}
 
 export type HeldoutArmSwitch = (typeof HELDOUT_ARM_SWITCHES)[number]
 

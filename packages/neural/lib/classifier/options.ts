@@ -7,6 +7,8 @@ import type {
 	AnchorRegionLookupLike,
 	CaseNormalization,
 	ChannelPins,
+	CountryFSTLookup,
+	PairIndexCountryGate,
 	PlacetypePairSelection,
 	SoftChannelName,
 	SpanProposerLexicon,
@@ -478,6 +480,40 @@ export interface ParseOpts {
 	 * The prior biases a place name toward the tag the pair index recorded beside another input name.
 	 */
 	placetypePair?: PlacetypePairSelection<PlacetypePairPriorOpts>
+
+	/**
+	 * Whether the placetype-pair prior leaves separator pieces, those without a letter or digit, unbiased.
+	 *
+	 * Off by default.
+	 */
+	pairPriorWordPieces?: boolean
+
+	/**
+	 * Whether a segment child's pair bias leaves out the same-field postcode its probe key stripped.
+	 *
+	 * Off by default.
+	 */
+	pairPriorChildPostcodeStrip?: boolean
+
+	/**
+	 * Applies the placetype-pair index only when the parse's country is the index's country.
+	 *
+	 * The parse's country is `declaredCountry` when the caller states one, else the locale
+	 * head's confident verdict, the country the decoded tree resolves containment for.
+	 * A parse with neither takes no pair bias.
+	 * Absent, the index applies to every parse.
+	 */
+	pairIndexCountryGate?: PairIndexCountryGate
+
+	/**
+	 * Returns the gazetteer FST shipped for a country, or `null` when none ships.
+	 *
+	 * When set, a parse whose locale head confidently reads a country with an FST
+	 * takes that country's FST in place of `fst`.
+	 * A parse whose head reads no country confidently, or reads one without an FST, keeps `fst`.
+	 * Absent, every parse takes `fst`.
+	 */
+	fstForCountry?: CountryFSTLookup
 
 	/**
 	 * The placetype census for this parse.

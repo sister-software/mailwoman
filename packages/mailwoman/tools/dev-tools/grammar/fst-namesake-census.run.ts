@@ -20,6 +20,12 @@
  * - `C`: tag `neighbourhood` and `macrohood` votes as `dependent_locality`,
  *   by overriding the placetype map for the arm's parse only.
  *
+ * `--decoder-arm <setting>` re-parses a row with one decoder setting on against its default,
+ * for the rows the setting can change: a placetype-pair setting on rows where the pair prior fired,
+ * `fstCountryRouting` on rows whose locale head confidently reads a country other than the route's.
+ * `--decoder-arm-every k` re-parses every k-th other row too, to check that bound.
+ * `--decoder-only` skips the FST vote-rule arms.
+ *
  * This command isn't a release eval.
  *
  * Usage:
@@ -36,6 +42,7 @@
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
+import { confidentLocaleCountry } from "@mailwoman/neural/address-system"
 import {
 	findFSTAcceptedMatches,
 	PLACETYPE_TO_BIO,
@@ -47,7 +54,9 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { DECODER_SETTING_KEYS } from "#geocode/core"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
+import { overlayLocale } from "#tools/eval-harness/gauntlet/routing"
 import {
 	comparePaths,
 	emptyFlipGrades,
@@ -72,6 +81,8 @@ const ARMS = ["A", "B0", "B1", "C"] as const
 
 type Arm = (typeof ARMS)[number]
 
+type DecoderSettingKey = (typeof DECODER_SETTING_KEYS)[number]
+
 const { values } = parseArguments({
 	options: {
 		heldout: { type: "string", multiple: true },
@@ -82,8 +93,24 @@ const { values } = parseArguments({
 		"out-dir": { type: "string" },
 		limit: { type: "string" },
 		"wof-db": { type: "string" },
+		// A decoder setting to re-parse with, on against the default, repeatable.
+		"decoder-arm": { type: "string", multiple: true },
+		// Also re-parse every k-th row outside a decoder arm's population, to check the population bound.
+		"decoder-arm-every": { type: "string" },
+		// Skip the FST vote-rule arms, for a run that measures only decoder settings.
+		"decoder-only": { type: "boolean" },
 	},
 })
+
+const decoderArms = (values["decoder-arm"] ?? []) as DecoderSettingKey[]
+
+for (const name of decoderArms) {
+	if (!(DECODER_SETTING_KEYS as readonly string[]).includes(name)) {
+		throw new Error(`unknown --decoder-arm ${name}; the decoder settings are ${DECODER_SETTING_KEYS.join(", ")}`)
+	}
+}
+
+const decoderArmEvery = values["decoder-arm-every"] ? Number(values["decoder-arm-every"]) : 0
 
 const outDir = values["out-dir"] ?? "/mnt/mw/audits/fst-census"
 const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY
@@ -197,6 +224,10 @@ interface RowReceipt {
 	head: { country: string; confidence: number; rowCountryProbability: number | null } | null
 	flips: FlipReceipt[]
 	arms: Partial<Record<Arm, ArmReceipt>>
+	/**
+	 * Each decoder setting that changed the row's path, with the setting on against the default.
+	 */
+	decoderArms: Partial<Record<DecoderSettingKey, ArmReceipt>>
 }
 
 function voterReceipt(vote: FSTVote | null, count: number): VoterReceipt | null {
@@ -256,13 +287,23 @@ interface CountryTally {
 	 * The maximum votes by voter country.
 	 */
 	maximumVoteCountries: Record<string, number>
+	/**
+	 * Per arm, the rows it re-parsed (`rows`) and what moved.
+	 */
 	arms: Record<
 		string,
-		{ rowsChanged: number; rowsImproved: number; rowsRegressed: number; gained: number; lost: number }
+		{ rows: number; rowsChanged: number; rowsImproved: number; rowsRegressed: number; gained: number; lost: number }
 	>
 }
 
-const armKeys = [...RULE_A_THRESHOLDS.map((t) => `A@${t}`), "B0", "B1", "C"]
+const armKeys = [
+	...RULE_A_THRESHOLDS.map((t) => `A@${t}`),
+	"B0",
+	"B1",
+	"C",
+	...decoderArms.map((name) => `decoder:${name}`),
+	...decoderArms.map((name) => `decoder:${name}:outside`),
+]
 
 function emptyTally(): CountryTally {
 	return {
@@ -279,7 +320,7 @@ function emptyTally(): CountryTally {
 		maximumVotesForeignToHead: 0,
 		maximumVoteCountries: {},
 		arms: Object.fromEntries(
-			armKeys.map((key) => [key, { rowsChanged: 0, rowsImproved: 0, rowsRegressed: 0, gained: 0, lost: 0 }])
+			armKeys.map((key) => [key, { rows: 0, rowsChanged: 0, rowsImproved: 0, rowsRegressed: 0, gained: 0, lost: 0 }])
 		),
 	}
 }
@@ -299,8 +340,12 @@ function tallyFor(collection: string, country: string | null): CountryTally {
 }
 
 function addArm(tally: CountryTally, key: string, receipt: ArmReceipt | undefined): void {
-	if (!receipt?.changedPieces.length) return
+	if (!receipt) return
 	const arm = tally.arms[key]!
+
+	arm.rows++
+
+	if (!receipt.changedPieces.length) return
 
 	arm.rowsChanged++
 	arm.gained += receipt.gained
@@ -355,15 +400,70 @@ for await (const row of readDecodeCensusRows({
 	tally.rows++
 	const caseOpts = row.country && !values["base-route"] ? { caseCountry: row.country } : {}
 	const base = await deps.diagnoseParse(row.input, caseOpts)
-
-	if (!base.fst) continue
-
-	tally.rowsWithFST++
 	const { trace } = base
-	const matches = findFSTAcceptedMatches(base.fst, trace.pieces)
-	const votes = fstVotes(matches, trace.pieces)
 	const head = localeHeadReading(trace.localeLogits, trace.localeCountries)
 	const truth = truthInText(row, trace.text)
+	const baseLabels = pathLabels(trace)
+	const pieceTruth = pieceTruthTags(trace.pieces, trace.text, truth.spans, truth.complete)
+
+	// The decoder arms: each re-parses the rows its setting can change, and every k-th other row as a check.
+	const decoderReceipts: Partial<Record<DecoderSettingKey, ArmReceipt>> = {}
+	const pairApplied = trace.priors.some((prior) => prior.kind === "placetypePair" && prior.applied)
+
+	const routeCountry = overlayLocale(caseOpts.caseCountry ?? null)
+		.split("-")[1]!
+		.toUpperCase()
+
+	const headCountry = confidentLocaleCountry(trace.localeLogits)?.country ?? null
+
+	for (const name of decoderArms) {
+		const inPopulation =
+			name === "fstCountryRouting" ? Boolean(base.fst && headCountry && headCountry !== routeCountry) : pairApplied
+
+		const sampled = !inPopulation && decoderArmEvery > 0 && processed % decoderArmEvery === 0
+
+		if (!inPopulation && !sampled) continue
+
+		const arm = await deps.diagnoseParse(row.input, caseOpts, undefined, { [name]: true })
+		const receipt = armReceipt(trace, baseLabels, pathLabels(arm.trace), pieceTruth)
+
+		addArm(tally, inPopulation ? `decoder:${name}` : `decoder:${name}:outside`, receipt)
+
+		if (receipt.changedPieces.length) {
+			decoderReceipts[name] = receipt
+		}
+	}
+
+	const decoderChanged = Object.keys(decoderReceipts).length > 0
+
+	const headReceipt = head
+		? {
+				country: head.country,
+				confidence: head.confidence,
+				rowCountryProbability: row.country ? (head.probabilities[row.country.toUpperCase()] ?? null) : null,
+			}
+		: null
+
+	if (!base.fst) {
+		if (decoderChanged) {
+			receipts.push({
+				collection: row.collection,
+				id: row.id,
+				input: row.input,
+				country: row.country,
+				head: headReceipt,
+				flips: [],
+				arms: {},
+				decoderArms: decoderReceipts,
+			})
+		}
+
+		continue
+	}
+
+	tally.rowsWithFST++
+	const matches = findFSTAcceptedMatches(base.fst, trace.pieces)
+	const votes = fstVotes(matches, trace.pieces)
 	const flips = priorFlipSpans(trace.explanation, "fst") ?? []
 
 	// The distribution: per accepted match and tag, the highest-referential vote.
@@ -452,15 +552,15 @@ for await (const row of readDecodeCensusRows({
 
 	// The arms: a row whose FST entries an arm leaves unchanged decodes as the base did, so it isn't re-parsed.
 	const arms: Partial<Record<Arm, ArmReceipt>> = {}
-	const baseLabels = pathLabels(trace)
-	const pieceTruth = pieceTruthTags(trace.pieces, trace.text, truth.spans, truth.complete)
 	const entries = matches.flatMap((match) => match.entries)
 	const mapped = entries.filter((entry) => PLACETYPE_TO_BIO.has(entry.placetype))
 
 	const armParse = async (wrap: (fst: FSTMatcherLike) => FSTMatcherLike) =>
 		armReceipt(trace, baseLabels, pathLabels((await deps.diagnoseParse(row.input, caseOpts, wrap)).trace), pieceTruth)
 
-	if (head) {
+	const voteRules = !values["decoder-only"]
+
+	if (voteRules && head) {
 		if (
 			mapped.some((entry) => {
 				const country = countryOf(entry.wofID)
@@ -485,7 +585,7 @@ for await (const row of readDecodeCensusRows({
 		}
 	}
 
-	if (entries.some((entry) => (RULE_C_PLACETYPES as readonly string[]).includes(entry.placetype))) {
+	if (voteRules && entries.some((entry) => (RULE_C_PLACETYPES as readonly string[]).includes(entry.placetype))) {
 		arms.C = await withRuleCMap(() => armParse((fst) => fst))
 	}
 
@@ -501,23 +601,18 @@ for await (const row of readDecodeCensusRows({
 
 	const armChanged = Object.values(arms).some((receipt) => receipt.changedPieces.length)
 
-	if (flipReceipts.length || armChanged) {
+	if (flipReceipts.length || armChanged || decoderChanged) {
 		receipts.push({
 			collection: row.collection,
 			id: row.id,
 			input: row.input,
 			country: row.country,
-			head: head
-				? {
-						country: head.country,
-						confidence: head.confidence,
-						rowCountryProbability: row.country ? (head.probabilities[row.country.toUpperCase()] ?? null) : null,
-					}
-				: null,
+			head: headReceipt,
 			flips: flipReceipts,
 			arms: Object.fromEntries(Object.entries(arms).filter(([, receipt]) => receipt.changedPieces.length)) as Partial<
 				Record<Arm, ArmReceipt>
 			>,
+			decoderArms: decoderReceipts,
 		})
 	}
 

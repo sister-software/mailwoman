@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
+import { heldoutArmDecoderSettings, parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
 import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
 
 describe("parseHeldoutArm", () => {
@@ -28,5 +28,13 @@ describe("parseHeldoutArm", () => {
 		expect(() => parseHeldoutArm("/r#countyDesignatorFallback=yes")).toThrow(/a pin is on or off/u)
 		expect(() => parseHeldoutArm("/r#countyDesignatorFallback=on,countyDesignatorFallback=off")).toThrow(/twice/u)
 		expect(() => parseHeldoutArm("#countyDesignatorFallback=on")).toThrow(/no weights cache root/u)
+	})
+
+	it("separates the decoder pins its parses take from the resolver pins, and refuses the FST routing it can't feed", () => {
+		const arm = parseHeldoutArm("/r#pairPriorWordPieces=on,pairIndexCountryGate=off,poiVenueTier=on")
+
+		expect(heldoutArmDecoderSettings(arm)).toEqual({ pairPriorWordPieces: true, pairIndexCountryGate: false })
+		expect(heldoutArmDecoderSettings(parseHeldoutArm("/r#poiVenueTier=on"))).toEqual({})
+		expect(() => parseHeldoutArm("/r#fstCountryRouting=on")).toThrow(/the switches an arm may pin/u)
 	})
 })

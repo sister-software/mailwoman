@@ -15,6 +15,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type AnchorRegionLookupLike,
 	type ClassifierOpts,
+	type CountryFSTLookup,
 	type FSTMatcherLike,
 	streetContextRequirementFor,
 	type VenueHeadLexiconLike,
@@ -288,6 +289,71 @@ export async function loadParsePriors(
 
 			return lexicon
 		},
+	}
+}
+
+/**
+ * Options for {@link createCountryFSTLookup}.
+ */
+export interface CountryFSTLookupOptions {
+	/**
+	 * The country of the FST the classifier already parses with, answered without a load.
+	 */
+	primaryCountry: string | null
+	/**
+	 * The FST the classifier already parses with.
+	 */
+	primaryFST: FSTMatcherLike | null
+	/**
+	 * The path of the FST shipped for a country, or `null` when none ships.
+	 */
+	fstPathFor: (country: string) => Promise<PathBuilderLike | string | null>
+	/**
+	 * Receives one message for each country whose FST was found but couldn't be read.
+	 *
+	 * @defaultValue `console.warn`
+	 */
+	onWarn?: (message: string) => void
+}
+
+/**
+ * Returns a lookup of the gazetteer FST shipped for each country, loading each one on first use.
+ *
+ * A country whose FST ships but doesn't load is reported once and answers `null`,
+ * so its parse keeps the classifier's own FST.
+ */
+export function createCountryFSTLookup(options: CountryFSTLookupOptions): CountryFSTLookup {
+	const warn = options.onWarn ?? ((message: string) => console.warn(`[mailwoman] ${message}`))
+	const primary = options.primaryCountry?.toUpperCase() ?? null
+	const loaded = new Map<string, Promise<FSTMatcherLike | null>>()
+
+	const load = async (country: string): Promise<FSTMatcherLike | null> => {
+		const path = await options.fstPathFor(country)
+
+		if (!path) return null
+
+		try {
+			return deserializeFST(await readLocalBuffer(path))
+		} catch (error) {
+			warn(`failed to load the ${country} gazetteer FST at ${path}: ${(error as Error).message}`)
+
+			return null
+		}
+	}
+
+	return (country) => {
+		const key = country.toUpperCase()
+
+		if (key === primary) return options.primaryFST
+
+		let pending = loaded.get(key)
+
+		if (!pending) {
+			pending = load(key)
+			loaded.set(key, pending)
+		}
+
+		return pending
 	}
 }
 

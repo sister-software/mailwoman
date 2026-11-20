@@ -44,6 +44,7 @@ import type {
 	SpanProposerConfig,
 } from "#classifier/options"
 import { DEFAULT_TOGGLE } from "#classifier/options"
+import { containmentCountry, fstForParse, parsePairPrior } from "#classifier/parse-country"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { codeUnitChannel } from "#code-unit-features"
 import {
@@ -130,17 +131,6 @@ export interface NeuralRunner {
 	 * by the constructor when the config has a `charEncoder`.
 	 */
 	inferChars?: InferCharsFunction
-}
-
-/**
- * The country a parse's tree resolves containment for: the caller's locale hint,
- * or the locale classifier's confident country when no hint was given.
- */
-function containmentCountry(
-	localeCountry: { country: string; confidence: number } | null,
-	localeHint: string | null | undefined
-): string | null {
-	return localeHint?.trim().toUpperCase() || localeCountry?.country || null
 }
 
 /**
@@ -624,25 +614,29 @@ export class NeuralAddressClassifier {
 				: null
 
 		const anchorRegionHits = new Set<number>()
+		const parseFST = await fstForParse(opts, localeLogits)
 
-		const fstPrior = opts?.fst
-			? buildFSTEmissionPriors(opts.fst, pieces, this.labels, {
-					biasScale: opts.fstBiasScale ?? 1,
-					...(anchorRegionIDs?.size ? { anchorRegionIDs, anchorRegionHits } : {}),
-					...(opts.fstImportanceLengthScaleMode
-						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
-						: {}),
-					// The street-context check reuses the street-morphology FST when one is loaded.
-					...(opts.fstStreetMorphology && opts.fstStreetContextRequirement !== false
-						? {
-								streetContext: {
-									fst: opts.fstStreetMorphology,
-									...(opts.fstStreetContextPositiveScale ? { positiveScale: opts.fstStreetContextPositiveScale } : {}),
-								},
-							}
-						: {}),
-				})
-			: null
+		const fstPrior =
+			parseFST && opts
+				? buildFSTEmissionPriors(parseFST, pieces, this.labels, {
+						biasScale: opts.fstBiasScale ?? 1,
+						...(anchorRegionIDs?.size ? { anchorRegionIDs, anchorRegionHits } : {}),
+						...(opts.fstImportanceLengthScaleMode
+							? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
+							: {}),
+						// The street-context check reuses the street-morphology FST when one is loaded.
+						...(opts.fstStreetMorphology && opts.fstStreetContextRequirement !== false
+							? {
+									streetContext: {
+										fst: opts.fstStreetMorphology,
+										...(opts.fstStreetContextPositiveScale
+											? { positiveScale: opts.fstStreetContextPositiveScale }
+											: {}),
+									},
+								}
+							: {}),
+					})
+				: null
 
 		if (fstPrior) {
 			addPrior("fst", fstPrior)
@@ -694,14 +688,7 @@ export class NeuralAddressClassifier {
 		// The placetype-pair prior stays off unless options or config enable it.
 		// It runs before the conventions mask, so the mask still removes any
 		// forbidden tag that the prior favors.
-		const placetypePairSelection = opts?.placetypePair ?? "inherit"
-
-		const placetypePairOpt =
-			placetypePairSelection === "inherit"
-				? this.cfg.placetypePair
-				: placetypePairSelection === "off"
-					? undefined
-					: placetypePairSelection
+		const placetypePairOpt = parsePairPrior(this.cfg.placetypePair, opts, localeLogits)
 
 		// This record, allocated only when tracing, receives the probe path that fired.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
@@ -718,6 +705,8 @@ export class NeuralAddressClassifier {
 			? buildPlacetypePairPriors(
 					{
 						...placetypePairOpt,
+						...(opts?.pairPriorWordPieces ? { wordPiecesOnly: true } : {}),
+						...(opts?.pairPriorChildPostcodeStrip ? { childKeyPiecesOnly: true } : {}),
 						inputText: text,
 						postcodeSpanMode: this.cfg.postcodeAnchorSpanMode,
 						probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace,

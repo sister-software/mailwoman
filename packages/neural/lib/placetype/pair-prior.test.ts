@@ -1148,3 +1148,83 @@ describe("BuildPlacetypePairPriors — whole-edge parent bias", () => {
 		expect(probeTrace.firedChildTags).toEqual(["dependent_locality"])
 	})
 })
+
+describe("buildPlacetypePairPriors — wordPiecesOnly (#3165 separator defect)", () => {
+	const text = "Moelfre, Abergele"
+
+	it("by default the segment window biases the comma after the child", () => {
+		const index = mockPairIndex({ "moelfre|abergele": "dependent_locality" }, 6, undefined, undefined, 4)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, makePiecesWithCommas(text), LABELS)
+
+		expect(matrix[1]![labelCol("I-dependent_locality")]).toBe(6)
+	})
+
+	it("with the setting on, the comma takes no bias and every word piece keeps its bias", () => {
+		const index = mockPairIndex({ "moelfre|abergele": "dependent_locality" }, 6, undefined, undefined, 4)
+
+		const { matrix } = buildPlacetypePairPriors(
+			{ index, inputText: text, wordPiecesOnly: true },
+			makePiecesWithCommas(text),
+			LABELS
+		)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
+		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[2]![labelCol("B-locality")]).toBe(4)
+	})
+
+	it("a byte-fallback piece inside a name keeps its bias, because it encodes a letter", () => {
+		// The word's FST token skips its byte pieces, so the probe key is `zrich`.
+		const index = mockPairIndex({ "zrich|bern": "dependent_locality" }, 6)
+
+		const pieces = [
+			{ piece: "▁Z", start: 0, end: 1 },
+			{ piece: "<0xC3>", start: 1, end: 2 },
+			{ piece: "<0xBC>", start: 1, end: 2 },
+			{ piece: "rich", start: 2, end: 6 },
+			{ piece: ",", start: 6, end: 7 },
+			{ piece: "▁Bern", start: 8, end: 12 },
+		]
+
+		const words = buildPlacetypePairPriors(
+			{ index, inputText: "Zürich, Bern", wordPiecesOnly: true },
+			pieces,
+			LABELS
+		).matrix
+
+		const all = buildPlacetypePairPriors({ index, inputText: "Zürich, Bern" }, pieces, LABELS).matrix
+
+		for (const piece of [0, 1, 2, 3]) {
+			expect(words[piece]).toEqual(all[piece])
+		}
+
+		expect(words[4]!.every((v) => v === 0)).toBe(true)
+	})
+})
+
+describe("buildPlacetypePairPriors — childKeyPiecesOnly (#3165 child postcode defect)", () => {
+	const text = "Sutton Coldfield B72 1PU, Birmingham"
+
+	it("by default a child segment's bias covers its same-field postcode", () => {
+		const index = mockPairIndex({ "sutton coldfield|birmingham": "dependent_locality" }, 6, undefined, "gb")
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, makePiecesWithCommas(text), LABELS)
+
+		expect(matrix[2]![labelCol("I-dependent_locality")]).toBe(6)
+		expect(matrix[3]![labelCol("I-dependent_locality")]).toBe(6)
+	})
+
+	it("with the setting on, the postcode pieces take no bias and the name keeps it", () => {
+		const index = mockPairIndex({ "sutton coldfield|birmingham": "dependent_locality" }, 6, undefined, "gb")
+
+		const { matrix } = buildPlacetypePairPriors(
+			{ index, inputText: text, childKeyPiecesOnly: true },
+			makePiecesWithCommas(text),
+			LABELS
+		)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
+		expect(matrix[1]![labelCol("I-dependent_locality")]).toBe(6)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[3]!.every((v) => v === 0)).toBe(true)
+	})
+})

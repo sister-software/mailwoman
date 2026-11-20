@@ -121,6 +121,26 @@ export interface GauntletRunOptions {
 	 */
 	siblingLocalityContainment?: SwitchPin
 	/**
+	 * Pin the placetype-pair bias to word pieces for every layer.
+	 * @defaultValue `"production"`
+	 */
+	pairPriorWordPieces?: SwitchPin
+	/**
+	 * Pin the placetype-pair child postcode strip for every layer.
+	 * @defaultValue `"production"`
+	 */
+	pairPriorChildPostcodeStrip?: SwitchPin
+	/**
+	 * Pin the placetype-pair index's own-country rule for every layer.
+	 * @defaultValue `"production"`
+	 */
+	pairIndexCountryGate?: SwitchPin
+	/**
+	 * Pin the FST country routing for every layer.
+	 * @defaultValue `"production"`
+	 */
+	fstCountryRouting?: SwitchPin
+	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
@@ -198,6 +218,10 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		countyDesignatorFallback: options.countyDesignatorFallback ?? "production",
 		scopeCountryRetrieval: options.scopeCountryRetrieval ?? "production",
 		siblingLocalityContainment: options.siblingLocalityContainment ?? "production",
+		pairPriorWordPieces: options.pairPriorWordPieces ?? "production",
+		pairPriorChildPostcodeStrip: options.pairPriorChildPostcodeStrip ?? "production",
+		pairIndexCountryGate: options.pairIndexCountryGate ?? "production",
+		fstCountryRouting: options.fstCountryRouting ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",
 		venueHeadPrior: options.venueHeadPrior ?? "production",

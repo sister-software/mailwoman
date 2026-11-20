@@ -13,6 +13,7 @@ import { movePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { JSONSpliterator, parallelMapWorkers } from "spliterator"
 
+import type { DecoderSettings } from "#geocode/core"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 
 const PARSE_WORKER_URL = new URL(import.meta.url.endsWith(".ts") ? "./worker.ts" : "./worker.js", import.meta.url)
@@ -34,6 +35,12 @@ export interface BatteryParseOptions {
 	 * @defaultValue `"row-country"`
 	 */
 	localeHint?: "row-country" | "none"
+	/**
+	 * The decoder settings every parse takes, with the row's hinted country as the declared country.
+	 *
+	 * @defaultValue none, every setting at its default
+	 */
+	decoderSettings?: DecoderSettings
 }
 
 /**
@@ -78,8 +85,11 @@ export async function parseRowsWithWorkers(
 	const started = performance.now()
 	let done = 0
 
+	const settings = Object.entries(options.decoderSettings ?? {}).map(([name, on]) => `${name}=${on ? "on" : "off"}`)
+
 	console.error(
-		`${rows.length} rows, ${options.workers} workers × ${options.threads} ONNX threads, locale hint ${options.localeHint ?? "row-country"}, ${options.cacheRoot}`
+		`${rows.length} rows, ${options.workers} workers × ${options.threads} ONNX threads, locale hint ${options.localeHint ?? "row-country"}, ` +
+			`decoder settings ${settings.join(",") || "default"}, ${options.cacheRoot}`
 	)
 
 	for await (const result of parallelMapWorkers<ParseRow, { id: string; spans: BatterySpan[] }>(rows, {
@@ -90,6 +100,7 @@ export async function parseRowsWithWorkers(
 			cacheRoot: options.cacheRoot,
 			intraOpNumThreads: options.threads,
 			localeHint: options.localeHint ?? "row-country",
+			decoderSettings: options.decoderSettings ?? {},
 		},
 	})) {
 		out.write(`${stringifyJSON(result)}\n`)

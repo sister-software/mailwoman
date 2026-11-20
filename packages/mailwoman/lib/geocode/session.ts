@@ -43,8 +43,11 @@ import {
 	geocodeAddress,
 	geocodeParseInputs,
 	parseForGeocode,
+	type GeocodeDecoderSettingDeps,
 	type GeocodeDeps,
 } from "#geocode/core"
+import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
+import { createCountryFSTLookup } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {
 	nationalDatabasesOf,
@@ -66,6 +69,13 @@ export interface GeocodeSessionSettings {
 	capitalTier: CapitalTier
 	variantAliasExemption: VariantAliasExemption
 }
+
+/**
+ * The locale a geocode parses under when the caller chooses none.
+ *
+ * A session left at this locale states no country, since every caller starts from it.
+ */
+export const GEOCODE_DEFAULT_LOCALE = "en-US"
 
 /**
  * The defaults behind every unset {@link GeocodeSessionSettings} key.
@@ -202,6 +212,36 @@ export interface GeocodeSessionOptions {
 	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
 	 */
 	siblingLocalityContainment?: boolean
+
+	/**
+	 * Whether the placetype-pair prior leaves separator pieces unbiased.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	pairPriorWordPieces?: boolean
+
+	/**
+	 * Whether a segment child's placetype-pair bias leaves out its same-field postcode.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	pairPriorChildPostcodeStrip?: boolean
+
+	/**
+	 * Whether the placetype-pair index applies only when the parse's country is the index's:
+	 * the default country when set, else the locale's country.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	pairIndexCountryGate?: boolean
+
+	/**
+	 * Whether a parse takes the gazetteer FST of the country the locale head
+	 * confidently reads, when that country ships one.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	fstCountryRouting?: boolean
 
 	/**
 	 * A parent place that scopes every lookup, as `--parent` sets it.
@@ -458,7 +498,35 @@ export async function createGeocodeSession(
 	const classifier = routed.primary
 	const { priors, artifacts: priorArtifacts } = parsePriors
 	const { fst, streetMorphology, anchorRegions } = priors
-	const venueHeadCountry = options.defaultCountry ?? options.locale.split("-")[1] ?? null
+	const localeRegion = options.locale.split("-")[1]?.toUpperCase() ?? null
+	const venueHeadCountry = options.defaultCountry ?? localeRegion
+
+	const decoderSettings: GeocodeDecoderSettingDeps = {
+		pairPriorWordPieces: options.pairPriorWordPieces ?? GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,
+		pairPriorChildPostcodeStrip:
+			options.pairPriorChildPostcodeStrip ?? GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip,
+		pairIndexCountryGate: options.pairIndexCountryGate ?? GEOCODE_SWITCH_DEFAULTS.pairIndexCountryGate,
+		fstCountryRouting: options.fstCountryRouting ?? GEOCODE_SWITCH_DEFAULTS.fstCountryRouting,
+	}
+
+	// The caller states the parse's country by a default country, or by choosing a locale other than the default.
+	const declaredCountry =
+		options.defaultCountry ??
+		(options.locale.toLowerCase() === GEOCODE_DEFAULT_LOCALE.toLowerCase() ? null : localeRegion)
+
+	if (declaredCountry) {
+		decoderSettings.parseCountry = declaredCountry
+	}
+
+	if (fst && decoderSettings.fstCountryRouting) {
+		decoderSettings.fstForCountry = createCountryFSTLookup({
+			primaryCountry: localeRegion,
+			primaryFST: fst,
+			fstPathFor: (country) =>
+				shippedGazetteerFSTPath(country, options.dataRoot, services.selection.catalog, options.weightsCacheRoot),
+		})
+	}
+
 	const venueHead = priors.venueHeadFor(venueHeadCountry)
 	const resolver = createWOFResolver(lookup)
 	const nationalDatabases = nationalDatabasesOf(services.ban, services.overture)
@@ -498,7 +566,9 @@ export async function createGeocodeSession(
 		| "venueHead"
 		| "venueHeadOpts"
 		| "channelPins"
-	> = {
+	> &
+		GeocodeDecoderSettingDeps = {
+		...decoderSettings,
 		classifier: routed,
 		...(fst ? { fst } : {}),
 		...(streetMorphology ? { streetMorphology } : {}),
@@ -582,6 +652,7 @@ export async function createGeocodeSession(
 		const parentPlace = request.parentPlace ?? options.parentPlace
 
 		const result = await geocodeAddress(input, {
+			...decoderSettings,
 			classifier: routed,
 			...(request.inputMode ? { inputMode: request.inputMode } : {}),
 			...(fst ? { fst } : {}),

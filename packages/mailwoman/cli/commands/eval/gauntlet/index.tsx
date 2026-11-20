@@ -91,6 +91,30 @@ export const spec = {
 			default: "production",
 			description: "Pin sibling-locality containment",
 		},
+		"pair-prior-word-pieces": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the place-pair bias to word pieces",
+		},
+		"pair-prior-child-postcode-strip": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the place-pair child postcode strip",
+		},
+		"pair-index-country-gate": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the place-pair index's own-country rule",
+		},
+		"fst-country-routing": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the FST country routing",
+		},
 		"poi-venue-tier": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

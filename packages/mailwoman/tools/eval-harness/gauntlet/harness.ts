@@ -27,10 +27,15 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
-import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
+import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/fst-layers"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import { loadParsePriors, type ParsePriorArtifacts, venueHeadOptsFor } from "#geocode/parse-priors"
+import {
+	createCountryFSTLookup,
+	loadParsePriors,
+	type ParsePriorArtifacts,
+	venueHeadOptsFor,
+} from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { loadForkEntityDeps } from "#geocode/session/layers"
@@ -70,11 +75,14 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * The returned `fst` is always the unwrapped matcher.
 	 * The returned `classifier` is the one that parsed the row.
+	 * `decoderSettings` overrides the pins' decoder settings for this one parse,
+	 * so a census can decode a row with a setting on and off from one set of loaded deps.
 	 */
 	diagnoseParse(
 		input: string,
 		opts?: GauntletGeocodeOpts,
-		wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike
+		wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike,
+		decoderSettings?: DecoderSettings
 	): Promise<{ trace: NeuralParseTrace; classifier: NeuralAddressClassifier; fst?: FSTMatcherLike }>
 	/**
 	 * Whether a row routed to `caseCountry` graded without that country's weights overlay. a
@@ -179,6 +187,25 @@ export interface GauntletResolverPins {
 	 */
 	siblingLocalityContainment: SwitchPin
 	/**
+	 * The placetype-pair prior leaves separator pieces unbiased.
+	 */
+	pairPriorWordPieces: SwitchPin
+	/**
+	 * A segment child's placetype-pair bias leaves out its same-field postcode.
+	 */
+	pairPriorChildPostcodeStrip: SwitchPin
+	/**
+	 * The placetype-pair index applies only when the row's country is the index's country.
+	 *
+	 * A row routed to its own overlay states its country, as a chosen locale does.
+	 * A row routed to the base package states none, and the locale head decides.
+	 */
+	pairIndexCountryGate: SwitchPin
+	/**
+	 * A row parses with the gazetteer FST of the country the locale head reads, when one ships.
+	 */
+	fstCountryRouting: SwitchPin
+	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
@@ -232,6 +259,10 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	countyDesignatorFallback: "production",
 	scopeCountryRetrieval: "production",
 	siblingLocalityContainment: "production",
+	pairPriorWordPieces: "production",
+	pairPriorChildPostcodeStrip: "production",
+	pairIndexCountryGate: "production",
+	fstCountryRouting: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
@@ -254,10 +285,18 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	countyDesignatorFallback?: boolean
 	scopeCountryRetrieval?: boolean
 	siblingLocalityContainment?: boolean
+	pairPriorWordPieces?: boolean
+	pairPriorChildPostcodeStrip?: boolean
+	pairIndexCountryGate?: boolean
+	fstCountryRouting?: boolean
 	poiVenueTier?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
 	return {
+		...switchPinEntry("pairPriorWordPieces", pins.pairPriorWordPieces),
+		...switchPinEntry("pairPriorChildPostcodeStrip", pins.pairPriorChildPostcodeStrip),
+		...switchPinEntry("pairIndexCountryGate", pins.pairIndexCountryGate),
+		...switchPinEntry("fstCountryRouting", pins.fstCountryRouting),
 		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
 		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
@@ -615,13 +654,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// overlay case a gazetteer for the wrong country, a pairing production never runs.
 	// Cached per resolved path, because the overlay classifiers are themselves cached
 	// and several countries share one.
-	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">>()
+	type PriorDeps = Pick<GeocodeDeps, "fst" | "fstForCountry" | "streetMorphology" | "anchorRegions">
+	const priorDepsByPath = new Map<string, PriorDeps>()
 	const warnedMissingPriorFST = new Set<string>()
 
-	async function priorDepsFor(
-		forClassifier: typeof classifier,
-		label: string
-	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions">> {
+	async function priorDepsFor(forClassifier: typeof classifier, label: string): Promise<PriorDeps> {
 		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
 
 		// The FSTs the active selection lists for the case's locale, else the files
@@ -667,8 +704,20 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
 		)
 
-		const deps: Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions"> = {
+		// The lookup loads another country's FST only when a parse under `fstCountryRouting` asks for it.
+		const fstForCountry = loaded.fst
+			? createCountryFSTLookup({
+					primaryCountry: (label === "base" ? "en-US" : label).split("-")[1] ?? null,
+					primaryFST: loaded.fst,
+					fstPathFor: (country) =>
+						shippedGazetteerFSTPath(country, dataRootPath(), catalog, opts.weightsCacheRoot ?? undefined),
+					onWarn: (message) => console.error(`[gauntlet] ${message}`),
+				})
+			: null
+
+		const deps: PriorDeps = {
 			...(loaded.fst ? { fst: loaded.fst } : {}),
+			...(fstForCountry ? { fstForCountry } : {}),
 			...(loaded.streetMorphology ? { streetMorphology: loaded.streetMorphology } : {}),
 			...(loaded.anchorRegions ? { anchorRegions: loaded.anchorRegions } : {}),
 		}
@@ -717,11 +766,19 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	 */
 	async function caseDepsFor(
 		caseClassifier: typeof classifier,
-		caseCountry: string | undefined
-	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology" | "anchorRegions" | "venueHead" | "venueHeadOpts">> {
-		const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+		caseCountry: string | undefined,
+		defaultCountry?: string
+	): Promise<PriorDeps & Pick<GeocodeDeps, "venueHead" | "venueHeadOpts" | "parseCountry">> {
+		const overlay = OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""]
+		const priorDeps = await priorDepsFor(caseClassifier, overlay ?? "base")
+		// A row routed to its own overlay states its country, as a session's chosen locale does.
+		const parseCountry = defaultCountry ?? (overlay ? caseCountry : undefined)
 
-		return { ...priorDeps, ...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)) }
+		return {
+			...priorDeps,
+			...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)),
+			...(parseCountry ? { parseCountry } : {}),
+		}
 	}
 
 	const streetMorphologyPrior = pinnedSwitch(pins.streetMorphologyPrior, GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior)
@@ -756,7 +813,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			osmDatabases: osmProvider.for,
 			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
-			...(await caseDepsFor(caseClassifier, caseCountry)),
+			...(await caseDepsFor(caseClassifier, caseCountry, defaultCountry)),
 			streetMorphologyPrior,
 			...forkEntityDeps,
 			...forwarded,
@@ -769,13 +826,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		diagnoseParse: async (
 			input: string,
 			geoOpts?: GauntletGeocodeOpts,
-			wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike
+			wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike,
+			decoderSettings?: DecoderSettings
 		) => {
-			const { caseCountry } = geoOpts ?? {}
+			const { caseCountry, defaultCountry } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
 
 			const priorDeps = {
-				...(await caseDepsFor(caseClassifier, caseCountry)),
+				...(await caseDepsFor(caseClassifier, caseCountry, defaultCountry)),
+				...pinDeps,
+				...decoderSettings,
 				streetMorphologyPrior,
 			}
 

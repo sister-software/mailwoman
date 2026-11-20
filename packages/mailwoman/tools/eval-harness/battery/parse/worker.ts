@@ -13,6 +13,7 @@
 import { workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+import { type DecoderSettings, decoderSettingOptions } from "#geocode/core"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import type { ParseRow } from "#tools/eval-harness/battery/parse/rows"
 import {
@@ -22,10 +23,11 @@ import {
 	treeSpans,
 } from "#tools/eval-harness/heldout/per/country"
 
-const { cacheRoot, intraOpNumThreads, localeHint } = workerUserData<{
+const { cacheRoot, intraOpNumThreads, localeHint, decoderSettings } = workerUserData<{
 	cacheRoot: string
 	intraOpNumThreads: number
 	localeHint: "row-country" | "none"
+	decoderSettings: DecoderSettings
 }>()
 
 const packages = await readHeldoutLocalePackages()
@@ -51,6 +53,11 @@ export async function handleItem(row: ParseRow): Promise<{ id: string; spans: Ba
 	).parse(row.raw, {
 		postcodeRepair: true,
 		...(row.country && localeHint === "row-country" ? { localeHint: row.country } : {}),
+		// The hinted country is the country the row states.
+		...decoderSettingOptions({
+			...decoderSettings,
+			...(row.country && localeHint === "row-country" ? { parseCountry: row.country } : {}),
+		}),
 	})
 
 	return {

@@ -9,8 +9,10 @@
  *   as it did before the selection existed.
  */
 
+import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { ArtifactFormat, ServingRole } from "@mailwoman/core/layers"
-import type { PathBuilderLike } from "path-ts"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { basename, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
 import type { ParsePriorArtifacts } from "#geocode/parse-priors"
@@ -39,6 +41,49 @@ export async function selectedGazetteerFSTPath(
 	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
 
 	return snapshot.firstPath(ServingRole.GazetteerFST, gazetteerFSTScope(locale))
+}
+
+/**
+ * The gazetteer FST that ships for a country, or `null` when none does.
+ *
+ * The active selection's entry for the country comes first.
+ * Otherwise each official language of the country gives a candidate weights locale, such as `en-GB` for GB.
+ *
+ * The first of those packages that ships its own `fst-<locale>.bin` answers.
+ *
+ * A package that resolves to another locale's weights, such as a script-family base, doesn't count.
+ *
+ * @param weightsCacheRoot Confines the package lookup to one weights cache, as the session's classifier is.
+ */
+export async function shippedGazetteerFSTPath(
+	country: string,
+	dataRoot: PathBuilderLike,
+	catalog?: LayerCatalog,
+	weightsCacheRoot?: PathBuilderLike
+): Promise<string | null> {
+	const region = country.toUpperCase()
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	const selected = await snapshot.firstPath(ServingRole.GazetteerFST, { country: region, subdivision: null })
+
+	if (selected) return selected
+
+	const languages = (OFFICIAL_LANGUAGES[region]?.official ?? []).filter((language) => language.length === 2)
+
+	for (const language of languages) {
+		const locale = `${language}-${region}`.toLowerCase()
+		let fstPath: string | undefined
+
+		try {
+			fstPath = (await resolveWeights({ locale, ...(weightsCacheRoot ? { cacheRoot: weightsCacheRoot } : {}) })).fstPath
+		} catch {
+			// No package for this locale: the next language is tried.
+			continue
+		}
+
+		if (fstPath && basename(fstPath) === `fst-${locale}.bin`) return fstPath
+	}
+
+	return null
 }
 
 /**

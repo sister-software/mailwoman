@@ -123,6 +123,32 @@ export interface PlacetypePairPriorOpts {
 	 * When set, it overrides `index.parentDelta`.
 	 */
 	parentDelta?: number
+	/**
+	 * Whether a window's bias skips its separator pieces, those without a letter or digit,
+	 * such as the `,` the segment path takes after a child name.
+	 *
+	 * Off by default.
+	 * Off, every piece of the window takes the bias (#3165).
+	 */
+	wordPiecesOnly?: boolean
+	/**
+	 * Whether a segment child's bias covers only the pieces its probe key covers, leaving
+	 * out the same-field postcode the key strip removed, as in `Sutton Coldfield B72 1PU`.
+	 *
+	 * Off by default.
+	 * Off, the whole segment takes the bias (#3165).
+	 */
+	childKeyPiecesOnly?: boolean
+}
+
+/**
+ * Whether a piece holds a letter or digit, rather than only separator characters.
+ *
+ * A byte-fallback piece such as `<0xC3>` counts as word content, so a name in a script
+ * the vocabulary splits into bytes keeps its bias on every byte.
+ */
+function isWordPiece(piece: string): boolean {
+	return /[\p{L}\p{N}]/u.test(piece)
 }
 
 /**
@@ -382,35 +408,33 @@ function writeSpanBias(
 function applyParentTagBias(
 	matrix: number[][],
 	labelToCol: ReadonlyMap<string, number>,
-	parent: CandidateWindow,
+	pieceIndices: readonly number[],
 	parentTag: ComponentTag,
 	parentDelta: number
 ): void {
-	// Prefer key-only span when provided.
-	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)
+	writeSpanBias(matrix, labelToCol, pieceIndices, parentTag, parentDelta)
 }
 
 /**
- * Apply emission bias to a child window.
- * Optionally adds transition adjustment at the window start.
+ * Apply emission bias to the pieces of a child window.
+ *
+ * Optionally adds transition adjustment at the first of those pieces.
+ * A `null` `transitionBeta` adds none, as for a window after a venue-title preposition.
  */
 function applyWindowBias(
-	nonEmptyGroups: readonly WordGroup[],
 	matrix: number[][],
 	labelToCol: ReadonlyMap<string, number>,
-	window: CandidateWindow,
+	pieceIndices: readonly number[],
 	tag: ComponentTag,
 	bias: number,
 	transitionBeta: number | null,
 	adjustments: TransitionAdjustment[]
 ): void {
-	if (!writeSpanBias(matrix, labelToCol, window.pieceIndices, tag, bias)) return
+	if (!writeSpanBias(matrix, labelToCol, pieceIndices, tag, bias)) return
 
-	if (transitionBeta === null || !window.pieceIndices.length) return
+	if (transitionBeta === null || !pieceIndices.length) return
 
-	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
-
-	const pieceIndex = window.pieceIndices[0]!
+	const pieceIndex = pieceIndices[0]!
 	const toLabel = `B-${tag}`
 	const existing = adjustments.find((a) => a.pieceIndex === pieceIndex && a.toLabel === toLabel)
 
@@ -447,8 +471,22 @@ export function buildPlacetypePairPriors(
 
 	const labelToCol = labelColumnIndex(labels)
 
+	// The pieces each write covers: the whole window unless a setting narrows it.
+	const keepPiece = opts.wordPiecesOnly ? (pi: number) => isWordPiece(pieces[pi]!.piece) : null
+	const biasedPieces = (indices: readonly number[]) => (keepPiece ? indices.filter(keepPiece) : indices)
+
+	const childPieces = (window: CandidateWindow) =>
+		biasedPieces(opts.childKeyPiecesOnly ? (window.keyPieceIndices ?? window.pieceIndices) : window.pieceIndices)
+
+	// The parent write covers the key-only range when the segment had a postcode stripped.
+	const parentPieces = (window: CandidateWindow) => biasedPieces(window.keyPieceIndices ?? window.pieceIndices)
+
 	const wordGroups = groupPiecesIntoWords(pieces)
 	const nonEmptyGroups = wordGroups.filter((g) => g.fstToken !== "")
+
+	// A child window after a venue-title preposition keeps its emission bias and takes no transition bonus.
+	const windowBeta = (window: CandidateWindow) =>
+		hasTitlePrepositionPredecessor(nonEmptyGroups, window) ? null : transitionBeta
 
 	if (nonEmptyGroups.length < 2) return { matrix, transitionAdjustments } // Need two disjoint candidates.
 
@@ -482,18 +520,17 @@ export function buildPlacetypePairPriors(
 			recordFiredChildTag(opts.probeTrace ?? null, hit.edge.tag)
 
 			applyWindowBias(
-				nonEmptyGroups,
 				matrix,
 				labelToCol,
-				hit.child,
+				childPieces(hit.child),
 				hit.edge.tag,
 				bias,
-				transitionBeta,
+				windowBeta(hit.child),
 				transitionAdjustments
 			)
 
 			if (parentDelta !== null) {
-				applyParentTagBias(matrix, labelToCol, hit.parent, hit.edge.parentTag, parentDelta)
+				applyParentTagBias(matrix, labelToCol, parentPieces(hit.parent), hit.edge.parentTag, parentDelta)
 			}
 
 			if (opts.probeTrace) {
@@ -543,10 +580,10 @@ export function buildPlacetypePairPriors(
 
 		recordFiredChildTag(opts.probeTrace ?? null, matchedEdge.tag)
 
-		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedEdge.tag, bias, transitionBeta, transitionAdjustments)
+		applyWindowBias(matrix, labelToCol, childPieces(x), matchedEdge.tag, bias, windowBeta(x), transitionAdjustments)
 
 		if (parentDelta !== null) {
-			applyParentTagBias(matrix, labelToCol, matchedParent!, matchedEdge.parentTag, parentDelta)
+			applyParentTagBias(matrix, labelToCol, parentPieces(matchedParent!), matchedEdge.parentTag, parentDelta)
 		}
 
 		anyApplied = true
