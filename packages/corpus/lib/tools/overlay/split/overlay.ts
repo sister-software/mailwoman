@@ -24,6 +24,7 @@ import {
 	splitPolicyHash,
 } from "#tools/overlay/split/attribute"
 import type { CanonicalRow } from "#types"
+import { evaluationGroupOf, frozenByAddress } from "#utils/evaluation-groups"
 import type { SplitRetention } from "#utils/retention"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
 import { type EvaluationGroupPolicy, evaluationGroupPolicyIdentity } from "#utils/validation-groups"
@@ -125,7 +126,13 @@ const SPLIT_COLUMNS = ["raw", "source_id", "country", "span_starts", "span_ends"
  * A file without the column records no derivation, so each row is its own group,
  * as the overlap audit reads it.
  */
-type SplitColumnRow = Pick<ParquetRow, (typeof SPLIT_COLUMNS)[number]> & { base_source_id?: string | null }
+type SplitColumnRow = Pick<ParquetRow, (typeof SPLIT_COLUMNS)[number]> & {
+	base_source_id?: string | null
+	/**
+	 * Read when the frozen list holds address keys, so a keyed source's rows can be matched by address.
+	 */
+	source?: string
+}
 
 export interface SplitSliceResult {
 	input: string
@@ -199,11 +206,19 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let index = 0
 	const { evaluationGroups } = options
+	const fileColumns = evaluationGroups ? await parquetColumnNames(input) : []
+	const keyed = Boolean(evaluationGroups?.frozen.addressKeys.size) && fileColumns.includes("source")
 
-	const columns =
-		evaluationGroups && (await parquetColumnNames(input)).includes("base_source_id")
-			? [...SPLIT_COLUMNS, "base_source_id"]
-			: SPLIT_COLUMNS
+	const columns = [
+		...SPLIT_COLUMNS,
+		...(fileColumns.includes("base_source_id") ? ["base_source_id"] : []),
+		...(keyed ? ["source"] : []),
+	]
+
+	/**
+	 * The groups a row joined by its address key, so the group's other rows follow it to test.
+	 */
+	const addressFrozenGroups = new Set<string>()
 
 	for await (const row of openCorpusRowStream<SplitColumnRow>(input, {
 		columns,
@@ -211,19 +226,29 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	})) {
 		const components = holdoutComponents(row, index, input)
 
-		const split = splitForRow(
-			{
-				source_id: row.source_id,
-				base_source_id: row.base_source_id ?? null,
-				country: row.country,
-				components,
-				span_tags: row.span_tags,
-			},
-			holdouts,
-			undefined,
-			options.retention,
-			evaluationGroups
-		)
+		const splitRow = {
+			source_id: row.source_id,
+			base_source_id: row.base_source_id ?? null,
+			country: row.country,
+			components,
+			span_tags: row.span_tags,
+			address:
+				keyed && row.source && row.span_starts && row.span_ends && row.span_tags
+					? {
+							source: row.source,
+							raw: row.raw,
+							span_starts: row.span_starts,
+							span_ends: row.span_ends,
+							span_tags: row.span_tags,
+						}
+					: null,
+		}
+
+		const split = splitForRow(splitRow, holdouts, undefined, options.retention, evaluationGroups)
+
+		if (keyed && frozenByAddress(splitRow.address, evaluationGroups!.frozen)) {
+			addressFrozenGroups.add(evaluationGroupOf(splitRow))
+		}
 
 		const earlier = decided.get(row.source_id)
 
@@ -240,6 +265,24 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		counts[split]++
 
 		index++
+	}
+
+	// A row whose own key a rendering changed, or which has no key, still follows its group to test.
+	if (addressFrozenGroups.size) {
+		for await (const row of openCorpusRowStream<SplitColumnRow>(input, {
+			columns: ["source_id", ...(fileColumns.includes("base_source_id") ? ["base_source_id"] : [])],
+			...(options.limits ? { limits: options.limits } : {}),
+		})) {
+			const earlier = decided.get(row.source_id)
+
+			if (earlier === "test" || !addressFrozenGroups.has(evaluationGroupOf(row))) continue
+
+			decided.set(row.source_id, "test")
+
+			counts[earlier!]--
+
+			counts.test++
+		}
 	}
 
 	const groupsIdentity = evaluationGroups ? evaluationGroupPolicyIdentity(evaluationGroups) : undefined

@@ -90,7 +90,8 @@ The split and its audits use five identities, recorded apart because each answer
    the allocation report lists the merged keys it finds.
 4. **Statistical group**, the unit uncertainty is estimated over, the held-out place or the frozen dataset's
    group, never the row.
-5. **Overlap relation**, the audit of exposure to training data, by record identity and by folded text.
+5. **Overlap relation**, the audit of exposure to training data, by record identity, by folded text and, for a
+   source keyed by address (section 4.6), by address key.
 
 The held-out decision reads a row's components before the record-based validation and test assignment, so a
 variant that changes the chosen key can change that earlier decision. The record-ancestry audit (section 4.4)
@@ -208,8 +209,21 @@ corpus's train split belong to a frozen or validation group and leave training w
 
 A row's group is `recordIDOf(base_source_id ?? source_id)`, the key the freeze writes on each dataset entry and the
 overlap audit compares against training rows, so a base row, its case, comma and spacing variants and the other
-rendered rows of its record take one split. Under the policy `splitForRow` decides each row by its group
-and the two lists:
+rendered rows of its record take one split.
+
+A source that issues one address a new record id on a re-ingest also keys its groups by address
+(`GROUP_ADDRESS_KEY_SOURCES` in `@mailwoman/corpus/utils/evaluation-groups`, #3125). NAD is the one such source:
+its release gave the addresses of earlier records new UUIDs, and 2,240 of `heldout-dev-v0.8.21`'s 4,000 US rows
+repeat the text of a v0.8.21 training row under another record. A NAD row's address key is its state, five-digit
+ZIP Code, house number, street and unit, folded so that every augmentation of one record gives one key
+(`nadAddressKey`). NAD rows carry no county, and the ZIP Code within its state stands in for it. The frozen list
+records the address key of every frozen NAD row (`addressKeys`, written by `evaluation-groups.run.ts`), a row
+whose key the list holds is frozen with the group it repeats, and its record's other rows follow it to `test`.
+A list written before #3125 holds no keys. The overlap audit compares NAD rows by address key
+under `--match-address`, and `--preview-evaluation-groups <list>` audits a corpus as a re-split under that list
+would write it.
+
+Under the policy `splitForRow` decides each row by its group and the two lists:
 
 1. A frozen group goes to `test`. Neither the holdout table nor the retention table is read, so a shape the
    retention table keeps in training can't return a frozen group's variant to training. Development and

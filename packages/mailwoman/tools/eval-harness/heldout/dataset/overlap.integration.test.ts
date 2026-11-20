@@ -5,6 +5,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"
 import { gbOverlayRow } from "@mailwoman/corpus/test-kit"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
@@ -65,6 +66,70 @@ const datasetInput = {
 } satisfies Parameters<typeof buildHeldoutDatasetManifest>[0]
 
 const dataset = buildHeldoutDatasetManifest(datasetInput)
+
+/**
+ * One NAD parquet row, `<number> <street> <suffix>, <locality>, <state> <zip>`,
+ * with the spans the adapter writes.
+ */
+function nadRow(
+	sourceID: string,
+	number: string,
+	street: string,
+	suffix: string,
+	locality: string,
+	state: string,
+	zip: string
+): ParquetRow {
+	const parts: Array<[string, string, string]> = [
+		[number, "house_number", " "],
+		[street, "street", " "],
+		[suffix, "street_suffix", ", "],
+		[locality, "locality", ", "],
+		[state, "region", " "],
+		[zip, "postcode", ""],
+	]
+
+	let raw = ""
+	const starts: number[] = []
+	const ends: number[] = []
+
+	for (const [text, , separator] of parts) {
+		starts.push(raw.length)
+		raw += text
+		ends.push(raw.length)
+		raw += separator
+	}
+
+	return {
+		raw,
+		tokens: raw.split(" "),
+		labels: raw.split(" ").map(() => "O"),
+		span_starts: starts,
+		span_ends: ends,
+		span_tags: parts.map(([, tag]) => tag),
+		country: "US",
+		locale: "en-US",
+		source: "usgov-nad",
+		source_id: sourceID,
+		license: "LicenseRef-Public-Domain",
+		register: null,
+		surface: "composed",
+		augmentation: null,
+		base_source_id: null,
+	}
+}
+
+function heldoutOf(row: ParquetRow): Omit<HeldoutRow, "group"> {
+	return {
+		raw: row.raw,
+		span_starts: [...row.span_starts],
+		span_ends: [...row.span_ends],
+		span_tags: [...row.span_tags],
+		country: row.country,
+		source: row.source,
+		source_id: row.source_id,
+	}
+}
 
 /**
  * Writes one parquet file of `(source, source_id, base_source_id)` rows and returns its row count.
@@ -398,7 +463,7 @@ describe("auditHeldoutOverlap", () => {
 		expect(withText.rows["oa-us:held-only"]).toMatchObject({ provenance: "verified_unseen" })
 
 		// A text-only match is reported and never refused by identity or group.
-		expect(withText.audit.overlapRows).toEqual({ identity: 0, group: 0, text: 1 })
+		expect(withText.audit.overlapRows).toEqual({ identity: 0, group: 0, text: 1, address: 0 })
 		expect(refusedOverlaps(withText.audit, [OverlapKind.Identity, OverlapKind.Group])).toEqual([])
 
 		const withoutText = await auditHeldoutOverlap({ dataset, corpora: [manifest], modelCards: [card], pathRoot: root })
@@ -570,6 +635,115 @@ describe("auditHeldoutOverlap", () => {
 
 		expect(leaked.result.audit.counts.known_overlap).toBe(1)
 		expect(leaked.result.rows["rendered-gb-os-open:gb-r#a"]).toMatchObject({ provenance: "known_overlap" })
+	})
+
+	it("matches a NAD address re-ingested under a new id by address key, and a keyed re-split keeps it out of train", async () => {
+		const parquet = `${root}/nad/usgov-nad.parquet`
+
+		const rows = [
+			// The frozen address, re-ingested under a new UUID and written with an abbreviated suffix.
+			nadRow("usgov-nad-new-1", "8634", "Vernon", "Ave", "Alexandria", "VA", "22309"),
+			// A variant of that record whose typo changes its own key.
+			// It follows its group.
+			{
+				...nadRow("usgov-nad-new-1+typo", "8634", "Vernnon", "Ave", "Alexandria", "VA", "22309"),
+				base_source_id: "usgov-nad-new-1",
+			},
+			nadRow("usgov-nad-other", "8636", "Vernon", "Avenue", "Alexandria", "VA", "22309"),
+		]
+
+		await makeDirectories(`${root}/nad`)
+		await writeParquetFile(rows, parquet, { extractHash: "fixture", codeHash: "fixture", config: {} })
+
+		const frozenRow = {
+			...heldoutOf(nadRow("usgov-nad-old-1", "8634", "Vernon", "Avenue", "Alexandria", "VA", "22309-1234")),
+			group: "usgov-nad-old-1",
+		}
+
+		const frozen = buildHeldoutDatasetManifest({ ...datasetInput, datasetID: "heldout-nad", rows: [frozenRow] })
+		const groupsFile = `${root}/nad/groups.json`
+
+		await writeLocalJSONFile(
+			buildEvaluationGroupsFile({
+				datasets: [
+					{
+						datasetID: frozen.datasetID,
+						version: frozen.version,
+						drawnFrom: { corpusVersion: "v-nad", sha256: "a".repeat(64) },
+						manifestSHA256: "b".repeat(64),
+						rows: 1,
+						groups: [frozenRow.group],
+					},
+				],
+				keyedRows: [frozenRow],
+			}),
+			groupsFile
+		)
+
+		const frozenGroups = await readEvaluationGroups(groupsFile)
+
+		expect([...frozenGroups.addressKeys]).toEqual(["usgov-nad:va|22309|8634|vernon avenue|"])
+
+		const writeManifest = async (name: string, file: Record<string, unknown>) => {
+			const manifest = `${root}/nad/${name}/MANIFEST.json`
+
+			await writeLocalJSONFile(
+				{
+					corpus_version: `v-${name}`,
+					files: [{ path: parquet, rows: rows.length, sha256: await sha256File(parquet), ...file }],
+				},
+				manifest
+			)
+
+			return { manifest, card: await writeCard(`nad-${name}`, `v-${name}`) }
+		}
+
+		const rowTexts = new Map([[frozen.rows[0]!.rowID, frozenRow.raw]])
+		const addressRows = new Map([[frozen.rows[0]!.rowID, frozenRow]])
+		const trained = await writeManifest("trained", { split: "train" })
+
+		const audit = (corpus: typeof trained, extra: Partial<Parameters<typeof auditHeldoutOverlap>[0]> = {}) =>
+			auditHeldoutOverlap({
+				dataset: frozen,
+				corpora: [corpus.manifest],
+				modelCards: [corpus.card],
+				pathRoot: root,
+				rowTexts,
+				...extra,
+			})
+
+		// The folded text differs, so only the address key finds the re-ingested record.
+		expect((await audit(trained)).audit.counts.verified_unseen).toBe(1)
+
+		const byAddress = await audit(trained, { addressRows })
+
+		expect(byAddress.audit.overlapRows).toEqual({ identity: 0, group: 0, text: 0, address: 1 })
+		expect(byAddress.rows[frozen.rows[0]!.rowID]!.evidence).toMatch(/address key "usgov-nad:va\|22309\|8634/u)
+
+		// The preview leaves out the rows a re-split under the list sends to test.
+		const previewed = await audit(trained, { addressRows, previewEvaluationGroups: frozenGroups })
+
+		expect(previewed.audit.counts.verified_unseen).toBe(1)
+		expect(previewed.audit.corpora[0]!.files[0]!.excludedPreviewRows).toBe(1)
+
+		const policy = evaluationGroupPolicy(frozenGroups, {
+			path: "validation.json",
+			sha256: "v".repeat(64),
+			quota: { margin: 2, minimumRows: 5, capRows: 20 },
+			evaluationGroupsSHA256: frozenGroups.sha256,
+			groups: new Set(),
+		})
+
+		const split = await splitOverlaySlice({ input: parquet, outputDir: `${root}/nad/split`, evaluationGroups: policy })
+
+		// The re-ingested record and its typo variant go to test, the other address trains.
+		expect(split.counts).toEqual({ train: 1, val: 0, test: 2 })
+
+		const resplit = await writeManifest("resplit", {
+			split_attribute: { path: split.attribute, sha256: await sha256File(split.attribute) },
+		})
+
+		expect((await audit(resplit, { addressRows })).audit.counts.verified_unseen).toBe(1)
 	})
 
 	it("refuses a partial read: a listed file that is missing", async () => {

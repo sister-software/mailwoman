@@ -77,6 +77,13 @@ One `CanonicalRow` per NAD record where the address quad is populated:
 - `source_id`: `"usgov-nad-<UUID>-<digest>"` (NAD's UUID) or
   `"usgov-nad-<OID_>-<digest>"` when the UUID is absent or the all-zero placeholder
 
+## Group identity across releases
+
+A NAD release can give an address a new UUID, so one address reaches the corpus under two `source_id`s.
+`address-key.ts` keys a row by its state, five-digit ZIP Code, house number, street and unit, folded so that
+every augmentation of a record gives one key. The evaluation-group split freezes a row whose key a frozen NAD
+row holds, together with the rest of its record (HOLDOUT_AND_EVALUATION section 4.6, #3125).
+
 ## Row filters
 
 Rows are dropped (silently) when:
