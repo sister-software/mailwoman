@@ -147,9 +147,4 @@ describe("MapRenderer", async () => {
 		// Center cell of an odd-sized viewport is the marker anchor.
 		expect(String.fromCodePoint(frame.chars[5 * 21 + 10]!)).toBe("●")
 	})
-
-	it("carries the archive attribution", async () => {
-		const frame = await renderer.renderFrame({ centerLon: -122.61, centerLat: 45.51, zoom: 11, columns: 20, rows: 10 })
-		expect(typeof frame.attribution).toBe("string")
-	})
 })

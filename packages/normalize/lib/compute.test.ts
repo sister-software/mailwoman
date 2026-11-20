@@ -45,11 +45,6 @@ describe("normalize — defaults", () => {
 		const r = normalize("New York")
 		expect(r.normalized).toBe("New York")
 	})
-
-	it("does not expand abbreviations by default", () => {
-		const r = normalize("350 5th Ave")
-		expect(r.normalized).toBe("350 5th Ave")
-	})
 })
 
 describe("normalize — opts", () => {

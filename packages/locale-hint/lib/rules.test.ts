@@ -4,7 +4,7 @@
 import { EMPTY_QUERY_SHAPE_VIEW, type QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
 import { expect, test } from "vitest"
 
-import { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
+import { scoreByPostcode, scoreByScript } from "#rules"
 
 const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
 	format,
@@ -131,14 +131,4 @@ test("scoreByPostcode: the postal generation reads the locale and the confidence
 	expect(postal([hit(0.55, "en-US", "numeric")])).toMatchObject({ locale: "en-US", confidence: 0.55 })
 	expect(postal([{ ...fmt("po_box", 0.85), locale: null }])).toBeNull()
 	expect(postal([])).toBeNull()
-})
-
-test("scoreFallback: always en-US at low confidence (check is never null)", () => {
-	expect(scoreFallback(shape())).toEqual({ locale: "en-US", confidence: 0.3, reason: "fallback" })
-
-	expect(scoreFallback(shape({ characterClass: "cjk", knownFormats: [fmt("jp_postcode", 0.95)] }))).toEqual({
-		locale: "en-US",
-		confidence: 0.3,
-		reason: "fallback",
-	})
 })

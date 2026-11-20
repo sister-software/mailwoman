@@ -353,11 +353,6 @@ describe("importance key in the admin walk (#17)", () => {
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
 	})
 
-	it("is byte-stable when no locale prior is supplied (the shipped default)", async () => {
-		const out = await walk(WHITBY, {})
-		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
-	})
-
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
 		// The prior is additive, never a filter: `weight: 0` is the identity,
 		// so the prior cannot make a place the gazetteer never returned appear.

@@ -3,22 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "#jp"
-
-describe("JP_ADMIN_SUFFIXES / JP_BLOCK_MARKERS", () => {
-	it("carries the prefecture-level and city-level admin markers", () => {
-		expect(JP_ADMIN_SUFFIXES).toContain("都") // metropolis (Tokyo)
-		expect(JP_ADMIN_SUFFIXES).toContain("県") // prefecture
-		expect(JP_ADMIN_SUFFIXES).toContain("市") // city
-		expect(JP_ADMIN_SUFFIXES).toContain("区") // ward
-	})
-
-	it("carries the numbered-tail block markers (the no-street house-number stand-in)", () => {
-		expect(JP_BLOCK_MARKERS).toContain("丁目") // chōme
-		expect(JP_BLOCK_MARKERS).toContain("番地") // banchi
-		expect(JP_BLOCK_MARKERS).toContain("号") // gō
-	})
-})
+import { isJapaneseAdminSuffix, stripAdminSuffix } from "#jp"
 
 describe("isJapaneseAdminSuffix", () => {
 	it("accepts a single admin-suffix kanji", () => {

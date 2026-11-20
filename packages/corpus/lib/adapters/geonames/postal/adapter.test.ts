@@ -56,12 +56,6 @@ async function collect(p: PathBuilder, extra?: Record<string, unknown>): Promise
 }
 
 describe("geonames-postal adapter", () => {
-	it("has the expected id and license", () => {
-		const a = createGeonamesPostalAdapter()
-		expect(a.id).toBe(GEONAMES_POSTAL_ADAPTER_ID)
-		expect(a.defaultLicense).toBe(GEONAMES_POSTAL_DEFAULT_LICENSE)
-	})
-
 	it("emits postcode-first variants with region when admin1 differs from the place", async () => {
 		const rows = await collect(
 			await writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France"))

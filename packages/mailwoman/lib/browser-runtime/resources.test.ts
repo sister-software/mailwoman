@@ -65,10 +65,6 @@ describe("pair-index URL construction", () => {
 const source = await readLocalTextFile(resolveModulePath("mailwoman/browser-runtime/load-assets"))
 
 describe("the release loader owns no pair-index URL of its own", () => {
-	test("the loader does not build a bucket pair-index path itself", () => {
-		expect(source).not.toMatch(/"https:\/\/public\.sister\.software\/mailwoman\/pair-index/)
-	})
-
 	test("the loader takes its pair-index URLs from the shared load configuration", () => {
 		expect(source).not.toContain("pairIndexURLs")
 		expect(source).toContain("neuralClassifierLoadURLs(")

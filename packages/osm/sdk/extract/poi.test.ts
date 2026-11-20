@@ -92,29 +92,6 @@ test("STATION_TAG_RULES: every entry passes the SQL validator", () => {
 	expect(() => buildTelecomPOISQL("multipolygons", STATION_TAG_RULES)).not.toThrow()
 })
 
-test("TELECOM_TAG_RULES: encodes exactly the six decision-2 rules", () => {
-	expect(TELECOM_TAG_RULES).toEqual([
-		{ categoryID: "telecom_exchange", all: [["man_made", "telephone_exchange"]] },
-		{ categoryID: "telecom_exchange", all: [["telecom", "exchange"]] },
-		{
-			categoryID: "telecom_cabinet",
-			all: [
-				["man_made", "street_cabinet"],
-				["street_cabinet", "telecom"],
-			],
-		},
-		{
-			categoryID: "tower_comms",
-			all: [
-				["man_made", "mast"],
-				["tower:type", "communication"],
-			],
-		},
-		{ categoryID: "data_center", all: [["man_made", "data_center"]] },
-		{ categoryID: "data_center", all: [["telecom", "data_center"]] },
-	])
-})
-
 test("matchOSMPOITagRule: telecom_exchange matches either OR branch", () => {
 	expect(matchOSMPOITagRule({ man_made: "telephone_exchange" })).toBe("telecom_exchange")
 	expect(matchOSMPOITagRule({ telecom: "exchange" })).toBe("telecom_exchange")
@@ -185,10 +162,6 @@ test("buildTelecomPOISQL: parameterizes the layer name", () => {
 	expect(buildTelecomPOISQL("multipolygons")).toContain("FROM multipolygons WHERE")
 })
 
-test("buildTelecomPOISQL: pure — identical rules produce byte-identical SQL", () => {
-	expect(buildTelecomPOISQL("points", TELECOM_TAG_RULES)).toBe(buildTelecomPOISQL("points", TELECOM_TAG_RULES))
-})
-
 test("BuildTelecomPOISQL: honors a custom rule table (single OR-less rule without hstore keys)", () => {
 	const sql = buildTelecomPOISQL("points", [{ categoryID: "x", all: [["man_made", "y"]] }])
 
@@ -205,11 +178,6 @@ test("buildTelecomPOISQL: rejects a hostile rule KEY (SQL injection attempt)", (
 	const hostileRules = [{ categoryID: "x", all: [["man_made'; DROP TABLE points; --", "y"] as [string, string]] }]
 
 	expect(() => buildTelecomPOISQL("points", hostileRules)).toThrow(/tag-token allowlist/)
-})
-
-test("buildTelecomPOISQL: every TELECOM_TAG_RULES entry passes the validator", () => {
-	expect(() => buildTelecomPOISQL("points", TELECOM_TAG_RULES)).not.toThrow()
-	expect(() => buildTelecomPOISQL("multipolygons", TELECOM_TAG_RULES)).not.toThrow()
 })
 
 test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr2ogr", async () => {

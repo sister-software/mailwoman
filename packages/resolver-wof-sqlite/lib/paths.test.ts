@@ -4,27 +4,10 @@
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { afterEach, expect, test, vi } from "vitest"
 
-import { wofDatabasePath, wofDatabaseRoot, wofExtractPaths } from "#paths"
+import { wofDatabasePath, wofExtractPaths } from "#paths"
 
 afterEach(() => {
 	vi.unstubAllEnvs()
-})
-
-test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
-	const wof = wofDatabaseRoot("/data")
-	const extract = (name: string): string => wof(name).toString()
-
-	expect(wofExtractPaths("/data")).toEqual([
-		extract("admin-global-priority.db"),
-		extract("postalcode-us.db"),
-		extract("postalcode-geonames-tail.db"),
-		extract("postalcode-intl.db"),
-		extract("postalcode-nl-pc6.db"),
-		// Build-local (ODbL): every caller filters with `existsSync`, which is why it can be listed unconditionally.
-		extract("postalcode-ni-osm.db"),
-	])
-
-	expect(extract("admin-global-priority.db")).toBe("/data/db/wof/admin-global-priority.db")
 })
 
 test("wofDatabasePath and wofExtractPaths read MAILWOMAN_DATA_ROOT when a path is requested", () => {

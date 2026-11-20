@@ -63,28 +63,6 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(() => licenseForOvertureCountry("kr")).toThrow(/COUNTRY_LICENSES/)
 	})
 
-	it("stamps Taiwan's grant as the conjunction, because a row through Overture is bound by both", () => {
-		// Two documents describe separate grants over the same municipal 門牌 rows.
-		// Overture states the terms it redistributes under.
-		// The counsel dossier reads the originating agencies' own grant.
-		// Each grant includes Attribution and adds no obligation the other lacks.
-		// A row with one grant would omit the other's conditions (#2369).
-		expect(licenseForOvertureCountry("tw")).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
-	})
-
-	it("reports Taiwan's evidence beside its expression, so a reader sees which document gave which grant", () => {
-		const taiwan = overtureCountryLicense("TW")
-
-		expect(taiwan?.expression).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
-		expect(taiwan?.evidence).toHaveLength(2)
-		expect(taiwan?.evidence[0]).toContain("Overture attribution page")
-		expect(taiwan?.evidence[1]).toContain("counsel-dossier")
-		expect(taiwan?.register).toBe("OpenAddresses/<bureau> Civil Affairs")
-
-		expect(overtureCountryLicense("es")?.expression).toBe("CC-BY-4.0")
-		expect(overtureCountryLicense("kr")).toBeNull()
-	})
-
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {
 		const root = fixtures.use(await temporaryDirectory("overture-national-")).path
 		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(root))

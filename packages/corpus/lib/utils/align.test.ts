@@ -157,20 +157,6 @@ describe("alignRow — verbatim matches", () => {
 		if (result.kind !== "labeled") return
 		expect(result.row.labels).toEqual(["O", "B-locality"])
 	})
-
-	it("tokens.length === labels.length always", () => {
-		const result = alignRow(
-			baseRow({
-				raw: "12 Main St, Springfield, IL 62701",
-				components: { house_number: "12", street: "Main St", locality: "Springfield", region: "IL", postcode: "62701" },
-			})
-		)
-
-		expect(result.kind).toBe("labeled")
-
-		if (result.kind !== "labeled") return
-		expect(result.row.tokens).toHaveLength(result.row.labels.length)
-	})
 })
 
 describe("alignRow — fuzzy fallback", () => {

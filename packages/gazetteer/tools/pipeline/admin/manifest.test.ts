@@ -6,7 +6,7 @@
  *   of the build that produced it rather than merely populated.
  */
 
-import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { LayerTier } from "@mailwoman/core/layers"
 import { describe, expect, it } from "vitest"
 
 import { adminLayerManifest } from "#tools/pipeline/admin/manifest"
@@ -61,14 +61,6 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 		expect(manifest.license).not.toContain("CDLA")
 	})
 
-	it("records the Who's On First records as a LicenseRef rather than electing one of its 102 sources", () => {
-		// Who's On First states CC0 over "the format and structure" while the records are a modification
-		// of sources with their own terms, so CC0 or ODbL would each claim a grant its text never states.
-		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 3, overture: 0, geonames: 0 } })
-
-		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed")
-	})
-
 	it("drops a license whose source contributed no rows", () => {
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 7 } })
 
@@ -104,23 +96,5 @@ describe("adminLayerManifest — vintages", () => {
 		})
 
 		expect(manifest.sourceVintage).not.toContain("overture")
-	})
-})
-
-describe("adminLayerManifest — the fields a reader acts on", () => {
-	it("names a build command that is a real CLI verb, not a path", () => {
-		// `data inventory` flags a build_cmd whose path tokens do not resolve,
-		// so a CLI verb is what survives a workspace regroup.
-		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } })
-
-		expect(manifest.buildCmd).toBe("mailwoman gazetteer build admin")
-		expect(manifest.buildCmd).not.toContain("/")
-	})
-
-	it("declares the WOF id spine, which is the join key every consumer uses", () => {
-		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } })
-
-		expect(manifest.spineKeys).toEqual({ wofID: "id" })
-		expect(manifest.freshnessPolicy).toBe(LayerFreshnessPolicy.Sealed)
 	})
 })

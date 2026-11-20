@@ -2,13 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { UnitStage } from "@mailwoman/dossier"
-import {
-	BuildingState,
-	districtFeatures,
-	routeFeatures,
-	SegmentStatus,
-	selectionEconomics,
-} from "@mailwoman/opportunity-map"
+import { BuildingState, districtFeatures, routeFeatures, selectionEconomics } from "@mailwoman/opportunity-map"
 import {
 	BUILDING_A,
 	BUILDING_B,
@@ -25,7 +19,6 @@ import {
 	monthText,
 	positionText,
 	recalculationText,
-	SEGMENT_WORDS,
 	segmentText,
 	STATE_WORDS,
 	statesText,
@@ -43,11 +36,6 @@ describe("STATE_WORDS and SEGMENT_WORDS", () => {
 
 		expect(STATE_WORDS[BuildingState.UnknownCoverage]).toMatch(/\bunknown\b/)
 		expect(STATE_WORDS[BuildingState.UnknownUnitCount]).toMatch(/\bunknown\b/)
-	})
-
-	test("name a verified segment as existing and a proposed one as construction", () => {
-		expect(SEGMENT_WORDS[SegmentStatus.Verified]).toBe("verified existing segment")
-		expect(SEGMENT_WORDS[SegmentStatus.Proposed]).toBe("proposed construction")
 	})
 })
 

@@ -251,12 +251,6 @@ describe("candidateLayerManifest", () => {
 		expect(manifest.sourceVintage).toContain("importance=none")
 	})
 
-	it("is never `shipped`, whatever its folds declare", async () => {
-		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratchDirectory())("n.db") })
-
-		expect(manifest.tier).toBe("build-local")
-	})
-
 	it("composes its license from every fold's own terms rather than the ancestor's alone", async () => {
 		// The defect this replaces: a literal `ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` stood here
 		// while the postcode folds supplied 23.90% of the table's places under terms it didn't name.
@@ -320,20 +314,5 @@ describe("candidateLayerManifest", () => {
 
 		expect(manifest.sourceVintage).toContain("build-local-folds=1")
 		expect(manifest.license).toBe("CC-BY-4.0 AND ODbL-1.0 AND OGL-UK-3.0")
-	})
-
-	it("declares the spine that joins back to the ancestor", async () => {
-		// `spr_id` is meaningful only against a known admin build.
-		// The chain records that build.
-		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratchDirectory())("n.db") })
-
-		expect(manifest.spineKeys).toEqual({ wofID: "spr_id" })
-	})
-
-	it("names a build command with no path tokens, so a workspace move cannot stale it", async () => {
-		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratchDirectory())("n.db") })
-
-		expect(manifest.buildCmd).toBe("mailwoman gazetteer build candidate")
-		expect(manifest.buildCmd).not.toContain("/")
 	})
 })

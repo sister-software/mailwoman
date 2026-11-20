@@ -23,7 +23,6 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -31,7 +30,6 @@ import {
 	ES_BIZKAIA_SERVICE_URL,
 	type ESBizkaiaHarvestManifest,
 	bizkaiaComponentFilename,
-	esBizkaiaInputPath,
 	fetchBizkaiaComponentDocument,
 	harvestESBizkaia,
 	readESBizkaiaServiceFeed,
@@ -140,12 +138,6 @@ function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
 function componentResults(): StubResult[] {
 	return ES_BIZKAIA_COMPONENT_TYPES.flatMap((type) => [{ body: hitsXML(1) }, { body: featuresXML(type, 1) }])
 }
-
-describe("esBizkaiaInputPath", () => {
-	it("states the directory the adapter reads, which holds the archives and the saved WFS documents", () => {
-		expect(String(esBizkaiaInputPath(PathBuilder.from("/data/corpus/sources")))).toBe("/data/corpus/sources/es-bizkaia")
-	})
-})
 
 describe("bizkaiaComponentFilename", () => {
 	it("writes a prefixed type name under a .xml name the adapter's glob reaches", () => {

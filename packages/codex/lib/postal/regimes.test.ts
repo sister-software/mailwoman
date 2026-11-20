@@ -17,10 +17,6 @@ import { describe, expect, it } from "vitest"
 import { POSTAL_REGIMES, postalRegimeByID, postalRegimesForCountry, RegimeCoverage, RegimeKind } from "#postal/regimes"
 
 describe("POSTAL_REGIMES", () => {
-	it("names the seven families the corpus specification lists", () => {
-		expect(POSTAL_REGIMES).toHaveLength(7)
-	})
-
 	it("gives every regime a unique id that is not an ISO code", () => {
 		const ids = POSTAL_REGIMES.map((regime) => regime.regimeID)
 

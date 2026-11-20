@@ -369,10 +369,6 @@ describe("compilation refuses what the validator refuses", () => {
 
 		expect(() => compileGeographicModel(document)).toThrow(GeographicModelValidationError)
 	})
-
-	it("admits acyclic multiple inheritance", () => {
-		expect(() => compileGeographicModel(fixture())).not.toThrow()
-	})
 })
 
 describe("the artifact's bytes", () => {

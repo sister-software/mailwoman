@@ -6,12 +6,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { splitLines } from "@mailwoman/core/strings/unicode"
 import { describe, expect, it } from "vitest"
 
-import {
-	dedupeKeepOrder,
-	DEFAULT_USER_DEFINED_SYMBOLS,
-	readUserDefinedSymbolsFile,
-	sentencePieceSymbol,
-} from "./symbols.ts"
+import { dedupeKeepOrder, readUserDefinedSymbolsFile, sentencePieceSymbol } from "./symbols.ts"
 
 const LINE_SEPARATOR = String.fromCodePoint(0x20_28)
 const FILE_SEPARATOR = String.fromCodePoint(0x1c)
@@ -19,12 +14,6 @@ const IDEOGRAPHIC_SPACE = String.fromCodePoint(0x30_00)
 const NO_BREAK_SPACE = String.fromCodePoint(0xa0)
 
 describe("user-defined symbols", () => {
-	it("keeps the postal anchors whole by default", () => {
-		for (const symbol of ["NY", "CA", "USA", "France", "Cedex", "PO Box"]) {
-			expect(DEFAULT_USER_DEFINED_SYMBOLS).toContain(symbol)
-		}
-	})
-
 	it("reads one literal per line, skipping blanks and comments and keeping inner spaces", async () => {
 		await using scratch = await temporaryDirectory("symbols-")
 		const path = scratch.path("uds.txt").toString()

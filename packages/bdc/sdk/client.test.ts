@@ -135,10 +135,6 @@ describe("createBDCClient: credential fail-fast", () => {
 		expect(() => createBDCClient({ username: USERNAME })).toThrow(/credentials/i)
 		expect(() => createBDCClient({ apiKey: API_KEY })).toThrow(/credentials/i)
 	})
-
-	it("does not throw when both halves are passed explicitly", () => {
-		expect(() => clientFor(bdcTransport([{}]))).not.toThrow()
-	})
 })
 
 describe("createBDCClient: header-pair auth and URL building", () => {

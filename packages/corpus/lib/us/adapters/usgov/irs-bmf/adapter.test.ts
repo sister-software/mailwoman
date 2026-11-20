@@ -7,11 +7,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import { writeDelimitedFixture } from "#test-kit"
 import type { CanonicalRow } from "#types"
-import {
-	createUSGovIRSBMFAdapter,
-	USGOV_IRS_BMF_ADAPTER_ID,
-	USGOV_IRS_BMF_DEFAULT_LICENSE,
-} from "#us/adapters/usgov/irs-bmf/adapter"
+import { createUSGovIRSBMFAdapter, USGOV_IRS_BMF_ADAPTER_ID } from "#us/adapters/usgov/irs-bmf/adapter"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -40,12 +36,6 @@ async function collect(p: PathBuilder, extra?: Record<string, unknown>): Promise
 }
 
 describe("usgov-irs-bmf adapter", () => {
-	it("has the expected id and license", () => {
-		const a = createUSGovIRSBMFAdapter()
-		expect(a.id).toBe(USGOV_IRS_BMF_ADAPTER_ID)
-		expect(a.defaultLicense).toBe(USGOV_IRS_BMF_DEFAULT_LICENSE)
-	})
-
 	it("tags a PO-box street line as po_box (not street)", async () => {
 		const rows = await collect(
 			await writeCSV("010674605,IGLESIA FUENTE DE AGUA VIVA,PO BOX 3869,CAROLINA,PR,00984-3869")

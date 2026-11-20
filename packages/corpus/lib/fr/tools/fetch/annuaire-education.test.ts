@@ -7,14 +7,12 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
 	ANNUAIRE_EDUCATION_API_URL,
 	ANNUAIRE_EDUCATION_FILENAME,
 	type AnnuaireExportManifest,
-	annuaireEducationInputPath,
 	annuaireExportURL,
 	annuaireOverseasFilter,
 	countJSONLines,
@@ -119,13 +117,5 @@ describe("downloadAnnuaireEducation", () => {
 
 		expect(summary).toEqual({ fetched: 0, skipped: 1, failed: 0, failedCodes: [] })
 		expect(client.calls).toEqual([ANNUAIRE_EDUCATION_API_URL])
-	})
-})
-
-describe("annuaireEducationInputPath", () => {
-	it("answers the export file the adapter reads", () => {
-		expect(annuaireEducationInputPath(PathBuilder.from("/tmp/sources")).toString()).toBe(
-			`/tmp/sources/fr-annuaire-education-overseas/${ANNUAIRE_EDUCATION_FILENAME}`
-		)
 	})
 })

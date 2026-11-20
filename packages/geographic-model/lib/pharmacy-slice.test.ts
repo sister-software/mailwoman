@@ -76,17 +76,6 @@ describe("the authored pharmacy records", () => {
 		])
 	})
 
-	it("declares `affords` as a defeasible establishment→activity relation", async () => {
-		const relation = (await compileAuthoredGeographicModel()).relations.find((entry) => entry.id === AFFORDS)
-
-		expect(relation).toBeDefined()
-		expect(relation?.domainKinds).toEqual(["establishment"])
-		expect(relation?.rangeKinds).toEqual(["activity"])
-		expect(relation?.transitive).toBe(false)
-		expect(relation?.symmetric).toBe(false)
-		expect(relation?.semantics).toBe(RelationSemantics.Defeasible)
-	})
-
 	it("maps the concept onto a category `@mailwoman/poi-taxonomy` actually carries", async () => {
 		const mapping = (await compileAuthoredGeographicModel()).mappings.find((entry) => entry.concept === PHARMACY)
 
@@ -181,19 +170,6 @@ describe("the committed artifact", () => {
 })
 
 describe("the wave-1 records", () => {
-	it("carries the `drugstore` concept the amendment admits, with provenance naming the measured gap", async () => {
-		const concept = (await compileAuthoredGeographicModel()).concepts.find((entry) => entry.id === DRUGSTORE)
-
-		expect(concept).toBeDefined()
-		expect(concept?.kind).toBe("establishment")
-		expect(concept?.isA).toEqual(["establishment"])
-		expect(concept?.status).toBe("active")
-		expect(concept?.provenance.source).toBe("mailwoman-curated")
-		expect(concept?.provenance.sourceRecord).toContain("§4.1")
-		expect(concept?.provenance.sourceVersion).toContain("2026-07-22.0")
-		expect(concept?.provenance.authoredAt).toBe("2026-08-27")
-	})
-
 	it("scopes the drugstore affordance to the US, at the strength the evidence carries", async () => {
 		const concept = (await compileAuthoredGeographicModel()).concepts.find((entry) => entry.id === DRUGSTORE)
 		const assertion = concept?.assertions.find((entry) => entry.relation === AFFORDS)

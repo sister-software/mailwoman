@@ -6,7 +6,6 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
-import { InMemoryAdapterRegistry } from "#adapters/registry"
 import { writeDelimitedFixture } from "#test-kit"
 import {
 	createStateHiSchoolsAdapter,
@@ -69,12 +68,6 @@ async function writeWorkbook(): Promise<PathBuilder> {
 }
 
 describe("state-hi-schools adapter", () => {
-	it("has the expected id and license", () => {
-		const a = createStateHiSchoolsAdapter()
-		expect(a.id).toBe(STATE_HI_SCHOOLS_ADAPTER_ID)
-		expect(a.defaultLicense).toBe(STATE_HI_SCHOOLS_DEFAULT_LICENSE)
-	})
-
 	it("emits a row for a HIDOE school with a hyphenated Oahu address", async () => {
 		const p = await writeCSV(
 			"335,Ahuimanu Elem School,47-470 Hui Aeko Place,Kaneohe,96744,808.305.4800,808.239.3127,Kimi Ikeda,K,6,Elementary,http://example,Castle,Castle-Kahuku,Windward,Oahu,False"
@@ -176,12 +169,6 @@ describe("state-hi-schools adapter", () => {
 				for await (const _ of a.rows({ inputPath: "/dev/null", country: "FR" }));
 			})()
 		).rejects.toThrow(/only US supported/)
-	})
-
-	it("registers cleanly with an InMemoryAdapterRegistry", () => {
-		const registry = new InMemoryAdapterRegistry()
-		registry.register(createStateHiSchoolsAdapter())
-		expect(registry.get(STATE_HI_SCHOOLS_ADAPTER_ID)?.id).toBe(STATE_HI_SCHOOLS_ADAPTER_ID)
 	})
 
 	it("honors limit", async () => {

@@ -51,9 +51,7 @@ import type { ConformanceResult } from "#tools/eval-harness/conformance/comparat
 import type { ConformanceFixture } from "#tools/eval-harness/conformance/fixture"
 import {
 	auditCanonicalFormSuite,
-	CANONICAL_APPLICABILITY_RULES,
 	CANONICAL_FORM_LAW,
-	CANONICAL_FORM_STATES,
 	CANONICAL_FORMS,
 	CANONICAL_TRANSFORMATION_BY_NAME,
 	canonicalApplicability,
@@ -127,11 +125,6 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 describe("the canonical forms", () => {
-	it("closes the set at two, and names the three states a query can be written in", () => {
-		expect([...CANONICAL_FORMS]).toEqual(["nfd", "nfc"])
-		expect([...CANONICAL_FORM_STATES]).toEqual(["nfc", "nfd", "mixed"])
-	})
-
 	it("splits a composed umlaut into a base letter and a combining mark, and composes it back", () => {
 		const decomposed = decompose(DE_NIPPES)
 
@@ -248,10 +241,6 @@ describe("independence from the other three laws", () => {
 })
 
 describe("canonicalApplicability", () => {
-	it("declares exactly two exclusion rules", () => {
-		expect([...CANONICAL_APPLICABILITY_RULES]).toEqual(["no-canonical-variance", "already-in-target-form"])
-	})
-
 	it.each([...CANONICAL_FORMS])("refuses %s on a query with no canonical variance", (form) => {
 		const reading = canonicalApplicability(GB_BARE_POSTCODE, form)
 

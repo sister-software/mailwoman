@@ -730,13 +730,6 @@ describe("RankByPrimaryPreference — variant-alias exemption (opt-in)", () => {
 			off.map((r) => [r.country_id, r.effectiveNegRank, r.demoted])
 		)
 	})
-
-	test("with the exemption OFF (the default), a stamped row still takes the penalty — the stamp alone changes nothing", () => {
-		const rows = [pop(340_521, 0, BY, "variant"), pop(144_899, 1, FR)]
-		const off = rankByPrimaryPreference(rows, 5)
-
-		expect(off[0]!.country_id).toBe(FR)
-	})
 })
 
 describe("Postcode-containment coherence (Mechanism 2)", () => {

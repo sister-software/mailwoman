@@ -6,12 +6,7 @@ import { stubFetchingBodies } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { describe, expect, it } from "vitest"
 
-import {
-	harvestVlaanderenAD,
-	MAX_PAGE_SIZE,
-	readVlaanderenFeatureCount,
-	readVlaanderenPage,
-} from "#tools/fetch/vlaanderen-ad"
+import { harvestVlaanderenAD, readVlaanderenFeatureCount, readVlaanderenPage } from "#tools/fetch/vlaanderen-ad"
 
 const NAMESPACES =
 	'xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ad="http://inspire.ec.europa.eu/schemas/ad/4.0" ' +
@@ -91,12 +86,6 @@ describe("readVlaanderenFeatureCount", () => {
 })
 
 describe("harvestVlaanderenAD", () => {
-	it("pages at the size the service actually serves", () => {
-		// A `count=50000` request answers with 10,000 features, so asking for more
-		// costs a request and returns the same body.
-		expect(MAX_PAGE_SIZE).toBe(10_000)
-	})
-
 	it("writes each component type whole, then the pages and the manifest", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-vlaanderen-harvest-")
 

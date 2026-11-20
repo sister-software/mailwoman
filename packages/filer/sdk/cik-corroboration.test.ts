@@ -47,14 +47,6 @@ describe("corroborateCIK — against the measured corpus", () => {
 
 		expect(corroborateCIK(cik("0001034760"), "7373").corroborated).toBe(false)
 	})
-
-	it("accepts 6 of the 8 real carriers and rejects 2 — the cost, stated", () => {
-		const real = REGISTRANTS.filter(([label]) => !label.includes("matched"))
-		const accepted = real.filter(([, value, sic]) => corroborateCIK(cik(value), sic).corroborated)
-
-		expect(real).toHaveLength(8)
-		expect(accepted).toHaveLength(6)
-	})
 })
 
 describe("corroborateCIK — pins", () => {
@@ -110,13 +102,6 @@ describe("the allowlist itself", () => {
 		// A 48xx prefix rule would accept these codes.
 		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
 		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
-	})
-
-	it("excludes the software classifications, because including them readmits WidePoint", () => {
-		// Carriers under these codes need an explicit pin.
-		for (const sic of ["7372", "7373", "7374"]) {
-			expect(TELECOM_SIC_CODES.has(sic)).toBe(false)
-		}
 	})
 
 	it("is overridable for another vertical without forking the check", () => {

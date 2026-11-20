@@ -3,17 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_STREET_TYPES, isBritishStreetWord } from "#gb"
-
-describe("GB_STREET_TYPES", () => {
-	it("spans the common core and the distinctively British vocabulary", () => {
-		expect(GB_STREET_TYPES).toContain("street")
-		expect(GB_STREET_TYPES).toContain("crescent")
-		expect(GB_STREET_TYPES).toContain("mews")
-		expect(GB_STREET_TYPES).toContain("wynd") // Scots
-		expect(GB_STREET_TYPES).toContain("brae") // Scots
-	})
-})
+import { isBritishStreetWord } from "#gb"
 
 describe("isBritishStreetWord", () => {
 	it("matches thoroughfare words, case-insensitively, as whole tokens", () => {

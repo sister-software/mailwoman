@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest"
 
 import { createVlaanderenAdapter } from "#be/adapters/vlaanderen/adapter"
 import { LIVE_PUBLISHER_TESTS } from "#test-kit"
-import { harvestVlaanderenAD, MAX_PAGE_SIZE } from "#tools/fetch/vlaanderen-ad"
+import { harvestVlaanderenAD } from "#tools/fetch/vlaanderen-ad"
 
 describe.runIf(LIVE_PUBLISHER_TESTS)("harvestVlaanderenAD against the live service", () => {
 	it("writes a harvest the adapter reads into rows", async () => {
@@ -57,8 +57,4 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestVlaanderenAD against the live servi
 		expect(rows.some((row) => row.components.street?.includes("_"))).toBe(false)
 		expect(rows.some((row) => row.components.locality === "België")).toBe(false)
 	}, 600_000)
-
-	it("pages at the size the service serves", () => {
-		expect(MAX_PAGE_SIZE).toBe(10_000)
-	})
 })

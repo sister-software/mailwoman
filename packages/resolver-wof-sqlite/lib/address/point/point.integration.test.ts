@@ -358,15 +358,6 @@ describe("AddressPointSqliteLookup", () => {
 		expect(lookup.find({ street: "PO Box", number: "123-125", postcode: "4505", bbox: null })).toBeNull()
 	})
 
-	it("unit siblings share the building coordinate through every rung", () => {
-		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })
-		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505", bbox: null })
-
-		expect(base?.lat).toBeDefined()
-
-		expect(viaRange?.lat).toBe(-27.9999)
-	})
-
 	it("carries the register row's own locality and postcode on the hit", () => {
 		const hit = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })
 

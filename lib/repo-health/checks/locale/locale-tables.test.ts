@@ -93,18 +93,6 @@ describe("findLocaleTables", () => {
 })
 
 describe("localeTablesCheck", () => {
-	it("no longer asks completeness of any table, because the one it bound is now derived", async () => {
-		const context = await plant({
-			config: { locales: ["en-us", "fr-fr"], charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } } },
-			weights: [
-				["US", "en-us"],
-				["FR", "fr-fr"],
-			],
-		})
-
-		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
-	})
-
 	it("reports a country key that disagrees with its locale's region, in any table", async () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
@@ -152,15 +140,6 @@ describe("localeTablesCheck", () => {
 					["KR", "ko-kr"],
 				]),
 			},
-		})
-
-		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
-	})
-
-	it("passes a tree with no census table, because it no longer binds one", async () => {
-		const context = await plant({
-			config: { locales: ["en-us"] },
-			extra: { [CENSUS]: "export const SOMETHING_ELSE = buildIt()\n" },
 		})
 
 		await expect(localeTablesCheck.run(context)).resolves.toEqual([])

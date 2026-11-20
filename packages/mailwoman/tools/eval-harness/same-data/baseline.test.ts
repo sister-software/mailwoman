@@ -125,11 +125,6 @@ describe("same-data scorer (#2261)", () => {
 		expect(mcnemarExactP(12, 3)).toBeCloseTo((2 * (1 + 15 + 105 + 455)) / 2 ** 15, 12)
 	})
 
-	it("rejects a 6/0 split and does not reject a 5/0 split at alpha 0.05", () => {
-		expect(mcnemarExactP(6, 0)).toBeLessThanOrEqual(0.05)
-		expect(mcnemarExactP(5, 0)).toBeGreaterThan(0.05)
-	})
-
 	it("is symmetric in its two arms", () => {
 		expect(mcnemarExactP(12, 3)).toBe(mcnemarExactP(3, 12))
 	})

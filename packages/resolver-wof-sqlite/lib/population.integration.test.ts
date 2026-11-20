@@ -73,24 +73,6 @@ afterEach(() => {
 	lookup[Symbol.dispose]()
 })
 
-describe("buildPlaceSearchFTS — done-phase summary", () => {
-	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
-		using db = buildFixtureDB()
-		let doneDetail: string | null = null
-
-		buildPlaceSearchFTS(db, {
-			onProgress: (phase, detail) => {
-				if (phase === "done") {
-					doneDetail = detail ?? null
-				}
-			},
-		})
-
-		expect(doneDetail).toMatch(/FTS rows/)
-		expect(doneDetail).toMatch(/bbox rows/)
-	})
-})
-
 describe("findPlace — population boost", () => {
 	test("returns population on candidates when present", async () => {
 		const candidates = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })

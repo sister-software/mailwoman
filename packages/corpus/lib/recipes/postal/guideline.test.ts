@@ -72,10 +72,6 @@ const words = (form: string) => form.toLowerCase().replaceAll(".", "").split(/\s
 const startsWith = (form: readonly string[], prefix: readonly string[]) => prefix.every((word, i) => form[i] === word)
 
 describe("postal-guideline", () => {
-	it("writes the invented-postal-guideline source", () => {
-		expect(SOURCE).toBe("invented-postal-guideline")
-	})
-
 	it("emits rows aligned with a po_box span", () => {
 		const rows = generate(7)
 

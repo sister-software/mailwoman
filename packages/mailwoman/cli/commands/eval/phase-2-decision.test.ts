@@ -417,24 +417,6 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 		}
 	})
 
-	it("registers the four phase-2 lanes, exactly one of them blocked", async () => {
-		expect(definition.lanes.map((lane) => lane.id)).toEqual([
-			"recognition",
-			"semantic_breadth",
-			"absence",
-			"surface_inertness",
-		])
-
-		expect(definition.lanes.filter((lane) => lane.status === "blocked").map((lane) => lane.blockedBy)).toEqual([
-			"https://github.com/sister-software/mailwoman/issues/1980",
-		])
-	})
-
-	it("records the integration record's nine default-change rows in order", async () => {
-		expect(definition.defaultChangeBar).toHaveLength(9)
-		expect(definition.defaultChangeBar.map((row) => row.row)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
-	})
-
 	it("names a merged receipt or a committed artifact for every baseline", async () => {
 		for (const check of definition.checks) {
 			expect(check.baseline.reference).not.toBe("")

@@ -354,12 +354,6 @@ describe("mergeNamePools", () => {
 		expect(merged.longerNames).toEqual([{ name: "Lochaline Ferry Terminal", source: NameSource.OverturePlaces }])
 		expect(merged.attested).toEqual(["Pier 1"])
 	})
-
-	it("keeps the order and length of a plain concatenation, so a seeded draw picks the same name", () => {
-		const merged = mergeNamePools(osm, overture)
-
-		expect(merged.venues.map((entry) => entry.name)).toEqual([...osm.venues, ...overture.venues])
-	})
 })
 
 describe("allocate", () => {

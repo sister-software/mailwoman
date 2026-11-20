@@ -3,13 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { consultsNextSource, LayerOutcome, UnreadableArtifactError, UnreadableReason } from "#layers"
-
-describe("consultsNextSource", () => {
-	it("moves on only from an absent layer", () => {
-		expect(Object.values(LayerOutcome).filter(consultsNextSource)).toEqual([LayerOutcome.Absent])
-	})
-})
+import { UnreadableArtifactError, UnreadableReason } from "#layers"
 
 describe("UnreadableArtifactError", () => {
 	it("names the artifact's path and the reason", () => {

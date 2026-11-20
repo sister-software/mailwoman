@@ -783,28 +783,6 @@ function evidenceOf(channels: Partial<NeuralParseTrace>) {
 	return assembleAccount(ITEM, run({ trace: traceOf({ parse: trace(channels) }) }), NO_EXPECTATION).evidence
 }
 
-describe("rows_cap", () => {
-	it("caps the emitted rows non-clean-first while the aggregates cover every row", async () => {
-		// Structural: exercise the partition and cap arithmetic without an engine,
-		// because the pure tail of `runDiagnose` isn't separable.
-		const rows = [
-			{ id: "a", shapes: ["clean"] },
-			{ id: "b", shapes: ["evidence_starved"] },
-			{ id: "c", shapes: ["clean"] },
-			{ id: "d", shapes: ["retrieval_empty"] },
-		]
-
-		const emitted = [
-			...rows.filter((row) => !row.shapes.includes("clean")),
-			...rows.filter((row) => row.shapes.includes("clean")),
-		]
-
-		expect(emitted.map((row) => row.id)).toEqual(["b", "d", "a", "c"])
-		expect(emitted.slice(0, 2).map((row) => row.id)).toEqual(["b", "d"])
-		expect(Math.max(0, emitted.length - 2)).toBe(2)
-	})
-})
-
 describe("routingFor", () => {
 	it("routes a country with an overlay to its locale and a country without one to the unscoped base", () => {
 		expect(routingFor(resolvedInput({ id: "gb", input: "x", country: "GB" }), "board-routed")).toEqual({

@@ -13,8 +13,7 @@ import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { postOfficeCategoryID, StructureProvenance } from "#structures/source"
-import { STRUCTURE_SOURCES } from "#structures/sources"
+import { postOfficeCategoryID } from "#structures/source"
 import { useScratchDir } from "#test-kit"
 import {
 	USGOV_USGS_STRUCTURES_ADAPTER_ID,
@@ -42,17 +41,6 @@ async function layOutFetch(): Promise<PathBuilder> {
 }
 
 describe("usgsNationalMapStructures", () => {
-	it("is registered as a mapping agency's list under the US federal public-domain license", () => {
-		expect(STRUCTURE_SOURCES).toContain(usgsNationalMapStructures)
-
-		expect(usgsNationalMapStructures).toMatchObject({
-			country: "US",
-			provenance: StructureProvenance.MappingAgency,
-			license: "LicenseRef-USGov-Public-Domain",
-			registerSource: "us-public-administration-3",
-		})
-	})
-
 	it("reads every feature with its layer's category, the fetch date as the vintage", async () => {
 		const features = await Array.fromAsync(JSONSpliterator.fromAsync<USGSStructureFeature>(fixture))
 		const read = await usgsNationalMapStructures.read(await layOutFetch())

@@ -20,16 +20,6 @@ import {
 	placetypeMapForCountry,
 } from "#placetype-map"
 
-describe("DEFAULT_PLACETYPE_MAP", () => {
-	it("routes the JP tiers the candidate gazetteer keys, and leaves the street tiers to the extracts", () => {
-		expect(DEFAULT_PLACETYPE_MAP.prefecture).toBe("region")
-		expect(DEFAULT_PLACETYPE_MAP.municipality).toBe("locality")
-		expect(DEFAULT_PLACETYPE_MAP.district).toBe("locality")
-		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
-		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
-	})
-})
-
 describe("placetypeMapForCountry", () => {
 	it("types the Taiwanese 鄉鎮市區 (`subregion`) as a locality-band placetype, and leaves every other tag alone", () => {
 		const tw = placetypeMapForCountry("TW")
@@ -105,11 +95,5 @@ describe("DEFAULT_PLACETYPE_MAP", () => {
 		// Their classifier attribution stands.
 		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
 		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
-	})
-
-	it("routes postcode to WOF's own placetype name", () => {
-		// The tags and the taxonomy disagree on the spelling.
-		// The map is where that's reconciled.
-		expect(DEFAULT_PLACETYPE_MAP.postcode).toBe("postalcode")
 	})
 })

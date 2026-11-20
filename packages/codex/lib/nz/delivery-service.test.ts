@@ -12,12 +12,6 @@ import {
 } from "#nz"
 
 describe("NZ_DELIVERY_SERVICE_TYPES", () => {
-	it("carries exactly the six ADV358 types", () => {
-		expect(NZ_DELIVERY_SERVICE_TYPES.map((t) => t.type).toSorted()).toEqual(
-			["CMB", "Counter Delivery", "PO Box", "Poste Restante", "Private Bag", "Response Bag"].toSorted()
-		)
-	})
-
 	it("marks the counter services as identifier-less", () => {
 		for (const t of NZ_DELIVERY_SERVICE_TYPES) {
 			if (t.type === "Counter Delivery" || t.type === "Poste Restante") {
@@ -28,13 +22,6 @@ describe("NZ_DELIVERY_SERVICE_TYPES", () => {
 })
 
 describe("NZ_PRIVATE_BOX_ALIAS", () => {
-	it("is marked officiallyInvalid — not a valid ADV358 Delivery Service Type", () => {
-		// ADV358 (June 2011) lists exactly six types; 'Private Box' isn't among them.
-		// Source: nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf (accessed 2026-06-11).
-		// Operator ruling 2026-06-11: recognize-as-used with this citation.
-		expect(NZ_PRIVATE_BOX_ALIAS.officiallyInvalid).toBe(true)
-	})
-
 	it("has the same identifier rule as PO Box — required-if-allocated", () => {
 		const poBox = NZ_DELIVERY_SERVICE_TYPES.find((t) => t.type === "PO Box")!
 		expect(NZ_PRIVATE_BOX_ALIAS.identifier).toBe(poBox.identifier)

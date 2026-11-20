@@ -23,7 +23,6 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -31,7 +30,6 @@ import {
 	decodeDeclaredXML,
 	ES_CATASTRO_SERVICE_FEED_URL,
 	type ESCatastroHarvestManifest,
-	esCatastroInputPath,
 	harvestESCatastro,
 	readESCatastroProvinceFeed,
 	readESCatastroServiceFeed,
@@ -313,14 +311,6 @@ describe("readESCatastroProvinceFeed", () => {
 
 		expect(() => readESCatastroProvinceFeed(feed, { code: "55", provinceFeedURL: CEUTA_FEED_URL })).toThrow(
 			/is listed twice/u
-		)
-	})
-})
-
-describe("esCatastroInputPath", () => {
-	it("states the directory the adapter reads, under the fetcher's own slug", () => {
-		expect(String(esCatastroInputPath(PathBuilder.from("/data/corpus/sources")))).toBe(
-			"/data/corpus/sources/es-catastro"
 		)
 	})
 })

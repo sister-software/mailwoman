@@ -323,13 +323,6 @@ describe("tagTable header field (self-describing tag decode)", () => {
 })
 
 describe("parentTag record field (schemaVersion 3 — the typed parent)", () => {
-	it("round-trips the parent tag independently of the child tag", () => {
-		const r = resolver()
-
-		expect(r.probe("shoreditch", "london")).toEqual({ tag: "dependent_locality", parentTag: "locality" })
-		expect(r.probe("london", "greater london")).toEqual({ tag: "locality", parentTag: "region" })
-	})
-
 	it("carries a parent tag the containment map would NOT have derived", () => {
 		const r = resolver([
 			{ child: "park slope", parent: "brooklyn", tag: "dependent_locality", parentTag: "dependent_locality" },

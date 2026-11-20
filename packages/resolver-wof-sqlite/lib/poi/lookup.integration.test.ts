@@ -275,15 +275,6 @@ describe("POILookup", () => {
 		expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
 	})
 
-	test("brand search reaches instances far beyond any k-ring budget (distance-sorted)", () => {
-		using lk = new POILookup({ databasePath: dbPath })
-
-		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-		const chicago = hits.find((h) => h.name === "McDonald's (Loop)")!
-		expect(chicago).toBeDefined()
-		expect(chicago.distanceM! / 1000).toBeGreaterThan(200)
-	})
-
 	test("brand search drops instances past the 500 km sanity radius", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 

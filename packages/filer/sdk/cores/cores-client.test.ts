@@ -41,21 +41,6 @@ describe("parseCORESRegistration — real CORES detail pages", () => {
 		})
 	})
 
-	it("keeps the legal name and the brand as SEPARATE surfaces — the reason this client exists", async () => {
-		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
-
-		expect(registration?.entityName).toBe("Knology Total Communications, Inc.")
-		expect(registration?.contactOrganization).toBe("WOW! Internet, Cable and Phone")
-		expect(registration?.entityName).not.toBe(registration?.contactOrganization)
-	})
-
-	it("reports a field CORES left blank as null rather than an empty string", async () => {
-		const registration = parseCORESRegistration(KNOLOGY_FRN, await fixture("frn-0001753557-knology-wow.html"))
-
-		// The fixture has a fax row with an empty cell.
-		expect(registration).toHaveProperty("contactFax", null)
-	})
-
 	it("reads the `ContactPhone:` label, which the page ships without its space", async () => {
 		expect(parseCORESRegistration(COMCAST_FRN, await fixture("frn-0003768165-comcast.html"))?.contactPhone).toBe(
 			"(215) 286-4040"

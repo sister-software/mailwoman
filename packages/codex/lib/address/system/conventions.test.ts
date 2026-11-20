@@ -9,22 +9,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "#address/system/conventions"
+import { conventionsForSystem } from "#address/system/conventions"
 import { UK_POSTCODE_PATTERN } from "#gb"
 
 describe("FR address-system conventions (#719)", () => {
-	it("does NOT forbid street_prefix — FR uses a LEADING street type the current model emits correctly", () => {
-		const fr = conventionsForSystem("fr")
-		expect(fr).not.toBeNull()
-		expect(fr!.forbiddenTags ?? []).not.toContain("street_prefix")
-	})
-
 	it("forbids no tag, so a French-looking address outside France keeps its street_suffix (#2987)", () => {
 		expect(conventionsForSystem("fr")!.forbiddenTags).toBeUndefined()
-	})
-
-	it("the literal table row agrees with the lookup", () => {
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr).toBe(conventionsForSystem("fr"))
 	})
 })
 

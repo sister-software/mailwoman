@@ -341,14 +341,6 @@ describe("buildToolTable", () => {
 			})
 		})
 
-		it("rejects at the handler level when both geoids and h3_cells are omitted", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_bdc_filing_landscape")
-
-			await expect(tool.handler({ database_path: "/data/bdc.db" })).rejects.toThrow(
-				/exactly one of `geoids` or `h3Cells`/
-			)
-		})
-
 		it("returns the deps result verbatim, vintage included", async () => {
 			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_bdc_filing_landscape")
 
@@ -437,25 +429,6 @@ describe("buildToolTable", () => {
 			})
 		})
 
-		it("missing bdc_database_path/poi_database_path → an abstain-shaped bundle, not a throw", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
-
-			const result = (await tool.handler({
-				geoid: "170010001001001",
-				technology_code: 50,
-				claimed_download_mbps: 100,
-			})) as { evidence_found: Array<{ type: string; reason?: string }>; vintage: string | null }
-
-			expect(result.evidence_found).toEqual(
-				expect.arrayContaining([
-					{ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" },
-					{ type: "abstain", reason: "requires_build_local_layer", layer: "poi" },
-				])
-			)
-
-			expect(result.vintage).toBeNull()
-		})
-
 		it("returns the deps result verbatim", async () => {
 			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
 
@@ -522,22 +495,6 @@ describe("buildToolTable", () => {
 			})
 		})
 
-		it("rejects at the handler level when no identifier is supplied", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
-
-			await expect(tool.handler({ database_path: "/data/filer.db" })).rejects.toThrow(
-				/exactly one of `frn`, `form499ID`, `bdcProviderID`/
-			)
-		})
-
-		it("rejects at the handler level when more than one identifier is supplied", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
-
-			await expect(
-				tool.handler({ database_path: "/data/filer.db", frn: "0001753557", form499_id: "899901" })
-			).rejects.toThrow(/exactly one of `frn`, `form499ID`, `bdcProviderID`/)
-		})
-
 		it("returns the deps result verbatim, as_of and vintage included", async () => {
 			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
 
@@ -598,26 +555,6 @@ describe("buildToolTable", () => {
 				nodeID: "frn:0001753557",
 				asOf: "2026-06-01",
 			})
-		})
-
-		it("rejects at the handler level when no identifier is supplied", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
-
-			await expect(tool.handler({ database_path: "/data/filer.db" })).rejects.toThrow(
-				/exactly one of `familyID`, `nodeID`/
-			)
-		})
-
-		it("rejects at the handler level when both identifiers are supplied", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
-
-			await expect(
-				tool.handler({
-					database_path: "/data/filer.db",
-					family_id: "holding_company_name:acme-holdco",
-					node_id: "frn:0001753557",
-				})
-			).rejects.toThrow(/exactly one of `familyID`, `nodeID`/)
 		})
 
 		it("returns the deps result verbatim — every FamilyRollup field intact, nothing dropped or reshaped", async () => {

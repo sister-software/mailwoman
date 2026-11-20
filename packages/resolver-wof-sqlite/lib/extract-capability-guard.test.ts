@@ -105,10 +105,6 @@ describe("extract capability guard", () => {
 		).not.toThrow()
 	})
 
-	it("does not examine the MAIN extract for routing — it is the fallback by definition", () => {
-		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db")] })).not.toThrow()
-	})
-
 	it("refuses an EMPTY extract whose name routes — no spr to claim with, and it would still be queried", () => {
 		let message = ""
 

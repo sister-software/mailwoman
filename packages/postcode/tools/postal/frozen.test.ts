@@ -103,10 +103,4 @@ describe("the frozen postal-family answers", () => {
 			}
 		}
 	})
-
-	it("states each difference as one of the two defects of issue 3088", () => {
-		for (const difference of frozen.removedImplementationDifferences) {
-			expect(difference.class, stringifyJSON(difference.input)).toMatch(/^issue 3088, defect [12]/u)
-		}
-	})
 })

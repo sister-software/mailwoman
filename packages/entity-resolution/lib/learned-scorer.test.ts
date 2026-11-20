@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type GBT, gbtScore, type TermFrequencyTable, trainGBT } from "@mailwoman/match"
+import type { TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { createGBTScorer, createMatchFeaturizer } from "#learned-scorer"
+import { createMatchFeaturizer } from "#learned-scorer"
 import { buildDefaultModel } from "#resolve"
 import type { SourceRecord } from "#types"
 
@@ -116,28 +116,5 @@ describe("createMatchFeaturizer", () => {
 		)[2]!
 
 		expect(crowded).toBeGreaterThan(rare) // a crowded address scores higher on the crowdedness feature
-	})
-})
-
-describe("createGBTScorer", () => {
-	it("applies the trained model to the pair's features (= gbtScore ∘ featurize)", () => {
-		const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
-		const a = rec("1", "ann", "lee", "10 oak st", "10 OAK ST")
-		const b = rec("2", "ann", "lee", "10 oak st", "10 OAK ST")
-		// A trivial model trained so its score is well-defined.
-		// We only assert the wiring is consistent.
-		const x = featurize(a, b)
-		const dim = x.length
-
-		const model: GBT = trainGBT([x, new Array<number>(dim).fill(0)], [1, 0], [1, 1], {
-			rounds: 5,
-			depth: 2,
-			lr: 0.3,
-			minLeaf: 1,
-		})
-
-		const scorer = createGBTScorer({ comparisons, addressFrequency, model })
-		// The scorer must equal gbtScore over the identical featurization.
-		expect(scorer(a, b)).toBeCloseTo(gbtScore(model, featurize(a, b)), 10)
 	})
 })

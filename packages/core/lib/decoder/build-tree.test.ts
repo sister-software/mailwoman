@@ -478,36 +478,6 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 		expect(depLocality.value).toBe("Plimmerton")
 		expect(locality.value).toBe("Porirua")
 	})
-
-	test("Same-tag spans across a comma stay two spans (Springfield, Chicago)", () => {
-		const raw = "Springfield, Chicago"
-
-		const tokens: DecoderToken[] = [
-			tok("Springfield", 0, 11, "B-locality"),
-			tok(",", 11, 12, "O"),
-			tok("Chicago", 13, 20, "B-locality"),
-		]
-
-		const tree = buildAddressTree(raw, tokens)
-		const localities: AddressNode[] = []
-
-		const walk = (n: AddressNode): void => {
-			if (n.tag === "locality") {
-				localities.push(n)
-			}
-
-			for (const c of n.children) {
-				walk(c)
-			}
-		}
-
-		for (const r of tree.roots) {
-			walk(r)
-		}
-
-		expect(localities).toHaveLength(2)
-		expect(localities.map((l) => l.value).toSorted()).toEqual(["Chicago", "Springfield"])
-	})
 })
 
 describe("a house number in a numbered settlement without a street", () => {

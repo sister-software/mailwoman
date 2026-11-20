@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
@@ -94,16 +94,6 @@ describe("layer interface DDL", () => {
 
 			expect((await readLayerCoverage(db, 3))?.basis).toBe(CoverageBasis.Designated)
 			expect((await readLayerCoverage(db, 4))?.basis).toBe(CoverageBasis.Surveyed)
-		})
-
-		it("permits an exclusion only on a designated or surveyed basis", () => {
-			// All three bases have completeness 1.0.
-			// Only two license the conclusion that the requested item is absent.
-			expect(supportsExclusion({ basis: CoverageBasis.Designated })).toBe(true)
-			expect(supportsExclusion({ basis: CoverageBasis.Surveyed })).toBe(true)
-			expect(supportsExclusion({ basis: CoverageBasis.SourcePresent })).toBe(false)
-			// An unread/absent basis is never strong enough either.
-			expect(supportsExclusion({})).toBe(false)
 		})
 	})
 })

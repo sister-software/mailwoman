@@ -6,12 +6,6 @@ import { describe, expect, it } from "vitest"
 import { isJapanesePrefectureCode, JP_PREFECTURES, lookupJapanesePrefecture } from "#jp"
 
 describe("JP_PREFECTURES", () => {
-	it("covers all 47 prefectures", () => {
-		expect(Object.keys(JP_PREFECTURES)).toHaveLength(47)
-		expect(JP_PREFECTURES["13"].kanji).toBe("東京都")
-		expect(JP_PREFECTURES["13"].romaji).toBe("Tokyo")
-	})
-
 	it("has the legal to/dō/fu/ken split (1 to, 1 do, 2 fu, 43 ken)", () => {
 		const counts = { to: 0, do: 0, fu: 0, ken: 0 }
 
@@ -20,13 +14,6 @@ describe("JP_PREFECTURES", () => {
 		}
 
 		expect(counts).toEqual({ to: 1, do: 1, fu: 2, ken: 43 })
-	})
-
-	it("pins the four special-type prefectures by name", () => {
-		expect(JP_PREFECTURES["13"].type).toBe("to") // Tokyo
-		expect(JP_PREFECTURES["01"].type).toBe("do") // Hokkaido
-		expect(JP_PREFECTURES["26"].type).toBe("fu") // Kyoto
-		expect(JP_PREFECTURES["27"].type).toBe("fu") // Osaka
 	})
 })
 

@@ -237,28 +237,6 @@ describe("writeParquetSplits", () => {
 		await expect(consume()).rejects.toThrow(/absent from the file schema: missing_measurement_column/)
 	})
 
-	it("PARQUET_COLUMNS lists every emitted column in order", () => {
-		const cols: string[] = [...PARQUET_COLUMNS]
-
-		expect(cols).toEqual([
-			"raw",
-			"tokens",
-			"labels",
-			"span_starts",
-			"span_ends",
-			"span_tags",
-			"country",
-			"locale",
-			"source",
-			"source_id",
-			"license",
-			"register",
-			"surface",
-			"augmentation",
-			"base_source_id",
-		])
-	})
-
 	it("writes per-split .parquet files readable by DuckDB, with MANIFEST.json", async () => {
 		// Pre-partitioned input shape: callers supply one AsyncIterable per split.
 		const trainRows: LabeledRow[] = [

@@ -15,13 +15,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 import type { CountryGranularity, RungMeasurement } from "#tools/pipeline/granularity"
-import {
-	LADDER,
-	SUB_LOCALITY_RUNGS,
-	bottomsOutAt,
-	buildGranularityLadder,
-	placetypesForRung,
-} from "#tools/pipeline/granularity"
+import { LADDER, bottomsOutAt, buildGranularityLadder, placetypesForRung } from "#tools/pipeline/granularity"
 
 describe("placetypesForRung", () => {
 	it("derives membership from the projection table rather than a second hand-written list", () => {
@@ -32,12 +26,6 @@ describe("placetypesForRung", () => {
 
 	it("returns an empty list for a tag no placetype projects onto", () => {
 		expect(placetypesForRung("po_box")).toEqual([])
-	})
-})
-
-describe("SUB_LOCALITY_RUNGS", () => {
-	it("names the rungs measured by parent-coverage rather than presence", () => {
-		expect([...SUB_LOCALITY_RUNGS].toSorted()).toEqual(["dependent_locality", "unit", "venue"])
 	})
 })
 

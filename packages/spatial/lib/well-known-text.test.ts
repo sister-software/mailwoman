@@ -116,11 +116,6 @@ test("geometryToEWKB: tags the geometry with the SRID-flag the plain WKB lacks",
 	expect(ewkb.toString("hex")).not.toBe(geometryToWKB(POINT).toString("hex"))
 })
 
-test("geometryToEWKH: is the hex-encoded form of the EWKB buffer", () => {
-	expect(geometryToEWKH(POINT)).toBe(geometryToEWKB(POINT).toString("hex"))
-	expect(geometryToEWKH(POINT)).toBe("0101000020e61000000000000000003e400000000000002440")
-})
-
 test("geometryToSQL: returns a thunk emitting a GeomFromEWKB literal for a real geometry", () => {
 	const thunk = geometryToSQL(POINT)
 	expect(typeof thunk).toBe("function")

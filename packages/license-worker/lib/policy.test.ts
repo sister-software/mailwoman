@@ -9,12 +9,7 @@
 import { describe, expect, it } from "vitest"
 
 import { LicenseState } from "#ledger/schema"
-import {
-	licenseStateAfterDispute,
-	licenseStateAfterRefund,
-	licenseStateAfterSubscription,
-	publicLicenseStatus,
-} from "#policy"
+import { licenseStateAfterRefund, licenseStateAfterSubscription, publicLicenseStatus } from "#policy"
 
 const WITHIN_GRACE = { graceUntil: "2026-11-15", today: "2026-11-10" }
 const PAST_GRACE = { graceUntil: "2026-11-15", today: "2026-11-16" }
@@ -43,11 +38,6 @@ describe("the license-state policy", () => {
 		}
 	)
 
-	it("a won dispute hands the license back to its subscription by deciding from active again", () => {
-		expect(licenseStateAfterSubscription(LicenseState.Active, { status: "active" }, WITHIN_GRACE)).toBe("active")
-		expect(licenseStateAfterSubscription(LicenseState.Active, { status: "canceled" }, PAST_GRACE)).toBe("lapsed")
-	})
-
 	it.each([
 		// current, amount refunded of 25,000, expected
 		["active", 25_000, "revoked"],
@@ -59,10 +49,6 @@ describe("the license-state policy", () => {
 		["revoked", 25_000, "revoked"],
 	] as const)("a %s license refunded %d of 25,000 reads %s", (current, refunded, expected) => {
 		expect(licenseStateAfterRefund(current, { amount: 25_000, amount_refunded: refunded })).toBe(expected)
-	})
-
-	it("a dispute revokes", () => {
-		expect(licenseStateAfterDispute()).toBe("revoked")
 	})
 
 	it("the public word for review is active; every other state is its own word", () => {

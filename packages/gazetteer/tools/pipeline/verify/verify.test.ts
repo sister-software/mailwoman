@@ -7,7 +7,7 @@ import { expect, test } from "vitest"
 
 import { enrichAdmin } from "#tools/pipeline/admin/enrich"
 import { buildFTS } from "#tools/pipeline/fts"
-import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "#tools/pipeline/verify"
+import { type VerifyBaseline, verifyAdmin } from "#tools/pipeline/verify"
 
 const TINY_BASELINE: VerifyBaseline = {
 	requiredNodes: { TL: ["country", "region"] },
@@ -81,13 +81,4 @@ test("verifyAdmin fails place-abbr when the join table is missing (the #1015 mis
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	expect(r.checks.find((c) => c.check === "place-abbr")!.ok).toBe(false)
-})
-
-test("the reverse panel covers the #1015 failure cases", () => {
-	expect(REVERSE_PANEL_CASES.length).toBeGreaterThanOrEqual(15)
-	const labels = REVERSE_PANEL_CASES.map(([label]) => label)
-
-	for (const must of ["Brussels", "Antwerpen", "Gent", "Basel"]) {
-		expect(labels.some((l) => l.includes(must))).toBe(true)
-	}
 })

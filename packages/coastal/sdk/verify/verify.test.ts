@@ -175,12 +175,4 @@ describe("the negative half", () => {
 			expect(row.designations).toBe(0)
 		}
 	})
-
-	it("names both populations — inland England and the other UK nations", () => {
-		const labels = OUTSIDE_MAPPING_POINTS.map((point) => point.label).join(" ")
-
-		expect(labels).toMatch(/inland England/u)
-		expect(labels).toMatch(/Wales/u)
-		expect(labels).toMatch(/Scotland/u)
-	})
 })

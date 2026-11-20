@@ -94,10 +94,6 @@ describe("nlKadasterInputPath", () => {
 
 		expect(String(path)).toBe(`/data/corpus/sources/nl-kadaster/${NL_KADASTER_DOWNLOAD_FILENAME}`)
 	})
-
-	it("keeps the .gz suffix, which is what makes the adapter inflate the file", () => {
-		expect(NL_KADASTER_DOWNLOAD_FILENAME.endsWith(".gml.gz")).toBe(true)
-	})
 })
 
 describe("readNLKadasterPublication", () => {

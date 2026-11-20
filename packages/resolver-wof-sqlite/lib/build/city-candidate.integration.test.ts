@@ -127,11 +127,4 @@ describe("WOFCandidateTableLookup postal-city side-index", () => {
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "region", postcode: "37013", country: "US" })
 		expect(hits.every((h) => h.name !== "Nashville")).toBe(true)
 	})
-
-	test("A candidate.db WITHOUT the side-index is byte-stable (no probe without throwing)", async () => {
-		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
-
-		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
-		expect(hits[0]!.name).toBe("Antioch")
-	})
 })

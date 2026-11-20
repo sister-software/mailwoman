@@ -65,10 +65,4 @@ describe("EFFECTIVE_KEY_FOR", () => {
 		expect(effectiveKeyFor("engine")).toBe("engine")
 		expect(effectiveKeyFor("tree_fingerprint")).toBe("tree_fingerprint")
 	})
-
-	it("translates the CLI spelling a caller is documented to use", () => {
-		expect(effectiveKeyFor("place_country")).toBe("placeCountry")
-		expect(effectiveKeyFor("gazetteer_prior")).toBe("gazetteerPrior")
-		expect(effectiveKeyFor("candidate_db")).toBe("candidateDB")
-	})
 })

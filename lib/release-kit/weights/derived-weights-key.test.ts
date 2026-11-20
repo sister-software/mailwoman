@@ -21,7 +21,6 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
 	DERIVED_WEIGHTS_INPUTS,
 	derivedStoreServeViolation,
-	derivedWeightsDir,
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
 } from "#release-kit/weights/derived-weights-key"
@@ -154,12 +153,6 @@ describe("derivedWeightsKey", () => {
 		// of stale artifact comes straight back.
 		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/cli/commands/gazetteer/pair-index.tsx")
 		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/cli/commands/gazetteer/postcode/binary.tsx")
-	})
-})
-
-describe("derivedWeightsDir", () => {
-	it("lands under the data root's derived/weights namespace", () => {
-		expect(derivedWeightsDir("deadbeefdeadbeef")).toMatch(/\/derived\/weights\/deadbeefdeadbeef$/)
 	})
 })
 

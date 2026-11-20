@@ -24,11 +24,4 @@ describe("wofRepoOrigin", () => {
 
 		expect(wofRepoOrigin("whosonfirst-placetypes").forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-placetypes"))
 	})
-
-	it("treats a postcode repository the same way as an admin repository", () => {
-		const origin = wofRepoOrigin("whosonfirst-data-postalcode-us")
-
-		expect(origin.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-postalcode-us"))
-		expect(origin.upstreamOrg).toBe("whosonfirst-data")
-	})
 })

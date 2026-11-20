@@ -9,14 +9,7 @@ import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import {
-	EE_ADS_HARVEST_FILE,
-	EE_ADS_PAGE_SIZE,
-	EE_ADS_SORT_BY,
-	featuresAsJSONL,
-	fetchADSEE,
-	harvestADSEE,
-} from "#ee/tools/fetch/ads"
+import { EE_ADS_HARVEST_FILE, EE_ADS_SORT_BY, featuresAsJSONL, fetchADSEE, harvestADSEE } from "#ee/tools/fetch/ads"
 
 /**
  * The capabilities document as far as the harvester reads one: the formats,
@@ -122,12 +115,6 @@ describe("featuresAsJSONL", () => {
 })
 
 describe("harvestADSEE", () => {
-	it("pages at the size the service's CountDefault allows", () => {
-		// The service advertises CountDefault 1000000 and honors count=10000.
-		// That page is 31,198,909 bytes.
-		expect(EE_ADS_PAGE_SIZE).toBe(10_000)
-	})
-
 	it("writes one JSONL line per feature and records each page", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-ads-harvest-")
 

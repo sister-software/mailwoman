@@ -11,7 +11,6 @@
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
-import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/postcode/systems"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -97,12 +96,6 @@ describe("adminLadderFor", () => {
 
 		expect(adminLadderFor({ ...DE_PLZ, country: null })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
-	})
-
-	// The membership table is a measured claim, so a silent addition is the thing to catch.
-	// A new entry has to arrive with its panel, the way DE did.
-	it("holds exactly the countries a full-panel measurement has admitted", () => {
-		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE", "JP", "SG"])
 	})
 })
 

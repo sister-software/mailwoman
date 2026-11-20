@@ -3,15 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "#ca"
-
-describe("CA_PROVINCES", () => {
-	it("covers all 13 provinces and territories", () => {
-		expect(Object.keys(CA_PROVINCES)).toHaveLength(13)
-		expect(CA_PROVINCES.QC).toEqual({ code: "QC", name: "Quebec", french: "Québec" })
-		expect(CA_PROVINCES.BC.french).toBe("Colombie-Britannique")
-	})
-})
+import { isCanadianProvinceCode, lookupCanadianProvince } from "#ca"
 
 describe("isCanadianProvinceCode", () => {
 	it("accepts ISO 3166-2:CA codes, case-insensitively", () => {

@@ -9,7 +9,6 @@
  *   national filer in 53 jurisdictions.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
@@ -127,11 +126,6 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 })
 
 describe("assertWorkbookHeader", () => {
-	it("accepts the real workbook's header", async () => {
-		// The fixture load runs the header check.
-		await expect(readFixture()).resolves.toHaveLength(4)
-	})
-
 	it("names every missing column rather than failing on the first", () => {
 		expect(() => assertWorkbookHeader(["filer_499_id", "CORESID"])).toThrow(/missing \d+ column\(s\)/)
 		expect(() => assertWorkbookHeader(["filer_499_id", "CORESID"])).toThrow(/legal_name_of_carrier/)
@@ -186,13 +180,5 @@ describe("readOperatingStates", () => {
 
 	it("accepts a real boolean cell, since a transformer may have typed the column", () => {
 		expect(readOperatingStates({ alabama: true })).toEqual(["AL"])
-	})
-})
-
-describe("the fixture itself", () => {
-	it("is a real workbook, not a hand-authored one", async () => {
-		// An xlsx file is a ZIP archive.
-		// ZIP archives start with "PK".
-		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

@@ -6,24 +6,6 @@ import { describe, expect, it } from "vitest"
 import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "#tools/eval-harness/invariance/transforms"
 
 describe("TRANSFORMS registry", () => {
-	it("carries the seven spec-named classes plus the two paired-punctuation classes", () => {
-		const ids = TRANSFORMS.map((t) => t.id).toSorted()
-
-		expect(ids).toEqual(
-			[
-				"abbreviation-swap",
-				"add-parenthetical",
-				"case-fold",
-				"comma-drop",
-				"idempotence",
-				"lowercase",
-				"trailing-punct",
-				"whitespace-jitter",
-				"wrap-in-quotes",
-			].toSorted()
-		)
-	})
-
 	it("every transform carries a non-empty literature anchor", () => {
 		for (const t of TRANSFORMS) {
 			expect(t.literatureAnchor.length).toBeGreaterThan(10)

@@ -9,15 +9,6 @@ import { PLACETYPE_DEPTH, placetypeDepth } from "#ancestry"
 // so it's out of scope for a pure unit test.
 // Only the depth helpers below are value-in/value-out.
 
-test("placetypeDepth: coarsest → finest containment ordering, country=1 up to microhood=11", () => {
-	expect(placetypeDepth("country")).toBe(1)
-	expect(placetypeDepth("region")).toBe(3)
-	expect(placetypeDepth("county")).toBe(5)
-	expect(placetypeDepth("localadmin")).toBe(6)
-	expect(placetypeDepth("locality")).toBe(7)
-	expect(placetypeDepth("microhood")).toBe(11)
-})
-
 test("placetypeDepth: depth strictly increases from country down to microhood", () => {
 	const order = [
 		"country",

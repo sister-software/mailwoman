@@ -84,13 +84,6 @@ describe("renderGranularityReport", () => {
 		expect(markdown).toContain("5.0%")
 	})
 
-	it("declares its own limits inline", () => {
-		const markdown = renderGranularityReport([row("GB", { country: { nodes: 1 } })], META)
-
-		expect(markdown).toContain("Counts are not quality")
-		expect(markdown).toContain("meaning-of-zero")
-	})
-
 	it("classifies each country by the source observed in the artifact, not by the recipe", () => {
 		const markdown = renderGranularityReport(
 			[
@@ -123,13 +116,6 @@ describe("renderGranularityReport", () => {
 
 		expect(line).toContain("100.0% gn")
 		expect(line).not.toContain("ovt")
-	})
-
-	it("warns that an empty rung in a non-WOF-repo country is not a finding about WOF", () => {
-		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 } })], META)
-
-		expect(markdown).toContain("It is a country we never asked.")
-		expect(markdown).toContain("260")
 	})
 
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {

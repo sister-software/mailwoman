@@ -109,14 +109,6 @@ describe("against the real defaults.ts", () => {
 		expect(result.ok || result.comment?.join(" ")).toContain("189,026")
 	})
 
-	it("adds TR to the WOF list in sorted position, between JP and KR's neighbors", () => {
-		const result = addCountry(source, "DEFAULT_WOF_PRIORITY_COUNTRIES", "TR")
-
-		expect(result.ok && result.changed).toBe(true)
-		// TW follows TR alphabetically and is the entry it must land before.
-		expect(result.ok && result.source).toContain('"TR",\n\t"TW",')
-	})
-
 	it("round-trips: adding then removing a country restores the file byte for byte", () => {
 		const added = addCountry(source, "DEFAULT_OVERTURE_COUNTRIES", "ZZ")
 

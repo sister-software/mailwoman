@@ -21,13 +21,11 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
 	ES_NAVARRA_SERVICE_FEED_URL,
 	type ESNavarraHarvestManifest,
-	esNavarraInputPath,
 	harvestESNavarra,
 	readESNavarraServiceFeed,
 } from "#es/tools/fetch/navarra"
@@ -151,12 +149,6 @@ describe("readESNavarraServiceFeed", () => {
 		const feed = await readAtomFeed(feedChunks(serviceXML(entryXML(1) + entryXML(1))))
 
 		expect(() => readESNavarraServiceFeed(feed)).toThrow(/is listed twice/u)
-	})
-})
-
-describe("esNavarraInputPath", () => {
-	it("states the directory the adapter reads, under the fetcher's own slug", () => {
-		expect(String(esNavarraInputPath(PathBuilder.from("/data/corpus/sources")))).toBe("/data/corpus/sources/es-navarra")
 	})
 })
 

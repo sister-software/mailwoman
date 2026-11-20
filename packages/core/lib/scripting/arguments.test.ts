@@ -10,13 +10,6 @@ import { describe, expect, it } from "vitest"
 import * as scriptingUtils from "#scripting/arguments"
 
 describe("@mailwoman/core/scripting/arguments", () => {
-	it("exports every argv accessor", () => {
-		expect(typeof scriptingUtils.cliArguments, "cliArguments").toBe("function")
-		expect(typeof scriptingUtils.optionPropertyName, "optionPropertyName").toBe("function")
-		expect(typeof scriptingUtils.passThroughCLIArguments, "passThroughCLIArguments").toBe("function")
-		expect(typeof scriptingUtils.scriptEntryPath, "scriptEntryPath").toBe("function")
-	})
-
 	it("hands back the argument vector as strings", () => {
 		// The verbatim passthrough is spread into a child-process command line, so the element type is the interface.
 		for (const argument of scriptingUtils.passThroughCLIArguments()) {

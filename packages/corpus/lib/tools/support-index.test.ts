@@ -13,7 +13,6 @@ import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import {
 	buildSupportIndex,
-	foldSurfaceSQL,
 	querySupport,
 	readSupportIndexRecord,
 	renderSupportRow,
@@ -73,10 +72,6 @@ function row(
 describe("tag classes", () => {
 	it("classifies every component tag as closed or open", () => {
 		expect(unclassifiedTags()).toEqual([])
-	})
-
-	it("folds in SQL with a whitespace collapse and a lower-case", () => {
-		expect(foldSurfaceSQL("x")).toBe("lower(trim(regexp_replace(nfc_normalize(x), '\\s+', ' ', 'g')))")
 	})
 })
 

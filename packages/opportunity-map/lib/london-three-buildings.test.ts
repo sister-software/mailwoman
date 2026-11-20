@@ -8,7 +8,6 @@ import { describe, expect, test } from "vitest"
 import {
 	ADDISCOMBE_GROVE,
 	BDUK_LONDON,
-	BDUK_LONDON_ARCHIVE,
 	CRICKLEWOOD_LANE,
 	FLOOD_MAP,
 	LONDON_AS_OF,
@@ -46,13 +45,6 @@ describe("the three London buildings as one dossier", () => {
 		expect(dossier.excluded).toEqual([])
 		expect(dossier.undated).toEqual([])
 		expect(dossier.unplaced).toEqual([])
-	})
-
-	test("holds no synthetic position, no check, no provider record and no completed or occupied count", () => {
-		expect(LONDON_RECORDS.positions!.map((position) => position.synthetic)).toEqual([false, false, false])
-		expect(LONDON_RECORDS.checks).toEqual([])
-		expect(LONDON_RECORDS.availability).toEqual([])
-		expect(new Set(LONDON_RECORDS.counts.map((count) => count.stage))).toEqual(new Set(["planned"]))
 	})
 
 	test("names each building by its planning authority's reference, cited to its planning row, and its site address", () => {
@@ -560,21 +552,6 @@ describe("the three London buildings: BDUK's counts", () => {
 			{ within50m: 77, currentGigabit: 72, white: 5 },
 		])
 	})
-
-	test("the BDUK record gives the release's OMR month, its publication date and the retrieval date", () => {
-		expect(LONDON_RECORDS.sources.find((source) => source.id === BDUK_LONDON)).toEqual({
-			id: BDUK_LONDON,
-			publisher: "Building Digital UK",
-			title:
-				"May 2026 OMR and premises in BDUK plans (England and Wales), UPRN-level release, London (2026-09-10_zipped_files_release_london.zip)",
-			url: "https://www.gov.uk/government/publications/may-2026-omr-and-premises-in-bduk-plans-england-and-wales",
-			observedAt: "2026-05-31",
-			availableAt: "2026-09-17",
-			retrievedAt: "2026-10-05",
-		})
-
-		expect(BDUK_LONDON_ARCHIVE).toMatchObject({ bytes: 57_082_748, file: "2026-09-10_zipped_files_release_london.zip" })
-	})
 })
 
 describe("the three London buildings: flood readings", () => {
@@ -608,14 +585,6 @@ describe("the three London buildings: flood readings", () => {
 			[["flood-zones-ea-england:building:barnet-16-0601-ful:2026-05-20", "FZ1", "designated", FLOOD_MAP]],
 			[["flood-zones-ea-england:building:islington-p2014-1017-ful:2026-05-20", "FZ1", "designated", FLOOD_MAP]],
 		])
-	})
-
-	test("the flood map's record takes its three dates from the database manifest", () => {
-		expect(LONDON_RECORDS.sources.find((source) => source.id === FLOOD_MAP)).toMatchObject({
-			observedAt: "2026-05-20",
-			availableAt: "2026-05-20",
-			retrievedAt: "2026-08-28T01:46:44.206Z",
-		})
 	})
 })
 

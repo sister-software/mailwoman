@@ -522,15 +522,6 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
 	})
 
-	it("names DE by postcode area only", () => {
-		// `synth-german` supplies every DE street row, and prefix `02` reaches them.
-		// The Land names Saarland and Mecklenburg-Vorpommern are not keys (#2777).
-		const de = policyOf(defaultHoldouts().DE)
-
-		expect(de.regions).toBeUndefined()
-		expect(de.postcodePrefixes).toEqual(["02"])
-	})
-
 	it("holds out a DE street row in postcode area 02 and trains on the rest of Sachsen", () => {
 		// A `synth-german` row's shape: a street row carrying a postcode, with a region on some rows.
 		const deRow = (id: string, postcode: string): MinRow => ({

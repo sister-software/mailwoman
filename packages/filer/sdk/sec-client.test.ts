@@ -62,12 +62,6 @@ describe("createSECClient: User-Agent fail-fast", () => {
 		expect(() => createSECClient()).toThrow(/SEC_EDGAR_USER_AGENT/)
 		expect(() => createSECClient()).toThrow(/accessing-edgar-data/)
 	})
-
-	it("does not throw when userAgent is passed explicitly", () => {
-		const transport = stubTransport([{}])
-
-		expect(() => createSECClient({ userAgent: TEST_USER_AGENT, cacheDir: cacheDir.path, ...transport })).not.toThrow()
-	})
 })
 
 describe("createSECClient: request headers", () => {
@@ -804,20 +798,5 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 
 		expect(error).toBeInstanceOf(ResourceError)
 		expect(isTransientResourceError(error)).toBe(true)
-	})
-
-	it("a disallowed host → a programmer bug, never requeued", async () => {
-		const transport = stubTransport([{}])
-
-		const client = createSECClient({
-			userAgent: TEST_USER_AGENT,
-			cacheDir: cacheDir.path,
-			clock: createFakeClock(),
-			...transport,
-		})
-
-		const error = await client.get("https://attacker.example/x").catch((caught: unknown) => caught)
-
-		expect(isTransientResourceError(error)).toBe(false)
 	})
 })

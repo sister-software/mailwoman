@@ -61,15 +61,6 @@ describe("autocomplete — in-memory fixture", () => {
 		expect(result.suggestions).toHaveLength(0)
 	})
 
-	it("ranks by importance (prominent places first)", () => {
-		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
-		expect(result.suggestions.length).toBeGreaterThan(0)
-
-		if (result.suggestions.length >= 2) {
-			expect(result.suggestions[0]!.referential).toBeGreaterThanOrEqual(result.suggestions[1]!.referential)
-		}
-	})
-
 	it("prefix 'San' yields San Francisco as the top result (highest referential)", () => {
 		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
 		expect(result.suggestions.length).toBeGreaterThan(0)

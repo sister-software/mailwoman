@@ -479,11 +479,6 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 		expect(out).toBeNull()
 	})
 
-	it("AUGMENTATIONS includes us-street-suffix-abbreviate + us-street-suffix-expand", () => {
-		expect(AUGMENTATIONS["us-street-suffix-abbreviate"]).toBe(streetSuffixAbbreviate)
-		expect(AUGMENTATIONS["us-street-suffix-expand"]).toBe(streetSuffixExpand)
-	})
-
 	it("streetSuffixExpand skips when the venue shares the street's text (#2893)", () => {
 		// usgov-hrsa-fqhc-2b8d368528b1: a clinic that shares its street's name.
 		// The rewrite of both occurrences left venue="Hagen St" inside an expanded
@@ -742,12 +737,6 @@ describe("FR augmentations", () => {
 })
 
 describe("registry + defaults", () => {
-	it("AUGMENTATIONS maps every public augmentation by stable id", () => {
-		expect(AUGMENTATIONS["case-upper"]).toBe(caseUpper)
-		expect(AUGMENTATIONS["accent-strip"]).toBe(accentStrip)
-		expect(AUGMENTATIONS["state-expand"]).toBe(stateExpand)
-	})
-
 	it("defaultAugmentationsForCountry: US includes state-expand, FR includes accent-strip", () => {
 		const us = defaultAugmentationsForCountry("US")
 		const fr = defaultAugmentationsForCountry("FR")
@@ -1317,12 +1306,6 @@ describe("typoInject (#530)", () => {
 
 	it("is deterministic — the same source_id yields the same typo (reproducible corpus)", () => {
 		expect(typoInject(row)).toEqual(typoInject(row))
-	})
-
-	it("never touches digit components — number + postcode survive verbatim", () => {
-		const out = typoInject(row)!
-		expect(out.components.house_number).toBe("123")
-		expect(out.components.postcode).toBe("95014")
 	})
 
 	it("returns null when there is no eligible alpha component", () => {

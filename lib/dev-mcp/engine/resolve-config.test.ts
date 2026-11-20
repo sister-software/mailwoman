@@ -28,14 +28,6 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 		expect(resolved.adminContainmentRerank).toBe(production.adminContainmentRerank)
 	})
 
-	it("names the three drifted values so the incident stays legible", () => {
-		const resolved = resolveConfig({})
-
-		expect(resolved.postcodeShapeCoherence).toBe(true)
-		expect(resolved.postcodeContainmentCoherence).toBe(false)
-		expect(resolved.placeCountryThreshold).toBe(0.9)
-	})
-
 	it("passes channel pins through as the session's channelPins and omits the key when none is set", () => {
 		expect(resolveConfig({}).channelPins).toBeUndefined()
 		expect(resolveConfig({ channels: {} }).channelPins).toBeUndefined()

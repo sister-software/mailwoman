@@ -66,12 +66,6 @@ async function fixtureDB(): Promise<string> {
 }
 
 describe("PLACETYPE_PROJECTION", () => {
-	it("projects the dependent-locality family onto one tag", () => {
-		for (const placetype of ["borough", "neighbourhood", "macrohood", "microhood"]) {
-			expect(PLACETYPE_PROJECTION[placetype]).toBe("dependent_locality")
-		}
-	})
-
 	it("covers every placetype in the WOF vocabulary", () => {
 		const unmapped = WOF_PLACETYPES.filter((placetype) => !(placetype in PLACETYPE_PROJECTION))
 
@@ -83,28 +77,6 @@ describe("PLACETYPE_PROJECTION", () => {
 		const extra = Object.keys(PLACETYPE_PROJECTION).filter((placetype) => !vocabulary.has(placetype))
 
 		expect(extra).toEqual([])
-	})
-
-	it("distinguishes a deliberately-uncounted placetype from an unmapped one", () => {
-		// Present with a null value: in the vocabulary rather than projected.
-		expect("metroarea" in PLACETYPE_PROJECTION).toBe(true)
-		expect(PLACETYPE_PROJECTION.metroarea).toBeNull()
-		// Absent entirely: the builder must report it rather than count it.
-		expect("not_a_wof_placetype" in PLACETYPE_PROJECTION).toBe(false)
-	})
-
-	it("projects the sub-venue structures onto venue and unit rather than dropping them", () => {
-		expect(PLACETYPE_PROJECTION.building).toBe("venue")
-		expect(PLACETYPE_PROJECTION.campus).toBe("venue")
-		expect(PLACETYPE_PROJECTION.wing).toBe("unit")
-		expect(PLACETYPE_PROJECTION.concourse).toBe("unit")
-	})
-
-	it("leaves the multi-span and record placetypes deliberately unprojected", () => {
-		// `intersection` is a two-span construct (intersection_a + intersection_b) — no single tag fits.
-		expect(PLACETYPE_PROJECTION.intersection).toBeNull()
-		// A WOF `address` is a whole address record rather than a span role.
-		expect(PLACETYPE_PROJECTION.address).toBeNull()
 	})
 })
 

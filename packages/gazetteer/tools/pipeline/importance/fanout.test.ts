@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "#tools/pipeline/importance/fanout"
+import { resolveConcordanceFanout } from "#tools/pipeline/importance/fanout"
 
 /**
  * Q61 is Washington DC as WOF models it, one place carrying three placetypes at one point.
@@ -127,10 +127,5 @@ describe("resolveConcordanceFanout", () => {
 		]
 
 		expect(resolveConcordanceFanout(straggler)).toEqual({ verdict: "population", keep: [2] })
-	})
-
-	it("exposes a coincidence radius small enough to stay inside one settlement", () => {
-		expect(FANOUT_SPREAD_EPSILON_KM).toBeGreaterThan(0)
-		expect(FANOUT_SPREAD_EPSILON_KM).toBeLessThanOrEqual(10)
 	})
 })

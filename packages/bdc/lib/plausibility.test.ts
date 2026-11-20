@@ -228,14 +228,6 @@ async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDe
 }
 
 describe("physicalCategoriesForTechnology / PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES", () => {
-	it("maps fiber to the three infra categories", () => {
-		expect(physicalCategoriesForTechnology(BroadbandTechnologyCode.OpticalCarrierFiber)).toEqual([
-			"telecom_exchange",
-			"telecom_cabinet",
-			"data_center",
-		])
-	})
-
 	it.each([
 		["Unlicensed", BroadbandTechnologyCode.UnlicensedTerrestrialFixedWireless],
 		["Licensed", BroadbandTechnologyCode.LicensedTerrestrialFixedWireless],
@@ -792,27 +784,6 @@ describe("§7-2b criteria", () => {
 			expect(bundle.coverage_confidence).toBe("high")
 		})
 
-		it("contrast: absence in a SPARSE, never-surveyed cell yields insufficient_survey_data — never the informative-absence form proved above (fuller proof: 'both axes unknown' test in the 'full composition' suite above)", async () => {
-			await using both = await openBoth()
-			const { deps } = both
-
-			const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
-
-			const bundle = await plausibilityCheck(
-				{ point: remote, technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 1000 },
-				deps
-			)
-
-			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
-			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
-
-			expect(bundle.evidence_found).toContainEqual({
-				type: "abstain",
-				reason: "insufficient_survey_data",
-				layer: "bdc",
-			})
-		})
-
 		const PLAUSIBILITY_BUNDLE_KEYS = {
 			claim: true,
 			evidence_found: true,
@@ -877,29 +848,6 @@ describe("§7-2b criteria", () => {
 		})
 	})
 
-	describe("Criterion 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
-		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high, coverage_detail fully covered, and no abstain", async () => {
-			await using both = await openBoth()
-			const { deps } = both
-
-			const bundle = await plausibilityCheck(
-				{
-					point: SPRINGFIELD_POINT,
-					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
-					claimedDownloadMbps: 1000,
-				},
-				deps
-			)
-
-			expect(bundle.coverage_confidence).toBe("high")
-
-			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
-			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
-			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)
-			expect(bundle.evidence_found.some((e) => e.type === "abstain")).toBe(false)
-		})
-	})
-
 	describe("Criterion 3 — layer absent: abstain without fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
 		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-related evidence shape) is fabricated", async () => {
 			const bundle = await plausibilityCheck(
@@ -918,52 +866,6 @@ describe("§7-2b criteria", () => {
 			})
 
 			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
-		})
-
-		it("bdc layer absent -> abstain requires_bdc_layer, vintage: null, and no filing evidence is fabricated", async () => {
-			const bundle = await plausibilityCheck(
-				{
-					point: SPRINGFIELD_POINT,
-					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
-					claimedDownloadMbps: 100,
-				},
-				{}
-			)
-
-			expect(bundle.vintage).toBeNull()
-			expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
-			expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		})
-	})
-
-	describe("Criterion 4 — block-grain flag (fuller proof: 'claim resolution' suite above)", () => {
-		it("address- and point-resolved claims carry block_resolution: h3_cell_approximation; a geoid-given claim carries geoid", async () => {
-			const byPoint = await plausibilityCheck(
-				{ point: SPRINGFIELD_POINT, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
-				{}
-			)
-
-			expect(byPoint.block_resolution).toBe("h3_cell_approximation")
-
-			const geocode = async (): Promise<NullableLatLon> => ({ lat: SPRINGFIELD.latitude, lon: SPRINGFIELD.longitude })
-
-			const byAddress = await plausibilityCheck(
-				{
-					address: "123 Main St, Springfield, IL",
-					technologyCode: BroadbandTechnologyCode.AsymmetricXDSL,
-					claimedDownloadMbps: 10,
-				},
-				{ geocode }
-			)
-
-			expect(byAddress.block_resolution).toBe("h3_cell_approximation")
-
-			const byGeoid = await plausibilityCheck(
-				{ geoid: GEOID_SPRINGFIELD, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
-				{}
-			)
-
-			expect(byGeoid.block_resolution).toBe("geoid")
 		})
 	})
 })

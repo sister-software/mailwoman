@@ -8,7 +8,6 @@ import {
 	type Annotator,
 	composeAnnotators,
 	composeStreetAddress,
-	toNative,
 	emptyAnnotationSet,
 	toOpenCage,
 	toSchemaOrg,
@@ -75,11 +74,6 @@ test("toOpenCage: maps native fields to OpenCage key names + casing", () => {
 test("toOpenCage: omits unpopulated fields", () => {
 	expect(toOpenCage(emptyAnnotationSet())).toEqual({})
 	expect(toOpenCage({ ...emptyAnnotationSet(), geohash: "x" })).toEqual({ geohash: "x" })
-})
-
-test("toNative: returns the native set unchanged", () => {
-	const set: AnnotationSet = { ...emptyAnnotationSet(), geohash: "x", callingCode: 44 }
-	expect(toNative(set)).toEqual(set)
 })
 
 test("composeStreetAddress: collapses housenumber + street + unit into one number-first line", () => {

@@ -214,24 +214,11 @@ describe("buildSettings", () => {
 	const table: TermFrequencyTable = { total: 10, distinct: 5, frequency: () => 0.1 }
 	const settings = buildSettings(table)
 
-	it("opens on the bare baseline with both proven settings pinned off", () => {
-		expect(settings[0]!.config).toEqual({ collapseSpatial: false, addressFrequency: false })
-	})
-
 	it("sets collapseSpatial and addressFrequency EXPLICITLY on every row", () => {
 		for (const setting of settings) {
 			expect(Object.hasOwn(setting.config, "collapseSpatial")).toBe(true)
 			expect(Object.hasOwn(setting.config, "addressFrequency")).toBe(true)
 		}
-	})
-
-	it("ends on the taxonomy code-set discriminator, stacked on A1 + authorized-official", () => {
-		expect(settings.at(-1)!.config).toEqual({
-			collapseSpatial: true,
-			addressFrequency: table,
-			discriminators: ["authorizedOfficial"],
-			exactDiscriminators: ["taxonomy"],
-		})
 	})
 })
 

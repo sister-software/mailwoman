@@ -9,7 +9,6 @@ import { US_STATE_CODES_READ_AS_COUNTRIES } from "#us/state-country-codes"
 
 describe("usAbbrevRegions (#2769)", () => {
 	const regions = usAbbrevRegions()
-	const byCode = new Map(regions.map((region) => [region.code, region]))
 
 	it("returns one entry per computed state code, in the codex's order", () => {
 		expect(regions.map((region) => region.code)).toEqual([...US_STATE_CODES_READ_AS_COUNTRIES])
@@ -34,9 +33,5 @@ describe("usAbbrevRegions (#2769)", () => {
 				)
 			}
 		}
-	})
-
-	it("keeps the pairs the hand-typed table carried for California", () => {
-		expect(byCode.get("CA")?.localities).toContain("Los Angeles")
 	})
 })

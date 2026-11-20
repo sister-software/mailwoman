@@ -19,13 +19,11 @@
 import { APIClient } from "@mailwoman/core/api"
 import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
 	ES_GIPUZKOA_ARCHIVE_FILENAME,
 	ES_GIPUZKOA_SERVICE_URL,
-	esGipuzkoaInputPath,
 	type GipuzkoaManifest,
 	gipuzkoaPublicationIsRecorded,
 	readGipuzkoaPublication,
@@ -89,14 +87,6 @@ function recordedManifest(overrides: Partial<GipuzkoaManifest> = {}): GipuzkoaMa
 	}
 }
 
-describe("esGipuzkoaInputPath", () => {
-	it("states the archive the adapter reads, under the fetcher's own directory", () => {
-		const path = esGipuzkoaInputPath(PathBuilder.from("/data/corpus/sources"))
-
-		expect(String(path)).toBe(`/data/corpus/sources/es-gipuzkoa/${ES_GIPUZKOA_ARCHIVE_FILENAME}`)
-	})
-})
-
 describe("resolveGipuzkoaArchive", () => {
 	it("takes the entry's rel=alternate link, which is the only relation this dataset is published under", async () => {
 		const client = stubClient([{ body: SERVICE_FEED }])
@@ -108,12 +98,6 @@ describe("resolveGipuzkoaArchive", () => {
 
 		expect(client.calls).toHaveLength(1)
 		expect(client.calls[0]).toContain("addresses.xml")
-	})
-
-	it("does not resolve the describedby link the publisher writes ahead of the alternate", async () => {
-		const reference = await resolveGipuzkoaArchive(stubClient([{ body: SERVICE_FEED }]))
-
-		expect(reference.archiveURL).not.toBe(METADATA_URL)
 	})
 
 	it("refuses a feed holding no entry, rather than reporting an empty fetch", async () => {

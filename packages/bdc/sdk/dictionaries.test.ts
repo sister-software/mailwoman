@@ -3,8 +3,6 @@
 
 import { expect, test } from "vitest"
 
-import { BuildingTypeCode, BusinessResidentialCode } from "#sdk/buildings"
-import { AddressConfidenceCode, BSLFlag, LandUseCode } from "#sdk/data-collection"
 import { isBroadbandServicableLocationID } from "#sdk/location"
 import {
 	BroadbandTechnologyCategory,
@@ -34,32 +32,4 @@ test("isBroadbandServicableLocationID: rejects strings that aren't exactly 10 di
 	expect(isBroadbandServicableLocationID("123456789")).toBe(false)
 	expect(isBroadbandServicableLocationID("12345678901")).toBe(false)
 	expect(isBroadbandServicableLocationID("abcdefghij")).toBe(false)
-})
-
-test("BroadbandTechnologyCode: const-object shape includes the known optical fiber code", () => {
-	expect(BroadbandTechnologyCode.OpticalCarrierFiber).toBe(50)
-})
-
-test("BroadbandTechnologyCategory: const-object shape includes the known Fiber category", () => {
-	expect(BroadbandTechnologyCategory.Fiber).toBe("FIBER")
-})
-
-test("BusinessResidentialCode: const-object shape includes the known Residential code", () => {
-	expect(BusinessResidentialCode.Residential).toBe(BuildingTypeCode.Residential)
-})
-
-test("AddressConfidenceCode: const-object shape includes the known High-confidence code", () => {
-	expect(AddressConfidenceCode.High).toBe("1")
-})
-
-test("LandUseCode: const-object shape includes the known Residential code", () => {
-	expect(LandUseCode.Residential).toBe(1)
-})
-
-test("BSLFlag: const-object shape includes the known Serviceable flag", () => {
-	expect(BSLFlag.Serviceable).toBe(1)
-})
-
-test("BuildingTypeCode: const-object shape includes the known Residential code", () => {
-	expect(BuildingTypeCode.Residential).toBe("R")
 })

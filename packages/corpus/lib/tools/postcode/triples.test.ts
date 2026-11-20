@@ -431,13 +431,6 @@ describe("readPairsFromAdmin", () => {
 })
 
 describe("POSTCODE_CONVENTIONS", () => {
-	it("keeps the two trailing conventions APART", () => {
-		// VE writes the code after the locality.
-		// IN writes it after the region.
-		expect(POSTCODE_CONVENTIONS.get("VE")?.placement).toBe("after_locality")
-		expect(POSTCODE_CONVENTIONS.get("IN")?.placement).toBe("after_region")
-	})
-
 	it("omits countries whose surface no board row attests", () => {
 		// A country needs an eval board row that shows its placement.
 		expect(POSTCODE_CONVENTIONS.has("AU")).toBe(false)

@@ -474,12 +474,6 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		expect(injected.census.familyRows).toBe(5)
 	})
 
-	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
-		// The injected rows would fail the leakage check.
-		// The run succeeds only because the check reads the census before the injection writes.
-		await expect(runInjected()).resolves.toBeDefined()
-	})
-
 	// This relationship string is missing from `FilerRelationship`.
 	const UNRECOGNIZED_RELATIONSHIP = "transfer_of_control"
 

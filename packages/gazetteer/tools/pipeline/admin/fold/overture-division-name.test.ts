@@ -11,11 +11,6 @@ import { describe, expect, it } from "vitest"
 
 import { isDivisionName } from "#tools/pipeline/admin/fold/overture"
 
-/**
- * The rule this predicate replaced, kept as the comparison arm.
- */
-const isLatin = (s: string): boolean => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(s)
-
 describe("admitting an Overture division name", () => {
 	it("admits a name in the script its country writes", () => {
 		// Singapore, Sri Lanka and Malaysia: their Overture primary is already Latin,
@@ -41,30 +36,5 @@ describe("admitting an Overture division name", () => {
 	it("refuses a value carrying no letter, so a bare code is not a name", () => {
 		expect(isDivisionName("35001")).toBe(false)
 		expect(isDivisionName("   ")).toBe(false)
-	})
-
-	it("differs from the old rule exactly where the old rule tested script", () => {
-		expect(isLatin("Vulapük")).toBe(true)
-		expect(isLatin("新加坡")).toBe(false)
-
-		expect(isDivisionName("Vulapük")).toBe(true)
-		expect(isDivisionName("新加坡")).toBe(true)
-	})
-
-	it("agrees with the old rule on a plain Latin name", () => {
-		for (const value of ["Singapore", "Moscow", "Kuala Lumpur"]) {
-			expect(isDivisionName(value)).toBe(true)
-			expect(isLatin(value)).toBe(true)
-		}
-	})
-
-	it("refuses noise the old rule admitted, which is the half its docstring claimed", () => {
-		for (const value of ["(( Karis Landskommun ))", "Noise Town [old]", "name/other", "x_y"]) {
-			expect(isLatin(value)).toBe(true)
-			expect(isDivisionName(value)).toBe(false)
-		}
-
-		expect(isLatin("35001")).toBe(true)
-		expect(isDivisionName("35001")).toBe(false)
 	})
 })

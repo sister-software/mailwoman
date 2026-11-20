@@ -78,12 +78,6 @@ async function collect(inputPath: PathBuilder, extra?: Record<string, unknown>):
 }
 
 describe("geonames adapter", () => {
-	it("has the expected id and license", () => {
-		const a = createGeonamesAdapter()
-		expect(a.id).toBe(GEONAMES_ADAPTER_ID)
-		expect(a.defaultLicense).toBe(GEONAMES_DEFAULT_LICENSE)
-	})
-
 	it("emits both hierarchy variants for a populated place, with mapped region + country names", async () => {
 		const p = await writeFixture([
 			gnRow({ id: "5234567", name: "Montpelier", featureClass: "P", featureCode: "PPLA", country: "US", admin1: "VT" }),

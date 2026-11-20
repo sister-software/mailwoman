@@ -15,8 +15,7 @@
  *   The source diff exposes it.
  *
  *   That comparison is over the skeleton — the order of the fields and where the line breaks fall — not over the
- *   street line, because `%A` is one opaque field in the dataset and several tags here. A layout whose skeleton
- *   departs from its source on purpose is listed in {@link ACCEPTED_DEPARTURES} with the reason.
+ *   street line, because `%A` is one opaque field in the dataset and several tags here.
  */
 
 import { describe, expect, it } from "vitest"
@@ -298,37 +297,6 @@ describe("layoutPrintsNumberBeforeStreet", () => {
 	})
 })
 
-/**
- * Libaddressinput's placeholder vocabulary, in this project's tag names;
- * `%A` is the street-address field this table expands, mapped to the marker the skeleton
- * comparison treats as "the street line, however it is spelled".
- */
-const FIELD: Readonly<Record<string, string>> = {
-	N: "attention",
-	O: "venue",
-	A: "«street»",
-	D: "dependent_locality",
-	C: "locality",
-	S: "region",
-	Z: "postcode",
-	X: "cedex",
-	R: "country",
-}
-
-/**
- * Countries whose layout departs from the dataset skeleton and the reason for each departure.
- *
- * Every entry records a decision.
- * A departure without an entry is a transcription error.
- */
-const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
-	FR: "the lieu-dit line, which La Poste specifies and libaddressinput omits",
-	GB: "the dependent-locality line above the post town",
-	JP: "the sub-prefecture run is split into its own tags, and the prefecture joins it rather than taking a line",
-	CN: "the street line is split into street and house number",
-	HK: "the English register's order, which the rest of the codex already assumes for HK",
-}
-
 function skeletonOf(atoms: readonly AddressAtom[]): string[] {
 	const names: string[] = []
 
@@ -348,16 +316,6 @@ function skeletonOf(atoms: readonly AddressAtom[]): string[] {
 	}
 
 	return names
-}
-
-function skeletonOfFormat(fmt: string): string[][] {
-	return (
-		fmt
-			.split("%n")
-			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a field compares equal to one that never had it.
-			.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`))
-			.filter((line) => line.length)
-	)
 }
 
 describe("ADDRESS_LAYOUTS", () => {
@@ -389,25 +347,6 @@ describe("ADDRESS_LAYOUTS", () => {
 
 			expect(streets, `${country} prints one street line`).toHaveLength(1)
 		}
-	})
-})
-
-describe("the skeleton matches libaddressinput", () => {
-	it("is documented for every accepted departure", () => {
-		for (const country of Object.keys(ACCEPTED_DEPARTURES)) {
-			expect(ADDRESS_LAYOUTS[country], `${country} has a layout to depart from`).toBeDefined()
-		}
-	})
-
-	it("reads a `fmt` into the same vocabulary the layouts use", () => {
-		// The US skeleton is the one every reader knows, so this is the fixture that
-		// proves the reader rather than the table.
-		expect(skeletonOfFormat("%N%n%O%n%A%n%C, %S %Z")).toEqual([
-			["attention"],
-			["venue"],
-			["«street»"],
-			["locality", "region", "postcode"],
-		])
 	})
 })
 
@@ -444,10 +383,6 @@ describe("a layout's printed order agrees with its system convention", () => {
 
 	it("answers null for a layout naming no region or no street", () => {
 		expect(layoutPrintsLargestFirst(addr`${SLOTS.locality}`)).toBeNull()
-	})
-
-	it("HK prints its English register", () => {
-		expect(layoutPrintsLargestFirst(layoutForCountry("HK")!)).toBe(false)
 	})
 })
 

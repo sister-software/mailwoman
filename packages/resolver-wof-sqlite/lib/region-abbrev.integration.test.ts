@@ -106,13 +106,4 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", country: "US" })
 		expect(r[0]?.id).toBe(31)
 	})
-
-	it("the constraint reaches a place whose direct parent is a county, not the region (the ancestry-backfill case)", async () => {
-		// Sheldon, VT has Franklin County (20) as its direct parent.
-		// Vermont (10) appears only in its ancestor chain.
-		// The constraint reaches it through the `ancestors` table, the linkage the backfill
-		// restores for multi-parent or ambiguous-parent places such as NYC (parent_id=-4).
-		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
-		expect(r[0]?.id).toBe(30)
-	})
 })

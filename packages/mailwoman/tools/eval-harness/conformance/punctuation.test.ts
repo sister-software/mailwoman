@@ -39,10 +39,8 @@ import {
 	auditPunctuationSuite,
 	classifyPunctuationTransformation,
 	describePunctuationTransformation,
-	PUNCTUATION_APPLICABILITY_RULES,
 	PUNCTUATION_LAW,
 	PUNCTUATION_TRANSFORMATION_BY_NAME,
-	PUNCTUATION_TRANSFORMATION_SCOPE,
 	PUNCTUATION_TRANSFORMATIONS,
 	punctuationApplicability,
 	punctuationBlindKey,
@@ -87,20 +85,6 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 describe("punctuation transformations", () => {
-	it("closes the set at five, and gives each one a scope", () => {
-		expect([...PUNCTUATION_TRANSFORMATIONS]).toEqual([
-			"comma-removed",
-			"period-removed",
-			"terminal-period",
-			"apostrophe-typographic",
-			"apostrophe-ascii",
-		])
-
-		for (const transformation of PUNCTUATION_TRANSFORMATIONS) {
-			expect(PUNCTUATION_TRANSFORMATION_SCOPE[transformation]).toBeTruthy()
-		}
-	})
-
 	it("renders the registers of one committed query", () => {
 		expect(PUNCTUATION_TRANSFORMATION_BY_NAME["comma-removed"](GB_LLOYDS)).toBe(
 			"Lloyd's of London 1 Lime St London EC3M 7HA"
@@ -228,14 +212,6 @@ describe("independence from the case-folding and spacing laws", () => {
 })
 
 describe("punctuationApplicability", () => {
-	it("declares exactly three exclusion rules", () => {
-		expect([...PUNCTUATION_APPLICABILITY_RULES]).toEqual([
-			"identity-transformation",
-			"mark-inside-token",
-			"text-echoing-comparator",
-		])
-	})
-
 	it("separates a query with no point from one whose point is part of a name", () => {
 		expect(punctuationApplicability(GB_BARE_POSTCODE, "period-removed").rule).toBe("identity-transformation")
 

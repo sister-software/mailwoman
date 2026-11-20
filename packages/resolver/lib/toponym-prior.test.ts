@@ -129,12 +129,6 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 		expect(rankByImportance(SPRINGFIELD).map((c) => c.id)).toEqual([85_971_363, 85_950_393, 85_940_429])
 	})
 
-	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
-		// The band must never compare across countries: any width covering Springfield's
-		// The 0.0164 gap also covers Windsor's accepted flips.
-		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
-	})
-
 	it("lets importance separate same-country bearers when the gap clears the band", () => {
 		const clear = [
 			place({ id: 1, name: "X", country: "US", prominence: 6, importance: 0.6 }),

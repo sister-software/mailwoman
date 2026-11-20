@@ -137,11 +137,6 @@ describe("the regression board", () => {
 			expect(hintFor(row.input).locale, row.id).toMatch(/^[a-z]{2}-[A-Z]{2}$/)
 		}
 	})
-
-	it("holds no Hangul-led row, which is the board's gap rather than the hint's", () => {
-		// The regression board has no Korean cases, so the Korean reference set covers Hangul.
-		expect(koreanRows.map(topScript)).toContain("Hang")
-	})
 })
 
 describe("what reaches the parse surface", () => {

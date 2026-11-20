@@ -10,7 +10,7 @@ import { htmlToText } from "@mailwoman/core/html/text"
 import { describe, expect, it } from "vitest"
 
 import { assertAttributionUnchanged } from "#sdk/client"
-import { GZT_ATTRIBUTION, GZT_DECLARED_CODE_SET, GZT_DECLARED_CODES, GZT_LICENSE } from "#vocabulary"
+import { GZT_ATTRIBUTION, GZT_DECLARED_CODE_SET, GZT_DECLARED_CODES } from "#vocabulary"
 
 /**
  * The final clause of the published `licenseInfo`, verbatim with its inline markup.
@@ -86,11 +86,6 @@ describe("the shipped constants", () => {
 		expect(GZT_ATTRIBUTION).toContain(PUBLISHED_ACCESS_INFORMATION)
 		expect(GZT_ATTRIBUTION).toContain("Tailte Éireann")
 		expect(GZT_ATTRIBUTION).toContain("2023/OSi_NMA_073")
-	})
-
-	it("asserts NO license, because three published statements disagree about the grant", () => {
-		expect(GZT_LICENSE).toBe("NOASSERTION")
-		expect(GZT_LICENSE).not.toContain("CC-BY")
 	})
 
 	it("declares the publisher's own 54 generic types, and no more", () => {

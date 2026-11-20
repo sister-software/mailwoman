@@ -12,10 +12,8 @@ import { describe, expect, it } from "vitest"
 
 import {
 	auditCaseFoldingSuite,
-	CASE_APPLICABILITY_RULES,
 	CASE_FOLDING_LAW,
 	CASE_TRANSFORMATION_BY_NAME,
-	CASE_TRANSFORMATIONS,
 	caseApplicability,
 	caseFoldKey,
 	classifyCaseTransformation,
@@ -56,10 +54,6 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 describe("case transformations", () => {
-	it("closes the set at upper, lower and mixed", () => {
-		expect([...CASE_TRANSFORMATIONS]).toEqual(["upper", "lower", "mixed"])
-	})
-
 	it("renders the three registers of one committed query", () => {
 		const base = "10 Downing Street, London SW1A 2AA"
 
@@ -130,10 +124,6 @@ describe("classifyCaseTransformation", () => {
 })
 
 describe("caseApplicability", () => {
-	it("declares exactly two exclusion rules", () => {
-		expect([...CASE_APPLICABILITY_RULES]).toEqual(["identity-transformation", "locale-sensitive-casing"])
-	})
-
 	it.each(["upper", "lower"] as const)(
 		"excludes the committed Turkish street row from %s, naming the locale rule",
 		(transformation) => {

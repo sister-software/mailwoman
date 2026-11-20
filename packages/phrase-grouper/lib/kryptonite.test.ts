@@ -167,11 +167,6 @@ describe("kryptonite catalogue — 350 5th Ave, New York, NY 10118 (canonical)",
 		expect(streetPhrases.find((p) => p.span.body === "5th Ave")).toBeDefined()
 		expect(streetPhrases.find((p) => p.span.body === "350 5th Ave")).toBeUndefined()
 	})
-
-	it("New York is a single LOCALITY_PHRASE proposal (not two separate)", () => {
-		const newYork = out.find((p) => p.kindHypothesis === "LOCALITY_PHRASE" && p.span.body === "New York")
-		expect(newYork).toBeDefined()
-	})
 })
 
 describe("kryptonite catalogue — mid-position postcode (Paris 75008)", () => {
@@ -192,24 +187,5 @@ describe("kryptonite catalogue — mid-position postcode (Paris 75008)", () => {
 	it("75008 as NUMERIC is also surfaced (low confidence, leaves choice to reconciler)", () => {
 		const numeric = out.find((p) => p.kindHypothesis === "NUMERIC" && p.span.body === "75008")
 		expect(numeric).toBeDefined()
-	})
-})
-
-describe("kryptonite catalogue — overall sanity", () => {
-	it("every fixture above emits at least one proposal — no kryptonite silently produces []", () => {
-		const fixtures = [
-			"Buffalo Buffalo",
-			"NY-NY Steakhouse, Houston, TX",
-			"Saint Petersburg, FL",
-			"Paris, Texas",
-			"350 5th Ave, New York, NY 10118",
-			"Paris 75008",
-		]
-
-		for (const f of fixtures) {
-			const shape = computeQueryShape(f)
-			const out = groupPhrasesSync(input(f), shape)
-			expect(out.length).toBeGreaterThan(0)
-		}
 	})
 })

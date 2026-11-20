@@ -12,10 +12,3 @@ test("meters per degree follow the mean radius", () => {
 	expect(Math.round(BODIES.moon.metresPerDegree)).toBe(30_323)
 	expect(Math.round(BODIES.mars.metresPerDegree)).toBe(59_158)
 })
-
-test("both USGS products carry east longitude in 0..360", () => {
-	expect(BODIES.moon.coordinates.longitudeRange).toBe("0..360")
-	expect(BODIES.mars.coordinates.longitudeRange).toBe("0..360")
-	expect(BODIES.moon.coordinates.longitudeDirection).toBe("east")
-	expect(BODIES.mars.coordinates.longitudeDirection).toBe("east")
-})

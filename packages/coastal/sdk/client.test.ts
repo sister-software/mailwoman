@@ -17,7 +17,7 @@
 import { describe, expect, it } from "vitest"
 
 import { assertAttributionUnchanged, parseAttributionStatement } from "#sdk/client"
-import { NCERM_ATTRIBUTION, NCERM_SERVICE_SLUG } from "#vocabulary"
+import { NCERM_ATTRIBUTION } from "#vocabulary"
 
 /**
  * The marker the published record puts before each copy of its attribution statement.
@@ -101,15 +101,5 @@ describe("assertAttributionUnchanged", () => {
 		expect(() =>
 			assertAttributionUnchanged("© Environment Agency copyright and/or database right 2026. All rights reserved.")
 		).toThrow(/licence condition/u)
-	})
-})
-
-describe("the service slug", () => {
-	it("is the authority's misspelling of its own product", () => {
-		// The correct spelling answers http 404 and the misspelling answers http 200.
-		// A build that "corrected" this would lose the service half of the two-path
-		// verification while reporting a clean run.
-		expect(NCERM_SERVICE_SLUG).toBe("ncern-national-2024")
-		expect(NCERM_SERVICE_SLUG).not.toContain("ncerm")
 	})
 })

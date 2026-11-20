@@ -414,25 +414,6 @@ describe("createPOIExecutor", () => {
 		expect(seenQueries).toEqual([{ name: "Joe's Diner", center: null, limit: null }])
 	})
 
-	it("ancestry is null when no reverseGeocode fn is wired", () => {
-		const executor = createPOIExecutor({
-			lookup: stubLookup(() => [HOSPITAL_HIT]),
-			requiresBuildLocal: NEVER_BUILD_LOCAL,
-		})
-
-		const poiResult = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
-			relation: null,
-			limit: null,
-		})
-
-		expect(poiResult.type).toBe("intent")
-
-		if (poiResult.type !== "intent") throw new Error("unreachable")
-		expect(poiResult.results![0]!.ancestry).toBeNull()
-	})
-
 	it("ancestry is decorated per-result when reverseGeocode is wired, capped at the result count", () => {
 		const seenCoords: Array<[number, number]> = []
 

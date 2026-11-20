@@ -113,13 +113,6 @@ describe("the committed pre-registration", () => {
 		expect(auditProbeDefinition(definition)).toEqual([])
 	})
 
-	it("registers four target rows and six control rows across both groups", async () => {
-		expect(definition.targetRows).toHaveLength(4)
-		expect(definition.controlRows).toHaveLength(6)
-		expect(definition.controlRows.filter((row) => row.group === "same_category")).toHaveLength(3)
-		expect(definition.controlRows.filter((row) => row.group === "adjacent")).toHaveLength(3)
-	})
-
 	it("resolves every control row against the committed board file, byte-for-byte", async () => {
 		const resolved = resolveControlRows(definition, committed)
 

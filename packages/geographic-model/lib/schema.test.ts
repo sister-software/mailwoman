@@ -207,29 +207,6 @@ function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
 	return refusalOf(input).map((issue) => [issue.path, issue.code])
 }
 
-describe("the concept vocabulary", () => {
-	it("carries no kind beyond place, establishment, and activity", () => {
-		expect(Object.values(ConceptKind)).toEqual(["place", "establishment", "activity"])
-	})
-
-	it("carries the eight recorded modality values and no numeric scale", () => {
-		expect(Object.values(Modality)).toEqual([
-			"necessary",
-			"prohibited",
-			"strongly_expected",
-			"expected",
-			"weakly_expected",
-			"possible",
-			"unusual",
-			"strongly_unusual",
-		])
-
-		for (const modality of Object.values(Modality)) {
-			expect(typeof modality).toBe("string")
-		}
-	})
-})
-
 describe("branded identifiers", () => {
 	it("preserves the string at runtime", () => {
 		expect(toConceptID("pharmacy")).toBe("pharmacy")

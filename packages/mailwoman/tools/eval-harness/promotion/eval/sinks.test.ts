@@ -113,18 +113,6 @@ const LEG_SEMANTICS = [
 ] as const
 
 describe("error semantics — the per-leg table", () => {
-	test("all eight former spawns are accounted for", () => {
-		// Eight spawns, seven distinct modules: score-affix accounted for six of the call sites.
-		expect(LEG_SEMANTICS).toHaveLength(7)
-		expect(LEG_SEMANTICS.filter((row) => row.spawn.includes("nothrow"))).toHaveLength(4)
-	})
-
-	test("every leg is a callable module, not a command string", () => {
-		for (const row of LEG_SEMANTICS) {
-			expect(typeof row.call, row.leg).toBe("function")
-		}
-	})
-
 	test("the legs that merge stderr into their .md declare a SECOND sink", () => {
 		// `Function.length` cannot see a `reportError` parameter that has a default,
 		// so the check reads the declaration and fails loudly if someone drops the error sink.
@@ -132,18 +120,6 @@ describe("error semantics — the per-leg table", () => {
 			if (!row.mergesStderr) continue
 
 			expect(row.call.toString(), `${row.leg} must accept an error sink`).toMatch(/\breportError\b/)
-		}
-	})
-
-	test("the two legs that abort the check are the arena and the FR floor", () => {
-		const aborting = LEG_SEMANTICS.filter((row) => row.onFailure.includes("ABORTS")).map((row) => row.leg)
-
-		expect(aborting).toEqual(["external-arenas", "fr-parse-recall"])
-	})
-
-	test("every leg names the artifact the verdict assembler reads", () => {
-		for (const row of LEG_SEMANTICS) {
-			expect(row.artifact, row.leg).toMatch(/\.md$/)
 		}
 	})
 })

@@ -3,15 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry, ukCountryForGSS } from "#gb"
-
-describe("GB_COUNTRIES", () => {
-	it("covers the four constituent countries of the UK", () => {
-		expect(Object.keys(GB_COUNTRIES)).toHaveLength(4)
-		expect(GB_COUNTRIES.ENG).toEqual({ code: "ENG", name: "England", gss: "E92000001" })
-		expect(GB_COUNTRIES.NIR.name).toBe("Northern Ireland")
-	})
-})
+import { isUkCountryCode, lookupUkCountry, ukCountryForGSS } from "#gb"
 
 describe("ukCountryForGSS", () => {
 	it("maps each ONS country code to its constituent country", () => {

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { candidateSystemsForPostcode, SYSTEM_CODES } from "#systems"
+import { candidateSystemsForPostcode } from "#systems"
 
 describe("candidateSystemsForPostcode", () => {
 	it("a bare 5-digit code is eligible for every numeric-postcode system (shape can't split them)", () => {
@@ -14,10 +14,6 @@ describe("candidateSystemsForPostcode", () => {
 	it("a Spanish código postal and an Italian CAP reach their own systems", () => {
 		expect(candidateSystemsForPostcode("28013")).toContain("es")
 		expect(candidateSystemsForPostcode("00184")).toContain("it")
-	})
-
-	it("SYSTEM_CODES is the universe candidateSystemsForPostcode draws from", () => {
-		expect(SYSTEM_CODES).toEqual(["us", "de", "fr", "es", "it", "ca", "gb", "jp", "au", "nz"])
 	})
 
 	it("the German D- prefix narrows to Germany alone", () => {

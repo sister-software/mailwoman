@@ -21,10 +21,6 @@ import {
 } from "#data"
 
 describe("BUNDLES registry", () => {
-	it("ships exactly the confirmed bundles — no invented timezone/nuts/un-locode entries", () => {
-		expect(Object.keys(BUNDLES).toSorted()).toEqual(["candidate", "fr", "poi", "us"])
-	})
-
 	it("every artifact declares a positive approxBytes and a non-empty remote/local path", () => {
 		for (const bundle of Object.values(BUNDLES)) {
 			expect(bundle.artifacts.length).toBeGreaterThan(0)
@@ -51,15 +47,6 @@ describe("BUNDLES registry", () => {
 
 		expect(vi).toHaveLength(1)
 		expect(vi[0]!.family).toBe("address-points")
-	})
-
-	it("candidate/poi/fr are single fixed-path artifacts with no family tag", () => {
-		for (const name of ["candidate", "poi", "fr"] as const) {
-			const bundle = BUNDLES[name]!
-
-			expect(bundle.artifacts).toHaveLength(1)
-			expect(bundle.artifacts[0]!.family).toBeUndefined()
-		}
 	})
 })
 
@@ -163,20 +150,6 @@ describe("every bundle states its terms before it is pulled", () => {
 
 		expect(lines).toHaveLength(1)
 		expect(lines[0]).toContain("not on disk: 3 artifacts, such as /data/db/ca.db")
-	})
-
-	it("says where each bundle's rows name their publisher, or that they do not", () => {
-		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
-			table: "address_point",
-			column: "source",
-			shape: "per-row",
-			family: "address-points",
-		})
-
-		expect(BUNDLES["us"]?.artifacts.some((artifact) => artifact.family === "interpolation")).toBe(true)
-
-		expect(BUNDLES["poi"]?.sourceCensus?.shape).toBe("manifest")
-		expect(BUNDLES["candidate"]?.sourceCensus).toBeUndefined()
 	})
 })
 

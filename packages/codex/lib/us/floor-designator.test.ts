@@ -8,32 +8,10 @@ import {
 	lookupFloorDesignator,
 	US_FLOOR_DESIGNATOR_LOOKUP,
 	US_FLOOR_DESIGNATOR_PREFERRED_ABBR,
-	US_FLOOR_DESIGNATOR_TOKENS,
 	US_FLOOR_DESIGNATORS,
 } from "#us/floor-designator"
 
 describe("US_FLOOR_DESIGNATORS", () => {
-	it("carries the four USPS Pub 28 C2 floor-class designators", () => {
-		const names = US_FLOOR_DESIGNATORS.map((r) => r.name).toSorted()
-		expect(names).toEqual(["BASEMENT", "FLOOR", "LOBBY", "PENTHOUSE"].toSorted())
-	})
-
-	it("marks FLOOR and BASEMENT as requiring a secondary number (Appendix C2)", () => {
-		const numbered = US_FLOOR_DESIGNATORS.filter((r) => r.requiresNumber)
-			.map((r) => r.name)
-			.toSorted()
-
-		expect(numbered).toEqual(["BASEMENT", "FLOOR"].toSorted())
-	})
-
-	it("marks PENTHOUSE and LOBBY as standalone (Appendix C2)", () => {
-		const standalone = US_FLOOR_DESIGNATORS.filter((r) => !r.requiresNumber)
-			.map((r) => r.name)
-			.toSorted()
-
-		expect(standalone).toEqual(["LOBBY", "PENTHOUSE"].toSorted())
-	})
-
 	it("every row has a non-empty name and abbreviation — structural integrity", () => {
 		for (const row of US_FLOOR_DESIGNATORS) {
 			expect(row.name.length).toBeGreaterThan(0)
@@ -59,14 +37,6 @@ describe("US_FLOOR_DESIGNATOR_LOOKUP", () => {
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("apt")).toBe(false)
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("ste")).toBe(false)
 		expect(US_FLOOR_DESIGNATOR_LOOKUP.has("rm")).toBe(false)
-	})
-})
-
-describe("US_FLOOR_DESIGNATOR_TOKENS", () => {
-	it("includes all lookup keys as lowercase tokens", () => {
-		for (const key of US_FLOOR_DESIGNATOR_LOOKUP.keys()) {
-			expect(US_FLOOR_DESIGNATOR_TOKENS.has(key), `token "${key}"`).toBe(true)
-		}
 	})
 })
 

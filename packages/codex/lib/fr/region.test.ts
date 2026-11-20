@@ -5,18 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { FR_DEPARTEMENTS, FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "#fr"
 
-describe("FR_REGIONS", () => {
-	it("covers all 18 régions (13 metropolitan + 5 overseas)", () => {
-		expect(Object.keys(FR_REGIONS)).toHaveLength(18)
-		expect(FR_REGIONS.IDF.name).toBe("Île-de-France")
-	})
-})
-
 describe("FR_DEPARTEMENTS", () => {
-	it("covers all 101 départements", () => {
-		expect(Object.keys(FR_DEPARTEMENTS)).toHaveLength(101)
-	})
-
 	it("every département points at a real région", () => {
 		for (const d of Object.values(FR_DEPARTEMENTS)) {
 			expect(FR_REGIONS[d.region]).toBeDefined()

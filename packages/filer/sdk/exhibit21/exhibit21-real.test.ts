@@ -63,16 +63,6 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 			expect(parseExhibit21(await fixture(name)).subsidiaries.length).toBeGreaterThan(0)
 		}
 	)
-
-	it("recovers 142 subsidiaries across the corpus", async () => {
-		let total = 0
-
-		for (const name of FIXTURE_NAMES) {
-			total += parseExhibit21(await fixture(name)).subsidiaries.length
-		}
-
-		expect(total).toBe(142)
-	})
 })
 
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {

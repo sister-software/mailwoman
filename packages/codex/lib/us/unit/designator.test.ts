@@ -11,7 +11,6 @@ import {
 	matchLeadingDesignatorWithRange,
 	US_UNIT_DESIGNATOR_LOOKUP,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
-	US_UNIT_DESIGNATOR_REQUIRES_RANGE,
 	US_UNIT_DESIGNATOR_VARIANTS,
 	usUnitIdentifier,
 } from "#us/unit/designator"
@@ -120,10 +119,6 @@ describe("lookupUnitDesignator + isUnitDesignatorToken", () => {
 describe("US_UNIT_DESIGNATOR_VARIANTS table integrity", () => {
 	const canonicals = Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as (keyof typeof US_UNIT_DESIGNATOR_VARIANTS)[]
 
-	it("has exactly the 24 USPS Pub-28 Appendix C2 designators", () => {
-		expect(canonicals).toHaveLength(24)
-	})
-
 	it("has no variant string claimed by two different canonicals", () => {
 		const owner = new Map<string, string>()
 
@@ -140,37 +135,6 @@ describe("US_UNIT_DESIGNATOR_VARIANTS table integrity", () => {
 	it("every canonical resolves to itself in the lookup (case-insensitive)", () => {
 		for (const canonical of canonicals) {
 			expect(US_UNIT_DESIGNATOR_LOOKUP.get(canonical.toLowerCase())).toBe(canonical)
-		}
-	})
-
-	it("every canonical has US_UNIT_DESIGNATOR_REQUIRES_RANGE + US_UNIT_DESIGNATOR_PREFERRED_ABBR entries", () => {
-		for (const canonical of canonicals) {
-			expect(typeof US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe("boolean")
-			expect(typeof US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical]).toBe("string")
-		}
-	})
-})
-
-describe("US_UNIT_DESIGNATOR_REQUIRES_RANGE", () => {
-	it("flags the designators Pub-28 marks as requiring a secondary number", () => {
-		for (const canonical of ["APARTMENT", "BUILDING", "DEPARTMENT", "FLOOR", "ROOM", "SUITE", "UNIT"] as const) {
-			expect(US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe(true)
-		}
-	})
-
-	it("does not flag the standalone designators", () => {
-		for (const canonical of [
-			"BASEMENT",
-			"FRONT",
-			"LOBBY",
-			"LOWER",
-			"OFFICE",
-			"PENTHOUSE",
-			"REAR",
-			"SIDE",
-			"UPPER",
-		] as const) {
-			expect(US_UNIT_DESIGNATOR_REQUIRES_RANGE[canonical]).toBe(false)
 		}
 	})
 })

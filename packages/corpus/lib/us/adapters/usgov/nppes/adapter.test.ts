@@ -5,13 +5,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry } from "#adapters/registry"
 import { writeDelimitedFixture } from "#test-kit"
-import {
-	createUsgovNPPESAdapter,
-	USGOV_NPPES_ADAPTER_ID,
-	USGOV_NPPES_DEFAULT_LICENSE,
-} from "#us/adapters/usgov/nppes/adapter"
+import { createUsgovNPPESAdapter, USGOV_NPPES_ADAPTER_ID } from "#us/adapters/usgov/nppes/adapter"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -42,12 +37,6 @@ function writeCSV(...lines: string[]): Promise<PathBuilder> {
 }
 
 describe("usgov-nppes adapter", () => {
-	it("has the expected id and license", () => {
-		const a = createUsgovNPPESAdapter()
-		expect(a.id).toBe(USGOV_NPPES_ADAPTER_ID)
-		expect(a.defaultLicense).toBe(USGOV_NPPES_DEFAULT_LICENSE)
-	})
-
 	it("refuses a file whose practice-location column it cannot find, rather than emitting zero rows", async () => {
 		// A renamed column must raise an error that names it, instead of silently dropping every row.
 		const swept = CSV_HEADER.replace(
@@ -199,12 +188,6 @@ describe("usgov-nppes adapter", () => {
 				for await (const _ of a.rows({ inputPath: "/dev/null", country: "FR" }));
 			})()
 		).rejects.toThrow(/only US supported/)
-	})
-
-	it("registers cleanly with an InMemoryAdapterRegistry", () => {
-		const registry = new InMemoryAdapterRegistry()
-		registry.register(createUsgovNPPESAdapter())
-		expect(registry.get(USGOV_NPPES_ADAPTER_ID)?.id).toBe(USGOV_NPPES_ADAPTER_ID)
 	})
 
 	it("honors limit", async () => {

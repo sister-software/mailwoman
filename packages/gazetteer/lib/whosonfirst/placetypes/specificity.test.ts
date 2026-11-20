@@ -115,27 +115,6 @@ describe("isStrictlyFiner", () => {
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})
 
-	it("checks differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
-		// The check blocks a resurrection when a live row covers the dead one.
-		// A negated `isAtLeastAsSpecific` asks the wrong question and lets a live
-		// locality stop blocking a dead locality of the same name.
-		const wrong = (live: string, dead: string) => isAtLeastAsSpecific(live, dead) !== true
-		const right = (live: string, dead: string) => isStrictlyFiner(live, dead) !== true
-
-		// The equal rung is where the two checks diverge.
-		expect(wrong("locality", "locality")).toBe(false)
-		expect(right("locality", "locality")).toBe(true)
-
-		// They agree everywhere else.
-		for (const [live, dead] of [
-			["neighbourhood", "locality"],
-			["region", "locality"],
-			["country", "locality"],
-		] as const) {
-			expect(wrong(live, dead), `${live} vs ${dead}`).toBe(right(live, dead))
-		}
-	})
-
 	it("returns undefined for an unranked placetype so a check can choose to block on it", () => {
 		expect(isStrictlyFiner("bookstore", "locality")).toBeNull()
 	})

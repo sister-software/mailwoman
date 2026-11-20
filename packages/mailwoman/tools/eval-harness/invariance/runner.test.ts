@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest"
 
 import { type InvarianceRow, loadSuite } from "#tools/eval-harness/invariance/fixtures"
-import { type ParseFn, localeForCountry } from "#tools/eval-harness/invariance/parser"
+import type { ParseFn } from "#tools/eval-harness/invariance/parser"
 import { runInvarianceSuite } from "#tools/eval-harness/invariance/runner"
 
 describe("loadSuite", () => {
@@ -26,14 +26,6 @@ describe("loadSuite", () => {
 			expect(Array.isArray(row.transforms)).toBe(true)
 			expect(row.transforms.length).toBeGreaterThan(0)
 		}
-	})
-
-	it("carries the two gauntlet-famous landmark cases verbatim", async () => {
-		const rows = await loadSuite()
-		const raws = rows.map((r) => r.raw)
-
-		expect(raws).toContain("1600 Pennsylvania Ave NW, Washington, DC 20500")
-		expect(raws).toContain("350 Fifth Avenue, New York, NY 10118")
 	})
 
 	it("spans all four target countries", async () => {
@@ -264,14 +256,6 @@ describe("runInvarianceSuite", () => {
 })
 
 describe("per-row locale + gained-capability class (#1516)", () => {
-	it("localeForCountry maps the suite's four countries and falls back to en-US", () => {
-		expect(localeForCountry("US")).toBe("en-US")
-		expect(localeForCountry("GB")).toBe("en-GB")
-		expect(localeForCountry("FR")).toBe("fr-FR")
-		expect(localeForCountry("DE")).toBe("de-DE")
-		expect(localeForCountry("XX")).toBe("en-US")
-	})
-
 	it("threads the row's country-derived locale into EVERY parse call (candidate and baseline, original and perturbed and idempotence)", async () => {
 		const calls: Array<{ raw: string; locale?: string }> = []
 

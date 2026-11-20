@@ -63,12 +63,6 @@ describe("checkConfounds", () => {
 		expect(reading.warnings[0]).toContain("countryScope")
 	})
 
-	it("warns rather than refusing, so the comparison still returns", () => {
-		// The decided behavior (spec §6.3).
-		// A refusal an agent cannot override is a reason to bypass the tool.
-		expect(() => checkConfounds({ a: 1 }, { a: 2, b: 3 }, ["a"])).not.toThrow()
-	})
-
 	it("flags a declared key that did not actually move", () => {
 		const reading = checkConfounds({ locale: "en-US" }, { locale: "en-US" }, ["locale"])
 

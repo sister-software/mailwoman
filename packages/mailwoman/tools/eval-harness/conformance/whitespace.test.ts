@@ -34,10 +34,8 @@ import {
 	classifyWhitespaceTransformation,
 	describeWhitespaceTransformation,
 	structuralIdentifierSpaces,
-	WHITESPACE_APPLICABILITY_RULES,
 	WHITESPACE_LAW,
 	WHITESPACE_TRANSFORMATION_BY_NAME,
-	WHITESPACE_TRANSFORMATION_SCOPE,
 	WHITESPACE_TRANSFORMATIONS,
 	whitespaceApplicability,
 	whitespaceBlindKey,
@@ -73,21 +71,6 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 describe("whitespace transformations", () => {
-	it("closes the set at six, and gives each one a scope", () => {
-		expect([...WHITESPACE_TRANSFORMATIONS]).toEqual([
-			"leading",
-			"trailing",
-			"repeated",
-			"tabbed",
-			"separator-tightened",
-			"separator-loosened",
-		])
-
-		for (const transformation of WHITESPACE_TRANSFORMATIONS) {
-			expect(WHITESPACE_TRANSFORMATION_SCOPE[transformation]).toBeTruthy()
-		}
-	})
-
 	it("renders the six registers of one committed query", () => {
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.leading(GB_DOWNING)).toBe(" 10 Downing Street, London SW1A 2AA")
 		expect(WHITESPACE_TRANSFORMATION_BY_NAME.trailing(GB_DOWNING)).toBe("10 Downing Street, London SW1A 2AA ")
@@ -178,10 +161,6 @@ describe("classifyWhitespaceTransformation", () => {
 })
 
 describe("whitespaceApplicability", () => {
-	it("declares exactly two exclusion rules", () => {
-		expect([...WHITESPACE_APPLICABILITY_RULES]).toEqual(["identity-transformation", "structural-identifier-space"])
-	})
-
 	it.each(["repeated", "tabbed"] as const)(
 		"excludes the committed bare GB postcode from %s, naming the identifier",
 		(transformation) => {

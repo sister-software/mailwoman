@@ -12,14 +12,7 @@ import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-import {
-	assertWeightsCacheStaged,
-	EFFECTIVE_KEY_FOR,
-	effectiveKeyFor,
-	engineID,
-	EngineRegistry,
-	resolveConfig,
-} from "#dev-mcp/engine/registry"
+import { assertWeightsCacheStaged, engineID, EngineRegistry, resolveConfig } from "#dev-mcp/engine/registry"
 import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "#dev-mcp/tree-fingerprint"
 
@@ -62,11 +55,6 @@ async function stageCache(
 describe("weights_cache — the setting", () => {
 	it("is a key the tool schema accepts", () => {
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).toContain("weights_cache")
-	})
-
-	it("translates to the session option that reaches resolveWeights", () => {
-		expect(effectiveKeyFor("weights_cache")).toBe("weightsCacheRoot")
-		expect(EFFECTIVE_KEY_FOR.weights_cache).toBe("weightsCacheRoot")
 	})
 
 	it("is ABSENT from the effective config when unset", () => {

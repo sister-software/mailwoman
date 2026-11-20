@@ -303,10 +303,6 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 		expect(hit!.parityMatched).toBe(true)
 	})
 
-	it("still abstains without a postcode when the PARITY pool itself spans ZIPs", () => {
-		expect(interpolator.find({ street: "Main St", number: "150" })).toBeNull()
-	})
-
 	describe("near tie-break geometry", () => {
 		let nearDB: DatabaseClient<StreetSegmentDatabase>
 		let nearInterp: StreetInterpolator

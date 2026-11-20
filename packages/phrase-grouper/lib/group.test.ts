@@ -7,7 +7,7 @@
  *   The kryptonite-catalogue fixture test (operator's adversarial examples) lives in `kryptonite.test.ts`.
  */
 
-import type { PhraseGrouper, PhraseProposal } from "@mailwoman/core/pipeline"
+import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import {
 	EMPTY_QUERY_SHAPE_VIEW,
 	type NormalizedInputLite,
@@ -15,7 +15,7 @@ import {
 } from "@mailwoman/core/pipeline/types"
 import { describe, expect, it } from "vitest"
 
-import { groupPhrases, groupPhrasesSync } from "#group"
+import { groupPhrasesSync } from "#group"
 import {
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
@@ -44,23 +44,8 @@ function findKind(proposals: PhraseProposal[], kind: string, body?: string): Phr
 }
 
 describe("phrase-grouper — interface", () => {
-	it("groupPhrasesSync returns an array", () => {
-		const out: PhraseProposal[] = groupPhrasesSync(input("anything"), shape())
-		expect(Array.isArray(out)).toBe(true)
-	})
-
-	it("groupPhrases async wrapper resolves to an array", async () => {
-		const out = await groupPhrases(input("anything"), shape())
-		expect(Array.isArray(out)).toBe(true)
-	})
-
 	it("empty input returns empty list", () => {
 		expect(groupPhrasesSync(input(""), shape())).toEqual([])
-	})
-
-	it("satisfies the PhraseGrouper structural type", () => {
-		const grouper: PhraseGrouper = { group: groupPhrases }
-		expect(typeof grouper.group).toBe("function")
 	})
 
 	it("results sorted by descending confidence then ascending span start", () => {
@@ -179,11 +164,6 @@ describe("scoreHyphenatedCompound", () => {
 
 	it("ignores leading/trailing-hyphen-only tokens", () => {
 		expect(scoreHyphenatedCompound(tokenizeSegment("- foo -", 0), "- foo -")).toEqual([])
-	})
-
-	it("catches the NY-NY case", () => {
-		const out = scoreHyphenatedCompound(tokenizeSegment("NY-NY Steakhouse", 0), "NY-NY Steakhouse")
-		expect(findKind(out, "HYPHENATED_COMPOUND", "NY-NY")).toBeDefined()
 	})
 })
 
@@ -339,12 +319,6 @@ describe("scoreVenuePhrase", () => {
 		const venue = findKind(out, "VENUE_PHRASE", "NY-NY Steakhouse")
 		expect(venue).toBeDefined()
 		expect(venue!.confidence).toBeGreaterThanOrEqual(0.8)
-	})
-
-	it("emits lower-confidence VENUE_PHRASE on hyphen-compound-only runs", () => {
-		const out = scoreVenuePhrase(tokenizeSegment("Coca-Cola Plant", 0), "Coca-Cola Plant")
-		const venue = findKind(out, "VENUE_PHRASE")
-		expect(venue).toBeDefined()
 	})
 
 	it("no venue marker + no hyphen = no VENUE_PHRASE", () => {

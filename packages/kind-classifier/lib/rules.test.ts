@@ -15,7 +15,6 @@ import {
 	scorePoBox,
 	scorePostcodeOnly,
 	scoreStructuredAddress,
-	scoreVague,
 	scoreVenueLandmark,
 } from "#rules"
 
@@ -104,8 +103,4 @@ test("scoreStructuredAddress: multi-segment alphanumeric scores highest", () => 
 	).toBe(0.9)
 
 	expect(scoreStructuredAddress(input("Paris"), shape({ segments: seg(1), characterClass: "alpha" }))).toBe(0)
-})
-
-test("scoreVague: a constant moderate baseline so it is always an alternative", () => {
-	expect(scoreVague(input("anything"), shape())).toBe(0.3)
 })

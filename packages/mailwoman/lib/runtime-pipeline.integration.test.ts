@@ -116,22 +116,6 @@ describe("createRuntimePipeline — wiring", () => {
 		expect(map?.[4]).toBe(5)
 	})
 
-	it("kind classifier override is respected", async () => {
-		const classifier = fakeClassifier()
-
-		const customKind = vi.fn(async () => ({
-			kind: "structured_address" as const,
-			confidence: 0,
-			alternatives: [],
-			intentMarkers: null,
-		}))
-
-		const pipeline = createRuntimePipeline({ classifier, classifyKind: customKind })
-
-		await pipeline("350 5th Ave, NYC")
-		expect(customKind).toHaveBeenCalled()
-	})
-
 	it("locale check override is respected", async () => {
 		const customDetect = vi.fn(async () => ({
 			locale: "fr-FR",

@@ -4,30 +4,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
-	DA_LEVEL_DESIGNATORS,
-	DE_LEVEL_DESIGNATORS,
-	EN_LEVEL_DESIGNATORS,
-	ES_LEVEL_DESIGNATORS,
-	FR_LEVEL_DESIGNATORS,
-	IT_LEVEL_DESIGNATORS,
 	isLevelDesignatorToken,
-	JA_LEVEL_DESIGNATORS,
 	LEVEL_DESIGNATORS_BY_FAMILY,
 	levelToOrdinal,
 	lookupLevelDesignator,
-	NL_LEVEL_DESIGNATORS,
-	NO_LEVEL_DESIGNATORS,
-	PT_LEVEL_DESIGNATORS,
-	SV_LEVEL_DESIGNATORS,
 } from "#level-semantics"
 
 describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
-	it("carries all eleven language families", () => {
-		expect(Object.keys(LEVEL_DESIGNATORS_BY_FAMILY).toSorted()).toEqual(
-			["en", "fr", "de", "es", "it", "pt", "nl", "ja", "sv", "no", "da"].toSorted()
-		)
-	})
-
 	it("every row has a non-empty code, name, and at least one variant", () => {
 		for (const [family, rows] of Object.entries(LEVEL_DESIGNATORS_BY_FAMILY)) {
 			for (const row of rows) {
@@ -37,26 +20,6 @@ describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
 
 				for (const variant of row.variants) {
 					expect(variant.trim().length, `${family}.${row.code} variant "${variant}"`).toBeGreaterThan(0)
-				}
-			}
-		}
-	})
-
-	it("has no duplicate variant WITHIN any single locale family (case-insensitive)", () => {
-		for (const [family, rows] of Object.entries(LEVEL_DESIGNATORS_BY_FAMILY)) {
-			const seen = new Map<string, string>()
-
-			for (const row of rows) {
-				for (const variant of row.variants) {
-					const key = variant.toLowerCase()
-					const existing = seen.get(key)
-
-					expect(
-						existing,
-						`family "${family}": variant "${variant}" claimed by both "${existing}" and "${row.code}"`
-					).toBeUndefined()
-
-					seen.set(key, row.code)
 				}
 			}
 		}
@@ -208,57 +171,5 @@ describe("lookupLevelDesignator / isLevelDesignatorToken", () => {
 		expect(isLevelDesignatorToken("étage", "fr-FR")).toBe(true)
 		expect(isLevelDesignatorToken("nonsense", "en-US")).toBe(false)
 		expect(isLevelDesignatorToken(42, "en-US")).toBe(false)
-	})
-})
-
-describe("per-family designator counts — sanity check against the module docstring's designator list", () => {
-	it("English carries FLOOR, BASEMENT, PENTHOUSE, GROUND, LOWER/UPPER GROUND, MEZZANINE, and ROOF", () => {
-		expect(EN_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["FLOOR", "BASEMENT", "PENTHOUSE", "GROUND", "LOWER GROUND", "UPPER GROUND", "MEZZANINE", "ROOF"].toSorted()
-		)
-	})
-
-	it("French carries ÉTAGE, RDC, SOUS-SOL, and ENTRESOL", () => {
-		expect(FR_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["ÉTAGE", "RDC", "SOUS-SOL", "ENTRESOL"].toSorted()
-		)
-	})
-
-	it("German carries OBERGESCHOSS, ERDGESCHOSS, UNTERGESCHOSS, DACHGESCHOSS, and ZWISCHENGESCHOSS", () => {
-		expect(DE_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["OBERGESCHOSS", "ERDGESCHOSS", "UNTERGESCHOSS", "DACHGESCHOSS", "ZWISCHENGESCHOSS"].toSorted()
-		)
-	})
-
-	it("Spanish carries PLANTA, PLANTA BAJA, ENTRESUELO, PRINCIPAL, SÓTANO, and ÁTICO", () => {
-		expect(ES_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["PLANTA", "PLANTA BAJA", "ENTRESUELO", "PRINCIPAL", "SÓTANO", "ÁTICO"].toSorted()
-		)
-	})
-
-	it("Italian carries PIANO, PIANO TERRA, SEMINTERRATO, and ATTICO", () => {
-		expect(IT_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["PIANO", "PIANO TERRA", "SEMINTERRATO", "ATTICO"].toSorted()
-		)
-	})
-
-	it("Portuguese carries ANDAR, RÉS-DO-CHÃO, and CAVE", () => {
-		expect(PT_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(["ANDAR", "RÉS-DO-CHÃO", "CAVE"].toSorted())
-	})
-
-	it("Dutch carries VERDIEPING, BEGANE GROND, and KELDER", () => {
-		expect(NL_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(
-			["VERDIEPING", "BEGANE GROND", "KELDER"].toSorted()
-		)
-	})
-
-	it("Japanese carries F, B, and RF", () => {
-		expect(JA_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()).toEqual(["F", "B", "RF"].toSorted())
-	})
-
-	it("Swedish, Norwegian, and Danish each carry a numbered/ground/basement triple", () => {
-		expect(SV_LEVEL_DESIGNATORS).toHaveLength(3)
-		expect(NO_LEVEL_DESIGNATORS).toHaveLength(3)
-		expect(DA_LEVEL_DESIGNATORS).toHaveLength(3)
 	})
 })

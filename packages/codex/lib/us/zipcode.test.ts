@@ -3,14 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	isZipCode,
-	pluckStateZIPCode,
-	StateAbbreviationZipCodePrefixRecord,
-	ZipCodePatterns,
-	ZipCodePrefixAbbreviationMap,
-} from "#us"
-import { isUSStateAbbreviation } from "#us/state"
+import { isZipCode, pluckStateZIPCode, ZipCodePatterns, ZipCodePrefixAbbreviationMap } from "#us"
 import { normalizeZIPCode } from "#us/zipcode"
 
 describe("normalizeZIPCode", () => {
@@ -67,12 +60,6 @@ describe("isZipCode", () => {
 })
 
 describe("StateAbbreviationZipCodePrefixRecord", () => {
-	it("encodes the first-digit → state geographic prior", () => {
-		expect(StateAbbreviationZipCodePrefixRecord.CA).toBe(9)
-		expect(StateAbbreviationZipCodePrefixRecord.NY).toBe(1)
-		expect(StateAbbreviationZipCodePrefixRecord.FL).toBe(3)
-	})
-
 	it("inverts into the prefix → states map (band 0 holds the New England + DE/PR cluster)", () => {
 		const band0 = ZipCodePrefixAbbreviationMap.get(0)
 		expect(band0).toContain("MA")
@@ -102,14 +89,6 @@ describe("pluckStateZIPCode", () => {
 	it("returns null when there is no ZIP", () => {
 		expect(pluckStateZIPCode("CA")).toBeNull()
 		expect(pluckStateZIPCode(null)).toBeNull()
-	})
-})
-
-describe("isUSStateAbbreviation", () => {
-	it("accepts states + territories, case-insensitively", () => {
-		expect(isUSStateAbbreviation("CA")).toBe(true)
-		expect(isUSStateAbbreviation("pr")).toBe(true)
-		expect(isUSStateAbbreviation("ZZ")).toBe(false)
 	})
 })
 

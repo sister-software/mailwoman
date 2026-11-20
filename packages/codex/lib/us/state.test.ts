@@ -29,17 +29,6 @@ test("isUSStateAbbreviation: false for non-state / malformed / non-string input"
 	expect(isUSStateAbbreviation(undefined)).toBe(false)
 })
 
-test("US_STATE_BY_ABBREVIATION: abbreviation → full name, including homographs and territories", () => {
-	expect(US_STATE_BY_ABBREVIATION.CA).toBe("California")
-	expect(US_STATE_BY_ABBREVIATION.GA).toBe("Georgia") // country/state homograph
-	expect(US_STATE_BY_ABBREVIATION.WA).toBe("Washington") // country-capital homograph
-	expect(US_STATE_BY_ABBREVIATION.DC).toBe("District of Columbia")
-	expect(US_STATE_BY_ABBREVIATION.NY).toBe("New York")
-	expect(US_STATE_BY_ABBREVIATION.PR).toBe("Puerto Rico")
-	expect(US_STATE_BY_ABBREVIATION.VI).toBe("US Virgin Islands")
-	expect(US_STATE_BY_ABBREVIATION.MP).toBe("Northern Mariana Islands")
-})
-
 test("US_STATE_ABBREVIATIONS: holds 56 entries (50 states + DC + 5 territories, complete + unique)", () => {
 	expect(US_STATE_ABBREVIATIONS).toHaveLength(56)
 	expect(new Set(US_STATE_ABBREVIATIONS).size).toBe(56) // no duplicates

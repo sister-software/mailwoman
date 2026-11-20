@@ -23,7 +23,6 @@ import {
 	MATRIKKELEN_AREAS,
 	MATRIKKELEN_MAINLAND_AREA,
 	MATRIKKELEN_MEMBER_FILENAME,
-	MATRIKKELEN_REQUIRED_COLUMNS,
 	matrikkelenAreasFor,
 	matrikkelenArchiveFilename,
 	matrikkelenArchiveURL,
@@ -188,25 +187,5 @@ describe("recordedMatrikkelenArea", () => {
 		const { area_code: _area, member_bytes: _bytes, ...older } = recordedSvalbard()
 
 		expect(recordedMatrikkelenArea(older)).toBeNull()
-	})
-})
-
-describe("MATRIKKELEN_REQUIRED_COLUMNS", () => {
-	it("names the nine columns the adapter reads and no byte-order-marked first column", () => {
-		expect(MATRIKKELEN_REQUIRED_COLUMNS).toEqual([
-			"kommunenummer",
-			"adressetype",
-			"adressenavn",
-			"nummer",
-			"bokstav",
-			"adresseTekst",
-			"postnummer",
-			"poststed",
-			"adresseId",
-		])
-
-		// The published header's first column is `lokalid` carrying a byte-order mark,
-		// so a check that includes it would fail on every file the publisher writes.
-		expect(MATRIKKELEN_REQUIRED_COLUMNS).not.toContain("lokalid")
 	})
 })

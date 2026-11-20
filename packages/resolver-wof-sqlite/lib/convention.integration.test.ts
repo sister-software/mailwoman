@@ -13,11 +13,6 @@ import { WOFSQLitePlaceLookup } from "#lookup"
 import type { WOFDatabase } from "#schema"
 
 describe("convention engine — merge + resolve", () => {
-	it("WORLD_DEFAULT reproduces the pre-engine coordinate-first dispatch", () => {
-		expect(WORLD_DEFAULT.candidateStrategies).toEqual(["postcode_area_resolution", "fallback_fuzzy_name_match"])
-		expect(WORLD_DEFAULT.scoringWeights).toEqual({ pc: 0.6, name: 0.3, pop: 0.1 })
-	})
-
 	it("replaces candidateStrategies wholesale (a convention names its full list, never appends)", () => {
 		const out = mergeConventions(WORLD_DEFAULT, {
 			candidateStrategies: ["digital_code_lookup", "postcode_area_resolution"],

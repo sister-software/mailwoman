@@ -3,14 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "#de"
-
-describe("DE_BUNDESLAENDER", () => {
-	it("covers all 16 Bundesländer", () => {
-		expect(Object.keys(DE_BUNDESLAENDER)).toHaveLength(16)
-		expect(DE_BUNDESLAENDER.BY).toEqual({ code: "BY", name: "Bayern", english: "Bavaria" })
-	})
-})
+import { isGermanStateCode, lookupGermanState } from "#de"
 
 describe("isGermanStateCode", () => {
 	it("accepts ISO 3166-2:DE codes, case-insensitively", () => {

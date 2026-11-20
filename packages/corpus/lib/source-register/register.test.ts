@@ -451,17 +451,6 @@ describe("applyLicenseDecisions", () => {
 		expect(applied[1]).toEqual(generated[1])
 	})
 
-	it("preserves every field of the recorded decision, which is what a rebuild used to lose", () => {
-		// Each of these four fields is one the corpus acceptance rules require.
-		const applied = applyLicenseDecisions(generated, new Map([[elected.licenseID, elected]]))
-		const survivor = applied[0] as typeof elected
-
-		expect(survivor.electedTerms).toBe("Licence Ouverte 2.0")
-		expect(survivor.spdx).toBe("etalab-2.0")
-		expect(survivor.retrievedCopy).toBe("data/licenses/ban-licence-ouverte-2.0.txt")
-		expect(survivor.electedBecause).toContain("attribution only")
-	})
-
 	it("carries a refusal through as readily as an election", () => {
 		const refused: LicenseDecision = {
 			licenseID: "unchecked-access-free",

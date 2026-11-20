@@ -58,14 +58,6 @@ describe("assembleBench", () => {
 		expect(reading.summary).toContain("1000ms was engine construction")
 	})
 
-	it("pins concurrency at 1 and explains it rather than asserting it", () => {
-		const reading = assembleBench(null, warm)
-
-		expect(reading.concurrency).toBe(1)
-		expect(reading.note).toContain("blocks the calling thread")
-		expect(reading.note).toContain("peaking at 2 workers")
-	})
-
 	it("does not invent a warm figure when nothing was sampled", () => {
 		expect(assembleBench(null, summarizeLatency([])).summary).toContain("No warm samples were taken")
 	})

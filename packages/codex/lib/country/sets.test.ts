@@ -29,10 +29,6 @@ function takesWorld(countries: CountrySet<{ world: true }>): number {
 }
 
 describe("worldCountries", () => {
-	it("holds every CountryISO2 value", () => {
-		expect([...worldCountries()].toSorted()).toEqual(Object.values(CountryISO2).toSorted())
-	})
-
 	it("refuses a literal array or an unbranded set at compile time", () => {
 		expect(takesWorld(worldCountries())).toBe(Object.values(CountryISO2).length)
 

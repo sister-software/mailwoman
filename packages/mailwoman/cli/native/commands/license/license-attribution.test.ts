@@ -51,14 +51,6 @@ describe("attributionReport", () => {
 		expect(report.packages).toEqual([])
 		expect(report.notInstalled).toEqual(["@mailwoman/neural-weights-absent"])
 	})
-
-	it("states what it does not cover, so the gaps are read rather than inferred", async () => {
-		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
-
-		expect(report.notCovered).toHaveLength(2)
-		expect(report.notCovered[0]).toContain("downloaded separately at runtime")
-		expect(report.notCovered[1]).toContain("a package recording none is not a package with none")
-	})
 })
 
 describe("renderAttributionReport", () => {

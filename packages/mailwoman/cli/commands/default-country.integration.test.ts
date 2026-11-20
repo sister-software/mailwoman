@@ -81,10 +81,6 @@ describe("--country-scope separates country policy from the resolver backend", (
 
 		expect(resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" })).toBeNull()
 	})
-
-	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {
-		expect(parseCommand(parseSpec, ["address"]).values["country-scope"]).toBe("auto")
-	})
 })
 
 describe("--default-country schema validation", () => {

@@ -110,11 +110,6 @@ beforeAll(async () => {
 })
 
 describe("postal-unit-guideline", () => {
-	it("writes the invented-postal-unit-guideline source, apart from the PO-box rows", () => {
-		expect(SOURCE).toBe("invented-postal-unit-guideline")
-		expect(SOURCE).not.toBe(defaultRecipeSource("synth-postal-guideline"))
-	})
-
 	it("emits rows each with one unit or named-complex venue span that matches its component", () => {
 		const rows = generate(7)
 

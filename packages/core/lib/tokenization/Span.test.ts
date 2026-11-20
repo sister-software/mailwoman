@@ -212,18 +212,3 @@ test("connectSiblings - array list", () => {
 	expect(spans[2].nextSibling).toBeFalsy()
 	expect(spans[2].previousSibling).toStrictEqual(spans[1])
 })
-
-test("connectSiblings - list of items", () => {
-	const a = Span.from("A")
-	const b = Span.from("B")
-	const c = Span.from("C")
-
-	Span.connectSiblings(a, b, c)
-
-	expect(a.nextSibling).toStrictEqual(b)
-	expect(a.previousSibling).toBeFalsy()
-	expect(b.nextSibling).toStrictEqual(c)
-	expect(b.previousSibling).toStrictEqual(a)
-	expect(c.nextSibling).toBeFalsy()
-	expect(c.previousSibling).toStrictEqual(b)
-})

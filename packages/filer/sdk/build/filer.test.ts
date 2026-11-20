@@ -882,20 +882,6 @@ describe("buildFilerDatabase", () => {
 			expect(familyRows).toHaveLength(0)
 		})
 
-		it("EdgarRows ALONE satisfies the 'at least one source' condition — it does not require form499/provider data", async () => {
-			await using scratch = await temporaryDirectory("filer-build-")
-			const out = scratch.path("filer.db")
-
-			await expect(
-				buildFilerDatabase({
-					edgarRows: [edgarFixtureRow({ subsidiaryName: "Standalone Sub LLC" })],
-					out,
-					sourceVintage: EDGAR_SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
-			).resolves.toBeDefined()
-		})
-
 		it("the manifest's source includes edgar-exhibit-21 only when edgarRows was actually supplied", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")

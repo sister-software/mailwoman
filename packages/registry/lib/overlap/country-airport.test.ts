@@ -36,11 +36,6 @@ const currentAlpha3 = new Set(
 const airportCodes = new Set(airports.records.map((record) => record.iata))
 
 describe("country/airport collision index", () => {
-	it("holds exactly 2,197 payload bytes", () => {
-		expect(collisionMembership().size).toBeGreaterThan(0)
-		expect(Math.ceil(KEY_SPACE_3 / 8)).toBe(2197)
-	})
-
 	it("equals the set intersection of the two memberships over all 17,576 keys", () => {
 		let collisions = 0
 

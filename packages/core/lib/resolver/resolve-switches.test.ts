@@ -40,18 +40,6 @@ describe("resolveSwitches", () => {
 		}
 	})
 
-	// Promoted to on in #2679 after the dashless ZIP+4 and house-number fixes.
-	test("postcodeShapeCoherence defaults on and an explicit false turns it off", () => {
-		expect(resolveSwitches({}).postcodeShapeCoherence).toBe(true)
-		expect(resolveSwitches({ postcodeShapeCoherence: false }).postcodeShapeCoherence).toBe(false)
-	})
-
-	// The geocode path promoted the rerank to on (#1717); the resolver now shares that one default.
-	test("adminContainmentRerank defaults on and an explicit false turns it off", () => {
-		expect(resolveSwitches({}).adminContainmentRerank).toBe(true)
-		expect(resolveSwitches({ adminContainmentRerank: false }).adminContainmentRerank).toBe(false)
-	})
-
 	test("an explicit undefined falls back to the default", () => {
 		expect(resolveSwitches({ adminCoherence: null }).adminCoherence).toBe(true)
 	})

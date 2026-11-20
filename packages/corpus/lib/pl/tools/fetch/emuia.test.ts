@@ -111,11 +111,6 @@ async function membersIn(markup: string): Promise<number> {
 }
 
 describe("harvestEMUiAPL", () => {
-	it("pages at the cap the service serves", () => {
-		// `count=5000` answers numberReturned="1000", and the capabilities state CountDefault 1000.
-		expect(PL_EMUIA_PAGE_SIZE).toBe(1000)
-	})
-
 	it("assembles one document whose root holds the namespaces and no per-page counts", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-emuia-harvest-")
 

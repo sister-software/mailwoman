@@ -70,18 +70,4 @@ describe("withGeocode", () => {
 		expect(located.geocode?.tier).toBe("address_point")
 		expect(located.canonicalKey).toBe(base.canonicalKey)
 	})
-
-	it("carries the weakening flags through (PO box / multi-unit)", () => {
-		const located = withGeocode(toPostalAddress(US), {
-			coordinate: { latitude: 45.5, longitude: -122.6 },
-			tier: "interpolated",
-			uncertaintyMeters: 120,
-			hierarchy: null,
-			poBox: true,
-			multiUnit: null,
-		})
-
-		expect(located.geocode?.poBox).toBe(true)
-		expect(located.geocode?.uncertaintyMeters).toBe(120)
-	})
 })

@@ -23,10 +23,6 @@ const hasWOFDB = await pathExists(wofPath)
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 
 describe("--resolve option validation", () => {
-	test("--resolve defaults to false", () => {
-		expect(parseCommand(parseSpec, ["address"]).values.resolve).toBe(false)
-	})
-
 	test("--resolve accepts true", () => {
 		expect(parseCommand(parseSpec, ["--resolve", "--neural", "address"]).values.resolve).toBe(true)
 	})

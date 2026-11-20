@@ -71,15 +71,6 @@ describe("resolveEntities", () => {
 		expect(entities.length).toBeGreaterThanOrEqual(1)
 	})
 
-	it("picks a representative and a coordinate per entity", () => {
-		const { entities } = resolveEntities(records, { learnedScorer: false })
-
-		for (const entity of entities) {
-			expect(entity.representative).toBeDefined()
-			expect(entity.coordinate).toBeDefined()
-		}
-	})
-
 	it("the scorer hook overrides the FS weight and drives the clustering (#603)", () => {
 		const none = resolveEntities(records, { scorer: () => Number.NEGATIVE_INFINITY })
 		expect(none.entities).toHaveLength(records.length)

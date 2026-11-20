@@ -13,25 +13,6 @@ import {
 } from "#au"
 
 describe("AU_LEVEL_DESIGNATORS", () => {
-	it("carries the nine AS 4590.1-2017 level-type codes", () => {
-		const codes = AU_LEVEL_DESIGNATORS.map((r) => r.code).toSorted()
-		expect(codes).toEqual(["B", "G", "L", "LG", "M", "OD", "P", "RT", "UG"].toSorted())
-	})
-
-	it("marks requires-number entries correctly — L, B, P take identifiers; others stand alone", () => {
-		const numbered = AU_LEVEL_DESIGNATORS.filter((r) => r.requiresNumber)
-			.map((r) => r.code)
-			.toSorted()
-
-		expect(numbered).toEqual(["B", "L", "P"].toSorted())
-
-		const standalone = AU_LEVEL_DESIGNATORS.filter((r) => !r.requiresNumber)
-			.map((r) => r.code)
-			.toSorted()
-
-		expect(standalone).toEqual(["G", "LG", "M", "OD", "RT", "UG"].toSorted())
-	})
-
 	it("every row has a non-empty code, name, and abbreviation — builder must throw on malformed", () => {
 		for (const row of AU_LEVEL_DESIGNATORS) {
 			expect(row.code.length).toBeGreaterThan(0)

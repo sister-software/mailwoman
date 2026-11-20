@@ -5,19 +5,6 @@ import { expect, test } from "vitest"
 
 import { AU_STATE_ABBREVIATIONS, isAuStateAbbreviation } from "#au"
 
-test("AU_STATE_ABBREVIATIONS: the eight ISO 3166-2:AU subdivisions map to their full names", () => {
-	expect(AU_STATE_ABBREVIATIONS.NSW).toBe("New South Wales")
-	expect(AU_STATE_ABBREVIATIONS.VIC).toBe("Victoria")
-	expect(AU_STATE_ABBREVIATIONS.QLD).toBe("Queensland")
-	expect(AU_STATE_ABBREVIATIONS.WA).toBe("Western Australia")
-	expect(AU_STATE_ABBREVIATIONS.SA).toBe("South Australia")
-	expect(AU_STATE_ABBREVIATIONS.TAS).toBe("Tasmania")
-	expect(AU_STATE_ABBREVIATIONS.ACT).toBe("Australian Capital Territory")
-	expect(AU_STATE_ABBREVIATIONS.NT).toBe("Northern Territory")
-	// exactly six states + two territories
-	expect(Object.keys(AU_STATE_ABBREVIATIONS)).toHaveLength(8)
-})
-
 test("isAuStateAbbreviation: true for every abbreviation in the set", () => {
 	for (const abbr of Object.keys(AU_STATE_ABBREVIATIONS)) {
 		expect(isAuStateAbbreviation(abbr)).toBe(true)

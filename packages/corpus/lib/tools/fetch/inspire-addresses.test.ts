@@ -11,7 +11,6 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
 import {
-	AD_FEATURE_TYPES,
 	adFeatureTypeOf,
 	componentIdentifier,
 	componentReferences,
@@ -112,18 +111,6 @@ describe("reading an INSPIRE Addresses WFS", () => {
 		})
 
 		expect(capabilities.typeNames.Address).toBe("ms:AD.Address")
-	})
-
-	it("carries every AD feature type this module pages", () => {
-		// An address references the other four, so a build that pages only `Address` holds
-		// addresses whose street name and postcode it cannot resolve.
-		expect(AD_FEATURE_TYPES).toEqual([
-			"Address",
-			"ThoroughfareName",
-			"PostalDescriptor",
-			"AdminUnitName",
-			"AddressAreaName",
-		])
 	})
 })
 

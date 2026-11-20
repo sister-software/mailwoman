@@ -390,12 +390,6 @@ describe("Every failing check states its consequence", () => {
 		})
 	}
 
-	it("names the POI layer's consequence in product terms, verbatim from the ask", () => {
-		expect(checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null }, PREFIX).consequence).toContain(
-			"A Point of Interest (POI) database is necessary to geocode businesses and landmarks."
-		)
-	})
-
 	it("a passing check carries no consequence — there is nothing to lose", () => {
 		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
 		expect(c.status).toBe(CheckStatus.OK)

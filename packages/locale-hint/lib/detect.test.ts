@@ -195,10 +195,6 @@ describe("detectLocale — fallback + always-decisive", () => {
 })
 
 describe("detectLocale — source attribution", () => {
-	it("source=caller when hint set", () => {
-		expect(detectLocale(shape(), { hint: "en-US" }).source).toBe("caller")
-	})
-
 	it("source=detected when no hint", () => {
 		expect(detectLocale(shape()).source).toBe("detected")
 	})

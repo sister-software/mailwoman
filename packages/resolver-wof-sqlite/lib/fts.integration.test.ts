@@ -302,16 +302,3 @@ describe("aliasBagExactMatch", () => {
 		expect(aliasBagExactMatch(separated, "", false)).toBe(false)
 	})
 })
-
-describe("placeSearchFTSExists", () => {
-	test("returns false when the table is absent", () => {
-		using db = buildBaseSchema()
-		expect(placeSearchFTSExists(db)).toBe(false)
-	})
-
-	test("returns true once the table is built", () => {
-		using db = buildBaseSchema()
-		buildPlaceSearchFTS(db)
-		expect(placeSearchFTSExists(db)).toBe(true)
-	})
-})

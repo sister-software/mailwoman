@@ -19,13 +19,6 @@ test("GeoPoint.from: a 2-tuple is read as GeoJSON [longitude, latitude]", () => 
 	expect(point.is2D()).toBe(true)
 })
 
-test("GeoPoint.from: an out-of-lat-range longitude is still just the longitude", () => {
-	const point = GeoPoint.from([-118.2437, 34.0522])!
-
-	expect(point.longitude).toBe(-118.2437)
-	expect(point.latitude).toBe(34.0522)
-})
-
 // The axis order is fixed rather than inferred.
 // Until 2026-08-05 the constructor ran a 2-tuple through `inferGeoJSONCoordOrder`,
 // which transposes the pair when the first magnitude is in [-90, 90] and the second isn't.

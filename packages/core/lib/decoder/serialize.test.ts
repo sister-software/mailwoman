@@ -22,24 +22,6 @@ describe("decodeAsJSON (libpostal-compat)", () => {
 			postcode: "20500",
 		})
 	})
-
-	test("first-occurrence wins for repeated tags", () => {
-		// "Springfield IL Springfield MA" → two B-locality
-		const raw = "Springfield IL Springfield MA"
-
-		const tokens: DecoderToken[] = [
-			tok("Springfield", 0, 11, "B-locality"),
-			tok("IL", 12, 14, "B-region"),
-			tok("Springfield", 15, 26, "B-locality"),
-			tok("MA", 27, 29, "B-region"),
-		]
-
-		const tree = buildAddressTree(raw, tokens)
-		const json = decodeAsJSON(tree)
-		// First locality / region encountered in tree walk wins.
-		expect(json.locality).toBeDefined()
-		expect(json.region).toBeDefined()
-	})
 })
 
 describe("decodeAsTuples (order-preserving)", () => {

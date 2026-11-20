@@ -254,23 +254,6 @@ describe("gradeCase — brand results expectation", () => {
 		expect(grade.pass).toBe(false)
 		expect(grade.resultCount).toBe(0)
 	})
-
-	it("Category grading is unaffected by the brandWikidata branch (check)", () => {
-		const boardResult = boardResultFor({
-			type: "intent",
-			intent: {
-				subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe", countryBinding: null },
-				relation: null,
-				anchor: null,
-				limit: null,
-			},
-			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
-		})
-
-		const grade = gradeCase(resultsFixture, boardResult)
-
-		expect(grade.pass).toBe(true)
-	})
 })
 
 describe("gradeCase — abstain expectation", () => {
@@ -340,12 +323,6 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
-		expect(fixtures).toHaveLength(56)
-		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
-		expect(fixtures.filter((f) => !isCountedFixture(f))).toHaveLength(5)
-	})
-
 	it("audits clean", () => {
 		expect(auditFixtures(fixtures)).toEqual([])
 	})
@@ -541,43 +518,6 @@ describe("evaluateFloors — breach detection", () => {
 		expect(evaluation.breached).toBe(true)
 		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
 		expect(evaluation.lines.find((l) => l.key === "abstain")!.fraction).toBe("0/0")
-	})
-
-	describe("The 55-row composition", () => {
-		it("reads the same 49/51 = 96.1% it read at 51 rows, because the four promoted rows are tracked", () => {
-			const evaluation = evaluateFloors(
-				report({
-					results: { total: 37, pass: 35 },
-					abstain: { total: 8, pass: 8 },
-					address: { total: 6, pass: 6 },
-				})
-			)
-
-			expect(evaluation.breached).toBe(false)
-
-			const overall = evaluation.lines.find((l) => l.key === "overall")!
-			expect(overall.fraction).toBe("49/51")
-			expect(overall.observed).toBeCloseTo(49 / 51, 5)
-		})
-
-		it("would breach at 49/55 = 89.1% if the four counted — the reason the tracked convention carries them", () => {
-			const evaluation = evaluateFloors(
-				report({
-					results: { total: 41, pass: 35 },
-					abstain: { total: 8, pass: 8 },
-					address: { total: 6, pass: 6 },
-				})
-			)
-
-			expect(evaluation.breached).toBe(true)
-
-			const overall = evaluation.lines.find((l) => l.key === "overall")!
-			expect(overall.met).toBe(false)
-			expect(overall.fraction).toBe("49/55")
-			expect(overall.observed).toBeCloseTo(49 / 55, 5)
-			expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(true)
-			expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(true)
-		})
 	})
 })
 

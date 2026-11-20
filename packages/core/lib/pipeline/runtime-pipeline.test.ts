@@ -354,16 +354,6 @@ describe("runPipeline — stage composition", () => {
 		)
 	})
 
-	it("Defaults caseNormalization to title-case and placetypePair to inherit", async () => {
-		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
-		await runPipeline("214 JONES RD", { classifier })
-
-		expect(classifier.parse).toHaveBeenCalledWith(
-			"214 JONES RD",
-			expect.objectContaining({ caseNormalization: "title-case", placetypePair: "inherit" })
-		)
-	})
-
 	it("skips resolver when not wired", async () => {
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const result = await runPipeline("hello", { classifier })
@@ -805,13 +795,6 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 
 		return { resolver, seen }
 	}
-
-	it("byte-stable when no placeCountry stage is wired (resolveOpts passed through verbatim)", async () => {
-		const { resolver, seen } = captureResolveOpts()
-		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
-
-		expect(seen[0]).toEqual({ maxLookups: 3 })
-	})
 
 	it("a confident in-map guess becomes an anchorPosterior fed to the resolver", async () => {
 		const { resolver, seen } = captureResolveOpts()

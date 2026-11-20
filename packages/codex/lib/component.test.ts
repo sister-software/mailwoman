@@ -11,44 +11,6 @@ describe("COMPONENT_TAGS", () => {
 		const seen = new Set<ComponentTag>(COMPONENT_TAGS)
 		expect(seen.size).toBe(COMPONENT_TAGS.length)
 	})
-
-	test("includes universal tags from #5", () => {
-		const required: ComponentTag[] = ["country", "region", "locality", "dependent_locality", "postcode", "subregion"]
-
-		for (const tag of required) {
-			expect(COMPONENT_TAGS).toContain(tag)
-		}
-	})
-
-	test("includes the FR-specific cedex tag", () => {
-		expect(COMPONENT_TAGS).toContain("cedex")
-	})
-
-	test("declares JP tags for forward-compat (Phase 6)", () => {
-		const jp: ComponentTag[] = [
-			"prefecture",
-			"municipality",
-			"district",
-			"block",
-			"sub_block",
-			"building_number",
-			"building_name",
-		]
-
-		for (const tag of jp) {
-			expect(COMPONENT_TAGS).toContain(tag)
-		}
-	})
-
-	test("declares the CN organizational-unit tag (#2034)", () => {
-		expect(COMPONENT_TAGS).toContain("locality_unit")
-	})
-
-	test("type narrows from the readonly tuple", () => {
-		// Compile-time assertion: ComponentTag is the union of literals.
-		const sample: ComponentTag = "country"
-		expect(sample satisfies ComponentTag).toBe("country")
-	})
 })
 
 describe("BIO_LABELS", () => {

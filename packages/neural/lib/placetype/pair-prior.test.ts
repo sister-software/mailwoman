@@ -1083,16 +1083,6 @@ describe("BuildPlacetypePairPriors — whole-edge parent bias", () => {
 		expect(matrix[2]![labelCol("B-locality")]).toBe(20)
 	})
 
-	it("a header WITHOUT parentDelta writes no parent bias at all — the unmeasured-locale posture", () => {
-		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us")
-		const text = "Brooklyn, New York, NY"
-		const pieces = makePiecesWithCommas(text)
-		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
-
-		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
-		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
-	})
-
 	it("the parent bias is emission-only — it never emits a transition adjustment", () => {
 		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10, 5)
 		const text = "Brooklyn, New York, NY"

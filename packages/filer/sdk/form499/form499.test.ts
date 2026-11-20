@@ -9,7 +9,7 @@ import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { classifyFiler, FilerClassification, FORM_499_COLUMNS, parseForm499, type Form499Row } from "#sdk/form499"
+import { classifyFiler, FilerClassification, parseForm499, type Form499Row } from "#sdk/form499"
 
 const FIXTURES_DIR = resolvePackageDirectory("@mailwoman/filer")("test-fixtures")
 const SAMPLE_TSV = FIXTURES_DIR("form499-sample.tsv")
@@ -24,18 +24,6 @@ async function collect(tsvPath: PathBuilder): Promise<Form499Row[]> {
 
 	return rows
 }
-
-describe("FORM_499_COLUMNS", () => {
-	it("carries all 17 column names from spec §3.1, in TSV order", () => {
-		expect(FORM_499_COLUMNS).toHaveLength(17)
-		expect(FORM_499_COLUMNS[0]).toBe("form499ID")
-		expect(FORM_499_COLUMNS.at(-1)).toBe("dcAgentAddress")
-	})
-
-	it("does not carry otherTradeName1 — present in the interface but absent from its column tuple", () => {
-		expect(FORM_499_COLUMNS as readonly string[]).not.toContain("otherTradeName1")
-	})
-})
 
 describe("parseForm499", () => {
 	it("parses a 3-row fixture into 3 typed rows", async () => {
@@ -62,14 +50,6 @@ describe("parseForm499", () => {
 		// Row 3's raw FRN in the fixture is unpadded (7 digits) — parseForm499 must
 		// zero-pad it via toFRN, same as any other FRN source.
 		expect(rows[2]!.frn).toBe("0003456789")
-	})
-
-	it("retains both holdingCompany and managementCompany as distinct fields (spec §3.1 finding 1)", async () => {
-		const rows = await collect(SAMPLE_TSV)
-
-		expect(rows[0]!.holdingCompany).toBe("Example Holdings Inc")
-		expect(rows[0]!.managementCompany).toBe("Example Management Inc")
-		expect(rows[0]!.holdingCompany).not.toBe(rows[0]!.managementCompany)
 	})
 
 	it("carries the DC agent fields as plain strings", async () => {

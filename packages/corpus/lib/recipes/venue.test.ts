@@ -4,7 +4,6 @@
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { describe, expect, it } from "vitest"
 
-import { recipeSource } from "#recipes/sources"
 import { isBareVenueName, tupleCountryCode, venueNameKey, venueRecipe } from "#recipes/venue"
 
 describe("isBareVenueName", () => {
@@ -46,10 +45,5 @@ describe("tupleCountryCode", () => {
 describe("venueRecipe", () => {
 	it("requires the admin tuples", async () => {
 		await expect(venueRecipe.run({ output: "", seed: 1, variants: 1 }, () => {})).rejects.toThrow(/--input/u)
-	})
-
-	it("writes two sources the table records", () => {
-		expect(recipeSource("fragment-venue-bare")?.producer).toBe("recipes/venue.ts")
-		expect(recipeSource("spliced-venue-locality")?.producer).toBe("recipes/venue.ts")
 	})
 })

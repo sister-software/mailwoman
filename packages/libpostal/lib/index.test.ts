@@ -7,7 +7,6 @@ import { buildEngineStamp } from "@mailwoman/core/license"
 import { expect, test } from "vitest"
 
 import {
-	COMPONENT_TO_LIBPOSTAL,
 	createLibpostalApp,
 	treeToParseMatches,
 	type LibpostalEngine,
@@ -37,13 +36,6 @@ test("toLibpostalComponents: passes unmapped classifications through unchanged",
 	expect(toLibpostalComponents([{ classification: "some_future_tag", value: "x" }])).toEqual([
 		{ label: "some_future_tag", value: "x" },
 	])
-})
-
-test("COMPONENT_TO_LIBPOSTAL: the core US/EU mappings hold", () => {
-	expect(COMPONENT_TO_LIBPOSTAL.street).toBe("road")
-	expect(COMPONENT_TO_LIBPOSTAL.locality).toBe("city")
-	expect(COMPONENT_TO_LIBPOSTAL.region).toBe("state")
-	expect(COMPONENT_TO_LIBPOSTAL.postcode).toBe("postcode")
 })
 
 /**
@@ -355,12 +347,6 @@ test("treeToParseMatches: assembles the street-name family into one street match
 		{ classification: "street", value: "East Sheldon Rd" },
 		{ classification: "locality", value: "Springfield" },
 	])
-})
-
-test("COMPONENT_TO_LIBPOSTAL: plan-2 additions", () => {
-	expect(COMPONENT_TO_LIBPOSTAL.subregion).toBe("state_district")
-	expect(COMPONENT_TO_LIBPOSTAL.intersection_a).toBe("road")
-	expect(COMPONENT_TO_LIBPOSTAL.intersection_b).toBe("road")
 })
 
 // MARK: engine stamp

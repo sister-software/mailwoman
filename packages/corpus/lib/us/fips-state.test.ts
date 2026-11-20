@@ -7,22 +7,6 @@ import { lookupFipsState, lookupStateAbbreviation, US_FIPS_STATE, US_STATE_BY_AB
 
 // #region US_FIPS_STATE table
 
-test("US_FIPS_STATE: maps zero-padded FIPS codes to the correct state", () => {
-	expect(US_FIPS_STATE["01"]).toEqual({ abbreviation: "AL", name: "Alabama" })
-	expect(US_FIPS_STATE["06"]).toEqual({ abbreviation: "CA", name: "California" })
-	expect(US_FIPS_STATE["50"]).toEqual({ abbreviation: "VT", name: "Vermont" })
-	expect(US_FIPS_STATE["36"]).toEqual({ abbreviation: "NY", name: "New York" })
-})
-
-test("US_FIPS_STATE: DC and the five primary territories are present", () => {
-	expect(US_FIPS_STATE["11"]).toEqual({ abbreviation: "DC", name: "District of Columbia" })
-	expect(US_FIPS_STATE["72"]).toEqual({ abbreviation: "PR", name: "Puerto Rico" })
-	expect(US_FIPS_STATE["66"]).toEqual({ abbreviation: "GU", name: "Guam" })
-	expect(US_FIPS_STATE["78"]).toEqual({ abbreviation: "VI", name: "Virgin Islands" })
-	expect(US_FIPS_STATE["69"]).toEqual({ abbreviation: "MP", name: "Northern Mariana Islands" })
-	expect(US_FIPS_STATE["60"]).toEqual({ abbreviation: "AS", name: "American Samoa" })
-})
-
 test("US_FIPS_STATE: covers exactly 50 states + DC + 5 territories (56 entries)", () => {
 	expect(Object.keys(US_FIPS_STATE)).toHaveLength(56)
 })

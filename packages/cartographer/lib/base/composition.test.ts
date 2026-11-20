@@ -7,15 +7,6 @@ import { expect, test } from "vitest"
 import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "#base/composition"
 import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 
-test("createLightSpec: returns the house defaults when called bare", () => {
-	expect(createLightSpec()).toEqual({
-		color: "white",
-		intensity: 0.85,
-		anchor: "viewport",
-		position: [10, 20, -5],
-	})
-})
-
 test("createLightSpec: an override shadows the matching default key", () => {
 	const spec = createLightSpec({ intensity: 0.5 })
 
@@ -27,17 +18,6 @@ test("createLightSpec: an override shadows the matching default key", () => {
 
 test("createLightSpec: overriding position replaces the whole tuple", () => {
 	expect(createLightSpec({ position: [1, 2, 3] }).position).toEqual([1, 2, 3])
-})
-
-test("createSkySpec: returns the house atmospheric defaults when called bare", () => {
-	expect(createSkySpec()).toEqual({
-		"sky-color": "#000535",
-		"horizon-color": "hsl(54deg 100% 16%)",
-		"fog-color": "hsl(54deg 100% 5%)",
-		"sky-horizon-blend": 0.75,
-		"horizon-fog-blend": 0.75,
-		"fog-ground-blend": 0.1,
-	})
 })
 
 test("createSkySpec: an override shadows only the named key", () => {
@@ -110,14 +90,6 @@ test("Composer.layers: an inserted layer sits immediately after its anchor", () 
 	const anchorIdx = ids.indexOf(anchorID)
 	expect(anchorIdx).toBeGreaterThanOrEqual(0)
 	expect(ids[anchorIdx + 1]).toBe("mw-anchored-layer")
-})
-
-test("Composer.toJSON: emits a v8 style with the self-host glyph + sprite endpoints", () => {
-	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
-
-	expect(style.version).toBe(8)
-	expect(style.glyphs).toBe("https://public.mailwoman.post/protomaps/fonts/{fontstack}/{range}.pbf")
-	expect(style.sprite).toBe("https://public.mailwoman.post/protomaps/sprites/v4/light")
 })
 
 test("Composer.toJSON: carries the composed light, sky, terrain, sources and layers through", () => {

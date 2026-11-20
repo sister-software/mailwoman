@@ -7,14 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	CLAIM_ARITY,
-	ClaimArity,
-	ConventionClaimID,
-	ObservationStance,
-	reorderedPairs,
-	stanceFromLayout,
-} from "#address/convention-claims"
+import { ConventionClaimID, ObservationStance, reorderedPairs, stanceFromLayout } from "#address/convention-claims"
 import { conventionClaimForCountry, layoutForCountry } from "#address/layouts"
 
 describe("reorderedPairs", () => {
@@ -28,14 +21,6 @@ describe("reorderedPairs", () => {
 		).toHaveLength(6)
 
 		expect(reorderedPairs(["street", "locality"], ["street", "postcode", "locality"])).toEqual([])
-	})
-})
-
-describe("CLAIM_ARITY", () => {
-	it("marks the script-order claim relational and every other claim unary", () => {
-		const relational = Object.values(ConventionClaimID).filter((id) => CLAIM_ARITY[id] === ClaimArity.Relational)
-
-		expect(relational).toEqual([ConventionClaimID.OrderingReversesWithScript])
 	})
 })
 

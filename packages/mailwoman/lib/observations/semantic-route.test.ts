@@ -99,10 +99,6 @@ function withoutPharmacyAffordance(model: CompiledGeographicModel): void {
 }
 
 describe("the committed lexicon against the committed artifact", () => {
-	it("resolves — every declared phrase reaches a mapped entity kind", async () => {
-		await expect(createSemanticObservationRoute()).resolves.toBeDefined()
-	})
-
 	it("reaches both POI categories wave 1 maps", () => {
 		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["drugstore", "pharmacy"])
 	})
@@ -358,12 +354,6 @@ describe("a plural affordance", () => {
 		])
 	})
 
-	it("gives every member of the set the same confidence", () => {
-		const confidences = new Set(committedRoute.lookup("prescription", "en-US").map((hit) => hit.confidence))
-
-		expect(confidences).toEqual(new Set([1]))
-	})
-
 	it("returns the whole set when the added class sorts last", async () => {
 		const route = await scratchRoute(withAffordingKind("retail_pharmacy", { countries: ["US"] }))
 
@@ -495,14 +485,6 @@ describe("the assertion's country scope", () => {
 
 		expect(observation!.concept).toBe("drugstore")
 		expect(observation!.localeCountry).toBe("FR")
-	})
-
-	it("leaves an unscoped assertion carrying no scope, beside a scoped one that does", () => {
-		const hits = committedRoute.lookup("prescription", "fr-FR")
-
-		expect(hits.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
-		expect(hits[0]).toHaveProperty("countryScope", ["US"])
-		expect(hits[1]).toHaveProperty("countryScope", null)
 	})
 
 	it("records the scope and the caller's lens, so a receipt can be checked", async () => {

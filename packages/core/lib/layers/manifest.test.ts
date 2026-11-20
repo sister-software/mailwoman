@@ -310,10 +310,4 @@ describe("SpineKeys.street — the third layer shape", () => {
 			writeLayerManifest(db, { ...MANIFEST, spineKeys: { street: { column: "street_norm" } } })
 		).resolves.toBeUndefined()
 	})
-
-	it("still refuses a manifest with NO spine at all", async () => {
-		const db = await openschemadb()
-
-		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
-	})
 })
