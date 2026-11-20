@@ -52,7 +52,7 @@ async function bundle(source: string): Promise<Bundled> {
  */
 async function payload(family: string): Promise<string> {
 	const module = await readLocalTextFile(
-		workspacePath("postcode", "lib", "recognize", "artifacts", `${family}.generated.ts`)
+		workspacePath("postcode", "lib", "recognizer", "artifacts", `${family}.generated.ts`)
 	)
 
 	const match = /"([0-9a-f]{200,})"/u.exec(module)
