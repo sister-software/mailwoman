@@ -43,7 +43,7 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 ## Installation
 
-```sh
+```sh npm2yarn
 npm install mailwoman
 ```
 

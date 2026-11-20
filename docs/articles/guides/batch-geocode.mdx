@@ -17,9 +17,9 @@ Use this procedure to geocode a file of records that each have an ID. The script
 
 <CommonPrerequisites />
 
-Install the published 11.0.0 packages:
+Start by installing the required packages:
 
-```sh
+```sh npm2yarn
 npm install mailwoman
 ```
 
@@ -131,17 +131,20 @@ if (!work.length) {
 }
 
 const started = Date.now()
+
 const geocoder = spawn("npx", ["mailwoman", "geocode", "--stdin"], {
 	stdio: ["pipe", "pipe", "ignore"],
 })
+
 let next = 0
 
 createInterface({ input: geocoder.stdout }).on("line", (line) => {
 	const row = work[next++]
 	const result = JSON.parse(line) as GeocodeResult
 
-	if (result.input !== row.address)
+	if (result.input !== row.address) {
 		throw new Error(`result for "${result.input}" belongs to a row other than ${row.id}`)
+	}
 
 	write({
 		id: row.id,

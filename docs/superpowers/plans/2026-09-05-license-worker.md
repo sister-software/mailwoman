@@ -1911,8 +1911,9 @@ export async function ensureLicenseFromCheckoutSession(
 
 	if (!licensee) throw new Error(`checkout session ${session.id} carries no licensee legal name`)
 	if (!email || !customerID) throw new Error(`checkout session ${session.id} carries no customer email or id`)
-	if (session.consent?.terms_of_service !== "accepted")
+	if (session.consent?.terms_of_service !== "accepted") {
 		throw new Error(`checkout session ${session.id} records no terms acceptance`)
+	}
 
 	const priceID = session.line_items?.data[0]?.price?.id
 	const plan = priceID ? planForPrice(env, priceID) : undefined

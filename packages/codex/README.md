@@ -60,7 +60,7 @@ Node, the browser, and on an edge worker.
 
 ## Installation
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/codex
 # or
 yarn add @mailwoman/codex

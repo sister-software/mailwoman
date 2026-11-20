@@ -25,7 +25,7 @@ India is the locale where they were measured.
 
 ## Install
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/neural-weights-en-in
 ```
 

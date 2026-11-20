@@ -22,7 +22,7 @@ German input — which is what blocked this locale until now, rather than any sh
 
 ## Install
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/neural-weights-de-de
 ```
 

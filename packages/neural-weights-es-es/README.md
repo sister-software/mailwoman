@@ -11,7 +11,7 @@ its `model-card.json` copies the base card's `requires` block, so a consumer run
 board grades. A data-only overlay without them ran gazetteer, country and both evidence channels off
 against a model trained with them (#2115).
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/neural-weights-es-es
 ```
 

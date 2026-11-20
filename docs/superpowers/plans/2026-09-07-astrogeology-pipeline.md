@@ -513,8 +513,9 @@ export interface NormalizedBBox {
 }
 
 export function normalizeLongitude(lon: number): number {
-	if (!Number.isFinite(lon) || lon < -180 || lon > 360)
+	if (!Number.isFinite(lon) || lon < -180 || lon > 360) {
 		throw new RangeError(`longitude ${lon} is outside 0..360 and -180..180`)
+	}
 
 	const shifted = lon > 180 ? lon - 360 : lon
 
@@ -675,15 +676,19 @@ export async function downloadPinned(
 
 	await downloadToFile(source.url, dest)
 	const bytes = (await statPath(dest)).size
-	if (source.expectedBytes !== null && bytes !== source.expectedBytes)
+	if (source.expectedBytes !== null && bytes !== source.expectedBytes) {
 		throw new Error(
 			`${source.id}: ${bytes} bytes downloaded, ${source.expectedBytes} expected — the product changed under its URL`
 		)
+	}
+
 	const sha256 = await sha256File(String(dest))
-	if (locked && locked.sha256 !== sha256)
+
+	if (locked && locked.sha256 !== sha256) {
 		throw new Error(
 			`${source.id}: sha256 ${sha256} differs from the lock's ${locked.sha256} — review the source before re-pinning`
 		)
+	}
 
 	await writeLock({
 		...lock,

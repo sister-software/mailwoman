@@ -16,10 +16,10 @@ Use this procedure when a consumer needs derived facts about a coordinate, such 
 
 <CommonPrerequisites />
 
-Install the published 11.0.0 packages the examples use:
+Start by installing the required packages:
 
-```sh
-npm install --save-exact @mailwoman/annotations @mailwoman/spatial @mailwoman/codex @mailwoman/core
+```sh npm2yarn
+npm install @mailwoman/annotations @mailwoman/spatial @mailwoman/codex @mailwoman/core
 ```
 
 The coordinate-format and country-reference annotators used below need no geographic database. The repeated-component check later uses `@mailwoman/core`.

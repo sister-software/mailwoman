@@ -2270,8 +2270,9 @@ export function buildDossier(records: DossierRecords, options: { asOf: ISODate }
 	const issues = validateRecords(records)
 	const errors = issues.filter((issue) => issue.severity === "error")
 
-	if (errors.length > 0)
+	if (errors.length) {
 		throw new Error(`buildDossier: ${errors.map((issue) => `${issue.code}: ${issue.message}`).join("; ")}`)
+	}
 
 	const admitted: SourceRecordID[] = []
 	const excluded: Dossier["excluded"] = []

@@ -5,6 +5,6 @@ zh-CN weights overlay for [mailwoman](https://mailwoman.post).
 **Data-only.** Declares `mailwoman.baseWeights` and shares the base model and tokenizer with
 `@mailwoman/neural-weights-en-us`; what it adds is `fst-zh-cn.bin`.
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/neural-weights-zh-cn
 ```

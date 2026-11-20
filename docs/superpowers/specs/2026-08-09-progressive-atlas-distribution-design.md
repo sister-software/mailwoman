@@ -140,7 +140,7 @@ but sets no byte target before a real build and lookup benchmark.
 
 The ten-minute path remains short:
 
-```sh
+```sh npm2yarn
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 npx mailwoman doctor
 npx mailwoman parse "350 5th Ave, New York, NY 10118"

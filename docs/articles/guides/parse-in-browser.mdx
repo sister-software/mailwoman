@@ -19,8 +19,8 @@ Use the browser loader when an application needs address components in the tab. 
 
 Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install these exact published versions in a fresh project:
 
-```sh
-npm install --save-exact @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web@1.31.1 vite@8.3.5
+```sh npm2yarn
+npm install @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web@1.31.1 vite@8.3.5
 ```
 
 The model files must be served over HTTP. Copy the ten files used by this example into Vite's `public/mailwoman` directory. Keep the four lexicons beside `model.onnx`: the loader derives their URLs from the model URL and the published model card.

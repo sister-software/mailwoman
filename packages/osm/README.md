@@ -72,7 +72,7 @@ aren't lost.
 Install the package beside `mailwoman`, which loads it as an optional peer when it is present, and build
 through the public CLI:
 
-```sh
+```sh npm2yarn
 npm install mailwoman @mailwoman/osm
 
 # The plan: the regional extract, the outline when the region holds other countries, the outputs,

@@ -6,7 +6,7 @@ Phase 4.2 of the mailwoman neural-resolver plan — see [`docs/plan/phases/PHASE
 
 ## Installation
 
-```sh
+```sh npm2yarn
 npm install @mailwoman/resolver-wof-sqlite
 ```
 

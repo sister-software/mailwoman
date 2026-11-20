@@ -216,6 +216,7 @@ function openInMemory(sqlite3: Sqlite3Static, bytes: Uint8Array): Database {
 	if (rc !== sqlite3.capi.SQLITE_OK) {
 		sqlite3.wasm.dealloc(pointer)
 		db.close()
+
 		throw new Error(`sqlite3_deserialize failed: ${sqlite3.capi.sqlite3_js_rc_str(rc)}`)
 	}
 
@@ -250,6 +251,7 @@ export async function openWholeDatabase(databaseURL: string, runtimeBaseURL: str
 		return client
 	} catch (error) {
 		client.terminate()
+
 		throw error
 	}
 }
@@ -1669,8 +1671,9 @@ const ACCEPTANCE: [query: string, url: string][] = [
 let db: SearchDatabase
 
 beforeAll(async () => {
-	if (!(await pathExists(BUILD_DIR)))
+	if (!(await pathExists(BUILD_DIR))) {
 		throw new Error(`${BUILD_DIR} is absent; run yarn workspace @mailwoman/docs build first`)
+	}
 
 	const records = []
 
