@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mwops` routes release, shop, storage, and health operations through their registries.
+ *   `mwops` routes release, shop, storage, host, and health operations through their registries.
  *
  *   The `ci-scope` command selects CI suites and writes GitHub Actions outputs.
  *   The `ci-replay` command replays that selection over recorded history and compares two replays.
  *
  *   The `ci-test` command runs a selected suite.
+ *   The `check` command runs one registered repository check and exits with its status,
+ *   and `host` reads the host lock and CI through its operation registry.
+ *
  *   Dispatch receives its output streams and checkout path from the entry point.
  *
  *   `health` also performs two mutations outside the check registry.
@@ -25,6 +28,10 @@ import { parseArguments, type ParseArgsOptionsConfig } from "@mailwoman/core/scr
 import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { resolvePath } from "path-ts"
 
+import { HOST_BUSY_EXIT, renderCheckResult, runPreflight, runRegisteredCheck } from "#check-kit/check"
+import { DEFAULT_MAX_WAIT_MINUTES } from "#check-kit/host"
+import { hostExitCode, hostOperations } from "#check-kit/host/operations"
+import { checkCommands, findCheckCommand } from "#check-kit/registry"
 import { operations, type ReleaseContext } from "#release-kit"
 import {
 	applyModuleMoves,
@@ -118,6 +125,10 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops check <name> [paths…] [--json] [--no-wait] [--max-wait-minutes N] [--log-dir <dir>]   (run a registered check; exits with its status)",
+			"  mwops check preflight [--json]   (run the direct-push set: fast suite, lint:prose:code, lint:prose:vocab, health)",
+			"  mwops host status [--json]       (the host lock holder and the queued or in-progress CI runs)",
+			"  mwops host wait-idle [--max-minutes N] [--json]   (exit 0 when idle, 3 when the bound expired busy, 4 when CI stayed unread)",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops code-blocks [--fix] [--no-cache] [--summary] [--json]   (lint the docs pages' JavaScript and TypeScript code blocks with oxlint)",
@@ -136,6 +147,8 @@ function usage(io: DispatchIO): number {
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
+			`host operations:    ${hostOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
+			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.heavy ? ", heavy" : ""})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
 			// oxlint-disable-next-line maishopViewlwoman/comment-reflow -- TODO Detangle this
@@ -173,6 +186,13 @@ const shopView: OperationView<ReleaseContext> = {
 	verb: "shop",
 	registry: shopOperations,
 	context: (base, io) => ({ ...base, repoRoot: io.repoRoot }),
+}
+
+const hostView: OperationView<OperationContext> = {
+	verb: "host",
+	registry: hostOperations,
+	context: (base) => base,
+	exitCode: hostExitCode,
 }
 
 const storageView: OperationView<StorageContext> = {
@@ -725,6 +745,119 @@ async function runCIReplay(args: readonly string[], io: DispatchIO): Promise<num
 	return 0
 }
 
+const CHECK_OPTIONS = {
+	json: { type: "boolean", default: false },
+	wait: { type: "boolean", default: true },
+	"max-wait-minutes": { type: "string" },
+	"log-dir": { type: "string" },
+} as const satisfies ParseArgsOptionsConfig
+
+/**
+ * `mwops check <name> [paths…]` runs one registered check in this checkout and exits with its status.
+ *
+ * `mwops check preflight` runs the direct-push set and exits non-zero if any of it failed.
+ * A heavy check waits for the host lock and for CI, within `--max-wait-minutes`.
+ */
+async function runCheckVerb(args: readonly string[], io: DispatchIO): Promise<number> {
+	let parsed: ReturnType<typeof parseFlags>
+
+	try {
+		parsed = parseFlags(args, CHECK_OPTIONS)
+	} catch (error) {
+		io.stderr(`mwops check: ${error instanceof Error ? error.message : String(error)}\n`)
+
+		return 2
+	}
+
+	const { options, rest } = parsed
+	const [name, ...paths] = rest
+	const maxWaitMinutes = Number(options["max-wait-minutes"] ?? DEFAULT_MAX_WAIT_MINUTES)
+
+	if (!name || !Number.isFinite(maxWaitMinutes) || maxWaitMinutes < 0) {
+		io.stderr(
+			[
+				"mwops check <name> [paths…] [--json] [--no-wait] [--max-wait-minutes N] [--log-dir <dir>]",
+				"mwops check preflight [--json]",
+				"",
+				...checkCommands.map(
+					(check) => `  ${check.name.padEnd(12)} ${check.heavy ? "heavy" : "light"}  ${check.description}`
+				),
+				"",
+			].join("\n")
+		)
+
+		return 2
+	}
+
+	const json = options.json === true
+
+	const common = {
+		checkout: io.repoRoot,
+		maxWaitMs: maxWaitMinutes * 60_000,
+		noWait: options.wait === false,
+		logDirectory: typeof options["log-dir"] === "string" ? resolvePath(options["log-dir"]) : undefined,
+		host: { log: json ? undefined : (line: string) => io.stderr(`${line}\n`) },
+	}
+
+	if (name === "preflight") {
+		if (paths.length) {
+			io.stderr("mwops check preflight takes no paths\n")
+
+			return 2
+		}
+
+		const result = await runPreflight(common)
+
+		if (json) {
+			io.stdout(prettyJSON(result))
+		} else if (!result.results.length) {
+			io.stdout("preflight: not run; the host lock wait expired\n")
+		} else {
+			for (const line of result.lines) {
+				io.stdout(`${line.commandLine}: exit ${line.exitCode}\n`)
+			}
+
+			for (const entry of result.results) {
+				for (const line of renderCheckResult(entry).slice(1)) {
+					io.stdout(`  ${line}\n`)
+				}
+			}
+
+			for (const note of result.omitted) {
+				io.stdout(`not run: ${note}\n`)
+			}
+		}
+
+		return result.passed ? 0 : result.results.length ? 1 : HOST_BUSY_EXIT
+	}
+
+	const check = findCheckCommand(name)
+
+	if (!check) {
+		io.stderr(
+			`mwops check: no check ${stringifyJSON(name)}; registered: preflight, ${checkCommands.map((entry) => entry.name).join(", ")}\n`
+		)
+
+		return 2
+	}
+
+	if (paths.length && !check.takesPaths) {
+		io.stderr(`mwops check ${name} takes no paths\n`)
+
+		return 2
+	}
+
+	if (!json) {
+		io.stderr(`mwops check ${name}: running in ${io.repoRoot}\n`)
+	}
+
+	const result = await runRegisteredCheck(check, paths, common)
+
+	io.stdout(json ? prettyJSON(result) : `${renderCheckResult(result).join("\n")}\n`)
+
+	return result.exitCode
+}
+
 /**
  * Route one invocation.
  *
@@ -734,6 +867,10 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 	const [verb, ...rest] = args
 
 	switch (verb) {
+		case "check":
+			return runCheckVerb(rest, io)
+		case "host":
+			return runOperation(hostView, rest, io)
 		case "checkout":
 			return reportCheckoutLocality(io)
 		case "ci-scope":

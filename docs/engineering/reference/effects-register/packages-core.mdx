@@ -94,6 +94,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 | Kind  | Interface                | Target                  | Calls |
 | ----- | ------------------------ | ----------------------- | ----- |
+| read  | `readLocalTextFile`      | `unresolved (template)` | 1     |
 | read  | `tryReadLocalJSONFile`   | `unresolved (template)` | 2     |
 | write | `makeDirectoryExclusive` | `unresolved (call)`     | 1     |
 | write | `removePathIfPresent`    | `unresolved (call)`     | 2     |

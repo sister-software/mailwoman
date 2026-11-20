@@ -47,6 +47,15 @@ describe("mwops dispatch", () => {
 		expect(h.err.join("")).toContain('no operation "nope"')
 	})
 
+	it("refuses an unregistered check, and paths for a check that takes none, before running anything", async () => {
+		const h = io()
+
+		await expect(dispatch(["check", "nope"], h.io)).resolves.toBe(2)
+		expect(h.err.join("")).toContain('no check "nope"')
+		await expect(dispatch(["check", "compile", "lib/a.test.ts"], h.io)).resolves.toBe(2)
+		expect(h.err.join("")).toContain("compile takes no paths")
+	})
+
 	it("refuses an unknown health check", async () => {
 		const h = io()
 

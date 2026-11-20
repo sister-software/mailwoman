@@ -209,7 +209,11 @@ condition to `out/`, so knip and the bundle-graph check fail on an uncompiled tr
 `mwops release copy-weights` after `yarn compile`, or the FST, postcode and pair-index files are left
 out. A pipeline's exit status is its last command's, so `audit | grep … && launch` launches on a
 failed audit and `tsc | tail` reports green on nine errors. Run only a command whose exit code decides
-the next step. Redirect its output to a log, chain the next step on its exit code, then read the log.
+the next step. Run a repository check with `mwops check <name>`: it exits with the check's status, writes
+the output to a log outside the checkout, and prints the counts, failing tests and log path, or with
+`--json` the whole result. A heavy check waits for the host lock and for CI within
+`--max-wait-minutes`. `mwops host status` names what holds the host, and `mwops check preflight` runs
+the direct-push set below.
 
 ## Vocabulary rules across the tree
 

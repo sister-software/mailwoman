@@ -1,0 +1,19 @@
+{
+	"source": "/mnt/mw/audits/ogc-3140/review-yarn-health.log",
+	"lines": [
+		"[health:duplicates  ] Using config from jscpd.json",
+		"[health:manifests   ] ",
+		"[health:manifests   ] ✓ No issues found",
+		"[health:duplicates  ] \u001b[32mJSON report saved to out/repo-health/jscpd/jscpd-report.json\u001b[39m",
+		"[health:duplicates  ] \u001b[90mtime: 1.64s\u001b[39m",
+		"[health:mdx-angles  ] ✓ mdx-angles",
+		"[health:test-layout ] ✓ test-layout",
+		"[health:bundles     ] ✓ bundle-graph",
+		"[health:reexports   ] ✓ module-reexports",
+		"[health:architecture] ",
+		"[health:architecture] ✔ no dependency violations found (4594 modules, 19675 dependencies cruised)",
+		"[health:architecture] ",
+		"[health:debt        ] ✓ debt",
+		"[health:exports     ] ✓ exports"
+	]
+}

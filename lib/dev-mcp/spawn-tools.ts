@@ -12,16 +12,20 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { NodeModulesState, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
+import { resolvePath } from "path-ts"
 import { z } from "zod"
 
+import { checkCommands } from "#check-kit/registry"
 import { checkCLIAllowlist } from "#dev-mcp/cli/allowlist"
 import { assertCompiledFresh } from "#dev-mcp/compiled-tree"
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { missingWeightsCacheArtifacts, readEvalReport } from "#dev-mcp/eval-report"
 import { parseGauntletReport } from "#dev-mcp/gauntlet-report"
+import { resolveCheckout } from "#dev-mcp/github"
 import type { JobRegistry } from "#dev-mcp/jobs"
 import { summarizeJob, type DevTool } from "#dev-mcp/tool-kit"
 
@@ -32,6 +36,13 @@ import { summarizeJob, type DevTool } from "#dev-mcp/tool-kit"
  * would fail exactly when the run died before printing any.
  */
 const promotionEvalOutDirs = new Map<string, string>()
+
+/**
+ * The jobs `mwdev_check` started.
+ *
+ * Their stdout is the `mwops check --json` result, and `mwdev_job` returns it parsed.
+ */
+const repositoryCheckJobs = new Set<string>()
 
 let checkLaunches = 0
 
@@ -232,6 +243,67 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 		},
 
 		{
+			name: "mwdev_check",
+			description:
+				"Run a registered repository check (`mwops check`) in a checkout and return a job id. The job runs that " +
+				"checkout's own `lib/ops-cli/cli.ts`, so a worktree is graded by its own packages. A heavy check waits for " +
+				"the host lock and for CI within `max_wait_minutes`. Poll with mwdev_job; a finished job returns the parsed " +
+				"result: exit status, error and warning counts, failing tests, and the log path.",
+			inputSchema: z.object({
+				name: z
+					.enum(["preflight", ...checkCommands.map((check) => check.name)] as [string, ...string[]])
+					.describe("The registered check, or `preflight` for the direct-push set."),
+				checkout: z
+					.string()
+					.min(1)
+					.optional()
+					.describe("Absolute path of the working tree to check. Defaults to the server's checkout."),
+				paths: z.array(z.string()).default([]).describe("Test paths for `vitest`, relative to the checkout."),
+				no_wait: z.boolean().default(false).describe("Refuse rather than wait when the host lock is held."),
+				max_wait_minutes: z.number().nonnegative().optional(),
+				log_dir: z.string().optional().describe("Absolute directory for the log. Defaults to the cache root."),
+			}),
+			handler: async (args) => {
+				const cwd = await resolveCheckout(registry.repoRoot, args["checkout"] as string | undefined)
+
+				// The child's checkout-locality guard refuses a tree without its own install.
+				// This refusal returns the repair at once rather than as a failed job.
+				const locality = await readCheckoutLocality(cwd)
+
+				if (locality?.nodeModules.state === NodeModulesState.Absent) {
+					throw new Error(`${cwd} has no node_modules. Run \`yarn install\` there before mwdev_check.`)
+				}
+
+				const name = args["name"] as string
+				const paths = (args["paths"] as string[] | undefined) ?? []
+				const argv = [resolvePath(cwd, "lib", "ops-cli", "cli.ts"), "check", name, ...paths, "--json"]
+
+				if (args["no_wait"] === true) {
+					argv.push("--no-wait")
+				}
+
+				if (typeof args["max_wait_minutes"] === "number") {
+					argv.push("--max-wait-minutes", String(args["max_wait_minutes"]))
+				}
+
+				if (typeof args["log_dir"] === "string") {
+					argv.push("--log-dir", args["log_dir"])
+				}
+
+				const job = jobs.start(`check:${name}`, process.execPath, argv, cwd)
+
+				repositoryCheckJobs.add(job.jobID)
+
+				return {
+					job_id: job.jobID,
+					checkout: cwd,
+					command: [process.execPath, ...argv].join(" "),
+					note: "Started. Poll with mwdev_job; the finished job's `result` is the parsed `mwops check --json` output.",
+				}
+			},
+		},
+
+		{
 			name: "mwdev_cli",
 			description:
 				"Run a READ-ONLY mailwoman CLI command and return its output. An override, not the main road: every " +
@@ -331,6 +403,21 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				if (action === "status" && job.state === "running") {
 					return { ...summary, note: 'Still running. Call again, or use action "result" once it has finished.' }
+				}
+
+				if (repositoryCheckJobs.has(jobID)) {
+					// The check's own log holds its output, so the job returns the result and the child's stderr.
+					const result = job.state === "running" ? null : tryParsingJSON(job.stdout)
+
+					return {
+						...summary,
+						partial: job.state === "running",
+						result,
+						...(job.state !== "running" && !result
+							? { note: "The job printed no JSON result. Its stderr says why the check did not report." }
+							: {}),
+						stderr: job.stderr,
+					}
 				}
 
 				const promotionEvalOutDir = promotionEvalOutDirs.get(jobID)
