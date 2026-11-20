@@ -14,6 +14,7 @@ import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { allRows } from "@mailwoman/core/utils"
+import { nearestPostalPlace, postalGridCell } from "@mailwoman/gazetteer/tools/pipeline/pair/postal-children"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -27,7 +28,7 @@ export interface PostalPlaces {
 	artifact: string
 	rows: number
 	/**
-	 * Postcode points bucketed by {@link GRID} degrees, each with its folded place name.
+	 * Postcode points bucketed by {@link postalGridCell}, each with its folded place name.
 	 */
 	grid: Map<string, Array<{ lat: number; lon: number; place: string }>>
 	/**
@@ -41,15 +42,6 @@ export interface PostalPlaces {
 }
 
 const POSTAL_COLUMNS = 12
-
-const GRID = 0.1
-
-/**
- * The ring search stops at 10 cells, about 110 km at {@link GRID} degrees.
- */
-const MAX_RING = 10
-
-const gridKey = (row: number, column: number): string => `${row},${column}`
 
 function addFolded(map: Map<string, Set<string>>, raw: string, admin1: string): void {
 	const folded = normalizeFSTToken(raw.trim())
@@ -119,7 +111,7 @@ export async function readPostalPlaces(postalDir: string, country: string): Prom
 		const place = normalizeFSTToken(columns[2]!.trim())
 
 		if (place && columns[9]!.trim() && columns[10]!.trim() && Number.isFinite(lat) && Number.isFinite(lon)) {
-			const cell = gridKey(Math.floor(lat / GRID), Math.floor(lon / GRID))
+			const cell = postalGridCell(lat, lon)
 			let bucket = grid.get(cell)
 
 			if (!bucket) {
@@ -134,41 +126,6 @@ export async function readPostalPlaces(postalDir: string, country: string): Prom
 	if (!rows) throw new Error(`GeoNames postal ${artifact} holds no records`)
 
 	return { artifact, rows, placeAdmin1, anyNameAdmin1, grid }
-}
-
-/**
- * The folded place name of the postcode point nearest `(lat, lon)`, by squared equirectangular distance.
- *
- * Null when no point lies within {@link MAX_RING} cells.
- */
-export function nearestPostalPlace(postal: PostalPlaces, lat: number, lon: number): string | null {
-	const row = Math.floor(lat / GRID)
-	const column = Math.floor(lon / GRID)
-	const scale = Math.cos((lat * Math.PI) / 180)
-	let best: string | null = null
-	let bestDistance = Number.POSITIVE_INFINITY
-
-	for (let ring = 0; ring <= MAX_RING; ring++) {
-		for (let dr = -ring; dr <= ring; dr++) {
-			for (let dc = -ring; dc <= ring; dc++) {
-				if (Math.max(Math.abs(dr), Math.abs(dc)) !== ring) continue
-
-				for (const point of postal.grid.get(gridKey(row + dr, column + dc)) ?? []) {
-					const distance = (point.lat - lat) ** 2 + ((point.lon - lon) * scale) ** 2
-
-					if (distance < bestDistance) {
-						bestDistance = distance
-						best = point.place
-					}
-				}
-			}
-		}
-
-		// Every point beyond this ring is at least `ring` cells away in latitude or scaled longitude.
-		if (best !== null && Math.sqrt(bestDistance) <= ring * GRID * Math.min(1, scale)) break
-	}
-
-	return best
 }
 
 interface PairLocation {

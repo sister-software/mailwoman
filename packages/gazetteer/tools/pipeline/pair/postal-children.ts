@@ -55,6 +55,13 @@ export interface PostalPoints {
 const gridKey = (row: number, column: number): string => `${row},${column}`
 
 /**
+ * The grid cell a postcode point is bucketed under, the key {@link nearestPostalPlace} searches.
+ */
+export function postalGridCell(lat: number, lon: number): string {
+	return gridKey(Math.floor(lat / GRID_DEGREES), Math.floor(lon / GRID_DEGREES))
+}
+
+/**
  * Reads `<CC>.txt`, else `<CC>.zip`, from a GeoNames postal directory.
  *
  * @throws When neither file exists, the file holds no records, or a record lacks the twelve columns.
@@ -98,7 +105,7 @@ export async function readPostalPoints(postalDirectory: PathBuilderLike, country
 			continue
 		}
 
-		const cell = gridKey(Math.floor(lat / GRID_DEGREES), Math.floor(lon / GRID_DEGREES))
+		const cell = postalGridCell(lat, lon)
 		let bucket = grid.get(cell)
 
 		if (!bucket) {
@@ -213,7 +220,7 @@ function sameFoldedName(a: string, b: string): boolean {
  * An entry no WOF record locates isn't a postal child, since a name without a
  * location doesn't separate a postal locality from a namesake.
  */
-export function isPostalChild(
+function isPostalChild(
 	postal: Pick<PostalPoints, "grid">,
 	locations: ChildLocations,
 	entry: Pick<PairIndexEntry, "child" | "parent">

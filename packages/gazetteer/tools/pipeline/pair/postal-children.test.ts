@@ -7,17 +7,18 @@ import {
 	type ChildLocations,
 	nearestPostalPlace,
 	partitionPostalChildren,
+	postalGridCell,
 	type PostalPoints,
 } from "#tools/pipeline/pair/postal-children"
 
 /**
- * Postcode points bucketed as `readPostalPoints` buckets them, at 0.1 degrees.
+ * Postcode points bucketed as `readPostalPoints` buckets them.
  */
 function postalGrid(points: Array<{ lat: number; lon: number; place: string }>): Pick<PostalPoints, "grid"> {
 	const grid: PostalPoints["grid"] = new Map()
 
 	for (const point of points) {
-		const key = `${Math.floor(point.lat / 0.1)},${Math.floor(point.lon / 0.1)}`
+		const key = postalGridCell(point.lat, point.lon)
 		grid.set(key, [...(grid.get(key) ?? []), point])
 	}
 
