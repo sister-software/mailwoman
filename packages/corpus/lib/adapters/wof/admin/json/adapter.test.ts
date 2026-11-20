@@ -73,22 +73,45 @@ describe("variantsFor, structural chains of the canonical and colloquial names",
 	const ancestry = { locality: newYorkCity, subregion: kingsCounty, region: newYorkState, country: unitedStates }
 	const defaultSlot: NameSlot = { key: "default", value: "Brooklyn" }
 
-	it("renders the name alone and with every ordered subset of its four ancestor levels", () => {
+	it("renders the name with every ordered subset of its four ancestor levels that holds its locality", () => {
 		const suffixes = new Set(variantsFor(brooklyn, ancestry, defaultSlot).map((v) => v.suffix))
 
-		expect(suffixes).toContain("self")
+		expect(suffixes).toContain("with-locality")
 		expect(suffixes).toContain("with-locality-subregion-region-country")
-		expect(suffixes).toContain("with-subregion")
-		expect([...suffixes].filter((suffix) => !suffix.endsWith("-form"))).toHaveLength(16)
+		expect(suffixes).not.toContain("self")
+		expect(suffixes).not.toContain("with-subregion")
+		expect(suffixes).not.toContain("with-region-country")
+		expect([...suffixes].filter((suffix) => !suffix.endsWith("-form"))).toHaveLength(8)
+	})
+
+	it("writes a dependent locality beside its locality in every variant and every name slot", () => {
+		const slots: NameSlot[] = [defaultSlot, slot("ブルックリン区", "jpn"), slot("Brooklyn", "est")]
+
+		for (const name of slots) {
+			for (const variant of variantsFor(brooklyn, ancestry, name)) {
+				expect(variant.components.locality, `${variant.suffix} of ${name.value}`).toBeTruthy()
+			}
+		}
+	})
+
+	it("renders no row for a dependent locality whose locality is missing or lacks the slot's language", () => {
+		const fields = rec({ id: 6040, name: "Fen Ditton Fields", placetype: "neighbourhood", country: "GB" })
+		const england = rec({ id: 6010, name: "England", placetype: "region", country: "GB" })
+
+		expect(variantsFor(fields, { region: england }, { key: "default", value: "Fen Ditton Fields" })).toEqual([])
+
+		// The locality has no Estonian name, so an Estonian chain has no locality to write.
+		expect(variantsFor(brooklyn, ancestry, slot("Londoni linnamüür", "est"))).toEqual([])
 	})
 
 	it("writes each level canonically, and once more in another of its forms", () => {
 		const variants = variantsFor(brooklyn, ancestry, defaultSlot)
-		const regionCountry = variants.find((v) => v.suffix === "with-region-country")!
-		const regionCountryForm = variants.find((v) => v.suffix === "with-region-country-form")!
+		const regionCountry = variants.find((v) => v.suffix === "with-locality-region-country")!
+		const regionCountryForm = variants.find((v) => v.suffix === "with-locality-region-country-form")!
 
 		expect(regionCountry.components).toEqual({
 			dependent_locality: "Brooklyn",
+			locality: "New York",
 			region: "New York",
 			country: "United States of America",
 		})
@@ -201,7 +224,7 @@ describe("variantsFor (pure)", () => {
 			slot("ブルックリン区", "jpn")
 		)
 
-		expect(v.map((x) => x.suffix)).toEqual(["self", "with-locality-region", "with-locality-region-country"])
+		expect(v.map((x) => x.suffix)).toEqual(["with-locality-region", "with-locality-region-country"])
 
 		const local = v.find((x) => x.suffix === "with-locality-region")!
 
@@ -566,6 +589,27 @@ describe("wof-admin-json adapter on records whose chain leaves their country", (
 		expect(condamine.some((r) => r.components.country === "Monaco")).toBe(true)
 		expect(rows.filter((r) => r.country === "XX" || r.raw.includes("Unplaced Quarter"))).toEqual([])
 		expect(rows.some((r) => r.country === "FR" && r.components.region === "Alpes-Maritimes")).toBe(true)
+	})
+})
+
+describe("wof-admin-json adapter on sub-localities", () => {
+	it("emits every dependent locality beside its locality, and nothing for one with no locality ancestor", async () => {
+		await removePathIfPresent(scratch.path(WOF_ADMIN_ADAPTER_ID))
+
+		await runAdapter({
+			adapter: createWOFAdminAdapter(),
+			adapterOptions: { inputPath: workspacePath("corpus", "fixtures", "wof-admin-sub-locality") },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await loadRows()
+		const subLocalities = rows.filter((r) => r.components.dependent_locality != null)
+
+		expect(subLocalities.map((r) => r.raw)).toContain("Camden, London")
+		expect(subLocalities.filter((r) => r.components.locality == null)).toEqual([])
+		expect(rows.filter((r) => r.raw.includes("Fen Ditton Fields") || r.raw.includes("Camdeni"))).toEqual([])
+		expect(rows.some((r) => r.components.locality === "London" && r.components.dependent_locality == null)).toBe(true)
 	})
 })
 

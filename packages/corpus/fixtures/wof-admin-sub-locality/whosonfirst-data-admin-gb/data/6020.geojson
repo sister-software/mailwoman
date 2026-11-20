@@ -1,0 +1,16 @@
+{
+	"type": "Feature",
+	"id": 6020,
+	"properties": {
+		"wof:id": 6020,
+		"wof:name": "London",
+		"wof:placetype": "locality",
+		"wof:country": "GB",
+		"wof:parent_id": 6010,
+		"wof:hierarchy": [{ "country_id": 6001, "region_id": 6010, "locality_id": 6020 }],
+		"mz:is_current": 1,
+		"geom:latitude": 51.51,
+		"geom:longitude": -0.13
+	},
+	"geometry": null
+}
