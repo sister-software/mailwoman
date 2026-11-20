@@ -243,6 +243,18 @@ export interface LandmarkHit {
 export const OSM_LANDMARK_PREFIX = "osm:"
 
 /**
+ * Parses the resolver's `placeID` URI back to a WOF id, returning `null` for anything else
+ * so a future non-WOF backend isn't silently read as one.
+ */
+export function wofIDFromPlaceID(placeID: string | null): number | null {
+	if (!placeID) return null
+
+	const match = /^wof:(\d+)$/.exec(placeID)
+
+	return match ? Number(match[1]) : null
+}
+
+/**
  * Returns a landmark's place ID: `openstreetmap:W427818536` or `wikidata:Q160409`.
  */
 export function landmarkPlaceID(id: string | number): string {

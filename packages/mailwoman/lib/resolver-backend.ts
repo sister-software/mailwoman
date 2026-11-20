@@ -7,6 +7,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { ServingRole } from "@mailwoman/core/layers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type {
 	PlaceLookup,
@@ -131,6 +132,8 @@ interface ResolverLookupModule {
  * It uses the candidate-table backend when a candidate gazetteer resolves.
  * and the FTS backend over `wofPaths` otherwise.
  * The FTS backend gets the postal-city alias scorer when an alias database exists.
+ *
+ * Both backends read a place's ancestry by id, so the return type declares `ancestors`.
  */
 export async function createResolverBackend(
 	mod: ResolverLookupModule,
@@ -149,7 +152,7 @@ export async function createResolverBackend(
 		 */
 		catalog?: LayerCatalog
 	}
-): Promise<PlaceLookup> {
+): Promise<PlaceLookup & Pick<ResolverBackend, "ancestors">> {
 	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot, opts.catalog)
 
 	if (candidate) {

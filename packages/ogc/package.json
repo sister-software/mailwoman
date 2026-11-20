@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/ogc",
 	"version": "11.2.0",
-	"description": "OGC API adapter for the Mailwoman engine. Serves the OGC API Common Part 1 landing page, conformance declaration and OpenAPI 3.0 API definition. Run it with `npx @mailwoman/ogc serve`.",
+	"description": "OGC API adapter for the Mailwoman engine. Serves the OGC API Common landing page, conformance declaration, API definition and collections, and forward geocoding at /search in the form of PDOK's Location API. Run it with `npx @mailwoman/ogc serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -57,8 +57,13 @@
 	},
 	"dependencies": {
 		"@hono/zod-openapi": "^1.6.3",
+		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"hono": "^4.13.14",
 		"mailwoman": "workspace:*",
 		"zod": "^4.6.7"

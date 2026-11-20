@@ -15,8 +15,11 @@
 		{ "path": ".." },
 		// ---
 		{ "path": "../../api-kit" },
+		{ "path": "../../codex" },
 		{ "path": "../../core" },
 		{ "path": "../../mailwoman" },
-		{ "path": "../../mailwoman/cli" }
+		{ "path": "../../mailwoman/cli" },
+		{ "path": "../../resolver" },
+		{ "path": "../../resolver-wof-sqlite" }
 	]
 }

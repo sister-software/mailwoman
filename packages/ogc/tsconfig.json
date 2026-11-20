@@ -9,5 +9,11 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../api-kit" }, { "path": "../core" }]
+	"references": [
+		{ "path": "../api" },
+		{ "path": "../api-kit" },
+		{ "path": "../codex" },
+		{ "path": "../core" },
+		{ "path": "../spatial" }
+	]
 }

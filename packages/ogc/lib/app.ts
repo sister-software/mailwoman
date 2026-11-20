@@ -12,6 +12,7 @@ import {
 } from "@mailwoman/api-kit"
 import { cors } from "hono/cors"
 
+import type { OGCEngine } from "#engine"
 import { registerOGCRoutes } from "#routes"
 
 /**
@@ -39,7 +40,10 @@ export const OGC_DOC_INFO: OpenAPIDocInfo = {
 		},
 	],
 	security: [],
-	tags: [{ name: "capabilities", description: "The OGC API Common landing page, conformance and API definition." }],
+	tags: [
+		{ name: "capabilities", description: "The OGC API Common landing page, conformance and API definition." },
+		{ name: "data", description: "The collections and the forward geocoding search." },
+	],
 }
 
 /**
@@ -56,11 +60,12 @@ export interface OGCAppOptions extends CompatibilityAppOptions {
 }
 
 /**
- * Builds the OGC API Common Part 1 app: the landing page at `/`, the conformance
- * declaration at `/conformance`, the OpenAPI 3.0 definition at `/api`, and the OpenAPI
+ * Builds the OGC API app around the given {@link OGCEngine}: the landing page at `/`,
+ * the conformance declaration at `/conformance`, the OpenAPI 3.0 definition at `/api`,
+ * the collections at `/collections`, forward geocoding at `/search`, and the OpenAPI
  * 3.1 document at `/openapi.json` that every Mailwoman surface serves.
  */
-export function createOGCApp(options: OGCAppOptions = {}): OpenAPIHono {
+export function createOGCApp(engine: OGCEngine, options: OGCAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono({
 		defaultHook: (result, c) => {
 			if (result.success) return
@@ -87,7 +92,7 @@ export function createOGCApp(options: OGCAppOptions = {}): OpenAPIHono {
 		? { ...OGC_DOC_INFO, servers: [{ url: options.baseURL }] }
 		: OGC_DOC_INFO
 
-	registerOGCRoutes(app, { baseURL: options.baseURL, docInfo })
+	registerOGCRoutes(app, engine, { baseURL: options.baseURL, docInfo })
 	attachOpenAPIDocs(app, docInfo)
 
 	return app
