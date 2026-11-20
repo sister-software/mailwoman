@@ -3,12 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	addressSystemConventionsFor,
-	gazetteerSuppressionFor,
-	parseAddressSystemConventions,
-	punctuationBridgingFor,
-} from "#classifier/options"
+import { declaredClassifierConfig, parseAddressSystemConventions } from "#classifier/options"
 
 const SHIPPED_CARD = {
 	suppress_gazetteer_near_postcode: true,
@@ -16,51 +11,65 @@ const SHIPPED_CARD = {
 	conventions: { required: true, mode: "auto" },
 }
 
-describe("gazetteerSuppressionFor", () => {
-	it("follows the card's declaration and defaults off without one", () => {
-		expect(gazetteerSuppressionFor("declared", SHIPPED_CARD)).toBe("on")
-		expect(gazetteerSuppressionFor("declared", {})).toBe("off")
-		expect(gazetteerSuppressionFor("declared", null)).toBe("off")
+describe("declaredClassifierConfig", () => {
+	it("follows the card's gazetteer suppression and defaults off without one", () => {
+		expect(declaredClassifierConfig(SHIPPED_CARD).suppressGazetteerNearPostcode).toBe("on")
+		expect(declaredClassifierConfig({}).suppressGazetteerNearPostcode).toBe("off")
+		expect(declaredClassifierConfig(null).suppressGazetteerNearPostcode).toBe("off")
 	})
 
-	it("lets an explicit setting replace the card", () => {
-		expect(gazetteerSuppressionFor("off", SHIPPED_CARD)).toBe("off")
-		expect(gazetteerSuppressionFor("on", null)).toBe("on")
-	})
-})
+	it("lets an explicit gazetteer suppression setting replace the card", () => {
+		expect(
+			declaredClassifierConfig(SHIPPED_CARD, { suppressGazetteerNearPostcode: "off" }).suppressGazetteerNearPostcode
+		).toBe("off")
 
-describe("punctuationBridgingFor", () => {
+		expect(declaredClassifierConfig(null, { suppressGazetteerNearPostcode: "on" }).suppressGazetteerNearPostcode).toBe(
+			"on"
+		)
+	})
+
 	it("follows the card's bridge declaration and defaults off without one", () => {
-		expect(punctuationBridgingFor("declared", SHIPPED_CARD)).toBe("off")
-		expect(punctuationBridgingFor("declared", { bridge: { required: true } })).toBe("on")
-		expect(punctuationBridgingFor("declared", null)).toBe("off")
+		expect(declaredClassifierConfig(SHIPPED_CARD).bridgePunctuationGaps).toBe("off")
+		expect(declaredClassifierConfig({ bridge: { required: true } }).bridgePunctuationGaps).toBe("on")
+		expect(declaredClassifierConfig(null).bridgePunctuationGaps).toBe("off")
 	})
 
-	it("lets an explicit setting replace the card", () => {
-		expect(punctuationBridgingFor("on", SHIPPED_CARD)).toBe("on")
-		expect(punctuationBridgingFor("off", { bridge: { required: true } })).toBe("off")
-	})
-})
+	it("lets an explicit bridge setting replace the card", () => {
+		expect(declaredClassifierConfig(SHIPPED_CARD, { bridgePunctuationGaps: "on" }).bridgePunctuationGaps).toBe("on")
 
-describe("addressSystemConventionsFor", () => {
-	it("takes the card's mode when the card requires conventions", () => {
-		expect(addressSystemConventionsFor("declared", SHIPPED_CARD)).toBe("auto")
-		expect(addressSystemConventionsFor("declared", { conventions: { required: true, mode: "gb" } })).toBe("gb")
-		expect(addressSystemConventionsFor("declared", { conventions: { required: true } })).toBe("auto")
+		expect(
+			declaredClassifierConfig({ bridge: { required: true } }, { bridgePunctuationGaps: "off" }).bridgePunctuationGaps
+		).toBe("off")
 	})
 
-	it("is off when the card does not require conventions", () => {
-		expect(addressSystemConventionsFor("declared", { conventions: { required: false, mode: "gb" } })).toBe("off")
-		expect(addressSystemConventionsFor("declared", null)).toBe("off")
+	it("takes the card's conventions mode when the card requires conventions", () => {
+		expect(declaredClassifierConfig(SHIPPED_CARD).addressSystemConventions).toBe("auto")
+
+		expect(declaredClassifierConfig({ conventions: { required: true, mode: "gb" } }).addressSystemConventions).toBe(
+			"gb"
+		)
+
+		expect(declaredClassifierConfig({ conventions: { required: true } }).addressSystemConventions).toBe("auto")
 	})
 
-	it("lets an explicit mode replace the card", () => {
-		expect(addressSystemConventionsFor("off", SHIPPED_CARD)).toBe("off")
-		expect(addressSystemConventionsFor("us", null)).toBe("us")
+	it("leaves conventions off when the card does not require them", () => {
+		expect(declaredClassifierConfig({ conventions: { required: false, mode: "gb" } }).addressSystemConventions).toBe(
+			"off"
+		)
+
+		expect(declaredClassifierConfig(null).addressSystemConventions).toBe("off")
 	})
 
-	it("refuses a card mode that is not a conventions mode", () => {
-		expect(() => addressSystemConventionsFor("declared", { conventions: { required: true, mode: "zz" } })).toThrow(
+	it("lets an explicit conventions mode replace the card", () => {
+		expect(declaredClassifierConfig(SHIPPED_CARD, { addressSystemConventions: "off" }).addressSystemConventions).toBe(
+			"off"
+		)
+
+		expect(declaredClassifierConfig(null, { addressSystemConventions: "us" }).addressSystemConventions).toBe("us")
+	})
+
+	it("refuses a card conventions mode that is not a conventions mode", () => {
+		expect(() => declaredClassifierConfig({ conventions: { required: true, mode: "zz" } })).toThrow(
 			/unknown address-system conventions mode "zz"/
 		)
 	})
