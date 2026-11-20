@@ -12,8 +12,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
+import { NodeModulesState, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { resolvePath } from "path-ts"
@@ -268,7 +268,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				// The child's checkout-locality guard refuses a tree without its own install.
 				// This refusal returns the repair at once rather than as a failed job.
-				if (!(await pathExists(resolvePath(cwd, "node_modules")))) {
+				const locality = await readCheckoutLocality(cwd)
+
+				if (locality?.nodeModules.state === NodeModulesState.Absent) {
 					throw new Error(`${cwd} has no node_modules. Run \`yarn install\` there before mwdev_check.`)
 				}
 

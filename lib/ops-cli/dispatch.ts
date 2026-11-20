@@ -30,7 +30,7 @@ import { resolvePath } from "path-ts"
 
 import { HOST_BUSY_EXIT, renderCheckResult, runPreflight, runRegisteredCheck } from "#check-kit/check"
 import { DEFAULT_MAX_WAIT_MINUTES } from "#check-kit/host"
-import { hostExitCode, hostOperations } from "#check-kit/host-operations"
+import { hostExitCode, hostOperations } from "#check-kit/host/operations"
 import { checkCommands, findCheckCommand } from "#check-kit/registry"
 import { operations, type ReleaseContext } from "#release-kit"
 import {

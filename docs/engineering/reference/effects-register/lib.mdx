@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `lib`
 
 The manifest at `package.json` has no `sideEffects` field.
-This page lists 126 of the group's 295 library and tool modules.
+This page lists 125 of the group's 295 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -296,12 +296,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `pathExists`       | `unresolved (call)`      | 1     |
 | read | `pathExists`       | `unresolved (parameter)` | 1     |
 | read | `statPath`         | `unresolved (parameter)` | 1     |
-
-## `lib/dev-mcp/spawn-tools.ts`
-
-| Kind | Interface    | Target              | Calls |
-| ---- | ------------ | ------------------- | ----- |
-| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `lib/dev-mcp/symbol.ts`
 
