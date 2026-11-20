@@ -23,6 +23,61 @@ import { literalFilesEntries } from "#release-kit/pack/verify-tarball"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 
 /**
+ * One weights workspace's untracked declared artifacts, split by whether each is on disk.
+ */
+export interface WeightsWorkspaceMaterialization {
+	/**
+	 * The repo-relative workspace directory, such as `packages/neural-weights-en-us`.
+	 */
+	workspace: string
+	manifestPath: string
+	/**
+	 * The literal `files` entries the checkout doesn't track.
+	 */
+	untracked: string[]
+	present: string[]
+	missing: string[]
+}
+
+/**
+ * Read every tracked weights workspace's untracked declared artifacts and
+ * whether each exists under `repoRoot`.
+ *
+ * @param trackedFiles The checkout's tracked paths, repo-relative.
+ * A weights workspace is found by its tracked `package.json`.
+ */
+export async function readWeightsMaterialization(
+	repoRoot: string,
+	trackedFiles: readonly string[]
+): Promise<WeightsWorkspaceMaterialization[]> {
+	const tracked = new Set(trackedFiles)
+	const rows: WeightsWorkspaceMaterialization[] = []
+
+	const manifestPaths = trackedFiles.filter((file) => /^packages\/neural-weights-[^/]+\/package\.json$/u.test(file))
+
+	for (const manifestPath of manifestPaths) {
+		const workspace = manifestPath.slice(0, -"/package.json".length)
+		const manifest = await readLocalJSONFile<{ files?: unknown }>(resolvePath(repoRoot, manifestPath))
+
+		const untracked = literalFilesEntries(manifest.files).filter((entry) => !tracked.has(`${workspace}/${entry}`))
+		const present: string[] = []
+		const missing: string[] = []
+
+		for (const entry of untracked) {
+			if (await pathExists(resolvePath(repoRoot, workspace, entry))) {
+				present.push(entry)
+			} else {
+				missing.push(entry)
+			}
+		}
+
+		rows.push({ workspace, manifestPath, untracked, present, missing })
+	}
+
+	return rows
+}
+
+/**
  * The `weights-materialization` check: one error per weights workspace that
  * holds part of its untracked declared set.
  */
@@ -33,26 +88,11 @@ export const weightsMaterializationCheck: RepoCheck = {
 
 	async run({ repoRoot, trackedFiles }): Promise<Diagnostic[]> {
 		const diagnostics: Diagnostic[] = []
-		const tracked = new Set(trackedFiles)
 
-		const manifestPaths = trackedFiles.filter((file) => /^packages\/neural-weights-[^/]+\/package\.json$/u.test(file))
-
-		for (const manifestPath of manifestPaths) {
-			const workspace = manifestPath.slice(0, -"/package.json".length)
-			const manifest = await readLocalJSONFile<{ files?: unknown }>(resolvePath(repoRoot, manifestPath))
-
-			const untracked = literalFilesEntries(manifest.files).filter((entry) => !tracked.has(`${workspace}/${entry}`))
-			const present: string[] = []
-			const missing: string[] = []
-
-			for (const entry of untracked) {
-				if (await pathExists(resolvePath(repoRoot, workspace, entry))) {
-					present.push(entry)
-				} else {
-					missing.push(entry)
-				}
-			}
-
+		for (const { workspace, manifestPath, untracked, present, missing } of await readWeightsMaterialization(
+			repoRoot,
+			trackedFiles
+		)) {
 			if (!present.length || !missing.length) continue
 
 			diagnostics.push({

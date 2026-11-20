@@ -383,6 +383,26 @@ export async function gitCommonDirectory(repoRoot: PathBuilderLike = repoRootPat
 }
 
 /**
+ * The count of commits `head` has that `base` lacks, and the count `base` has that `head` lacks.
+ *
+ * Both are read from local refs, so a remote-tracking `base` reflects the last fetch.
+ */
+export async function commitsAheadBehind(
+	base: string,
+	head = "HEAD",
+	repoRoot: PathBuilderLike = repoRootPathBuilder
+): Promise<{ ahead: number; behind: number }> {
+	const counts = await git(["rev-list", "--left-right", "--count", `${base}...${head}`], repoRoot)
+	const [behind, ahead] = counts.trim().split(/\s+/u).map(Number)
+
+	if (!Number.isInteger(behind) || !Number.isInteger(ahead)) {
+		throw new TypeError(`git rev-list --left-right --count ${base}...${head} printed "${counts}"`)
+	}
+
+	return { ahead: ahead!, behind: behind! }
+}
+
+/**
  * The absolute path of the working tree that contains `repoRoot`.
  */
 export async function workingTreeRoot(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {

@@ -20,6 +20,7 @@ import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import { checkCommands } from "#check-kit/registry"
+import { readWorktreeStatus } from "#check-kit/worktree/status"
 import { checkCLIAllowlist } from "#dev-mcp/cli/allowlist"
 import { assertCompiledFresh } from "#dev-mcp/compiled-tree"
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -38,9 +39,10 @@ import { summarizeJob, type DevTool } from "#dev-mcp/tool-kit"
 const promotionEvalOutDirs = new Map<string, string>()
 
 /**
- * The jobs `mwdev_check` started.
+ * The jobs `mwdev_check` and `mwdev_worktree` started.
  *
- * Their stdout is the `mwops check --json` result, and `mwdev_job` returns it parsed.
+ * Their stdout is the `mwops check --json` or `mwops worktree prepare --json` result,
+ * and `mwdev_job` returns it parsed.
  */
 const repositoryCheckJobs = new Set<string>()
 
@@ -299,6 +301,59 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					checkout: cwd,
 					command: [process.execPath, ...argv].join(" "),
 					note: "Started. Poll with mwdev_job; the finished job's `result` is the parsed `mwops check --json` output.",
+				}
+			},
+		},
+
+		{
+			name: "mwdev_worktree",
+			description:
+				"Read or prepare another working tree. `status` reports each prerequisite (node_modules, a current out/, " +
+				"the weights files) as satisfied, missing or unread, with the tree's position against origin/main and its " +
+				".env. `prepare` returns a job id: it runs this server checkout's `mwops worktree prepare`, which runs the " +
+				"missing `yarn install`, `yarn compile` and `yarn mwops release copy-weights` in the target tree under one " +
+				"host lock. Poll with mwdev_job; a finished job returns the parsed result with the status after the steps.",
+			inputSchema: z.object({
+				action: z.enum(["status", "prepare"]).default("status"),
+				path: z.string().min(1).describe("Absolute path inside the working tree to read or prepare."),
+				max_wait_minutes: z.number().nonnegative().optional(),
+				dry_run: z.boolean().default(false).describe("For `prepare`: list the steps it would run, and run none."),
+			}),
+			handler: async (args) => {
+				const path = resolvePath(registry.repoRoot.toString(), args["path"] as string)
+
+				if ((args["action"] ?? "status") === "status") {
+					return readWorktreeStatus(path, { callingCheckout: registry.repoRoot.toString() })
+				}
+
+				// The target tree may have no install, so the job runs the server checkout's command.
+				// That command acts on the path.
+				const argv = [
+					resolvePath(registry.repoRoot.toString(), "lib", "ops-cli", "cli.ts"),
+					"worktree",
+					"prepare",
+					"--path",
+					path,
+					"--json",
+				]
+
+				if (typeof args["max_wait_minutes"] === "number") {
+					argv.push("--max-wait-minutes", String(args["max_wait_minutes"]))
+				}
+
+				if (args["dry_run"] === true) {
+					argv.push("--dry-run")
+				}
+
+				const job = jobs.start("worktree:prepare", process.execPath, argv, registry.repoRoot)
+
+				repositoryCheckJobs.add(job.jobID)
+
+				return {
+					job_id: job.jobID,
+					path,
+					command: [process.execPath, ...argv].join(" "),
+					note: "Started. Poll with mwdev_job; the finished job's `result` is the parsed `mwops worktree prepare --json` output.",
 				}
 			},
 		},

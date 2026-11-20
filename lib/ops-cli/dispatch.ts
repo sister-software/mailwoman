@@ -11,6 +11,8 @@
  *   The `check` command runs one registered repository check and exits with its status,
  *   and `host` reads the host lock and CI through its operation registry.
  *
+ *   `worktree` reads another working tree's setup state and runs its missing setup steps.
+ *
  *   Dispatch receives its output streams and checkout path from the entry point.
  *
  *   `health` also performs two mutations outside the check registry.
@@ -37,6 +39,7 @@ import {
 	pullRequestOperations,
 } from "#check-kit/pull-request/operations"
 import { checkCommands, findCheckCommand } from "#check-kit/registry"
+import { type WorktreeContext, worktreeExitCode, worktreeOperations } from "#check-kit/worktree/operations"
 import { operations, type ReleaseContext } from "#release-kit"
 import {
 	applyModuleMoves,
@@ -131,11 +134,13 @@ function usage(io: DispatchIO): number {
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
 			"  mwops check <name> [paths…] [--json] [--no-wait] [--max-wait-minutes N] [--log-dir <dir>]   (run a registered check; exits with its status)",
-			"  mwops check preflight [--json]   (run the direct-push set: fast suite, lint:prose:code, lint:prose:vocab, health)",
+			"  mwops check preflight [--json]   (run the direct-push set: fast suite, lint:prose:code, lint:prose:vocab, health, health-tree)",
 			"  mwops host status [--json]       (the host lock holder and the queued or in-progress CI runs)",
 			"  mwops host wait-idle [--max-minutes N] [--json]   (exit 0 when idle, 3 when the bound expired busy, 4 when CI stayed unread)",
 			"  mwops pr status <number> [--json]   (one pull request's checks; exit 0 passed, 1 failed, 3 pending, 4 unread, 5 no checks)",
 			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until zero checks are pending; the same exit statuses)",
+			"  mwops worktree status --path <dir> [--json]   (what the working tree at <dir> lacks; exit 0 when ready, 1 when not)",
+			"  mwops worktree prepare --path <dir> [--json] [--dry-run] [--max-wait-minutes N] [--log-dir <dir>]   (run the missing install, compile and copy-weights steps there)",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops code-blocks [--fix] [--no-cache] [--summary] [--json]   (lint the docs pages' JavaScript and TypeScript code blocks with oxlint)",
@@ -156,6 +161,7 @@ function usage(io: DispatchIO): number {
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`host operations:    ${hostOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`pr operations:      ${pullRequestOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
+			`worktree operations: ${worktreeOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.heavy ? ", heavy" : ""})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
@@ -208,6 +214,13 @@ const pullRequestView: OperationView<OperationContext> = {
 	registry: pullRequestOperations,
 	context: (base) => base,
 	exitCode: pullRequestExitCode,
+}
+
+const worktreeView: OperationView<WorktreeContext> = {
+	verb: "worktree",
+	registry: worktreeOperations,
+	context: (base, io) => ({ ...base, repoRoot: io.repoRoot }),
+	exitCode: worktreeExitCode,
 }
 
 const storageView: OperationView<StorageContext> = {
@@ -888,6 +901,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			return runOperation(hostView, rest, io)
 		case "pr":
 			return runOperation(pullRequestView, pullRequestOperationArgs(rest), io)
+		case "worktree":
+			return runOperation(worktreeView, rest, io)
 		case "checkout":
 			return reportCheckoutLocality(io)
 		case "ci-scope":

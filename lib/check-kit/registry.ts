@@ -93,6 +93,16 @@ export const checkCommands: readonly CheckCommand[] = [
 		parse: parseScriptOutput,
 	},
 	{
+		name: "health-tree",
+		description:
+			"yarn vitest --run lib/repo-health: the repository-health tests, which run the current-tree checks `yarn health` leaves out",
+		effect: OperationEffect.Read,
+		heavy: false,
+		takesPaths: false,
+		args: ["vitest", "--run", "lib/repo-health"],
+		reader: CheckReader.Vitest,
+	},
+	{
 		name: "lint",
 		description: "yarn lint: oxlint, oxfmt, code blocks, prose, spelling and health",
 		effect: OperationEffect.LocalWrite,
@@ -163,4 +173,4 @@ export function findCheckCommand(name: string): CheckCommand | null {
  * The checks `mwops check preflight` runs, in order: the set `AGENTS.md` requires
  * before a direct push to `main`.
  */
-export const PREFLIGHT_CHECKS = ["fast-suite", "prose-code", "prose-vocab", "health"] as const
+export const PREFLIGHT_CHECKS = ["fast-suite", "prose-code", "prose-vocab", "health", "health-tree"] as const
