@@ -69,7 +69,7 @@ Note the third test: the old file asserted `expect("wing" in PLACETYPE_PROJECTIO
 which this task deliberately makes false. The new test uses a placetype that's not in the WOF
 vocabulary instead.
 
-```typescript
+```ts
 describe("PLACETYPE_PROJECTION", () => {
 	it("projects the dependent-locality family onto one tag", () => {
 		for (const placetype of ["borough", "neighbourhood", "macrohood", "microhood"]) {
@@ -116,7 +116,7 @@ describe("PLACETYPE_PROJECTION", () => {
 
 Update the import at `placetype-census.test.ts:15` to pull the new constant:
 
-```typescript
+```ts
 import { PLACETYPE_PROJECTION, WOF_PLACETYPES, buildPlacetypeCensus, toBaseRates } from "./placetype-census.ts"
 ```
 
@@ -130,7 +130,7 @@ assertion runs.
 
 Insert immediately above `PLACETYPE_PROJECTION` in `mailwoman/gazetteer-pipeline/placetype-census.ts`:
 
-```typescript
+```ts
 /**
  * The complete Who's on First placetype vocabulary (34 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key
  * for every entry — a test asserts it — so a placetype can never reach `buildPlacetypeCensus` unmapped and turn a build
@@ -178,7 +178,7 @@ export const WOF_PLACETYPES: readonly string[] = [
 
 In `PLACETYPE_PROJECTION`, immediately after the `venue: "venue",` line, insert:
 
-```typescript
+```ts
 	// Venue sub-structure. A WOF `building`/`campus` place carries a venue NAME ("Empire State Building", "MIT
 	// Campus"); the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing"). The
 	// admin build stocks none of these today — that is the ingest allowlist rather than the source, and measuring the
@@ -194,7 +194,7 @@ In `PLACETYPE_PROJECTION`, immediately after the `venue: "venue",` line, insert:
 
 Then, in the context-only block after `planet: null,`, insert:
 
-```typescript
+```ts
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag.
 	// An intersection is a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole
 	// address record consumed by the kind-classifier and the resolver's address-point tiers rather than a span role.
@@ -294,7 +294,7 @@ Context-only placetypes project to `null`, so they're always excluded.
 
 Create `mailwoman/gazetteer-pipeline/granularity.test.ts`:
 
-```typescript
+```ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -347,7 +347,7 @@ Expected: fail — `Cannot find module './granularity.ts'`.
 
 Create `mailwoman/gazetteer-pipeline/granularity.ts`:
 
-```typescript
+```ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -475,7 +475,7 @@ Append to `mailwoman/gazetteer-pipeline/granularity.test.ts`. Add `DatabaseSync`
 the top of the file (`import { DatabaseSync } from "node:sqlite"`) and extend the module import to
 `import { LADDER, SUB_LOCALITY_RUNGS, buildGranularityLadder, placetypesForRung } from "./granularity.ts"`.
 
-```typescript
+```ts
 /**
  * A fixture DB with the `spr`/`ancestors` shape the ladder reads. `node:sqlite` cannot share an `:memory:` DB across
  * connections and the builder opens its own read-only handle, so this writes a temp file — the same approach
@@ -591,7 +591,7 @@ Expected: fail — `buildGranularityLadder is not a function` (the import is unr
 Append to `mailwoman/gazetteer-pipeline/granularity.ts`. Add these imports at the top of the file,
 below the existing ones:
 
-```typescript
+```ts
 import { DatabaseSync } from "node:sqlite"
 
 import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
@@ -599,7 +599,7 @@ import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
 
 Then append:
 
-```typescript
+```ts
 /**
  * One rung's measurement for one country. A rung the builder LOOKED AT and found empty is a present row of zeroes; a
  * rung with no measurable source is absent from `CountryGranularity.rungs` entirely. Collapsing those two would break
@@ -855,7 +855,7 @@ re-run at another value without a code change.
 Append to `mailwoman/gazetteer-pipeline/granularity.test.ts`, extending the module import with
 `DEFAULT_COVERAGE_FLOOR, bottomsOutAt`:
 
-```typescript
+```ts
 /**
  * Build a `CountryGranularity` by hand so the bottoms-out rule is tested independently of any SQL.
  */
@@ -940,7 +940,7 @@ describe("bottomsOutAt", () => {
 
 Extend the type-only import at the top of the test file:
 
-```typescript
+```ts
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import type { CountryGranularity, RungMeasurement } from "./granularity.ts"
@@ -955,7 +955,7 @@ Expected: fail — `bottomsOutAt is not a function`.
 
 Append to `mailwoman/gazetteer-pipeline/granularity.ts`:
 
-```typescript
+```ts
 /**
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
@@ -1031,7 +1031,7 @@ the locality rung compares Overture with itself for backfilled countries.
 
 Create `mailwoman/gazetteer-pipeline/granularity-report.test.ts`:
 
-```typescript
+```ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -1138,7 +1138,7 @@ Expected: fail — `Cannot find module './granularity-report.ts'`.
 
 Create `mailwoman/gazetteer-pipeline/granularity-report.ts`:
 
-```typescript
+```ts
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
