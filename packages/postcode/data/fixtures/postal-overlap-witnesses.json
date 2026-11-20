@@ -2,17 +2,6 @@
 	"pairs": [
 		{
 			"a": {
-				"family": "coordinates",
-				"shape": "coordinate.dms_pair_spaced"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "000 000D"
-		},
-		{
-			"a": {
 				"family": "identifiers",
 				"shape": "census.geoid_county"
 			},
@@ -403,31 +392,9 @@
 			},
 			"b": {
 				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "WOF 0000"
-		},
-		{
-			"a": {
-				"family": "identifiers",
-				"shape": "wof.reference"
-			},
-			"b": {
-				"family": "postal",
 				"shape": "postal.mt"
 			},
 			"witness": "WOF 00"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ac"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "ASCN1ZZ"
 		},
 		{
 			"a": {
@@ -898,17 +865,6 @@
 			},
 			"b": {
 				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "0000AAA"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ar"
-			},
-			"b": {
-				"family": "postal",
 				"shape": "postal.lb"
 			},
 			"witness": "0000"
@@ -1635,17 +1591,6 @@
 			},
 			"b": {
 				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "BB00000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.bb"
-			},
-			"b": {
-				"family": "postal",
 				"shape": "postal.so"
 			},
 			"witness": "BB00000"
@@ -2067,17 +2012,6 @@
 				"shape": "number.signed_decimal"
 			},
 			"witness": "6799"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.cl"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "0000000"
 		},
 		{
 			"a": {
@@ -2929,17 +2863,6 @@
 		{
 			"a": {
 				"family": "postal",
-				"shape": "postal.fk"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "FIQQ1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
 				"shape": "postal.fm"
 			},
 			"b": {
@@ -3417,17 +3340,6 @@
 			},
 			"b": {
 				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "AB000AA"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.gb"
-			},
-			"b": {
-				"family": "postal",
 				"shape": "postal.im"
 			},
 			"witness": "IM00AA"
@@ -3534,28 +3446,6 @@
 		{
 			"a": {
 				"family": "postal",
-				"shape": "postal.gg"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "GY000AA"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.gi"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "GX111AA"
-		},
-		{
-			"a": {
-				"family": "postal",
 				"shape": "postal.gl"
 			},
 			"b": {
@@ -3596,17 +3486,6 @@
 				"shape": "number.signed_decimal"
 			},
 			"witness": "3900"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.gs"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"witness": "SIQQ1ZZ"
 		},
 		{
 			"a": {
@@ -3695,171 +3574,6 @@
 				"shape": "number.signed_decimal"
 			},
 			"witness": "96910"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.il"
-			},
-			"witness": "0000000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.im"
-			},
-			"witness": "IM000AA"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.io"
-			},
-			"witness": "BBND1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.je"
-			},
-			"witness": "JE000AA"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.jp"
-			},
-			"witness": "0000000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.mt"
-			},
-			"witness": "AAA0000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.pe"
-			},
-			"witness": "CALLAO0"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.pn"
-			},
-			"witness": "PCRN1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.sh"
-			},
-			"witness": "ASCN1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.so"
-			},
-			"witness": "AA00000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.ta"
-			},
-			"witness": "TDCU1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "postal",
-				"shape": "postal.tc"
-			},
-			"witness": "TKCA1ZZ"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "primitives",
-				"shape": "number.digit_run"
-			},
-			"witness": "0000000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "primitives",
-				"shape": "number.signed_decimal"
-			},
-			"witness": "0000000"
-		},
-		{
-			"a": {
-				"family": "postal",
-				"shape": "postal.ie"
-			},
-			"b": {
-				"family": "primitives",
-				"shape": "word.ascii"
-			},
-			"witness": "AAAAAAA"
 		},
 		{
 			"a": {

@@ -10,6 +10,7 @@
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend, WeakResolutionReading } from "@mailwoman/core/resolver"
+import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { isRegionAbbreviationToken } from "@mailwoman/recognizer/region-abbreviation"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
@@ -566,6 +567,11 @@ export async function findRescoreCandidate(
 
 			for (const h of exact) {
 				if (!h.country || h.country === country) continue
+
+				// A postcode row verifies a country only for a code written in that country's form.
+				// A US ZIP row also answers to its city's name, so without this test a city name
+				// tagged as a postcode verifies every same-name locality in its own country.
+				if (acceptPostcode(code, h.country) == null) continue
 
 				const pcHits = await backend.findPlace({
 					text: code,

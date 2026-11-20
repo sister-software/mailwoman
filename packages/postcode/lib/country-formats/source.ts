@@ -4,7 +4,8 @@
 /**
  *   The postcode syntax of a country as pattern text: the data the `postal` family is generated from.
  *
- *   The libaddressinput table (`./data.ts`) and the written forms (`./written-forms.ts`) hold the patterns.
+ *   The libaddressinput table (`./data.ts`), the authority patterns that replace some of its entries
+ *   (`./authority-patterns.ts`) and the written forms (`./written-forms.ts`) hold the patterns.
  *   This module joins them into one anchored pattern text with the spacing tolerated,
  *   and it compiles no `RegExp`.
  *
@@ -13,6 +14,7 @@
  *   The `postal` family's artifact answers serving code, in `../country-formats.ts`.
  */
 
+import { COUNTRY_POSTCODE_AUTHORITY_PATTERNS } from "#country-formats/authority-patterns"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 import { COUNTRY_POSTCODE_WRITTEN_FORMS } from "#country-formats/written-forms"
 
@@ -79,18 +81,20 @@ export function tolerateSpacing(pattern: string): string {
 }
 
 /**
- * The postcode syntax libaddressinput states for `countryCode`, as pattern text,
- * or null when it states none.
+ * The postcode syntax of `countryCode` as pattern text, or null when libaddressinput states none.
  *
- * The pattern is the libaddressinput pattern and each form `COUNTRY_POSTCODE_WRITTEN_FORMS`
- * adds, each with its spacing tolerated.
+ * The pattern is the country's entry in `COUNTRY_POSTCODE_AUTHORITY_PATTERNS`
+ * where it has one, and the libaddressinput pattern otherwise, followed by each form
+ * `COUNTRY_POSTCODE_WRITTEN_FORMS` adds, each with its spacing tolerated.
  */
 export function postcodeSyntaxText(countryCode: string): PostcodeSyntaxText | null {
-	const source = COUNTRY_POSTCODE_FORMAT_SOURCES[countryCode.toUpperCase()]
+	const code = countryCode.toUpperCase()
+	const source = COUNTRY_POSTCODE_FORMAT_SOURCES[code]
 
 	if (!source) return null
 
-	const alternatives = [source.pattern, ...(COUNTRY_POSTCODE_WRITTEN_FORMS[countryCode.toUpperCase()] ?? [])]
+	const base = COUNTRY_POSTCODE_AUTHORITY_PATTERNS[code] ?? source.pattern
+	const alternatives = [base, ...(COUNTRY_POSTCODE_WRITTEN_FORMS[code] ?? [])]
 
 	return {
 		pattern: `^(?:${alternatives.map((p) => `(?:${tolerateSpacing(p)})`).join("|")})$`,

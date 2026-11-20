@@ -20,12 +20,31 @@ describe("countryFromPostcodeFormat", () => {
 		["T12 X70A", "IE"],
 		["V94T2XR", "IE"],
 		["D6W XY00", "IE"],
+		["D02 X285", "IE"],
+		["A65 F4E2", "IE"],
+		["D6W 1234", "IE"],
+		["a65f4e2", "IE"],
 	])("reads %s as %s", (postcode, country) => {
 		expect(countryFromPostcodeFormat(postcode)).toBe(country)
 	})
 
 	it.each(["90210", "75013", "1012 LG", "110 00", "27", "2737 CA"])(
 		"declines %s, which no single-country shape claims",
+		(postcode) => {
+			expect(countryFromPostcodeFormat(postcode)).toBeNull()
+		}
+	)
+
+	// A seven-letter word fills libaddressinput's `[\dA-Z]{3} ?[\dA-Z]{4}`, and an Eircode never does (#3136).
+	it.each(["Toronto", "Glasgow", "Chicago", "Bristol", "Hamburg", "Belfast"])(
+		"declines the city name %s, which has no Eircode routing key",
+		(postcode) => {
+			expect(countryFromPostcodeFormat(postcode)).toBeNull()
+		}
+	)
+
+	it.each(["D02 X2B5", "B12 F4E2", "D6X 1234"])(
+		"declines %s, which holds a character outside the Eircode alphabet",
 		(postcode) => {
 			expect(countryFromPostcodeFormat(postcode)).toBeNull()
 		}

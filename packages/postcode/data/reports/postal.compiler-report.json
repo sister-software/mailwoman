@@ -15,18 +15,6 @@
 		"overlaps": [
 			{
 				"a": {
-					"family": "coordinates",
-					"shape": "coordinate.dms_pair_spaced"
-				},
-				"b": {
-					"family": "postal",
-					"shape": "postal.ie"
-				},
-				"declared": true,
-				"witness": "000 000D"
-			},
-			{
-				"a": {
 					"family": "identifiers",
 					"shape": "census.geoid_block"
 				},
@@ -596,18 +584,6 @@
 				},
 				"b": {
 					"family": "postal",
-					"shape": "postal.ie"
-				},
-				"declared": true,
-				"witness": "WOF 0000"
-			},
-			{
-				"a": {
-					"family": "identifiers",
-					"shape": "wof.reference"
-				},
-				"b": {
-					"family": "postal",
 					"shape": "postal.mt"
 				},
 				"declared": true,
@@ -1152,42 +1128,6 @@
 				},
 				"declared": true,
 				"witness": "96910"
-			},
-			{
-				"a": {
-					"family": "postal",
-					"shape": "postal.ie"
-				},
-				"b": {
-					"family": "primitives",
-					"shape": "number.digit_run"
-				},
-				"declared": true,
-				"witness": "0000000"
-			},
-			{
-				"a": {
-					"family": "postal",
-					"shape": "postal.ie"
-				},
-				"b": {
-					"family": "primitives",
-					"shape": "number.signed_decimal"
-				},
-				"declared": true,
-				"witness": "0000000"
-			},
-			{
-				"a": {
-					"family": "postal",
-					"shape": "postal.ie"
-				},
-				"b": {
-					"family": "primitives",
-					"shape": "word.ascii"
-				},
-				"declared": true,
-				"witness": "AAAAAAA"
 			},
 			{
 				"a": {
@@ -1988,27 +1928,21 @@
 			"automata": [
 				{
 					"backend": "sparse",
-					"bytes": 53709,
+					"bytes": 45978,
 					"patterns": 98,
 					"role": "whole",
-					"states": 1408
+					"states": 1241
 				},
 				{
 					"backend": "sparse",
-					"bytes": 91415,
+					"bytes": 73763,
 					"patterns": 98,
 					"role": "embedded",
-					"states": 1846
+					"states": 1562
 				}
 			],
 			"equivalent": [],
 			"overlaps": [
-				{
-					"a": "postal.ac",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "ASCN1ZZ"
-				},
 				{
 					"a": "postal.ac",
 					"b": "postal.sh",
@@ -2224,12 +2158,6 @@
 					"b": "postal.gl",
 					"declared": true,
 					"witness": "3900"
-				},
-				{
-					"a": "postal.ar",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "0000AAA"
 				},
 				{
 					"a": "postal.ar",
@@ -2581,12 +2509,6 @@
 				},
 				{
 					"a": "postal.bb",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "BB00000"
-				},
-				{
-					"a": "postal.bb",
 					"b": "postal.so",
 					"declared": true,
 					"witness": "BB00000"
@@ -2752,12 +2674,6 @@
 					"b": "postal.tz",
 					"declared": true,
 					"witness": "6799"
-				},
-				{
-					"a": "postal.cl",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "0000000"
 				},
 				{
 					"a": "postal.cl",
@@ -3174,12 +3090,6 @@
 					"witness": "97600"
 				},
 				{
-					"a": "postal.fk",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "FIQQ1ZZ"
-				},
-				{
 					"a": "postal.fm",
 					"b": "postal.fr",
 					"declared": true,
@@ -3403,12 +3313,6 @@
 				},
 				{
 					"a": "postal.gb",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "AB000AA"
-				},
-				{
-					"a": "postal.gb",
 					"b": "postal.im",
 					"declared": true,
 					"witness": "IM00AA"
@@ -3456,18 +3360,6 @@
 					"witness": "97300"
 				},
 				{
-					"a": "postal.gg",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "GY000AA"
-				},
-				{
-					"a": "postal.gi",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "GX111AA"
-				},
-				{
 					"a": "postal.gl",
 					"b": "postal.lb",
 					"declared": true,
@@ -3478,12 +3370,6 @@
 					"b": "postal.tz",
 					"declared": true,
 					"witness": "3900"
-				},
-				{
-					"a": "postal.gs",
-					"b": "postal.ie",
-					"declared": true,
-					"witness": "SIQQ1ZZ"
 				},
 				{
 					"a": "postal.gu",
@@ -3520,78 +3406,6 @@
 					"b": "postal.us",
 					"declared": true,
 					"witness": "96910"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.il",
-					"declared": true,
-					"witness": "0000000"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.im",
-					"declared": true,
-					"witness": "IM000AA"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.io",
-					"declared": true,
-					"witness": "BBND1ZZ"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.je",
-					"declared": true,
-					"witness": "JE000AA"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.jp",
-					"declared": true,
-					"witness": "0000000"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.mt",
-					"declared": true,
-					"witness": "AAA0000"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.pe",
-					"declared": true,
-					"witness": "CALLAO0"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.pn",
-					"declared": true,
-					"witness": "PCRN1ZZ"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.sh",
-					"declared": true,
-					"witness": "ASCN1ZZ"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.so",
-					"declared": true,
-					"witness": "AA00000"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.ta",
-					"declared": true,
-					"witness": "TDCU1ZZ"
-				},
-				{
-					"a": "postal.ie",
-					"b": "postal.tc",
-					"declared": true,
-					"witness": "TKCA1ZZ"
 				},
 				{
 					"a": "postal.il",
