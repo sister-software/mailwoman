@@ -492,6 +492,35 @@ export async function readHeldoutDatasetRows(
 }
 
 /**
+ * A verified held-out row with the label of the collection it came from.
+ */
+export interface HeldoutCollectionRow {
+	/**
+	 * `datasetID@` and the first 16 characters of the collection's version.
+	 */
+	collection: string
+	row: HeldoutRow
+}
+
+/**
+ * Yields each manifest's verified rows in turn, as {@linkcode readHeldoutDatasetRows} reads them.
+ *
+ * Each row is paired with its collection's label, so a census can tally per collection.
+ */
+export async function* readHeldoutCollectionRows(
+	manifestPaths: Iterable<PathBuilderLike>
+): AsyncGenerator<HeldoutCollectionRow> {
+	for (const manifestPath of manifestPaths) {
+		const { manifest, rows } = await readHeldoutDatasetRows(manifestPath)
+		const collection = `${manifest.datasetID}@${manifest.version.slice(0, 16)}`
+
+		for (const row of rows) {
+			yield { collection, row }
+		}
+	}
+}
+
+/**
  * Joins collections an evaluation role scores together: their rows in the order given,
  * their cell counts summed per country and row kind, and the collection each came from.
  *

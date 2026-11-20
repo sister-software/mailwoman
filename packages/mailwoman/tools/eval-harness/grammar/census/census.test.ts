@@ -1,11 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { buildFSTEmissionPriors, findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { describe, expect, it } from "vitest"
 
+import { buildFixtureFST } from "#test-kit/fst-fixture"
 import {
 	completeSpanRegistryReceipt,
 	detectC6Violations,
+	fstVotes,
+	maximumVote,
 	gradeBoundaryTruth,
 	locateUniqueComponentTruth,
 	spansFromBIO,
@@ -183,5 +187,49 @@ describe("C6 census aggregation", () => {
 		})
 
 		expect(receipt.referentialDelta).toBeCloseTo(-0.2)
+	})
+})
+
+describe("fstVotes", () => {
+	it("attributes the same per-tag maximum the FST emission prior applies", () => {
+		const fst = buildFixtureFST([
+			{ wofID: 1, placetype: "locality", name: "Springfield", referential: 0.6, parentChain: [] },
+			{ wofID: 2, placetype: "neighbourhood", name: "Springfield", referential: 0.9, parentChain: [] },
+			{ wofID: 3, placetype: "neighbourhood", name: "Springfield Road", referential: 0.95, parentChain: [] },
+			{ wofID: 4, placetype: "region", name: "Oak", referential: 0.5, parentChain: [] },
+			// One WOF id under two surfaces votes only at the first match that reaches it.
+			{ wofID: 5, placetype: "locality", name: "Oak", referential: 0.2, parentChain: [] },
+			{ wofID: 5, placetype: "locality", name: "Oak Springfield", referential: 0.2, parentChain: [] },
+		])
+
+		const words = ["▁Oak", "▁Spring", "field", "▁Road"]
+		let offset = 0
+
+		const pieces = words.map((piece) => {
+			const start = offset
+			offset += piece.length
+
+			return { piece, start, end: offset }
+		})
+
+		const labels = ["O", "B-locality", "I-locality", "B-region", "I-region", "B-street", "I-street"]
+		const matrix = buildFSTEmissionPriors(fst, pieces, labels)
+		const votes = fstVotes(findFSTAcceptedMatches(fst, pieces), pieces)
+
+		expect(votes.filter((vote) => vote.entry.wofID === 5)).toHaveLength(1)
+		expect(votes.some((vote) => vote.entry.wofID === 3)).toBe(false)
+
+		for (const [piece] of pieces.entries()) {
+			for (const tag of ["locality", "region"]) {
+				const { vote } = maximumVote(votes, tag, piece, piece + 1)
+
+				const applied = Math.max(
+					matrix[piece]![labels.indexOf(`B-${tag}`)]!,
+					matrix[piece]![labels.indexOf(`I-${tag}`)]!
+				)
+
+				expect(applied).toBeCloseTo(vote ? vote.entry.referential * 3 : 0)
+			}
+		}
 	})
 })

@@ -8,8 +8,18 @@
  * They do not score, repair, or replace it.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { PLACETYPE_TO_BIO, type FSTAcceptedMatch, type FSTPlaceEntryLike } from "@mailwoman/neural/fst-prior"
+import type { DecodeExplanation } from "@mailwoman/neural/decode-explanation"
+import {
+	groupPiecesIntoWords,
+	isStreetShapedSurface,
+	PLACETYPE_TO_BIO,
+	type FSTAcceptedMatch,
+	type FSTMatcherLike,
+	type FSTPlaceEntryLike,
+} from "@mailwoman/neural/fst-prior"
+import { softmax } from "@mailwoman/neural/viterbi"
 
 export interface CensusSpan {
 	tag: string
@@ -326,5 +336,312 @@ export function summarizeC6(rows: ReadonlyArray<C6RowReport>): C6CensusSummary {
 		truePositive: violations.filter((violation) => violation.grade === "true_positive").length,
 		falsePositive: violations.filter((violation) => violation.grade === "false_positive").length,
 		unclassified: violations.filter((violation) => violation.grade === "unclassified").length,
+	}
+}
+
+/**
+ * A run of contiguous pieces the decoder labels differently when the FST prior
+ * is removed and every other term is kept.
+ */
+export interface FSTFlipSpan {
+	startPiece: number
+	endPiece: number
+	/**
+	 * The tag decoded with the FST prior.
+	 */
+	withFST: string
+	/**
+	 * The tag decoded without it.
+	 */
+	withoutFST: string
+}
+
+/**
+ * Groups the FST ledger entry's changed pieces into runs that share one tag pair.
+ *
+ * Null when the parse has no explanation, because absent evidence isn't an empty flip set.
+ * A run whose two tags are equal changed only a span boundary.
+ */
+export function fstFlipSpans(explanation: DecodeExplanation | null): FSTFlipSpan[] | null {
+	if (!explanation) return null
+
+	const changes = explanation.ledger.find((entry) => entry.prior === "fst")?.changes ?? []
+	const spans: FSTFlipSpan[] = []
+
+	for (const change of changes.toSorted((a, b) => a.piece - b.piece)) {
+		const withFST = bareBIOTag(change.from)
+		const withoutFST = bareBIOTag(change.to)
+		const previous = spans.at(-1)
+
+		if (
+			previous?.endPiece === change.piece &&
+			previous.withFST === withFST &&
+			previous.withoutFST === withoutFST &&
+			!change.from.startsWith("B-")
+		) {
+			previous.endPiece = change.piece + 1
+		} else {
+			spans.push({ startPiece: change.piece, endPiece: change.piece + 1, withFST, withoutFST })
+		}
+	}
+
+	return spans
+}
+
+/**
+ * One FST entry that biases a tag at one accepted match.
+ */
+export interface FSTVote {
+	entry: FSTPlaceEntryLike
+	tag: string
+	startPiece: number
+	endPiece: number
+}
+
+/**
+ * Replays which entry votes at which match, under the attribution rules of
+ * `buildFSTEmissionPriors`: each WOF id votes only at the first match that reaches it,
+ * an entry votes for its {@linkcode PLACETYPE_TO_BIO} tag, and the mapped `localadmin`
+ * and `neighbourhood` tiers don't vote on a street-shaped surface.
+ *
+ * It reads `PLACETYPE_TO_BIO` at call time and ignores the street-context and anchor-region scales.
+ * Those scales set a vote's size and not which entry votes.
+ */
+export function fstVotes(
+	matches: ReadonlyArray<FSTAcceptedMatch>,
+	pieces: ReadonlyArray<{ piece: string }>
+): FSTVote[] {
+	const groups = groupPiecesIntoWords(pieces)
+	const seen = new Set<number>()
+	const votes: FSTVote[] = []
+
+	for (const match of matches) {
+		const surface = groups
+			.slice(match.startWord, match.endWord)
+			.filter((group) => group.fstToken !== "")
+			.map((group) => group.fstToken)
+
+		const streetShaped = isStreetShapedSurface(surface)
+
+		for (const entry of match.entries) {
+			if (seen.has(entry.wofID)) continue
+			seen.add(entry.wofID)
+			const tag = PLACETYPE_TO_BIO.get(entry.placetype)
+
+			if (!tag) continue
+
+			if (streetShaped && (entry.placetype === "localadmin" || entry.placetype === "neighbourhood")) continue
+
+			votes.push({ entry, tag, startPiece: match.startPiece, endPiece: match.endPiece })
+		}
+	}
+
+	return votes
+}
+
+/**
+ * The vote with the highest referential for `tag` among the votes whose match overlaps
+ * the pieces, and the count of votes for `tag` that overlap them.
+ *
+ * The bias on a piece is the maximum over its votes, so this entry sets it
+ * unless a context scale shrank its match.
+ * Compare with the ledger's cell to tell.
+ */
+export function maximumVote(
+	votes: ReadonlyArray<FSTVote>,
+	tag: string,
+	startPiece: number,
+	endPiece: number
+): { vote: FSTVote | null; count: number } {
+	const covering = votes.filter((vote) => vote.tag === tag && vote.startPiece < endPiece && vote.endPiece > startPiece)
+
+	let best: FSTVote | null = null
+
+	for (const vote of covering) {
+		if (!best || vote.entry.referential > best.entry.referential) {
+			best = vote
+		}
+	}
+
+	return { vote: best, count: covering.length }
+}
+
+/**
+ * The largest FST emission change on the `B-` or `I-` label of `tag` over the pieces,
+ * read from the decode explanation's ledger, or null when the FST changed none of those cells.
+ */
+export function fstBiasOn(
+	explanation: DecodeExplanation | null,
+	tag: string,
+	startPiece: number,
+	endPiece: number
+): number | null {
+	const cells = explanation?.ledger.find((entry) => entry.prior === "fst")?.cells ?? []
+	let best: number | null = null
+
+	for (const cell of cells) {
+		if (cell.piece < startPiece || cell.piece >= endPiece) continue
+
+		if (cell.label !== `B-${tag}` && cell.label !== `I-${tag}`) continue
+
+		if (best === null || cell.delta > best) {
+			best = cell.delta
+		}
+	}
+
+	return best
+}
+
+/**
+ * The locale head's reading: its top country, that country's probability, and every country's probability.
+ */
+export interface LocaleHeadReading {
+	country: string
+	confidence: number
+	probabilities: Record<string, number>
+}
+
+/**
+ * Reads the locale head's softmax, or null for a model without the head.
+ */
+export function localeHeadReading(
+	localeLogits: readonly number[] | null,
+	localeCountries: readonly string[] | null
+): LocaleHeadReading | null {
+	if (!localeLogits || !localeCountries || localeLogits.length !== localeCountries.length) return null
+
+	const softmaxed = softmax(localeLogits)
+	const probabilities: Record<string, number> = {}
+	let country = localeCountries[0]!
+	let confidence = -1
+
+	for (const [index, code] of localeCountries.entries()) {
+		const probability = softmaxed[index]!
+		probabilities[code] = probability
+
+		if (probability > confidence) {
+			confidence = probability
+			country = code
+		}
+	}
+
+	return { country, confidence, probabilities }
+}
+
+/**
+ * A character span of component truth.
+ */
+export type TruthSpan = Pick<LocatedTruthSpan, "tag" | "start" | "end">
+
+/**
+ * The truth tag over a character range: the tag of the one truth span it overlaps.
+ *
+ * With `complete` truth, a range that overlaps none is `O`.
+ * Partial truth leaves it null, as it leaves a range that overlaps two spans.
+ */
+export function truthTagForRange(
+	truth: ReadonlyArray<TruthSpan>,
+	start: number,
+	end: number,
+	complete: boolean
+): string | null {
+	const overlapping = truth.filter((span) => span.start < end && span.end > start)
+
+	if (overlapping.length === 1) return overlapping[0]!.tag
+
+	if (!overlapping.length && complete) return "O"
+
+	return null
+}
+
+/**
+ * Whether the FST's change moved a span toward the truth tag, away from it, or neither.
+ */
+export type FlipGrade = "helped" | "hurt" | "neither" | "unclassified"
+
+export function gradeFlip(withFST: string, withoutFST: string, truthTag: string | null): FlipGrade {
+	if (truthTag === null) return "unclassified"
+
+	if (withFST === truthTag && withoutFST !== truthTag) return "helped"
+
+	if (withoutFST === truthTag && withFST !== truthTag) return "hurt"
+
+	return "neither"
+}
+
+/**
+ * The truth tag of each piece with word content, null for a blank piece or ungraded truth.
+ */
+export function pieceTruthTags(
+	pieces: ReadonlyArray<{ start: number; end: number }>,
+	text: string,
+	truth: ReadonlyArray<TruthSpan>,
+	complete: boolean
+): Array<string | null> {
+	return pieces.map((piece) =>
+		text.slice(piece.start, piece.end).trim() ? truthTagForRange(truth, piece.start, piece.end, complete) : null
+	)
+}
+
+/**
+ * How a second decode of one row differs from the first against piece truth.
+ */
+export interface PathMove {
+	/**
+	 * The pieces whose tag differs between the two decodes.
+	 */
+	changedPieces: number[]
+	/**
+	 * Changed pieces the second decode tags as the truth does and the first doesn't.
+	 */
+	gained: number
+	/**
+	 * Changed pieces the first decode tags as the truth does and the second doesn't.
+	 */
+	lost: number
+}
+
+export function comparePaths(
+	first: readonly string[],
+	second: readonly string[],
+	truth: ReadonlyArray<string | null>
+): PathMove {
+	const changedPieces: number[] = []
+	let gained = 0
+	let lost = 0
+
+	for (const [index, label] of first.entries()) {
+		const before = bareBIOTag(label)
+		const after = bareBIOTag(second[index] ?? "O")
+
+		if (before === after) continue
+		changedPieces.push(index)
+		const expected = truth[index]
+
+		if (expected == null) continue
+
+		if (after === expected) {
+			gained++
+		} else if (before === expected) {
+			lost++
+		}
+	}
+
+	return { changedPieces, gained, lost }
+}
+
+/**
+ * Wraps an FST matcher so every accepting state returns `transform` of its entries.
+ *
+ * The walk is unchanged, so only which entries vote and with what referential can differ.
+ */
+export function transformFSTEntries(
+	fst: FSTMatcherLike,
+	transform: (entries: FSTPlaceEntryLike[]) => FSTPlaceEntryLike[]
+): FSTMatcherLike {
+	return {
+		walk: (tokens) => fst.walk(tokens),
+		walkFrom: (previous, token) => fst.walkFrom(previous, token),
+		accepting: (stateID) => transform(fst.accepting(stateID)),
 	}
 }
