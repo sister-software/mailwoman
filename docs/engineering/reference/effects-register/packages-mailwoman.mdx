@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 393 of the group's 779 library and tool modules.
+This page lists 395 of the group's 781 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -1772,6 +1772,21 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `DatabaseClient`     | `unresolved (call)`     | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
+## `packages/mailwoman/tools/dev-tools/grammar/fst-namesake-census.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `calls the effect interface DatabaseClient at module scope`
+- `awaits at module scope`
+- `runs a statement at module scope`, 3 times
+
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| read  | `DatabaseClient`      | `unresolved (other)`    | 1     |
+| read  | `readLocalTextFile`   | `unresolved (property)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (template)` | 1     |
+| write | `writeLocalJSONLFile` | `unresolved (template)` | 1     |
+
 ## `packages/mailwoman/tools/dev-tools/grammar/number-shape-census.run.ts`
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
@@ -1898,6 +1913,19 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | -------------------- | ----------------------- | ----- |
 | write | `DatabaseClient`     | `unresolved (other)`    | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
+
+## `packages/mailwoman/tools/dev-tools/locality/sibling-locality-census.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 4 times
+- `awaits at module scope`, 2 times
+
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| read  | `readLocalTextFile`   | `unresolved (property)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (template)` | 1     |
+| write | `writeLocalJSONLFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/locality/stratified-panel.run.ts`
 
