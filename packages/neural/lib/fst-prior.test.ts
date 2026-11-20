@@ -340,10 +340,7 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("leaves spaces intact (Zs, not punctuation) — hyphen/space equivalence comes from the caller's split-then-join", () => {
-		const stockton = normalizeFSTToken("Stockton")
-		const on = normalizeFSTToken("on")
-		const tees = normalizeFSTToken("Tees")
-		expect(stockton + on + tees).toBe("stocktonontees")
+		expect(normalizeFSTToken("Stockton on Tees")).toBe("stockton on tees")
 	})
 
 	it("Preserves diacritics (Álava → álava, not alava)", () => {

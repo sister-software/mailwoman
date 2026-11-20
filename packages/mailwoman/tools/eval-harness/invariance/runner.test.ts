@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest"
 
 import { type InvarianceRow, loadSuite } from "#tools/eval-harness/invariance/fixtures"
-import type { ParseFn } from "#tools/eval-harness/invariance/parser"
+import { COUNTRY_TO_LOCALE, type ParseFn } from "#tools/eval-harness/invariance/parser"
 import { runInvarianceSuite } from "#tools/eval-harness/invariance/runner"
 
 describe("loadSuite", () => {
@@ -25,11 +25,13 @@ describe("loadSuite", () => {
 		}
 	})
 
-	it("spans all four target countries", async () => {
+	it("names only countries that have a locale entry", async () => {
+		// An unlisted country falls back to `en-US` without an error.
 		const rows = await loadSuite()
-		const countries = new Set(rows.map((r) => r.country))
+		const countries = [...new Set(rows.map((r) => r.country))]
 
-		expect(countries).toEqual(new Set(["US", "FR", "DE", "GB"]))
+		expect(countries.length).toBeGreaterThan(0)
+		expect(countries.filter((country) => !(country in COUNTRY_TO_LOCALE))).toEqual([])
 	})
 
 	it("every declared transform id is a real transform (no fixture typos)", async () => {

@@ -80,7 +80,6 @@ describe("readWorkspaceDirectories", () => {
 		expect(directories).toContain("docs")
 		expect(directories).toContain("packages/core")
 		expect(directories).toContain("packages/earth")
-		expect(directories.length).toBeGreaterThanOrEqual(70)
 		await expect(isRegisteredWorkspace(repoRootPath(), "packages/core")).resolves.toBe(true)
 		await expect(isRegisteredWorkspace(repoRootPath(), "packages/nowhere")).resolves.toBe(false)
 		await expect(retiredWorkspaceDirectories(repoRootPath())).resolves.not.toContain("packages/trainer")

@@ -94,8 +94,9 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 		await expect(lookup.findPlace({ text: "*", placetype: "postalcode" })).resolves.toEqual([])
 	})
 
-	test("`abc*xyz*` strips embedded * and keeps trailing → prefix `abcxyz*`", async () => {
-		await expect(lookup.findPlace({ text: "abc*xyz*", placetype: "postalcode" })).resolves.toBeInstanceOf(Array)
+	test("`62*70*` strips embedded * and keeps trailing → prefix `6270*`", async () => {
+		const r = await lookup.findPlace({ text: "62*70*", placetype: "postalcode", limit: 10 })
+		expect(r.map((c) => c.name).toSorted()).toEqual(["62701", "62702"])
 	})
 })
 

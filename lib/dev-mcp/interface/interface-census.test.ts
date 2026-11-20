@@ -13,7 +13,7 @@
  *   These pin that they stay distinguishable.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { STRICT_DEPENDENTS, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
 import { censusTrees, type InterfaceRow } from "#dev-mcp/interface/census"
@@ -60,16 +60,7 @@ describe("censusTrees", () => {
 		// Otherwise the report is a list of what happened with no way to see what didn't.
 		const census = censusTrees([row("plain", "Alburgh, VT", [node("locality", "Alburgh")])])
 
-		expect(census.stranding.map((entry) => entry.tag).toSorted()).toEqual([
-			"attention",
-			"cedex",
-			"dependent_locality",
-			"house_number",
-			"street_prefix",
-			"street_prefix_particle",
-			"street_suffix",
-			"unit",
-		])
+		expect(census.stranding.map((entry) => entry.tag).toSorted()).toEqual([...STRICT_DEPENDENTS].toSorted())
 	})
 
 	it("counts a tag once per row however many nodes carry it", () => {

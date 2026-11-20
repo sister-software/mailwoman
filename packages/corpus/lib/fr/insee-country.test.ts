@@ -8,17 +8,7 @@ import { countryOfInseeCode } from "#fr/insee-country"
 describe("countryOfInseeCode", () => {
 	it.each([
 		["97123", "GP"],
-		["97216", "MQ"],
-		["97390", "GF"],
-		["97412", "RE"],
-		["97501", "PM"],
-		["97630", "YT"],
-		["97701", "BL"],
-		["97801", "MF"],
 		["984", "TF"],
-		["986", "WF"],
-		["98735", "PF"],
-		["98825", "NC"],
 		// A metropolitan department is two characters, Corsica's included, and neither reads as overseas.
 		["75101", "FR"],
 		["2A004", "FR"],

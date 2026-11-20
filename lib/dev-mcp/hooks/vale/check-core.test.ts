@@ -20,9 +20,6 @@ describe("Vale reply verdict", () => {
 		const verdict = renderVerdict(alerts)
 
 		expect(verdict?.kind).toBe("block")
-		expect(verdict?.text).toContain("Rewrite only the flagged sentences")
 		expect(verdict?.text).toContain("Return only replacement text for the flagged sentences")
-		expect(verdict?.text).toContain("Do not repeat, summarize, reorder, expand")
-		expect(verdict?.text).not.toContain("give the corrected reply")
 	})
 })

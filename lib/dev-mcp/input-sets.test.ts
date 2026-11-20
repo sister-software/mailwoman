@@ -166,7 +166,7 @@ describe("resolveInputSet — parity", () => {
 		// into the denominator, so `parity-corpus.ts` filters `!dropped && expect`.
 		const set = await resolveInputSet({ kind: "parity" })
 
-		expect(set.n).toBe(321)
+		expect(set.inputs.every((row) => row.expectComponents != null)).toBe(true)
 		expect(set.notes.join(" ")).toContain("tombstones skipped")
 	})
 

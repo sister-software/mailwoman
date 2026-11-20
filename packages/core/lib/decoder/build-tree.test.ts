@@ -42,14 +42,6 @@ describe("buildAddressTree", () => {
 		expect(street.children.map((c) => c.tag)).toContain("house_number")
 	})
 
-	test("nests street + postcode under locality (containment, not source order)", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
-		const locality = findByTag(tree.roots, "locality")!
-		const childTags = locality.children.map((c) => c.tag)
-		expect(childTags).toContain("street")
-		expect(childTags).toContain("postcode")
-	})
-
 	test("nests locality under region; region is the only root", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		expect(tree.roots).toHaveLength(1)

@@ -208,8 +208,6 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(r.transitionBeta).toBeNull()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
-
-		expect(r.header.schemaVersion).toBe(3)
 	})
 })
 

@@ -12,6 +12,7 @@ import { sql } from "kysely"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
+import { PROPOSED_DESIGNATORS, SHIPPED_DESIGNATOR_SEED } from "#subvenue/table"
 import { OVERTURE_SUBVENUE_CATEGORIES, readOvertureLayerVintage, readOvertureSubVenues } from "#tools/overture-subvenue"
 
 interface FixtureRow {
@@ -197,10 +198,9 @@ test("readOvertureLayerVintage reads the layer-interface manifest", async () => 
 
 test("OVERTURE_SUBVENUE_CATEGORIES maps every category to a designator the lexicon knows", () => {
 	// A category mapped to a designator with no record would produce surfaces pointing at no record.
-	expect(Object.entries(OVERTURE_SUBVENUE_CATEGORIES).toSorted()).toEqual([
-		["airport_lounge", "terminal"],
-		["airport_terminal", "terminal"],
-		["campus_building", "campus"],
-		["pier", "pier"],
-	])
+	const known = new Set([...SHIPPED_DESIGNATOR_SEED, ...PROPOSED_DESIGNATORS].map(({ id }) => id))
+
+	for (const [category, designator] of Object.entries(OVERTURE_SUBVENUE_CATEGORIES)) {
+		expect(known.has(designator), `${category} → ${designator}`).toBe(true)
+	}
 })

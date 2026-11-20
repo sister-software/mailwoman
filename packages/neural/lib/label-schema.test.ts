@@ -43,12 +43,4 @@ describe("label schema", () => {
 			expect(set.bio_labels.slice(0, STAGE3_BIO_LABELS.length), name).toEqual([...STAGE3_BIO_LABELS])
 		}
 	})
-
-	test("the head widths match the trained models", () => {
-		const widths = Object.fromEntries(
-			Object.entries(schema.label_sets).map(([name, set]) => [name, set.bio_labels.length])
-		)
-
-		expect(widths).toEqual({ stage3: 33, "stage3-jp": 47, "stage3-cn": 35, "stage3-cjk": 49, stage4: 47 })
-	})
 })

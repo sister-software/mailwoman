@@ -11,6 +11,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { describe, expect, test } from "vitest"
 
+import { DECISIVE_MARGIN_LOG10 } from "#ablation/expectation"
 import { coarserAnswerMarker, declaredAmbiguityMarker } from "#query-intent"
 
 interface PlaceFixture {
@@ -75,7 +76,7 @@ describe("declaredAmbiguityMarker", () => {
 		expect(marker!.kind).toBe("bare_toponym")
 		expect(marker!.mechanism).toBe("resolver:dominance_margin")
 		expect(marker!.evidence?.["margin"]).toBeCloseTo(0.05, 4)
-		expect(marker!.evidence?.["decisiveMarginLog10"]).toBe(0.5)
+		expect(marker!.evidence?.["decisiveMarginLog10"]).toBe(DECISIVE_MARGIN_LOG10)
 		expect(marker!.evidence?.["distinctPlaces"]).toBe(3)
 		expect(marker!.evidence?.["runnerUp"]).toMatchObject({ name: "Springfield" })
 	})

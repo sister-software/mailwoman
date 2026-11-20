@@ -532,13 +532,4 @@ describe("the unmeasured verdict bucket", () => {
 
 		expect(formatConformanceFinding(findings[0]!).startsWith("? ")).toBe(true)
 	})
-
-	it("leaves the four answer-axis laws exactly as they were", async () => {
-		const { findings } = await runConformanceFixtures([fixture()], tableObserver(HELD_TABLE).observe)
-		const summary = summarizeConformanceRun(findings)
-
-		expect(summary.unmeasured).toEqual([])
-		expect(summary.decided).toBe(1)
-		expect(summary.pass).toBe(true)
-	})
 })

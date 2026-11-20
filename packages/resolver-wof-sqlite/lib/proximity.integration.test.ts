@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { bboxAround } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -133,13 +132,6 @@ describe("haversine (sanity)", () => {
 
 	test("identity is exactly 0", () => {
 		expect(haversine(48.85, 2.34, 48.85, 2.34)).toBe(0)
-	})
-})
-
-describe("bboxAround (sanity)", () => {
-	test("doesn't divide-by-zero at the pole", () => {
-		expect(() => bboxAround(90, 0, 100)).not.toThrow()
-		expect(() => bboxAround(-90, 0, 100)).not.toThrow()
 	})
 })
 

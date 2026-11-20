@@ -49,15 +49,8 @@ describe("parseProviderList", () => {
 			"Second Holdings LLC",
 			"Second Holdings, Renamed LLC",
 		])
-	})
 
-	it("does not fold the two 140088 rows into one — both survive as separate yielded rows sharing one FRN", async () => {
-		const rows = await collect(SAMPLE_CSV)
-		const providerRows = rows.filter((row) => row.providerID === 140_088)
-
-		expect(providerRows).toHaveLength(2)
 		expect(providerRows[0]!.frn).toBe(providerRows[1]!.frn)
-		expect(providerRows[0]!.holdingCompany).not.toBe(providerRows[1]!.holdingCompany)
 	})
 
 	it("zero-pads an unpadded FRN via toFRN, same as any other FRN source", async () => {

@@ -12,7 +12,11 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it, vi } from "vitest"
 
-import { attributionReport, renderAttributionReport } from "#cli/native/commands/license/attribution"
+import {
+	attributionReport,
+	KNOWN_WEIGHTS_PACKAGES,
+	renderAttributionReport,
+} from "#cli/native/commands/license/attribution"
 
 describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
@@ -22,7 +26,7 @@ describe("attributionReport", () => {
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
-		expect(report.packages.length + report.notInstalled.length).toBe(12)
+		expect(report.packages.length + report.notInstalled.length).toBe(KNOWN_WEIGHTS_PACKAGES.length)
 	})
 
 	it("carries a base package's entries under the overlay that decodes through it", async () => {

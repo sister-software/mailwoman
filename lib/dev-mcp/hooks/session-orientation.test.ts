@@ -8,6 +8,7 @@
 
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { orientationListing } from "#dev-mcp/hooks/session-orientation"
@@ -33,11 +34,13 @@ beforeAll(async () => {
 })
 
 describe("orientationListing", () => {
-	it("names every workspace", () => {
+	it("names every workspace", async () => {
+		const workspaces = await readWorkspaceDirectories(REPO_ROOT)
+		// A header and a blank line precede one line per workspace.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- one listing, already resident and bounded by the budget.
-		const lines = listing.split("\n").filter((line) => line.includes(": "))
+		const lines = listing.split("\n").slice(2)
 
-		expect(lines.length).toBeGreaterThanOrEqual(70)
+		expect(lines).toHaveLength(workspaces.length)
 		expect(listing).toContain("@mailwoman/core:")
 		expect(listing).toContain("@mailwoman/earth (private):")
 	})

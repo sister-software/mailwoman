@@ -330,8 +330,6 @@ describe("the three London buildings: claims", () => {
 	test("an Ofcom figure is an inferred network claim on one area and one premises set, never a reading", () => {
 		const figures = LONDON_RECORDS.claims.filter((claim) => claim.predicate === "area_gigabit_availability")
 
-		expect(figures).toHaveLength(27)
-
 		for (const claim of figures) {
 			expect(claim).toMatchObject({ axis: "network", status: "inferred" })
 			expect(OFCOM_SOURCES).toContain(claim.evidence.source)

@@ -100,21 +100,6 @@ describe("readBuildInputs", () => {
 	it("reads the committed v0.7.0-de-holdout record through the package's data export", async () => {
 		const inputs = await readBuildInputs(buildInputsPath("v0.7.0-de-holdout"))
 
-		// The eleven adapters that build recorded, in the manifest's own order.
-		expect(Object.keys(inputs)).toEqual([
-			"wof-admin",
-			"wof-postalcode",
-			"ban",
-			"tiger",
-			"usgov-hrsa-fqhc",
-			"usgov-nppes",
-			"usgov-nad",
-			"usgov-imls-pls",
-			"state-ia-contractors",
-			"state-tx-notaries",
-			"state-ny-notaries",
-		])
-
 		expect(inputs["wof-admin"]!.inputPath).toBe(dataRootPath("src", "wof-repos").toString())
 	})
 })

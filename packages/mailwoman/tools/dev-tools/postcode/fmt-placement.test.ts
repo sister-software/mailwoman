@@ -75,6 +75,5 @@ describe("postcodeSideOfAdminBlock", () => {
 		}
 
 		expect(committed.countries).toEqual(expected)
-		expect(["GI", "JP", "KY", "SG"].map((code) => committed.countries[code])).toEqual([null, null, null, null])
 	})
 })

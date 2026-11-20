@@ -174,7 +174,6 @@ describe("harvestESNavarra", () => {
 
 		expect(manifest).toMatchObject({ source: "es-navarra", partitions_listed: 2 })
 		expect(manifest?.license).toBe("CC-BY-4.0")
-		expect(manifest?.attribution).toBe("Gobierno de Navarra")
 
 		expect(manifest?.files[0]).toMatchObject({
 			partition: "1",

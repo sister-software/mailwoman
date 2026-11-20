@@ -44,9 +44,8 @@ describe("the committed address-source register", () => {
 		register = await readAddressSourceRegister()
 	})
 
-	it("carries every jurisdiction, whether or not research found a source", () => {
-		expect(register.jurisdictions).toHaveLength(250)
-		expect(new Set(register.jurisdictions.map((row) => row.iso2)).size).toBe(250)
+	it("carries each jurisdiction once, whether or not research found a source", () => {
+		expect(new Set(register.jurisdictions.map((row) => row.iso2)).size).toBe(register.jurisdictions.length)
 		expect(register.jurisdictions.some((row) => row.iso2 === "XK")).toBe(true)
 	})
 

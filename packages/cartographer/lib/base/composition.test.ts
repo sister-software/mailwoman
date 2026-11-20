@@ -148,8 +148,11 @@ test("Composer: footprint layers read a separate buildings source when the style
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
 	const a = new StyleSpecificationComposer({ sources: {} })
-	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers).toHaveLength(baseCount)
-	expect(a.layers).toHaveLength(baseCount)
+	const baseIDs = b.layers.map((layer) => layer.id)
+
+	a.layersList.insert({ id: "mw-only-in-a", type: "background", paint: {}, afterID: baseIDs[0]! })
+
+	expect(a.layers.map((layer) => layer.id)).toContain("mw-only-in-a")
+	expect(b.layers.map((layer) => layer.id)).toEqual(baseIDs)
 })

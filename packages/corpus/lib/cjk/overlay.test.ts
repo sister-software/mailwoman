@@ -95,11 +95,7 @@ async function writeJSONL(path: string, rows: readonly CNUnitsRow[]) {
 }
 
 describe("toCNRecord", () => {
-	it("takes country CN and register cn-units", () => {
-		const record = toCNRecord(CN_ROW)
-
-		expect(record.country).toBe("CN")
-		expect(record.register).toBe("cn-units")
+	it("takes the cn-units source when the row states none", () => {
 		expect(toCNRecord({ ...CN_ROW, source: null }).source).toBe("coarse-placer-cn-units")
 	})
 

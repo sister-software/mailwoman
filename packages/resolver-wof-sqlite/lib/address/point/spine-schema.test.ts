@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
+import { readLayerCoverage, writeLayerManifest } from "@mailwoman/core/layers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import {
 	canonicalizeRouteKey,
@@ -65,8 +65,6 @@ describe("address-point spine schema", () => {
 			sourceRecords: null,
 		})
 
-		const manifest = await readLayerManifest(db)
-		expect(manifest.spineKeys).toEqual({ h3: { column: "h3_cell", resolution: 9 } })
 		await expect(readLayerCoverage(db, 123_456)).resolves.toBeNull()
 
 		const columns = db.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>

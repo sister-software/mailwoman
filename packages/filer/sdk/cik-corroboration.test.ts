@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CIKCorroborationBasis, corroborateCIK, TELECOM_SIC_CODES } from "#sdk/cik-corroboration"
+import { CIKCorroborationBasis, corroborateCIK } from "#sdk/cik-corroboration"
 import { toCIK, type CIK } from "#sdk/edgar/filings"
 
 const cik = (value: string): CIK => toCIK(value)!
@@ -96,12 +96,10 @@ describe("corroborateCIK — abstention is not denial", () => {
 })
 
 describe("the allowlist itself", () => {
-	it("is enumerated, not a 48xx prefix test — 4899 is in, 4813 is in, 4899's neighbors are not", () => {
-		expect(TELECOM_SIC_CODES.has("4813")).toBe(true)
-		expect(TELECOM_SIC_CODES.has("4899")).toBe(true)
+	it("is enumerated, not a 48xx prefix test — 4899's neighbors are rejected", () => {
 		// A 48xx prefix rule would accept these codes.
-		expect(TELECOM_SIC_CODES.has("4800")).toBe(false)
-		expect(TELECOM_SIC_CODES.has("4890")).toBe(false)
+		expect(corroborateCIK(cik("0001537054"), "4800").corroborated).toBe(false)
+		expect(corroborateCIK(cik("0001537054"), "4890").corroborated).toBe(false)
 	})
 
 	it("is overridable for another vertical without forking the check", () => {

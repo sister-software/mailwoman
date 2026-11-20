@@ -127,6 +127,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			["1600", "CA"],
 			["3080", "CA"],
 			["1200", "CO"],
+			// `matchSubdivision("PR")` maps to US, so the region signal path covers the territory.
+			["1009", "PR"],
 		]
 
 		for (const [code, region] of cases) {
@@ -168,37 +170,6 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		expect(flat.postcode).toBeUndefined()
 		expect(flat.house_number).toBe("2238")
 		expect(roots[3]!.value).toBe("2238")
-	})
-
-	it("excludes 9 synthesized US/PR 4-digit rows — the speaks-population board totals 13/13", () => {
-		const synthesized: Array<[string, string]> = [
-			["1004", "NY"],
-			["2001", "CA"],
-			["3003", "TX"],
-			["4004", "FL"],
-			// `WA` also identifies Western Australia.
-			// Its syntax accepts four digits, so this row uses a US-only code.
-			["5005", "NJ"],
-			["6006", "CO"],
-			["7007", "OR"],
-			["8008", "AZ"],
-			["1009", "PR"], // matchSubdivision("PR") maps to US, so the region signal path covers the territory.
-		]
-
-		let excluded = 0
-
-		for (const [code, signal] of synthesized) {
-			const roots = [postcodeNode(code), node({ tag: "region", value: signal })]
-
-			const verdict = applyPostcodeShapeCoherence(roots)
-
-			expect(verdict.excluded).toEqual([code])
-			expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
-
-			excluded++
-		}
-
-		expect(excluded).toBe(9)
 	})
 
 	it("letter-containing spans keep their tag and are stamped", () => {

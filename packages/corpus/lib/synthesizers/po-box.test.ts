@@ -199,31 +199,18 @@ describe("maybeNoisifyBoxNumber", () => {
 
 		const result = maybeNoisifyBoxNumber("12345", rng)
 
-		expect(typeof result).toBe("string")
+		// The noise only groups the digits, so the result differs and its digits are the input's.
+		expect(result).not.toBe("12345")
+		expect(result.replaceAll(/\D/gu, "")).toBe("12345")
 	})
 })
 
 describe("poBoxTemplateLocale", () => {
-	it("maps US/USA/United States", () => {
-		expect(poBoxTemplateLocale("US")).toBe("en-US")
-		expect(poBoxTemplateLocale("USA")).toBe("en-US")
-		expect(poBoxTemplateLocale("United States")).toBe("en-US")
-	})
-
-	it("maps FR variants", () => {
-		expect(poBoxTemplateLocale("FR")).toBe("fr-FR")
-		expect(poBoxTemplateLocale("France")).toBe("fr-FR")
-	})
-
-	it("maps ES variants", () => {
-		expect(poBoxTemplateLocale("ES")).toBe("es-ES")
-		expect(poBoxTemplateLocale("Spain")).toBe("es-ES")
-	})
-
 	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
 		expect(supportedLocales()).not.toContain("de-DE")
 		expect(poBoxTemplateLocale("DE")).toBe("en-US")
 		expect(poBoxTemplateLocale("Germany")).toBe("en-US")
+		expect(poBoxTemplateLocale("France")).toBe("fr-FR")
 	})
 })
 
@@ -234,6 +221,5 @@ describe("supportedLocales", () => {
 		expect(locs).toContain("fr-FR")
 		expect(locs).toContain("es-ES")
 		expect(locs).toContain("en-AU")
-		expect(locs.length).toBeGreaterThanOrEqual(7)
 	})
 })

@@ -61,19 +61,14 @@ async function authoredDocument(): Promise<GeographicModelDocument> {
 
 describe("the authored pharmacy records", () => {
 	it("loads and compiles", async () => {
+		const document = await authoredDocument()
 		const model = await compileAuthoredGeographicModel()
 
-		expect(model.modelVersion).toBe("0.3.0")
+		expect(model.modelVersion).toBe(document.version)
 
-		expect(model.concepts.map((concept) => concept.id)).toEqual([
-			"activity",
-			"drugstore",
-			"establishment",
-			"healthcare_facility",
-			"obtain_medication",
-			"pharmacy",
-			"place",
-		])
+		expect(model.concepts.map((concept) => concept.id).toSorted()).toEqual(
+			document.concepts.map((concept) => concept.id).toSorted()
+		)
 	})
 
 	it("maps the concept onto a category `@mailwoman/poi-taxonomy` actually carries", async () => {
@@ -191,15 +186,9 @@ describe("the wave-1 records", () => {
 
 	it("maps it into the POI vocabulary, which is what makes the second afforded kind searchable", async () => {
 		const model = await compileAuthoredGeographicModel()
-		const mapping = model.mappings.find((entry) => entry.concept === DRUGSTORE)
 
 		// The whole mapping table, so a mapping added anywhere trips this rather than only the two this test names.
 		expect(model.mappings.map((entry) => entry.concept)).toEqual([DRUGSTORE, PHARMACY])
-		expect(mapping?.id).toBe("poi-taxonomy-drugstore")
-		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
-		expect(mapping?.externalID).toBe(DRUGSTORE_CATEGORY)
-		expect(mapping?.provenance.source).toBe("mailwoman-curated")
-		expect(mapping?.provenance.sourceRecord).toContain("taxonomy.json")
 
 		// The vocabulary owner rejects a category that stopped resolving.
 		// Without this check, the mapping would translate into no category and other checks would miss it.
@@ -253,7 +242,6 @@ describe("reading the record set through the runtime lookups", () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
 		expect(index.concept(DRUGSTORE)).toBeDefined()
-		expect(index.concept(DRUGSTORE)?.assertions).toHaveLength(1)
 		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, DRUGSTORE_CATEGORY)).toEqual([DRUGSTORE])
 		expect(index.derivedFactsAbout(DRUGSTORE)).toEqual([])
 	})

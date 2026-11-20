@@ -155,11 +155,11 @@ describe("robustness interface", () => {
 		expect(r.suggestions).toHaveLength(1)
 	})
 
-	it("never throws on single-character input", () => {
-		expect(() => autocomplete(CITIES, ["n"])).not.toThrow()
+	it("completes a single-character query from the root", () => {
 		const r = autocomplete(CITIES, ["n"])
 
-		expect(r.suggestions.every((s) => typeof s.id === "number")).toBe(true)
+		expect(r.suggestions.length).toBeGreaterThan(0)
+		expect(r.suggestions.every((s) => s.tokens[0] === "new")).toBe(true)
 	})
 })
 

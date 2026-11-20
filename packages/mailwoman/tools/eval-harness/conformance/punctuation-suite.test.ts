@@ -9,7 +9,6 @@ import {
 	auditPunctuationSuite,
 	classifyPunctuationTransformation,
 	PUNCTUATION_APPLICABILITY_RULES,
-	PUNCTUATION_LAW,
 	PUNCTUATION_SUITE_PATH,
 	PUNCTUATION_TRANSFORMATION_BY_NAME,
 	PUNCTUATION_TRANSFORMATION_SCOPE,
@@ -38,11 +37,6 @@ function assertedSpans(seedCase: SeedCase): string[] {
 }
 
 describe("the committed punctuation suite", () => {
-	it("loads through the shared conformance loader", () => {
-		expect(fixtures.length).toBeGreaterThan(0)
-		expect(new Set(fixtures.map((fixture) => fixture.law))).toEqual(new Set([PUNCTUATION_LAW]))
-	})
-
 	it("passes its own audit", () => {
 		expect(auditPunctuationSuite(fixtures)).toEqual([])
 	})

@@ -162,17 +162,11 @@ describe("componentHrefs", () => {
 	it("returns each reference verbatim, because the key form differs per publisher", async () => {
 		const [address] = await features(CZ, "ad:Address")
 
+		// The third component in the fixture has `xlink:href=""`, which Brussels writes on 9 addresses, and is skipped.
 		expect(componentHrefs(address!)).toEqual([
 			"http://services.cuzk.cz/wfs/inspire-ad-wfs.asp?service=WFS&Id=TF.48674",
 			"http://services.cuzk.cz/wfs/inspire-ad-wfs.asp?service=WFS&Id=PD.66701",
 		])
-	})
-
-	it("skips an empty href, which Brussels writes on 9 addresses", async () => {
-		const [address] = await features(CZ, "ad:Address")
-
-		// The third component in the fixture has `xlink:href=""`.
-		expect(componentHrefs(address!)).toHaveLength(2)
 	})
 })
 

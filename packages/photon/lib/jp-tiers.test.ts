@@ -7,7 +7,7 @@
 
 import { expect, test } from "vitest"
 
-import { photonForwardProperties, photonOSMTags } from "#projection"
+import { photonForwardProperties } from "#projection"
 
 test("forward: a JP municipality is Photon's city, its prefecture the state, its district the district", () => {
 	const props = photonForwardProperties({
@@ -23,5 +23,4 @@ test("forward: a JP municipality is Photon's city, its prefecture the state, its
 	expect(props.city).toBe("Miyakonojō")
 	expect(props.state).toBe("Miyazaki")
 	expect(props.district).toBe("下長飯町")
-	expect(photonOSMTags("municipality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
 })

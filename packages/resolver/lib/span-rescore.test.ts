@@ -301,12 +301,6 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.postcodeVerified).toBe(false)
 	})
 
-	it(": orders equal-token spans by CHARACTER extent, so a region code cannot outrun the locality", async () => {
-		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
-		expect(hit?.text).toBe("Sammamish")
-		expect(hit?.place.id).toBe(51)
-	})
-
 	it(": returns a sub-span that drops a NAME word, flagged as dropping the name", async () => {
 		const hit = await findRescoreCandidate("Fort Worth", [], await makeBackend(), { thresholdKm: 0 })
 

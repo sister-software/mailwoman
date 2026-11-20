@@ -166,7 +166,7 @@ describe("DebugFrame", () => {
 			100
 		)
 
-		expect(focusedText).toContain("map") // focused pane title is highlighted + suffixed, e.g. "map ◀"
+		expect(focusedText).toContain("map ◀")
 	})
 
 	it("the ribbon losslessly reconstructs the input, connector text included", () => {

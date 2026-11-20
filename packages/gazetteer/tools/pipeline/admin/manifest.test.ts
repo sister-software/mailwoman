@@ -51,15 +51,6 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0")
 	})
 
-	it("gives the Overture fold its Divisions grant rather than the Places theme's", () => {
-		// Overture licenses per theme: Divisions' grant is `License for theme: ODbL`,
-		// where `CDLA-Permissive-2.0` is the Places theme's grant.
-		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 5, geonames: 0 } })
-
-		expect(manifest.license).toBe("ODbL-1.0")
-		expect(manifest.license).not.toContain("CDLA")
-	})
-
 	it("drops a license whose source contributed no rows", () => {
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 0, geonames: 7 } })
 

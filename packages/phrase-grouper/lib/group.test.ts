@@ -114,7 +114,7 @@ describe("scoreRegionAbbreviation", () => {
 
 	it("3-letter caps also match (e.g. TWN)", () => {
 		const out = scoreRegionAbbreviation(tokenizeSegment("Hsinchu TWN", 0), "Hsinchu TWN", true)
-		expect(findKind(out, "REGION_ABBREVIATION", "TWN")).toBeDefined()
+		expect(findKind(out, "REGION_ABBREVIATION", "TWN")).not.toBeNull()
 	})
 })
 

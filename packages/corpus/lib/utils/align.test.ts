@@ -470,29 +470,6 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		expect(byTag["region"]).toEqual([20, 26])
 	})
 
-	it("the Lake/AK natural-row case from the pilot scan", () => {
-		const result = alignRow(
-			baseRow({
-				raw: "Lake Dr, AK 99692",
-				components: { street: "Lake", street_suffix: "Dr", region: "AK", postcode: "99692" },
-			})
-		)
-
-		expect(result.kind).toBe("labeled")
-
-		if (result.kind !== "labeled") return
-		const { raw, span_starts, span_ends, span_tags } = result.row
-
-		for (let i = 0; i < span_tags!.length; i++) {
-			const surface = raw.slice(span_starts![i]!, span_ends![i]!)
-			expect(surface.trim()).toBe(surface)
-		}
-
-		const regionIdx = span_tags!.indexOf("region")
-		expect(raw.slice(span_starts![regionIdx]!, span_ends![regionIdx]!)).toBe("AK")
-		expect(span_starts![regionIdx]).toBe(9)
-	})
-
 	it("binds a value to the occurrence in its own case before a case-folded one", () => {
 		const result = alignRow(
 			baseRow({

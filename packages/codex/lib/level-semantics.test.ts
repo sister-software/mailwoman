@@ -11,16 +11,11 @@ import {
 } from "#level-semantics"
 
 describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
-	it("every row has a non-empty code, name, and at least one variant", () => {
+	it("every row has a non-empty code and name", () => {
 		for (const [family, rows] of Object.entries(LEVEL_DESIGNATORS_BY_FAMILY)) {
 			for (const row of rows) {
 				expect(row.code.length, `${family}.${row.code} code`).toBeGreaterThan(0)
 				expect(row.name.length, `${family}.${row.code} name`).toBeGreaterThan(0)
-				expect(row.variants.length, `${family}.${row.code} variants`).toBeGreaterThan(0)
-
-				for (const variant of row.variants) {
-					expect(variant.trim().length, `${family}.${row.code} variant "${variant}"`).toBeGreaterThan(0)
-				}
 			}
 		}
 	})

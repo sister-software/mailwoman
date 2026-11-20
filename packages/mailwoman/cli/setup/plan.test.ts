@@ -148,10 +148,10 @@ describe("setupCapabilities and nextInstallation", () => {
 
 		const next = nextInstallation(plan, "npx mailwoman")
 
-		expect(next[0]).toMatch(/^npx mailwoman data pull candidate {3}# 2\.9 GB$/u)
+		expect(next[0]).toMatch(/^npx mailwoman data pull candidate {3}# [\d.]+ \wB$/u)
 
 		expect(next[1]).toMatch(
-			/^npx mailwoman data pull us --only <state> {3}# one of 52 states, from .+ \(vi\) to .+ \(ca\)$/u
+			/^npx mailwoman data pull us --only <state> {3}# one of \d+ states, from .+ \(vi\) to .+ \(ca\)$/u
 		)
 
 		expect(installedBundles(plan)).toEqual(new Set())

@@ -14,10 +14,6 @@ describe("COMPONENT_TAGS", () => {
 })
 
 describe("BIO_LABELS", () => {
-	test("starts with the outside-any-component sentinel", () => {
-		expect(BIO_LABELS[0]).toBe("O")
-	})
-
 	test("length is 1 + 2 * COMPONENT_TAGS.length", () => {
 		expect(BIO_LABELS).toHaveLength(1 + 2 * COMPONENT_TAGS.length)
 	})

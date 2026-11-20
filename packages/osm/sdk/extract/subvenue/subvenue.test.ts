@@ -77,8 +77,10 @@ test("buildSubVenueSQL: reads aeroway bare on multipolygons and via hstore on po
 })
 
 test("buildSubVenueSQL: always selects other_tags wholesale for the name:<lang> harvest", () => {
-	expect(buildSubVenueSQL("points")).toContain("other_tags")
-	expect(buildSubVenueSQL("multipolygons")).toContain("other_tags")
+	// A bare column follows a space.
+	// Inside `hstore_get_value(other_tags,…)` the name follows a parenthesis.
+	expect(buildSubVenueSQL("points")).toMatch(/ other_tags(,| FROM )/)
+	expect(buildSubVenueSQL("multipolygons")).toMatch(/ other_tags(,| FROM )/)
 })
 
 test("buildSubVenueSQL: refuses a rule table with an OGRSQL-injecting value", () => {

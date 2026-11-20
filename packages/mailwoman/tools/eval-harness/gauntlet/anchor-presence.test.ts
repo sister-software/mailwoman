@@ -44,7 +44,8 @@ describe("the anchor-artifact presence assertion", () => {
 	it("REFUSES when a package declares a binary it does not have", async () => {
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
-		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/postcode-zz\.bin/)
+		// The message tags each missing binary with its locale.
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/zz-zz: postcode-zz\.bin/)
 	})
 
 	it("names the repair — the package's own link-dev-weights script", async () => {
@@ -85,15 +86,6 @@ describe("the anchor-artifact presence assertion", () => {
 		await writeLocalTextFile("", dir("tokenizer.model"))
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
-	})
-
-	it("reports EVERY missing package, not just the first", async () => {
-		// One fixture root cannot hold two locales' packages in the cache layout
-		// `resolveWeights` probes, so the multi-locale case is two calls against one root
-		// and the message must include a per-locale tag.
-		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
-
-		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)
 	})
 
 	it("skips a locale whose package does not resolve at all — a different failure with a different repair", async () => {

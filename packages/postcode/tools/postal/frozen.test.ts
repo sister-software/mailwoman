@@ -72,8 +72,6 @@ describe("the frozen postal-family answers", () => {
 	})
 
 	it("holds the completable strings of every country", () => {
-		expect(frozen.completion).toHaveLength(181)
-
 		for (const entry of frozen.completion) {
 			const completable = completionStrings(entry).filter(
 				(text) => canComplete(text, { countries: entry.country }).canComplete

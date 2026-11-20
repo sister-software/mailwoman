@@ -91,7 +91,7 @@ describe("the shipped constants", () => {
 	it("declares the publisher's own 54 generic types, and no more", () => {
 		// The data also uses the undeclared `N/A`, which the ingest records as observed but undeclared.
 		expect(GZT_DECLARED_CODES).toHaveLength(54)
-		expect(GZT_DECLARED_CODE_SET.size).toBe(54)
+		expect(GZT_DECLARED_CODE_SET.size).toBe(GZT_DECLARED_CODES.length)
 		expect(GZT_DECLARED_CODE_SET.has("N/A")).toBe(false)
 		expect(GZT_DECLARED_CODE_SET.has("R2")).toBe(true)
 	})

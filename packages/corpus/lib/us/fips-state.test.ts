@@ -1,14 +1,17 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { expect, test } from "vitest"
 
 import { lookupFipsState, lookupStateAbbreviation, US_FIPS_STATE, US_STATE_BY_ABBREVIATION } from "#us/fips-state"
 
 // #region US_FIPS_STATE table
 
-test("US_FIPS_STATE: covers exactly 50 states + DC + 5 territories (56 entries)", () => {
-	expect(Object.keys(US_FIPS_STATE)).toHaveLength(56)
+test("US_FIPS_STATE: covers the 50 states + DC + 5 territories the codex lists", () => {
+	const abbreviations = Object.values(US_FIPS_STATE).map((info) => info.abbreviation)
+
+	expect(abbreviations.toSorted()).toEqual(US_STATE_ABBREVIATIONS.toSorted())
 })
 
 test("US_FIPS_STATE: every abbreviation is unique", () => {

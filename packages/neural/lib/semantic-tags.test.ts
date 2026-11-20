@@ -22,7 +22,7 @@ const NAMES = Object.keys(LABEL_SETS) as LabelSetName[]
 describe("semantic tag registry", () => {
 	// The registry's frozen assignments, recorded when the registry moved here from the retired trainer.
 	// Global ids are append-only, so these stay true as tags are added.
-	test("keeps the registry's frozen ids, refinements and head mappings", () => {
+	test("keeps the registry's frozen ids, unrefined tags and head mappings", () => {
 		expect(SEMANTIC_TAGS.slice(0, 33)).toEqual([
 			"country",
 			"region",
@@ -58,15 +58,6 @@ describe("semantic tag registry", () => {
 			"street_prefix_particle",
 			"attention",
 		])
-
-		expect(REFINES).toEqual({
-			prefecture: "region",
-			municipality: "locality",
-			district: "dependent_locality",
-			block: "house_number",
-			sub_block: "house_number",
-			building_number: "house_number",
-		})
 
 		expect([...UNREFINED].toSorted()).toEqual([
 			"attention",

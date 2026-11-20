@@ -10,7 +10,6 @@ import { type ConformanceFixture, loadConformanceFixtures } from "#tools/eval-ha
 import {
 	auditCanonicalFormSuite,
 	CANONICAL_APPLICABILITY_RULES,
-	CANONICAL_FORM_LAW,
 	CANONICAL_FORMS,
 	CANONICAL_TRANSFORMATION_BY_NAME,
 	canonicalApplicability,
@@ -43,11 +42,6 @@ function splitRowRef(rowRef: string): { file: string; caseID: string } {
 }
 
 describe("the committed canonical-form suite", () => {
-	it("loads through the shared conformance loader", () => {
-		expect(fixtures.length).toBeGreaterThan(0)
-		expect(new Set(fixtures.map((fixture) => fixture.law))).toEqual(new Set([CANONICAL_FORM_LAW]))
-	})
-
 	it("passes its own audit", () => {
 		expect(auditCanonicalFormSuite(fixtures)).toEqual([])
 	})

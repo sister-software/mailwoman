@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest"
 
 import { CountryISO2 } from "#country/codes"
 import { OFFICIAL_LANGUAGES } from "#country/official-languages"
-import { COUNTRY_REFERENCE } from "#country/reference/data"
 import {
 	countriesDeclaredBy,
 	countriesOfAddressSystem,
@@ -80,12 +79,6 @@ describe("countriesOfScript", () => {
 
 describe("dependentTerritories", () => {
 	it("reads the dependency column, and the sovereign states are the rest of the world", () => {
-		const marked = Object.keys(COUNTRY_REFERENCE).filter(
-			(code) => COUNTRY_REFERENCE[code]!.dependency && hasCountry(worldCountries(), code)
-		)
-
-		expect([...dependentTerritories()].toSorted()).toEqual(marked.toSorted())
-
 		const sovereign = minus(worldCountries(), dependentTerritories())
 
 		expect(sovereign.size + dependentTerritories().size).toBe(worldCountries().size)

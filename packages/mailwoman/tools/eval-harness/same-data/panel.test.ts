@@ -127,8 +127,8 @@ describe("same-data panel builder (#2261)", () => {
 		const { rows } = build(corpus(500))
 
 		for (const row of rows) {
-			expect(row.source.license).toBe("CC-BY-4.0")
-			expect(row.source.attribution).toBe("GeoNames")
+			expect(row.source.license).toBe(definition.goldSource.license)
+			expect(row.source.attribution).toBe(definition.goldSource.attribution)
 		}
 	})
 

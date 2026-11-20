@@ -40,7 +40,7 @@ import { inputSetProvenance, provenanceFor } from "#dev-mcp/tool-kit"
  * The census reports them as `allowlisted`.
  * It reports any unexpected signal because the recorded reason is stale.
  */
-export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
+const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	placetypeCensus:
 		"applied: false by construction — the PCN1 census records parent-candidate observations and composes no bias; " +
 		"a true here would mean someone wired a census bias into the decoder (blocked behind a calibration δ the " +

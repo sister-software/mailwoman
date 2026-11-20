@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FORK_ORG, repoURL, upstreamOrgOf, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"
+import { upstreamOrgOf, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"
 
 describe("wofRepoOrigin", () => {
 	it("fetches every country repository from our fork and keeps whosonfirst-data as upstream", () => {
@@ -21,7 +21,5 @@ describe("wofRepoOrigin", () => {
 		expect(wofRepoOrigin("whosonfirst-placetypes").upstreamURL).toBe(
 			"ssh://git@github.com/whosonfirst/whosonfirst-placetypes"
 		)
-
-		expect(wofRepoOrigin("whosonfirst-placetypes").forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-placetypes"))
 	})
 })

@@ -111,7 +111,7 @@ describe("scenarioFor", () => {
 
 describe("dossierFor", () => {
 	test("admits the records available on the dossier date", () => {
-		expect(dossierFor(DISTRICT_RECORDS, defaults).admitted).toHaveLength(5)
+		expect(dossierFor(DISTRICT_RECORDS, defaults).admitted).toHaveLength(DISTRICT_RECORDS.sources.length)
 
 		expect(
 			dossierFor(DISTRICT_RECORDS, { ...defaults, dossierDate: "2026-08-02" }).excluded.map((record) => record.id)

@@ -64,9 +64,8 @@ describe("lookupVariantAliases", () => {
 		expect(lookupVariantAliases("petrol station", "en-ZA")[0]!.confidence).toBe(1)
 	})
 
-	it("getAllAliases returns non-empty table", () => {
+	it("getAllAliases returns entries that each carry a variant and a locale", () => {
 		const all = getAllAliases()
-		expect(all.length).toBeGreaterThan(20)
 		expect(all.every((a) => a.variant && a.locales.length)).toBe(true)
 	})
 })

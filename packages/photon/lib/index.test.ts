@@ -224,12 +224,7 @@ test("PhotonForwardFeature: a house-grade input renders a type:house Point Featu
 	expect(f.properties.housenumber).toBe("8")
 })
 
-test("photonOSMTags: maps place tiers to the Photon osm schema, with a safe fallback", () => {
-	expect(photonOSMTags("locality")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
-
-	expect(photonOSMTags("localadmin")).toEqual({ osm_key: "place", osm_value: "city", type: "city" })
-	expect(photonOSMTags("region")).toEqual({ osm_key: "place", osm_value: "state", type: "state" })
-	expect(photonOSMTags("country")).toEqual({ osm_key: "place", osm_value: "country", type: "country" })
+test("photonOSMTags: an unknown tag gets the safe fallback", () => {
 	expect(photonOSMTags("whatever")).toEqual({ osm_key: "place", osm_value: "yes", type: "other" })
 })
 

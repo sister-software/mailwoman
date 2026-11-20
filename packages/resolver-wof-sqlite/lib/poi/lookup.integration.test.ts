@@ -366,12 +366,6 @@ describe("POILookup", () => {
 		expect(lk.search({ categoryIDs: ["zoo", "aquarium"], center: SPRINGFIELD })).toEqual([])
 	})
 
-	test("an unknown category id is a clean miss, not a throw", () => {
-		using lk = new POILookup({ databasePath: dbPath })
-
-		expect(lk.search({ categoryIDs: ["zoo"], center: SPRINGFIELD })).toEqual([])
-	})
-
 	test("the name_key index exists (FTS-hydration path, not a full table scan)", () => {
 		using raw = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 

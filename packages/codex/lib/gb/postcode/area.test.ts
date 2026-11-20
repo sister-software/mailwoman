@@ -30,6 +30,7 @@ describe("countryOfPostcode", () => {
 	it("resolves a whole postcode through its area to a constituent country", () => {
 		expect(countryOfPostcode("BT1 1AA")).toBe("NIR")
 		expect(countryOfPostcode("EH1 1BB")).toBe("SCT")
+		expect(countryOfPostcode("G1 1XW")).toBe("SCT")
 		expect(countryOfPostcode("CF10 1AA")).toBe("WLS")
 		expect(countryOfPostcode("SW1A 1AA")).toBe("ENG")
 		expect(countryOfPostcode("M1 1AE")).toBe("ENG")
@@ -38,17 +39,5 @@ describe("countryOfPostcode", () => {
 	it("returns null when no postcode area can be extracted", () => {
 		expect(countryOfPostcode("12345")).toBeNull()
 		expect(countryOfPostcode(null)).toBeNull()
-	})
-
-	it("area→country is a real mapping, but a postcode is not a county", () => {
-		// London (`SW`) and Manchester (`M`) are different cities in different
-		// English counties, yet both resolve to ENG.
-		// The area-to-country map holds.
-		// It goes no further: the postcode identifies the country, never the county,
-		// while a Scottish area like Glasgow's `G` changes the country.
-		// Royal Mail routing rather than administrative geography.
-		expect(countryOfPostcode("SW1A 1AA")).toBe("ENG") // London
-		expect(countryOfPostcode("M1 1AE")).toBe("ENG") // Manchester
-		expect(countryOfPostcode("G1 1XW")).toBe("SCT") // Glasgow
 	})
 })

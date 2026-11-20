@@ -63,8 +63,7 @@ beforeAll(async () => {
 describe("the Korean reference set", () => {
 	it("reports Hangul on every row, while locale reports Japanese on every row", () => {
 		// A `ko-KR` locale would break consumers that map it to a weights package.
-		expect(koreanRows).toHaveLength(20)
-		expect(koreanRows.map(topScript)).toEqual(Array.from({ length: 20 }, () => "Hang"))
+		expect([...new Set(koreanRows.map(topScript))]).toEqual(["Hang"])
 		expect([...new Set(koreanRows.map((row) => hintFor(row).locale))]).toEqual(["ja-JP"])
 	})
 
@@ -78,8 +77,6 @@ describe("the Korean reference set", () => {
 describe("the Chinese organizational-units board", () => {
 	it("finds Han on every row, and Latin at the head of most of them", () => {
 		// In `逊克二分场四队, heilongjiang, china`, the romanized province and country outweigh the Han unit.
-		expect(chineseRows).toHaveLength(21)
-
 		for (const row of chineseRows) {
 			expect([row, scriptsOf(row).includes("Hani")]).toEqual([row, true])
 		}
@@ -103,7 +100,6 @@ describe("the Chinese organizational-units board", () => {
 
 describe("the Japanese Overture gold set", () => {
 	it("reports Han at the head of all but twenty rows, and locale ja-JP throughout", () => {
-		expect(japaneseRows).toHaveLength(3982)
 		expect(japaneseRows.filter((row) => topScript(row) === "Hani")).toHaveLength(3962)
 		expect(japaneseRows.filter((row) => topScript(row) === "Hira")).toHaveLength(20)
 		expect([...new Set(japaneseRows.map((row) => hintFor(row).locale))]).toEqual(["ja-JP"])

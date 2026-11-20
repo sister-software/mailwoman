@@ -77,7 +77,7 @@ describe("openBDCDatabaseIfPresent", () => {
 		const path = await emptySqliteFile("bdc.db")
 		using db = await openBDCDatabaseIfPresent(path)
 
-		expect(db).toBeDefined()
+		expect(db).not.toBeNull()
 	})
 })
 
@@ -129,7 +129,7 @@ describe("openFilerDatabaseIfPresent", () => {
 		const path = await emptySqliteFile("filer.db")
 		using db = await openFilerDatabaseIfPresent(path)
 
-		expect(db).toBeDefined()
+		expect(db).not.toBeNull()
 	})
 })
 

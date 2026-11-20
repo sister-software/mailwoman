@@ -13,6 +13,7 @@ import { classifyIdentifier, extractAttestedPhrases } from "#subvenue/harvest"
 import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 import { buildSurfaceIndex, nameContainsSurfaces, normalizeSurface } from "#subvenue/surfaces"
 import { CONCEPT_QIDS, SHIPPED_DESIGNATOR_SEED, SHIPPED_MODIFIER_SEED, type SubVenueSurface } from "#subvenue/table"
+import { SUBVENUE_CONCEPTS } from "#tools/fetch/wikidata/subvenue"
 import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
 import { applyPromotions, buildSubVenueLexicon, serializeSubVenueLexicon } from "#tools/sub/venue/lexicon"
 import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
@@ -84,18 +85,10 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 }
 
 test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
-	// Mirrors `fetch/wikidata/subvenue.ts`'s SUBVENUE_CONCEPTS.
 	// `wing` is absent from both on purpose: Wikidata has no clean "wing of a building" concept.
-	expect(Object.keys(CONCEPT_QIDS).toSorted()).toEqual([
-		"arcade",
-		"building",
-		"campus",
-		"concourse",
-		"gate",
-		"hall",
-		"satellite",
-		"terminal",
-	])
+	const fetched = Object.fromEntries(SUBVENUE_CONCEPTS.map(({ designatorID, qid }) => [designatorID, qid]))
+
+	expect(CONCEPT_QIDS).toEqual(fetched)
 
 	expect(CONCEPT_QIDS["wing"]).toBeUndefined()
 })

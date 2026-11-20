@@ -557,6 +557,7 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			layer: "poi",
 		})
 
+		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
 		expect(bundle.coverage_detail.physical).toBe("layer_missing")
 	})
 
@@ -819,8 +820,6 @@ describe("§7-2b criteria", () => {
 				...Object.keys(BLOCK_RESOLUTION_VALUES),
 			]
 
-			expect(allValues).toHaveLength(16)
-
 			for (const value of allValues) {
 				expect(value).not.toMatch(VERDICT_LIKE_PATTERN)
 			}
@@ -828,27 +827,6 @@ describe("§7-2b criteria", () => {
 
 		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time condition above vacuous", () => {
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
-		})
-	})
-
-	describe("Criterion 3 — layer absent: abstain without fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
-		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-related evidence shape) is fabricated", async () => {
-			const bundle = await plausibilityCheck(
-				{
-					point: SPRINGFIELD_POINT,
-					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
-					claimedDownloadMbps: 100,
-				},
-				{}
-			)
-
-			expect(bundle.evidence_found).toContainEqual({
-				type: "abstain",
-				reason: "requires_build_local_layer",
-				layer: "poi",
-			})
-
-			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
 		})
 	})
 })

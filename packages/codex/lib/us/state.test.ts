@@ -29,9 +29,8 @@ test("isUSStateAbbreviation: false for non-state / malformed / non-string input"
 	expect(isUSStateAbbreviation(undefined)).toBe(false)
 })
 
-test("US_STATE_ABBREVIATIONS: holds 56 entries (50 states + DC + 5 territories, complete + unique)", () => {
-	expect(US_STATE_ABBREVIATIONS).toHaveLength(56)
-	expect(new Set(US_STATE_ABBREVIATIONS).size).toBe(56) // no duplicates
+test("US_STATE_ABBREVIATIONS: lists no abbreviation twice", () => {
+	expect(new Set(US_STATE_ABBREVIATIONS).size).toBe(US_STATE_ABBREVIATIONS.length)
 })
 
 test("every abbreviation has a name, and every abbreviation in the list keys the name map", () => {

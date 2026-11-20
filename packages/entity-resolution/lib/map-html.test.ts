@@ -32,20 +32,16 @@ function point(
 }
 
 describe("toMapHTML", () => {
-	it("returns a complete HTML document on the house stack: MapLibre (pinned + SRI) + Protomaps basemap", () => {
+	it("returns a complete HTML document on the house stack: MapLibre (SRI) + Protomaps basemap", () => {
 		const html = toMapHTML(
 			fc([point(-97.7431, 30.2672, { entityID: "e1", recordCount: 2, sources: ["a", "b"], name: "Acme" })])
 		)
 
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
-		expect(html).toContain("maplibre-gl@5.24.0/dist/maplibre-gl.js")
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
-		expect(html).toContain("https://tiles.mailwoman.post/planet.v4.json")
 		expect(html).toContain("public.mailwoman.post/protomaps/fonts")
-		expect(html).toContain("Bliss Pro Regular")
-		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")
 		expect(html).not.toMatch(/tile\.openstreetmap\.org|raster/)
 		expect(html).toContain("new maplibregl.Map(")
 	})

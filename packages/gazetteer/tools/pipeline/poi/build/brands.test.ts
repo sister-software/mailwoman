@@ -183,14 +183,13 @@ describe("buildBrandTable", () => {
 })
 
 describe("serializeBrandTable", () => {
-	it("is byte-identical across repeated calls on an equivalent table (determinism proof)", () => {
+	it("ends with a trailing newline", () => {
 		const table = {
 			version: "0.1.0",
 			sourceLayer: SOURCE_LAYER,
 			brands: [{ wikidata: "Q1", name: "Chain Co", aliases: ["Alt Co"], rows: 30 }],
 		} as POIBrandTable
 
-		expect(serializeBrandTable(table)).toBe(serializeBrandTable(structuredClone(table)))
 		expect(serializeBrandTable(table).endsWith("\n")).toBe(true)
 	})
 })

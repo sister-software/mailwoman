@@ -110,7 +110,6 @@ describe("assertBaselines", () => {
 	it("honors a row's absolute tolerance", async () => {
 		const baseline = (await findBaseline("paris.resolver.street_evidence_rate@ban-street-centroids"))!
 
-		expect(baseline.tolerance_abs).toBe(0.01)
 		// 0.016 -> 0.02 is inside the absolute band even though it is +25% relative.
 		expect((await assertBaselines([{ id: baseline.id, observed: 0.02 }])).ok).toBe(true)
 		expect((await assertBaselines([{ id: baseline.id, observed: 0.05 }])).ok).toBe(false)

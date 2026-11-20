@@ -533,15 +533,6 @@ describe("rerootBaseFilePath", () => {
 })
 
 describe("baseManifestFiles", () => {
-	it("reads a manifest written before the 2026-09-01 rename", () => {
-		// Every corpus built before the rename lists its Parquet files under the old key.
-		// A built corpus is an immutable artifact.
-		expect(baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "b.parquet"]))).toEqual([
-			{ path: "a.parquet" },
-			{ path: "b.parquet" },
-		])
-	})
-
 	it("prefers the current key when a manifest carries both", () => {
 		const both = {
 			...manifestWith("files", ["new.parquet"]),
@@ -561,6 +552,8 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("reads every retired file-list key, as manifests built before each rename hold them", () => {
+		// Every corpus built before a rename lists its Parquet files under the old key.
+		// A built corpus is an immutable artifact.
 		for (const key of RETIRED_FILES_KEYS) {
 			expect(baseManifestFiles(manifestWith(key, ["old.parquet"]))).toEqual([{ path: "old.parquet" }])
 		}

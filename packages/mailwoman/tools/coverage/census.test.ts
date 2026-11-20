@@ -164,10 +164,6 @@ describe("readBoardCoverage", () => {
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
 	})
 
-	it("ignores nested country files the board loader does not read", async () => {
-		expect((await readBoardCoverage(root("cases"))).get("GB")).toEqual({ rows: 2, passed: 1 })
-	})
-
 	it("attributes a row by its own country field, not its directory", async () => {
  // Board rows include their country explicitly even though the directory also encodes one.
 				// Those values can disagree.

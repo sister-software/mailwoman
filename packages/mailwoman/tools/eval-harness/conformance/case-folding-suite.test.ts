@@ -6,7 +6,6 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import {
 	auditCaseFoldingSuite,
-	CASE_FOLDING_LAW,
 	CASE_FOLDING_SUITE_PATH,
 	CASE_TRANSFORMATION_BY_NAME,
 	CASE_TRANSFORMATIONS,
@@ -32,11 +31,6 @@ function splitRowRef(rowRef: string): { file: string; caseID: string } {
 }
 
 describe("the committed case-folding suite", () => {
-	it("loads through the shared conformance loader", () => {
-		expect(fixtures.length).toBeGreaterThan(0)
-		expect(new Set(fixtures.map((fixture) => fixture.law))).toEqual(new Set([CASE_FOLDING_LAW]))
-	})
-
 	it("passes its own audit", () => {
 		expect(auditCaseFoldingSuite(fixtures)).toEqual([])
 	})

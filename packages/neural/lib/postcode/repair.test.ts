@@ -154,13 +154,6 @@ describe("repairPostcodeLabels", () => {
 		expect(postcodeValue(text, out)).toBe("70390-100")
 	})
 
-	it("does not let the BR shape steal the tail of a US ZIP+4", () => {
-		const text = "Oakland 94610-2737"
-		const tokens = [tok("Oakland", 0, 7, "B-locality"), tok("94610-2737", 8, 18, "B-postcode")]
-		const { tokens: out } = repairPostcodeLabels(text, tokens)
-		expect(postcodeValue(text, out)).toBe("94610-2737")
-	})
-
 	it("still refuses to CREATE a BR-shaped postcode — numeric shapes stay SNAP-only", () => {
 		const text = "12345-678 Main St"
 

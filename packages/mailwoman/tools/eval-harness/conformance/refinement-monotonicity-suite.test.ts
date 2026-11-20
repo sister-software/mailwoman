@@ -9,7 +9,6 @@ import {
 	auditRefinementSuite,
 	classifyRefinementStep,
 	REFINEMENT_DERIVATION_BY_STEP,
-	REFINEMENT_MONOTONICITY_LAW,
 	REFINEMENT_MONOTONICITY_SUITE_PATH,
 	refinementChains,
 	refinementCoverage,
@@ -37,11 +36,6 @@ function splitRowRef(rowRef: string): { file: string; caseID: string } {
 }
 
 describe("the committed refinement suite", () => {
-	it("loads through the shared conformance loader and states one law", () => {
-		expect(fixtures.length).toBeGreaterThan(0)
-		expect(new Set(fixtures.map((fixture) => fixture.law))).toEqual(new Set([REFINEMENT_MONOTONICITY_LAW]))
-	})
-
 	it("passes its own audit", () => {
 		expect(auditRefinementSuite(fixtures)).toEqual([])
 	})

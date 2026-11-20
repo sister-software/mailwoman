@@ -8,7 +8,6 @@
  *   so resolution reaches the cache on every host.
  */
 
-import { cacheRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -16,7 +15,7 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"
+import { resolveWeights, weightsCachePackageDir, weightsPackageName } from "#weights"
 
 const LOCALE = "pt-BR"
 const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
@@ -154,8 +153,7 @@ describe("resolveWeights cache fallback", () => {
 		expect(message).not.toContain("packages/neural-weights-en-us/model.onnx")
 	})
 
-	test("helpers: cache dir + package-name builder", () => {
-		expect(weightsCacheDir().toString()).toBe(cacheRootPath("weights"))
+	test("helpers: package-name builder", () => {
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
 	})

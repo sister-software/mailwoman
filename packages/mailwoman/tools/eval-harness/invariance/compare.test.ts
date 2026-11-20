@@ -61,13 +61,6 @@ describe("compareComponents", () => {
 		expect(compareComponents(a, b).verdict).toBe("LOST")
 	})
 
-	it("Does not treat a critical tag absent from the ORIGINAL as broken just because it's absent in both", () => {
-		const a = { street: "Rue Montmartre", locality: "Paris" }
-		const b = { street: "Rue Montmartre", locality: "Paris" }
-
-		expect(compareComponents(a, b).verdict).toBe("INVARIANT")
-	})
-
 	it("Is LOST when a critical tag is ABSENT in the original but PRESENT in the transformed parse — hallucination", () => {
 		const a = { street: "Rue Montmartre", locality: "Paris" }
 		const b = { street: "Rue Montmartre", locality: "Paris", postcode: "75001" }

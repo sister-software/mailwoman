@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildPlaceSearchFTS } from "#fts"
 import { WOFSQLitePlaceLookup } from "#lookup"
+import { populationBoostTerm } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 
 interface FixturePlace {
@@ -111,6 +112,8 @@ describe("findPlace — population boost", () => {
 		const candidates = await lookup.findPlace({ text: "Tokyo", placetype: "locality" })
 		expect(candidates).toHaveLength(1)
 		expect(candidates[0]?.population).toBe(13_500_000)
+		// Tokyo is past the `10^populationScaleLog10` saturation point, so its boost is the weight itself.
+		expect(populationBoostTerm(13_500_000, { populationBoost: 3, populationScaleLog10: 6 })).toBe(3)
 	})
 
 	test("DB without place_population table → no boost, lookup still works", async () => {

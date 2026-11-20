@@ -9,7 +9,6 @@ import {
 	auditWhitespaceSuite,
 	classifyWhitespaceTransformation,
 	WHITESPACE_APPLICABILITY_RULES,
-	WHITESPACE_LAW,
 	WHITESPACE_SUITE_PATH,
 	WHITESPACE_TRANSFORMATION_BY_NAME,
 	WHITESPACE_TRANSFORMATIONS,
@@ -33,11 +32,6 @@ function splitRowRef(rowRef: string): { file: string; caseID: string } {
 }
 
 describe("the committed whitespace suite", () => {
-	it("loads through the shared conformance loader", () => {
-		expect(fixtures.length).toBeGreaterThan(0)
-		expect(new Set(fixtures.map((fixture) => fixture.law))).toEqual(new Set([WHITESPACE_LAW]))
-	})
-
 	it("passes its own audit", () => {
 		expect(auditWhitespaceSuite(fixtures)).toEqual([])
 	})

@@ -362,10 +362,8 @@ describe("filerLinkageEval — the withheld run (the measurement)", () => {
 	})
 
 	it("scores over registrant pairs, so the two runs share one truth partition", async () => {
-		const { withheld, control, registrants } = await runEval()
+		const { withheld, control } = await runEval()
 
-		expect(registrants).toHaveLength(11)
-		expect(withheld.score.totalPairs).toBe(55)
 		expect(withheld.score.totalPairs).toBe(control.score.totalPairs)
 	})
 })

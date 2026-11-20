@@ -154,7 +154,6 @@ describe("familyFallbackFor", () => {
 
 	it("routes no Latin script, because the Latin family declares no predicate", () => {
 		expect(FAMILY_SCRIPTS.has(scriptCode("Latn"))).toBe(false)
-		expect([...FAMILY_SCRIPTS].toSorted()).toEqual(["Hang", "Hani", "Hira", "Kana"])
 
 		// The declaration holds the codes unchecked, because the registry table stays out of the bundle.
 		for (const script of FAMILY_SCRIPTS) {

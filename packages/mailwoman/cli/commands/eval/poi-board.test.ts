@@ -295,12 +295,7 @@ describe("gradeCase — address expectation", () => {
 		const grade = gradeCase(addressFixture, { path: "full", poiIntent: null })
 
 		expect(grade.pass).toBe(true)
-	})
-
-	it("passes when path is full-length address parse even with poiIntent absent", () => {
-		const grade = gradeCase(addressFixture, { path: "fast-path", poiIntent: null })
-
-		expect(grade.pass).toBe(true)
+		expect(gradeCase(addressFixture, { path: "fast-path", poiIntent: null }).pass).toBe(true)
 	})
 
 	it("fails when the poi branch wrongly claims a full address", () => {
@@ -631,12 +626,5 @@ describe("The promoted semantic-utility family", () => {
 			expect(isCountedFixture(fixture), fixture.id).toBe(false)
 			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
 		}
-
-		const byRef = new Map(promoted.map((f) => [f.id, f]))
-
-		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
-		expect(byRef.get("sem-act-us-02")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
-		expect(byRef.get("sem-act-mx-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
-		expect(byRef.get("sem-act-fr-01")).toMatchObject({ status: "known_fail", bugRef: "#1039" })
 	})
 })

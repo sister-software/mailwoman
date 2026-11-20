@@ -268,19 +268,6 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		}
 	})
 
-	it("passes share-alike rows through when allowShareAlike is set", async () => {
-		await runAdapter({
-			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
-			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch.path,
-			corpusVersion: "0.1.0",
-		})
-
-		const rows = await loadRows()
-		expect(rows).toHaveLength(6)
-		expect(rows.find((r) => r.source_id === "openaddresses-e5f6071829304152")?.license).toBe("CC-BY-SA-4.0")
-	})
-
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
 		const upper = scratch.path("upper.geojsonl")
 

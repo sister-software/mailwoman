@@ -16,7 +16,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 import { cleanLieuDit, extractBANAddrPoints } from "#sdk/extract"
-import { streetLocaleForBANCountry, supportedBANCountries } from "#street-locale"
+import { streetLocaleForBANCountry } from "#street-locale"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -69,7 +69,6 @@ test("extract: yields the full tuple, folds rep to lower-case, skips coordinate-
 })
 
 test("provider: FR-only, keys with the FR street locale, throws otherwise", () => {
-	expect(supportedBANCountries()).toEqual(["fr"])
 	expect(streetLocaleForBANCountry("FR")).toBe("fr")
 	expect(() => streetLocaleForBANCountry("de")).toThrow(/BAN_EXTRACT_COUNTRIES/)
 })

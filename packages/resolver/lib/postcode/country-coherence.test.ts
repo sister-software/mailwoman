@@ -559,6 +559,7 @@ describe("findPostcodeCountryScope", () => {
 
 		expect(scope?.country).toBe("CZ")
 		expect(scope?.evidence).toBe("pair")
+		expect(scope?.distanceKm).toBeLessThan(1)
 	})
 
 	it("recovers DE for (10115, Berlin) under a US default — generality beyond FR", async () => {
@@ -733,18 +734,6 @@ describe("FindPostcodeCountryScope — single-sided rungs", () => {
 		})
 
 		expect(scope).toBeNull()
-	})
-
-	it("prefers the PAIR rung over either single-sided one", async () => {
-		const backend = await makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
-
-		const scope = await findPostcodeCountryScope(addressTree("37901", "Třeboň").roots, backend, {
-			postcode: "37901",
-			defaultCountry: "US",
-		})
-
-		expect(scope?.evidence).toBe("pair")
-		expect(scope?.distanceKm).toBeLessThan(1)
 	})
 })
 

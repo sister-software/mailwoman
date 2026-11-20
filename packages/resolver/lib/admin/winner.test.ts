@@ -72,14 +72,10 @@ describe("adminLadderFor", () => {
 		expect([...ADMIN_LADDER_POSTCODE_FIRST].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
 	})
 
-	it("ranks a JP municipality above its district on both arms — an unscoped district picks namesakes", () => {
-		for (const ladder of [ADMIN_LADDER_POSTCODE_FIRST, ADMIN_LADDER_LOCALITY_FIRST]) {
-			expect(ladder.indexOf("locality")).toBeLessThan(ladder.indexOf("municipality"))
-			expect(ladder.indexOf("municipality")).toBeLessThan(ladder.indexOf("district"))
-			expect(ladder.indexOf("district")).toBeLessThan(ladder.indexOf("region"))
-			expect(ladder.indexOf("region")).toBeLessThan(ladder.indexOf("prefecture"))
-			expect(ladder.indexOf("prefecture")).toBeLessThan(ladder.indexOf("country"))
-		}
+	it("orders the admin rungs identically on both arms — only the postcode moves", () => {
+		expect(ADMIN_LADDER_POSTCODE_FIRST.filter((rung) => rung !== "postcode")).toEqual(
+			ADMIN_LADDER_LOCALITY_FIRST.filter((rung) => rung !== "postcode")
+		)
 	})
 
 	// The second route to postcode-first.

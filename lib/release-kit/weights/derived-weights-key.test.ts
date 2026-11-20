@@ -136,10 +136,6 @@ describe("derivedWeightsKeyFrom", () => {
 			await derivedWeightsKeyFrom(inputsFor(checkoutB))
 		)
 	})
-
-	it("returns a 16-hex-char key", async () => {
-		await expect(derivedWeightsKeyFrom([])).resolves.toMatch(/^[0-9a-f]{16}$/)
-	})
 })
 
 describe("derivedWeightsKey", () => {

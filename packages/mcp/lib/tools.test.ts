@@ -297,17 +297,19 @@ describe("buildToolTable", () => {
 			expect(tool.inputSchema.safeParse({ database_path: "/data/bdc.db", h3_cells: [] }).success).toBe(false)
 		})
 
-		it("routes to deps.bdcFilingLandscape with the parsed database path and geoids", async () => {
+		it("routes to deps.bdcFilingLandscape with the parsed database path and geoids, and returns its result verbatim", async () => {
 			const deps = stubDeps()
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_bdc_filing_landscape")
 
-			await tool.handler({ database_path: "/data/bdc.db", geoids: ["060750101001000"] })
+			const result = await tool.handler({ database_path: "/data/bdc.db", geoids: ["060750101001000"] })
 
 			expect(deps.bdcFilingLandscape).toHaveBeenCalledWith({
 				databasePath: "/data/bdc.db",
 				geoids: ["060750101001000"],
 				h3Cells: null,
 			})
+
+			expect(result).toBe(await vi.mocked(deps.bdcFilingLandscape).mock.results[0]?.value)
 		})
 
 		it("routes to deps.bdcFilingLandscape with the parsed database path and h3Cells", async () => {
@@ -320,19 +322,6 @@ describe("buildToolTable", () => {
 				databasePath: "/data/bdc.db",
 				geoids: null,
 				h3Cells: [140_737_488_355_328],
-			})
-		})
-
-		it("returns the deps result verbatim, vintage included", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_bdc_filing_landscape")
-
-			const result = await tool.handler({ database_path: "/data/bdc.db", geoids: ["060750101001000"] })
-
-			expect(result).toEqual({
-				vintage: "2024-06",
-				surveyed_block_count: 1,
-				unknown_block_count: 0,
-				filings: [],
 			})
 		})
 	})
@@ -388,11 +377,11 @@ describe("buildToolTable", () => {
 			expect(tool.inputSchema.safeParse({}).success).toBe(false)
 		})
 
-		it("routes to deps.plausibilityCheck with snake_case fields mapped to the claim shape", async () => {
+		it("routes to deps.plausibilityCheck with snake_case fields mapped to the claim shape, and returns its result verbatim", async () => {
 			const deps = stubDeps()
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_plausibility_check")
 
-			await tool.handler({
+			const result = await tool.handler({
 				geoid: "170010001001001",
 				technology_code: 50,
 				claimed_download_mbps: 100,
@@ -409,33 +398,8 @@ describe("buildToolTable", () => {
 				technologyCode: 50,
 				claimedDownloadMbps: 100,
 			})
-		})
 
-		it("returns the deps result verbatim", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_plausibility_check")
-
-			const result = await tool.handler({
-				geoid: "170010001001001",
-				technology_code: 50,
-				claimed_download_mbps: 100,
-				bdc_database_path: "/data/bdc.db",
-				poi_database_path: "/data/poi.db",
-			})
-
-			expect(result).toEqual({
-				claim: {
-					address: null,
-					point: null,
-					geoid: "170010001001001",
-					technologyCode: 50,
-					claimedDownloadMbps: 100,
-				},
-				evidence_found: [],
-				coverage_confidence: "high",
-				coverage_detail: { filing: "covered", physical: "covered" },
-				block_resolution: "geoid",
-				vintage: "2024-06",
-			})
+			expect(result).toBe(await vi.mocked(deps.plausibilityCheck).mock.results[0]?.value)
 		})
 	})
 
@@ -462,11 +426,15 @@ describe("buildToolTable", () => {
 			expect(tool.inputSchema.safeParse({ database_path: "" }).success).toBe(false)
 		})
 
-		it("routes to deps.filerLookup with the parsed database path and identifier fields", async () => {
+		it("routes to deps.filerLookup with the parsed database path and identifier fields, and returns its result verbatim", async () => {
 			const deps = stubDeps()
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_filer_lookup")
 
-			await tool.handler({ database_path: "/data/filer.db", form499_id: "899901", as_of: "2026-06-01" })
+			const result = await tool.handler({
+				database_path: "/data/filer.db",
+				form499_id: "899901",
+				as_of: "2026-06-01",
+			})
 
 			expect(deps.filerLookup).toHaveBeenCalledWith({
 				databasePath: "/data/filer.db",
@@ -475,22 +443,8 @@ describe("buildToolTable", () => {
 				bdcProviderID: null,
 				asOf: "2026-06-01",
 			})
-		})
 
-		it("returns the deps result verbatim, as_of and vintage included", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_lookup")
-
-			const result = await tool.handler({ database_path: "/data/filer.db", bdc_provider_id: 130_077 })
-
-			expect(result).toEqual({
-				node: { node_id: "frn:0001753557", identifier_type: "frn", identifier_value: "0001753557" },
-				identifiers: [],
-				attributes: {},
-				cluster: null,
-				inferred_links: [],
-				as_of: "2026-07-31",
-				vintage: "2026-Q1",
-			})
+			expect(result).toBe(await vi.mocked(deps.filerLookup).mock.results[0]?.value)
 		})
 	})
 
@@ -525,11 +479,15 @@ describe("buildToolTable", () => {
 			expect(tool.inputSchema.safeParse({ database_path: "" }).success).toBe(false)
 		})
 
-		it("routes to deps.filerFamily with the parsed database path and identifier fields", async () => {
+		it("routes to deps.filerFamily with the parsed database path and identifier fields, and returns its result verbatim", async () => {
 			const deps = stubDeps()
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_filer_family")
 
-			await tool.handler({ database_path: "/data/filer.db", node_id: "frn:0001753557", as_of: "2026-06-01" })
+			const result = await tool.handler({
+				database_path: "/data/filer.db",
+				node_id: "frn:0001753557",
+				as_of: "2026-06-01",
+			})
 
 			expect(deps.filerFamily).toHaveBeenCalledWith({
 				databasePath: "/data/filer.db",
@@ -537,29 +495,8 @@ describe("buildToolTable", () => {
 				nodeID: "frn:0001753557",
 				asOf: "2026-06-01",
 			})
-		})
 
-		it("returns the deps result verbatim — every FamilyRollup field intact, nothing dropped or reshaped", async () => {
-			const tool = toolNamed(buildToolTable(stubDeps()), "mailwoman_filer_family")
-
-			const result = await tool.handler({
-				database_path: "/data/filer.db",
-				family_id: "holding_company_name:acme-holdco",
-			})
-
-			expect(result).toEqual([
-				{
-					family_id: "holding_company_name:acme-holdco",
-					members: [
-						{ node_id: "frn:0001753557", relationship: "holding_company", source: "form499" },
-						{ node_id: "frn:0002222222", relationship: "holding_company", source: "form499" },
-					],
-					distinct_member_count: 2,
-					display_names: ["Acme Holdco LLC"],
-					as_of: "2026-07-31",
-					vintage: "2026-Q1",
-				},
-			])
+			expect(result).toBe(await vi.mocked(deps.filerFamily).mock.results[0]?.value)
 		})
 	})
 })

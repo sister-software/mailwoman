@@ -111,11 +111,11 @@ describe("the download route", () => {
 		const response = await a.post("/v1/downloads", { token, artifact: "tier:us-streets/tiers/us-ca.db" })
 
 		expect(response.status).toBe(200)
-		await expect(response.json()).resolves.toMatchObject({ status: "granted", bytes: 2 })
 
-		expect(
-			new URL(((await response.json().catch(() => null)) as Granted | null)?.url ?? "https://x/").pathname
-		).toBeDefined()
+		const body = (await response.json()) as Granted
+
+		expect(body).toMatchObject({ status: "granted", bytes: 2 })
+		expect(new URL(body.url).pathname).toBe("/mailwoman-paid-test/tiers/us-streets/2026-10-01/us-ca.db")
 	})
 
 	it("refuses an artifact outside the token's scope", async () => {

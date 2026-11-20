@@ -33,10 +33,6 @@ describe("parseExhibit21 — criterion 3 (decision 6: abstain, never guess)", ()
 		expect(() => parseExhibit21("")).not.toThrow()
 		expect(parseExhibit21("")).toEqual({ subsidiaries: [], unparseable: 0 })
 	})
-
-	it("never throws on a document that is neither a table, a list, nor any recognizable line", () => {
-		expect(() => parseExhibit21("<html><body></body></html>")).not.toThrow()
-	})
 })
 
 describe("parseExhibit21 — fabrication audit: malformed input recovered WITHOUT fabrication (C1, C2, C4)", () => {

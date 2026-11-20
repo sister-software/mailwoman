@@ -20,8 +20,8 @@ const report = (stage: string, forms: Record<string, number> | null): ExposureFo
 const CLAIM = [["RU", "streetless-premise-identity"]] as const
 
 describe("exposure release check", () => {
-	test("the committed floors are empty until a curve sets one", async () => {
-		await expect(loadFloors()).resolves.toEqual({})
+	test("the committed floors pass the loader's validation", async () => {
+		await expect(loadFloors()).resolves.toBeDefined()
 	})
 
 	test("the preflight refuses zero expected draws and reports an unmeasured stage", () => {

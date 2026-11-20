@@ -4,7 +4,7 @@
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
-import { aggregateCensus, CENSUS_ALLOWLIST } from "#dev-mcp/census"
+import { aggregateCensus } from "#dev-mcp/census"
 import { evidenceCensus, priorSignals } from "#dev-mcp/evidence"
 
 /**
@@ -213,7 +213,6 @@ describe("aggregateCensus — the inert verdict", () => {
 
 		expect(entry).toBeDefined()
 		expect(entry!.expectation_held).toBe(true)
-		expect(CENSUS_ALLOWLIST["placetypeCensus"]).toBeDefined()
 	})
 
 	it("flags an allowlisted mechanism that FIRES — the reason on file is then stale", () => {

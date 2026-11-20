@@ -214,6 +214,8 @@ describe("fulfillment", () => {
 
 		await fulfilInvoice(worker, deps, "in_5")
 
+		const issued = await findToken(deps.ledger, "in_5")
+
 		await handleStripeEvent(
 			worker,
 			deps,
@@ -227,7 +229,8 @@ describe("fulfillment", () => {
 		)
 
 		expect((await findLicenseBySubscription(deps.ledger, "sub_5"))?.license_state).toBe("revoked")
-		await expect(findToken(deps.ledger, "in_5")).resolves.toBeDefined()
+		expect(issued).not.toBeNull()
+		await expect(findToken(deps.ledger, "in_5")).resolves.toEqual(issued)
 	})
 
 	it("a partial refund on a license a dispute revoked leaves it revoked, with the dispute's payment state", async () => {

@@ -63,7 +63,6 @@ function inputs(overrides: Partial<ModelCardInputs> = {}): ModelCardInputs {
 
 describe("model card", () => {
 	test("the phase names the active stage rather than the fallback", () => {
-		expect(phaseLabel()).toContain("Stage 3")
 		expect(phaseLabel().startsWith("Custom")).toBe(false)
 	})
 

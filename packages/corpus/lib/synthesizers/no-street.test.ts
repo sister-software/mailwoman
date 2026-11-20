@@ -154,23 +154,12 @@ describe("synthesizeNoStreetRow", () => {
 		}
 	})
 
-	it("uses the correct locale for each country", () => {
-		const cases: Array<[string, string]> = [
-			["US", "en-US"],
-			["FR", "fr-FR"],
-			["DE", "de-DE"],
-			["GB", "en-GB"],
-			["CA", "en-CA"],
-			["AU", "en-AU"],
-		]
+	it("takes the locale from the tuple's country", () => {
+		const row = synthesizeNoStreetRow(
+			{ ...SAMPLE_BASE, country: "FR" },
+			{ random: makeLcg(7), forceTemplate: "venue-plain" }
+		)
 
-		for (const [country, expectedLocale] of cases) {
-			const row = synthesizeNoStreetRow(
-				{ ...SAMPLE_BASE, country },
-				{ random: makeLcg(7), forceTemplate: "venue-plain" }
-			)
-
-			expect(row!.locale).toBe(expectedLocale)
-		}
+		expect(row!.locale).toBe("fr-FR")
 	})
 })

@@ -228,8 +228,8 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 		const c: SourceRecord = { ...coLocated("3", "Acme", "Health"), attributes: { taxonomy: "207Q00000X" } } // disjoint
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(shared.entities).toHaveLength(1)
-		const disjoint = resolveEntities([a, c], { threshold: -100, exactDiscriminators: ["taxonomy"] })
-		expect(disjoint.entities.length).toBeGreaterThanOrEqual(1)
+		const model = buildDefaultModel({ exactDiscriminators: ["taxonomy"] })
+		expect(scorePair(model, a, c).weight).toBeLessThan(scorePair(model, a, b).weight)
 	})
 })
 

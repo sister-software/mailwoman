@@ -20,11 +20,12 @@ test("pythonPyproject interpolates the given version and names the mailwoman-cli
 test("pythonInitPy defines an ergonomics class for every surface", () => {
 	const source = pythonInitPy()
 
-	expect(source).toContain("class PhotonClient(_PhotonBase):")
-	expect(source).toContain("class NominatimClient(_NominatimBase):")
-	expect(source).toContain("class LibpostalClient(_LibpostalBase):")
-	expect(source).toContain("class MailwomanClient(_MailwomanBase):")
-	expect(source).toContain('DEFAULT_BASE_URL = "http://127.0.0.1:3000"')
+	for (const surface of CLIENT_SURFACES) {
+		const base = `_${surface[0]!.toUpperCase()}${surface.slice(1)}Base`
+
+		expect(source).toContain(`from .${surface}.client import Client as ${base}`)
+		expect(source).toContain(`(${base}):`)
+	}
 })
 
 test("rustCargoToml interpolates the given version and names the mailwoman-client crate", () => {

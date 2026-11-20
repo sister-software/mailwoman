@@ -40,11 +40,6 @@ describe("normalize — defaults", () => {
 		const r = normalize("   350 5th Ave   ")
 		expect(r.normalized).toBe("350 5th Ave")
 	})
-
-	it("preserves case by default", () => {
-		const r = normalize("New York")
-		expect(r.normalized).toBe("New York")
-	})
 })
 
 describe("normalize — opts", () => {

@@ -66,9 +66,11 @@ describe("checkReleaseListIdentity", () => {
 })
 
 describe("assertWorkspacePublishable", () => {
-	it("refuses a held-out workspace and quotes the reason it is held for", () => {
+	it("refuses a held-out workspace and quotes the reason it is held for", async () => {
+		const { absences } = await readLocalJSONFile<{ absences: Record<string, string> }>(repoRootPath(".release-it.json"))
+
 		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(/held out of the release/)
-		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(/private demo-map tile worker/)
+		expect(() => assertWorkspacePublishable("packages/tile-worker")).toThrow(absences["packages/tile-worker"]!)
 	})
 
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {

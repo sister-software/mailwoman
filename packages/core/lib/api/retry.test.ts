@@ -67,13 +67,8 @@ describe("isRetryableStatus", () => {
 		expect(isRetryableStatus(status)).toBe(true)
 	})
 
-	it.each([[200], [301], [400], [401], [404], [410], [418], [422], [600]])("treats %i as terminal", (status) => {
+	it.each([[200], [301], [400], [401], [403], [404], [410], [418], [422], [600]])("treats %i as terminal", (status) => {
 		expect(isRetryableStatus(status)).toBe(false)
-	})
-
-	it("NEVER treats a 403 as retryable", () => {
-		// Retries cannot restore a rejected credential.
-		expect(isRetryableStatus(403)).toBe(false)
 	})
 })
 

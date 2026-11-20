@@ -7,14 +7,11 @@ import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-c
 
 describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {
 	it("selects the measured factor by region (slug is lowercase from regionToStateSlug)", () => {
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "dc")).toBe(1.44)
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "az")).toBe(3.12)
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "tx")).toBe(1.7)
-	})
+		const { byRegion } = INTERP_RADIUS_CALIBRATION
 
-	it("is case-insensitive on the region key", () => {
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "CA")).toBe(1.87)
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "ca")).toBe(1.87)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "dc")).toBe(byRegion["DC"])
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "az")).toBe(byRegion["AZ"])
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "tx")).toBe(byRegion["TX"])
 	})
 
 	it("falls back to the conservative default for an unmeasured region", () => {
@@ -23,8 +20,8 @@ describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {
 	})
 
 	it("falls back to the default for an absent region (null/undefined)", () => {
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, null)).toBe(1.95)
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, undefined)).toBe(1.95)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, null)).toBe(INTERP_RADIUS_CALIBRATION.default)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, undefined)).toBe(INTERP_RADIUS_CALIBRATION.default)
 	})
 
 	it("the default is at the conservative (rural) end — never below the densest measured factor", () => {

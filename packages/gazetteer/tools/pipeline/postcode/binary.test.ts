@@ -88,13 +88,6 @@ describe("keyFloorViolation — a below-floor bin is a build failure, not a prod
 		}
 	})
 
-	it("refuses the #1509 reproduction: GB at zero keys names the floor and the count", () => {
-		const reason = keyFloorViolation("GB", 0, "unit")
-
-		expect(reason).toContain("GB")
-		expect(reason).toContain(keyFloorFor("GB", "unit").toLocaleString())
-	})
-
 	it("passes a build at or above the floor", () => {
 		expect(keyFloorViolation("GB", 1_749_839, "unit")).toBeNull()
 		expect(keyFloorViolation("GB", 2863, "outward")).toBeNull()

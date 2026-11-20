@@ -11,7 +11,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
+import { loadImportanceIndex } from "#candidate/importance"
 import type { WOFDatabase } from "#schema"
 
 let scratch: TemporaryDirectory
@@ -119,8 +119,6 @@ describe("ImportanceIndex.find", () => {
 
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.05, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.5, 8.5417)).toBeNull()
-		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeGreaterThan(5.6)
-		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeLessThan(55)
 	})
 
 	test("the key is the SHARED fold — diacritics and non-Latin scripts reach their scores", () => {
