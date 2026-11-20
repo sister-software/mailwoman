@@ -1261,7 +1261,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [x] **Step 1: CHANGELOG** under `## Unreleased`, above the worker entry:
 
-```markdown
+```md
 ### Added — self-service license: the site and the CLI
 
 `/license` gains a Purchase section (the two Payment Links and the billing portal, rendered once the operator fills them),

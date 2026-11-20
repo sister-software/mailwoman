@@ -331,7 +331,7 @@ Root `tsconfig.json`: add, next to the `tile-worker` and `license-worker` entrie
 
 `packages/earth/README.md`:
 
-```markdown
+```md
 # @mailwoman/earth
 
 Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.post` as an installable PWA on Cloudflare

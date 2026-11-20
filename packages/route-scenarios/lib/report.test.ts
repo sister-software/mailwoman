@@ -230,7 +230,7 @@ describe("an unresolved unit total", () => {
 describe("the README", () => {
 	test("shows the renderer's output for the synthetic fixture, unchanged", async () => {
 		const readme = await readLocalTextFile(workspacePath("route-scenarios", "README.md"))
-		const example = readme.split("```markdown\n")[1]?.split("\n```")[0]
+		const example = readme.split("```md\n")[1]?.split("\n```")[0]
 
 		expect(example).toBe(markdown.trimEnd())
 	})

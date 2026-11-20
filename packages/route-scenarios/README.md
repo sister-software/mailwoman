@@ -68,7 +68,7 @@ The section below is the verbatim output of
 construction figures: USD 13,000.00 for Building A by itself, USD 14,000.00 for Building B by itself, USD 16,000.00 for both,
 and USD 3,000.00 to add Building B to Building A.
 
-```markdown
+```md
 ## Shared-route scenario: Synthetic shared route to Example Route Parcel
 
 Every input in this section is synthetic. The figures are a scenario computed from the supplied assumptions below. They are not a quote. The low and high cases are scenarios from named assumptions, and no probability is attached to them.

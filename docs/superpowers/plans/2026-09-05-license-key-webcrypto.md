@@ -1375,7 +1375,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 Under `## Unreleased`, add:
 
-```markdown
+```md
 ### Changed — the license key signs and verifies on WebCrypto
 
 `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, `generateLicenseSigningKeyPair` and `verifyConfiguredLicenseKey`

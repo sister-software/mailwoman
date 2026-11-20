@@ -726,7 +726,7 @@ and change the `json` option description to `"Emit { engine, entries } as JSON i
 
 In `CHANGELOG.md` under `## Unreleased`, add a `### Changed` section (or extend the existing one):
 
-```markdown
+```md
 ### Changed — `mailwoman autocomplete --json` wraps its array
 
 The command emitted a bare JSON array. It now emits `{ "engine": …, "entries": […] }`, so the record carries the
@@ -1542,7 +1542,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 Under `## Unreleased`, add:
 
-```markdown
+```md
 ### Added — the engine stamp and the license notice
 
 Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomplete --json`), every `/v1` body, each

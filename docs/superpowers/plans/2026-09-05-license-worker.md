@@ -2696,7 +2696,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 - [x] **Step 1: CHANGELOG** under `## Unreleased`:
 
-```markdown
+```md
 ### Added — `@mailwoman/license-worker` (private)
 
 A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,
