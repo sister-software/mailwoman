@@ -67,13 +67,15 @@ export interface GauntletDeps extends Disposable {
 	 * It performs no resolution and doesn't alter the check's geocode path.
 	 * `wrapFST` replaces the case's gazetteer FST for this one parse with the matcher it returns,
 	 * so a census can decode a candidate FST rule without changing the decoder.
+	 *
 	 * The returned `fst` is always the unwrapped matcher.
+	 * The returned `classifier` is the one that parsed the row.
 	 */
 	diagnoseParse(
 		input: string,
 		opts?: GauntletGeocodeOpts,
 		wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike
-	): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
+	): Promise<{ trace: NeuralParseTrace; classifier: NeuralAddressClassifier; fst?: FSTMatcherLike }>
 	/**
 	 * Whether a row routed to `caseCountry` graded without that country's weights overlay. a
 	 * base-only pass isn't evidence that the production path passes, so a caller turning a passing
@@ -786,6 +788,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 			return {
 				trace: await caseClassifier.traceParse(parseInput, parseOpts),
+				classifier: caseClassifier,
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},

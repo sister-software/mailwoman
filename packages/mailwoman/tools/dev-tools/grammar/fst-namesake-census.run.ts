@@ -33,7 +33,6 @@
  * It writes `<label>-summary.json` and `<label>-rows.jsonl` to `--out-dir`.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
@@ -48,28 +47,25 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
 import {
 	comparePaths,
+	emptyFlipGrades,
 	fstBiasOn,
-	fstFlipSpans,
 	fstVotes,
 	gradeFlip,
 	localeHeadReading,
-	locateUniqueComponentTruth,
 	maximumVote,
 	pieceTruthTags,
+	priorFlipSpans,
 	transformFSTEntries,
 	truthTagForRange,
 	type FlipGrade,
 	type FSTVote,
 	type LocaleHeadReading,
 	type PathMove,
-	type TruthSpan,
 } from "#tools/eval-harness/grammar/census"
-import { readHeldoutCollectionRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { heldoutRowID } from "#tools/eval-harness/heldout/per/country"
+import { readDecodeCensusRows, truthInText } from "#tools/eval-harness/grammar/census/rows"
 
 const RULE_A_THRESHOLDS = [0.5, 0.8, 0.9, 0.95, 0.99, 0.999] as const
 const ARMS = ["A", "B0", "B1", "C"] as const
@@ -91,91 +87,6 @@ const { values } = parseArguments({
 
 const outDir = values["out-dir"] ?? "/mnt/mw/audits/fst-census"
 const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY
-
-interface CensusRow {
-	collection: string
-	id: string
-	input: string
-	country: string | null
-	/**
-	 * Character truth against `input`, or the board's component values located in the parsed text.
-	 */
-	truth: { spans: TruthSpan[]; complete: true } | { components: Record<string, string>; complete: false }
-}
-
-async function* censusRows(): AsyncGenerator<CensusRow> {
-	const manifests = values.heldout ?? []
-
-	// One input per line, parsed through the base route, with no truth.
-	if (values.inputs) {
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A hand-written probe list of a few dozen lines.
-		for (const input of (await readLocalTextFile(values.inputs)).split("\n").filter((line) => line.trim())) {
-			yield { collection: "inputs", id: input, input, country: null, truth: { components: {}, complete: false } }
-		}
-
-		return
-	}
-
-	if (!manifests.length) {
-		for (const row of await loadRegressionCases()) {
-			yield {
-				collection: "board",
-				id: row.id,
-				input: row.input,
-				country: row.locale?.split("-")[1] ?? row.country,
-				truth: { components: row.expectComponents ?? {}, complete: false },
-			}
-		}
-
-		return
-	}
-
-	for await (const { collection, row } of readHeldoutCollectionRows(manifests)) {
-		yield {
-			collection,
-			id: heldoutRowID(row),
-			input: row.raw,
-			country: row.country,
-			truth: {
-				spans: row.span_tags.map((tag, span) => ({
-					tag,
-					start: row.span_starts[span]!,
-					end: row.span_ends[span]!,
-				})),
-				complete: true,
-			},
-		}
-	}
-}
-
-/**
- * Truth in the parsed text's coordinates.
- *
- * Held-out character truth is used as given only when the parsed text is the input up to case.
- */
-function truthInText(row: CensusRow, text: string): { spans: TruthSpan[]; complete: boolean } {
-	if (!row.truth.complete) {
-		return { spans: locateUniqueComponentTruth(text, row.truth.components), complete: false }
-	}
-
-	if (text.length === row.input.length && text.toLowerCase() === row.input.toLowerCase()) {
-		return { spans: row.truth.spans, complete: true }
-	}
-
-	const components: Record<string, string> = {}
-
-	for (const span of row.truth.spans) {
-		components[`${span.tag}\u0000${span.start}`] = row.input.slice(span.start, span.end)
-	}
-
-	return {
-		spans: locateUniqueComponentTruth(text, components).map((span) => ({
-			...span,
-			tag: span.tag.split("\u0000")[0]!,
-		})),
-		complete: false,
-	}
-}
 
 using wof = new DatabaseClient<WOFDatabase>(
 	values["wof-db"] ?? wofDatabasePath("admin-global-priority.db").toString(),
@@ -351,8 +262,6 @@ interface CountryTally {
 	>
 }
 
-const emptyGrades = (): Record<FlipGrade, number> => ({ helped: 0, hurt: 0, neither: 0, unclassified: 0 })
-
 const armKeys = [...RULE_A_THRESHOLDS.map((t) => `A@${t}`), "B0", "B1", "C"]
 
 function emptyTally(): CountryTally {
@@ -361,9 +270,9 @@ function emptyTally(): CountryTally {
 		rowsWithFST: 0,
 		rowsWithFlip: 0,
 		flips: 0,
-		flipGrades: emptyGrades(),
+		flipGrades: emptyFlipGrades(),
 		foreignFlips: 0,
-		foreignFlipGrades: emptyGrades(),
+		foreignFlipGrades: emptyFlipGrades(),
 		maximumVotes: 0,
 		maximumVotesUnknownCountry: 0,
 		maximumVotesForeignToRow: 0,
@@ -432,7 +341,10 @@ async function checkpoint(final: boolean): Promise<void> {
 
 using deps = await buildGauntletDeps()
 
-for await (const row of censusRows()) {
+for await (const row of readDecodeCensusRows({
+	...(values.heldout ? { heldout: values.heldout } : {}),
+	...(values.inputs ? { inputs: values.inputs } : {}),
+})) {
 	if (processed >= limit) break
 
 	if (countryFilter && !countryFilter.has(row.country?.toUpperCase() ?? "")) continue
@@ -452,7 +364,7 @@ for await (const row of censusRows()) {
 	const votes = fstVotes(matches, trace.pieces)
 	const head = localeHeadReading(trace.localeLogits, trace.localeCountries)
 	const truth = truthInText(row, trace.text)
-	const flips = fstFlipSpans(trace.explanation) ?? []
+	const flips = priorFlipSpans(trace.explanation, "fst") ?? []
 
 	// The distribution: per accepted match and tag, the highest-referential vote.
 	const maxima = new Map<string, FSTVote>()
@@ -493,7 +405,7 @@ for await (const row of censusRows()) {
 		const truthTag = truthTagForRange(truth.spans, start, end, truth.complete)
 		// A flip with no vote for the FST decode's tag came from another tag's vote or the
 		// street suppression, so the receipt records the highest vote of any tag on the span.
-		let best = maximumVote(votes, flip.withFST, flip.startPiece, flip.endPiece)
+		let best = maximumVote(votes, flip.withPrior, flip.startPiece, flip.endPiece)
 
 		if (!best.vote) {
 			for (const tag of new Set(votes.map((candidate) => candidate.tag))) {
@@ -511,11 +423,11 @@ for await (const row of censusRows()) {
 
 		return {
 			text: trace.text.slice(start, end),
-			withFST: flip.withFST,
-			withoutFST: flip.withoutFST,
+			withFST: flip.withPrior,
+			withoutFST: flip.withoutPrior,
 			truth: truthTag,
-			grade: gradeFlip(flip.withFST, flip.withoutFST, truthTag),
-			bias: fstBiasOn(trace.explanation, flip.withFST, flip.startPiece, flip.endPiece),
+			grade: gradeFlip(flip.withPrior, flip.withoutPrior, truthTag),
+			bias: fstBiasOn(trace.explanation, flip.withPrior, flip.startPiece, flip.endPiece),
 			voter,
 			voterForeignToHead: voter?.country && head ? voter.country !== head.country : null,
 			voterForeignToRow: voter?.country && row.country ? voter.country !== row.country.toUpperCase() : null,

@@ -10,7 +10,7 @@
 
 import { bareBIOTag } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import type { DecodeExplanation } from "@mailwoman/neural/decode-explanation"
+import type { DecodeExplanation, LedgerPrior } from "@mailwoman/neural/decode-explanation"
 import {
 	groupPiecesIntoWords,
 	isStreetShapedSurface,
@@ -340,48 +340,47 @@ export function summarizeC6(rows: ReadonlyArray<C6RowReport>): C6CensusSummary {
 }
 
 /**
- * A run of contiguous pieces the decoder labels differently when the FST prior
- * is removed and every other term is kept.
+ * A run of contiguous pieces the decoder labels differently without one prior, every other term kept.
  */
-export interface FSTFlipSpan {
+export interface PriorFlipSpan {
 	startPiece: number
 	endPiece: number
 	/**
-	 * The tag decoded with the FST prior.
+	 * The tag decoded with the prior.
 	 */
-	withFST: string
+	withPrior: string
 	/**
 	 * The tag decoded without it.
 	 */
-	withoutFST: string
+	withoutPrior: string
 }
 
 /**
- * Groups the FST ledger entry's changed pieces into runs that share one tag pair.
+ * Groups one prior's ledger-entry changed pieces into runs that share one tag pair.
  *
  * Null when the parse has no explanation, because absent evidence isn't an empty flip set.
  * A run whose two tags are equal changed only a span boundary.
  */
-export function fstFlipSpans(explanation: DecodeExplanation | null): FSTFlipSpan[] | null {
+export function priorFlipSpans(explanation: DecodeExplanation | null, prior: LedgerPrior): PriorFlipSpan[] | null {
 	if (!explanation) return null
 
-	const changes = explanation.ledger.find((entry) => entry.prior === "fst")?.changes ?? []
-	const spans: FSTFlipSpan[] = []
+	const changes = explanation.ledger.find((entry) => entry.prior === prior)?.changes ?? []
+	const spans: PriorFlipSpan[] = []
 
 	for (const change of changes.toSorted((a, b) => a.piece - b.piece)) {
-		const withFST = bareBIOTag(change.from)
-		const withoutFST = bareBIOTag(change.to)
+		const withPrior = bareBIOTag(change.from)
+		const withoutPrior = bareBIOTag(change.to)
 		const previous = spans.at(-1)
 
 		if (
 			previous?.endPiece === change.piece &&
-			previous.withFST === withFST &&
-			previous.withoutFST === withoutFST &&
+			previous.withPrior === withPrior &&
+			previous.withoutPrior === withoutPrior &&
 			!change.from.startsWith("B-")
 		) {
 			previous.endPiece = change.piece + 1
 		} else {
-			spans.push({ startPiece: change.piece, endPiece: change.piece + 1, withFST, withoutFST })
+			spans.push({ startPiece: change.piece, endPiece: change.piece + 1, withPrior, withoutPrior })
 		}
 	}
 
@@ -555,16 +554,21 @@ export function truthTagForRange(
 }
 
 /**
- * Whether the FST's change moved a span toward the truth tag, away from it, or neither.
+ * Whether a prior's change moved a span toward the truth tag, away from it, or neither.
  */
 export type FlipGrade = "helped" | "hurt" | "neither" | "unclassified"
 
-export function gradeFlip(withFST: string, withoutFST: string, truthTag: string | null): FlipGrade {
+/**
+ * A zero count for each {@link FlipGrade}.
+ */
+export const emptyFlipGrades = (): Record<FlipGrade, number> => ({ helped: 0, hurt: 0, neither: 0, unclassified: 0 })
+
+export function gradeFlip(withPrior: string, withoutPrior: string, truthTag: string | null): FlipGrade {
 	if (truthTag === null) return "unclassified"
 
-	if (withFST === truthTag && withoutFST !== truthTag) return "helped"
+	if (withPrior === truthTag && withoutPrior !== truthTag) return "helped"
 
-	if (withoutFST === truthTag && withFST !== truthTag) return "hurt"
+	if (withoutPrior === truthTag && withPrior !== truthTag) return "hurt"
 
 	return "neither"
 }

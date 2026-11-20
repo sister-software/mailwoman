@@ -310,6 +310,24 @@ export class PairIndexResolver {
 	}
 
 	/**
+	 * Every (child, parent) pair the index holds, with both tags, in load order.
+	 */
+	*entries(): Generator<PairIndexEntry> {
+		for (const [key, edge] of this.#probeMap) {
+			const lengthEnd = key.indexOf(":")
+			const childStart = lengthEnd + 1
+			const childEnd = childStart + Number(key.slice(0, lengthEnd))
+
+			yield {
+				child: key.slice(childStart, childEnd),
+				parent: key.slice(childEnd + 1),
+				tag: edge.tag,
+				parentTag: edge.parentTag,
+			}
+		}
+	}
+
+	/**
 	 * The header's child bias magnitude.
 	 */
 	get delta(): number {
