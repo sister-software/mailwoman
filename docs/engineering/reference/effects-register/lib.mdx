@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `lib`
 
 The manifest at `package.json` has no `sideEffects` field.
-This page lists 123 of the group's 285 library and tool modules.
+This page lists 126 of the group's 295 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -21,6 +21,23 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 - `awaits at module scope`
 - `runs a statement at module scope`, 3 times
+
+## `lib/check-kit/host.ts`
+
+| Kind  | Interface              | Target                   | Calls |
+| ----- | ---------------------- | ------------------------ | ----- |
+| read  | `pathExists`           | `unresolved (parameter)` | 1     |
+| read  | `tryReadLocalJSONFile` | `unresolved (template)`  | 1     |
+| write | `makeDirectories`      | `unresolved (call)`      | 1     |
+
+## `lib/check-kit/runner.ts`
+
+| Kind  | Interface              | Target                   | Calls |
+| ----- | ---------------------- | ------------------------ | ----- |
+| read  | `gitHead`              | `unresolved (property)`  | 1     |
+| read  | `tryReadLocalJSONFile` | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`      | `unresolved (other)`     | 1     |
+| write | `openWriteStream`      | `unresolved (call)`      | 1     |
 
 ## `lib/dev-mcp/arc.ts`
 
@@ -279,6 +296,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `pathExists`       | `unresolved (call)`      | 1     |
 | read | `pathExists`       | `unresolved (parameter)` | 1     |
 | read | `statPath`         | `unresolved (parameter)` | 1     |
+
+## `lib/dev-mcp/spawn-tools.ts`
+
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `lib/dev-mcp/symbol.ts`
 
