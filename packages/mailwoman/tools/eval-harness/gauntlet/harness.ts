@@ -162,6 +162,14 @@ export interface GauntletResolverPins {
 	 */
 	countyDesignatorFallback: SwitchPin
 	/**
+	 * A soft country scope acts inside retrieval, and a hard scope reports the places it excluded.
+	 */
+	scopeCountryRetrieval: SwitchPin
+	/**
+	 * One of two `locality` spans resolves inside the other when the gazetteer contains it there.
+	 */
+	siblingLocalityContainment: SwitchPin
+	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
 	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
 	 * that the harness loads rather than `resolverPinDeps`.
@@ -213,6 +221,8 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	adminContainmentRerank: "production",
 	dependentLocalityContainment: "production",
 	countyDesignatorFallback: "production",
+	scopeCountryRetrieval: "production",
+	siblingLocalityContainment: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
 	poiVenueTier: "production",
@@ -233,6 +243,8 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	adminContainmentRerank?: boolean
 	dependentLocalityContainment?: boolean
 	countyDesignatorFallback?: boolean
+	scopeCountryRetrieval?: boolean
+	siblingLocalityContainment?: boolean
 	poiVenueTier?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
@@ -241,6 +253,8 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
 		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
 		...switchPinEntry("countyDesignatorFallback", pins.countyDesignatorFallback),
+		...switchPinEntry("scopeCountryRetrieval", pins.scopeCountryRetrieval),
+		...switchPinEntry("siblingLocalityContainment", pins.siblingLocalityContainment),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
 		...(pins.spanRescoreWeakResolution === "production"
 			? {}

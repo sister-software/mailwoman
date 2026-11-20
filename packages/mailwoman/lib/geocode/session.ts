@@ -21,7 +21,13 @@ import {
 	type QueryKindResult,
 	type SoftChannelName,
 } from "@mailwoman/core/pipeline"
-import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
+import {
+	type DefaultCountry,
+	type ParentPlaceScope,
+	type ResolveNodeTrace,
+	type ResolveOpts,
+	ScopeStrength,
+} from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
@@ -182,6 +188,26 @@ export interface GeocodeSessionOptions {
 	 */
 	countyDesignatorFallback?: boolean
 
+	/**
+	 * Whether a soft country scope acts inside retrieval, the locale head's contradicting
+	 * country stands in as a soft scope, and a hard scope reports the places it excluded.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	scopeCountryRetrieval?: boolean
+
+	/**
+	 * Whether one of two `locality` spans resolves inside the other when the gazetteer contains it there.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	siblingLocalityContainment?: boolean
+
+	/**
+	 * A parent place that scopes every lookup, as `--parent` sets it.
+	 */
+	parentPlace?: ParentPlaceScope
+
 	placeCountryThreshold: number
 
 	/**
@@ -276,6 +302,11 @@ export interface GeocodeRequestOptions {
 	 * Points the resolver prefers candidates near, in place of the session's `bias` when non-empty.
 	 */
 	bias?: GeocodeDeps["bias"]
+
+	/**
+	 * A parent place that scopes every lookup of this input, in place of the session's `parentPlace`.
+	 */
+	parentPlace?: ParentPlaceScope
 }
 
 /**
@@ -539,6 +570,16 @@ export async function createGeocodeSession(
 			countryScope?.source === "caller" || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
 		const withheldCountry = inferredScopeOK ? null : localeCountry
+		const scopeCountryRetrieval = options.scopeCountryRetrieval ?? GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval
+
+		// A withheld locale country stays a soft scope under either prior.
+		const softScope: DefaultCountry | null =
+			withheldCountry && (options.localeCountryPrior || scopeCountryRetrieval)
+				? { country: withheldCountry, source: "inferred", strength: ScopeStrength.Soft }
+				: null
+
+		const resolverScope = inferredScopeOK && countryScope ? countryScope : softScope
+		const parentPlace = request.parentPlace ?? options.parentPlace
 
 		const result = await geocodeAddress(input, {
 			classifier: routed,
@@ -552,8 +593,8 @@ export async function createGeocodeSession(
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(requestBias.length ? { bias: requestBias } : {}),
-			...(inferredScopeOK && countryScope ? { defaultCountry: countryScope } : {}),
-			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
+			...(resolverScope ? { defaultCountry: resolverScope } : {}),
+			...(parentPlace ? { parentPlace } : {}),
 
 			...(capitalLevel ? { capitalLevel } : {}),
 
@@ -566,6 +607,9 @@ export async function createGeocodeSession(
 			dependentLocalityContainment:
 				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 			countyDesignatorFallback: options.countyDesignatorFallback ?? GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
+			scopeCountryRetrieval,
+			siblingLocalityContainment:
+				options.siblingLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 

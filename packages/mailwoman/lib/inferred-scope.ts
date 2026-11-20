@@ -13,7 +13,7 @@
 
 import { addressSystemKey, layoutForCountry } from "@mailwoman/codex/address/layouts"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { DefaultCountry } from "@mailwoman/core/resolver"
+import { type DefaultCountry, ScopeStrength } from "@mailwoman/core/resolver"
 import { LOCALE_COUNTRIES } from "@mailwoman/neural/labels"
 
 /**
@@ -77,4 +77,19 @@ export function shouldDropInferredScope(
 	if (verdict && verdictContradicts(verdict.country.toUpperCase(), inferred)) return true
 
 	return formatCountries.length > 0 && !formatCountries.some((country) => country.toUpperCase() === inferred)
+}
+
+/**
+ * The soft scope that stands in for a dropped inferred scope: the locale head's country,
+ * when the head's verdict is what contradicts the inferred country.
+ *
+ * It returns null when the head gave no verdict or agrees with the inferred country,
+ * so a scope the postcode format dropped while the head agreed gets no stand-in.
+ */
+export function softScopeFromLocaleHead(tree: AddressTree, defaultCountry: DefaultCountry): DefaultCountry | null {
+	const verdict = tree.localeCountry?.country.toUpperCase()
+
+	if (!verdict || !verdictContradicts(verdict, defaultCountry.country.toUpperCase())) return null
+
+	return { country: verdict, source: "inferred", strength: ScopeStrength.Soft }
 }

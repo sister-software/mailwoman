@@ -9,7 +9,12 @@
  */
 
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import type { ResolvedPlace, ResolverBackend, WeakResolutionReading } from "@mailwoman/core/resolver"
+import {
+	type ResolvedPlace,
+	type ResolverBackend,
+	ScopeStrength,
+	type WeakResolutionReading,
+} from "@mailwoman/core/resolver"
 import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { isRegionAbbreviationToken } from "@mailwoman/recognizer/region-abbreviation"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -17,13 +22,33 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { partitionByContainment } from "#admin/containment"
 import { bareSublocalityCandidate } from "#bare-toponym-race"
 import { foldName } from "#fold-name"
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "#toponym-prior"
+import { retrieveWithSoftCountry } from "#scope-retrieval"
+import {
+	DEFAULT_COUNTRY_PRIOR_WEIGHT,
+	promoteScopedCountry,
+	rankByCountryPrior,
+	rankByImportance,
+} from "#toponym-prior"
 
 export interface SpanRescoreOptions {
 	/**
 	 * ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default country).
 	 */
 	country?: string
+	/**
+	 * How {@link country} acts: a `"hard"` country filters every probe except the bare
+	 * whole-input span, and a `"soft"` country filters none and only ranks that span.
+	 *
+	 * @defaultValue `"hard"`
+	 */
+	countryStrength?: ScopeStrength
+	/**
+	 * Whether the bare whole-input span also retrieves {@link country}'s rows and promotes them after the
+	 * importance rerank, in place of ranking one worldwide fetch by a prior the rerank then reorders.
+	 *
+	 * @defaultValue `false`
+	 */
+	scopeCountryRetrieval?: boolean
 	/**
 	 * The sibling postcode serves as the backend disambiguation hint and the consistency-check anchor.
 	 */
@@ -313,6 +338,8 @@ export async function findRescoreCandidate(
 	const maxSpan = opts.maxSpanTokens ?? 4
 	const threshold = opts.confidentThreshold ?? 0.7
 	const country = opts.country
+	// A soft country never filters a probe.
+	const filterCountry = opts.countryStrength === ScopeStrength.Soft ? undefined : country
 	const postcode = opts.postcode?.trim() || undefined
 
 	// The postcode-consistency anchor.
@@ -322,7 +349,13 @@ export async function findRescoreCandidate(
 	if (postcode && thresholdKm > 0) {
 		// Both anchor probes are `postalcode`-typed: an untyped truncated code fragment
 		// name-matches arbitrary places and the false anchor then excludes the true village.
-		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
+		const pcHits = await backend.findPlace({
+			text: postcode,
+			country: filterCountry,
+			placetype: "postalcode",
+			limit: 2,
+		})
+
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 		if (a) {
@@ -334,7 +367,13 @@ export async function findRescoreCandidate(
 			const code = postcodeCodeSubset(postcode)
 
 			if (code && code !== postcode) {
-				const codeHits = await backend.findPlace({ text: code, country, placetype: "postalcode", limit: 2 })
+				const codeHits = await backend.findPlace({
+					text: code,
+					country: filterCountry,
+					placetype: "postalcode",
+					limit: 2,
+				})
+
 				const c = codeHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
 				if (c) {
@@ -465,18 +504,18 @@ export async function findRescoreCandidate(
 		const bare = softCountryEligible && wholeSpan
 		const qualifier = wholeSpan ? null : qualifierRemainder(sp)
 
+		const bareQuery = { text: sp.text, postcode, placetype: "locality", limit: BARE_TOPONYM_FETCH }
+
 		const hits = bare
-			? rankByCountryPrior(
-					await backend.findPlace({ text: sp.text, postcode, placetype: "locality", limit: BARE_TOPONYM_FETCH }),
-					country,
-					countryWeight
-				)
+			? opts.scopeCountryRetrieval
+				? await retrieveWithSoftCountry(backend, bareQuery, await backend.findPlace(bareQuery), country!)
+				: rankByCountryPrior(await backend.findPlace(bareQuery), country, countryWeight)
 			: // A SUB-span probe is a RE-READING of a token the parse classified into a longer span — it
 				// never included an alias, so alias-keyed rows are off for it (`primaryOnly`); a whole-input
 				// span keeps the alias tier regardless of scope.
 				await backend.findPlace({
 					text: sp.text,
-					country,
+					country: filterCountry,
 					postcode,
 					placetype: "locality",
 					limit: 5,
@@ -492,7 +531,13 @@ export async function findRescoreCandidate(
 		//
 		// Importance-first within the admitted set.
 		// It abstains on an artifact predating the column and so changes no pick.
-		const ranked = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
+		const importanceRanked = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
+
+		// Under scope retrieval the country's bounded bonus runs after the rerank, so the rerank can't undo it.
+		const ranked =
+			bare && opts.scopeCountryRetrieval
+				? promoteScopedCountry(importanceRanked, country!, countryWeight)
+				: importanceRanked
 
 		// The same partition the walk applies: tier-safe, stable and positive-evidence-only,
 		// so a backend that ignored `regionQualifier` is byte-stable.
@@ -532,7 +577,7 @@ export async function findRescoreCandidate(
 		// A whole-input venue can be a sub-locality row, as `Golden Gate Park` is a neighborhood,
 		// and that row states the whole name where a shorter span would state part of it.
 		if (wholeSpan && venueCoversInput) {
-			const sublocality = await bareSublocalityCandidate(backend, sp.text, country)
+			const sublocality = await bareSublocalityCandidate(backend, sp.text, filterCountry)
 
 			if (sublocality && withinThreshold(sublocality)) {
 				return {
@@ -566,7 +611,7 @@ export async function findRescoreCandidate(
 			const exact = hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0))
 
 			for (const h of exact) {
-				if (!h.country || h.country === country) continue
+				if (!h.country || h.country === filterCountry) continue
 
 				// A postcode row verifies a country only for a code written in that country's form.
 				// A US ZIP row also answers to its city's name, so without this test a city name

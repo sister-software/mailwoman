@@ -37,8 +37,8 @@ const KNOB_OPTION_KINDS = {
 	locale: "string",
 	anchorPosterior: null,
 	anchorWeight: "number",
-	localeCountryPrior: "string",
-	localeCountryPriorWeight: "number",
+	softCountryWeight: "number",
+	parentPlace: null,
 	capitalLevel: null,
 	hardCountry: "string",
 	addressPoints: null,
@@ -70,6 +70,8 @@ const KNOB_OPTION_KINDS = {
 	adminContainmentRerank: "boolean",
 	dependentLocalityContainment: "boolean",
 	countyDesignatorFallback: "boolean",
+	scopeCountryRetrieval: "boolean",
+	siblingLocalityContainment: "boolean",
 	traceSink: null,
 	diagnoseUnreachable: "boolean",
 } as const satisfies Record<keyof Required<ResolveOpts>, KnobOptionKind>
@@ -98,9 +100,13 @@ function matchesKind(value: unknown, kind: Exclude<KnobOptionKind, null>): boole
 			return typeof value === "string" && WEAK_RESOLUTION_READINGS.has(value)
 		case "default-country": {
 			if (typeof value !== "object" || !value) return false
-			const { country, source } = value as { country?: unknown; source?: unknown }
+			const { country, source, strength } = value as { country?: unknown; source?: unknown; strength?: unknown }
 
-			return typeof country === "string" && (source === "caller" || source === "inferred")
+			return (
+				typeof country === "string" &&
+				(source === "caller" || source === "inferred") &&
+				(strength == null || strength === "hard" || strength === "soft")
+			)
 		}
 	}
 }

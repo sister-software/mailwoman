@@ -6,6 +6,8 @@ import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman
 import {
 	type DefaultCountry,
 	EMPTY_PLACE_FIELDS,
+	hardCountryOf,
+	type ParentPlaceScope,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
 	type PostcodePrefixIndexLike,
@@ -13,6 +15,7 @@ import {
 	type ResolveOpts,
 	type ResolverBackend,
 	type ResolveSwitches,
+	ScopeStrength,
 } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -168,6 +171,15 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 /**
  * The options and mutable state that one `resolveTree` call passes through its tree walk.
  */
+/**
+ * A caller's parent place as the walk reads it: the scope, the place's record, and its ancestors' ids.
+ */
+export interface ResolvedParentPlace {
+	scope: ParentPlaceScope
+	place: ResolvedPlace
+	ancestorIDs: ReadonlySet<number>
+}
+
 export interface ResolutionState {
 	lookupsRemaining: number
 	placetypeMap: PlacetypeMap
@@ -268,15 +280,28 @@ export interface ResolutionState {
 	diagnoseUnreachable?: boolean
 
 	/**
-	 * The locale country used as a soft prior on region and locality candidates
-	 * when no default country or anchor posterior applies.
+	 * The soft country scope: a prior on region and locality candidates that applies
+	 * while {@link ResolutionState.defaultCountry} is null and no anchor posterior applies.
+	 *
+	 * {@link ResolutionState.defaultCountry} holds only a hard scope.
 	 */
-	localeCountryPrior?: string
+	softCountry: DefaultCountry | null
 
 	/**
-	 * The weight of {@link ResolutionState.localeCountryPrior}, in log10-population units.
+	 * The weight of {@link ResolutionState.softCountry}, in log10-population units.
 	 */
-	localeCountryPriorWeight: number
+	softCountryWeight: number
+
+	/**
+	 * Whether a soft scope acts inside retrieval, and a hard default country
+	 * probes for the places it excluded.
+	 */
+	scopeCountryRetrieval: boolean
+
+	/**
+	 * The caller's parent place with its record and the ids of its ancestors, or null.
+	 */
+	parentPlace: ResolvedParentPlace | null
 
 	/**
 	 * Returns a candidate's capital level for bounded capital promotion.
@@ -341,24 +366,36 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | null
  * appending a resolved `locality` node on a hit.
  *
  * When no span matches, it tries the postcode node's code part.
+ *
+ * A hard default country filters the probes, and a bare whole-input span reads it as a prior.
+ * `softCountry` is a soft scope that acts inside retrieval: span probes read it only as a prior.
  */
 export async function applySpanRescore(
 	roots: AddressNode[],
 	raw: string,
 	backend: ResolverBackend,
-	opts: ResolvedOpts
+	opts: ResolvedOpts,
+	softCountry: string | null = null
 ): Promise<void> {
 	if (hasResolvedPlace(roots, opts.spanRescoreWeakResolution ?? false)) return
+
+	const hardCountry = hardCountryOf(opts.defaultCountry)
 
 	let hit
 
 	try {
 		hit = await findRescoreCandidate(raw, roots, backend, {
-			country: opts.defaultCountry?.country,
+			...(hardCountry
+				? { country: hardCountry }
+				: softCountry
+					? { country: softCountry, countryStrength: ScopeStrength.Soft }
+					: {}),
+			scopeCountryRetrieval: opts.scopeCountryRetrieval,
 			postcode: firstPostcodeValue(roots),
 			thresholdKm: opts.spanRescoreThresholdKm,
 
 			postalCompoundRecovery: opts.postalCompoundRecovery,
+			...(opts.softCountryWeight != null ? { bareToponymCountryWeight: opts.softCountryWeight } : {}),
 			...(opts.isVenueCategoryWord ? { isVenueCategoryWord: opts.isVenueCategoryWord } : {}),
 		})
 	} catch {
@@ -367,7 +404,7 @@ export async function applySpanRescore(
 
 	if (!hit && opts.postalCompoundRecovery) {
 		try {
-			await recoverPostcodeNode(roots, backend, opts.defaultCountry?.country ?? null, opts.traceSink)
+			await recoverPostcodeNode(roots, backend, hardCountry, opts.traceSink)
 		} catch {}
 	}
 

@@ -55,6 +55,7 @@ export const PICK_METADATA_KEYS = [
 	"parent_fallback",
 	"variant_alias_exemption",
 	"county_designator_fallback",
+	"sibling_locality_containment",
 ] as const
 
 /**

@@ -37,13 +37,14 @@ import type {
 	AuthoritativeProvider,
 	DefaultCountry,
 	AddressPointLookup,
+	ParentPlaceScope,
 	PostcodePrefixIndexLike,
 	RegionDatabases,
 	ResolveOpts,
 	Resolver,
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
-import { RESOLVE_SWITCH_DEFAULTS } from "@mailwoman/core/resolver"
+import { hardCountryOf, RESOLVE_SWITCH_DEFAULTS, ScopeStrength } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
@@ -63,7 +64,7 @@ import {
 	resolvedCountryOf,
 	treePostcodeValue,
 } from "#geocode/tree-reads"
-import { shouldDropInferredScope } from "#inferred-scope"
+import { shouldDropInferredScope, softScopeFromLocaleHead } from "#inferred-scope"
 import { thingQueryRefusalMarkers } from "#intent-refusal"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
 // Observation-layer routes are imported from one barrel.
@@ -133,6 +134,15 @@ export interface GeocodeSwitches {
 	 */
 	countyDesignatorFallback: boolean
 	/**
+	 * Lets a soft country scope act inside retrieval, and stands the locale head's
+	 * country in as a soft scope when it contradicts the inferred scope.
+	 */
+	scopeCountryRetrieval: boolean
+	/**
+	 * Resolves one of two `locality` spans inside the other when the gazetteer contains it there.
+	 */
+	siblingLocalityContainment: boolean
+	/**
 	 * Uses the postcode-prefix prior.
 	 * It needs {@link GeocodeDeps.postcodePrefixIndex}.
 	 */
@@ -158,6 +168,8 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
 	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
 	countyDesignatorFallback: RESOLVE_SWITCH_DEFAULTS.countyDesignatorFallback,
+	scopeCountryRetrieval: RESOLVE_SWITCH_DEFAULTS.scopeCountryRetrieval,
+	siblingLocalityContainment: RESOLVE_SWITCH_DEFAULTS.siblingLocalityContainment,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
 
@@ -267,18 +279,18 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	authoritativeProvider?: AuthoritativeProvider
 	/**
-	 * Country constraint passed to the resolver, and who chose it.
+	 * Country scope passed to the resolver, who chose it, and whether it filters or ranks.
 	 * When it is unset, the resolver has no default country.
 	 */
 	defaultCountry?: DefaultCountry
 	/**
-	 * Locale country as a soft ranking prior when no hard country scope is set.
+	 * The bonus a soft country scope gives a candidate in its country, in log10-population units.
 	 */
-	localeCountryPrior?: string
+	softCountryWeight?: number
 	/**
-	 * Weight for localeCountryPrior.
+	 * A caller-supplied parent place that scopes every lookup.
 	 */
-	localeCountryPriorWeight?: number
+	parentPlace?: ParentPlaceScope
 	/**
 	 * Capital status callback for bounded capital promotion.
 	 */
@@ -519,8 +531,28 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
 
 	// An inferred scope is dropped when contradictory evidence is stronger.
-	if (deps.defaultCountry && !shouldDropInferredScope(tree, deps.defaultCountry, formatCountries)) {
-		opts.defaultCountry = deps.defaultCountry
+	// Under scope retrieval the locale head's contradicting country stands in as a soft scope.
+	if (deps.defaultCountry) {
+		const legacySoft =
+			deps.defaultCountry.strength === ScopeStrength.Soft && !geocodeSwitches(deps).scopeCountryRetrieval
+
+		if (legacySoft || !shouldDropInferredScope(tree, deps.defaultCountry, formatCountries)) {
+			opts.defaultCountry = deps.defaultCountry
+		} else if (geocodeSwitches(deps).scopeCountryRetrieval) {
+			const headScope = softScopeFromLocaleHead(tree, deps.defaultCountry)
+
+			if (headScope) {
+				opts.defaultCountry = headScope
+			}
+		}
+	}
+
+	if (deps.softCountryWeight != null) {
+		opts.softCountryWeight = deps.softCountryWeight
+	}
+
+	if (deps.parentPlace) {
+		opts.parentPlace = deps.parentPlace
 	}
 
 	// Pass format-implied countries to postcode probe.
@@ -531,15 +563,6 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	// Locale hint for fuzzy matching scope.
 	if (deps.fuzzyCountryScope) {
 		opts.fuzzyCountryScope = deps.fuzzyCountryScope
-	}
-
-	// Soft locale prior when no hard scope is active.
-	if (deps.localeCountryPrior && !opts.defaultCountry) {
-		opts.localeCountryPrior = deps.localeCountryPrior
-
-		if (deps.localeCountryPriorWeight) {
-			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
-		}
 	}
 
 	// Capital-level callback for bounded promotion.
@@ -558,6 +581,8 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"adminContainmentRerank",
 	"dependentLocalityContainment",
 	"countyDesignatorFallback",
+	"scopeCountryRetrieval",
+	"siblingLocalityContainment",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
 
@@ -643,7 +668,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
 	// Prefer postcode-format country prior when eligible.
-	if (switches.postcodeCountryPrior && !opts.defaultCountry && !opts.anchorPosterior && !isBareLocalityTree(tree)) {
+	if (
+		switches.postcodeCountryPrior &&
+		!hardCountryOf(opts.defaultCountry) &&
+		!opts.anchorPosterior &&
+		!isBareLocalityTree(tree)
+	) {
 		const pcCountry = countryFromPostcodeFormat(decodeAsJSON(tree).postcode as string | null)
 
 		if (pcCountry) {
@@ -712,7 +742,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Pre-resolve country: explicit default first, then placer.
-	const preResolveCountry = (deps.defaultCountry?.country ?? placedCountry)?.toLowerCase() ?? null
+	const preResolveCountry = (hardCountryOf(deps.defaultCountry) ?? placedCountry)?.toLowerCase() ?? null
 
 	// Country-specific placetype map.
 	opts.placetypeMap = placetypeMapForCountry(preResolveCountry)
@@ -741,7 +771,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 		opts.streetCentroids = (country: string) => provider(country).streetCentroids ?? null
 
-		for (const c of [deps.defaultCountry?.country.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
+		for (const c of [
+			hardCountryOf(deps.defaultCountry)?.toLowerCase(),
+			placedCountry?.toLowerCase(),
+			streetPlacerCountry,
+		]) {
 			if (c && !streetHints.includes(c)) {
 				streetHints.push(c)
 			}

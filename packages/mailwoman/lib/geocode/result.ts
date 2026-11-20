@@ -200,6 +200,7 @@ interface CandidateAlternative {
 	score?: number
 	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	matchedAlias?: true | null
+	outsideScope?: true | null
 }
 
 /**
@@ -287,6 +288,7 @@ function candidatesOf(primaryNode: AddressNode | null, allNodes: readonly Addres
 				placeID,
 				...scoreFieldsOf(a.score, a.scoreUnmeasured),
 				...(a.matchedAlias ? { matchedAlias: true as const } : {}),
+				...(a.outsideScope ? { outsideScope: true as const } : {}),
 			})
 		}
 	}

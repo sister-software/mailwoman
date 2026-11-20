@@ -98,7 +98,8 @@ async function buildEngine() {
 
 				const depsFor = (
 					inputMode: GeocodeInit["inputMode"],
-					bias: GeocodeInit["bias"] = []
+					bias: GeocodeInit["bias"] = [],
+					parent: GeocodeInit["parent"] = null
 				): Parameters<typeof geocodeAddress>[1] => ({
 					classifier,
 					resolver,
@@ -106,6 +107,7 @@ async function buildEngine() {
 					...countryScope,
 					inputMode,
 					...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+					...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
 				})
 
 				const oneGeocode = (address: string, { inputMode }: Pick<GeocodeInit, "inputMode">) =>
@@ -113,7 +115,7 @@ async function buildEngine() {
 
 				// The tree is parsed once and handed to the geocoder, so the classifier runs once per request.
 				engine.geocode = async (address, init) => {
-					const deps = depsFor(init.inputMode, init.bias)
+					const deps = depsFor(init.inputMode, init.bias, init.parent)
 
 					if (!init.includeTree) return { ...(await geocodeAddress(address, deps)), tree: null }
 

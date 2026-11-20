@@ -9,7 +9,7 @@ import { z } from "zod"
  */
 export interface MCPToolDeps {
 	parse: (text: string, opts?: { poi?: boolean | null }) => Promise<unknown>
-	geocode: (text: string) => Promise<unknown>
+	geocode: (text: string, opts?: { parent?: MCPGeocodeParent | null }) => Promise<unknown>
 	poiSearch: (q: { query: string; poiDatabasePath?: string }) => Promise<unknown>
 	overpassExport: (query: string) => Promise<string>
 	layerManifest: (databasePath: string) => Promise<unknown>
@@ -67,7 +67,29 @@ const ParseInputSchema = z.object({
 
 const GeocodeInputSchema = z.object({
 	text: z.string().min(1).describe("The free-text postal address to geocode."),
+	parent: z
+		.number()
+		.int()
+		.positive()
+		.optional()
+		.describe(
+			"A Who's On First place id that scopes every lookup, such as a borough, city, region or country the caller already knows."
+		),
+	parent_scope: z
+		.enum(["hard", "soft"])
+		.optional()
+		.describe(
+			"How `parent` acts: hard (default) keeps only places inside it, the place itself and its ancestors; soft ranks the places inside it first."
+		),
 })
+
+/**
+ * A caller's parent place for {@link MCPToolDeps.geocode}.
+ */
+export interface MCPGeocodeParent {
+	id: number
+	scope: "hard" | "soft"
+}
 
 const POISearchInputSchema = z.object({
 	query: z
@@ -255,9 +277,9 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 				"radius in meters, and the resolved admin hierarchy. Use this to convert an address string into a location.",
 			inputSchema: GeocodeInputSchema,
 			handler: async (args) => {
-				const { text } = GeocodeInputSchema.parse(args)
+				const { text, parent, parent_scope } = GeocodeInputSchema.parse(args)
 
-				return deps.geocode(text)
+				return deps.geocode(text, { parent: parent ? { id: parent, scope: parent_scope ?? "hard" } : null })
 			},
 		},
 		{

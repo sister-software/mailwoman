@@ -258,6 +258,7 @@ test("POST /v1/geocode: the bias points and the tree option reach the engine, an
 			{ lat: 39.8, lon: -89.65 },
 			{ lat: 42.1, lon: -72.59, weight: 0.6 },
 		],
+		parent: { id: 85_688_697 },
 		include_tree: true,
 	})
 
@@ -275,9 +276,10 @@ test("POST /v1/geocode: the bias points and the tree option reach the engine, an
 				{ lat: 39.8, lon: -89.65 },
 				{ lat: 42.1, lon: -72.59, weight: 0.6 },
 			],
+			parent: { id: 85_688_697, scope: "hard" },
 			includeTree: true,
 		},
-		{ inputMode: "auto", bias: [], includeTree: false },
+		{ inputMode: "auto", bias: [], parent: null, includeTree: false },
 	])
 
 	expect((await post({ address: "Springfield", bias: [{ lat: 91, lon: 0 }] })).status).toBe(400)

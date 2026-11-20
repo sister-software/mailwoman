@@ -203,7 +203,18 @@ describe("buildToolTable", () => {
 			const tool = toolNamed(buildToolTable(deps), "mailwoman_geocode")
 
 			await tool.handler({ text: "350 5th Ave, New York, NY 10118" })
-			expect(deps.geocode).toHaveBeenCalledWith("350 5th Ave, New York, NY 10118")
+			expect(deps.geocode).toHaveBeenCalledWith("350 5th Ave, New York, NY 10118", { parent: null })
+		})
+
+		it("passes a parent place with its scope, hard by default", async () => {
+			const deps = stubDeps()
+			const tool = toolNamed(buildToolTable(deps), "mailwoman_geocode")
+
+			await tool.handler({ text: "Camden", parent: 101_750_367 })
+			await tool.handler({ text: "Camden", parent: 101_750_367, parent_scope: "soft" })
+
+			expect(deps.geocode).toHaveBeenNthCalledWith(1, "Camden", { parent: { id: 101_750_367, scope: "hard" } })
+			expect(deps.geocode).toHaveBeenNthCalledWith(2, "Camden", { parent: { id: 101_750_367, scope: "soft" } })
 		})
 	})
 

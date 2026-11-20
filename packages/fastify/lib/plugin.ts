@@ -233,7 +233,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 				url: GeocodeAddressOperation.pathname,
 				schema: GeocodeAddressOperation.schema,
 				handler: async (request, reply) => {
-					const { input_mode, bias, include_tree } = request.body
+					const { input_mode, bias, parent, include_tree } = request.body
 					const address = request.body.address.trim()
 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
@@ -245,7 +245,16 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 						withLocale(
 							{
 								inputMode: input_mode,
-								...(bias.length ? { resolveOpts: { bias: bias.map((point) => ({ ...point })) } } : {}),
+								...(bias.length || parent
+									? {
+											resolveOpts: {
+												...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+												...(parent
+													? { parentPlace: { id: parent.id, source: "caller" as const, strength: parent.scope } }
+													: {}),
+											},
+										}
+									: {}),
 							},
 							locale
 						)

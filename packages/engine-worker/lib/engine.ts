@@ -83,6 +83,8 @@ export function createEngineWorkerEngine({
 				writtenInput: address,
 				...landmarkLayers,
 				...(init.bias.length ? { bias: init.bias.map((point) => ({ ...point })) } : {}),
+				// A backend that can't read the parent's lineage makes the resolve throw rather than answer unscoped.
+				...(init.parent ? { parentPlace: { id: init.parent.id, source: "caller", strength: init.parent.scope } } : {}),
 			})
 
 			return { ...extractGeocodeResult(address, resolved), tree: init.includeTree ? tree : null }

@@ -12,7 +12,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 
-import type { EngineGeocodeResponse, GeocodeBiasPoint } from "#operations/geocode/address"
+import type { EngineGeocodeResponse, GeocodeBiasPoint, GeocodeParent } from "#operations/geocode/address"
 import type { EngineBatchResponse } from "#operations/geocode/batch"
 import type { ParseResponse } from "#operations/parse/address"
 import type { ReloadResponse } from "#operations/reload-data"
@@ -47,6 +47,12 @@ export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
 	 * An empty list applies no bias.
 	 */
 	bias: readonly GeocodeBiasPoint[]
+	/**
+	 * A place that scopes every lookup, or null for none.
+	 *
+	 * An engine that can't apply it throws rather than answering unscoped.
+	 */
+	parent: GeocodeParent | null
 	/**
 	 * Whether the response includes the decoded tree.
 	 * When false, `tree` is null.

@@ -32,6 +32,29 @@ export const GeocodeBiasPointSchema = z
 export type GeocodeBiasPoint = z.infer<typeof GeocodeBiasPointSchema>
 
 /**
+ * A place that scopes every lookup of a request, such as the borough or country the caller already knows.
+ */
+export const GeocodeParentSchema = z
+	.object({
+		/**
+		 * The Who's On First id of the parent place.
+		 */
+		id: z.number().int().positive(),
+		/**
+		 * How the parent acts.
+		 *
+		 * `hard` keeps only places whose lineage agrees with the parent: places inside it,
+		 * the parent and its ancestors.
+		 * `soft` ranks the places inside it first and prefers its country,
+		 * so a much larger place elsewhere can still answer.
+		 */
+		scope: z.enum(["hard", "soft"]).default("hard"),
+	})
+	.meta({ id: "GeocodeParent", description: "A place that scopes every lookup of the request." })
+
+export type GeocodeParent = z.infer<typeof GeocodeParentSchema>
+
+/**
  * The request body of {@link GeocodeAddressOperation}.
  */
 export const GeocodeRequestSchema = z
@@ -45,6 +68,13 @@ export const GeocodeRequestSchema = z
 		 * It doesn't move a coordinate or add a candidate.
 		 */
 		bias: z.array(Ref(GeocodeBiasPointSchema)).max(MAX_BIAS_POINTS).default([]),
+		/**
+		 * A place that scopes every lookup, or null for none.
+		 *
+		 * A hard parent's excluded places are listed in `candidates` with `outsideScope`.
+		 * An id the gazetteer doesn't hold fails the request.
+		 */
+		parent: Ref(GeocodeParentSchema).nullable().default(null),
 		/**
 		 * Whether the response includes the decoded address tree, the tree `POST /v1/parse` returns.
 		 *

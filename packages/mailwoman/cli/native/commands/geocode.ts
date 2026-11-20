@@ -10,6 +10,7 @@ import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
+import type { ScopeStrength } from "@mailwoman/core/resolver"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
@@ -158,6 +159,32 @@ export const spec = {
 			description:
 				"Resolve a locality span written with its country's county designator (Harris County, TX) as the region's county when no locality of that name is there.",
 		},
+		"scope-country-retrieval": {
+			type: "boolean",
+			default: false,
+			description:
+				"Retrieve a soft country scope's own rows and promote them after the importance rerank; a hard scope also reports the same-name places it excluded.",
+		},
+		"sibling-locality-containment": {
+			type: "boolean",
+			default: false,
+			description:
+				"Resolve one of two locality spans inside the other when the gazetteer contains it there (Kensington, London).",
+		},
+		parent: {
+			type: "number",
+			hint: "wof id",
+			description: "A parent place that scopes every lookup, such as a borough, city, region or country WOF id.",
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--parent expects a positive integer WOF id.",
+		},
+		"parent-scope": {
+			type: "string",
+			default: "hard",
+			choices: ["hard", "soft"],
+			description:
+				"How --parent acts: hard keeps only places its lineage agrees with; soft ranks the places inside it first.",
+		},
 		"capital-tier": {
 			type: "string",
 			default: "auto",
@@ -245,6 +272,17 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
 		countyDesignatorFallback: booleanValue(values, "county-designator-fallback"),
+		scopeCountryRetrieval: booleanValue(values, "scope-country-retrieval"),
+		siblingLocalityContainment: booleanValue(values, "sibling-locality-containment"),
+		...(numberValue(values, "parent") !== null
+			? {
+					parentPlace: {
+						id: numberValue(values, "parent")!,
+						source: "caller" as const,
+						strength: stringValue(values, "parent-scope") as ScopeStrength,
+					},
+				}
+			: {}),
 		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
 		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,

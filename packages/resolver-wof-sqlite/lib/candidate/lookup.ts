@@ -139,6 +139,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	readonly #intervalCache = new Map<number, IntervalLabel | null>()
 
 	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
+
+	#placeProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * The folds the artifact recorded for its `name_key` column, applied to every query key.
 	 */
@@ -670,60 +672,78 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			rows = this.#applyContainment(rows, new Set([query.parentQualifierID]), containmentOptions)
 		}
 
-		const candidates = rows.map((row): PlaceCandidate => {
-			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
-			const parent = this.#ancestorLineage(Number(row.spr_id))[0]
-			const hasPopulation = row.population !== null && row.population > 0
-
-			return {
-				id: Number(row.spr_id),
-				name: String(row.name ?? ""),
-				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
-
-				country: this.#idToCountry.get(Number(row.country_id)) ?? "",
-				lat: Number(row.latitude),
-				lon: Number(row.longitude),
-
-				parent_id: parent ? Number(parent.id) : null,
-
-				score: -Number(row.neg_rank),
-				// `neg_rank` is -log10(population + 1), so a place without a population ranks at 0 unmeasured.
-				scoreUnmeasured: hasPopulation ? null : ScoreUnmeasuredReason.PopulationUnrecorded,
-				distanceKm: null,
-
-				prominence: -Number(row.effectiveNegRank),
-
-				exactMatch: !row.demoted && !row.fuzzy,
-
-				regionScopeMiss: regionScopeMiss ? true : null,
-
-				containedByQualifier: row.containedByQualifier ?? null,
-
-				variantAliasExempted: row.variantExempted ? true : null,
-
-				matchedAlias: row.is_primary === 0 ? true : null,
-
-				population: hasPopulation ? row.population : null,
-				referential: hasPopulation ? referentialFromPopulation(row.population) : null,
-				encyclopedic: null,
-
-				importance: typeof row.importance === "number" && Number.isFinite(row.importance) ? row.importance : null,
-				bbox: hasBbox
-					? {
-							minLat: Number(row.min_lat),
-							maxLat: Number(row.max_lat),
-							minLon: Number(row.min_lon),
-							maxLon: Number(row.max_lon),
-						}
-					: null,
-				mismatch: null,
-			}
-		})
+		const candidates = rows.map((row) => this.#toCandidate(row, regionScopeMiss))
 
 		if (query.bias && query.bias.length) {
 			applyProximityRerank(candidates, query.bias)
 		}
 
 		return candidates
+	}
+
+	/**
+	 * One place by its `spr_id`, read from its primary-name row, or null when the table holds no row for it.
+	 */
+	place(id: number): PlaceCandidate | null {
+		if (!Number.isInteger(id)) return null
+
+		this.#placeProbe ??= this.database.prepare(
+			"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
+				`${this.#importanceSelect} FROM candidate WHERE spr_id = ? ORDER BY is_primary DESC LIMIT 1`
+		)
+
+		const row = this.#placeProbe.get(id) as CandidateRow | undefined
+
+		return row ? this.#toCandidate({ ...row, effectiveNegRank: row.neg_rank, demoted: false }, false) : null
+	}
+
+	#toCandidate(row: RankedRow<CandidateRow>, regionScopeMiss: boolean): PlaceCandidate {
+		const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
+		const parent = this.#ancestorLineage(Number(row.spr_id))[0]
+		const hasPopulation = row.population !== null && row.population > 0
+
+		return {
+			id: Number(row.spr_id),
+			name: String(row.name ?? ""),
+			placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
+
+			country: this.#idToCountry.get(Number(row.country_id)) ?? "",
+			lat: Number(row.latitude),
+			lon: Number(row.longitude),
+
+			parent_id: parent ? Number(parent.id) : null,
+
+			score: -Number(row.neg_rank),
+			// `neg_rank` is -log10(population + 1), so a place without a population ranks at 0 unmeasured.
+			scoreUnmeasured: hasPopulation ? null : ScoreUnmeasuredReason.PopulationUnrecorded,
+			distanceKm: null,
+
+			prominence: -Number(row.effectiveNegRank),
+
+			exactMatch: !row.demoted && !row.fuzzy,
+
+			regionScopeMiss: regionScopeMiss ? true : null,
+
+			containedByQualifier: row.containedByQualifier ?? null,
+
+			variantAliasExempted: row.variantExempted ? true : null,
+
+			matchedAlias: row.is_primary === 0 ? true : null,
+
+			population: hasPopulation ? row.population : null,
+			referential: hasPopulation ? referentialFromPopulation(row.population) : null,
+			encyclopedic: null,
+
+			importance: typeof row.importance === "number" && Number.isFinite(row.importance) ? row.importance : null,
+			bbox: hasBbox
+				? {
+						minLat: Number(row.min_lat),
+						maxLat: Number(row.max_lat),
+						minLon: Number(row.min_lon),
+						maxLon: Number(row.max_lon),
+					}
+				: null,
+			mismatch: null,
+		}
 	}
 }

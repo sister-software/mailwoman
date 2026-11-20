@@ -63,7 +63,12 @@ describe("createEngineWorkerEngine", () => {
 		const lookup = springfieldLookup()
 		const engine = createEngineWorkerEngine({ pipeline: async () => pipeline, lookup })
 
-		const response = await engine.geocode!("Springfield", { inputMode: "auto", bias: [], includeTree: false })
+		const response = await engine.geocode!("Springfield", {
+			inputMode: "auto",
+			bias: [],
+			parent: null,
+			includeTree: false,
+		})
 
 		expect(lookup.findPlace).toHaveBeenCalled()
 		expect(response).toMatchObject({ input: "Springfield", locality: "Springfield", lat: 37.21, lon: -93.29 })
@@ -77,6 +82,7 @@ describe("createEngineWorkerEngine", () => {
 		const response = await engine.geocode!("Springfield", {
 			inputMode: "auto",
 			bias: [{ lat: 39.8, lon: -89.6, weight: 1 }],
+			parent: null,
 			includeTree: true,
 		})
 
