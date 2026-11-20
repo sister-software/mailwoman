@@ -24,15 +24,12 @@ import {
 } from "@mailwoman/codex/us"
 import { foldNFKCWhitespace, stripCombiningMarks } from "@mailwoman/normalize/fold"
 
+import type { ParquetRow } from "#parquet/schema"
+
 /**
  * The text and span triple an address key reads.
  */
-export interface AddressKeyRow {
-	raw: string
-	span_starts: readonly number[]
-	span_ends: readonly number[]
-	span_tags: readonly string[]
-}
+export type AddressKeyRow = Pick<ParquetRow, "raw" | "span_starts" | "span_ends" | "span_tags">
 
 /**
  * The street tags whose spans make up the street, in the order a row writes them.
@@ -82,7 +79,9 @@ function canonicalWord(word: string): string {
 }
 
 function canonicalWords(text: string): string {
-	return foldKeyText(text).split(" ").filter(Boolean).map(canonicalWord).join(" ")
+	const folded = foldKeyText(text)
+
+	return folded ? folded.split(" ").map(canonicalWord).join(" ") : ""
 }
 
 /**
