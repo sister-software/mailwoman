@@ -53,6 +53,7 @@ import { readOvertureAddressRecords } from "#address-records/overture"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { recordPathFor } from "#parquet/record"
 import { readNADAddressRecords } from "#us/address-records/nad"
+import { US_ADDRESS_LAYER_SOURCE } from "#us/address-records/sources"
 
 /**
  * The run counts a parallel build's worker reports for its state.
@@ -531,7 +532,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			license: "LicenseRef-US-Mixed",
 			attribution:
 				"U.S. Department of Transportation, National Address Database; OpenAddresses contributors, directly and via Overture Maps",
-			source: "usgov-nad+overture+openaddresses",
+			source: US_ADDRESS_LAYER_SOURCE,
 			sourceVintage: options.version,
 			buildCmd: "mailwoman situs layer",
 			buildSHA: options.buildSHA,

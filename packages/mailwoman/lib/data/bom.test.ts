@@ -39,6 +39,7 @@ const INVENTORY: InventoryReport = {
 	},
 	skippedForeign: 0,
 	maxDepth: 4,
+	layerDepth: 4,
 }
 
 describe("buildDataBOM over a locally built OpenStreetMap layer", () => {

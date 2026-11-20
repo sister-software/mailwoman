@@ -9,7 +9,7 @@
  *   collections its opened layers serve.
  */
 
-import type { SourceLocation } from "@mailwoman/core/resolver"
+import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 
 import type { OGCBBox } from "#bbox"
 import type { OGCCollectionID } from "#collections"
@@ -66,35 +66,6 @@ export interface OGCItemSource {
 }
 
 /**
- * The terms one opened layer records in its `layer_manifest`.
- */
-export interface OGCLayerTerms {
-	/**
-	 * The layer's name as its manifest records it, such as `admin-global-priority`.
-	 */
-	name: string
-	/**
-	 * The SPDX expression the manifest records, or null when it records none.
-	 */
-	license: string | null
-	/**
-	 * The manifest's `attribution`, or null when it records none.
-	 */
-	attribution: string | null
-	/**
-	 * The manifest's `source`, such as `whosonfirst+overture-divisions+geonames`,
-	 * or null when it records none.
-	 */
-	source: string | null
-	/**
-	 * Where a user obtains each source, as the layer's provider records it.
-	 *
-	 * A source missing here falls back to the gazetteer's own source table.
-	 */
-	sourceLocations?: Readonly<Record<string, SourceLocation>>
-}
-
-/**
  * A collection the engine serves, and the regions its layers cover.
  */
 export interface OGCServedCollection {
@@ -116,7 +87,7 @@ export interface OGCServedCollection {
 	 * An empty array means no layer backs the collection.
 	 * Absent means the engine read no manifest for it, and the description states that.
 	 */
-	layers?: readonly OGCLayerTerms[]
+	layers?: readonly LayerTerms[]
 	/**
 	 * The regions with a layer database whose `layer_manifest` the engine couldn't read, absent or unreadable.
 	 *

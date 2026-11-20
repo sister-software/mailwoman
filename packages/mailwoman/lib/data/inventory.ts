@@ -5,9 +5,11 @@
  *   Inventories databases in the data root and reports their provenance and symlink targets.
  */
 
+import { databaseRootPath } from "@mailwoman/core/data-root"
 import type { Dirent } from "@mailwoman/core/fs/readers"
 import { pathExists, readLink, isSymbolicLink, statPath } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { LayerManifestState, type LayerManifestRead, probeLayerManifest } from "@mailwoman/core/layers/manifest"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -129,11 +131,18 @@ export interface InventoryEntry {
 	 */
 	linkTarget?: string
 	/**
-	 * Why this entry is foreign or unreadable.
+	 * Why this entry is foreign, unreadable, or without a manifest row.
 	 *
-	 * Absent otherwise.
+	 * Absent for a manifested entry.
 	 */
 	note?: string
+	/**
+	 * Why `probeLayerManifest` refused the manifest row, for a manifested entry
+	 * whose row fails its validation.
+	 *
+	 * Absent when the row is valid and for every other provenance.
+	 */
+	manifestError?: string
 	/**
 	 * `active` when the active selection lists the artifact, `inactive` when it is installed and unselected.
 	 *
@@ -158,7 +167,19 @@ export interface InventoryReport {
 	 * A report that silently bounded its own search would read as coverage.
 	 */
 	maxDepth: number
+	/**
+	 * The depth where the walk stopped inside the data root's database group, `db/`.
+	 */
+	layerDepth: number
 }
+
+/**
+ * The depth the walk reaches inside the data root's database group.
+ *
+ * A versioned address layer sits at `db/addresses/<region>/<version>/lookup.db`,
+ * four directories below the data root.
+ */
+const DATABASE_GROUP_DEPTH = 4
 
 /**
  * Read a database's `layer_manifest`, or report why not.
@@ -185,10 +206,66 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
 }
 
 /**
- * Every `*.db` under `dataRoot`, to `maxDepth` path segments.
+ * What one database's `layer_manifest` reads as, through the reader the serving layers use.
+ */
+type ManifestProbe =
+	| { state: "unopenable"; reason: string }
+	| { state: typeof LayerManifestState.Absent; reason: string }
+	| { state: "invalid"; reason: string; row: LayerManifest | null }
+	| { state: typeof LayerManifestState.Present; row: LayerManifest }
+
+/**
+ * Open one database read-only, classify its manifest with {@linkcode probeLayerManifest}, and close it.
+ *
+ * A missing table is absent, as `probeLayerManifest` reports it.
+ * A table that exists and fails that reader's validation is invalid, and its recorded row is still
+ * returned, because the row's build command and license are what an operator needs to repair it.
+ */
+async function probeManifestState(path: string): Promise<ManifestProbe> {
+	let db: DatabaseClient<layerschemadatabase>
+
+	try {
+		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+	} catch (error) {
+		return { state: "unopenable", reason: (error as Error).message }
+	}
+
+	try {
+		// A file that isn't SQLite fails here, at its first read, and reads as unopenable.
+		tableExists(db, "layer_manifest")
+
+		let read: LayerManifestRead
+
+		try {
+			read = await probeLayerManifest(db)
+		} catch (error) {
+			let row: LayerManifest | null = null
+
+			try {
+				row = getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1")) ?? null
+			} catch {
+				// The validation message states the defect, and the entry reports that message without a row.
+			}
+
+			return { state: "invalid", reason: (error as Error).message, row }
+		}
+
+		if (read.state === LayerManifestState.Absent) return { state: read.state, reason: read.reason }
+
+		return { state: read.state, row: getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1"))! }
+	} catch (error) {
+		return { state: "unopenable", reason: (error as Error).message }
+	} finally {
+		db.destroy()
+	}
+}
+
+/**
+ * Every `*.db` under `dataRoot`, to `maxDepth` path segments, and to `layerDepth` inside the database group.
  *
  * Bounded because the data root holds source trees with millions of files (a WOF checkout is ~1.2 M GeoJSON),
  * and an unbounded walk would spend minutes in directories that contain no databases.
+ * The database group holds only built layers, so its deeper bound reaches versioned layers at little cost.
  * Foreign roots are not descended into at all.
  *
  * The inventory records each row and its name at lower cost.
@@ -197,13 +274,15 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
  */
 async function findDatabases(
 	dataRoot: PathBuilder,
-	maxDepth: number
+	maxDepth: number,
+	layerDepth: number
 ): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
+	const databaseGroup = databaseRootPath(dataRoot).toString()
 	let skippedForeign = 0
 
-	const walk = async (dir: PathBuilder, depth: number): Promise<void> => {
-		if (depth > maxDepth) return
+	const walk = async (dir: PathBuilder, depth: number, limit: number): Promise<void> => {
+		if (depth > limit) return
 
 		let entries: Dirent[]
 
@@ -228,7 +307,7 @@ async function findDatabases(
 					continue
 				}
 
-				await walk(full, depth + 1)
+				await walk(full, depth + 1, depth === 0 && full.toString() === databaseGroup ? layerDepth : limit)
 
 				continue
 			}
@@ -239,7 +318,7 @@ async function findDatabases(
 		}
 	}
 
-	await walk(dataRoot, 0)
+	await walk(dataRoot, 0, maxDepth)
 
 	return { paths: paths.toSorted(), skippedForeign }
 }
@@ -270,11 +349,21 @@ async function inventoryEntry(dataRoot: string, path: string): Promise<Inventory
 		return { ...base, provenance: Provenance.Foreign, note: FOREIGN_ROOTS[segment] }
 	}
 
-	const { manifest, error } = probeManifest(path)
+	const probe = await probeManifestState(path)
 
-	if (error) return { ...base, provenance: Provenance.Unreadable, note: error }
-
-	return manifest ? { ...base, provenance: Provenance.Manifested, manifest } : base
+	switch (probe.state) {
+		case "unopenable":
+			return { ...base, provenance: Provenance.Unreadable, note: probe.reason }
+		case LayerManifestState.Absent:
+			return { ...base, note: probe.reason }
+		case "invalid":
+			// A table without a row records no build command, as a missing table does.
+			return probe.row
+				? { ...base, provenance: Provenance.Manifested, manifest: probe.row, manifestError: probe.reason }
+				: { ...base, note: probe.reason, manifestError: probe.reason }
+		case LayerManifestState.Present:
+			return { ...base, provenance: Provenance.Manifested, manifest: probe.row }
+	}
 }
 
 /**
@@ -283,6 +372,13 @@ async function inventoryEntry(dataRoot: string, path: string): Promise<Inventory
 export async function takeInventory(options: {
 	dataRoot: PathBuilderLike
 	maxDepth?: number
+	/**
+	 * The depth bound inside the database group, `db/`.
+	 * It is never lower than `maxDepth`.
+	 *
+	 * @defaultValue 4. That depth reaches a versioned layer at `db/<layer>/<region>/<version>/<file>.db`.
+	 */
+	layerDepth?: number
 	/**
 	 * The catalog's lists.
 	 *
@@ -298,7 +394,8 @@ export async function takeInventory(options: {
 	// A bound of two stops the walk at `db/<layer>/`.
 	// The report then describes a data root holding zero databases.
 	const maxDepth = options.maxDepth ?? 3
-	const { paths, skippedForeign } = await findDatabases(root, maxDepth)
+	const layerDepth = Math.max(maxDepth, options.layerDepth ?? DATABASE_GROUP_DEPTH)
+	const { paths, skippedForeign } = await findDatabases(root, maxDepth, layerDepth)
 	const installed = new Map<string, "active" | "inactive">()
 
 	for (const copy of options.installation?.active ?? []) {
@@ -314,14 +411,15 @@ export async function takeInventory(options: {
 	const walked = new Set(paths)
 	const allPaths = [...paths, ...[...installed.keys()].filter((path) => !walked.has(path))]
 
-	const entries = await Promise.all(
-		allPaths.map(async (path) => {
-			const entry = await inventoryEntry(dataRoot, path)
-			const selection = installed.get(path)
+	const entries: InventoryEntry[] = []
 
-			return selection ? { ...entry, selection } : entry
-		})
-	)
+	// The loop opens one database at a time, and each handle closes before the next opens.
+	for (const path of allPaths) {
+		const entry = await inventoryEntry(dataRoot, path)
+		const selection = installed.get(path)
+
+		entries.push(selection ? { ...entry, selection } : entry)
+	}
 
 	const counts: Record<Provenance, number> = {
 		[Provenance.Manifested]: 0,
@@ -334,7 +432,7 @@ export async function takeInventory(options: {
 		counts[entry.provenance]++
 	}
 
-	return { dataRoot, entries, counts, skippedForeign, maxDepth }
+	return { dataRoot, entries, counts, skippedForeign, maxDepth, layerDepth }
 }
 
 /**
@@ -353,7 +451,7 @@ export function inventorySentence(report: InventoryReport): string {
 		`${report.counts.manifested} of ${ours} mailwoman-built databases carry a layer_manifest (${pct}%)` +
 		`${report.counts.foreign ? `; ${report.counts.foreign} foreign, not ours to reproduce` : ""}` +
 		`${report.counts.unreadable ? `; ${report.counts.unreadable} could not be opened` : ""}` +
-		`. Walked ${report.maxDepth} level(s) under the data root` +
+		`. Walked ${report.maxDepth} level(s) under the data root and ${report.layerDepth} in its db/ group` +
 		`${report.skippedForeign ? `, skipping ${report.skippedForeign} foreign root(s)` : ""}.`
 	)
 }

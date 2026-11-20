@@ -13,13 +13,14 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { APIErrorSchema, emitOpenAPIDocuments, errorResponse, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { MAX_ADDRESS_LENGTH } from "@mailwoman/api/input-limits"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { wofIDFromPlaceID } from "@mailwoman/core/resolver"
 import { isoSeconds } from "@mailwoman/core/utils"
 import type { Context } from "hono"
 
 import { type OGCBBox, parseBBox, searchBoxContains } from "#bbox"
 import { OGC_COLLECTION_CATALOG } from "#collections"
-import type { OGCEngine, OGCItem, OGCLayerTerms, OGCSearchHit, OGCServedCollection } from "#engine"
+import type { OGCEngine, OGCItem, OGCSearchHit, OGCServedCollection } from "#engine"
 import { negotiateFormat } from "#format"
 import {
 	apiDefinitionHTML,
@@ -334,7 +335,7 @@ export function buildCollection(
 	base: string,
 	served: OGCServedCollection,
 	format: OGCFormat,
-	knownLayers: readonly OGCLayerTerms[] = served.layers ?? []
+	knownLayers: readonly LayerTerms[] = served.layers ?? []
 ): OGCCollection {
 	const { title, description } = OGC_COLLECTION_CATALOG[served.id]
 	const coverage = served.regions ? ` The engine opened its layers for ${served.regions.join(", ")}.` : ""
@@ -374,7 +375,7 @@ export function buildCollection(
 /**
  * Every layer the collections' manifests describe, so one collection's source can resolve to another layer.
  */
-function knownLayersOf(collections: readonly OGCServedCollection[]): OGCLayerTerms[] {
+function knownLayersOf(collections: readonly OGCServedCollection[]): LayerTerms[] {
 	return collections.flatMap((collection) => collection.layers ?? [])
 }
 

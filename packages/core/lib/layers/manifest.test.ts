@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest"
 import {
 	COVERAGE_INSERT_BATCH,
 	LayerManifestState,
+	manifestSourceNames,
 	probeLayerManifest,
 	readLayerCoverage,
 	readLayerManifest,
@@ -322,5 +323,19 @@ describe("SpineKeys.street — the third layer shape", () => {
 		await expect(
 			writeLayerManifest(db, { ...MANIFEST, spineKeys: { street: { column: "street_norm" } } })
 		).resolves.toBeUndefined()
+	})
+})
+
+describe("manifestSourceNames", () => {
+	it("drops a version and a scope, and keeps a URL a build recorded as its source", () => {
+		expect(manifestSourceNames("admin-global-priority@2026-11-18+openstreetmap:de")).toEqual([
+			"admin-global-priority",
+			"openstreetmap",
+		])
+
+		// The undersea build records its feature service's URL, and a scope split at its scheme would leave `https`.
+		expect(manifestSourceNames("https://services2.arcgis.com/x/FeatureServer")).toEqual([
+			"https://services2.arcgis.com/x/FeatureServer",
+		])
 	})
 })

@@ -137,6 +137,20 @@ describe("takeInventory — the four states stay distinct", () => {
 		expect(report.maxDepth).toBeGreaterThanOrEqual(3)
 	})
 
+	it("reaches a versioned layer four directories down inside db/, and no deeper elsewhere", async () => {
+		const root = await dataRoot()
+
+		await makeDirectories(root("db", "addresses", "us-wi", "2026-11-13"))
+		await makeDirectories(root("a", "b", "c", "d"))
+		bare(root("db", "addresses", "us-wi", "2026-11-13", "lookup.db"))
+		bare(root("a", "b", "c", "d", "deep.db"))
+
+		const report = await takeInventory({ dataRoot: root })
+
+		expect(report.entries.map((entry) => entry.path)).toEqual(["db/addresses/us-wi/2026-11-13/lookup.db"])
+		expect(report.entries[0]?.note).toBe("the database has no layer_manifest table")
+	})
+
 	it("reports a data root that does not exist as holding no databases", async () => {
 		const root = await dataRoot()
 

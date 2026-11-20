@@ -469,3 +469,11 @@ Measured 2026-09-27: 28 of the 28 postcode and locality databases under `db/wof/
 `postalcode-gb-codepoint.db` reads `Open Government Licence v3.0` and `postalcode-ni-osm.db` reads
 `Open Database License (ODbL) 1.0` — and `readLicenseRecord` resolves both through `EXPRESSION_ALIASES`.
 The remaining 26 state terms nowhere. `LicenseRef-Undeclared-Input` exists for them.
+
+`mailwoman data inventory` reports this for a whole data root. It reads each database's manifest with
+`probeLayerManifest`, and its layer report states one of four outcomes per database: read, absent (no
+`layer_manifest` table), invalid (the table exists and `probeLayerManifest` refuses its contents) or
+unopenable. For a read manifest it states the license, the obligations `summarizeLicense` gives it, and each
+source with the location its owning package records. The owners' tables are joined in
+`packages/mailwoman/lib/data/source-locations.ts`, and `resolveLayerTerms` in `@mailwoman/core/layers/provenance`
+turns manifests into license and source links for both the report and the OGC adapter.

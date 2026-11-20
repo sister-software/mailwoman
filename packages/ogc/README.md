@@ -105,6 +105,10 @@ A user who wants the data obtains it from its sources:
   data and locales reference lists them.
 - Each source's own terms: the [data and licensing page](https://mailwoman.post/product/data-and-licensing) links
   the publishers' pages, and each collection's `license` and `via` links state what the opened databases record.
+- Your own data root: `mailwoman data inventory` lists every database under it with its license, the
+  obligations that license carries, its sources and where to obtain each one, and the databases whose
+  `layer_manifest` it couldn't read. The collections' links come from the same function, `resolveLayerTerms` in
+  `@mailwoman/core/layers/provenance`, so the two agree.
 
 ## Items
 
