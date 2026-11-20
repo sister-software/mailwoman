@@ -20,10 +20,5 @@
 		"types": ["node"]
 	},
 	"include": ["./**/*"],
-	"exclude": [
-		"./out/**/*",
-		"./**/*.test.ts",
-		"./**/*.test.mts",
-		"./**/*.test.tsx"
-	]
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.mts", "./**/*.test.tsx"]
 }
