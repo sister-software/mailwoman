@@ -45,7 +45,11 @@
 	},
 	// A composite project must list every file it pulls in. Without an `include`, the default covers .ts/.tsx only, and
 	// the trace fixture a story imports through `resolveJsonModule` is left out.
-	"include": ["./**/*.ts", "./**/*.mts", "./**/*.tsx", "./**/*.json"],
+	//
+	// `tsc` drops the `.mdx` pattern because it compiles no such extension. The editor's MDX plugin reads the pattern
+	// to place an article in this project, where `@theme/*` and `#partials/*` resolve. An article outside every
+	// project is checked in an inferred project that has neither.
+	"include": ["./**/*.ts", "./**/*.mts", "./**/*.tsx", "./**/*.json", "./**/*.mdx"],
 	"exclude": [".docusaurus", "build", "build-check", "out", "node_modules"],
 	// Every workspace package the site imports, so `tsc -b` reads each one's source project instead of whatever its
 	// `out/` holds at the moment this project compiles.
