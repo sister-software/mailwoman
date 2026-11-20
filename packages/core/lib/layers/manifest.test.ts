@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest"
 
 import {
 	COVERAGE_INSERT_BATCH,
+	LayerManifestState,
+	probeLayerManifest,
 	readLayerCoverage,
 	readLayerManifest,
 	writeLayerCoverage,
@@ -134,6 +136,17 @@ describe("layer manifest IO", () => {
 	it("throws when reading a database with no manifest", async () => {
 		using db = await openschemadb()
 		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
+	})
+
+	it("reports a database without a layer_manifest table as absent, and an empty table as a fault", async () => {
+		using bare = DatabaseClient.temp<layerschemadatabase>()
+
+		await expect(probeLayerManifest(bare)).resolves.toMatchObject({ state: LayerManifestState.Absent })
+		await expect(readLayerManifest(bare)).rejects.toThrow(/no layer_manifest table/)
+
+		using empty = await openschemadb()
+
+		await expect(probeLayerManifest(empty)).rejects.toThrow(/expected exactly 1 row, found 0/)
 	})
 
 	it("round-trips a manifest with a null attribution", async () => {
