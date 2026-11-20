@@ -27,7 +27,7 @@ import { verifyTarball } from "#release-kit/pack/verify-tarball"
  * The root workspaces that sit outside `.release-it.json`'s publish list,
  * each with the reason a reader can state.
  */
-export const SANCTIONED_RELEASE_ABSENCES = await import("@mailwoman/universe/release-it.json", {
+const SANCTIONED_RELEASE_ABSENCES = await import("@mailwoman/universe/release-it.json", {
 	with: { type: "json" },
 }).then((module) => module.default.absences as Record<string, string>)
 
