@@ -16,6 +16,7 @@ import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman
 import { spawnProcessSync } from "@mailwoman/core/process"
 import {
 	type PairIndexInputs,
+	type ReleaseConfig,
 	readReleaseConfig,
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
@@ -140,6 +141,20 @@ async function buildIntoPlace(dir: string, filename: string, build: (outDir: str
 }
 
 /**
+ * The weights workspaces {@linkcode copyWeights} writes, in the order it writes them:
+ * one per release locale, then each char-path family followed by its overlays.
+ */
+export function copyWeightsTargets(config: Pick<ReleaseConfig, "locales" | "charWeights">): string[] {
+	return [
+		...config.locales.map((locale: string) => `packages/neural-weights-${locale}`),
+		...Object.entries(config.charWeights ?? {}).flatMap(([family, recipe]) => [
+			`packages/neural-weights-${family}`,
+			...(recipe.overlays ?? []).map((overlay) => `packages/neural-weights-${overlay}`),
+		]),
+	]
+}
+
+/**
  * Copies or builds the binaries and evidence artifacts of every weights workspace under `destRoot`.
  */
 export async function copyWeights({
@@ -182,9 +197,12 @@ export async function copyWeights({
 		throw new Error(`Missing source tokenizer: ${sourceTokenizer}\nSet MAILWOMAN_PUBLISH_TOKENIZER to override.`)
 	}
 
-	const targets = config.locales.map((locale: string) => `packages/neural-weights-${locale}`)
+	const targets: string[] = []
 
-	for (const workspace of targets) {
+	for (const locale of config.locales) {
+		const workspace = `packages/neural-weights-${locale}`
+
+		targets.push(workspace)
 		const dir = resolvePath(destRoot, workspace)
 		await makeDirectories(dir)
 		const modelDest = resolvePath(dir, "model.onnx")

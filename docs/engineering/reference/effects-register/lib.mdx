@@ -46,6 +46,16 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | write | `makeDirectories`      | `unresolved (other)`     | 1     |
 | write | `openWriteStream`      | `unresolved (call)`      | 1     |
 
+## `lib/check-kit/worktree/status.ts`
+
+| Kind    | Interface       | Target                   | Calls |
+| ------- | --------------- | ------------------------ | ----- |
+| read    | `currentBranch` | `unresolved (parameter)` | 1     |
+| read    | `gitHead`       | `unresolved (parameter)` | 1     |
+| read    | `pathExists`    | `unresolved (call)`      | 1     |
+| read    | `trackedFiles`  | `unresolved (parameter)` | 1     |
+| process | `runFile`       | `literal:yarn`           | 1     |
+
 ## `lib/dev-mcp/arc.ts`
 
 | Kind | Interface           | Target                   | Calls |

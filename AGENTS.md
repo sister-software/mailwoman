@@ -213,7 +213,9 @@ the next step. Run a repository check with `mwops check <name>`: it exits with t
 the output to a log outside the checkout, and prints the counts, failing tests and log path, or with
 `--json` the whole result. A heavy check waits for the host lock and for CI within
 `--max-wait-minutes`. `mwops host status` names what holds the host, and `mwops check preflight` runs
-the direct-push set below.
+the direct-push set below. `yarn health` runs nine scripts. `node-modules-reacharound`, `prefix-directories`
+and the other checks that a test runs over the current tree run only through the tests under
+`lib/repo-health`, which `mwops check health-tree` runs.
 
 ## Vocabulary rules across the tree
 
@@ -328,6 +330,9 @@ A new git worktree has no `node_modules`. Run `yarn install` in the worktree bef
 `yarn compile` when a check reads `out/`. The pre-commit hook needs both. Never commit with `--no-verify`, and
 never symlink another checkout's `node_modules`, because the checks then grade that checkout. A worktree
 without an install has a setup step left to do, and the agent does it before committing.
+`yarn mwops worktree prepare --path <dir>`, run from a checkout that has its own install, runs the missing
+`yarn install`, `yarn compile` and `yarn mwops release copy-weights` steps in the tree at `<dir>`, and
+`yarn mwops worktree status --path <dir>` reports which of them that tree still lacks.
 A worktree without its own `node_modules` resolves `@mailwoman/*` from the checkout above it, so `mwops`,
 the `mailwoman` CLI, the root Vitest config and the pre-commit hook refuse to start there. Run
 `yarn mwops checkout` to see which checkout a tree's packages come from.

@@ -467,6 +467,11 @@
 			"node": "./lib/decoder/unknown-spans.ts",
 			"default": "./out/decoder/unknown-spans.js"
 		},
+		"./env/env-file": {
+			"types": "./out/env/env-file.d.ts",
+			"node": "./lib/env/env-file.ts",
+			"default": "./out/env/env-file.js"
+		},
 		"./env/schema": {
 			"types": "./out/env/schema.d.ts",
 			"node": "./lib/env/schema.ts",

@@ -126,6 +126,8 @@ const ALLOWED: Record<string, string> = {
 		"links a scratch tree's node_modules to name the link state the guard reports",
 	"packages/core/lib/module/checkout-locality.integration.test.ts":
 		"links this checkout's install above and inside a worktree to reproduce the resolution leak",
+	"lib/check-kit/worktree/status.test.ts":
+		"builds a scratch tree's node_modules directory and link for the status reader under test",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":
 		"records source snippets containing install paths as inputs to the checker",
 	"lib/dev-mcp/routed-mailwoman-arm.test.ts":
