@@ -39,6 +39,7 @@ import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { USStateDatabaseProvider } from "#geocode/regions"
+import { unattachedLayerLines } from "#geocode/serving-layers"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
 import { type ForkEntityProbe, type LayerRoutes, loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
@@ -273,12 +274,22 @@ export function registerGenerationServices(
 	)
 
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
+	// Each extract the provider left unattached prints its path and reason to stderr,
+	// as the servers print it at startup.
 	provide(
 		registry,
 		timings,
 		S.osm,
 		catalog,
-		(snapshot) => openOSMRegionDatabases(options.dataRoot, snapshot),
+		async (snapshot) => {
+			const osm = await openOSMRegionDatabases(options.dataRoot, snapshot)
+
+			for (const line of unattachedLayerLines({ osm })) {
+				console.error(line)
+			}
+
+			return osm
+		},
 		disposeHandle
 	)
 
