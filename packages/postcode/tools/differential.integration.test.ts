@@ -10,7 +10,7 @@
 import { codepointKey, readFrozenFixture } from "@mailwoman/recognizer/tools/frozen"
 import { expect, it } from "vitest"
 
-import { computeQueryShape } from "#recognize/query-shape"
+import { computeQueryShape } from "#recognizer/query-shape"
 
 it("equals the frozen output on every Unicode codepoint", { timeout: 600_000 }, async () => {
 	const { codepointRuns } = await readFrozenFixture()

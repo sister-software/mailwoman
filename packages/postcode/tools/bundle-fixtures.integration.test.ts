@@ -65,7 +65,7 @@ async function payload(family: string): Promise<string> {
 describe("bundle fixtures of the postcode families", () => {
 	it("a consumer of the legacy family retains its artifact and no byte of the postal artifact", async () => {
 		const { text, inputs } = await bundle(
-			`import { postcodeLegacy } from "./out/recognize/legacy.js"; console.log(postcodeLegacy.id)`
+			`import { postcodeLegacy } from "./out/recognizer/legacy.js"; console.log(postcodeLegacy.id)`
 		)
 
 		const legacy = await payload("postcode_legacy")
@@ -82,7 +82,7 @@ describe("bundle fixtures of the postcode families", () => {
 
 	it("a consumer of the postal family retains its artifact and no byte of the legacy artifact", async () => {
 		const { text, inputs } = await bundle(
-			`import { postal, acceptingCountries } from "./out/recognize/postal.js"; console.log(postal.id, acceptingCountries)`
+			`import { postal, acceptingCountries } from "./out/recognizer/postal.js"; console.log(postal.id, acceptingCountries)`
 		)
 
 		const legacy = await payload("postcode_legacy")
@@ -95,7 +95,7 @@ describe("bundle fixtures of the postcode families", () => {
 
 	it("a consumer of both families retains both artifacts", async () => {
 		const { text } = await bundle(
-			`import { postcodeLegacy } from "./out/recognize/legacy.js"; import { postal } from "./out/recognize/postal.js"; console.log(postcodeLegacy.id, postal.id)`
+			`import { postcodeLegacy } from "./out/recognizer/legacy.js"; import { postal } from "./out/recognizer/postal.js"; console.log(postcodeLegacy.id, postal.id)`
 		)
 
 		expect(text).toContain(await payload("postcode_legacy"))

@@ -20,7 +20,7 @@ import { createRecognizer, type PrefixStatus } from "@mailwoman/recognizer"
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
 import type { PostcodePrefixIndexResolver } from "#prefix/index"
-import { type PostalKindsOfCountry, postal, postalKindsOfCountry } from "#recognize/postal"
+import { type PostalKindsOfCountry, postal, postalKindsOfCountry } from "#recognizer/postal"
 
 /**
  * One country whose syntax the partial text can still complete to.

@@ -9,7 +9,7 @@ rather than jointly discovering boundaries and types.
 
 ```ts
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
 const text = "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 const proposals = groupPhrasesSync({ raw: text, normalized: text }, computeQueryShape(text))

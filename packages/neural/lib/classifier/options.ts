@@ -15,7 +15,7 @@ import type {
 	VenueHeadPriorOpts,
 	WordConsistencySetting,
 } from "@mailwoman/core/pipeline"
-import type { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
+import type { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { SYSTEM_CODES } from "@mailwoman/postcode/systems"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"

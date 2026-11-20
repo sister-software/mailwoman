@@ -9,7 +9,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
-import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
 /**
  * Postcode formats whose surface is structurally distinguishable from anything else

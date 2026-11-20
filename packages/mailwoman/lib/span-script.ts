@@ -13,8 +13,8 @@
  */
 
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { scriptForRange } from "@mailwoman/recognizer/charset"
 import { rangeScript } from "@mailwoman/recognizer/script-run"
 

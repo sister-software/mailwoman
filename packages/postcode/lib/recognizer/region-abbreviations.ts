@@ -20,7 +20,7 @@ import { type CountrySet, countriesDeclaredBy } from "@mailwoman/codex/country/s
 import { matchSubdivisionsAnywhere } from "@mailwoman/codex/country/subdivision"
 import type { TokenClass } from "@mailwoman/recognizer/types"
 
-import type { QueryShapeRegionAbbreviation } from "#recognize/query-shape"
+import type { QueryShapeRegionAbbreviation } from "#recognizer/query-shape"
 
 const SHAPE = /^[A-Z]{2,3}$/
 

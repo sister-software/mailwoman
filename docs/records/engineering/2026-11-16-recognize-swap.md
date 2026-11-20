@@ -15,16 +15,16 @@ The `postcode` and `recognize` files are the comparison tools.
 
 | Former export                                                                                                                                | New owner                                                             | New name                                                                          |
 | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `computeQueryShape`, `QueryShape`                                                                                                            | `@mailwoman/postcode/recognize/query-shape`                           | same names, and the locale option is gone                                         |
+| `computeQueryShape`, `QueryShape`                                                                                                            | `@mailwoman/postcode/recognizer/query-shape`                          | same names, and the locale option is gone                                         |
 | `NormalizedInputLite`                                                                                                                        | `@mailwoman/core/pipeline/types`                                      | same                                                                              |
 | `QueryShapeFormatsView`, `QueryShapeSegmentsView`, `QueryShapeTokensView`, `KnownFormatHitView`                                              | `@mailwoman/core/pipeline/types`                                      | same; `string` replaces `ScriptCode`, `KnownFormat`                               |
 | `SegmentView`, `TokenClassView`, `EMPTY_QUERY_SHAPE_VIEW`                                                                                    | `@mailwoman/core/pipeline/types`                                      | same; `TokenClassView.length` is gone                                             |
 | `isPostcodeFormat`                                                                                                                           | `@mailwoman/core/pipeline/types`                                      | same name. It replaces core's private copy and postcode's `isKnownPostcodeFormat` |
-| `SpanRange`                                                                                                                                  | `@mailwoman/recognize/types`                                          | `TextSpan`                                                                        |
-| `CharRange`                                                                                                                                  | `@mailwoman/recognize/types`                                          | same                                                                              |
+| `SpanRange`                                                                                                                                  | `@mailwoman/recognizer/types`                                         | `TextSpan`                                                                        |
+| `CharRange`                                                                                                                                  | `@mailwoman/recognizer/types`                                         | same                                                                              |
 | `TextSpan` (`{ text, start, end }`)                                                                                                          | `@mailwoman/core/tokenization/Span`                                   | `TextFragment`                                                                    |
-| `classifyCodepoint`, `classifyToken`, `classifyTokenScript`, `scriptForRange`                                                                | `@mailwoman/recognize/charset`                                        | same                                                                              |
-| `isRegionAbbreviationToken`, `RegionAbbreviationTokenOpts`                                                                                   | `@mailwoman/recognize/region-abbreviation`                            | `RegionAbbreviationTokenOptions`                                                  |
+| `classifyCodepoint`, `classifyToken`, `classifyTokenScript`, `scriptForRange`                                                                | `@mailwoman/recognizer/charset`                                       | same                                                                              |
+| `isRegionAbbreviationToken`, `RegionAbbreviationTokenOpts`                                                                                   | `@mailwoman/recognizer/region-abbreviation`                           | `RegionAbbreviationTokenOptions`                                                  |
 | `classifyTokens`, `foldInputClass`                                                                                                           | the `tokenClasses` and `characterClass` fields of `computeQueryShape` | removed                                                                           |
 | `segment`                                                                                                                                    | the `segments` field of `computeQueryShape`                           | removed                                                                           |
 | `foldInputScripts`, `scriptForCodepoint`, `detectKnownFormats`, `detectRegionAbbreviations`, `ScriptCode`, `KnownFormat` and the other types | none. No file outside the package read them                           | removed                                                                           |
@@ -60,18 +60,18 @@ A walk over the `dependencies` and `devDependencies` of every manifest found 11 
 
 The callers decide each helper.
 
-- `classifyCodepoint` (the held-out reachability tool, once per codepoint at each edge), `classifyToken` (the grammar-conflict census, once per token over parquet rows) and `classifyTokenScript` (the corpus WOF adapter, once per name part) run in loops of thousands of calls. They stay plain TypeScript in `@mailwoman/recognize/charset`.
+- `classifyCodepoint` (the held-out reachability tool, once per codepoint at each edge), `classifyToken` (the grammar-conflict census, once per token over parquet rows) and `classifyTokenScript` (the corpus WOF adapter, once per name part) run in loops of thousands of calls. They stay plain TypeScript in `@mailwoman/recognizer/charset`.
   The functions are the legacy functions, moved. Their ties go to the script seen first. The `scripts` field doesn't reproduce that, because it ranks ties by script code.
 - `scriptForRange` is plain TypeScript in the same module. It reads the `tokenClasses` field.
-- `isRegionAbbreviationToken` is a regular-expression test with a letter limit, so it stays plain TypeScript in `@mailwoman/recognize/region-abbreviation`.
+- `isRegionAbbreviationToken` is a regular-expression test with a letter limit, so it stays plain TypeScript in `@mailwoman/recognizer/region-abbreviation`.
 - `classifyTokens` plus `foldInputClass` (one call per query, in `kind-classifier`), `classifyTokens` (one call per parse, in `span-script.ts`) and `segment` (one call per geocode result) become one `computeQueryShape` call. The fields equal the legacy functions' by the frozen comparison below.
 
 Before `packages/query-shape` was deleted, a scratch script compared the moved functions with the legacy ones: `classifyCodepoint`, `classifyToken` and `classifyTokenScript` on all 1,114,112 codepoints, then `classifyToken`, `classifyTokenScript`, `isRegionAbbreviationToken` (at the default limit and at `maxLetters: 3`) and `scriptForRange` on 200,000 random strings. That's 4,342,336 comparisons and **0 differences**.
-`packages/recognize/lib/charset.test.ts` keeps the Unicode-property checks of the moved ranges and compares class and script of each codepoint with the frozen fixture.
+`packages/recognizer/lib/charset.test.ts` keeps the Unicode-property checks of the moved ranges and compares class and script of each codepoint with the frozen fixture.
 
 ## The frozen comparison (observed)
 
-`packages/recognize/data/fixtures/query-shape-frozen.fixture.json` holds the output of the legacy `computeQueryShape`, taken before the package was deleted. It is 1,727,781 bytes with 1,777 cases and 168 runs of codepoints. A case records the six structural fields and `knownFormats`.
+`packages/recognizer/data/fixtures/query-shape-frozen.fixture.json` holds the output of the legacy `computeQueryShape`, taken before the package was deleted. It is 1,727,781 bytes with 1,777 cases and 168 runs of codepoints. A case records the six structural fields and `knownFormats`.
 
 | Part                     | Cases    | How it was drawn                                                                                                        |
 | ------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -84,7 +84,7 @@ Before `packages/query-shape` was deleted, a scratch script compared the moved f
 
 No row comes from the data root: the gauntlet inputs are committed, and the other parts are generated.
 `tools/differential.test.ts` in `recognize` and `tools/differential.test.ts` in `postcode` compare against it, and both integration tests run all 1,114,112 codepoints.
-The two real-row tools, `differential.run.ts` in each package, are deleted with the package they compared against. The reports of their last runs against `query-shape` stay: `packages/recognize/data/reports/structure-differential.json` (121,878 rows, 0 differing, committed at `ca38a89e93`) and `packages/postcode/data/reports/known-formats-differential.json` (committed at `9036fcb3e2`).
+The two real-row tools, `differential.run.ts` in each package, are deleted with the package they compared against. The reports of their last runs against `query-shape` stay: `packages/recognizer/data/reports/structure-differential.json` (121,878 rows, 0 differing, committed at `ca38a89e93`) and `packages/postcode/data/reports/known-formats-differential.json` (committed at `9036fcb3e2`).
 The Phase 0 tools `golden.run.ts` and `bench.run.ts` under `packages/mailwoman/tools/dev-tools/query-shape/` are deleted, because the frozen fixture replaces the first and the two benchmarks below replace the second.
 
 ## The benchmark (observed)
@@ -105,7 +105,7 @@ No CI run was in progress (`gh run list` showed the last five runs completed). T
 | `1111…` (300 units)                                     | 300          | 0             | 86.06                         | 20.54                              |
 | `漢漢漢…` (300 units)                                   | 300          | 0             | 70.02                         | 17.93                              |
 
-`packages/recognize/tools/bench.run.ts`, the `structure` family on its own against `computeQueryShape`:
+`packages/recognizer/tools/bench.run.ts`, the `structure` family on its own against `computeQueryShape`:
 
 | Input                                                   | `computeQueryShape` (µs/call) | recognize (µs/call) |
 | ------------------------------------------------------- | ----------------------------- | ------------------- |
@@ -139,11 +139,11 @@ No input differs. The comparison reads the pipeline's result and not the CLI's t
 
 `@mailwoman/recognize` instantiates its WebAssembly engine on the first call. Each place the pipeline runs resolves the engine as follows.
 
-| Runtime                                                                                                | How the engine loads                                                                                    | Held by                                                                                                        |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Node: the CLI, the corpus recipes, the evaluation harness                                              | the default entry compiles its embedded bytes synchronously                                             | the fast suite (`differential.test.ts`, `query-shape.test.ts`) and both parse comparisons                      |
-| Chromium page, main thread (`mailwoman/browser-runtime/classify.ts`, `usePOISearch.ts`, the earth app) | the default entry, as in Node                                                                           | `packages/postcode/lib/recognize/query-shape.browser.test.ts` (new) and the existing recognize first-call test |
-| Workers (`@mailwoman/engine-worker`)                                                                   | the `workerd` export condition resolves to `out/workerd.js`, which imports `recognize.wasm` as a module | `packages/postcode/lib/recognize/query-shape.workers.test.ts` (new) and the existing recognize first-call test |
+| Runtime                                                                                                | How the engine loads                                                                                    | Held by                                                                                                         |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Node: the CLI, the corpus recipes, the evaluation harness                                              | the default entry compiles its embedded bytes synchronously                                             | the fast suite (`differential.test.ts`, `query-shape.test.ts`) and both parse comparisons                       |
+| Chromium page, main thread (`mailwoman/browser-runtime/classify.ts`, `usePOISearch.ts`, the earth app) | the default entry, as in Node                                                                           | `packages/postcode/lib/recognizer/query-shape.browser.test.ts` (new) and the existing recognize first-call test |
+| Workers (`@mailwoman/engine-worker`)                                                                   | the `workerd` export condition resolves to `out/workerd.js`, which imports `recognize.wasm` as a module | `packages/postcode/lib/recognizer/query-shape.workers.test.ts` (new) and the existing recognize first-call test |
 
 `yarn workspace @mailwoman/postcode test:workers` and `test:browser` pass, and so do the two recognize configurations. The new steps are in `.github/workflows/test.yml`, and `vitest.config.ts` excludes the two new file kinds from the root sweep.
 
@@ -170,7 +170,7 @@ The default entry of `recognize` embeds the engine binary and the artifacts as h
 `mailwoman parse --debug` and a geocode trace print the `queryShape`. Two things in it differ from `07a84aed1c`: the `whitespacePattern` field is gone, and `knownFormats` follows `totalLength` instead of `segments`.
 A token class in the full trace no longer has a `length`.
 The parse tree, the tags, the spans, the kind and the locale hint are the same. The package `@mailwoman/query-shape` is gone from npm's dependency list of `@mailwoman/core`, `@mailwoman/normalize`, `@mailwoman/kind-classifier`, `@mailwoman/locale-hint`, `@mailwoman/phrase-grouper`, `@mailwoman/mtf`, `@mailwoman/neural`, `@mailwoman/corpus`, `@mailwoman/react`, `@mailwoman/resolver` and `mailwoman`.
-Public names that moved are in the owners table above. `KnownFormatHitLike` left the `@mailwoman/neural` entry, and `isKnownPostcodeFormat` left `@mailwoman/postcode/recognize/legacy`.
+Public names that moved are in the owners table above. `KnownFormatHitLike` left the `@mailwoman/neural` entry, and `isKnownPostcodeFormat` left `@mailwoman/postcode/recognizer/legacy`.
 
 ## Checks and what they showed (observed)
 
@@ -185,7 +185,7 @@ Public names that moved are in the owners table above. `KnownFormatHitLike` left
 | `yarn workspace @mailwoman/docs lint:prose`                                                                          | exit 0, 0 errors, 24 warnings, none in a file this change wrote                                                                                                      |
 | `yarn workspace @mailwoman/docs build`, `yarn workspace @mailwoman/earth build`                                      | exit 0                                                                                                                                                               |
 | `yarn mwops release smoke-clean-install`                                                                             | exit 0, 67 workspaces packed                                                                                                                                         |
-| `node packages/recognize/tools/generate.run.ts --check`                                                              | exit 1 on `identifiers`, `primitives` and `structure`, and the same at `07a84aed1c`; the postcode generator's `--check` exits 0                                      |
+| `node packages/recognizer/tools/generate.run.ts --check`                                                             | exit 1 on `identifiers`, `primitives` and `structure`, and the same at `07a84aed1c`; the postcode generator's `--check` exits 0                                      |
 
 No Rust crate changed, so `cargo test` didn't run.
 

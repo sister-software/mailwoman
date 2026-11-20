@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "https://mailwoman.dev/schemas/recognize/ir-1.json",
+	"$id": "https://mailwoman.dev/schemas/recognizer/ir-1.json",
 	"title": "Mailwoman recognize intermediate representation, version 1",
 	"description": "One grammar family: named terms, shapes, their captures, scope, validator and handler IDs, ambiguity policy and source locations. Written by crates/recognize-build; every file under data/ir/ validates against this schema.",
 	"type": "object",

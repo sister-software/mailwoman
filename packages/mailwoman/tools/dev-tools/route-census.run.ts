@@ -48,7 +48,7 @@ import {
 	routeFamilyWithLeadingRun,
 	routeFamilyWithPostcode,
 } from "@mailwoman/neural"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 

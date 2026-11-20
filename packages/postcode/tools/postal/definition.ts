@@ -59,7 +59,7 @@
  *
  *   Each shape's metadata states a `form`: `designated` for a printed form, `alnum` for a
  *   bare form whose language holds a letter, and `numeric` for a bare form of digits.
- *   See `PostalForm` in `lib/recognize/postal/readers.ts`.
+ *   See `PostalForm` in `lib/recognizer/postal/readers.ts`.
  *
  *   # The embedded boundary
  *
@@ -67,7 +67,7 @@
  *   character before it and the one after it are not an ASCII letter or an ASCII digit.
  *   A connector may touch a match, so `54000` stands in `Lahore-54000` and in `FI-FI-01730`,
  *   the spellings the old shape table matched with `\b`.
- *   See `lib/recognize/postal/readers.ts`.
+ *   See `lib/recognizer/postal/readers.ts`.
  *
  *   # What the compiler refuses
  *
@@ -445,7 +445,7 @@ export function equivalenceGroups(prefix: "bare" | "printed", reported: readonly
  * The form of a bare shape, from the text of its pattern.
  *
  * A letter outside a `\x{...}` escape makes the shape alphanumeric.
- * `PostalForm` in `lib/recognize/postal/readers.ts` states what each form may do.
+ * `PostalForm` in `lib/recognizer/postal/readers.ts` states what each form may do.
  */
 export function bareForm(pattern: string): "alnum" | "numeric" {
 	const readable = pattern.replaceAll(/\\x\{[0-9a-f]+\}/gu, "").replace("(?i:", "")

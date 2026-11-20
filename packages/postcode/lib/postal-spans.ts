@@ -11,7 +11,7 @@
  *   `packages/mtf/crates/mtf-channels/src/finders.rs`, with the same order and the same reduction.
  *
  *   A span is the code the anchor table looks up, so a printed prefix is outside it.
- *   `postalSpans` in `./recognize/postal/readers.ts` states the order of the candidates,
+ *   `postalSpans` in `./recognizer/postal/readers.ts` states the order of the candidates,
  *   and the family's definition states the case rule: every shape matches either case.
  *
  *   The engine loads on the first call.
@@ -20,8 +20,8 @@
 import type { CountrySet } from "@mailwoman/codex/country/sets"
 import { createRecognizer } from "@mailwoman/recognizer"
 
-import { postal, type PostalForm, postalSpans, type PostalSpan } from "#recognize/postal"
-import { POSTAL_FORMAT, postalFormatHits } from "#recognize/postal/formats"
+import { postal, type PostalForm, postalSpans, type PostalSpan } from "#recognizer/postal"
+import { POSTAL_FORMAT, postalFormatHits } from "#recognizer/postal/formats"
 
 const recognizer = createRecognizer([postal])
 

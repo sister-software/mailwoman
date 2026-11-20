@@ -16,7 +16,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { CaseNormalization, ClassifierOpts, InputMode } from "@mailwoman/core/pipeline"
 import { normalize } from "@mailwoman/normalize"
-import type { QueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
 /**
  * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).

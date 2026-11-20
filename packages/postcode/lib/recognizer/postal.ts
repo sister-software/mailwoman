@@ -11,7 +11,7 @@
  *
  *   ```ts
  *   import { createRecognizer } from "@mailwoman/recognizer"
- *   import { postal, postalCandidates } from "@mailwoman/postcode/recognize/postal"
+ *   import { postal, postalCandidates } from "@mailwoman/postcode/recognizer/postal"
  *
  *   const text = "12345 Main Street"
  *   const candidates = postalCandidates(createRecognizer([postal]).recognize(text).recognitions)
@@ -22,12 +22,12 @@
  *   and `postalCandidates` lists the candidates of a result.
  *   `postal/readers.ts` states the boundary rule for a code inside an address.
  *
- *   The `postcode_legacy` family has its own module, `@mailwoman/postcode/recognize/legacy`.
+ *   The `postcode_legacy` family has its own module, `@mailwoman/postcode/recognizer/legacy`.
  *   This module imports its own artifact only, so a bundle that imports it
  *   holds no byte of the legacy artifact.
  */
 
-export { postal, POSTAL_FAMILY_ID, PostalKind } from "#recognize/postal.generated"
+export { postal, POSTAL_FAMILY_ID, PostalKind } from "#recognizer/postal.generated"
 
 export {
 	acceptingCountries,
@@ -46,4 +46,4 @@ export {
 	type PostalRecognitionLike,
 	type PostalRecognizerLike,
 	type PrintedPostcode,
-} from "#recognize/postal/readers"
+} from "#recognizer/postal/readers"

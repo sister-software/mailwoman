@@ -6,7 +6,7 @@ import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@ma
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { isPresent } from "@mailwoman/core/objects"
 import { landmarkPlaceID } from "@mailwoman/core/resolver"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"

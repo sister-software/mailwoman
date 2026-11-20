@@ -32,7 +32,7 @@ import {
 	postal,
 	postalCountryCodes,
 	splitPrintedPostcode,
-} from "#recognize/postal"
+} from "#recognizer/postal"
 
 const recognizer = createRecognizer([postal])
 

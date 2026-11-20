@@ -20,7 +20,7 @@ import { poBoxSpans } from "@mailwoman/recognizer/po-box"
 import type { KnownFormatHit, TokenClass } from "@mailwoman/recognizer/types"
 
 import { postcodeSyntaxCountries } from "#country-formats"
-import { postalConfidence } from "#recognize/postal/confidence"
+import { postalConfidence } from "#recognizer/postal/confidence"
 import {
 	isPostalRecognition,
 	type PostalForm,
@@ -28,7 +28,7 @@ import {
 	postalCountryCodes,
 	postalSpans,
 	splitPrintedPostcode,
-} from "#recognize/postal/readers"
+} from "#recognizer/postal/readers"
 
 /**
  * The format name of a postcode hit of the `postal` generation.

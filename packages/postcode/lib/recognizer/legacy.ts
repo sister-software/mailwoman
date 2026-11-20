@@ -18,7 +18,7 @@
  *   ```ts
  *   import { createRecognizer } from "@mailwoman/recognizer"
  *   import { structure } from "@mailwoman/recognizer/structure"
- *   import { postcodeLegacy } from "@mailwoman/postcode/recognize/legacy"
+ *   import { postcodeLegacy } from "@mailwoman/postcode/recognizer/legacy"
  *
  *   const { fields } = createRecognizer([structure, postcodeLegacy]).recognize("SW1A 1AA")
  *   ```
@@ -29,8 +29,8 @@
  *   This module imports its own artifact only.
  *   A bundle that imports it holds no byte of the `postal` family.
  *
- *   That family has its own module, `@mailwoman/postcode/recognize/postal`.
+ *   That family has its own module, `@mailwoman/postcode/recognizer/postal`.
  */
 
-export { postcodeLegacy, POSTCODE_LEGACY_FAMILY_ID } from "#recognize/postcode_legacy.generated"
-export { type KnownFormat, type PostcodeLegacyFields } from "#recognize/fields"
+export { postcodeLegacy, POSTCODE_LEGACY_FAMILY_ID } from "#recognizer/postcode_legacy.generated"
+export { type KnownFormat, type PostcodeLegacyFields } from "#recognizer/fields"

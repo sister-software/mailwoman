@@ -81,7 +81,7 @@ const RUST_CRATE_INPUTS = [
 	"packages/recognizer/lib/",
 	"packages/recognizer/data/",
 	"packages/recognizer/tools/",
-	"packages/postcode/lib/recognize/",
+	"packages/postcode/lib/recognizer/",
 	"packages/postcode/lib/legacy-formats/",
 	"packages/postcode/data/",
 	"packages/postcode/tools/",

@@ -6,7 +6,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
 import { findPostcodeSpans } from "#postal-spans"
-import { disjointSpans } from "#recognize/postal"
+import { disjointSpans } from "#recognizer/postal"
 
 function texts(raw: string, spans: ReadonlyArray<{ start: number; end: number }>): string[] {
 	return spans.map((span) => raw.slice(span.start, span.end))

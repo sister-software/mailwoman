@@ -7,7 +7,7 @@ Each claim is marked **observed** (a command printed it), **inferred** or **deci
 
 ## The final differential before the deletion (observed)
 
-`packages/mailwoman/tools/dev-tools/recognize/point-differential.run.ts` ran on the current tree before it was deleted. It compared 48,763 distinct inputs. The committed report matched the code's output (`--check` exited 0) before the DMS fix in `AnglePair`, with these counts:
+`packages/mailwoman/tools/dev-tools/recognizer/point-differential.run.ts` ran on the current tree before it was deleted. It compared 48,763 distinct inputs. The committed report matched the code's output (`--check` exited 0) before the DMS fix in `AnglePair`, with these counts:
 
 | Old reader             | Equal | Only the old code | Only `recognize` | Different values |
 | ---------------------- | ----- | ----------------- | ---------------- | ---------------- |

@@ -205,8 +205,8 @@ export async function runClassifyStage(
 ): Promise<ClassifyStageResult> {
 	const [{ computeQueryShape }, { queryShapeGenerationOf }, { classifyKindSync }, { runPipeline }, { groupPhrases }] =
 		await Promise.all([
-			import("@mailwoman/postcode/recognize/query-shape"),
-			import("@mailwoman/postcode/recognize/rule-generation"),
+			import("@mailwoman/postcode/recognizer/query-shape"),
+			import("@mailwoman/postcode/recognizer/rule-generation"),
 			import("@mailwoman/kind-classifier"),
 			import("@mailwoman/core/pipeline"),
 			import("@mailwoman/phrase-grouper"),

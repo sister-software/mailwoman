@@ -46,8 +46,8 @@ import type {
 import { RESOLVE_SWITCH_DEFAULTS } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
-import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognize/query-shape"
-import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognize/rule-generation"
+import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
+import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"

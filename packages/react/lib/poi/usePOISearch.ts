@@ -4,7 +4,7 @@
 import { matchPOISubject } from "@mailwoman/kind-classifier"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import type { OverpassIntentLike } from "@mailwoman/poi-taxonomy/overpass"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { useCallback, useEffect, useEffectEvent, useState } from "react"
 
 import { useDebouncedValue } from "#common/useDebouncedValue"

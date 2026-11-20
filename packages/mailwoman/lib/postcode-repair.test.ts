@@ -8,7 +8,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { repairPostcodeContradiction } from "#postcode-repair"

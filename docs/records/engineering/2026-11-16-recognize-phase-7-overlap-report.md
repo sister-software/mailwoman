@@ -6,7 +6,7 @@ It adds the grammars, validators and typed payloads of the remaining recognizer 
 It deletes no recognizer and changes no caller. A later task applies decision 8, starting from this record.
 
 Each claim is marked **observed** (a command printed it), **inferred** (read from code, with the reading stated) or **decided** (a choice this work made, with its reason).
-Every count comes from the committed report `packages/recognize/data/reports/point-query-differential.json`, written by `packages/mailwoman/tools/dev-tools/recognize/point-differential.run.ts`, unless a line says otherwise.
+Every count comes from the committed report `packages/recognizer/data/reports/point-query-differential.json`, written by `packages/mailwoman/tools/dev-tools/recognizer/point-differential.run.ts`, unless a line says otherwise.
 
 ## 1. What `recognize` reads now
 
@@ -44,11 +44,11 @@ All five coordinate shapes build the payload of the decimal pair: a validated la
 
 ### Where the GEOID and GNIS rules came from
 
-- The state codes come from `AdminLevel1Code` in `@mailwoman/tiger` (`packages/tiger/lib/state.ts`): 57 codes for the 50 states, the District of Columbia and the territories. `@mailwoman/recognize` cannot depend on that package, because `tiger` depends on `spatial`, `spatial` on `postcode` and `postcode` on `recognize`. `packages/mailwoman/tools/dev-tools/recognize/fips-states.run.ts` writes the table into `crates/recognize-core/src/validators/us_state_fips.rs`, and its `--check` compares the committed file with `tiger`.
+- The state codes come from `AdminLevel1Code` in `@mailwoman/tiger` (`packages/tiger/lib/state.ts`): 57 codes for the 50 states, the District of Columbia and the territories. `@mailwoman/recognize` cannot depend on that package, because `tiger` depends on `spatial`, `spatial` on `postcode` and `postcode` on `recognize`. `packages/mailwoman/tools/dev-tools/recognizer/fips-states.run.ts` writes the table into `crates/recognize-core/src/validators/us_state_fips.rs`, and its `--check` compares the committed file with `tiger`.
 - The GEOID part lengths are the ones `GeoIDPartLength` in `packages/tiger/lib/geoid.ts` already encodes (2, 3, 6, 1, 4). `tiger`'s matchers read a prefix of a longer string. A whole-input grammar cannot reuse that, so the shapes hold the lengths directly.
 - A search for an existing GNIS identifier parser (`mwdev_symbol`, then a grep for `gnis` in `packages/*/lib`, `tools` and `sdk`) found readers that take the identifier as an integer from the USGS layer (`packages/corpus/lib/us/tools/fetch/usgs/gnis.ts`) and a URL writer (`gnisFeatureURL` in `packages/gazetteer/tools/pipeline/us/gnis-backfill.ts`, observed). No code reads the identifier from text, so the shapes are new.
 - A bare GNIS number has no shape (decided). A GNIS identifier is an integer of up to ten digits (the Census Bureau's statement), so every house number and every postcode of up to ten digits is also one. A bare shape would match each of them and give the caller no evidence. The prefix is the only evidence the text means a GNIS feature: `gnis:1234567`, `gnis 1234567`, or the summary page address that `gnisFeatureURL` writes.
-- A GEOID and a bare H3 cell are candidates. A recognition says the digits have the structure of the identifier, with a known state code for a GEOID. Whether the area exists is a membership question. `isDeterministicIdentifier` in `@mailwoman/recognize/deterministic/identifiers` returns false for them.
+- A GEOID and a bare H3 cell are candidates. A recognition says the digits have the structure of the identifier, with a known state code for a GEOID. Whether the area exists is a membership question. `isDeterministicIdentifier` in `@mailwoman/recognizer/deterministic/identifiers` returns false for them.
 
 ### GeoJSON (observed)
 
@@ -128,7 +128,7 @@ Three recognizers meet the condition on the report's inputs, and `PLUS_CODE_TOKE
 
 ## 5. Size and speed
 
-### The engine binary (observed, `node packages/recognize/tools/build-wasm.run.ts --check`)
+### The engine binary (observed, `node packages/recognizer/tools/build-wasm.run.ts --check`)
 
 | Build                                                                        | Bytes   |
 | ---------------------------------------------------------------------------- | ------- |

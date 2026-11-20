@@ -11,7 +11,7 @@
 
 import { expect, it } from "vitest"
 
-import { computeQueryShape } from "#recognize/query-shape"
+import { computeQueryShape } from "#recognizer/query-shape"
 
 it("computes the structural fields and the known formats on the first call in Chromium", () => {
 	const agent = (globalThis as { navigator?: { userAgent: string } }).navigator?.userAgent ?? ""

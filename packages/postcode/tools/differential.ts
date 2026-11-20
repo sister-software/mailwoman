@@ -15,7 +15,7 @@ import { mulberry32 } from "@mailwoman/core/random"
 import { createRecognizer } from "@mailwoman/recognizer"
 import { structure } from "@mailwoman/recognizer/structure"
 
-import { postcodeLegacy } from "#recognize/legacy"
+import { postcodeLegacy } from "#recognizer/legacy"
 
 /**
  * The composed recognizer the comparison runs.

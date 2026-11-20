@@ -16,7 +16,7 @@ import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type CaseNormalization, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { JSONSpliterator } from "spliterator"
 
 import { flattenNodes } from "#tools/eval-harness/flatten-nodes"

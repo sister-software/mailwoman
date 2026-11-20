@@ -14,8 +14,8 @@ import {
 	postalCountries,
 	postalCountryCodes,
 	splitPrintedPostcode,
-} from "#recognize/postal"
-import { PostalMetadata } from "#recognize/postal.generated"
+} from "#recognizer/postal"
+import { PostalMetadata } from "#recognizer/postal.generated"
 import { translateBody } from "#tools/postal/definition"
 
 const recognizer = createRecognizer([postal])

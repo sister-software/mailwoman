@@ -30,12 +30,12 @@ import { specifyStructure } from "@mailwoman/recognizer/script-run"
 import { structure } from "@mailwoman/recognizer/structure"
 import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognizer/types"
 
-import type { PostcodeLegacyFields } from "#recognize/fields"
-import { postal } from "#recognize/postal.generated"
-import { type PostalFormatHit, postalFormatHits } from "#recognize/postal/formats"
-import { postcodeLegacy } from "#recognize/postcode_legacy.generated"
-import { regionAbbreviationsOf } from "#recognize/region-abbreviations"
-import { QueryShapeGeneration } from "#recognize/rule-generation"
+import type { PostcodeLegacyFields } from "#recognizer/fields"
+import { postal } from "#recognizer/postal.generated"
+import { type PostalFormatHit, postalFormatHits } from "#recognizer/postal/formats"
+import { postcodeLegacy } from "#recognizer/postcode_legacy.generated"
+import { regionAbbreviationsOf } from "#recognizer/region-abbreviations"
+import { QueryShapeGeneration } from "#recognizer/rule-generation"
 
 /**
  * One known-format hit of either generation.

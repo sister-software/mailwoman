@@ -48,7 +48,7 @@ import {
 import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

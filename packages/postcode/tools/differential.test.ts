@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The recognizer the pipeline reads, `computeQueryShape` of `@mailwoman/postcode/recognize/query-shape`,
+ *   The recognizer the pipeline reads, `computeQueryShape` of `@mailwoman/postcode/recognizer/query-shape`,
  *   against the frozen output of the legacy classifier: the six structural fields and `knownFormats`
  *   on every case of `@mailwoman/recognizer`'s fixture, then the family's own contracts.
  *
@@ -18,8 +18,8 @@ import { plainFields, readFrozenFixture } from "@mailwoman/recognizer/tools/froz
 import type { StructureFields } from "@mailwoman/recognizer/types"
 import { describe, expect, it } from "vitest"
 
-import { postcodeLegacy } from "#recognize/legacy"
-import { computeQueryShape } from "#recognize/query-shape"
+import { postcodeLegacy } from "#recognizer/legacy"
+import { computeQueryShape } from "#recognizer/query-shape"
 import { generatedKnownFormatInputs, recognizedHits } from "#tools/differential"
 
 describe("computeQueryShape equals the frozen legacy output", () => {

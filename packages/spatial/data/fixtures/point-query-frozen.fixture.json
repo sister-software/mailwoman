@@ -1,7 +1,7 @@
 {
 	"description": "The point readings of the legacy parsePointQuery, taken before it was deleted, and what recognize reads where the two differ. Each case is a trimmed text and the reading pointFromText returns, or null.",
 	"draw": {
-		"source": "the inputs of packages/mailwoman/tools/dev-tools/recognize/point-differential.run.ts: the string literals of the three spatial test files and seeded generated inputs",
+		"source": "the inputs of packages/mailwoman/tools/dev-tools/recognizer/point-differential.run.ts: the string literals of the three spatial test files and seeded generated inputs",
 		"distinctTrimmedInputs": 42122,
 		"agreedPerKind": 60,
 		"agreedCounts": {

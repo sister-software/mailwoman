@@ -29,7 +29,7 @@
  *   ambiguous five-digit run. 0.05 is the step between adjacent values of the legacy table.
  */
 
-import type { PostalForm } from "#recognize/postal/readers"
+import type { PostalForm } from "#recognizer/postal/readers"
 
 /**
  * The confidence of a form that one country accepts.

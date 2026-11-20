@@ -8,7 +8,7 @@
 //! (`packages/postcode/data/artifacts/postal.rca1`) and the family definition that states each shape's countries,
 //! form and printed prefix (`packages/postcode/data/definitions/postal.definition.json`). Serving reads the same
 //! family in `packages/postcode/lib/postal-spans.ts` and reduces its candidates by the same rule, so the two sides
-//! hold one finder. `postalSpans` in `packages/postcode/lib/recognize/postal/readers.ts` states the rule:
+//! hold one finder. `postalSpans` in `packages/postcode/lib/recognizer/postal/readers.ts` states the rule:
 //!
 //! - every embedded candidate is reduced to its code, which leaves out a printed prefix and the white space after it;
 //! - candidates are ordered longest first, then by earliest start, then by form (designated, alphanumeric, numeric) and

@@ -98,9 +98,9 @@ The per-country distribution that the rule for row 8 accepts is the codex's four
 
 Each piece has a `LEGACY-QUERY-SHAPE` marker in its header.
 
-- `packages/postcode/lib/recognize/legacy.ts`, its generated artifact and declarations, and `legacy-formats/table.ts`.
+- `packages/postcode/lib/recognizer/legacy.ts`, its generated artifact and declarations, and `legacy-formats/table.ts`.
 - The `legacy` branch of `computeQueryShape`, the `legacy` value of `QueryShapeGeneration`, and the generation parameter of every caller in the consumer table.
-- The hand-written ranges of `packages/recognize/lib/charset.ts` and the `charset.rs` script tables that the `structure` pass reads for a token's script and class.
+- The hand-written ranges of `packages/recognizer/lib/charset.ts` and the `charset.rs` script tables that the `structure` pass reads for a token's script and class.
 - `packages/postcode/lib/frozen-shapes.ts` with `frozen-shapes.json`, the one reader that remains being the postcode repair of a card that declares a span mode other than `postal`.
 
 ## Parses with the published weights (observed)

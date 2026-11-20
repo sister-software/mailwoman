@@ -3,7 +3,7 @@
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import { Span } from "@mailwoman/core/tokenization"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { observeC4Boundaries, summarizeC4FeatureVectors } from "#tools/eval-harness/grammar/census/c4"

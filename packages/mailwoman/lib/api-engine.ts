@@ -27,7 +27,7 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { queryShapeGenerationOf } from "@mailwoman/postcode/recognize/rule-generation"
+import { queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"

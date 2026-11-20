@@ -11,7 +11,7 @@
 import { hasCountry } from "@mailwoman/codex/country/sets"
 import { describe, expect, it } from "vitest"
 
-import { computeQueryShape } from "#recognize/query-shape"
+import { computeQueryShape } from "#recognizer/query-shape"
 
 const postal = (text: string) => computeQueryShape(text, "postal")
 const legacy = (text: string) => computeQueryShape(text, "legacy")

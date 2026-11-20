@@ -36,7 +36,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { JSONSpliterator } from "spliterator"
 
 import { deriveGeocodeRegister } from "#geocode/core"

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "https://mailwoman.dev/schemas/recognize/family-definition-1.json",
+	"$id": "https://mailwoman.dev/schemas/recognizer/family-definition-1.json",
 	"title": "Mailwoman recognize family definition, version 1",
 	"description": "A shape-only grammar family defined as data by a package other than recognize-core: regular-expression shapes, their scopes and overlap declarations, and metadata the generated TypeScript carries. recognize-build --definition compiles it into the IR, an artifact and generated TypeScript. A shape that declares captures, a validator or a handler is refused with a diagnostic.",
 	"type": "object",

@@ -3,7 +3,7 @@
 
 import { describe, expect, it, test } from "vitest"
 
-import { computeQueryShape } from "#recognize/query-shape"
+import { computeQueryShape } from "#recognizer/query-shape"
 
 describe("the region abbreviations of computeQueryShape", () => {
 	it.each([

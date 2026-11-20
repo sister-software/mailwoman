@@ -14,7 +14,7 @@ import {
 	type NormalizedInputLite,
 	type QueryShapeSegmentsView as QueryShapeLike,
 } from "@mailwoman/core/pipeline/types"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
 /**
  * Maximum length for a bare venue or landmark query.

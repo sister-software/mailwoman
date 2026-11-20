@@ -9,7 +9,7 @@ import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoma
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
-import { QueryShapeGeneration } from "@mailwoman/postcode/recognize/rule-generation"
+import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"

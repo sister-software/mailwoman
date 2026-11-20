@@ -13,7 +13,7 @@
  *   - `data/ir/<id>.json`, the compiled family's IR.
  *   - `data/artifacts/<id>.rca1`, the artifact.
  *   - `data/manifests/<id>.json` and `data/reports/<id>.compiler-report.json`.
- *   - `lib/recognize/<id>.generated.ts` and `lib/recognize/artifacts/<id>.generated.ts`,
+ *   - `lib/recognizer/<id>.generated.ts` and `lib/recognizer/artifacts/<id>.generated.ts`,
  *     the family's declarations and its artifact as hexadecimal text.
  *
  *   The `postal` family also writes `data/fixtures/postal-overlap-witnesses.json`, the shortest string

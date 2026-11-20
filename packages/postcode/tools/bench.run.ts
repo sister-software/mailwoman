@@ -38,8 +38,8 @@ import { primitives } from "@mailwoman/recognizer/primitives"
 import { spatial } from "@mailwoman/recognizer/spatial"
 import { structure } from "@mailwoman/recognizer/structure"
 
-import { postcodeLegacy } from "#recognize/legacy"
-import { postal } from "#recognize/postal"
+import { postcodeLegacy } from "#recognizer/legacy"
+import { postal } from "#recognizer/postal"
 
 const WARM_UP_CALLS = 20_000
 const TIMED_CALLS = 200_000

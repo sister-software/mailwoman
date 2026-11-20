@@ -14,7 +14,7 @@
 
 import { expect, it } from "vitest"
 
-import { computeQueryShape } from "#recognize/query-shape"
+import { computeQueryShape } from "#recognizer/query-shape"
 
 it("computes the structural fields and the known formats on the first call", () => {
 	const shape = computeQueryShape("350 5th Ave, New York, NY 10118")

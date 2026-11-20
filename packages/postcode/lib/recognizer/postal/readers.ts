@@ -30,13 +30,13 @@
  *   The recognizer's recognitions are the candidates, and `12345 Main Street` reports
  *   its five-digit candidate with every country that writes five digits.
  *
- *   The public module is `@mailwoman/postcode/recognize/postal`, which exports
+ *   The public module is `@mailwoman/postcode/recognizer/postal`, which exports
  *   these readers beside the family.
  */
 
 import { type CountrySet, countriesDeclaredBy, hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
 
-import { type PostalKind, PostalMetadata } from "#recognize/postal.generated"
+import { type PostalKind, PostalMetadata } from "#recognizer/postal.generated"
 
 /**
  * What the readers need of a recognition: its kind and its span.

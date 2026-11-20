@@ -25,8 +25,8 @@
 
 import { createRecognizer } from "@mailwoman/recognizer"
 
-import { postal } from "#recognize/postal.generated"
-import { acceptingCountries } from "#recognize/postal/readers"
+import { postal } from "#recognizer/postal.generated"
+import { acceptingCountries } from "#recognizer/postal/readers"
 
 const recognizer = createRecognizer([postal])
 

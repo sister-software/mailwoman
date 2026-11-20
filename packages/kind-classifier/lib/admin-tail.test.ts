@@ -15,7 +15,7 @@
  * these rows decides whether the decoder sees that evidence at all.
  */
 
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { describe, expect, it } from "vitest"
 
 import { classifyKindSync } from "#classify"

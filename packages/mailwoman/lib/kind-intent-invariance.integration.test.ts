@@ -20,7 +20,7 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier"
-import { computeQueryShape } from "@mailwoman/postcode/recognize/query-shape"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { beforeAll, describe, expect, test } from "vitest"
 
 import { poiTaxonomyLookup } from "#poi"
