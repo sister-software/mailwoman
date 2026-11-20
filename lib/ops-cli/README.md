@@ -1,6 +1,7 @@
 # ops-cli
 
-`mwops`, the operator CLI for CI and humans, dispatches the release, shop, repository health, and storage registries.
+`mwops`, the operator CLI for CI and humans, dispatches the release, shop, repository health, storage, host and pull
+request registries.
 
 ```
 mwops release preflight
@@ -28,6 +29,13 @@ when the lock is held. A lock whose holder process is gone, or whose pid now bel
 is released with a message. `mwops check preflight` runs the direct-push set from `AGENTS.md`. `mwops host status`
 reports the lock holder and the CI runs, and `mwops host wait-idle --max-minutes N` exits 0 when the host is idle, 3
 when the bound expired with it busy, and 4 when CI stayed unread.
+
+`mwops pr status <number>` reads one pull request's head commit, base branch, mergeable and merge-state values, and
+each check with its bucket. `mwops pr wait <number> --max-minutes N` reads the checks every `--poll-seconds` (default 45) until zero are pending or the bound (default 40) expires. Both exit 0 when every check passed, 1 when one failed or
+was cancelled, 3 when a check is pending at the end, 4 when `gh` returned no checks JSON, and 5 when the head has zero
+checks, because of a merge conflict or because none started. On exit 1 each failed job's log is written under the cache
+root's `checks/ci-logs` directory, and the command prints the failing tests the Vitest parser reads from it, or states
+that the log held none.
 
 `health baseline debt` is the one mutation the health verb performs: it rewrites `lib/repo-health/baseline.json`
 from the current readings, after a reviewed reduction. Every other `health` invocation only reads.

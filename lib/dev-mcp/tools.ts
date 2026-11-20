@@ -23,6 +23,7 @@ import { diffParseTool } from "#dev-mcp/tools/diff/parse"
 import { directoriesTool } from "#dev-mcp/tools/directories"
 import { fanoutTool } from "#dev-mcp/tools/fanout"
 import { githubTools } from "#dev-mcp/tools/github"
+import { httpGetTool } from "#dev-mcp/tools/http-get"
 import { inputsTool } from "#dev-mcp/tools/inputs"
 import { interfaceTool } from "#dev-mcp/tools/interface"
 import { lookupTool } from "#dev-mcp/tools/lookup"
@@ -35,6 +36,7 @@ import { rigTool } from "#dev-mcp/tools/rig"
 import { runTool } from "#dev-mcp/tools/run"
 import { runsTool } from "#dev-mcp/tools/runs"
 import { sourcesTool } from "#dev-mcp/tools/sources"
+import { sqlTool } from "#dev-mcp/tools/sql"
 import { supportTool } from "#dev-mcp/tools/support"
 import { symbolTool } from "#dev-mcp/tools/symbol"
 import { traceTool } from "#dev-mcp/tools/trace"
@@ -76,6 +78,8 @@ const FACTORIES = [
 	symbolTool,
 	vocabTool,
 	runsTool,
+	sqlTool,
+	httpGetTool,
 ] as const satisfies ReadonlyArray<(deps: DevToolDeps) => DevTool | Promise<DevTool>>
 
 /**

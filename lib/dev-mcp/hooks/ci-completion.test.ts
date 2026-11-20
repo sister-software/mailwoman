@@ -183,7 +183,7 @@ describe("CI completion", () => {
 					{ name: "docs", bucket: "skipping" },
 				])
 			)
-		).resolves.toBeUndefined()
+		).resolves.toBe("head-a")
 	})
 
 	it("passes a PR whose head branch is not the session's checked-out branch, without reading its checks", async () => {
@@ -192,7 +192,7 @@ describe("CI completion", () => {
 			stderr: "",
 		})
 
-		await expect(assertCIComplete("owner/repo", 1, run, true, "main")).resolves.toBeUndefined()
+		await expect(assertCIComplete("owner/repo", 1, run, true, "main")).resolves.toBeNull()
 		expect(run).toHaveBeenCalledTimes(1)
 	})
 

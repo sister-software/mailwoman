@@ -216,7 +216,13 @@ describe("GitHub MCP tools", () => {
 			tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })
 		).resolves.toMatchObject({
 			handoff_ready: true,
+			completed_head: "head-a",
 		})
+
+		// `merge` reads this record to require a completion for the current head.
+		expect(
+			await readLocalJSONFile<Record<string, unknown>>(cwd(".claude", "state", "completed-pull-requests.json"))
+		).toMatchObject({ "2400": { head: "head-a", issueNumber: 2365 } })
 
 		expect(run).toHaveBeenCalledWith(
 			expect.arrayContaining(["edit", "--body", body.replace(`- [ ] ${task}`, `- [x] ${task}`)]),
