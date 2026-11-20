@@ -4,9 +4,9 @@
 /**
  *   OpenAPI emit helpers.
  *
- *   The document is always derived from the route table — never handwritten. 3.1 is the
- *   published flavor. 3.0 exists solely for client generators that lag (progenitor),
- *   replacing the old hand-downgrade step.
+ *   The document is always derived from the route table — never handwritten. 3.1
+ *   is the published flavor. 3.0 serves client generators that lag (progenitor)
+ *   and the OGC API `oas30` conformance class that `@mailwoman/ogc` declares.
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
@@ -105,9 +105,13 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
 		...toDocumentConfig(info),
 	}
 
+	// OpenAPI 3.0 has no `info.summary` and no `license.identifier`, and its schema refuses
+	// unknown fields there, so the 3.0 document states only the license name.
+	const { summary: _summary, license, ...v30Info } = info
+
 	const v30Config: Parameters<OpenAPIHono["getOpenAPIDocument"]>[0] = {
 		openapi: "3.0.3",
-		...toDocumentConfig(info),
+		...toDocumentConfig({ ...v30Info, license: license && { name: license.name } }),
 	}
 
 	return {

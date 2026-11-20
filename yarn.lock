@@ -7479,6 +7479,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/ogc@workspace:packages/ogc":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/ogc@workspace:packages/ogc"
+  dependencies:
+    "@hono/zod-openapi": "npm:^1.6.3"
+    "@mailwoman/api-kit": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    hono: "npm:^4.13.14"
+    mailwoman: "workspace:*"
+    zod: "npm:^4.6.7"
+  bin:
+    ogc: ./out/cli/main.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/opportunity-app@workspace:packages/opportunity-app":
   version: 0.0.0-use.local
   resolution: "@mailwoman/opportunity-app@workspace:packages/opportunity-app"

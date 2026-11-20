@@ -48,6 +48,7 @@
 				"packages/nominatim",
 				"packages/normalize",
 				"packages/nuts-lookup",
+				"packages/ogc",
 				"packages/osm",
 				"packages/photon",
 				"packages/phrase-grouper",
