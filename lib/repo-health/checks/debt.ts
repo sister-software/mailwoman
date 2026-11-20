@@ -21,6 +21,7 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext }
 import { findDanglingLinks } from "#repo-health/checks/doc-link-targets"
 import { findDuplicateShapes } from "#repo-health/checks/duplicate-exported-shape"
 import { findAffixPairs } from "#repo-health/checks/export-name-affix"
+import { findTestOnlyExports } from "#repo-health/checks/exports/test-only"
 import { findPrivateNameShadows } from "#repo-health/checks/private-name-shadows"
 import { parseContextSource, readContextSource, readContextSources } from "#repo-health/context"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
@@ -42,6 +43,10 @@ export interface DebtCounters {
 	 * Exported interfaces and type aliases whose body another workspace also exports, one per site.
 	 */
 	duplicateExportedShapes: number
+	/**
+	 * Exports whose only importers are tests, outside a published package's explicit `exports` subpaths.
+	 */
+	testOnlyExports: number
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
@@ -200,6 +205,7 @@ function createDebtRecord(): DebtCounters {
 		exportNameAffix: 0,
 		danglingDocLinks: 0,
 		duplicateExportedShapes: 0,
+		testOnlyExports: 0,
 		asNever: 0,
 		doubleCast: 0,
 		deepRelativeImports: 0,
@@ -681,6 +687,12 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 	for (const duplicate of await findDuplicateShapes(context)) {
 		for (const site of duplicate.sites) {
 			note(ledger, "duplicateExportedShapes", `${site.file}:${site.line} ${site.name}`)
+		}
+	}
+
+	for (const finding of await findTestOnlyExports(context)) {
+		if (!finding.publicEntry) {
+			note(ledger, "testOnlyExports", `${finding.file}:${finding.line} ${finding.name}`)
 		}
 	}
 

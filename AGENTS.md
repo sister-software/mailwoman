@@ -113,7 +113,9 @@ A test sits in the same directory as the module it covers: `packages/core/lib/de
 `packages/core/lib/decoder/build-tree.test.ts`. The suffix selects the suite: `<name>.test.ts` runs in the fast suite,
 `<name>.integration.test.ts` in the slow suite, and `<name>.full.test.ts` in the full-data suite. A test
 may import its module by relative path, by the package's `#` imports, or by the public export. The
-`test-layout` repository check reports a test in a directory that holds no module.
+`test-layout` repository check reports a test in a directory that holds no module. Knip counts a
+test's import as a use, so the `test-only-exports` check reports an export that only tests import,
+and the `debt` counter keeps that count from growing. Mark an export meant for outside users `@public`.
 
 A directory's role decides its source root, whether or not shipped code imports it. `lib/` holds only
 the library. `sdk/` holds data acquisition: fetching, downloading and extracting source data. `tools/`

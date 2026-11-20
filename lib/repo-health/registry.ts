@@ -23,6 +23,7 @@ import { duplicateExportedShapeCheck } from "#repo-health/checks/duplicate-expor
 import { effectsRegisterCheck } from "#repo-health/checks/effects-register"
 import { exportNameAffixCheck } from "#repo-health/checks/export-name-affix"
 import { exportsCheck } from "#repo-health/checks/exports"
+import { testOnlyExportsCheck } from "#repo-health/checks/exports/test-only"
 import { licenseRegisterCheck } from "#repo-health/checks/license-register"
 import { localeScopeCheck } from "#repo-health/checks/locale/scope"
 import { supportPromisesCheck } from "#repo-health/checks/locale/support-promises"
@@ -95,6 +96,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	docLinkTargetsCheck,
 	mdxAnglesCheck,
 	duplicateExportedShapeCheck,
+	testOnlyExportsCheck,
 	stylesheetCheck,
 	runtimeFlagsCheck,
 	wireIdentifiersCheck,

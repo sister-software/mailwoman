@@ -100,6 +100,8 @@ const ALLOWED: Record<string, string> = {
 	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves.
 	// A fixture without an install layout cannot test Yarn's resolution behavior.
 	"lib/repo-health/move/plan.test.ts": "builds the scratch workspace's install link; nothing exists to resolve yet",
+	"lib/repo-health/checks/exports/test-only.test.ts":
+		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads,
 	// spelled out so the cache rung's test stays independent of the helper it exercises.
 	"packages/neural/lib/weights/overlay.integration.test.ts":
