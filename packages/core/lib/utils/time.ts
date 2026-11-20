@@ -32,6 +32,71 @@ export function isoSeconds(now: Date = new Date()): string {
 }
 
 /**
+ * The `date-time` production of RFC 3339 section 5.6: a full date, `T`, a full time
+ * with optional fractional seconds, and `Z` or a numeric offset.
+ * The letters may be lowercase.
+ */
+const RFC3339_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:[Zz]|[+-](\d{2}):(\d{2}))$/
+
+/**
+ * The days in each month of a leap year, January first.
+ */
+const LEAP_YEAR_MONTH_DAYS: readonly number[] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+/**
+ * The largest hour of a day in an RFC 3339 time or offset.
+ */
+const LAST_HOUR = 23
+
+/**
+ * The largest minute of an hour.
+ */
+const LAST_MINUTE = 59
+
+/**
+ * The largest second of a minute: 60, because RFC 3339 admits a leap second.
+ */
+const LAST_SECOND_WITH_LEAP = 60
+
+function isLeapYear(year: number): boolean {
+	return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+}
+
+/**
+ * Whether `value` is an RFC 3339 `date-time`, such as `2018-02-12T23:20:50Z`.
+ *
+ * Each field is checked against its range, so `2021-02-30T00:00:00Z` is refused.
+ * A second of 60 is accepted, as RFC 3339 admits a leap second.
+ */
+export function isRFC3339DateTime(value: string): boolean {
+	const match = RFC3339_DATE_TIME.exec(value)
+
+	if (!match) return false
+
+	const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number) as [
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+	]
+
+	const monthDays = LEAP_YEAR_MONTH_DAYS[month - 1]
+
+	if (monthDays == null || day < 1) return false
+
+	if (day > (month === 2 && !isLeapYear(year) ? monthDays - 1 : monthDays)) return false
+
+	if (hour > LAST_HOUR || minute > LAST_MINUTE || second > LAST_SECOND_WITH_LEAP) return false
+
+	const offsetHour = match[7]
+	const offsetMinute = match[8]
+
+	return offsetHour == null || (Number(offsetHour) <= LAST_HOUR && Number(offsetMinute) <= LAST_MINUTE)
+}
+
+/**
  * The wall-clock seconds one phase of a build took, under the phase's progress label.
  */
 export interface PhaseTiming {

@@ -13,23 +13,35 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { APIErrorSchema, emitOpenAPIDocuments, errorResponse, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { MAX_ADDRESS_LENGTH } from "@mailwoman/api/input-limits"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { wofIDFromPlaceID } from "@mailwoman/core/resolver"
 import { isoSeconds } from "@mailwoman/core/utils"
-import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
 import type { Context } from "hono"
 
+import { type OGCBBox, parseBBox, searchBoxContains } from "#bbox"
 import { OGC_COLLECTION_CATALOG } from "#collections"
-import type { OGCEngine, OGCSearchHit, OGCServedCollection } from "#engine"
+import type { OGCEngine, OGCItem, OGCSearchHit, OGCServedCollection } from "#engine"
 import { negotiateFormat } from "#format"
 import {
 	apiDefinitionHTML,
 	collectionHTML,
 	collectionsHTML,
 	conformanceHTML,
+	itemHTML,
+	itemsHTML,
 	landingPageHTML,
 	type OpenAPI30Document,
 	searchHTML,
 } from "#html"
+import { itemFeature, itemPlaceID, parseItemsQuery } from "#items"
 import {
+	type OGCExtent,
+	type OGCItemFeature,
+	OGCItemFeatureSchema,
+	OGCItemPathSchema,
+	OGCItemsQuerySchema,
+	type OGCItemsResponse,
+	OGCItemsResponseSchema,
+	OGC_CRS84,
 	collectionRelevanceParameter,
 	collectionVersionParameter,
 	type OGCCollection,
@@ -76,11 +88,36 @@ export interface OGCRouteOptions {
 }
 
 /**
- * The conformance classes the routes below implement.
+ * The OGC API Features Part 1 classes, declared only when a collection serves items.
  */
-export const OGC_CONFORMANCE: OGCConformance = {
-	conformsTo: Object.values(OGCConformanceClass),
+const FEATURES_CLASSES: ReadonlySet<string> = new Set([
+	OGCConformanceClass.FeaturesCore,
+	OGCConformanceClass.FeaturesGeoJSON,
+	OGCConformanceClass.FeaturesHTML,
+	OGCConformanceClass.FeaturesOAS30,
+])
+
+/**
+ * The conformance classes the routes implement for a service whose collections are `collections`.
+ *
+ * The OGC API Features Part 1 classes need a collection with items, so a service with none omits them.
+ */
+export function conformanceOf(collections: readonly OGCServedCollection[]): OGCConformance {
+	const servesItems = collections.some((collection) => collection.items)
+
+	return {
+		conformsTo: Object.values(OGCConformanceClass).filter((uri) => servesItems || !FEATURES_CLASSES.has(uri)),
+	}
 }
+
+/**
+ * The spatial extent of every collection that serves items.
+ *
+ * The box is the whole CRS84 range, so it contains every item.
+ * A tighter box would need a scan of the gazetteer at startup, and OGC API Features
+ * Part 1 asks only that the box contain the items.
+ */
+const WORLD_EXTENT: OGCExtent = { spatial: { bbox: [[-180, -90, 180, 90]], crs: OGC_CRS84 } }
 
 const errorContent = { [OGCMediaType.JSON]: { schema: APIErrorSchema } }
 
@@ -285,15 +322,49 @@ export function buildLandingPage(base: string, docInfo: OpenAPIDocInfo, format: 
 export function buildCollection(base: string, served: OGCServedCollection, format: OGCFormat): OGCCollection {
 	const { title, description } = OGC_COLLECTION_CATALOG[served.id]
 	const coverage = served.regions ? ` The engine opened its layers for ${served.regions.join(", ")}.` : ""
+	const path = collectionPath(served.id)
+	const links = selfLinks(base, path, format, title)
+
+	if (served.items) {
+		links.push(
+			{
+				href: hrefOf(base, `${path}/items`, OGCFormat.JSON),
+				rel: OGCLinkRelation.Items,
+				type: OGCMediaType.GeoJSON,
+				title: `${title} items`,
+			},
+			{
+				href: hrefOf(base, `${path}/items`, OGCFormat.HTML),
+				rel: OGCLinkRelation.Items,
+				type: OGCMediaType.HTML,
+				title: `${title} items as HTML`,
+			}
+		)
+	}
 
 	return {
 		id: served.id,
 		title,
 		description: `${description}${coverage}`,
-		links: selfLinks(base, `collections/${encodeURIComponent(served.id)}`, format, title),
+		links,
+		...(served.items ? { itemType: "feature" as const, extent: WORLD_EXTENT } : {}),
 		geometryDimension: 0,
 		version: OGC_COLLECTION_VERSION,
 	}
+}
+
+/**
+ * A collection's path relative to the service root.
+ */
+function collectionPath(collectionID: string): string {
+	return `collections/${encodeURIComponent(collectionID)}`
+}
+
+/**
+ * The path of one item relative to the service root.
+ */
+export function itemPath(collectionID: string, item: Pick<OGCItem, "wofID">): string {
+	return `${collectionPath(collectionID)}/items/${encodeURIComponent(itemPlaceID(item))}`
 }
 
 /**
@@ -308,51 +379,6 @@ export function buildCollections(
 		links: selfLinks(base, "collections", format, "Collections"),
 		collections: collections.map((served) => buildCollection(base, served, format)),
 	}
-}
-
-/**
- * A `[minLon, minLat, maxLon, maxLat]` box in WGS 84 degrees.
- */
-export type OGCBBox = readonly [number, number, number, number]
-
-/**
- * The count of numbers in a two-dimensional `bbox`: two longitudes and two latitudes.
- */
-const BBOX_CORNERS = 4
-
-/**
- * Parse a `bbox` value.
- *
- * @returns The box, or a message that states the problem with the value.
- */
-export function parseBBox(raw: string): OGCBBox | string {
-	const parts = raw.split(",").map((part) => part.trim())
-	const numbers = parts.map((part) => (part === "" ? Number.NaN : Number(part)))
-
-	if (numbers.length !== BBOX_CORNERS || !numbers.every(Number.isFinite)) {
-		return "bbox: four comma-separated numbers are required, minLon,minLat,maxLon,maxLat"
-	}
-
-	const [minLon, minLat, maxLon, maxLat] = numbers as [number, number, number, number]
-
-	if (!isValidLongitude(minLon) || !isValidLongitude(maxLon)) return "bbox: longitudes must lie in [-180, 180]"
-
-	if (!isValidLatitude(minLat) || !isValidLatitude(maxLat)) return "bbox: latitudes must lie in [-90, 90]"
-
-	if (minLat > maxLat) return "bbox: the minimum latitude exceeds the maximum"
-
-	return [minLon, minLat, maxLon, maxLat]
-}
-
-/**
- * Whether a point lies inside the box, edges included.
- *
- * A box whose minimum longitude exceeds its maximum crosses the antimeridian, as OGC API boxes may.
- */
-export function searchBoxContains([minLon, minLat, maxLon, maxLat]: OGCBBox, lon: number, lat: number): boolean {
-	if (lat < minLat || lat > maxLat) return false
-
-	return minLon <= maxLon ? lon >= minLon && lon <= maxLon : lon >= minLon || lon <= maxLon
 }
 
 /**
@@ -446,7 +472,7 @@ export function selectHits(hits: readonly OGCSearchHit[], request: OGCSearchRequ
 /**
  * One hit as a GeoJSON feature.
  */
-export function searchFeature(hit: OGCSearchHit): OGCSearchFeature {
+export function searchFeature(hit: OGCSearchHit, href?: string): OGCSearchFeature {
 	return {
 		type: "Feature",
 		geometry: { type: "Point", coordinates: [hit.lon, hit.lat] },
@@ -457,8 +483,29 @@ export function searchFeature(hit: OGCSearchHit): OGCSearchFeature {
 			collection_id: hit.collectionID,
 			...(hit.placeID ? { place_id: hit.placeID } : {}),
 			...(hit.placetype ? { placetype: hit.placetype } : {}),
+			...(href ? { href } : {}),
 		},
 	}
+}
+
+/**
+ * The item URL of a `/search` hit, when its collection serves items and holds the hit's place.
+ *
+ * The collection is asked for the place, so a link never points at an item that answers 404.
+ */
+async function searchHitHref(
+	base: string,
+	hit: OGCSearchHit,
+	collections: readonly OGCServedCollection[]
+): Promise<string | undefined> {
+	const items = collections.find(({ id }) => id === hit.collectionID)?.items
+	const wofID = wofIDFromPlaceID(hit.placeID ?? null)
+
+	if (!items || wofID == null) return undefined
+
+	const item = await items.item(wofID)
+
+	return item ? hrefOf(base, itemPath(hit.collectionID, item), OGCFormat.JSON) : undefined
 }
 
 /**
@@ -474,9 +521,16 @@ function queryPairsOf(c: Context): Array<[string, string]> {
 export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL, docInfo }: OGCRouteOptions): void {
 	const baseOf = (url: string) => baseURL ?? new URL(url).origin
 	const collections = engine.collections
+	const conformance = conformanceOf(collections)
 	// The route table is complete once the app is built, so the document is
 	// emitted once, at the first request.
 	let document: OpenAPI30Document | undefined
+
+	// A service whose collections serve no items registers no items routes, so its API
+	// definition declares none and its conformance declaration lists no Features class.
+	if (collections.some((collection) => collection.items)) {
+		registerItemRoutes(app, collections, baseOf)
+	}
 
 	const searchRoute = createRoute({
 		method: "get",
@@ -508,8 +562,8 @@ export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL
 		const links = selfLinks(baseOf(c.req.url), "conformance", format, "This document")
 
 		return format === OGCFormat.HTML
-			? c.html(conformanceHTML(OGC_CONFORMANCE, links), 200)
-			: c.json({ ...OGC_CONFORMANCE, links }, 200)
+			? c.html(conformanceHTML(conformance, links), 200)
+			: c.json({ ...conformance, links }, 200)
 	})
 
 	app.openapi(apiRoute, (c) => {
@@ -529,7 +583,11 @@ export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL
 			return c.html(apiDefinitionHTML(document, links), 200)
 		}
 
-		return c.body(stringifyJSON(document), 200, { "Content-Type": OGCMediaType.OpenAPI30 })
+		// The served definition lists the origin the request reached, the base its link hrefs use,
+		// so a client resolves each path against a URL rather than the `{host}:{port}` template.
+		const served = { ...document, servers: [{ url: baseOf(c.req.url) }] }
+
+		return c.body(stringifyJSON(served), 200, { "Content-Type": OGCMediaType.OpenAPI30 })
 	})
 
 	app.openapi(collectionsRoute, (c) => {
@@ -567,7 +625,11 @@ export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL
 
 		if (typeof request === "string") return errorResponse(c, 400, "invalid query parameter", request)
 
-		const features = selectHits(await engine.search(request.q), request).map(searchFeature)
+		const hits = selectHits(await engine.search(request.q), request)
+
+		const features = await Promise.all(
+			hits.map(async (hit) => searchFeature(hit, await searchHitHref(base, hit, collections)))
+		)
 
 		const body: OGCSearchResponse = {
 			type: "FeatureCollection",
@@ -583,5 +645,154 @@ export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL
 		if (format === OGCFormat.HTML) return c.html(searchHTML(body, body.links, collections, request.q), 200)
 
 		return c.body(stringifyJSON(body), 200, { "Content-Type": OGCMediaType.GeoJSON })
+	})
+}
+
+const itemsRoute = createRoute({
+	method: "get",
+	path: "/collections/{collectionId}/items",
+	operationId: "getFeatures",
+	summary: "Items",
+	description:
+		"One page of the collection's places in ascending WOF id order, as a GeoJSON FeatureCollection. A `next` link continues after the page's last place while more places remain.",
+	tags: ["data"],
+	request: { params: OGCCollectionPathSchema, query: OGCItemsQuerySchema },
+	responses: {
+		200: {
+			description: "One page of the collection's items.",
+			content: { [OGCMediaType.GeoJSON]: { schema: OGCItemsResponseSchema }, ...htmlContent },
+		},
+		404: { description: "No collection has this id, or the collection serves no items.", content: errorContent },
+		...errorResponses,
+	},
+})
+
+const itemRoute = createRoute({
+	method: "get",
+	path: "/collections/{collectionId}/items/{featureId}",
+	operationId: "getFeature",
+	summary: "Item",
+	description: "One place, by the gazetteer place ID `/search` reports as `place_id`.",
+	tags: ["data"],
+	request: { params: OGCItemPathSchema, query: OGCFormatQuerySchema },
+	responses: {
+		200: {
+			description: "The item, as a GeoJSON Feature.",
+			content: { [OGCMediaType.GeoJSON]: { schema: OGCItemFeatureSchema }, ...htmlContent },
+		},
+		404: {
+			description: "No collection has this id, it serves no items, or it holds no such item.",
+			content: errorContent,
+		},
+		...errorResponses,
+	},
+})
+
+/**
+ * The served collection with items for `collectionId`, or the 404 response that states why there's none.
+ */
+function collectionWithItems(c: Context, collections: readonly OGCServedCollection[], collectionId: string) {
+	const served = collections.find(({ id }) => id === collectionId)
+
+	if (!served) return errorResponse(c, 404, "collection not found", `no collection has the id "${collectionId}"`)
+
+	if (!served.items) {
+		return errorResponse(c, 404, "collection serves no items", `the collection "${collectionId}" has no items resource`)
+	}
+
+	return { served, items: served.items }
+}
+
+/**
+ * Register `/collections/{collectionId}/items` and `/collections/{collectionId}/items/{featureId}`.
+ */
+function registerItemRoutes(
+	app: OpenAPIHono,
+	collections: readonly OGCServedCollection[],
+	baseOf: (url: string) => string
+): void {
+	app.openapi(itemsRoute, async (c) => {
+		const query = c.req.valid("query")
+		const format = negotiateFormat(c, query.f)
+		const found = collectionWithItems(c, collections, c.req.valid("param").collectionId)
+
+		if (found instanceof Response) return found
+
+		const request = parseItemsQuery(query)
+
+		if (typeof request === "string") return errorResponse(c, 400, "invalid query parameter", request)
+
+		// One row past the page tells whether a next page exists without counting the box.
+		const rows = await found.items.page({ ...request, limit: request.limit + 1 })
+		const page = rows.slice(0, request.limit)
+		const base = baseOf(c.req.url)
+		const path = `${collectionPath(found.served.id)}/items`
+		const { title } = OGC_COLLECTION_CATALOG[found.served.id]
+		const pairs = queryPairsOf(c)
+
+		const links = selfLinks(base, path, format, `${title} items`, { query: pairs, json: OGCMediaType.GeoJSON })
+		const last = page.at(-1)
+
+		if (rows.length > request.limit && last) {
+			links.push({
+				href: hrefOf(base, path, format, [...pairs.filter(([key]) => key !== "after"), ["after", String(last.wofID)]]),
+				rel: OGCLinkRelation.Next,
+				type: mediaTypeOf(format, OGCMediaType.GeoJSON),
+				title: "Next page",
+			})
+		}
+
+		links.push({
+			href: hrefOf(base, collectionPath(found.served.id), OGCFormat.JSON),
+			rel: OGCLinkRelation.Collection,
+			type: OGCMediaType.JSON,
+			title,
+		})
+
+		const body: OGCItemsResponse = {
+			type: "FeatureCollection",
+			timeStamp: isoSeconds(),
+			links,
+			numberReturned: page.length,
+			features: page.map((item) => itemFeature(item)),
+		}
+
+		if (format === OGCFormat.HTML) return c.html(itemsHTML(body, title, found.served.id), 200)
+
+		return c.body(stringifyJSON(body), 200, { "Content-Type": OGCMediaType.GeoJSON })
+	})
+
+	app.openapi(itemRoute, async (c) => {
+		const format = negotiateFormat(c, c.req.valid("query").f)
+		const { collectionId, featureId } = c.req.valid("param")
+		const found = collectionWithItems(c, collections, collectionId)
+
+		if (found instanceof Response) return found
+
+		const wofID = wofIDFromPlaceID(featureId)
+		const item = wofID == null ? null : await found.items.item(wofID)
+
+		if (!item) {
+			return errorResponse(c, 404, "feature not found", `the collection "${collectionId}" has no item "${featureId}"`)
+		}
+
+		const base = baseOf(c.req.url)
+		const { title } = OGC_COLLECTION_CATALOG[found.served.id]
+
+		const links: OGCLink[] = [
+			...selfLinks(base, itemPath(found.served.id, item), format, item.name, { json: OGCMediaType.GeoJSON }),
+			{
+				href: hrefOf(base, collectionPath(found.served.id), OGCFormat.JSON),
+				rel: OGCLinkRelation.Collection,
+				type: OGCMediaType.JSON,
+				title,
+			},
+		]
+
+		const feature: OGCItemFeature = itemFeature(item, links)
+
+		if (format === OGCFormat.HTML) return c.html(itemHTML(feature, title), 200)
+
+		return c.body(stringifyJSON(feature), 200, { "Content-Type": OGCMediaType.GeoJSON })
 	})
 }

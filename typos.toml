@@ -616,6 +616,12 @@ extend-words = { theatre = "theatre", centre = "centre", harbour = "harbour", or
 extend-glob = ["fulfil.ts", "fulfil.test.ts"]
 check-filename = false
 
+[type.ogc-ets]
+# The OGC test suite runs on TestNG, which writes its report as `testng/<run>/testng-results.xml`,
+# and the tool that reads the report spells those paths verbatim.
+extend-glob = ["ets.run.ts"]
+extend-words = { testng = "testng" }
+
 [type.publiccode]
 extend-glob = ["publiccode.yml"]
 # The publiccode.yml standard spells its keys `organisation`, `localisation` and `localisationReady`,

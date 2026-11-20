@@ -13,7 +13,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
-import { featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
+import { BBoxSchema, featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
 
 /**
  * The media types this surface serves, keyed by their role.
@@ -53,6 +53,9 @@ export const OGCLinkRelation = {
 	Data: "data",
 	OGCData: "http://www.opengis.net/def/rel/ogc/1.0/data",
 	Search: "search",
+	Items: "items",
+	Next: "next",
+	Collection: "collection",
 } as const
 
 export type OGCLinkRelation = (typeof OGCLinkRelation)[keyof typeof OGCLinkRelation]
@@ -60,6 +63,8 @@ export type OGCLinkRelation = (typeof OGCLinkRelation)[keyof typeof OGCLinkRelat
 const COMMON_PART_1 = "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf"
 
 const COMMON_PART_2 = "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf"
+
+const FEATURES_PART_1 = "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf"
 
 /**
  * The OGC API conformance classes this surface implements.
@@ -73,6 +78,12 @@ const COMMON_PART_2 = "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf"
  * - `oas30`: an OpenAPI 3.0 document as `service-desc` and its HTML form as `service-doc`.
  * - `collections` (Common Part 2): `GET /collections` linked from the landing page as `data`,
  *   `GET /collections/{collectionId}` for every listed id, each with `self` and `alternate` links.
+ * - Features Part 1 `core`: `GET /collections/{collectionId}/items` with `limit`,
+ *   `bbox` and `datetime`, and `GET /collections/{collectionId}/items/{featureId}`,
+ *   for each collection whose description lists an `items` link.
+ * - Features Part 1 `geojson`: both items resources as `application/geo+json`.
+ * - Features Part 1 `html`: both items resources as HTML5, every link an `<a>`.
+ * - Features Part 1 `oas30`: the OpenAPI 3.0 definition declares both items resources and their parameters.
  */
 export const OGCConformanceClass = {
 	Core: `${COMMON_PART_1}/core`,
@@ -81,6 +92,10 @@ export const OGCConformanceClass = {
 	HTML: `${COMMON_PART_1}/html`,
 	OAS30: `${COMMON_PART_1}/oas30`,
 	Collections: `${COMMON_PART_2}/collections`,
+	FeaturesCore: `${FEATURES_PART_1}/core`,
+	FeaturesGeoJSON: `${FEATURES_PART_1}/geojson`,
+	FeaturesHTML: `${FEATURES_PART_1}/html`,
+	FeaturesOAS30: `${FEATURES_PART_1}/oas30`,
 } as const
 
 export type OGCConformanceClass = (typeof OGCConformanceClass)[keyof typeof OGCConformanceClass]
@@ -124,6 +139,25 @@ export const OGCConformanceSchema = z
 
 export type OGCConformance = z.infer<typeof OGCConformanceSchema>
 
+/**
+ * The CRS84 coordinate reference system: WGS 84 longitude and latitude, in that order.
+ */
+export const OGC_CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+
+/**
+ * A collection's extent, from OGC API Features Part 1's `extent.yaml`.
+ */
+export const OGCExtentSchema = z
+	.object({
+		spatial: z.object({
+			bbox: z.array(BBoxSchema),
+			crs: z.literal(OGC_CRS84),
+		}),
+	})
+	.openapi("OGCExtent")
+
+export type OGCExtent = z.infer<typeof OGCExtentSchema>
+
 const formatParameter = z.enum([OGCFormat.JSON, OGCFormat.HTML]).optional().openapi({
 	description: "The response encoding. Without it the `Accept` header decides, and JSON is the default.",
 })
@@ -140,8 +174,9 @@ export const OGCFormatQuerySchema = z.object({ f: formatParameter }).strict()
  * One collection description, from OGC API Common Part 2's `collectionDesc.yaml`.
  *
  * `id` and `links` are the two members the schema requires.
- * `itemType` is left out because it describes a `/collections/{collectionId}/items`
- * route this surface doesn't serve.
+ * A collection that serves `/collections/{collectionId}/items` adds `itemType`,
+ * the `items` link and the `extent` OGC API Features Part 1 describes.
+ * Another collection omits all three.
  */
 export const OGCCollectionSchema = z
 	.object({
@@ -149,6 +184,8 @@ export const OGCCollectionSchema = z
 		title: z.string(),
 		description: z.string(),
 		links: z.array(OGCLinkSchema),
+		itemType: z.literal("feature").optional(),
+		extent: OGCExtentSchema.optional(),
 		geometryDimension: z.literal(0).openapi({ description: "Every feature in the collection is a point." }),
 		version: z.number().int().openapi({
 			description: "The collection version, the value `/search` takes in `<collectionId>[version]`, as on PDOK.",
@@ -198,6 +235,10 @@ export const OGCSearchPropertiesSchema = z
 		placetype: z.string().optional().openapi({
 			description:
 				"The gazetteer placetype of a place or postcode, such as `locality`, `localadmin` or `postalcode`. Absent for an address, a street or a plus code.",
+		}),
+		href: z.string().optional().openapi({
+			description:
+				"The URL of the same place at `/collections/{collectionId}/items/{featureId}`, as on PDOK. Absent when the collection serves no items or holds no item for the place.",
 		}),
 	})
 	.openapi("OGCSearchProperties")
@@ -294,3 +335,117 @@ export function searchQuerySchema(collectionIDs: readonly string[]) {
 		})
 		.strict()
 }
+
+/**
+ * The number of items `/collections/{collectionId}/items` returns when the request omits `limit`.
+ */
+export const OGC_ITEMS_DEFAULT_LIMIT = 10
+
+/**
+ * The most items one `/collections/{collectionId}/items` page returns.
+ *
+ * A larger `limit` is served as this one, because OGC API Features Part 1 requires
+ * a `limit` above the maximum to succeed rather than fail.
+ */
+export const OGC_ITEMS_MAX_LIMIT = 1000
+
+/**
+ * The properties of one item.
+ */
+export const OGCItemPropertiesSchema = z
+	.object({
+		name: z.string().openapi({ description: "The place's name, as the gazetteer records it." }),
+		placetype: z.string().openapi({ description: "The gazetteer placetype, such as `locality` or `region`." }),
+		country_code: z.string().nullable().openapi({
+			description: "The ISO 3166-1 alpha-2 country code the gazetteer records, or null when it records none.",
+		}),
+		display_name: z.string().openapi({
+			description:
+				"The place's name, then its ancestors, most specific first, then its country, as `/search` labels it.",
+		}),
+	})
+	.openapi("OGCItemProperties")
+
+export type OGCItemProperties = z.infer<typeof OGCItemPropertiesSchema>
+
+/**
+ * One item, a GeoJSON point feature with its gazetteer place ID as `id`.
+ */
+export const OGCItemFeatureSchema = featureSchema(OGCItemPropertiesSchema)
+	.extend({
+		id: z.string().openapi({ description: "The gazetteer place ID, such as `wof:85975673`, as `/search` reports it." }),
+		links: z.array(OGCLinkSchema).optional(),
+	})
+	.openapi("OGCItemFeature")
+
+export type OGCItemFeature = z.infer<typeof OGCItemFeatureSchema>
+
+/**
+ * One page of items: a GeoJSON FeatureCollection with the members OGC API Features Part 1 adds.
+ *
+ * `numberMatched` is omitted, as the standard permits, because counting a box's places costs a scan.
+ */
+export const OGCItemsResponseSchema = featureCollectionSchema(OGCItemFeatureSchema)
+	.extend({
+		timeStamp: z.string().openapi({ description: "When the response was generated, as an RFC 3339 UTC timestamp." }),
+		links: z.array(OGCLinkSchema),
+		numberReturned: z.number().int(),
+	})
+	.openapi("OGCItemsResponse")
+
+export type OGCItemsResponse = z.infer<typeof OGCItemsResponseSchema>
+
+/**
+ * The path parameters of `/collections/{collectionId}/items/{featureId}`.
+ */
+export const OGCItemPathSchema = OGCCollectionPathSchema.extend({
+	featureId: z.string().openapi({ param: { name: "featureId", in: "path" }, example: "wof:101751893" }),
+})
+
+/**
+ * The query of `/collections/{collectionId}/items`.
+ *
+ * The parameter definitions follow OGC API Features Part 1, Requirements 21, 23 and 25,
+ * including the `form` style without `explode` that a client reads from the API definition.
+ * The values arrive as strings, and the route parses them.
+ */
+export const OGCItemsQuerySchema = z
+	.object({
+		limit: z
+			.string()
+			.optional()
+			.openapi({
+				param: { style: "form", explode: false },
+				type: "integer",
+				minimum: 1,
+				maximum: OGC_ITEMS_MAX_LIMIT,
+				default: OGC_ITEMS_DEFAULT_LIMIT,
+				description: `The most features to return. The default is ${OGC_ITEMS_DEFAULT_LIMIT}, and a larger value than ${OGC_ITEMS_MAX_LIMIT} returns ${OGC_ITEMS_MAX_LIMIT}.`,
+			}),
+		bbox: z
+			.string()
+			.optional()
+			.openapi({
+				param: { style: "form", explode: false },
+				type: "array",
+				minItems: 4,
+				maxItems: 6,
+				items: { type: "number" },
+				description:
+					"Keep only features whose point lies inside the box: `minLon,minLat,maxLon,maxLat` in WGS 84 longitude and latitude, or six numbers with a minimum and maximum height after each latitude. The features have no height, so the height bounds select nothing out. A minimum longitude above the maximum crosses the antimeridian.",
+			}),
+		datetime: z
+			.string()
+			.optional()
+			.openapi({
+				param: { style: "form", explode: false },
+				description:
+					"An RFC 3339 date-time, or an interval of two separated by `/` with `..` or an empty string for an open end. The places carry no time, so every valid value matches every place, as OGC API Features Part 1 requires for features without a temporal geometry.",
+			}),
+		after: z.string().optional().openapi({
+			description:
+				"Start after the item with this WOF id. The `next` link sets it, and a client follows that link rather than building the value.",
+		}),
+		f: formatParameter,
+	})
+	.strict()
