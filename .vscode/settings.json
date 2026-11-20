@@ -65,6 +65,7 @@
 		".yarnrc": true,
 		"scratch": true,
 		"out": true,
+		"docs/build-check": true,
 		"paths.mjs": true,
 		"yarn.lock": true
 	},
@@ -73,6 +74,7 @@
 		"**/dist": true,
 		"**/out": true,
 		"docs/build": true,
+		"docs/build-check": true,
 		"docs/static": true,
 		// "**/*.test.ts": true,
 		"**/dictionaries/**/*.txt": true,
