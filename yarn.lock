@@ -7493,6 +7493,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     hono: "npm:^4.13.14"
     mailwoman: "workspace:*"
+    path-ts: "npm:^2.5.0"
     zod: "npm:^4.6.7"
   bin:
     ogc: ./out/cli/main.js

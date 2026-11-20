@@ -4,13 +4,20 @@ An [OGC API](https://ogcapi.ogc.org) adapter for the [Mailwoman](https://mailwom
 such as QGIS, GDAL/OGR and OWSLib start from a service's landing page and its conformance declaration. This
 package serves both, the API definition they link to, as described in
 [OGC API Common Part 1](https://docs.ogc.org/is/19-072/19-072.html), and the collections of
-[OGC API Common Part 2](https://www.opengis.net/doc/is/ogcapi-common-2/1.0). Forward geocoding is served at `/search`, in the
-form of the [PDOK Location API](https://api.pdok.nl/kadaster/location-api/v1/).
+[OGC API Common Part 2](https://www.opengis.net/doc/is/ogcapi-common-2/1.0). With `--serve-items`, the `places`
+collection serves the gazetteer's places as items, as described in
+[OGC API Features Part 1](https://docs.ogc.org/is/17-069r4/17-069r4.html), so QGIS, GDAL/OGR and other Features
+clients can browse them. Forward geocoding is served at `/search`, in the form of the
+[PDOK Location API](https://api.pdok.nl/kadaster/location-api/v1/).
 
 ```sh
 npx @mailwoman/ogc serve --port 8090
 curl "http://localhost:8090/collections"
 curl "http://localhost:8090/search?q=Dam%201%2C%201012JS%20Amsterdam&limit=2"
+
+# Bulk browsing is opt-in.
+npx @mailwoman/ogc serve --port 8090 --serve-items
+curl "http://localhost:8090/collections/places/items?bbox=4.7,52.2,5.1,52.5&limit=5"
 ```
 
 `serve` loads the same engine as `@mailwoman/photon` and `@mailwoman/nominatim`: the en-US classifier, the
@@ -20,15 +27,17 @@ a candidate gazetteer.
 
 ## Endpoints
 
-| Endpoint                      | What it returns                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `/`                           | The landing page: a title, a description and links to every resource below         |
-| `/conformance`                | `{ "conformsTo": [...] }`, the conformance classes the routes implement            |
-| `/api`                        | The API definition as OpenAPI 3.0 (`application/vnd.oai.openapi+json;version=3.0`) |
-| `/collections`                | `{ "links": [...], "collections": [...] }`, the collections the engine serves      |
-| `/collections/{collectionId}` | One collection, as `/collections` lists it, or a 404 for an unknown id             |
-| `/search`                     | Forward geocoding, as a GeoJSON FeatureCollection (`application/geo+json`)         |
-| `/openapi.json`               | The same routes as OpenAPI 3.1, the document every Mailwoman HTTP surface serves   |
+| Endpoint                                        | What it returns                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `/`                                             | The landing page: a title, a description and links to every resource below         |
+| `/conformance`                                  | `{ "conformsTo": [...] }`, the conformance classes the routes implement            |
+| `/api`                                          | The API definition as OpenAPI 3.0 (`application/vnd.oai.openapi+json;version=3.0`) |
+| `/collections`                                  | `{ "links": [...], "collections": [...] }`, the collections the engine serves      |
+| `/collections/{collectionId}`                   | One collection, as `/collections` lists it, or a 404 for an unknown id             |
+| `/collections/{collectionId}/items`             | One page of a collection's places, as a GeoJSON FeatureCollection                  |
+| `/collections/{collectionId}/items/{featureId}` | One place, as a GeoJSON Feature                                                    |
+| `/search`                                       | Forward geocoding, as a GeoJSON FeatureCollection (`application/geo+json`)         |
+| `/openapi.json`                                 | The same routes as OpenAPI 3.1, the document every Mailwoman HTTP surface serves   |
 
 Every resource accepts `f=json` or `f=html`. Without `f`, the `Accept` header decides, and JSON answers a
 request that names neither. Any other `f` value, a query parameter the API definition doesn't name, or an
@@ -52,8 +61,95 @@ only when some region has a layer. Their descriptions name those regions, such a
 startup banner prints them. A region absent from the list has no layer the engine opened. Its addresses may
 still exist, and the list makes no claim about them.
 
-Each collection reports `version: 1` and `geometryDimension: 0`, since every feature is a point. `itemType`
-and the `items` link are absent because the server doesn't serve `/collections/{collectionId}/items`.
+Each collection reports `version: 1` and `geometryDimension: 0`, since every feature is a point. A collection
+that serves items adds `itemType: "feature"`, an `items` link for GeoJSON and one for HTML, and an `extent`. The other
+collections carry none of the three, and their items routes answer 404.
+
+Every collection also links where its data comes from, read from the `layer_manifest` of each database behind it:
+
+- A `license` link ([RFC 4946](https://www.rfc-editor.org/rfc/rfc4946)) for each identifier in the recorded
+  license expression whose text has a known URL: SPDX's page for an SPDX identifier, and Who's On First's own
+  license text for `LicenseRef-WhosOnFirst-Mixed`, because that text requires the link back.
+- A `via` link ([RFC 4287](https://www.rfc-editor.org/rfc/rfc4287), "the source of the information") for each
+  source the manifest records, to the page where a user obtains it. Each source's location belongs to the package
+  that builds its layers: `GAZETTEER_SOURCE_LOCATIONS` in `@mailwoman/resolver-wof-sqlite/sources` for the
+  gazetteer, `BAN_SOURCE_LOCATIONS` in `@mailwoman/ban/source`, and `OSM_SOURCE_LOCATIONS` in
+  `@mailwoman/osm/source`. Each build writes its source names from the same table. The Who's On First entry points to
+  the [`mailwoman` organization](https://github.com/mailwoman), whose `whosonfirst-data-admin-<cc>` repositories are
+  the forks the build clones from `whosonfirst-data`. The OpenStreetMap entry points to the `@mailwoman/osm` build
+  documentation, because the project publishes the builder and a user builds the database.
+- An `attribution`, the member OGC API Common Part 2 defines, when a recorded license requires credit.
+
+A source that matches another opened layer, as the candidate gazetteer's manifest records the admin gazetteer,
+contributes that layer's license links, sources and credit. The address and street collections read the manifest
+of every region file their providers report, and list each license and source once. A manifest that records no
+license or no source, a source without a known location, and a license identifier without published text add a
+sentence to the description in place of a link. A region file without a readable `layer_manifest` contributes no
+link, and the description counts those regions. `plus-codes` has no layer.
+
+## Where the data comes from
+
+The adapter serves only the operator's own data root, `$MAILWOMAN_DATA_ROOT`. `/search` answers one
+query at a time. Bulk browsing through `items` is opt-in: `serve` serves no items unless it's started with
+`--serve-items`.
+
+A user who wants the data obtains it from its sources:
+
+- The gazetteer: `mailwoman data pull candidate` installs the candidate gazetteer, as the
+  [data and locales reference](https://mailwoman.post/docs/reference/data-and-locales) describes. To build the admin
+  gazetteer from Who's On First yourself, clone the `whosonfirst-data-admin-<cc>` repositories from the
+  [`mailwoman` organization](https://github.com/mailwoman) or from `whosonfirst-data`, then run
+  `mailwoman gazetteer build admin`, as the
+  [reverse geocoding guide](https://mailwoman.post/docs/guides/reverse-geocode) shows.
+- Address points, interpolation and street layers: `mailwoman data pull` installs the published bundles, and the
+  data and locales reference lists them.
+- Each source's own terms: the [data and licensing page](https://mailwoman.post/product/data-and-licensing) links
+  the publishers' pages, and each collection's `license` and `via` links state what the opened databases record.
+
+## Items
+
+Items are served only when `serve` is started with `--serve-items`, or `createOGCApp` is built with
+`serveItems: true`. While items are off, the collection descriptions link none, both items routes answer 404
+with `{ "error": "collection serves no items" }`, `/search` features carry no `href`, and `/conformance` lists
+only the OGC API Common classes. The startup banner states whether items are served, and why not when they aren't.
+
+`places` is the one collection that serves items. It reads the admin gazetteer's current places, the
+`admin-global-priority.db` the server resolves under `$MAILWOMAN_DATA_ROOT/db/wof`, through its primary key and
+its `place_bbox` R*Tree. The other collections serve no items:
+
+- `postcodes`: its places live only in the candidate gazetteer. That database has no index on a place's id or
+  position, so a page would scan the whole table.
+- `plus-codes`: the engine decodes plus codes and stores none.
+- `addresses` and `streets`: out of scope for now.
+
+| Parameter  | Meaning                                                                                                     |
+| ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `limit`    | The most features to return. The default is 10. A value above 1000 returns 1000 rather than an error.       |
+| `bbox`     | `minLon,minLat,maxLon,maxLat`, or six numbers with a minimum and maximum height after each latitude.        |
+| `datetime` | An RFC 3339 date-time, or an interval of two separated by `/` with `..` or an empty string for an open end. |
+| `after`    | The cursor a `next` link carries. A client follows the link rather than building it.                        |
+| `f`        | `json` (GeoJSON) or `html`.                                                                                 |
+
+A page lists places in ascending WOF id order. Its `next` link continues after the page's last id, so a deep page
+costs what the first page costs, and following the links visits every place in the box once. The last page has no
+`next` link. A response carries `timeStamp`, `numberReturned`, `self`, `alternate` and `collection` links, and
+omits the optional `numberMatched`, because counting a large box's places costs a scan.
+
+`bbox` keeps the places whose point lies inside the box, and a box whose minimum longitude exceeds its maximum
+crosses the antimeridian. The places have no height, so a six-number box selects by its longitudes and latitudes.
+The places carry no time either, so every valid `datetime` selects every place, as Requirement 26 C of the
+standard requires for features without a temporal geometry. A malformed value of either returns 400.
+
+A feature's `id` is the gazetteer place ID `/search` reports as `place_id`, such as `wof:101751893`, and
+`/collections/places/items/wof:101751893` returns that place. Its properties are `name`, `placetype`,
+`country_code` and `display_name`, the label `/search` gives the same place. An id the collection doesn't hold
+returns 404.
+
+The items routes serve the gazetteer in bulk, so with `--serve-items` the server reads the database's recorded
+license at startup and prints it. When `MAILWOMAN_REFUSE_OBLIGATIONS` refuses a class that license carries, `places`
+serves no items and the banner states the refusal. The database records `LicenseRef-WhosOnFirst-Mixed`, whose obligations this
+repository hasn't recorded, beside `ODbL-1.0` and `CC-BY-4.0`. An operator who sets
+`MAILWOMAN_REFUSE_OBLIGATIONS=unresolved` or `share-alike` therefore serves no items.
 
 ## Search
 
@@ -79,6 +175,8 @@ Each feature's properties are:
   or `localadmin`, of a place or postcode. Two places that share a label, such as a locality and the
   local-government area of the same name, differ here. Both are absent for an address, a street and a plus code,
   and `place_id` is absent for a place the gazetteer gave no ID.
+- `href`: the place's URL under `/collections/places/items`, as on PDOK. It's present only when the collection
+  serves items and holds the place, so the link never answers 404.
 
 A place's `display_name` is its name, then the ancestors the gazetteer records between it and its country, most
 specific first, then the country, such as `Camden, Ouachita, Arkansas, United States`. An ancestor that repeats
@@ -95,7 +193,6 @@ serves a search form, which the landing page links as `search`.
   its index needs the collection. The engine has no such need.
 - `<collectionId>[relevance]` is accepted so a PDOK client works unchanged, but it doesn't reweight the
   ranking, because the engine's scores don't compare across collections.
-- Features carry no `href` to an item yet. The link arrives with `/collections/{collectionId}/items` in #3142.
 - PDOK defines no reverse operation, so reverse geocoding stays on `@mailwoman/photon` and `@mailwoman/nominatim`.
 
 ## Conformance
@@ -113,7 +210,33 @@ The declaration lists five OGC API Common Part 1 classes, each under
   as `data`, and `/collections` and each `/collections/{collectionId}` carry `self` and `alternate` links with
   a `type`.
 
-`/search` is PDOK's convention. OGC publishes no conformance class for it, so the declaration names none.
+When a collection serves items, it adds four OGC API Features Part 1 classes, each under
+`http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/`:
+
+- `core`: the two items routes with `limit`, `bbox` and `datetime`, `next` links, and the error codes above.
+- `geojson`: both items routes as `application/geo+json`.
+- `html`: both items routes as HTML5, each link an `<a>` element.
+- `oas30`: the OpenAPI 3.0 definition declares both items routes and their parameters in the form the standard gives.
+
+A server whose collections serve no items declares none of the four and registers no items routes.
+`/search` is PDOK's convention. OGC publishes no conformance class for it, so the declaration lists none.
+
+## The OGC test suite
+
+`packages/ogc/tools/ets.run.ts` runs OGC's executable test suite for Features Part 1,
+[`ets-ogcapi-features10`](https://github.com/opengeospatial/ets-ogcapi-features10) revision 1.9, against a server on
+this machine. It needs Podman and the data root's gazetteer. From the repository root:
+
+```sh
+node packages/ogc/tools/ets.run.ts --out "$MAILWOMAN_DATA_ROOT/audits/ogc-ets/latest"
+```
+
+The tool starts `mailwoman-ogc serve --serve-items` on 127.0.0.1 (port 8195 unless `--port` says otherwise),
+because the suite needs a feature collection to test. It runs the suite
+from OGC's published image `docker.io/ogccite/ets-ogcapi-features10:1.9-teamengine-6.0.0-RC2` with the host's
+network, and stops the server it started. The container opens no port. The TestNG and EARL reports land under
+`--out`, `summary.json` beside them lists every failed and skipped test, and the tool exits 1 when a test failed.
+`--iut <url>` tests a running server instead, and the tool starts no server of its own.
 
 ## Link hrefs behind a proxy
 
@@ -127,7 +250,10 @@ npx @mailwoman/ogc serve --base-url https://example.org/ogc/
 ## Library use
 
 `createOGCApp` takes an `OGCEngine`: the collections it serves and a `search(q)` that returns its matches.
-`geocodeSearchHits` projects a `geocodeAddress` result to those matches.
+`geocodeSearchHits` projects a `geocodeAddress` result to those matches. A collection serves items when it carries
+an `items` source, such as `placeItemSource(new WOFPlaceBrowser({ databasePath }), ancestorsOf)`, with
+`WOFPlaceBrowser` from `@mailwoman/resolver-wof-sqlite/browse`, and the app is built with `serveItems: true`.
+A collection's `layers` lists the manifest terms its license and `via` links come from.
 
 ```ts
 import { serveNode } from "@mailwoman/api-kit"

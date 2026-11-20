@@ -117,6 +117,7 @@
 		{ "path": "./packages/photon/cli" },
 		{ "path": "./packages/ogc" },
 		{ "path": "./packages/ogc/cli" },
+		{ "path": "./packages/ogc/tools" },
 		{ "path": "./packages/libpostal" },
 		{ "path": "./packages/libpostal/cli" },
 		{ "path": "./packages/timezone-lookup" },

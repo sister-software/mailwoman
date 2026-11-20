@@ -187,6 +187,11 @@
 			"node": "./lib/license/stamp.ts",
 			"default": "./out/license/stamp.js"
 		},
+		"./license/text-url": {
+			"types": "./out/license/text-url.d.ts",
+			"node": "./lib/license/text-url.ts",
+			"default": "./out/license/text-url.js"
+		},
 		"./resources": {
 			"types": "./out/resources.d.ts",
 			"node": "./lib/resources.ts",

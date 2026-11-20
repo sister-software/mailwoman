@@ -19,6 +19,8 @@ import {
 	type OGCCollections,
 	OGC_COLLECTION_VERSION,
 	type OGCConformance,
+	type OGCItemFeature,
+	type OGCItemsResponse,
 	type OGCLandingPage,
 	type OGCLink,
 	type OGCSearchFeature,
@@ -130,13 +132,73 @@ export function collectionHTML(collection: OGCCollection): string {
 
 function searchFeatureItem(feature: OGCSearchFeature): string {
 	const [lon, lat] = feature.geometry.coordinates
-	const { display_name, score, score_unmeasured, collection_id, place_id, placetype } = feature.properties
+	const { display_name, score, score_unmeasured, collection_id, place_id, placetype, href } = feature.properties
 	const scoreText = score == null ? `score null (${score_unmeasured ?? "unmeasured"})` : `score ${score}`
 	const identity = [placetype, place_id].filter((part): part is string => typeof part === "string")
 
 	const meta = [collection_id, ...identity, `${lat}, ${lon}`, scoreText].map(escapeHTML).join(" &middot; ")
+	const label = href ? `<a href="${escapeHTML(href)}">${escapeHTML(display_name)}</a>` : escapeHTML(display_name)
 
-	return `<li>${escapeHTML(display_name)} <span class="meta">${meta}</span></li>`
+	return `<li>${label} <span class="meta">${meta}</span></li>`
+}
+
+/**
+ * The properties of one item as a definition list, the same members its GeoJSON form holds.
+ */
+function itemDetails(feature: OGCItemFeature): string {
+	const [lon, lat] = feature.geometry.coordinates
+	const { name, placetype, country_code, display_name } = feature.properties
+
+	const rows: Array<[string, string]> = [
+		["id", feature.id],
+		["name", name],
+		["placetype", placetype],
+		["country_code", country_code ?? "null"],
+		["display_name", display_name],
+		["coordinates", `${lon}, ${lat}`],
+	]
+
+	return `<dl>\n${rows.map(([term, value]) => `<dt><code>${term}</code></dt><dd>${escapeHTML(value)}</dd>`).join("\n")}\n</dl>`
+}
+
+/**
+ * One page of a collection's items as HTML: each item linked to its own page, then the page's links.
+ *
+ * @param collectionID The collection the items belong to, for each item's link.
+ */
+export function itemsHTML(body: OGCItemsResponse, title: string, collectionID: string): string {
+	const items = body.features.map((feature) => {
+		const [lon, lat] = feature.geometry.coordinates
+		const href = `${encodeURIComponent(collectionID)}/items/${encodeURIComponent(feature.id)}?f=html`
+		const meta = [feature.id, feature.properties.placetype, `${lat}, ${lon}`].map(escapeHTML).join(" &middot; ")
+
+		return `<li><a href="../${escapeHTML(href)}">${escapeHTML(feature.properties.display_name)}</a> <span class="meta">${meta}</span></li>`
+	})
+
+	return page(
+		`${title} items`,
+		`<h1>${escapeHTML(title)} items</h1>
+<p class="meta">${body.numberReturned} returned at ${escapeHTML(body.timeStamp)}</p>
+<ol>
+${items.join("\n")}
+</ol>
+<h2>Links</h2>
+${linkList(body.links)}`
+	)
+}
+
+/**
+ * One item as HTML.
+ */
+export function itemHTML(feature: OGCItemFeature, collectionTitle: string): string {
+	return page(
+		feature.properties.name,
+		`<h1>${escapeHTML(feature.properties.name)}</h1>
+<p class="meta">An item of ${escapeHTML(collectionTitle)}</p>
+${itemDetails(feature)}
+<h2>Links</h2>
+${linkList(feature.links ?? [])}`
+	)
 }
 
 /**

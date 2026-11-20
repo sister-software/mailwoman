@@ -32,7 +32,12 @@ export type {
 	AuthoritativeResponse,
 } from "#resolver/authoritative-provider"
 
-export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
+export type {
+	RegionDatabaseProvider,
+	RegionDatabases,
+	RegionLayerDatabase,
+	SourceLocation,
+} from "#resolver/region-database-provider"
 
 export {
 	EMPTY_PLACE_FIELDS,

@@ -9,7 +9,90 @@
  *   collections its opened layers serve.
  */
 
+import type { SourceLocation } from "@mailwoman/core/resolver"
+
+import type { OGCBBox } from "#bbox"
 import type { OGCCollectionID } from "#collections"
+
+/**
+ * One gazetteer place a collection serves as an item.
+ */
+export interface OGCItem {
+	/**
+	 * The place's WOF id, the number in its place ID `wof:<id>`.
+	 */
+	wofID: number
+	name: string
+	placetype: string
+	/**
+	 * The ISO 3166-1 alpha-2 code the gazetteer records, or null when it records none.
+	 */
+	countryCode: string | null
+	lon: number
+	lat: number
+	/**
+	 * The label `/search` gives the same place: its name, ancestors and country.
+	 */
+	displayName: string
+}
+
+/**
+ * One page of a collection's items.
+ */
+export interface OGCItemPageRequest {
+	/**
+	 * Keep only places whose point lies inside the box, or every place when null.
+	 */
+	bbox: OGCBBox | null
+	/**
+	 * Start after the place with this WOF id, or at the first place when null.
+	 */
+	after: number | null
+	limit: number
+}
+
+/**
+ * The reader behind a collection's `/items` routes.
+ */
+export interface OGCItemSource {
+	/**
+	 * The places the request selects, in ascending WOF id order, at most `limit` of them.
+	 */
+	page(request: OGCItemPageRequest): Promise<OGCItem[]>
+	/**
+	 * The place with this WOF id, or null when the collection holds no such place.
+	 */
+	item(wofID: number): Promise<OGCItem | null>
+}
+
+/**
+ * The terms one opened layer records in its `layer_manifest`.
+ */
+export interface OGCLayerTerms {
+	/**
+	 * The layer's name as its manifest records it, such as `admin-global-priority`.
+	 */
+	name: string
+	/**
+	 * The SPDX expression the manifest records, or null when it records none.
+	 */
+	license: string | null
+	/**
+	 * The manifest's `attribution`, or null when it records none.
+	 */
+	attribution: string | null
+	/**
+	 * The manifest's `source`, such as `whosonfirst+overture-divisions+geonames`,
+	 * or null when it records none.
+	 */
+	source: string | null
+	/**
+	 * Where a user obtains each source, as the layer's provider records it.
+	 *
+	 * A source missing here falls back to the gazetteer's own source table.
+	 */
+	sourceLocations?: Readonly<Record<string, SourceLocation>>
+}
 
 /**
  * A collection the engine serves, and the regions its layers cover.
@@ -22,6 +105,24 @@ export interface OGCServedCollection {
 	 * Null when the collection isn't divided by region, as for the worldwide gazetteer.
 	 */
 	regions: readonly string[] | null
+	/**
+	 * The reader that serves the collection's items, absent for a collection without `/items`.
+	 */
+	items?: OGCItemSource
+	/**
+	 * The manifests of the layers behind the collection.
+	 * Its license and source links come from them.
+	 *
+	 * An empty array means no layer backs the collection.
+	 * Absent means the engine read no manifest for it, and the description states that.
+	 */
+	layers?: readonly OGCLayerTerms[]
+	/**
+	 * The regions with a layer database whose `layer_manifest` the engine couldn't read, absent or unreadable.
+	 *
+	 * Such a layer contributes no link, and the description states the count.
+	 */
+	unreadRegions?: number
 }
 
 /**

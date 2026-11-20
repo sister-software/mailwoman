@@ -91,13 +91,20 @@ function scoreOf(candidate: GeocodeCandidate | null): Pick<OGCSearchHit, "score"
 export type AncestorsOf = (wofID: number) => readonly Ancestor[]
 
 /**
+ * The fields of a gazetteer place its label reads.
+ */
+export type LabeledPlace = Pick<GeocodeCandidate, "name" | "placeID" | "countryCode">
+
+/**
  * A gazetteer place's label: its name, the ancestors the gazetteer records between it
  * and its country, most specific first, and the country.
  *
+ * `/search` labels its place matches with it, and `/collections/{collectionId}/items` its features.
  * A name repeated by an ancestor appears once.
+ *
  * Without a WOF place ID or a recorded ancestry the label is the name and the country.
  */
-function candidateLabel(candidate: GeocodeCandidate, ancestorsOf: AncestorsOf | undefined): string {
+export function placeLabel(candidate: LabeledPlace, ancestorsOf: AncestorsOf | undefined): string {
 	const names = [candidate.name]
 	const wofID = wofIDFromPlaceID(candidate.placeID)
 
@@ -163,7 +170,7 @@ export function geocodeSearchHits(result: GeocodeResult, ancestorsOf?: Ancestors
 				collectionID,
 				lon: result.lon,
 				lat: result.lat,
-				displayName: answering ? candidateLabel(answering, ancestorsOf) : hierarchyLabel(result) || result.input.trim(),
+				displayName: answering ? placeLabel(answering, ancestorsOf) : hierarchyLabel(result) || result.input.trim(),
 				...scoreOf(answering),
 				...(answering ? placeIdentity(answering) : {}),
 			})
@@ -196,7 +203,7 @@ export function geocodeSearchHits(result: GeocodeResult, ancestorsOf?: Ancestors
 			collectionID: collectionOfPlacetype(candidate.placetype),
 			lon: candidate.lon,
 			lat: candidate.lat,
-			displayName: candidateLabel(candidate, ancestorsOf),
+			displayName: placeLabel(candidate, ancestorsOf),
 			...scoreOf(candidate),
 			...placeIdentity(candidate),
 		})

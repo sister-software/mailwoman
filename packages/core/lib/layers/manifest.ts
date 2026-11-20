@@ -460,3 +460,17 @@ export async function readLayerCoverage(db: layerschemahandle, h3Cell: number): 
 
 	return cell
 }
+
+/**
+ * The source names in a manifest's `source`, which a build joins with `+`.
+ *
+ * Each name drops a version after `@`, as in `admin-global-priority@2026-11-18`, and a scope
+ * after `:`, as in `openstreetmap:de`, because the bare name is what a reader looks up:
+ * another layer's manifest name, or a source's location.
+ */
+export function manifestSourceNames(source: string): string[] {
+	return source
+		.split("+")
+		.map((part) => part.trim().split("@")[0]!.split(":")[0]!.trim())
+		.filter((part) => part.length > 0)
+}
