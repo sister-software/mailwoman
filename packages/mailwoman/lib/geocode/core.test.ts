@@ -851,7 +851,7 @@ describe("epistemic_status — what the evidence permits, beside how the coordin
 })
 
 describe("decoderSettingOptions", () => {
-	const fst = { start: () => 0 } as unknown as NonNullable<GeocodeDeps["fst"]>
+	const fst: NonNullable<GeocodeDeps["fst"]> = { walk: () => null, walkFrom: () => null, accepting: () => [] }
 	const fstForCountry = () => null
 
 	it("adds no classifier option at the defaults, so a default parse decodes as before the settings existed", () => {
@@ -866,20 +866,20 @@ describe("decoderSettingOptions", () => {
 				parseCountry: "gb",
 				pairPriorWordPieces: true,
 				pairPriorChildPostcodeStrip: true,
-				pairIndexCountryGate: true,
+				pairIndexOwnCountry: true,
 				fstCountryRouting: true,
 			})
 		).toEqual({
 			pairPriorWordPieces: true,
 			pairPriorChildPostcodeStrip: true,
-			pairIndexCountryGate: { declaredCountry: "GB" },
+			pairIndexOwnCountry: { declaredCountry: "GB" },
 			fstForCountry,
 		})
 	})
 
 	it("leaves the head to decide when no country is stated, and routes no FST into a parse that has none", () => {
-		expect(decoderSettingOptions({ pairIndexCountryGate: true, fstCountryRouting: true, fstForCountry })).toEqual({
-			pairIndexCountryGate: { declaredCountry: null },
+		expect(decoderSettingOptions({ pairIndexOwnCountry: true, fstCountryRouting: true, fstForCountry })).toEqual({
+			pairIndexOwnCountry: { declaredCountry: null },
 		})
 	})
 })

@@ -31,9 +31,9 @@ describe("parseHeldoutArm", () => {
 	})
 
 	it("separates the decoder pins its parses take from the resolver pins, and refuses the FST routing it can't feed", () => {
-		const arm = parseHeldoutArm("/r#pairPriorWordPieces=on,pairIndexCountryGate=off,poiVenueTier=on")
+		const arm = parseHeldoutArm("/r#pairPriorWordPieces=on,pairIndexOwnCountry=off,poiVenueTier=on")
 
-		expect(heldoutArmDecoderSettings(arm)).toEqual({ pairPriorWordPieces: true, pairIndexCountryGate: false })
+		expect(heldoutArmDecoderSettings(arm)).toEqual({ pairPriorWordPieces: true, pairIndexOwnCountry: false })
 		expect(heldoutArmDecoderSettings(parseHeldoutArm("/r#poiVenueTier=on"))).toEqual({})
 		expect(() => parseHeldoutArm("/r#fstCountryRouting=on")).toThrow(/the switches an arm may pin/u)
 	})

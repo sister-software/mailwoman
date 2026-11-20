@@ -247,7 +247,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		sibling_locality_containment: SwitchPinSchema.optional(),
 		pair_prior_word_pieces: SwitchPinSchema.optional(),
 		pair_prior_child_postcode_strip: SwitchPinSchema.optional(),
-		pair_index_country_gate: SwitchPinSchema.optional(),
+		pair_index_own_country: SwitchPinSchema.optional(),
 		fst_country_routing: SwitchPinSchema.optional(),
 		poi_venue_tier: SwitchPinSchema.optional(),
 		capital_tier: z.enum(["auto", "required", "off"]).optional(),

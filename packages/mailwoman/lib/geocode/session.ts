@@ -233,7 +233,7 @@ export interface GeocodeSessionOptions {
 	 *
 	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
 	 */
-	pairIndexCountryGate?: boolean
+	pairIndexOwnCountry?: boolean
 
 	/**
 	 * Whether a parse takes the gazetteer FST of the country the locale head
@@ -505,7 +505,7 @@ export async function createGeocodeSession(
 		pairPriorWordPieces: options.pairPriorWordPieces ?? GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,
 		pairPriorChildPostcodeStrip:
 			options.pairPriorChildPostcodeStrip ?? GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip,
-		pairIndexCountryGate: options.pairIndexCountryGate ?? GEOCODE_SWITCH_DEFAULTS.pairIndexCountryGate,
+		pairIndexOwnCountry: options.pairIndexOwnCountry ?? GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry,
 		fstCountryRouting: options.fstCountryRouting ?? GEOCODE_SWITCH_DEFAULTS.fstCountryRouting,
 	}
 

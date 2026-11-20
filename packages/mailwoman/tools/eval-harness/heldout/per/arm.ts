@@ -26,7 +26,7 @@ import type { SwitchPin } from "#tools/eval-harness/switch-pin"
 export const HELDOUT_ARM_DECODER_SWITCHES = [
 	"pairPriorWordPieces",
 	"pairPriorChildPostcodeStrip",
-	"pairIndexCountryGate",
+	"pairIndexOwnCountry",
 ] as const satisfies readonly (keyof DecoderSettings)[]
 
 /**

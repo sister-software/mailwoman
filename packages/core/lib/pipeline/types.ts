@@ -815,9 +815,9 @@ export interface VenueHeadStage {
 }
 
 /**
- * The stated country that `pairIndexCountryGate` compares against a placetype-pair index's own country.
+ * The stated country that `pairIndexOwnCountry` compares against a placetype-pair index's own country.
  */
-export interface PairIndexCountryGate {
+export interface PairIndexOwnCountry {
 	/**
 	 * The country the caller states for the parse, such as its locale's or default country.
 	 *
@@ -908,7 +908,7 @@ export interface ClassifierOpts {
 	/**
 	 * Applies the placetype-pair index only when the parse's country is the index's country.
 	 */
-	pairIndexCountryGate?: PairIndexCountryGate
+	pairIndexOwnCountry?: PairIndexOwnCountry
 	/**
 	 * The gazetteer FST for the country the locale head reads, used in place of `fst` when one ships.
 	 */

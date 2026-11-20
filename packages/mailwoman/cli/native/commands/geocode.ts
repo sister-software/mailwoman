@@ -181,7 +181,7 @@ export const spec = {
 			default: false,
 			description: "Keep a place-pair child's bias off the postcode in its own segment (Sutton Coldfield B72 1PU).",
 		},
-		"pair-index-country-gate": {
+		"pair-index-own-country": {
 			type: "boolean",
 			default: false,
 			description:
@@ -298,7 +298,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		siblingLocalityContainment: booleanValue(values, "sibling-locality-containment"),
 		pairPriorWordPieces: booleanValue(values, "pair-prior-word-pieces"),
 		pairPriorChildPostcodeStrip: booleanValue(values, "pair-prior-child-postcode-strip"),
-		pairIndexCountryGate: booleanValue(values, "pair-index-country-gate"),
+		pairIndexOwnCountry: booleanValue(values, "pair-index-own-country"),
 		fstCountryRouting: booleanValue(values, "fst-country-routing"),
 		...(numberValue(values, "parent") !== null
 			? {

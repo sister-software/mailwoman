@@ -3,9 +3,10 @@
 
 import { describe, expect, it } from "vitest"
 
-import { fstForParse, pairIndexAppliesTo } from "#classifier/parse-country"
+import { fstForParse, parsePairPrior } from "#classifier/parse-country"
 import type { FSTMatcherLike } from "#fst-prior"
 import { LOCALE_COUNTRIES } from "#labels"
+import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 
 /**
  * Locale logits that read `country` at softmax probability near `probability`.
@@ -17,42 +18,47 @@ function headReading(country: (typeof LOCALE_COUNTRIES)[number], probability: nu
 	return LOCALE_COUNTRIES.map((code) => (code === country ? lead : 0))
 }
 
-const US_INDEX = { country: "us" }
+const pairIndexOf = (country: string): PlacetypePairPriorOpts => ({ index: { country, probe: () => null } })
 
-describe("pairIndexAppliesTo", () => {
+const US_PAIRS = pairIndexOf("us")
+
+describe("parsePairPrior", () => {
 	it("applies every index when the setting is off, whatever the head reads", () => {
-		expect(pairIndexAppliesTo(US_INDEX, {}, headReading("FR", 0.99))).toBe(true)
+		expect(parsePairPrior(US_PAIRS, {}, headReading("FR", 0.99))).toBe(US_PAIRS)
 	})
 
 	it("refuses the US index on a row the head reads as another country and no caller states one (LB `Mount Lebanon, Lebanon`)", () => {
-		const unstated = { pairIndexCountryGate: { declaredCountry: null } }
+		const unstated = { pairIndexOwnCountry: { declaredCountry: null } }
 
-		expect(pairIndexAppliesTo(US_INDEX, unstated, headReading("FR", 0.95))).toBe(false)
+		expect(parsePairPrior(US_PAIRS, unstated, headReading("FR", 0.95))).toBeUndefined()
 	})
 
 	it("refuses the index when the head is unsure and no caller states a country", () => {
-		const unstated = { pairIndexCountryGate: { declaredCountry: null } }
+		const unstated = { pairIndexOwnCountry: { declaredCountry: null } }
 
-		expect(pairIndexAppliesTo(US_INDEX, unstated, headReading("US", 0.5))).toBe(false)
-		expect(pairIndexAppliesTo(US_INDEX, unstated, headReading("US", 0.95))).toBe(true)
+		expect(parsePairPrior(US_PAIRS, unstated, headReading("US", 0.5))).toBeUndefined()
+		expect(parsePairPrior(US_PAIRS, unstated, headReading("US", 0.95))).toBe(US_PAIRS)
 	})
 
 	it("lets a stated country decide over the head, so a country outside the head's nine keeps its own index", () => {
-		const nz = { country: "nz" }
+		const nz = pairIndexOf("nz")
 
-		expect(pairIndexAppliesTo(nz, { pairIndexCountryGate: { declaredCountry: "NZ" } }, headReading("GB", 0.99))).toBe(
-			true
-		)
+		expect(parsePairPrior(nz, { pairIndexOwnCountry: { declaredCountry: "NZ" } }, headReading("GB", 0.99))).toBe(nz)
 
 		expect(
-			pairIndexAppliesTo(US_INDEX, { pairIndexCountryGate: { declaredCountry: "lb" } }, headReading("US", 0.99))
-		).toBe(false)
+			parsePairPrior(US_PAIRS, { pairIndexOwnCountry: { declaredCountry: "lb" } }, headReading("US", 0.99))
+		).toBeUndefined()
 	})
 })
 
+/**
+ * An FST whose every walk returns null, told apart from another by identity.
+ */
+const emptyFST = (): FSTMatcherLike => ({ walk: () => null, walkFrom: () => null, accepting: () => [] })
+
 describe("fstForParse", () => {
-	const usFST = { name: "us" } as unknown as FSTMatcherLike
-	const gbFST = { name: "gb" } as unknown as FSTMatcherLike
+	const usFST = emptyFST()
+	const gbFST = emptyFST()
 	const shipped = (country: string) => (country === "GB" ? gbFST : null)
 
 	it("routes a row the head reads as GB to the GB FST (`Kensington, London` under en-US)", async () => {

@@ -103,7 +103,7 @@ export const spec = {
 			default: "production",
 			description: "Pin the place-pair child postcode strip",
 		},
-		"pair-index-country-gate": {
+		"pair-index-own-country": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,
 			default: "production",

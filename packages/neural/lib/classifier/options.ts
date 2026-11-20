@@ -8,7 +8,7 @@ import type {
 	CaseNormalization,
 	ChannelPins,
 	CountryFSTLookup,
-	PairIndexCountryGate,
+	PairIndexOwnCountry,
 	PlacetypePairSelection,
 	SoftChannelName,
 	SpanProposerLexicon,
@@ -503,7 +503,7 @@ export interface ParseOpts {
 	 * A parse with neither takes no pair bias.
 	 * Absent, the index applies to every parse.
 	 */
-	pairIndexCountryGate?: PairIndexCountryGate
+	pairIndexOwnCountry?: PairIndexOwnCountry
 
 	/**
 	 * Returns the gazetteer FST shipped for a country, or `null` when none ships.

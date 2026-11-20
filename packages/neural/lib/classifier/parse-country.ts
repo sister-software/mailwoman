@@ -24,17 +24,17 @@ export function containmentCountry(
 }
 
 /**
- * Whether a parse takes the placetype-pair index: always without `pairIndexCountryGate`,
+ * Whether a parse takes the placetype-pair index: always without `pairIndexOwnCountry`,
  * and with it only when the parse's {@linkcode containmentCountry} is the index's country.
  *
  * An index whose header states no country always applies, since it claims no country.
  */
-export function pairIndexAppliesTo(
+function pairIndexAppliesTo(
 	index: Pick<PairIndexLike, "country">,
-	opts: Pick<ParseOpts, "pairIndexCountryGate"> | undefined,
+	opts: Pick<ParseOpts, "pairIndexOwnCountry"> | undefined,
 	localeLogits: readonly number[] | null
 ): boolean {
-	const rule = opts?.pairIndexCountryGate
+	const rule = opts?.pairIndexOwnCountry
 
 	if (!rule || !index.country) return true
 
@@ -53,7 +53,7 @@ export function pairIndexAppliesTo(
  */
 export function parsePairPrior(
 	configured: PlacetypePairPriorOpts | undefined,
-	opts: Pick<ParseOpts, "placetypePair" | "pairIndexCountryGate"> | undefined,
+	opts: Pick<ParseOpts, "placetypePair" | "pairIndexOwnCountry"> | undefined,
 	localeLogits: readonly number[] | null
 ): PlacetypePairPriorOpts | undefined {
 	const selection = opts?.placetypePair ?? "inherit"

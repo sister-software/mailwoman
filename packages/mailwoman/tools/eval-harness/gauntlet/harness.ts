@@ -75,6 +75,7 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * The returned `fst` is always the unwrapped matcher.
 	 * The returned `classifier` is the one that parsed the row.
+	 *
 	 * `decoderSettings` overrides the pins' decoder settings for this one parse,
 	 * so a census can decode a row with a setting on and off from one set of loaded deps.
 	 */
@@ -200,7 +201,7 @@ export interface GauntletResolverPins {
 	 * A row routed to its own overlay states its country, as a chosen locale does.
 	 * A row routed to the base package states none, and the locale head decides.
 	 */
-	pairIndexCountryGate: SwitchPin
+	pairIndexOwnCountry: SwitchPin
 	/**
 	 * A row parses with the gazetteer FST of the country the locale head reads, when one ships.
 	 */
@@ -261,7 +262,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	siblingLocalityContainment: "production",
 	pairPriorWordPieces: "production",
 	pairPriorChildPostcodeStrip: "production",
-	pairIndexCountryGate: "production",
+	pairIndexOwnCountry: "production",
 	fstCountryRouting: "production",
 	capitalTier: "production",
 	variantAliasExemption: "production",
@@ -287,7 +288,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	siblingLocalityContainment?: boolean
 	pairPriorWordPieces?: boolean
 	pairPriorChildPostcodeStrip?: boolean
-	pairIndexCountryGate?: boolean
+	pairIndexOwnCountry?: boolean
 	fstCountryRouting?: boolean
 	poiVenueTier?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
@@ -295,7 +296,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	return {
 		...switchPinEntry("pairPriorWordPieces", pins.pairPriorWordPieces),
 		...switchPinEntry("pairPriorChildPostcodeStrip", pins.pairPriorChildPostcodeStrip),
-		...switchPinEntry("pairIndexCountryGate", pins.pairIndexCountryGate),
+		...switchPinEntry("pairIndexOwnCountry", pins.pairIndexOwnCountry),
 		...switchPinEntry("fstCountryRouting", pins.fstCountryRouting),
 		...switchPinEntry("postcodeCountryCoherence", pins.postcodeCountryCoherence),
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),

@@ -96,9 +96,9 @@ export interface GeocodeCommandOptions {
 	 * The placetype-pair index applies only when the parse's country is the index's.
 	 * Off by default.
 	 *
-	 * `--pair-index-country-gate` opts in.
+	 * `--pair-index-own-country` opts in.
 	 */
-	pairIndexCountryGate: boolean
+	pairIndexOwnCountry: boolean
 	/**
 	 * A parse takes the gazetteer FST of the country the locale head reads, when one ships.
 	 * Off by default.
@@ -152,7 +152,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		siblingLocalityContainment: GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
 		pairPriorWordPieces: GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,
 		pairPriorChildPostcodeStrip: GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip,
-		pairIndexCountryGate: GEOCODE_SWITCH_DEFAULTS.pairIndexCountryGate,
+		pairIndexOwnCountry: GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry,
 		fstCountryRouting: GEOCODE_SWITCH_DEFAULTS.fstCountryRouting,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,

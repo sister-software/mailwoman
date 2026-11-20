@@ -134,7 +134,7 @@ export interface GauntletRunOptions {
 	 * Pin the placetype-pair index's own-country rule for every layer.
 	 * @defaultValue `"production"`
 	 */
-	pairIndexCountryGate?: SwitchPin
+	pairIndexOwnCountry?: SwitchPin
 	/**
 	 * Pin the FST country routing for every layer.
 	 * @defaultValue `"production"`
@@ -220,7 +220,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		siblingLocalityContainment: options.siblingLocalityContainment ?? "production",
 		pairPriorWordPieces: options.pairPriorWordPieces ?? "production",
 		pairPriorChildPostcodeStrip: options.pairPriorChildPostcodeStrip ?? "production",
-		pairIndexCountryGate: options.pairIndexCountryGate ?? "production",
+		pairIndexOwnCountry: options.pairIndexOwnCountry ?? "production",
 		fstCountryRouting: options.fstCountryRouting ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",

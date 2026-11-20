@@ -62,7 +62,7 @@ export type {
 	PhraseKind,
 	PhraseProposal,
 	PipelineOpts,
-	PairIndexCountryGate,
+	PairIndexOwnCountry,
 	PipelineTiming,
 	PlacetypePairSelection,
 	PlacerCountryUse,

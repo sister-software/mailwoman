@@ -104,9 +104,9 @@ export interface EngineConfig {
 	/**
 	 * Whether the placetype-pair index applies only when the parse's country is the index's.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairIndexCountryGate`
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry`
 	 */
-	pair_index_country_gate?: SwitchPin
+	pair_index_own_country?: SwitchPin
 	/**
 	 * Whether a parse takes the gazetteer FST of the country the locale head reads.
 	 *
@@ -177,7 +177,7 @@ export const EFFECTIVE_KEY_FOR = {
 	sibling_locality_containment: "siblingLocalityContainment",
 	pair_prior_word_pieces: "pairPriorWordPieces",
 	pair_prior_child_postcode_strip: "pairPriorChildPostcodeStrip",
-	pair_index_country_gate: "pairIndexCountryGate",
+	pair_index_own_country: "pairIndexOwnCountry",
 	fst_country_routing: "fstCountryRouting",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
@@ -261,7 +261,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 			config.pair_prior_child_postcode_strip ?? "production",
 			production.pairPriorChildPostcodeStrip
 		),
-		pairIndexCountryGate: pinnedSwitch(config.pair_index_country_gate ?? "production", production.pairIndexCountryGate),
+		pairIndexOwnCountry: pinnedSwitch(config.pair_index_own_country ?? "production", production.pairIndexOwnCountry),
 		fstCountryRouting: pinnedSwitch(config.fst_country_routing ?? "production", production.fstCountryRouting),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,

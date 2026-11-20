@@ -161,7 +161,7 @@ export interface GeocodeSwitches {
 	 * Applies the placetype-pair index only when the parse's country is the index's country:
 	 * {@link GeocodeDeps.parseCountry} when set, else the locale head's confident verdict.
 	 */
-	pairIndexCountryGate: boolean
+	pairIndexOwnCountry: boolean
 	/**
 	 * Parses with the gazetteer FST of the country the locale head confidently reads,
 	 * through {@link GeocodeDeps.fstForCountry}, when that country ships one.
@@ -193,7 +193,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 	pairPriorWordPieces: false,
 	pairPriorChildPostcodeStrip: false,
-	pairIndexCountryGate: false,
+	pairIndexOwnCountry: false,
 	fstCountryRouting: false,
 }
 
@@ -247,7 +247,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	fstForCountry?: import("@mailwoman/core/pipeline").CountryFSTLookup
 	/**
 	 * The country the caller states for the parse, such as the session's default
-	 * or locale country, read under {@link GeocodeSwitches.pairIndexCountryGate}.
+	 * or locale country, read under {@link GeocodeSwitches.pairIndexOwnCountry}.
 	 */
 	parseCountry?: string
 	/**
@@ -415,7 +415,7 @@ export interface GeocodeParseInputs {
 export const DECODER_SETTING_KEYS = [
 	"pairPriorWordPieces",
 	"pairPriorChildPostcodeStrip",
-	"pairIndexCountryGate",
+	"pairIndexOwnCountry",
 	"fstCountryRouting",
 ] as const satisfies readonly (keyof GeocodeSwitches)[]
 
@@ -431,7 +431,7 @@ export type GeocodeDecoderSettingDeps = Pick<
 	GeocodeDeps,
 	| "pairPriorWordPieces"
 	| "pairPriorChildPostcodeStrip"
-	| "pairIndexCountryGate"
+	| "pairIndexOwnCountry"
 	| "fstCountryRouting"
 	| "fstForCountry"
 	| "parseCountry"
@@ -446,15 +446,15 @@ export function decoderSettingOptions(
 	deps: GeocodeDecoderSettingDeps & Pick<GeocodeDeps, "fst">
 ): Pick<
 	ClassifierOpts,
-	"pairPriorWordPieces" | "pairPriorChildPostcodeStrip" | "pairIndexCountryGate" | "fstForCountry"
+	"pairPriorWordPieces" | "pairPriorChildPostcodeStrip" | "pairIndexOwnCountry" | "fstForCountry"
 > {
 	const switches = geocodeSwitches(deps)
 
 	return {
 		...(switches.pairPriorWordPieces ? { pairPriorWordPieces: true } : {}),
 		...(switches.pairPriorChildPostcodeStrip ? { pairPriorChildPostcodeStrip: true } : {}),
-		...(switches.pairIndexCountryGate
-			? { pairIndexCountryGate: { declaredCountry: deps.parseCountry?.toUpperCase() || null } }
+		...(switches.pairIndexOwnCountry
+			? { pairIndexOwnCountry: { declaredCountry: deps.parseCountry?.toUpperCase() || null } }
 			: {}),
 		...(switches.fstCountryRouting && deps.fst && deps.fstForCountry ? { fstForCountry: deps.fstForCountry } : {}),
 	}
