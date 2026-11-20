@@ -201,6 +201,76 @@ async function appendIDs(db: DisposableDuckDB, table: string, ids: Iterable<stri
 }
 
 /**
+ * One file as a corpus manifest lists it.
+ */
+export type TrainManifestFile = Record<string, unknown> & { path: string; source?: string }
+
+/**
+ * Stages one manifest file's train rows as the temporary table `r`, projected by
+ * `projection` and narrowed by the SQL predicate `rowFilter`, and returns their count,
+ * or `null` for a file the manifest records as `val` or `test`.
+ *
+ * A file decided by a split attribute contributes the rows the attribute lists under
+ * neither held-out split, and a file a manifest deletion targets loses the deleted ids.
+ * The caller's connection must hold an `excluded_ids (id VARCHAR)` table.
+ * This function empties and refills it.
+ *
+ * @throws When the file records neither a split nor a split attribute, since reading
+ * it as train or skipping it would both misstate the count.
+ */
+export async function stageTrainRows(
+	db: DisposableDuckDB,
+	manifestPath: string,
+	file: TrainManifestFile,
+	deletions: readonly CorpusDeletion[],
+	projection: string,
+	limits?: DuckDBLimits,
+	rowFilter = "true"
+): Promise<number | null> {
+	const split = file["split"]
+	const reference = file["split_attribute"] as { path?: unknown } | undefined
+
+	if (split !== "train" && split !== "val" && split !== "test" && typeof reference?.path !== "string") {
+		throw new Error(`${manifestPath} lists ${file.path} with neither a split nor a split attribute`)
+	}
+
+	if (split === "val" || split === "test") return null
+
+	const excluded = new Set<string>()
+
+	if (typeof split !== "string") {
+		const attribute = await readSplitAttribute(localManifestFilePath(reference!.path as string))
+
+		for (const id of [...attribute.val, ...attribute.test]) {
+			excluded.add(id)
+		}
+	}
+
+	for (const deletion of deletions) {
+		if (!deletionTargets(deletion.target, file)) continue
+
+		for (const id of await deletionIDs(deletion, limits)) {
+			excluded.add(id)
+		}
+	}
+
+	await db.run("DELETE FROM excluded_ids")
+
+	if (excluded.size) {
+		await appendIDs(db, "excluded_ids", excluded)
+	}
+
+	const predicate = excluded.size ? "source_id NOT IN (SELECT id FROM excluded_ids)" : "true"
+
+	await db.run(
+		`CREATE OR REPLACE TEMP TABLE r AS SELECT ${projection} ` +
+			`FROM read_parquet(${quoted(localManifestFilePath(file.path))}) WHERE ${predicate} AND (${rowFilter})`
+	)
+
+	return countOf(db, "SELECT count(*)::BIGINT AS n FROM r")
+}
+
+/**
  * The train files read between two merges of the per-file aggregates.
  *
  * Each file appends its own groups, so without a merge the tables grow with the file count
@@ -296,54 +366,24 @@ export async function buildSupportIndex(
 	for (const [index, file] of files.entries()) {
 		if (options.limitFiles && filesRead >= options.limitFiles) break
 
-		const split = file["split"]
-		const reference = file["split_attribute"] as { path?: unknown } | undefined
+		const path = localManifestFilePath(file.path)
 
-		if (split !== "train" && split !== "val" && split !== "test" && typeof reference?.path !== "string") {
-			throw new Error(`${manifestPath} lists ${file.path} with neither a split nor a split attribute`)
-		}
+		const rows = await stageTrainRows(
+			db,
+			manifestPath,
+			file,
+			deletions,
+			`country, source, span_tags, ` +
+				`list_distinct([span_tags[i] || chr(0) || substr(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) ` +
+				`FOR i IN range(1, len(span_tags) + 1)]) AS spans`,
+			options.limits
+		)
 
-		if (split === "val" || split === "test") {
+		if (rows === null) {
 			filesHeldOut++
 
 			continue
 		}
-
-		const excluded = new Set<string>()
-
-		if (typeof split !== "string") {
-			const attribute = await readSplitAttribute(localManifestFilePath(reference!.path as string))
-
-			for (const id of [...attribute.val, ...attribute.test]) {
-				excluded.add(id)
-			}
-		}
-
-		for (const deletion of deletions) {
-			if (!deletionTargets(deletion.target, file)) continue
-
-			for (const id of await deletionIDs(deletion, options.limits)) {
-				excluded.add(id)
-			}
-		}
-
-		await db.run("DELETE FROM excluded_ids")
-
-		if (excluded.size) {
-			await appendIDs(db, "excluded_ids", excluded)
-		}
-
-		const predicate = excluded.size ? "source_id NOT IN (SELECT id FROM excluded_ids)" : "true"
-		const path = localManifestFilePath(file.path)
-
-		await db.run(
-			`CREATE OR REPLACE TEMP TABLE r AS SELECT country, source, span_tags, ` +
-				`list_distinct([span_tags[i] || chr(0) || substr(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) ` +
-				`FOR i IN range(1, len(span_tags) + 1)]) AS spans ` +
-				`FROM read_parquet(${quoted(path)}) WHERE ${predicate}`
-		)
-
-		const rows = await countOf(db, "SELECT count(*)::BIGINT AS n FROM r")
 
 		trainRows += rows
 
