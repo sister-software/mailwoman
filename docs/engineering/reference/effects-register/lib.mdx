@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `lib`
 
 The manifest at `package.json` has no `sideEffects` field.
-This page lists 125 of the group's 295 library and tool modules.
+This page lists 129 of the group's 302 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -29,6 +29,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `pathExists`           | `unresolved (parameter)` | 1     |
 | read  | `tryReadLocalJSONFile` | `unresolved (template)`  | 1     |
 | write | `makeDirectories`      | `unresolved (call)`      | 1     |
+
+## `lib/check-kit/pull-request/failed-logs.ts`
+
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| write   | `writeLocalTextFile` | `unresolved (template)` | 1     |
+| process | `runFile`            | `literal:gh`            | 1     |
 
 ## `lib/check-kit/runner.ts`
 
@@ -105,6 +112,13 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | Kind    | Interface | Target       | Calls |
 | ------- | --------- | ------------ | ----- |
 | process | `runFile` | `literal:gh` | 2     |
+
+## `lib/dev-mcp/github/merge.ts`
+
+| Kind  | Interface              | Target              | Calls |
+| ----- | ---------------------- | ------------------- | ----- |
+| read  | `tryReadLocalJSONFile` | `unresolved (call)` | 2     |
+| write | `writeLocalJSONFile`   | `unresolved (call)` | 1     |
 
 ## `lib/dev-mcp/hooks/bash/write/guard.ts`
 
@@ -320,6 +334,19 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | --------------------- | ------------------------- | ----- |
 | write | `removePathIfPresent` | `unresolved (call)`       | 1     |
 | write | `writeLocalJSONFile`  | `unresolved (identifier)` | 1     |
+
+## `lib/dev-mcp/tools/http-get.ts`
+
+| Kind    | Interface         | Target                  | Calls |
+| ------- | ----------------- | ----------------------- | ----- |
+| network | `APIClient.fetch` | `unresolved (property)` | 1     |
+
+## `lib/dev-mcp/tools/sql.ts`
+
+| Kind | Interface        | Target              | Calls |
+| ---- | ---------------- | ------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (call)` | 1     |
+| read | `pathExists`     | `unresolved (call)` | 1     |
 
 ## `lib/dev-mcp/tree-fingerprint.ts`
 

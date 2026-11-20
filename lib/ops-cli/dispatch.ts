@@ -31,6 +31,11 @@ import { resolvePath } from "path-ts"
 import { HOST_BUSY_EXIT, renderCheckResult, runPreflight, runRegisteredCheck } from "#check-kit/check"
 import { DEFAULT_MAX_WAIT_MINUTES } from "#check-kit/host"
 import { hostExitCode, hostOperations } from "#check-kit/host/operations"
+import {
+	pullRequestExitCode,
+	pullRequestOperationArgs,
+	pullRequestOperations,
+} from "#check-kit/pull-request/operations"
 import { checkCommands, findCheckCommand } from "#check-kit/registry"
 import { operations, type ReleaseContext } from "#release-kit"
 import {
@@ -129,6 +134,8 @@ function usage(io: DispatchIO): number {
 			"  mwops check preflight [--json]   (run the direct-push set: fast suite, lint:prose:code, lint:prose:vocab, health)",
 			"  mwops host status [--json]       (the host lock holder and the queued or in-progress CI runs)",
 			"  mwops host wait-idle [--max-minutes N] [--json]   (exit 0 when idle, 3 when the bound expired busy, 4 when CI stayed unread)",
+			"  mwops pr status <number> [--json]   (one pull request's checks; exit 0 passed, 1 failed, 3 pending, 4 unread, 5 no checks)",
+			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until zero checks are pending; the same exit statuses)",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops code-blocks [--fix] [--no-cache] [--summary] [--json]   (lint the docs pages' JavaScript and TypeScript code blocks with oxlint)",
@@ -148,6 +155,7 @@ function usage(io: DispatchIO): number {
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`shop operations:    ${shopOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`host operations:    ${hostOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
+			`pr operations:      ${pullRequestOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.heavy ? ", heavy" : ""})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
@@ -193,6 +201,13 @@ const hostView: OperationView<OperationContext> = {
 	registry: hostOperations,
 	context: (base) => base,
 	exitCode: hostExitCode,
+}
+
+const pullRequestView: OperationView<OperationContext> = {
+	verb: "pr",
+	registry: pullRequestOperations,
+	context: (base) => base,
+	exitCode: pullRequestExitCode,
 }
 
 const storageView: OperationView<StorageContext> = {
@@ -871,6 +886,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			return runCheckVerb(rest, io)
 		case "host":
 			return runOperation(hostView, rest, io)
+		case "pr":
+			return runOperation(pullRequestView, pullRequestOperationArgs(rest), io)
 		case "checkout":
 			return reportCheckoutLocality(io)
 		case "ci-scope":

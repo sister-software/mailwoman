@@ -7,6 +7,7 @@ import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
+import { readPullRequestStatus, renderPullRequestStatus } from "#check-kit/pull-request/status"
 import {
 	assertValeClean,
 	assertValeCleanDiff,
@@ -21,6 +22,7 @@ import {
 	TODO_SYNC_END,
 	type RunGitHub,
 } from "#dev-mcp/github"
+import { mergePullRequest, recordPullRequestCompletion } from "#dev-mcp/github/merge"
 import { assertCIComplete, trackedCIMarkerPaths, type TrackedCI } from "#dev-mcp/hooks/ci-completion"
 import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
 
@@ -190,10 +192,18 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 		pull_request_number: z.number().int().positive(),
 		body: z.string().min(1),
 	}),
+	z.object({
+		action: z.literal("status"),
+		pull_request_number: z.number().int().positive(),
+	}),
+	z.object({
+		action: z.literal("merge"),
+		pull_request_number: z.number().int().positive(),
+	}),
 ])
 
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
-	action: z.enum(["create", "view", "edit", "append_comment", "complete"]),
+	action: z.enum(["create", "view", "edit", "append_comment", "complete", "status", "merge"]),
 	issue_number: z
 		.number()
 		.int()
@@ -329,16 +339,19 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			"Create and maintain the pull request that closes an implementation issue. Creation requires a completed " +
 			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
 			"(default: the server's checkout), and starts a " +
-			"tracked `gh pr checks --watch --fail-fast` job. Poll the returned job through `mwdev_job`. " +
-			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff. " +
-			"`view`, `edit` and `append_comment` take a pull request number alone, so they also serve a pull request that closes no issue.",
+			"tracked `gh pr checks --watch --fail-fast` job. Wait for the checks with `mwops pr wait <number>` rather than polling that job. " +
+			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff " +
+			"and records that head. `status` returns each check, the head commit, the mergeable state and the failing tests of each " +
+			"failed job, as `mwops pr status` does. `merge` squash-merges and keeps the branch, and refuses unless the pull request " +
+			"is open, `complete` succeeded for the current head, zero checks are pending or failed, and the merge state is CLEAN. " +
+			"`view`, `edit`, `append_comment`, `status` and `merge` take a pull request number alone, so they also serve a pull request that closes no issue.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
 			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = PULL_REQUEST_SCHEMA.parse(raw)
 
 			if (request.action === "complete") {
-				await assertCIComplete(REPO, request.pull_request_number, async (args) => ({
+				const head = await assertCIComplete(REPO, request.pull_request_number, async (args) => ({
 					stdout: await run(args, { cwd }),
 					stderr: "",
 				}))
@@ -356,7 +369,34 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
 				await removePathIfPresent(resolvePath(cwd, ".claude", "state", "linked-issue"))
 
-				return { action: request.action, pull_request_number: request.pull_request_number, handoff_ready: true }
+				// `assertCIComplete` returns a head for an open pull request whose checks passed.
+				const completion = head
+					? await recordPullRequestCompletion(deps.registry.repoRoot, {
+							pullRequestNumber: request.pull_request_number,
+							issueNumber: request.issue_number,
+							head,
+						})
+					: null
+
+				return {
+					action: request.action,
+					pull_request_number: request.pull_request_number,
+					handoff_ready: true,
+					completed_head: completion?.head ?? null,
+				}
+			}
+
+			if (request.action === "status") {
+				const status = await readPullRequestStatus(request.pull_request_number, { run })
+
+				return { action: request.action, ...status, rendered: renderPullRequestStatus(status) }
+			}
+
+			if (request.action === "merge") {
+				return {
+					action: request.action,
+					...(await mergePullRequest(request.pull_request_number, { repoRoot: deps.registry.repoRoot, run, cwd })),
+				}
 			}
 
 			if (request.action === "create") {

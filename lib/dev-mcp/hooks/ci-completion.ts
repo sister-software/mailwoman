@@ -102,6 +102,9 @@ export async function claimTrackedCI(paths: readonly string[], sessionID: string
  *
  * When `branch` is given, a PR on a different head branch passes.
  * That PR belongs to another checkout's work.
+ *
+ * @returns The head commit whose checks passed, or `null` when the PR passed without a check:
+ * closed under `allowClosed`, or on another branch than `branch`.
  */
 export async function assertCIComplete(
 	repo: string,
@@ -109,13 +112,13 @@ export async function assertCIComplete(
 	run: (args: string[]) => Promise<ProcessOutput> = (args) => runFile("gh", args),
 	allowClosed = false,
 	branch?: string
-): Promise<void> {
+): Promise<string | null> {
 	const args = ["pr", "view", String(pullRequestNumber), "--repo", repo, "--json", "headRefOid,headRefName,state"]
 	const before = parseJSONStrict<{ headRefOid: string; headRefName?: string; state: string }>((await run(args)).stdout)
 
-	if (allowClosed && ["CLOSED", "MERGED"].includes(before.state)) return
+	if (allowClosed && ["CLOSED", "MERGED"].includes(before.state)) return null
 
-	if (branch != null && before.headRefName != null && before.headRefName !== branch) return
+	if (branch != null && before.headRefName != null && before.headRefName !== branch) return null
 
 	if (before.state !== "OPEN" || !before.headRefOid) throw new Error("GitHub omitted the open PR state or head.")
 
@@ -140,6 +143,8 @@ export async function assertCIComplete(
 				unresolved.map((check) => `${check.name}: ${check.bucket}`).join(", ")
 		)
 	}
+
+	return after.headRefOid
 }
 
 /**

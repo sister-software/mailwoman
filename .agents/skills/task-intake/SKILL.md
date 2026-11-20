@@ -63,11 +63,18 @@ The hook's interface is:
   as forgotten rather than deferred.
 - Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
   list, creates a Vale-checked body that contains `Closes #<n>`, and starts a tracked CI monitor.
-- PR creation starts verification. It doesn't complete the task. Poll the monitor through `mwdev_job`,
-  inspect failed check logs, fix failures, push, and follow checks for the new head.
+- PR creation starts verification. It doesn't complete the task. Wait for the checks with
+  `yarn mwops pr wait <number> --max-minutes 40`, which exits 0 when every check passed, 1 when one failed,
+  3 when the bound expired, 4 when the checks stayed unread and 5 when the head has no checks. On a
+  failure it prints each failed job's failing tests and log path. Fix failures, push, and wait for the
+  checks on the new head.
 - PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
   After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool
-  independently checks CI before marking that task complete and unlinking the issue.
+  independently checks CI before marking that task complete and unlinking the issue, and it records
+  the head commit it verified. When the operator has asked for the merge, call `mwdev_pull_request`
+  with `action: merge`. It squash-merges and keeps the branch, and it refuses unless the PR is open,
+  `complete` succeeded for the current head, zero checks are pending or failed, and the merge state is
+  `CLEAN`.
 - The tool persists `.claude/state/tracked-ci.json`, and a Claude Code `PostToolUse` hook records the
   creating session as its owner. The Claude Code Stop hook checks the current PR head directly on GitHub
   and blocks the owning session's handoff while checks are absent, pending, failing, or unreadable. It
