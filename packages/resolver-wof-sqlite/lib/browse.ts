@@ -81,12 +81,26 @@ export interface BrowsePageRequest {
 }
 
 /**
- * The most R*Tree extents a box may intersect for its page to be read through the R*Tree.
+ * The most R*Tree extents a box may intersect for its page to be read through the R*Tree,
+ * unless {@link WOFPlaceBrowserOptions.extentProbeLimit} sets another.
  *
  * It chooses a plan and decides no result.
  * Both plans return the same rows, because each selects a place by its point.
  */
-export const EXTENT_PROBE_LIMIT = 50_000
+const EXTENT_PROBE_LIMIT = 50_000
+
+/**
+ * Where a {@link WOFPlaceBrowser} reads from, and when it reads a page through the R*Tree.
+ */
+export interface WOFPlaceBrowserOptions extends SQLiteLookupOptions<PlaceBrowseDatabase> {
+	/**
+	 * The most R*Tree extents a box may intersect for its page to be read through the R*Tree.
+	 *
+	 * @defaultValue 50,000. On `admin-global-priority.db`, a page of up to 1001 places took at most 40 ms
+	 * through either plan with this limit, the probe included (measured on #3142).
+	 */
+	extentProbeLimit?: number
+}
 
 /**
  * The candidates read past a page's limit in one query of the R*Tree plan,
@@ -132,12 +146,15 @@ function boxContains(box: BrowseBox, latitude: number, longitude: number): boole
  */
 export class WOFPlaceBrowser extends SQLiteLookup<PlaceBrowseDatabase> {
 	#irregular: Promise<IrregularPlace[]> | undefined
+	readonly #extentProbeLimit: number
 
 	/**
 	 * @throws When the database lacks `spr` or the `place_bbox` R*Tree, because it can't answer a box page.
 	 */
-	constructor(options: SQLiteLookupOptions<PlaceBrowseDatabase>) {
+	constructor({ extentProbeLimit = EXTENT_PROBE_LIMIT, ...options }: WOFPlaceBrowserOptions) {
 		super(options)
+
+		this.#extentProbeLimit = extentProbeLimit
 
 		for (const table of ["spr", PLACE_BBOX_TABLE]) {
 			if (!hasTable(this.database, table)) {
@@ -193,7 +210,7 @@ export class WOFPlaceBrowser extends SQLiteLookup<PlaceBrowseDatabase> {
 	}
 
 	/**
-	 * The ids of the R*Tree extents the box intersects, or null when they exceed {@link EXTENT_PROBE_LIMIT}.
+	 * The ids of the R*Tree extents the box intersects, or null when they exceed the probe limit.
 	 */
 	async #extentsIntersecting(box: BrowseBox): Promise<Set<number> | null> {
 		const ids = new Set<number>()
@@ -206,14 +223,14 @@ export class WOFPlaceBrowser extends SQLiteLookup<PlaceBrowseDatabase> {
 				.where("max_lon", ">=", part.minLon)
 				.where("min_lat", "<=", part.maxLat)
 				.where("max_lat", ">=", part.minLat)
-				.limit(EXTENT_PROBE_LIMIT + 1 - ids.size)
+				.limit(this.#extentProbeLimit + 1 - ids.size)
 				.execute()
 
 			for (const { id } of rows) {
 				ids.add(id)
 			}
 
-			if (ids.size > EXTENT_PROBE_LIMIT) return null
+			if (ids.size > this.#extentProbeLimit) return null
 		}
 
 		return ids

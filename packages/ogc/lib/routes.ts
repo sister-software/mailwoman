@@ -19,7 +19,7 @@ import type { Context } from "hono"
 
 import { type OGCBBox, parseBBox, searchBoxContains } from "#bbox"
 import { OGC_COLLECTION_CATALOG } from "#collections"
-import type { OGCEngine, OGCItem, OGCSearchHit, OGCServedCollection } from "#engine"
+import type { OGCEngine, OGCItem, OGCLayerTerms, OGCSearchHit, OGCServedCollection } from "#engine"
 import { negotiateFormat } from "#format"
 import {
 	apiDefinitionHTML,
@@ -33,6 +33,7 @@ import {
 	searchHTML,
 } from "#html"
 import { itemFeature, itemPlaceID, parseItemsQuery } from "#items"
+import { collectionTerms } from "#provenance"
 import {
 	type OGCExtent,
 	type OGCItemFeature,
@@ -85,6 +86,16 @@ export interface OGCRouteOptions {
 	 * The landing page's title and description, and the API definition's `info` block.
 	 */
 	docInfo: OpenAPIDocInfo
+	/**
+	 * Serve `/collections/{collectionId}/items` for the collections whose engine entry has an item source.
+	 *
+	 * While it's off, the descriptions link items for none of the collections,
+	 * and both items routes answer 404.
+	 * `/search` features then link no item, and the conformance declaration lists only the Common classes.
+	 *
+	 * @defaultValue `false`
+	 */
+	serveItems?: boolean
 }
 
 /**
@@ -319,11 +330,17 @@ export function buildLandingPage(base: string, docInfo: OpenAPIDocInfo, format: 
  * The description of one collection the engine serves, in the form `/collections`
  * and `/collections/{collectionId}` both serve, so the two can't disagree.
  */
-export function buildCollection(base: string, served: OGCServedCollection, format: OGCFormat): OGCCollection {
+export function buildCollection(
+	base: string,
+	served: OGCServedCollection,
+	format: OGCFormat,
+	knownLayers: readonly OGCLayerTerms[] = served.layers ?? []
+): OGCCollection {
 	const { title, description } = OGC_COLLECTION_CATALOG[served.id]
 	const coverage = served.regions ? ` The engine opened its layers for ${served.regions.join(", ")}.` : ""
 	const path = collectionPath(served.id)
-	const links = selfLinks(base, path, format, title)
+	const terms = collectionTerms(served, knownLayers)
+	const links = [...selfLinks(base, path, format, title), ...terms.links]
 
 	if (served.items) {
 		links.push(
@@ -345,12 +362,20 @@ export function buildCollection(base: string, served: OGCServedCollection, forma
 	return {
 		id: served.id,
 		title,
-		description: `${description}${coverage}`,
+		description: [`${description}${coverage}`, ...terms.notes].join(" "),
 		links,
+		...(terms.attribution ? { attribution: terms.attribution } : {}),
 		...(served.items ? { itemType: "feature" as const, extent: WORLD_EXTENT } : {}),
 		geometryDimension: 0,
 		version: OGC_COLLECTION_VERSION,
 	}
+}
+
+/**
+ * Every layer the collections' manifests describe, so one collection's source can resolve to another layer.
+ */
+function knownLayersOf(collections: readonly OGCServedCollection[]): OGCLayerTerms[] {
+	return collections.flatMap((collection) => collection.layers ?? [])
 }
 
 /**
@@ -377,7 +402,7 @@ export function buildCollections(
 ): OGCCollections {
 	return {
 		links: selfLinks(base, "collections", format, "Collections"),
-		collections: collections.map((served) => buildCollection(base, served, format)),
+		collections: collections.map((served) => buildCollection(base, served, format, knownLayersOf(collections))),
 	}
 }
 
@@ -518,18 +543,30 @@ function queryPairsOf(c: Context): Array<[string, string]> {
 /**
  * Register the OGC API routes against an engine.
  */
-export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL, docInfo }: OGCRouteOptions): void {
+export function registerOGCRoutes(
+	app: OpenAPIHono,
+	engine: OGCEngine,
+	{ baseURL, docInfo, serveItems = false }: OGCRouteOptions
+): void {
 	const baseOf = (url: string) => baseURL ?? new URL(url).origin
-	const collections = engine.collections
+
+	// With items off, every collection is served as if its engine entry had no item source.
+	const collections: readonly OGCServedCollection[] = serveItems
+		? engine.collections
+		: engine.collections.map(({ items: _, ...served }) => served)
+
 	const conformance = conformanceOf(collections)
 	// The route table is complete once the app is built, so the document is
 	// emitted once, at the first request.
 	let document: OpenAPI30Document | undefined
 
-	// A service whose collections serve no items registers no items routes, so its API
-	// definition declares none and its conformance declaration lists no Features class.
+	// A service whose collections serve no items keeps the items routes out of its API
+	// definition, and its conformance declaration lists no Features class.
+	// The two paths still answer 404 in the native form.
 	if (collections.some((collection) => collection.items)) {
 		registerItemRoutes(app, collections, baseOf)
+	} else {
+		registerItemRoutesNotFound(app, collections)
 	}
 
 	const searchRoute = createRoute({
@@ -606,7 +643,7 @@ export function registerOGCRoutes(app: OpenAPIHono, engine: OGCEngine, { baseURL
 			return errorResponse(c, 404, "collection not found", `no collection has the id "${collectionId}"`)
 		}
 
-		const body = buildCollection(baseOf(c.req.url), served, format)
+		const body = buildCollection(baseOf(c.req.url), served, format, knownLayersOf(collections))
 
 		return format === OGCFormat.HTML ? c.html(collectionHTML(body), 200) : c.json(body, 200)
 	})
@@ -701,6 +738,22 @@ function collectionWithItems(c: Context, collections: readonly OGCServedCollecti
 	}
 
 	return { served, items: served.items }
+}
+
+/**
+ * Answer both items paths with the native 404 when no collection serves items.
+ *
+ * The handlers stay out of the API definition, so it declares no items route.
+ */
+function registerItemRoutesNotFound(app: OpenAPIHono, collections: readonly OGCServedCollection[]): void {
+	const notFound = (c: Context) => {
+		const found = collectionWithItems(c, collections, c.req.param("collectionId") ?? "")
+
+		return found instanceof Response ? found : errorResponse(c, 404, "collection serves no items")
+	}
+
+	app.get("/collections/:collectionId/items", notFound)
+	app.get("/collections/:collectionId/items/:featureId", notFound)
 }
 
 /**

@@ -4,16 +4,20 @@ An [OGC API](https://ogcapi.ogc.org) adapter for the [Mailwoman](https://mailwom
 such as QGIS, GDAL/OGR and OWSLib start from a service's landing page and its conformance declaration. This
 package serves both, the API definition they link to, as described in
 [OGC API Common Part 1](https://docs.ogc.org/is/19-072/19-072.html), and the collections of
-[OGC API Common Part 2](https://www.opengis.net/doc/is/ogcapi-common-2/1.0). The `places` collection serves the
-gazetteer's places as items, as described in [OGC API Features Part 1](https://docs.ogc.org/is/17-069r4/17-069r4.html),
-so QGIS, GDAL/OGR and other Features clients can browse them. Forward geocoding is served at `/search`, in the form of
-the [PDOK Location API](https://api.pdok.nl/kadaster/location-api/v1/).
+[OGC API Common Part 2](https://www.opengis.net/doc/is/ogcapi-common-2/1.0). With `--serve-items`, the `places`
+collection serves the gazetteer's places as items, as described in
+[OGC API Features Part 1](https://docs.ogc.org/is/17-069r4/17-069r4.html), so QGIS, GDAL/OGR and other Features
+clients can browse them. Forward geocoding is served at `/search`, in the form of the
+[PDOK Location API](https://api.pdok.nl/kadaster/location-api/v1/).
 
 ```sh
 npx @mailwoman/ogc serve --port 8090
 curl "http://localhost:8090/collections"
-curl "http://localhost:8090/collections/places/items?bbox=4.7,52.2,5.1,52.5&limit=5"
 curl "http://localhost:8090/search?q=Dam%201%2C%201012JS%20Amsterdam&limit=2"
+
+# Bulk browsing is opt-in.
+npx @mailwoman/ogc serve --port 8090 --serve-items
+curl "http://localhost:8090/collections/places/items?bbox=4.7,52.2,5.1,52.5&limit=5"
 ```
 
 `serve` loads the same engine as `@mailwoman/photon` and `@mailwoman/nominatim`: the en-US classifier, the
@@ -61,7 +65,49 @@ Each collection reports `version: 1` and `geometryDimension: 0`, since every fea
 that serves items adds `itemType: "feature"`, an `items` link for GeoJSON and one for HTML, and an `extent`. The other
 collections carry none of the three, and their items routes answer 404.
 
+Every collection also links where its data comes from, read from the `layer_manifest` of each database behind it:
+
+- A `license` link ([RFC 4946](https://www.rfc-editor.org/rfc/rfc4946)) for each identifier in the recorded
+  license expression whose text has a known URL: SPDX's page for an SPDX identifier, and Who's On First's own
+  license text for `LicenseRef-WhosOnFirst-Mixed`, because that text requires the link back.
+- A `via` link ([RFC 4287](https://www.rfc-editor.org/rfc/rfc4287), "the source of the information") for each
+  source the manifest records, to the page where a user obtains it. The table is `GAZETTEER_SOURCE_LOCATIONS` in
+  `@mailwoman/resolver-wof-sqlite/sources`, and the admin build writes its source identifiers from the same table.
+  The Who's On First entry points to the
+  [`mailwoman` organization](https://github.com/mailwoman), whose `whosonfirst-data-admin-<cc>` repositories are the
+  forks the build clones from `whosonfirst-data`.
+- An `attribution`, the member OGC API Common Part 2 defines, when a recorded license requires credit.
+
+A manifest that records no license or no source, a source without a known location, and a license identifier
+without published text add a sentence to the description in place of a link. `plus-codes` has no layer. The
+address and street layers open per region, and the server reads none of their manifests, so those two
+descriptions say so.
+
+## Where the data comes from
+
+The adapter serves only the operator's own data root, `$MAILWOMAN_DATA_ROOT`. `/search` answers one
+query at a time. Bulk browsing through `items` is opt-in: `serve` serves no items unless it's started with
+`--serve-items`.
+
+A user who wants the data obtains it from its sources:
+
+- The gazetteer: `mailwoman data pull candidate` installs the candidate gazetteer, as the
+  [data and locales reference](https://mailwoman.post/docs/reference/data-and-locales) describes. To build the admin
+  gazetteer from Who's On First yourself, clone the `whosonfirst-data-admin-<cc>` repositories from the
+  [`mailwoman` organization](https://github.com/mailwoman) or from `whosonfirst-data`, then run
+  `mailwoman gazetteer build admin`, as the
+  [reverse geocoding guide](https://mailwoman.post/docs/guides/reverse-geocode) shows.
+- Address points, interpolation and street layers: `mailwoman data pull` installs the published bundles, and the
+  data and locales reference lists them.
+- Each source's own terms: the [data and licensing page](https://mailwoman.post/product/data-and-licensing) links
+  the publishers' pages, and each collection's `license` and `via` links state what the opened databases record.
+
 ## Items
+
+Items are served only when `serve` is started with `--serve-items`, or `createOGCApp` is built with
+`serveItems: true`. While items are off, the collection descriptions link none, both items routes answer 404
+with `{ "error": "collection serves no items" }`, `/search` features carry no `href`, and `/conformance` lists
+only the OGC API Common classes. The startup banner states whether items are served, and why not when they aren't.
 
 `places` is the one collection that serves items. It reads the admin gazetteer's current places, the
 `admin-global-priority.db` the server resolves under `$MAILWOMAN_DATA_ROOT/db/wof`, through its primary key and
@@ -95,9 +141,9 @@ A feature's `id` is the gazetteer place ID `/search` reports as `place_id`, such
 `country_code` and `display_name`, the label `/search` gives the same place. An id the collection doesn't hold
 returns 404.
 
-The items routes serve the gazetteer in bulk, so the server reads the database's recorded license at startup and
-prints it. When `MAILWOMAN_REFUSE_OBLIGATIONS` refuses a class that license carries, `places` serves no items and
-the banner states the refusal. The database records `LicenseRef-WhosOnFirst-Mixed`, whose obligations this
+The items routes serve the gazetteer in bulk, so with `--serve-items` the server reads the database's recorded
+license at startup and prints it. When `MAILWOMAN_REFUSE_OBLIGATIONS` refuses a class that license carries, `places`
+serves no items and the banner states the refusal. The database records `LicenseRef-WhosOnFirst-Mixed`, whose obligations this
 repository hasn't recorded, beside `ODbL-1.0` and `CC-BY-4.0`. An operator who sets
 `MAILWOMAN_REFUSE_OBLIGATIONS=unresolved` or `share-alike` therefore serves no items.
 
@@ -181,7 +227,8 @@ this machine. It needs Podman and the data root's gazetteer. From the repository
 node packages/ogc/tools/ets.run.ts --out "$MAILWOMAN_DATA_ROOT/audits/ogc-ets/latest"
 ```
 
-The tool starts `mailwoman-ogc serve` on 127.0.0.1 (port 8195 unless `--port` says otherwise), runs the suite
+The tool starts `mailwoman-ogc serve --serve-items` on 127.0.0.1 (port 8195 unless `--port` says otherwise),
+because the suite needs a feature collection to test. It runs the suite
 from OGC's published image `docker.io/ogccite/ets-ogcapi-features10:1.9-teamengine-6.0.0-RC2` with the host's
 network, and stops the server it started. The container opens no port. The TestNG and EARL reports land under
 `--out`, `summary.json` beside them lists every failed and skipped test, and the tool exits 1 when a test failed.
@@ -201,7 +248,8 @@ npx @mailwoman/ogc serve --base-url https://example.org/ogc/
 `createOGCApp` takes an `OGCEngine`: the collections it serves and a `search(q)` that returns its matches.
 `geocodeSearchHits` projects a `geocodeAddress` result to those matches. A collection serves items when it carries
 an `items` source, such as `placeItemSource(new WOFPlaceBrowser({ databasePath }), ancestorsOf)`, with
-`WOFPlaceBrowser` from `@mailwoman/resolver-wof-sqlite/browse`.
+`WOFPlaceBrowser` from `@mailwoman/resolver-wof-sqlite/browse`, and the app is built with `serveItems: true`.
+A collection's `layers` lists the manifest terms its license and `via` links come from.
 
 ```ts
 import { serveNode } from "@mailwoman/api-kit"

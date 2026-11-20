@@ -64,6 +64,29 @@ export interface OGCItemSource {
 }
 
 /**
+ * The terms one opened layer records in its `layer_manifest`.
+ */
+export interface OGCLayerTerms {
+	/**
+	 * The layer's name as its manifest records it, such as `admin-global-priority`.
+	 */
+	name: string
+	/**
+	 * The SPDX expression the manifest records, or null when it records none.
+	 */
+	license: string | null
+	/**
+	 * The manifest's `attribution`, or null when it records none.
+	 */
+	attribution: string | null
+	/**
+	 * The manifest's `source`, such as `whosonfirst+overture-divisions+geonames`,
+	 * or null when it records none.
+	 */
+	source: string | null
+}
+
+/**
  * A collection the engine serves, and the regions its layers cover.
  */
 export interface OGCServedCollection {
@@ -78,6 +101,14 @@ export interface OGCServedCollection {
 	 * The reader that serves the collection's items, absent for a collection without `/items`.
 	 */
 	items?: OGCItemSource
+	/**
+	 * The manifests of the layers behind the collection.
+	 * Its license and source links come from them.
+	 *
+	 * An empty array means no layer backs the collection.
+	 * Absent means the engine read no manifest for it, and the description states that.
+	 */
+	layers?: readonly OGCLayerTerms[]
 }
 
 /**

@@ -56,6 +56,8 @@ export const OGCLinkRelation = {
 	Items: "items",
 	Next: "next",
 	Collection: "collection",
+	License: "license",
+	Via: "via",
 } as const
 
 export type OGCLinkRelation = (typeof OGCLinkRelation)[keyof typeof OGCLinkRelation]
@@ -184,6 +186,10 @@ export const OGCCollectionSchema = z
 		title: z.string(),
 		description: z.string(),
 		links: z.array(OGCLinkSchema),
+		attribution: z.string().optional().openapi({
+			description:
+				"A short credit for the data, present when a layer's license requires attribution. OGC API Common Part 2 defines the member.",
+		}),
 		itemType: z.literal("feature").optional(),
 		extent: OGCExtentSchema.optional(),
 		geometryDimension: z.literal(0).openapi({ description: "Every feature in the collection is a point." }),

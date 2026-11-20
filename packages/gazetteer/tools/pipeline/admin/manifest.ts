@@ -14,6 +14,7 @@
 
 import type { LayerManifest } from "@mailwoman/core/layers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { GazetteerSourceName } from "@mailwoman/resolver-wof-sqlite/sources"
 
 /**
  * The number of rows each source contributed to a build.
@@ -42,11 +43,11 @@ const SOURCE_TERMS = {
 	// some requiring attribution.
 	// It states no single grant over the records, so `LicenseRef-WhosOnFirst-Mixed`
 	// records that rather than electing one of the 102.
-	wof: { name: "whosonfirst", license: "LicenseRef-WhosOnFirst-Mixed" },
+	wof: { name: GazetteerSourceName.WhosOnFirst, license: "LicenseRef-WhosOnFirst-Mixed" },
 	// Overture licenses each theme.
 	// Its attribution page gives Divisions `License for theme: ODbL`.
-	overture: { name: "overture-divisions", license: "ODbL-1.0" },
-	geonames: { name: "geonames", license: "CC-BY-4.0" },
+	overture: { name: GazetteerSourceName.OvertureDivisions, license: "ODbL-1.0" },
+	geonames: { name: GazetteerSourceName.GeoNames, license: "CC-BY-4.0" },
 } as const satisfies Record<keyof IngestCounts, { name: string; license: string }>
 
 /**

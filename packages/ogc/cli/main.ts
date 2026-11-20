@@ -21,6 +21,7 @@ import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
+	gazetteerFreshness,
 	loadClassifierOrExit,
 	openAPICommand,
 	resolveGazetteerOrExit,
@@ -29,7 +30,7 @@ import {
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 import { obligationFindings, ObligationRefusal, parseObligationRefusals } from "mailwoman/data/obligations"
 import { $public } from "mailwoman/env"
-import { readFreshness } from "mailwoman/freshness"
+import type { ArtifactFreshness } from "mailwoman/freshness"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { openServingRooftopProviders } from "mailwoman/geocode/serving-layers"
 import { createResolverBackend } from "mailwoman/resolver-backend"
@@ -44,6 +45,7 @@ import {
 	OGCCollectionID,
 	type OGCEngine,
 	type OGCItemSource,
+	type OGCLayerTerms,
 	placeItemSource,
 	type RegionLayerProbe,
 	servedCollections,
@@ -58,12 +60,7 @@ const BINARY_NAME = "mailwoman-ogc"
  * declares each collection's `/search` parameters.
  */
 const DOCUMENTED_ENGINE: OGCEngine = {
-	collections: Object.keys(OGC_COLLECTION_CATALOG).map((id) => ({
-		id: id as OGCCollectionID,
-		regions: null,
-		// `places` serves items when `serve` opens an admin gazetteer, so the definition documents the items routes.
-		...(id === OGCCollectionID.Places ? { items: { page: async () => [], item: async () => null } } : {}),
-	})),
+	collections: Object.keys(OGC_COLLECTION_CATALOG).map((id) => ({ id: id as OGCCollectionID, regions: null })),
 	search: async () => [],
 }
 
@@ -76,20 +73,45 @@ interface PlaceItems {
 }
 
 /**
- * Open the admin gazetteer as the `places` collection's item source.
+ * The terms an opened artifact's manifest records, under the layer name the manifest gives it.
+ *
+ * An artifact without a readable manifest keeps the role the server opened it for and records no terms.
+ */
+function layerTermsOf(artifact: ArtifactFreshness): OGCLayerTerms {
+	return {
+		name: artifact.version?.split("@")[0] ?? artifact.name,
+		license: artifact.license,
+		attribution: artifact.attribution,
+		source: artifact.sources?.[0] ?? null,
+	}
+}
+
+/**
+ * Open the admin gazetteer as the `places` collection's item source, when the operator asked for items.
  *
  * The items routes serve the gazetteer in pages, so the operator's `MAILWOMAN_REFUSE_OBLIGATIONS`
  * applies to them as it applies to an OpenStreetMap layer: a refused class in the database's
  * recorded license leaves `places` without items, and the banner states the refusal.
  * A database without the `place_bbox` R*Tree can't answer a box page, so it serves no items either.
  */
-async function openPlaceItems(adminDBPath: string | null, ancestorsOf: AncestorsOf | undefined): Promise<PlaceItems> {
-	if (!adminDBPath) {
+async function openPlaceItems(
+	serveItems: boolean,
+	admin: ArtifactFreshness | undefined,
+	ancestorsOf: AncestorsOf | undefined
+): Promise<PlaceItems> {
+	if (!serveItems) {
+		return {
+			source: null,
+			bannerLines: ["  items: off, because bulk browsing is opt-in; pass --serve-items to serve them"],
+		}
+	}
+
+	if (!admin) {
 		return { source: null, bannerLines: ["  places items: none, because no admin gazetteer database was found"] }
 	}
 
-	const [artifact] = (await readFreshness([{ name: "places-items", path: adminDBPath }])).artifacts
-	const license = artifact?.license ?? null
+	const adminDBPath = admin.path
+	const license = admin.license
 	const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
 	const findings = license ? obligationFindings(license, refuse) : []
 
@@ -138,6 +160,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Permissive CORS is on by default because OGC API clients run in browsers too.
 			// `--no-cors` turns it off where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
+			// Serve the `places` collection's items for bulk browsing.
+			// Off by default.
+			"serve-items": { type: "boolean", default: false },
 		},
 		allowNegative: true,
 		allowPositionals: true,
@@ -174,14 +199,42 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			: []),
 	]
 
-	const placeItems = await openPlaceItems(gazetteer.adminDBPath ?? null, ancestorsOf)
+	// The manifests of the gazetteer databases this process opened: the ones `/search` reads,
+	// and the admin gazetteer they derive from.
+	// The admin gazetteer also serves the `places` items.
+	const { artifacts } = await gazetteerFreshness(gazetteer)
+	const admin = artifacts.find((artifact) => artifact.path === gazetteer.adminDBPath)
+	const searchLayers = artifacts.filter((artifact) => artifact.name !== "reverse-admin").map(layerTermsOf)
+	const placeLayers = artifacts.map(layerTermsOf)
+	const placeItems = await openPlaceItems(values["serve-items"], admin, ancestorsOf)
+
+	// The gazetteer collections read the manifests above.
+	// Plus codes have no layer.
+	// The address and street layers are opened per region, and the server reads none of their manifests.
+	const layersOf = (id: OGCCollectionID): readonly OGCLayerTerms[] | undefined => {
+		switch (id) {
+			case OGCCollectionID.Places:
+				return placeLayers
+			case OGCCollectionID.Postcodes:
+				return searchLayers
+			case OGCCollectionID.PlusCodes:
+				return []
+			case OGCCollectionID.Addresses:
+			case OGCCollectionID.Streets:
+				return undefined
+		}
+	}
 
 	const engine: OGCEngine = {
-		collections: servedCollections(probes).map((collection) =>
-			collection.id === OGCCollectionID.Places && placeItems.source
-				? { ...collection, items: placeItems.source }
-				: collection
-		),
+		collections: servedCollections(probes).map((collection) => {
+			const layers = layersOf(collection.id)
+
+			return {
+				...collection,
+				...(layers ? { layers } : {}),
+				...(collection.id === OGCCollectionID.Places && placeItems.source ? { items: placeItems.source } : {}),
+			}
+		}),
 		async search(q) {
 			// The call sets no country constraint, so the placer routes the query to its own country.
 			const result = await geocodeAddress(q, {
@@ -196,7 +249,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		},
 	}
 
-	const app = createOGCApp(engine, { cors: values.cors, engine: engineStamp.stamp, baseURL })
+	const app = createOGCApp(engine, {
+		cors: values.cors,
+		engine: engineStamp.stamp,
+		baseURL,
+		serveItems: placeItems.source != null,
+	})
 
 	await serveNode({
 		fetch: app.fetch,
@@ -235,7 +293,7 @@ await runDropInCLI({
 	openapi: openAPICommand(BINARY_NAME, createOGCApp, OGC_DOC_INFO, DOCUMENTED_ENGINE),
 	serve,
 	usage: [
-		"  serve [--port 8090] [--host 0.0.0.0] [--base-url <url>] [--candidate-db <path>] [--no-cors]",
+		"  serve [--port 8090] [--host 0.0.0.0] [--base-url <url>] [--candidate-db <path>] [--no-cors] [--serve-items]",
 		"  openapi [--flavor 3.1|3.0] [--out <path>]",
 	],
 })

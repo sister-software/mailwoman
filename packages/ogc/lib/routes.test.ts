@@ -18,6 +18,7 @@ import {
 	type OGCItemFeature,
 	type OGCItemSource,
 	type OGCItemsResponse,
+	type OGCLayerTerms,
 	OGC_ITEMS_MAX_LIMIT,
 	type OGCLandingPage,
 	OGCLinkRelation,
@@ -98,15 +99,37 @@ const PLACE_ITEMS: OGCItemSource = {
 	},
 }
 
+/**
+ * A stub admin gazetteer manifest, in the shape the admin build writes.
+ */
+const ADMIN_LAYER: OGCLayerTerms = {
+	name: "admin-global-priority",
+	license: "LicenseRef-WhosOnFirst-Mixed AND ODbL-1.0 AND CC-BY-4.0",
+	attribution: "whosonfirst, overture-divisions, geonames",
+	source: "whosonfirst+overture-divisions+geonames",
+}
+
+/**
+ * A stub candidate gazetteer manifest.
+ * Its source is the admin layer by name and version.
+ */
+const CANDIDATE_LAYER: OGCLayerTerms = {
+	name: "candidate",
+	license: "CC-BY-4.0 AND LicenseRef-Undeclared-Input",
+	attribution: null,
+	source: "admin-global-priority@2026-11-18",
+}
+
 const engine: OGCEngine = {
 	collections: [
 		{ id: OGCCollectionID.Addresses, regions: ["NL"] },
-		{ id: OGCCollectionID.Places, regions: null, items: PLACE_ITEMS },
+		{ id: OGCCollectionID.Places, regions: null, items: PLACE_ITEMS, layers: [CANDIDATE_LAYER, ADMIN_LAYER] },
+		{ id: OGCCollectionID.PlusCodes, regions: null, layers: [] },
 	],
 	search: async (q) => (q === DAM_1 ? DAM_1_HITS : []),
 }
 
-const app = createOGCApp(engine)
+const app = createOGCApp(engine, { serveItems: true })
 
 async function search(query: string): Promise<OGCSearchResponse> {
 	const response = await app.request(`/search?${query}`)
@@ -362,19 +385,22 @@ describe("items", () => {
 	test("a limit above the maximum is served as the maximum rather than refused", async () => {
 		const requested: number[] = []
 
-		const capped = createOGCApp({
-			...engine,
-			collections: [
-				{
-					id: OGCCollectionID.Places,
-					regions: null,
-					items: {
-						...PLACE_ITEMS,
-						page: async (request) => (requested.push(request.limit), PLACE_ITEMS.page(request)),
+		const capped = createOGCApp(
+			{
+				...engine,
+				collections: [
+					{
+						id: OGCCollectionID.Places,
+						regions: null,
+						items: {
+							...PLACE_ITEMS,
+							page: async (request) => (requested.push(request.limit), PLACE_ITEMS.page(request)),
+						},
 					},
-				},
-			],
-		})
+				],
+			},
+			{ serveItems: true }
+		)
 
 		const response = await capped.request(`/collections/places/items?limit=${OGC_ITEMS_MAX_LIMIT * 5}`)
 
@@ -445,12 +471,85 @@ describe("items", () => {
 		}
 	})
 
-	test("a service whose collections serve no items declares no Features class and no items route", async () => {
-		const bare = createOGCApp({ ...engine, collections: [{ id: OGCCollectionID.Places, regions: null }] })
-		const { conformsTo } = (await (await bare.request("/conformance?f=json")).json()) as OGCConformance
+	test("items are off unless the app is built with serveItems, even for a collection with an item source", async () => {
+		const defaults = createOGCApp(engine)
+		const { conformsTo } = (await (await defaults.request("/conformance?f=json")).json()) as OGCConformance
+		const list = (await (await defaults.request("/collections?f=json")).json()) as OGCCollections
+		const document = (await (await defaults.request("/api?f=json")).json()) as { paths: Record<string, unknown> }
+		const searched = (await (await defaults.request(`/search?${DAM_1_QUERY}`)).json()) as OGCSearchResponse
 
-		expect(conformsTo).not.toContain(OGCConformanceClass.FeaturesCore)
-		expect((await bare.request("/collections/places/items")).status).toBe(404)
+		expect(conformsTo.filter((uri) => uri.includes("/ogcapi-features-1/"))).toEqual([])
+		expect(list.collections.flatMap(({ links }) => links).some(({ rel }) => rel === OGCLinkRelation.Items)).toBe(false)
+		expect(list.collections.some((collection) => collection.itemType)).toBe(false)
+		expect(Object.keys(document.paths).filter((path) => path.includes("/items"))).toEqual([])
+		expect(searched.features.some((feature) => feature.properties.href)).toBe(false)
+
+		for (const path of ["/collections/places/items", "/collections/places/items/wof:101751893"]) {
+			const response = await defaults.request(path)
+
+			expect(response.status, path).toBe(404)
+			expect(await response.json(), path).toMatchObject({ error: "collection serves no items" })
+		}
+
+		expect(await (await defaults.request("/collections/streets/items")).json()).toMatchObject({
+			error: "collection not found",
+		})
+	})
+})
+
+describe("collection sources and terms", () => {
+	async function describeCollection(id: string): Promise<OGCCollection> {
+		return (await (await app.request(`/collections/${id}?f=json`)).json()) as OGCCollection
+	}
+
+	test("a collection links each license text and each source its manifests record, and credits them", async () => {
+		const places = await describeCollection(OGCCollectionID.Places)
+		const hrefsOf = (rel: string) => places.links.filter((link) => link.rel === rel).map((link) => link.href)
+
+		expect(hrefsOf(OGCLinkRelation.License)).toEqual([
+			"https://spdx.org/licenses/CC-BY-4.0.html",
+			"https://github.com/whosonfirst-data/whosonfirst-data/blob/master/LICENSE.md",
+			"https://spdx.org/licenses/ODbL-1.0.html",
+		])
+
+		// The candidate layer's source is the admin layer, so both resolve to the admin build's sources.
+		expect(hrefsOf(OGCLinkRelation.Via)).toEqual([
+			"https://github.com/mailwoman",
+			"https://docs.overturemaps.org/guides/divisions/",
+			"https://download.geonames.org/export/dump/",
+		])
+
+		expect(places.attribution).toBe("Who's On First, Overture Maps divisions theme, GeoNames")
+		expect(places.description).toContain("LicenseRef-Undeclared-Input")
+	})
+
+	test("a manifest without a license or a source yields no link for it, and the description says so", async () => {
+		const bare = createOGCApp({
+			...engine,
+			collections: [
+				{
+					id: OGCCollectionID.Postcodes,
+					regions: null,
+					layers: [{ name: "postalcode-xx", license: null, attribution: null, source: null }],
+				},
+			],
+		})
+
+		const postcodes = (await (await bare.request("/collections/postcodes?f=json")).json()) as OGCCollection
+
+		expect(postcodes.links.filter((link) => link.rel === OGCLinkRelation.License)).toEqual([])
+		expect(postcodes.links.filter((link) => link.rel === OGCLinkRelation.Via)).toEqual([])
+		expect(postcodes.attribution).toBeUndefined()
+		expect(postcodes.description).toContain("records no license")
+		expect(postcodes.description).toContain("records no source")
+	})
+
+	test("a collection whose manifests the server didn't read says so, and one without a layer links nothing", async () => {
+		const addresses = await describeCollection(OGCCollectionID.Addresses)
+		const plusCodes = await describeCollection(OGCCollectionID.PlusCodes)
+
+		expect(addresses.description).toContain("read no layer manifest")
+		expect(plusCodes.links.map(({ rel }) => rel)).toEqual([OGCLinkRelation.Self, OGCLinkRelation.Alternate])
 	})
 })
 

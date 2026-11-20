@@ -1,18 +1,28 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LatLonBounds as BrowseBox } from "@mailwoman/spatial/bbox"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { type BrowseBox, EXTENT_PROBE_LIMIT, type PlaceBrowseDatabase, WOFPlaceBrowser } from "#browse"
+import { WOFPlaceBrowser } from "#browse"
+
+/**
+ * The probe limit the browser is built with, small so the fixture stays small.
+ */
+const EXTENT_PROBE_LIMIT = 500
+
+type BrowseDatabase = NonNullable<ConstructorParameters<typeof WOFPlaceBrowser>[0]["database"]>
+
+type BrowseTables = BrowseDatabase extends DatabaseClient<infer DB> ? DB : never
 
 /**
  * A gazetteer with more R*Tree extents than {@link EXTENT_PROBE_LIMIT}, so a world box takes
  * the primary-key plan and a small box the R*Tree plan, and with the two kinds of place the
  * R*Tree misses: one whose point lies outside its extent, and one with no extent at all.
  */
-function buildGazetteer(): DatabaseClient<PlaceBrowseDatabase> {
-	const db = DatabaseClient.temp<PlaceBrowseDatabase>()
+function buildGazetteer(): BrowseDatabase {
+	const db = DatabaseClient.temp<BrowseTables>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -60,7 +70,7 @@ function buildGazetteer(): DatabaseClient<PlaceBrowseDatabase> {
 }
 
 const db = buildGazetteer()
-const browser = new WOFPlaceBrowser({ database: db })
+const browser = new WOFPlaceBrowser({ database: db, extentProbeLimit: EXTENT_PROBE_LIMIT })
 
 afterAll(() => {
 	browser[Symbol.dispose]()
@@ -124,7 +134,7 @@ describe("WOFPlaceBrowser", () => {
 	test("a world box, read in primary-key order, pages through every current place once", async () => {
 		const world = { minLon: -180, minLat: -90, maxLon: 180, maxLat: 90 }
 
-		expect(await pageThrough(world, 5000)).toEqual(scan(world))
+		expect(await pageThrough(world, 50)).toEqual(scan(world))
 	})
 
 	test("a place is read by id only while it is current", async () => {

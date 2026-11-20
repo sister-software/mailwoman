@@ -57,6 +57,14 @@ export interface OGCAppOptions extends CompatibilityAppOptions {
 	 * @defaultValue The request's own origin.
 	 */
 	baseURL?: string
+	/**
+	 * Serve the items routes for the collections whose engine entry has an item source.
+	 *
+	 * Bulk browsing is opt-in, so the default leaves every collection without items.
+	 *
+	 * @defaultValue `false`
+	 */
+	serveItems?: boolean
 }
 
 /**
@@ -92,7 +100,7 @@ export function createOGCApp(engine: OGCEngine, options: OGCAppOptions = {}): Op
 		? { ...OGC_DOC_INFO, servers: [{ url: options.baseURL }] }
 		: OGC_DOC_INFO
 
-	registerOGCRoutes(app, engine, { baseURL: options.baseURL, docInfo })
+	registerOGCRoutes(app, engine, { baseURL: options.baseURL, docInfo, serveItems: options.serveItems === true })
 	attachOpenAPIDocs(app, docInfo)
 
 	return app

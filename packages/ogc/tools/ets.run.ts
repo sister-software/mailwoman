@@ -5,8 +5,10 @@
  *   Runs the OGC API Features Part 1 executable test suite, `ets-ogcapi-features10`,
  *   against `mailwoman-ogc serve` on this machine and prints the result.
  *
- *   Without `--iut` the tool starts the server on 127.0.0.1 with the data root's gazetteer,
- *   runs the suite, and stops the server it started by its own process.
+ *   Without `--iut` the tool starts the server on 127.0.0.1 with the data root's gazetteer
+ *   and `--serve-items`, because the suite needs a feature collection to test.
+ *   It runs the suite and stops the server it started by its own process.
+ *
  *   With `--iut` it tests that URL instead and leaves the server to the caller.
  *
  *   The suite runs from OGC's published container image under Podman.
@@ -220,7 +222,15 @@ if (values.iut) {
 
 	await using server = new ProcessTask(
 		process.execPath,
-		[fileURLToPath(import.meta.resolve("#cli/main")), "serve", "--host", "127.0.0.1", "--port", values.port],
+		[
+			fileURLToPath(import.meta.resolve("#cli/main")),
+			"serve",
+			"--host",
+			"127.0.0.1",
+			"--port",
+			values.port,
+			"--serve-items",
+		],
 		{ stdout: "ignore", stderr: "inherit", reject: false }
 	)
 
