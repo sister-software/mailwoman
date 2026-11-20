@@ -182,7 +182,7 @@ export interface NeuralAddressClassifierConfig {
 	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
 	 * model trained with the matching `data.gazetteer_choreography`.
 	 *
-	 * @defaultValue `"off"`; loaders resolve it with {@link gazetteerSuppressionFor}.
+	 * @defaultValue `"off"`; loaders resolve it with {@link declaredClassifierConfig}.
 	 */
 	suppressGazetteerNearPostcode?: Toggle
 
@@ -214,7 +214,7 @@ export interface NeuralAddressClassifierConfig {
 	 *
 	 * The model splits these spans because the corpus label format cannot mark punctuation inside a span.
 	 *
-	 * @defaultValue `"off"`; loaders resolve it with {@link punctuationBridgingFor}.
+	 * @defaultValue `"off"`; loaders resolve it with {@link declaredClassifierConfig}.
 	 */
 	bridgePunctuationGaps?: Toggle
 
@@ -538,6 +538,8 @@ export interface DeclaredModelBehavior {
 	suppress_gazetteer_near_postcode?: boolean
 	bridge?: { required: boolean }
 	conventions?: { required: boolean; mode?: string }
+	anchor?: { span_mode?: AnchorSpanMode }
+	query_shape?: QueryShapeGeneration
 }
 
 /**
@@ -568,13 +570,8 @@ function toggleFor(setting: ModelCardToggle, declared: boolean | undefined): Tog
  *
  * Inference must match training, so the model card's `requires.suppress_gazetteer_near_postcode` decides.
  * A model whose card doesn't declare it was trained without the choreography, so it is off.
- *
- * Every loader (Node, scorer, browser) resolves the setting here.
  */
-export function gazetteerSuppressionFor(
-	setting: ModelCardToggle,
-	declared: DeclaredModelBehavior | null | undefined
-): Toggle {
+function gazetteerSuppressionFor(setting: ModelCardToggle, declared: DeclaredModelBehavior | null | undefined): Toggle {
 	return toggleFor(setting, declared?.suppress_gazetteer_near_postcode)
 }
 
@@ -582,13 +579,8 @@ export function gazetteerSuppressionFor(
  * Whether a loader merges same-tag spans split by short punctuation.
  *
  * The model card's `requires.bridge` decides, and a card that doesn't declare it leaves bridging off.
- *
- * Every loader (Node, scorer, browser) resolves the setting here.
  */
-export function punctuationBridgingFor(
-	setting: ModelCardToggle,
-	declared: DeclaredModelBehavior | null | undefined
-): Toggle {
+function punctuationBridgingFor(setting: ModelCardToggle, declared: DeclaredModelBehavior | null | undefined): Toggle {
 	return toggleFor(setting, declared?.bridge?.required)
 }
 
@@ -598,11 +590,9 @@ export function punctuationBridgingFor(
  * A card that requires conventions supplies its `mode`, defaulting to `"auto"`.
  * A card that doesn't require them leaves conventions `"off"`.
  *
- * Every loader (Node, scorer, browser) resolves the setting here.
- *
  * @throws When the card declares a mode that's not a known conventions mode.
  */
-export function addressSystemConventionsFor(
+function addressSystemConventionsFor(
 	setting: ConventionsSetting,
 	declared: DeclaredModelBehavior | null | undefined
 ): AddressSystemConventions {
@@ -613,4 +603,54 @@ export function addressSystemConventionsFor(
 	if (!conventions?.required) return "off"
 
 	return parseAddressSystemConventions(conventions.mode ?? "auto")
+}
+
+/**
+ * The loader settings that may replace a behavior the model card declares.
+ *
+ * Each defaults to `"declared"`, which follows the card.
+ */
+export interface DeclaredBehaviorSettings {
+	suppressGazetteerNearPostcode?: ModelCardToggle
+	bridgePunctuationGaps?: ModelCardToggle
+	addressSystemConventions?: ConventionsSetting
+}
+
+/**
+ * The classifier config fields that a model card's `requires` block decides.
+ */
+export type DeclaredClassifierConfig = Pick<
+	NeuralAddressClassifierConfig,
+	| "suppressGazetteerNearPostcode"
+	| "bridgePunctuationGaps"
+	| "addressSystemConventions"
+	| "postcodeAnchorSpanMode"
+	| "queryShapeGeneration"
+>
+
+/**
+ * Returns the classifier config fields that a model card's `requires` block decides.
+ *
+ * Every loader (Node, scorer, browser) spreads this result into its classifier config,
+ * so a card field read here reaches all three.
+ *
+ * @throws When the card declares a mode that's not a known conventions mode.
+ */
+export function declaredClassifierConfig(
+	declared: DeclaredModelBehavior | null | undefined,
+	settings: DeclaredBehaviorSettings = {}
+): DeclaredClassifierConfig {
+	const spanMode = declared?.anchor?.span_mode
+	const queryShape = declared?.query_shape
+
+	return {
+		suppressGazetteerNearPostcode: gazetteerSuppressionFor(
+			settings.suppressGazetteerNearPostcode ?? "declared",
+			declared
+		),
+		bridgePunctuationGaps: punctuationBridgingFor(settings.bridgePunctuationGaps ?? "declared", declared),
+		addressSystemConventions: addressSystemConventionsFor(settings.addressSystemConventions ?? "declared", declared),
+		...(spanMode ? { postcodeAnchorSpanMode: spanMode } : {}),
+		...(queryShape ? { queryShapeGeneration: queryShape } : {}),
+	}
 }
