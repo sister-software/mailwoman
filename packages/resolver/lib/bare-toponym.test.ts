@@ -421,7 +421,7 @@ describe("scope-country retrieval", () => {
 
 	const SOFT_GB = { country: "GB", source: "inferred", strength: "soft" } as const
 
-	it("retrieves the soft country's namesake that the unscoped fetch cut", async () => {
+	it("retrieves the soft country's namesake that the unscoped fetch's limit left out", async () => {
 		const off = await createWOFResolver(backend).resolveTree(tree, { defaultCountry: SOFT_GB })
 
 		const on = await createWOFResolver(backend).resolveTree(tree, {
