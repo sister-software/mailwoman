@@ -19,9 +19,14 @@ import { OGCFormat, OGCMediaType } from "#schema"
 /**
  * The JSON media types a request may name in `Accept`, beside `text/html`.
  *
- * `/api` serves the OpenAPI media type and answers a request for plain JSON with it too.
+ * `/api` serves the OpenAPI media type and answers a request for plain JSON with it too,
+ * and `/search` serves GeoJSON the same way.
  */
-const JSON_MEDIA_TYPES: readonly string[] = [OGCMediaType.JSON, "application/vnd.oai.openapi+json"]
+const JSON_MEDIA_TYPES: readonly string[] = [
+	OGCMediaType.JSON,
+	OGCMediaType.GeoJSON,
+	"application/vnd.oai.openapi+json",
+]
 
 /**
  * The encoding a request asks for.

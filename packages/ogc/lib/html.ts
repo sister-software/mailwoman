@@ -12,7 +12,18 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { escapeHTML } from "@mailwoman/core/strings/escape"
 
-import type { OGCConformance, OGCLandingPage, OGCLink } from "#schema"
+import type { OGCServedCollection } from "#engine"
+import {
+	collectionVersionParameter,
+	type OGCCollection,
+	type OGCCollections,
+	OGC_COLLECTION_VERSION,
+	type OGCConformance,
+	type OGCLandingPage,
+	type OGCLink,
+	type OGCSearchFeature,
+	type OGCSearchResponse,
+} from "#schema"
 
 /**
  * The OpenAPI 3.0 document the generator emits.
@@ -86,6 +97,79 @@ export function conformanceHTML(conformance: OGCConformance, links: readonly OGC
 <ul>
 ${classes.join("\n")}
 </ul>
+<h2>Links</h2>
+${linkList(links)}`
+	)
+}
+
+function collectionSection(collection: OGCCollection, heading: "h1" | "h2"): string {
+	return `<${heading}>${escapeHTML(collection.title)} <code>${escapeHTML(collection.id)}</code></${heading}>
+<p>${escapeHTML(collection.description)}</p>
+<p class="meta">Point features, version ${collection.version}</p>
+${linkList(collection.links)}`
+}
+
+/**
+ * The collections list as HTML.
+ */
+export function collectionsHTML(body: OGCCollections): string {
+	return page(
+		"Collections",
+		`<h1>Collections</h1>
+${linkList(body.links)}
+${body.collections.map((collection) => collectionSection(collection, "h2")).join("\n")}`
+	)
+}
+
+/**
+ * One collection description as HTML.
+ */
+export function collectionHTML(collection: OGCCollection): string {
+	return page(collection.title, collectionSection(collection, "h1"))
+}
+
+function searchFeatureItem(feature: OGCSearchFeature): string {
+	const [lon, lat] = feature.geometry.coordinates
+	const { display_name, score, score_unmeasured, collection_id } = feature.properties
+	const scoreText = score == null ? `score null (${score_unmeasured ?? "unmeasured"})` : `score ${score}`
+
+	return `<li>${escapeHTML(display_name)} <span class="meta">${escapeHTML(collection_id)} &middot; ${lat}, ${lon} &middot; ${escapeHTML(scoreText)}</span></li>`
+}
+
+/**
+ * The search form, with the results of a search when `body` holds one.
+ *
+ * @param collections The collections a checkbox can restrict the search to.
+ */
+export function searchHTML(
+	body: OGCSearchResponse | null,
+	links: readonly OGCLink[],
+	collections: readonly OGCServedCollection[],
+	q = ""
+): string {
+	const boxes = collections.map(
+		({ id }) =>
+			`<label><input type="checkbox" name="${escapeHTML(collectionVersionParameter(id))}" value="${OGC_COLLECTION_VERSION}"> ${escapeHTML(id)}</label>`
+	)
+
+	const results = body
+		? `<h2>Results</h2>
+<p class="meta">${body.numberReturned} returned at ${escapeHTML(body.timeStamp)}</p>
+<ol>
+${body.features.map(searchFeatureItem).join("\n")}
+</ol>`
+		: ""
+
+	return page(
+		"Search",
+		`<h1>Search</h1>
+<p>Forward geocoding. Leave every collection unchecked to search them all.</p>
+<form method="get" action="search">
+<input type="hidden" name="f" value="html">
+<p><input type="search" name="q" value="${escapeHTML(q)}" required size="48" aria-label="Address or place"> <button type="submit">Search</button></p>
+<p>${boxes.join(" ")}</p>
+</form>
+${results}
 <h2>Links</h2>
 ${linkList(links)}`
 	)
