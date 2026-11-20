@@ -552,6 +552,11 @@ bytes = "1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+# The crate is assembled inside the repository, whose root Cargo.toml declares a workspace, and
+# cargo refuses to check a package that sits under a workspace without being a member. The empty
+# table makes the crate its own workspace root wherever it is assembled.
+[workspace]
 `
 }
 
