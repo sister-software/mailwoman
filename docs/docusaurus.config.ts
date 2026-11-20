@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type * as Preset from "@docusaurus/preset-classic"
+import remarkPluginNPM2Yarn from "@docusaurus/remark-plugin-npm2yarn"
 import type { Config } from "@docusaurus/types"
 import { gitSync } from "@mailwoman/core/git"
 import { FontFamilies } from "@sister.software/theme"
@@ -175,6 +176,7 @@ const config: Config = {
 					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					remarkPlugins: [
+						[remarkPluginNPM2Yarn, { sync: true }],
 						remarkCodeSnippet,
 						remarkReleaseVersion,
 						[
@@ -189,7 +191,7 @@ const config: Config = {
 					],
 				},
 				pages: {
-					remarkPlugins: [remarkCodeSnippet, remarkReleaseVersion],
+					remarkPlugins: [remarkPluginNPM2Yarn, remarkCodeSnippet, remarkReleaseVersion],
 					// Co-located `.ts` helpers are not pages and SSG-fail ("no default export")
 					// if routed, so exclude them.
 					// The other entries reproduce Docusaurus's defaults.
@@ -212,6 +214,7 @@ const config: Config = {
 					blogSidebarCount: "ALL",
 					showReadingTime: true,
 					postsPerPage: 10,
+					remarkPlugins: [remarkPluginNPM2Yarn],
 
 					feedOptions: {
 						type: ["rss", "atom"],
