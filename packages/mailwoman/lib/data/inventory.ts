@@ -448,7 +448,7 @@ export function inventorySentence(report: InventoryReport): string {
 	const pct = ours === 0 ? 0 : Math.round((report.counts.manifested / ours) * 1000) / 10
 
 	return (
-		`${report.counts.manifested} of ${ours} mailwoman-built databases carry a layer_manifest (${pct}%)` +
+		`${report.counts.manifested} of ${ours} mailwoman-built databases carry a layer_manifest table (${pct}%)` +
 		`${report.counts.foreign ? `; ${report.counts.foreign} foreign, not ours to reproduce` : ""}` +
 		`${report.counts.unreadable ? `; ${report.counts.unreadable} could not be opened` : ""}` +
 		`. Walked ${report.maxDepth} level(s) under the data root and ${report.layerDepth} in its db/ group` +

@@ -125,12 +125,19 @@ describe("buildLayerReport", () => {
 			unread: 0,
 		})
 
-		// The summary lists every unread database by its path.
-		const summary = layerReportSummaryLines(report).join("\n")
+		const summary = layerReportSummaryLines(report)
 
-		for (const path of ["db/interpolation/interpolation-us-wi.db", "db/soil/soil.db", "db/wof/broken.db"]) {
-			expect(summary).toContain(path)
-		}
+		// Every state is counted in one line, so the states sum to the databases listed.
+		expect(summary[0]).toBe("layer manifests: 1 read + 1 invalid + 1 absent + 1 unopenable = 4 databases")
+
+		// An invalid or unopenable database is listed by its path, and an absent one only by its family's count.
+		expect(summary).toContain("      db/soil/soil.db")
+		expect(summary).toContain("      db/wof/broken.db")
+		expect(summary.join("\n")).not.toContain("db/interpolation/interpolation-us-wi.db")
+
+		expect(summary.find((line) => line.trimStart().startsWith("db/interpolation"))).toMatch(
+			/^ {2}db\/interpolation\s+1 {2}absent: the database has no layer_manifest table$/
+		)
 	})
 })
 

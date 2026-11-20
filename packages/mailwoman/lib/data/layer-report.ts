@@ -11,6 +11,7 @@
  *   An unread database states no license, and the report never reads that as a database without obligations.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerTerms, resolveLayerTerms, type SourceLocator } from "@mailwoman/core/layers/provenance"
 import { licenseIdentifiers, summarizeLicense } from "@mailwoman/core/license/obligations"
 import { licenseTextURL } from "@mailwoman/core/license/text-url"
@@ -324,8 +325,14 @@ export function obligationsPhrase(obligations: readonly string[], unknown: reado
  * The summary lines of a report: families, licenses, sources and unread databases.
  */
 export function layerReportSummaryLines(report: LayerReport): string[] {
+	const count = (state: ManifestRead) => report.entries.filter((entry) => entry.manifest === state).length
+	const invalid = count(ManifestRead.Invalid)
+
 	const lines = [
-		`layer manifests: ${report.read} read, ${report.unread} unread, of ${report.read + report.unread} databases`,
+		`layer manifests: ${report.read} read + ${invalid} invalid + ${count(ManifestRead.Absent)} absent + ` +
+			`${count(ManifestRead.Unopenable)} unopenable = ${report.entries.length} databases`,
+		`  The ${report.read + invalid} that carry a layer_manifest table are the ${report.read} read and the ` +
+			`${invalid} whose row the reader refuses.`,
 		``,
 		`by layer family (read / unread):`,
 		...report.families.map(
@@ -358,17 +365,26 @@ export function layerReportSummaryLines(report: LayerReport): string[] {
 	const unread = report.entries.filter((entry) => entry.manifest !== ManifestRead.Read)
 
 	if (unread.length) {
-		lines.push(``, `databases without a readable layer_manifest (${unread.length}), which state no license:`)
+		lines.push(
+			``,
+			`databases without a readable layer_manifest (${unread.length}), which state no license (family, databases, state: reason):`
+		)
 
-		const byFamily = Map.groupBy(unread, (entry) => entry.family)
+		const groups = Map.groupBy(unread, (entry) => stringifyJSON([entry.family, entry.manifest, entry.reason ?? ""]))
+		const width = Math.max(...unread.map((entry) => entry.family.length))
 
-		for (const [family, members] of byFamily) {
-			lines.push(`  ${family} (${members.length})`)
+		for (const members of groups.values()) {
+			const { family, manifest, reason } = members[0]!
 
-			for (const [reason, withReason] of Map.groupBy(members, (entry) => `${entry.manifest}: ${entry.reason ?? ""}`)) {
-				lines.push(`    ${reason}`, ...withReason.map((entry) => `      ${entry.path}`))
+			lines.push(`  ${family.padEnd(width)}  ${String(members.length).padStart(4)}  ${manifest}: ${reason}`)
+
+			// An invalid or unopenable database is one an operator must repair, so its path is listed here.
+			if (manifest !== ManifestRead.Absent) {
+				lines.push(...members.map((entry) => `      ${entry.path}`))
 			}
 		}
+
+		lines.push(`Pass --all to list the path of every database, absent ones included, with its state and reason.`)
 	}
 
 	return lines
