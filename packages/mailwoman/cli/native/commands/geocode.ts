@@ -163,7 +163,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Retrieve a soft country scope's own rows and promote them after the importance rerank; a hard scope also reports the same-name places it excluded.",
+				"Retrieve a soft country scope's own rows and promote them after the importance rerank. A hard scope also reports the same-name places it excluded.",
 		},
 		"sibling-locality-containment": {
 			type: "boolean",
@@ -183,7 +183,7 @@ export const spec = {
 			default: "hard",
 			choices: ["hard", "soft"],
 			description:
-				"How --parent acts: hard keeps only places its lineage agrees with; soft ranks the places inside it first.",
+				"How --parent acts. Hard keeps only places its lineage agrees with, and soft ranks the places inside it first.",
 		},
 		"capital-tier": {
 			type: "string",
