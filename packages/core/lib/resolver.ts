@@ -41,6 +41,7 @@ export {
 	RESOLVE_SWITCH_DEFAULTS,
 	resolveSwitches,
 	ScoreUnmeasuredReason,
+	wofIDFromPlaceID,
 } from "#resolver/types"
 
 export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"

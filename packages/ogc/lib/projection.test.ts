@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { Ancestor } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 
 import { geocodeSearchHits, OGCCollectionID } from "#index"
@@ -103,6 +104,8 @@ describe("geocodeSearchHits", () => {
 				lat: 52.37243,
 				displayName: "Amsterdam, Netherlands",
 				score: 5.92097073042671,
+				placeID: "wof:101751893",
+				placetype: "locality",
 			},
 		])
 	})
@@ -129,32 +132,101 @@ describe("geocodeSearchHits", () => {
 		)
 
 		expect(
-			hits.map(({ collectionID, displayName, score, scoreUnmeasured }) => ({
+			hits.map(({ collectionID, placeID, placetype, score, scoreUnmeasured }) => ({
 				collectionID,
-				displayName,
+				placeID,
+				placetype,
 				score,
 				scoreUnmeasured,
 			}))
 		).toEqual([
 			{
 				collectionID: "places",
-				displayName: "Camden, United States",
+				placeID: "wof:85975673",
+				placetype: "locality",
 				score: CAMDEN_NJ.score,
 				scoreUnmeasured: undefined,
 			},
 			{
 				collectionID: "places",
-				displayName: "Camden, United States",
+				placeID: "wof:404477989",
+				placetype: "localadmin",
 				score: CAMDEN_NJ.score,
 				scoreUnmeasured: undefined,
 			},
 			{
 				collectionID: "postcodes",
-				displayName: "Camden, United States",
+				placeID: "wof:1",
+				placetype: "postalcode",
 				score: null,
 				scoreUnmeasured: "population_unrecorded",
 			},
 		])
+	})
+
+	test("two places sharing a name and country are labeled with the regions the gazetteer records", () => {
+		const camdenAR = {
+			...CAMDEN_NJ,
+			placeID: "wof:85921237",
+			lat: 33.567931,
+			lon: -92.839659,
+			score: 4.0071501053666845,
+		}
+
+		// The lineages `candidate_ancestor` records for each place in the 2026-11-19 candidate gazetteer.
+		// Camden, New Jersey sits in a localadmin and a county whose gazetteer name is also Camden.
+		const ancestries: Record<number, Ancestor[]> = {
+			85_975_673: [
+				{ id: 1, placetype: "localadmin", name: "Camden" },
+				{ id: 2, placetype: "county", name: "Camden" },
+				{ id: 3, placetype: "region", name: "New Jersey" },
+				{ id: 4, placetype: "country", name: "United States" },
+			],
+			85_921_237: [
+				{ id: 5, placetype: "county", name: "Ouachita" },
+				{ id: 6, placetype: "region", name: "Arkansas" },
+				{ id: 4, placetype: "country", name: "United States" },
+			],
+		}
+
+		const hits = geocodeSearchHits(
+			geocodeResult({
+				input: "Camden",
+				lat: CAMDEN_NJ.lat,
+				lon: CAMDEN_NJ.lon,
+				countryCode: "US",
+				hierarchy: [{ ...CAMDEN_NJ, in_winner_lineage: true }],
+				candidates: [CAMDEN_NJ, camdenAR],
+			}),
+			(wofID) => ancestries[wofID] ?? []
+		)
+
+		expect(hits.map((hit) => hit.displayName)).toEqual([
+			"Camden, New Jersey, United States",
+			"Camden, Ouachita, Arkansas, United States",
+		])
+	})
+
+	test("a place without a WOF place ID, or without a recorded ancestry, keeps its name and country", () => {
+		const unidentified = { ...CAMDEN_NJ, placeID: null, lat: 1, lon: 1 }
+		const unrecorded = { ...CAMDEN_NJ, placeID: "wof:404475697", lat: 2, lon: 2 }
+		const looked: number[] = []
+
+		const hits = geocodeSearchHits(
+			geocodeResult({ input: "Camden", candidates: [unidentified, unrecorded] }),
+			(wofID) => {
+				looked.push(wofID)
+
+				return []
+			}
+		)
+
+		expect(hits.map(({ displayName, placeID }) => ({ displayName, placeID }))).toEqual([
+			{ displayName: "Camden, United States", placeID: undefined },
+			{ displayName: "Camden, United States", placeID: "wof:404475697" },
+		])
+
+		expect(looked).toEqual([404_475_697])
 	})
 
 	test("a result without a coordinate or candidates has no match", () => {

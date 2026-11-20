@@ -40,6 +40,18 @@ export interface OGCSearchHit {
 	 * Why `score` is null, absent when it holds a value.
 	 */
 	scoreUnmeasured?: string
+	/**
+	 * The gazetteer place ID of a place match, such as `wof:85975673`.
+	 *
+	 * Absent for an address, a street or a plus code, and for a place the gazetteer gave no ID.
+	 */
+	placeID?: string
+	/**
+	 * The gazetteer placetype of a place match, such as `locality` or `postalcode`.
+	 *
+	 * Absent for an address, a street or a plus code.
+	 */
+	placetype?: string
 }
 
 /**

@@ -82,6 +82,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
+	// The gazetteer's own ancestry reader labels each place match with its region and county.
+	const ancestorsOf = backend.ancestors?.bind(backend)
 	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	// The national open register ahead of the OpenStreetMap tier, read from one generation
 	// of the active selection, as the Photon and Nominatim servers read them.
@@ -112,7 +114,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				...(rooftops.osm ? { osmDatabases: rooftops.osm.for } : {}),
 			})
 
-			return geocodeSearchHits(result)
+			return geocodeSearchHits(result, ancestorsOf)
 		},
 	}
 

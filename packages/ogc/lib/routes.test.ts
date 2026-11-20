@@ -41,6 +41,8 @@ const DAM_1_HITS: OGCSearchHit[] = [
 		lat: 52.374,
 		displayName: "Amsterdam, Netherlands",
 		score: -5.94,
+		placeID: "wof:101751893",
+		placetype: "locality",
 	},
 	{
 		collectionID: OGCCollectionID.Places,
@@ -183,6 +185,8 @@ describe("search", () => {
 			display_name: "Amsterdam, Netherlands",
 			score: -5.94,
 			collection_id: OGCCollectionID.Places,
+			place_id: "wof:101751893",
+			placetype: "locality",
 		})
 	})
 

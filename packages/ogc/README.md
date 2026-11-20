@@ -75,6 +75,15 @@ Each feature's properties are:
   an address point or a place without a recorded population, has `score: null`, and `score_unmeasured` names the
   reason.
 - `collection_id`: the collection the feature belongs to.
+- `place_id` and `placetype`: the gazetteer place ID, such as `wof:85975673`, and placetype, such as `locality`
+  or `localadmin`, of a place or postcode. Two places that share a label, such as a locality and the
+  local-government area of the same name, differ here. Both are absent for an address, a street and a plus code,
+  and `place_id` is absent for a place the gazetteer gave no ID.
+
+A place's `display_name` is its name, then the ancestors the gazetteer records between it and its country, most
+specific first, then the country, such as `Camden, Ouachita, Arkansas, United States`. An ancestor that repeats
+the place's name appears once. A place without a WOF place ID, or without a recorded ancestry, keeps its name and
+country.
 
 The first feature is the engine's answer. The places the resolver weighed for the same part of the input
 follow. A box whose minimum longitude exceeds its maximum crosses the antimeridian. `f=html` without `q`

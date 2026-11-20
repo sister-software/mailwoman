@@ -455,6 +455,8 @@ export function searchFeature(hit: OGCSearchHit): OGCSearchFeature {
 			score: hit.score,
 			...(hit.score == null && hit.scoreUnmeasured ? { score_unmeasured: hit.scoreUnmeasured } : {}),
 			collection_id: hit.collectionID,
+			...(hit.placeID ? { place_id: hit.placeID } : {}),
+			...(hit.placetype ? { placetype: hit.placetype } : {}),
 		},
 	}
 }

@@ -130,10 +130,13 @@ export function collectionHTML(collection: OGCCollection): string {
 
 function searchFeatureItem(feature: OGCSearchFeature): string {
 	const [lon, lat] = feature.geometry.coordinates
-	const { display_name, score, score_unmeasured, collection_id } = feature.properties
+	const { display_name, score, score_unmeasured, collection_id, place_id, placetype } = feature.properties
 	const scoreText = score == null ? `score null (${score_unmeasured ?? "unmeasured"})` : `score ${score}`
+	const identity = [placetype, place_id].filter((part): part is string => typeof part === "string")
 
-	return `<li>${escapeHTML(display_name)} <span class="meta">${escapeHTML(collection_id)} &middot; ${lat}, ${lon} &middot; ${escapeHTML(scoreText)}</span></li>`
+	const meta = [collection_id, ...identity, `${lat}, ${lon}`, scoreText].map(escapeHTML).join(" &middot; ")
+
+	return `<li>${escapeHTML(display_name)} <span class="meta">${meta}</span></li>`
 }
 
 /**

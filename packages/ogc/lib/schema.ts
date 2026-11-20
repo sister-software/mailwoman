@@ -191,6 +191,14 @@ export const OGCSearchPropertiesSchema = z
 			description: "Why `score` is null. Absent when `score` holds a value.",
 		}),
 		collection_id: z.string().openapi({ description: "The collection the feature belongs to." }),
+		place_id: z.string().optional().openapi({
+			description:
+				"The gazetteer place ID of a place or postcode, such as `wof:85975673`. Absent for an address, a street, a plus code, or a place the gazetteer gave no ID.",
+		}),
+		placetype: z.string().optional().openapi({
+			description:
+				"The gazetteer placetype of a place or postcode, such as `locality`, `localadmin` or `postalcode`. Absent for an address, a street or a plus code.",
+		}),
 	})
 	.openapi("OGCSearchProperties")
 
