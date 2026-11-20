@@ -615,10 +615,8 @@ describe("readWeightsRightsRecords", () => {
 })
 
 describe("the records this repository holds today", () => {
-	it("covers twelve published weights packages, each attributing the artifacts it ships", async () => {
+	it("attributes the artifacts the en-GB weights package ships in that package's own record", async () => {
 		const records = await weightsRightsRecords(repoRootPath())
-
-		expect(records).toHaveLength(12)
 
 		// `pair-index-gb.bin` ships here with its Who's On First and ONS attribution,
 		// so a consumer who installs only the overlay receives the attribution with the artifact.

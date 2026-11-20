@@ -229,7 +229,6 @@ describe("filingLandscape — Check 1: interface conformance", () => {
 
 		const manifest = await readLayerManifest(schemadb)
 		expect(manifest.spineKeys.h3?.resolution).toBe(9)
-		expect(BDC_H3_RESOLUTION).toBe(9)
 
 		const row = await db
 			.selectFrom("bdc_availability")

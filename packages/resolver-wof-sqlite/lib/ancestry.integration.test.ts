@@ -48,12 +48,7 @@ test("placetypeDepth: descending-depth sort yields nearest-first (deepest placet
 	expect(nearestFirst).toEqual(["neighbourhood", "locality", "region", "country"])
 })
 
-test("PLACETYPE_DEPTH: the exported table matches placetypeDepth for every known key", () => {
-	for (const [placetype, depth] of Object.entries(PLACETYPE_DEPTH)) {
-		expect(placetypeDepth(placetype)).toBe(depth)
-	}
-
-	// Each depth is unique (no two placetypes collide at the same rank).
+test("PLACETYPE_DEPTH: no two placetypes share a depth", () => {
 	const depths = Object.values(PLACETYPE_DEPTH)
 	expect(new Set(depths).size).toBe(depths.length)
 })

@@ -32,7 +32,6 @@ test("rustCargoToml interpolates the given version and names the mailwoman-clien
 
 	expect(toml).toContain('name = "mailwoman-client"')
 	expect(toml).toContain('version = "5.10.1"')
-	expect(toml).toContain('progenitor = "0.14"')
 })
 
 test("rustLibRs declares a generate_api! module + a *_local() constructor for every surface", () => {

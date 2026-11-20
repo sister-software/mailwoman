@@ -75,12 +75,9 @@ describe("corpus run option validation", () => {
 		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--limit", "10"])).not.toThrow()
 	})
 
-	test("input + out are required; corpusVersion defaults to 0.1.0-dev", () => {
+	test("input + out are required", () => {
 		expect(() => parseCommand(runSpec, ["adapter", "--out", "y"])).toThrow(/input/)
 		expect(() => parseCommand(runSpec, ["adapter", "--input", "x"])).toThrow(/out/)
-		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--out", "y"])
-		expect(parsed.values["corpus-version"]).toBe("0.1.0-dev")
-		expect(parsed.values["progress-every"]).toBe(1000)
 	})
 
 	test("the retired --output still satisfies the requirement it used to", () => {

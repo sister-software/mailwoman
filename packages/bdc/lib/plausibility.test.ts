@@ -392,8 +392,6 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 
 		const dslEntry = filingEntries.find((e) => e.filing.provider_id === PROVIDER_DSL)!
 		expect(dslEntry.corroborates).toBe(false)
-
-		expect(filingEntries.every((e) => e.type === "filing")).toBe(true)
 	})
 
 	it("corroborates false for a same-tech but LESSER speed filing", async () => {

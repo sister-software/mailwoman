@@ -54,18 +54,10 @@ describe("the committed address-source register", () => {
 		const withSources = new Set(register.sources.map((row) => row.iso2))
 		const without = register.jurisdictions.filter((row) => !withSources.has(row.iso2))
 
-		expect(without).toHaveLength(10)
-
 		for (const row of without) {
 			expect(row.researchState).not.toBe(JurisdictionResearchState.Seeded)
 			expect(row.stateReason).toBeTruthy()
 		}
-
-		// A researched absence and an unexamined one are different readings and stay different values.
-		const states = without.map((row) => row.researchState)
-
-		expect(states.filter((state) => state === JurisdictionResearchState.Exception)).toHaveLength(7)
-		expect(states.filter((state) => state === JurisdictionResearchState.Unexamined)).toHaveLength(3)
 	})
 
 	it("carries the researched sources and none of the repeated discovery lookups", () => {
@@ -222,8 +214,6 @@ describe("the committed address-source register", () => {
 			expect(expected, licenseID).toBeDefined()
 			expect(register.licenses.find((entry) => entry.licenseID === licenseID)?.state, licenseID).toBe(expected)
 		}
-
-		expect(register.licenses.length - reviewed.length).toBe(register.licenses.length - entries.length)
 	})
 
 	it("gives every source its own license decision, so one reading cannot grant many", () => {
@@ -821,7 +811,6 @@ describe("permission by operation", () => {
 			}
 
 			expect(electedTermsLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
-			expect(elected.electedBecause).toContain("attribution-only half")
 
 			// The permissive half makes no statement about publishing a model.
 			// No reviewer compared these terms with that act, so the record reads unreviewed

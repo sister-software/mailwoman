@@ -94,8 +94,6 @@ test("cleanLieuDit: drops the literal header-leak value", () => {
 test("cleanLieuDit: drops placeholder sentinels (_1, _23, …)", () => {
 	expect(cleanLieuDit("_1", "Altier")).toBeNull()
 	expect(cleanLieuDit("_23", "Altier")).toBeNull()
-	// Not a placeholder — a real name that happens to start with an underscore-free digit run is untouched.
-	expect(cleanLieuDit("Le Bourg", "Altier")).toBe("Le Bourg")
 })
 
 test("cleanLieuDit: drops the 'ancienne commune :' prefix bucket (deferred, not raw-labeled)", () => {

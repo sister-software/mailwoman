@@ -18,7 +18,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
-import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "#candidate/name-roles"
+import { stampNameRoles } from "#candidate/name-roles"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import { CANDIDATE_COLUMNS, type CandidateDatabase, createCandidateStagingTables } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
@@ -210,8 +210,6 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 	})
 
 	test("never flags an admin placetype, where an exonym set is the expected shape", async () => {
-		expect(GLOSS_EXCLUDED_PLACETYPES.has("country")).toBe(true)
-
 		const { roleGloss, keyTailPlaces } = await stamp(
 			[
 				{

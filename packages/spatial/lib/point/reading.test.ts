@@ -290,7 +290,6 @@ describe("the handler map", () => {
 		].toSorted()
 
 		expect(Object.keys(POINT_QUERY_DESCRIPTIONS).toSorted()).toEqual(kinds)
-		expect(kinds).toHaveLength(23)
 	})
 
 	test("refuses a map that omits a kind of a composed family", () => {

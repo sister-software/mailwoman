@@ -20,7 +20,6 @@ describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {
 	it("falls back to the conservative default for an unmeasured region", () => {
 		// FL isn't in the 12-state seed table → the deliberately-high default (rural-skewed).
 		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "fl")).toBe(INTERP_RADIUS_CALIBRATION.default)
-		expect(INTERP_RADIUS_CALIBRATION.default).toBe(1.95)
 	})
 
 	it("falls back to the default for an absent region (null/undefined)", () => {

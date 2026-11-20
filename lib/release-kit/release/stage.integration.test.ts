@@ -19,11 +19,7 @@ import { afterAll, describe, expect, it } from "vitest"
 
 import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"
 import { collectDataFileEntries, literalFilesEntries, verifyTarball } from "#release-kit/pack/verify-tarball"
-import {
-	assertWorkspacePublishable,
-	checkReleaseListIdentity,
-	SANCTIONED_RELEASE_ABSENCES,
-} from "#release-kit/release/stage"
+import { assertWorkspacePublishable, checkReleaseListIdentity } from "#release-kit/release/stage"
 import { planWeightsMaterialization } from "#release-kit/weights/fetch-hf-weights"
 
 const fixtures = new AsyncDisposableStack()
@@ -38,7 +34,6 @@ describe("checkReleaseListIdentity", () => {
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(21)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {

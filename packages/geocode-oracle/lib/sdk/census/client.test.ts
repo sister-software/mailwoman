@@ -146,7 +146,6 @@ describe("parseCensusAddressMatch", () => {
 	it("always reports the interpolated tier", () => {
 		// Census interpolates positions along address ranges.
 		expect(parseCensusAddressMatch(match()).address.geocode?.tier).toBe(CENSUS_RESOLUTION_TIER)
-		expect(CENSUS_RESOLUTION_TIER).toBe("interpolated")
 	})
 
 	it("carries the TIGER segment through on raw rather than calling it a place ID", () => {

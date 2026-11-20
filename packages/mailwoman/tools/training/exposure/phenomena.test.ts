@@ -22,8 +22,6 @@ const canonical = (raw: string, country: string, components: Record<string, stri
 
 describe("exposure phenomena", () => {
 	test("the ids are the convention claim ids, one of them relational", () => {
-		expect(PHENOMENON_IDS).toHaveLength(8)
-
 		expect(PHENOMENON_IDS.filter((id) => CLAIM_ARITY[id] === ClaimArity.Relational)).toEqual([
 			"ordering-reverses-with-script",
 		])

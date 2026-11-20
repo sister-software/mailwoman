@@ -30,9 +30,7 @@ describe("regionLanguagesAlpha3", () => {
 })
 
 describe("ES_PROVINCE_CO_OFFICIAL_LANGUAGES", () => {
-	it("names the sixteen provinces the statutes give a co-official language, each in ISO 639-3", () => {
-		expect(ES_PROVINCE_CO_OFFICIAL_LANGUAGES.size).toBe(16)
-
+	it("writes every co-official language in ISO 639-3, and gives Madrid none", () => {
 		for (const codes of ES_PROVINCE_CO_OFFICIAL_LANGUAGES.values()) {
 			for (const code of codes) {
 				expect(code).toMatch(/^[a-z]{3}$/u)

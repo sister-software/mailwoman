@@ -5,7 +5,7 @@ import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
-import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "#stripe/webhook"
+import { verifyStripeEvent } from "#stripe/webhook"
 import { invoicePaidEvent } from "#test/support/stripe/fixtures"
 import { signedWebhook } from "#test/support/stripe/mock"
 
@@ -65,7 +65,5 @@ describe("webhook verification", () => {
 			kind: "ignored",
 			reason: expect.stringContaining("livemode"),
 		})
-
-		expect(ACCEPTED_EVENT_TYPES).toHaveLength(7)
 	})
 })

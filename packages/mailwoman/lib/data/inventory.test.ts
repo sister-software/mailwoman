@@ -17,15 +17,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-import {
-	buildCommandGaps,
-	FOREIGN_ROOTS,
-	inventorySentence,
-	Provenance,
-	probeManifest,
-	rebuildHint,
-	takeInventory,
-} from "#data"
+import { buildCommandGaps, inventorySentence, Provenance, probeManifest, rebuildHint, takeInventory } from "#data"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -101,7 +93,6 @@ describe("takeInventory — the four states stay distinct", () => {
 		// It reports the skip so the bounded walk remains visible in coverage results.
 		expect(report.skippedForeign).toBe(1)
 		expect(report.entries.some((e) => e.path.startsWith("pelias-rig"))).toBe(false)
-		expect(Object.keys(FOREIGN_ROOTS)).toContain("pelias-rig")
 	})
 
 	it("reports a symlinked artifact's target, because the link IS the choice", async () => {

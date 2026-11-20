@@ -3,12 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	expandFinessVoieType,
-	isStreetNameDigitPlaced,
-	splitFrenchStreetType,
-	TRE_R35_VOIE_TYPES,
-} from "#fr/adapters/finess/voie-type"
+import { expandFinessVoieType, isStreetNameDigitPlaced, splitFrenchStreetType } from "#fr/adapters/finess/voie-type"
 
 /**
  * Every `typvoie` code the overseas rows of the 2026-05-04 extract use, with TRE-R35's display for each.
@@ -72,7 +67,6 @@ describe("expandFinessVoieType", () => {
 	})
 
 	it("follows TRE-R35 where the codex reads an abbreviation another way", () => {
-		expect(TRE_R35_VOIE_TYPES["PASS"]).toBe("passe")
 		expect(expandFinessVoieType("PASS")).toBe("passe")
 	})
 })

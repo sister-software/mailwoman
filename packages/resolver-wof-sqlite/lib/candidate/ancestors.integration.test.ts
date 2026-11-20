@@ -143,8 +143,6 @@ describe("the candidate ancestors sidecar", () => {
 	test("the reader serves the chain as Ancestor rows, nearest-first and memo-stable", () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(typeof lk.ancestors).toBe("function")
-
 		const chain = lk.ancestors!(WEIMAR_DE)
 
 		expect(chain).toEqual([

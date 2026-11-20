@@ -114,7 +114,6 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		const r = resolver()
 
 		expect(r.header).toEqual(HEADER_AS_WRITTEN)
-		expect(r.header.delta).toBe(0.42)
 	})
 
 	it("exposes delta as a top-level accessor so the resolver conforms to PairIndexLike", () => {

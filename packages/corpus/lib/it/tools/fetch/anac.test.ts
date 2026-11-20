@@ -57,8 +57,6 @@ function stubClient(results: StubResult[]): APIClient & { calls: string[] } {
 
 describe("anacEditionURL", () => {
 	it("names the publication the registry serves ANAC under", () => {
-		expect(IT_ANAC_PUBLICATION_ID).toBe(117)
-
 		expect(anacEditionURL("2025")).toBe(
 			"https://data.open-contracting.org/en/publication/117/download?name=2025.jsonl.gz"
 		)

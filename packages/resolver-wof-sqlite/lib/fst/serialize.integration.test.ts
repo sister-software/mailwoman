@@ -175,7 +175,6 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		const rest = restored.query("New York")
 		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofID === 85_977_539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofID).toBe(85_977_539)
 		expect(nyc!.parentChain).toContain(85_688_543)
 	})
 

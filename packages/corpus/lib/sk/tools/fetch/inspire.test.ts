@@ -133,7 +133,6 @@ describe("skInspireInputPath", () => {
 
 	it("takes the four component types before the addresses they are joined against", () => {
 		expect(SK_INSPIRE_TYPES.at(-1)).toBe("Address")
-		expect(SK_INSPIRE_TYPES).toHaveLength(5)
 	})
 })
 

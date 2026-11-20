@@ -16,9 +16,6 @@ describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", async () => {
 		const rows = await loadSuite()
 
-		expect(rows.length).toBeGreaterThanOrEqual(16)
-		expect(rows.length).toBeLessThanOrEqual(25)
-
 		for (const row of rows) {
 			expect(row.id).toBeTruthy()
 			expect(row.raw).toBeTruthy()

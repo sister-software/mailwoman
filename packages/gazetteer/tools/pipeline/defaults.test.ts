@@ -38,8 +38,6 @@ test("geonamesAdminGapCountries is the zero-coverage gap set (#1026 — the GeoN
 	const gap = geonamesAdminGapCountries()
 
 	// GeoNames-only locales: in the alias set, but carrying no WOF or Overture admin.
-	expect(gap).toHaveLength(147)
-
 	for (const cc of gap) {
 		expect(DEFAULT_GEONAMES_COUNTRIES).toContain(cc)
 		expect(DEFAULT_OVERTURE_COUNTRIES).not.toContain(cc)

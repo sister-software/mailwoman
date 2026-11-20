@@ -43,8 +43,6 @@ import {
 	auditAbsenceProbeDefinition,
 	loadAbsenceProbeDefinition,
 	absenceProbeDefinitionHash,
-	ABSENCE_PROBE_DEFINITION_PATH,
-	ABSENCE_PROBE_FREEZE_PATH,
 	type AbsenceProbeDefinition,
 } from "#tools/eval-harness/absence-observation/probe"
 
@@ -451,8 +449,6 @@ describe("the frozen pre-registration", () => {
 	it("loads, and its content hash matches the committed freeze record", () => {
 		expect(definition.probeID).toBe("absence-observation-pharmacy-idf-v1")
 		expect(auditAbsenceProbeDefinition(definition)).toEqual([])
-		expect(ABSENCE_PROBE_DEFINITION_PATH).toContain("probe-definition.json")
-		expect(ABSENCE_PROBE_FREEZE_PATH).toContain("probe-freeze.json")
 	})
 
 	it("refuses a definition whose content has moved", () => {

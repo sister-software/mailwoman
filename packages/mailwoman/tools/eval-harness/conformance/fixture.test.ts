@@ -68,8 +68,6 @@ async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise
 
 describe("conformance fixture vocabulary", () => {
 	it("refuses candidate_admissibility the relation it cannot report", () => {
-		expect(RELATIONS_BY_COMPARATOR["candidate_admissibility"]).toEqual(["refines", "diverges"])
-
 		expect(() =>
 			parseConformanceFixture(record({ resultComparator: "candidate_admissibility", expect: "equivalent" }), "inline")
 		).toThrow(/cannot express the relation "equivalent"/)

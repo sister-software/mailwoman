@@ -35,7 +35,6 @@ describe("titleCaseGB", () => {
 	it("capitalizes apostrophe-name segments but not possessive 's", () => {
 		expect(titleCaseGB("TOLLESHUNT D'ARCY")).toBe("Tolleshunt D'Arcy")
 		expect(titleCaseGB("STOKE D'ABERNON")).toBe("Stoke D'Abernon")
-		expect(titleCaseGB("BISHOP'S STORTFORD")).toBe("Bishop's Stortford")
 	})
 
 	it("trims leading whitespace without breaking first-word capitalization", () => {

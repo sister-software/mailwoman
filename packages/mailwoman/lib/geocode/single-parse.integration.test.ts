@@ -69,10 +69,10 @@ describe("geocodeAddress — parsedTree dedupe", () => {
 })
 
 describe("parseForGeocode", () => {
-	test("parses once with the geocode options (postcodeRepair + caseNormalization) and returns a tree", async () => {
+	test("parses once with the geocode options (postcodeRepair + caseNormalization)", async () => {
 		const classifier = fakeClassifier(emptyTree)
 
-		const tree = await parseForGeocode("500 N HIATUS RD, PEMBROKE PINES, FL", {
+		await parseForGeocode("500 N HIATUS RD, PEMBROKE PINES, FL", {
 			classifier,
 		})
 
@@ -82,8 +82,6 @@ describe("parseForGeocode", () => {
 			expect.any(String),
 			expect.objectContaining({ postcodeRepair: true, caseNormalization: "title-case" })
 		)
-
-		expect(tree).toBeDefined()
 	})
 
 	test("a tree from parseForGeocode, fed back as parsedTree, reaches the resolver unchanged", async () => {

@@ -1189,8 +1189,6 @@ describe("composeAdversarialRow", () => {
 		expect(span_ends).toEqual([21, 30, 34, 40])
 		const surfaces = span_tags!.map((_, i) => raw.slice(span_starts![i]!, span_ends![i]!))
 		expect(surfaces).toEqual(["Buffalo Health Clinic", "Buffalo", "NY", "14201"])
-		expect(span_ends![0]!).toBeLessThanOrEqual(21)
-		expect(span_starts![1]!).toBeGreaterThanOrEqual(23)
 	})
 
 	it("composed spans satisfy the #519 invariants under every separator", () => {

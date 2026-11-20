@@ -7,9 +7,7 @@ import { describe, expect, it } from "vitest"
 import { overlayDuckDBLimits, spec } from "./overlay-manifest.tsx"
 
 describe("corpus overlay-manifest DuckDB options", () => {
-	it("declares both options as numbers", () => {
-		expect(spec.options["duckdb-memory-gib"].type).toBe("number")
-		expect(spec.options["duckdb-threads"].type).toBe("number")
+	it("refuses a fractional thread count and a zero memory limit", () => {
 		expect(spec.options["duckdb-threads"].validate(1.5)).toBe(false)
 		expect(spec.options["duckdb-memory-gib"].validate(0)).toBe(false)
 	})

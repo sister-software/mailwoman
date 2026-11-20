@@ -71,8 +71,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		expect(countryOfFinnishMunicipality(code)).toBe(expected)
 	})
 
-	it("covers all sixteen Åland municipalities", () => {
-		expect(ALAND_MUNICIPALITIES.size).toBe(16)
+	it("writes every Åland municipality code with three characters", () => {
 		expect([...ALAND_MUNICIPALITIES].every((code) => code.length === 3)).toBe(true)
 	})
 

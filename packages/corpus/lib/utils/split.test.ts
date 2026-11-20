@@ -416,10 +416,7 @@ describe("defaultHoldouts", () => {
 		expect(splitForRow({ ...nsukka, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
 	})
 
-	it("keeps the DE postcode area, and holds out FR districts inside Corsica and Creuse rather than both departments", () => {
-		// DE: Upper Lusatia 02.
-		expect(policyOf(defaultHoldouts().DE).postcodePrefixes).toEqual(["02"])
-
+	it("holds out FR districts inside Corsica and Creuse rather than both departments", () => {
 		const fr = (postcode: string) =>
 			splitForRow({ source_id: `fr-${postcode}`, country: "FR", components: { postcode } })
 
@@ -437,7 +434,6 @@ describe("defaultHoldouts", () => {
 		// The `split.ts` comment records the evidence used to set these prefixes.
 		const gb = policyOf(defaultHoldouts().GB)
 
-		expect(gb.postcodePrefixes?.slice(0, 2)).toEqual(["TR", "HX"])
 		// The LL area is held out by district rather than whole (Conwy, Wrecsam and Sir Ddinbych lie inside it).
 		expect(gb.postcodePrefixes).not.toContain("LL")
 

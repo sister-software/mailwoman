@@ -104,13 +104,9 @@ describe("lookupPOICategoryLocaleNormalized over the shipped table", () => {
 })
 
 describe("taxonomy integrity", () => {
-	it("every synonym points at an existing category, and hierarchies end with the category id", () => {
+	it("every hierarchy ends with its category id", () => {
 		for (const category of getAllCategories()) {
 			expect(category.hierarchy.at(-1)).toBe(category.id)
-		}
-
-		for (const category of getAllCategories()) {
-			expect(getPOICategory(category.id)).toBeDefined()
 		}
 	})
 

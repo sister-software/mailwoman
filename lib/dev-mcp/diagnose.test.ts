@@ -470,7 +470,6 @@ describe("assembleAccount — the terminal states", () => {
 		const account = assembleAccount(ITEM, run({ trace: traceOf() }), FAILED_EXPECTATION)
 
 		expect(account.shapes).toEqual(["unclassified"])
-		expect(SHAPE_PREDICATES.unclassified).toContain("novelty signal")
 	})
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {

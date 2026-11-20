@@ -285,8 +285,6 @@ describe("buildingFeatures: the three London buildings at the planned stage", ()
 	test("28-30 Addiscombe Grove: two sources agree on 153 planned units, and no record bears on service", () => {
 		const sources = [addiscombe!.ldd, "gla-referral-3831a"]
 
-		expect(addiscombe!.referral?.source).toBe("gla-referral-3831a")
-
 		expect(londonFeature(ADDISCOMBE_GROVE).properties).toMatchObject({
 			label: "28-30 Addiscombe Grove",
 			state: BuildingState.UnknownCoverage,
@@ -310,8 +308,6 @@ describe("buildingFeatures: the three London buildings at the planned stage", ()
 	test("130-154, 154a Pentonville Road: 119 and 118 planned units leave the denominator unresolved", () => {
 		const reason = `2 counts share the same subject, stage, date and membership (${pentonville!.key}:residential-units) and disagree: 119 versus 118`
 		const sources = [pentonville!.ldd, "gla-referral-2924b"]
-
-		expect(pentonville!.referral?.source).toBe("gla-referral-2924b")
 
 		expect(londonFeature(PENTONVILLE_ROAD).properties).toMatchObject({
 			label: "130-154, 154a Pentonville Road",

@@ -36,11 +36,6 @@ describe("two frontages", () => {
 		])
 
 		expect(entrancesOf(HOUSE, CONTAINMENT).map((link) => link.child)).toEqual([NORTH, SOUTH])
-
-		expect(ALIASES.map((alias) => alias.text)).toEqual([
-			"North entrance, Example House",
-			"South entrance, Example House",
-		])
 	})
 
 	test("an alias with two candidates is ambiguous and keeps both", () => {

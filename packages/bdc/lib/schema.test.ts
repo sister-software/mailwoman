@@ -7,7 +7,6 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 import {
-	BDC_COVERAGE_H3_RESOLUTION,
 	BDC_H3_RESOLUTION,
 	createBDCAvailabilityTable,
 	createBDCGeoidIndex,
@@ -73,7 +72,5 @@ describe("bdc schema", () => {
 
 		const manifestRow = await db.selectFrom("layer_manifest").selectAll().executeTakeFirstOrThrow()
 		expect(manifestRow.name).toBe("bdc")
-
-		expect(BDC_COVERAGE_H3_RESOLUTION).toBe(6)
 	})
 })

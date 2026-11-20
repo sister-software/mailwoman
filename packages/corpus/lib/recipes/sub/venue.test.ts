@@ -244,7 +244,6 @@ describe("buildSubVenueForm", () => {
 	})
 
 	it("produces the target modifier+designator class for an English leg, and never for a non-English one", () => {
-		const model = buildIdentifierModel(lexicon, "GB")
 		const english = legFor("en-GB")
 		const french = legFor("fr-FR")
 
@@ -270,7 +269,6 @@ describe("buildSubVenueForm", () => {
 
 		expect(gb.filter((f) => f === "modifier-designator").length / gb.length).toBeGreaterThan(0.4)
 		expect(fr.filter((f) => f === "modifier-designator")).toHaveLength(0)
-		expect(model).toBeDefined()
 	})
 
 	it("never puts a modifier in front of a designator the shipped list excludes", () => {
