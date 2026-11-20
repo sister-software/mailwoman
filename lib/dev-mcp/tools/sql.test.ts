@@ -109,4 +109,20 @@ describe("mwdev_sql", () => {
 
 		expect(result.rows).toEqual([{ n: 5 }])
 	})
+
+	it("refuses a second statement that follows a block comment", async () => {
+		await expect(
+			runSQL({ database: "db/places.db", sql: "SELECT 1; /* note */ DELETE FROM place" }, dataRoot)
+		).rejects.toThrow(/holds another after/)
+	})
+
+	it("reads a tail of repeated comment markers in one pass", async () => {
+		// A backtracking pattern over this tail takes time exponential in the repetitions.
+		const tail = `/*${"*//*".repeat(5000)}`
+		const startedAt = performance.now()
+		const result = await runSQL({ database: "db/places.db", sql: `SELECT count(*) AS n FROM place; ${tail}` }, dataRoot)
+
+		expect(result.rows).toEqual([{ n: 5 }])
+		expect(performance.now() - startedAt).toBeLessThan(2000)
+	})
 })

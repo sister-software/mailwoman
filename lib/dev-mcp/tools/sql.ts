@@ -36,9 +36,52 @@ const MAX_LIMIT = 1000
 const MAX_RUNS = 25
 
 /**
- * The text after a statement when it holds only whitespace, semicolons and comments.
+ * Whether the text after a statement holds only whitespace, semicolons and comments.
+ *
+ * The scan reads each character once.
+ * A regular expression with a lazy block-comment branch inside a repeated group backtracks
+ * exponentially in the number of times a tail repeats the closing and opening markers
+ * after it opens a block comment, so the tail is scanned by position.
+ *
+ * A block comment without its closing marker runs to the end of the text, as SQLite reads it.
  */
-const EMPTY_TAIL = /^(?:\s|;|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*$/u
+function isEmptyTail(tail: string): boolean {
+	let index = 0
+
+	while (index < tail.length) {
+		const character = tail[index]!
+
+		if (character === ";" || character.trim() === "") {
+			index++
+
+			continue
+		}
+
+		if (tail.startsWith("--", index)) {
+			const lineEnd = tail.indexOf("\n", index)
+
+			if (lineEnd === -1) return true
+
+			index = lineEnd + 1
+
+			continue
+		}
+
+		if (tail.startsWith("/*", index)) {
+			const commentEnd = tail.indexOf("*/", index + 2)
+
+			if (commentEnd === -1) return true
+
+			index = commentEnd + 2
+
+			continue
+		}
+
+		return false
+	}
+
+	return true
+}
 
 const VACUUM_INTO = /^\s*vacuum\b[\s\S]*\binto\b/iu
 
@@ -135,7 +178,7 @@ function assertOneStatement(sql: string, statement: StatementSync): void {
 	const start = sql.indexOf(first)
 	const tail = start === -1 ? "" : sql.slice(start + first.length)
 
-	if (!EMPTY_TAIL.test(tail)) {
+	if (!isEmptyTail(tail)) {
 		throw new Error(
 			`mwdev_sql runs one statement, and the SQL holds another after ${stringifyJSON(first.trim())}: ${stringifyJSON(tail.trim())}.`
 		)
