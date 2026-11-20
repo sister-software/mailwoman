@@ -35,6 +35,7 @@ import { poBoxRecipe } from "#recipes/po/box"
 import { poBoxCedexRecipe } from "#recipes/po/box/cedex"
 import { postalGuidelineRecipe } from "#recipes/postal/guideline"
 import { postalUnitGuidelineRecipe } from "#recipes/postal/unit-guideline"
+import { prominentPlacesRecipe } from "#recipes/prominent/places"
 import type { CorpusRecipe } from "#recipes/scaffold"
 import { streetRecipe } from "#recipes/street"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "#recipes/street/affix"
@@ -58,6 +59,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	bareCountryRecipe,
 	trailingRegionRecipe,
 	usCountyRecipe,
+	prominentPlacesRecipe,
 	reviewedPostcodeTailRecipe,
 	streetRecipe,
 	streetBareRecipe,

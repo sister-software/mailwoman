@@ -16,12 +16,11 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { QUERY_SHAPES, type QueryShape } from "@mailwoman/corpus/recipes/prominent/places"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
-
-import { QUERY_SHAPES, type QueryShape } from "#tools/dev-tools/corpus/prominent-places"
 
 function quoted(value: string): string {
 	return `'${escapeSQLString(value)}'`

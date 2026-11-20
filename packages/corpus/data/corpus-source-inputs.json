@@ -3223,6 +3223,21 @@
 			],
 			"authored": ["the Islamabad sector grid in packages/corpus/lib/south-asia/recipes/register.ts"]
 		},
+		"rendered-prominent-places": {
+			"aliases": ["synth-prominent-places"],
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "locality and sub-locality names, their parent locality and region names, and region abbreviation rows of the WOF candidate table"
+				}
+			],
+			"authored": [
+				"COUNTRY_DISPLAY_NAME in packages/corpus/lib/adapters/wof/json-rows.ts",
+				"country surface forms in @mailwoman/codex/country/country",
+				"the runtime's Intl.DisplayNames English region name, for a territory with no WOF country or dependency record"
+			]
+		},
 		"rendered-pt": {
 			"aliases": ["synth-pt"],
 			"inputs": [

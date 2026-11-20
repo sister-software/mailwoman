@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The prominent-places census (see `prominent-places.ts`).
+ *   The prominent-places census (see `places.ts`).
  *
  *   Usage:
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts places --out <dir> \
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts places --out <dir> \
  *       [--candidate-db <path>] [--geonames-glob <glob>] [--geonames-postal <path>]
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts scan --out <dir> --manifest <MANIFEST.json> \
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts scan --out <dir> --manifest <MANIFEST.json> \
  *       [--limit-files N]
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts coverage --out <dir>
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts report --out <dir>
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts inputs --out <dir> [--per-band N] \
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts coverage --out <dir>
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts report --out <dir>
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts inputs --out <dir> [--per-band N] \
  *       [--include <WOF id>,<WOF id>]
- *     node packages/mailwoman/tools/dev-tools/corpus/prominent-places.run.ts grade --out <dir>
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts grade --out <dir>
+ *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts tuples --out <dir>
+ *
+ *   `tuples` reads `places.parquet` and a base corpus's `scan` from `--out` and writes
+ *   `prominent-tuples.jsonl`, the `prominent-places` recipe's input (`tuples.ts`).
  *
  *   `places`, `scan` and `coverage` write parquet into `--out`.
  *   `report` prints the prominence distribution and the coverage tables as markdown.
@@ -30,8 +34,9 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath } from "path-ts"
 
-import { buildProminentPlaces, measureCoverage, scanShortAdminRows } from "#tools/dev-tools/corpus/prominent-places"
-import { drawGeocodeInputs, gradeGeocodes, renderProminenceReport } from "#tools/dev-tools/corpus/prominent-probe"
+import { buildProminentPlaces, measureCoverage, scanShortAdminRows } from "#tools/dev-tools/corpus/prominent/places"
+import { drawGeocodeInputs, gradeGeocodes, renderProminenceReport } from "#tools/dev-tools/corpus/prominent/probe"
+import { writeProminentTuples } from "#tools/dev-tools/corpus/prominent/tuples"
 
 const { values, positionals } = parseArguments({
 	allowPositionals: true,
@@ -41,6 +46,7 @@ const { values, positionals } = parseArguments({
 		"candidate-db": { type: "string" },
 		"geonames-glob": { type: "string" },
 		"geonames-postal": { type: "string" },
+		"geonames-admin1": { type: "string" },
 		"limit-files": { type: "string" },
 		"per-band": { type: "string" },
 		include: { type: "string" },
@@ -67,6 +73,7 @@ if (command === "places") {
 		candidateDB: values["candidate-db"] ?? wofDatabasePath("candidate.db").toString(),
 		geonamesGlob: values["geonames-glob"] ?? dataRootPath("geonames", "[A-Z][A-Z].txt").toString(),
 		geonamesPostal: values["geonames-postal"] ?? dataRootPath("geonames", "allCountries-postal.txt").toString(),
+		geonamesAdmin1: values["geonames-admin1"] ?? dataRootPath("geonames", "admin1CodesASCII.txt").toString(),
 		out,
 		limits,
 		log,
@@ -100,6 +107,8 @@ if (command === "places") {
 	)
 } else if (command === "grade") {
 	console.log(await gradeGeocodes({ out }))
+} else if (command === "tuples") {
+	console.log(stringifyJSON(await writeProminentTuples({ out, limits })))
 } else {
-	throw new Error("expected one of places, scan, coverage, report, inputs, grade")
+	throw new Error("expected one of places, scan, coverage, report, inputs, grade, tuples")
 }

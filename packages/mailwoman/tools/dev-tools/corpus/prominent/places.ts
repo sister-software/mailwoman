@@ -21,35 +21,28 @@
  *   and every place name is folded by the same SQL before the join.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import {
 	REFERENTIAL_LOG2_SCALE,
 	REFERENTIAL_POPULATION_DIVISOR,
 	referentialFromPopulation,
 } from "@mailwoman/core/resolver"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { PLACE_BANDS, type PlaceBand } from "@mailwoman/corpus/recipes/prominent/places"
 import type { CorpusDeletion } from "@mailwoman/corpus/tools/overlay/deletions"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { foldSurfaceSQL, stageTrainRows, type TrainManifestFile } from "@mailwoman/corpus/tools/support-index"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
+import {
+	PROMINENT_PLACES_RECORD,
+	PROMINENT_PLACES_RECORD_VERSION,
+	type ProminentPlacesRecord,
+} from "#tools/training/audits/prominent/coverage"
+
 // #region Prominence
-
-/**
- * The placetype bands a place is ranked within, each a set of WOF placetypes.
- *
- * A borough sits in the sub-locality band because WOF parents it under a locality
- * (Brooklyn under New York, Camden under London).
- */
-export const PLACE_BANDS = {
-	locality: ["locality", "localadmin"],
-	sublocality: ["borough", "macrohood", "neighbourhood", "microhood"],
-} as const satisfies Record<string, readonly string[]>
-
-/**
- * One placetype band.
- */
-export type PlaceBand = keyof typeof PLACE_BANDS
 
 /**
  * The fewest places one country and band selects, when it ranks at least this number.
@@ -81,6 +74,12 @@ const REFERENTIAL_SQL_TOLERANCE = 1e-9
 export const GEONAMES_MATCH_KM = 15
 
 /**
+ * The radius within which a locality and a localadmin of one name
+ * (Zürich, WOF 101748463 and 1394254167) are one place and take one rank.
+ */
+export const TWIN_KM = 10
+
+/**
  * The radius a capital point must lie within to mark a place as its country's capital.
  */
 export const CAPITAL_MATCH_KM = 15
@@ -88,6 +87,20 @@ export const CAPITAL_MATCH_KM = 15
 const SQL_HAVERSINE_KM = (aLat: string, aLon: string, bLat: string, bLon: string) =>
 	`(2 * 6371.0088 * asin(sqrt(pow(sin(radians(${bLat} - ${aLat}) / 2), 2) + ` +
 	`cos(radians(${aLat})) * cos(radians(${bLat})) * pow(sin(radians(${bLon} - ${aLon}) / 2), 2))))`
+
+/**
+ * Whether a WOF ancestor's folded name and a GeoNames division's folded ASCII name name one division.
+ *
+ * Accents are stripped, since GeoNames' ASCII column drops them (`Hải Dương`, `Hai Duong`), and either
+ * name may hold the other whole, since one source prefixes the division's kind (`Tinh Hai Duong`).
+ * A name under four characters must match exactly, so `Ibb` holds no other name.
+ */
+const PARENT_NAMES_AGREE_SQL = (wof: string, geonames: string) => {
+	const a = `strip_accents(${wof})`
+	const b = `strip_accents(${geonames})`
+
+	return `(${a} = ${b} OR (length(${a}) >= 4 AND length(${b}) >= 4 AND (contains(${a}, ${b}) OR contains(${b}, ${a}))))`
+}
 
 function quoted(value: string): string {
 	return `'${escapeSQLString(value)}'`
@@ -103,6 +116,11 @@ export interface ProminentPlacesOptions {
 	 * The GeoNames postal export, `allCountries-postal.txt`.
 	 */
 	geonamesPostal: string
+	/**
+	 * GeoNames' first-level divisions, `admin1CodesASCII.txt`.
+	 * They hold a fallback match's administrative parent.
+	 */
+	geonamesAdmin1: string
 	out: string
 	limits?: DuckDBLimits
 	log?: (line: string) => void
@@ -300,6 +318,42 @@ async function loadCandidatePlaces(db: DisposableDuckDB, candidateDB: string, lo
 }
 
 /**
+ * Writes `match_ancestors (spr_id, fold)`: the folded names of every WOF ancestor
+ * of each place in `geonames_match`.
+ *
+ * The GeoNames parent check compares them against the feature's first-level division.
+ *
+ * The candidate table's ancestor rows are streamed once and kept only for the matched places.
+ */
+async function loadMatchAncestors(db: DisposableDuckDB, candidateDB: string): Promise<void> {
+	const matched = new Set(
+		(await db.runAndReadAll("SELECT spr_id FROM geonames_match"))
+			.getRowObjectsJson()
+			.map((row) => Number(row["spr_id"]))
+	)
+
+	await db.run("CREATE TABLE match_ancestor_names (spr_id BIGINT, name VARCHAR)")
+
+	using candidates = await openBuiltClient<CandidateDatabase>(candidateDB)
+
+	const appender = await db.createAppender("match_ancestor_names")
+
+	for await (const ancestor of candidates.selectFrom("candidate_ancestor").select(["spr_id", "parent_name"]).stream()) {
+		if (!matched.has(ancestor.spr_id) || !ancestor.parent_name) continue
+
+		appender.appendBigInt(BigInt(ancestor.spr_id))
+		appender.appendVarchar(ancestor.parent_name)
+		appender.endRow()
+	}
+
+	appender.closeSync()
+
+	await db.run(
+		`CREATE TABLE match_ancestors AS SELECT DISTINCT spr_id, ${foldSurfaceSQL("name")} AS fold FROM match_ancestor_names`
+	)
+}
+
+/**
  * The SQL expression of {@linkcode referentialFromPopulation}, with a population of zero or none
  * read as no score. {@linkcode buildProminentPlaces} checks it against the function before use.
  */
@@ -338,18 +392,29 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 	log("[prominent] reading GeoNames populated features")
 
 	await db.run(
-		`CREATE TABLE geonames AS SELECT column08 AS country, ${foldSurfaceSQL("column01")} AS fold, ` +
+		`CREATE TABLE geonames AS SELECT column00 AS geonameid, column08 AS country, column10 AS admin1, ` +
+			`${foldSurfaceSQL("column01")} AS fold, ` +
 			`${foldSurfaceSQL("column02")} AS ascii_fold, column04::DOUBLE AS lat, column05::DOUBLE AS lon, ` +
 			`TRY_CAST(column14 AS BIGINT) AS population FROM read_csv(${quoted(options.geonamesGlob)}, ` +
 			`delim = '\t', quote = '', escape = '', header = false, all_varchar = true, null_padding = true) ` +
 			`WHERE column06 IN ('P', 'A') AND TRY_CAST(column14 AS BIGINT) > 0`
 	)
 
+	// `admin1CodesASCII.txt` keys each first-level division as `<country>.<admin1 code>`.
 	await db.run(
-		`CREATE TABLE postal_names AS SELECT DISTINCT column00 AS country, ${foldSurfaceSQL("column02")} AS fold ` +
+		`CREATE TABLE admin1 AS SELECT column0 AS key, ${foldSurfaceSQL("column1")} AS fold, ` +
+			`${foldSurfaceSQL("column2")} AS ascii_fold FROM read_csv(${quoted(options.geonamesAdmin1)}, ` +
+			`delim = '\t', quote = '', escape = '', header = false, all_varchar = true, null_padding = true)`
+	)
+
+	await db.run(
+		`CREATE TABLE postal AS SELECT column00 AS country, ${foldSurfaceSQL("column02")} AS fold, ` +
+			"TRY_CAST(column09 AS DOUBLE) AS lat, TRY_CAST(column10 AS DOUBLE) AS lon " +
 			`FROM read_csv(${quoted(options.geonamesPostal)}, delim = '\t', quote = '', escape = '', header = false, ` +
 			`all_varchar = true, null_padding = true) WHERE column02 IS NOT NULL`
 	)
+
+	await db.run("CREATE TABLE postal_names AS SELECT DISTINCT country, fold FROM postal")
 
 	log("[prominent] scoring and ranking")
 
@@ -359,11 +424,48 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 			"WHERE name <> '' AND regexp_matches(country, '^[A-Z]{2}$')"
 	)
 
+	// The candidate GeoNames feature is the most populous one of the place's folded name within the radius.
 	await db.run(
-		"CREATE TABLE geonames_match AS SELECT w.spr_id, max(g.population) AS population FROM folded w " +
+		"CREATE TABLE geonames_candidates AS SELECT w.spr_id, g.geonameid, g.country, g.admin1, g.lat, g.lon, g.population, " +
+			`${SQL_HAVERSINE_KM("w.lat", "w.lon", "g.lat", "g.lon")} AS km FROM folded w ` +
 			"JOIN geonames g ON g.country = w.country AND (g.fold = w.fold OR g.ascii_fold = w.fold) " +
 			"WHERE w.importance IS NULL AND coalesce(w.population, 0) <= 0 AND w.lat IS NOT NULL AND " +
-			`${SQL_HAVERSINE_KM("w.lat", "w.lon", "g.lat", "g.lon")} <= ${GEONAMES_MATCH_KM} GROUP BY w.spr_id`
+			`${SQL_HAVERSINE_KM("w.lat", "w.lon", "g.lat", "g.lon")} <= ${GEONAMES_MATCH_KM}`
+	)
+
+	await db.run(
+		"CREATE TABLE geonames_match AS SELECT spr_id, arg_max(geonameid, population) AS geonameid, " +
+			"max(population) AS population, arg_max(km, population) AS km, arg_max(admin1, population) AS admin1, " +
+			"arg_max(lat, population) AS lat, arg_max(lon, population) AS lon, arg_max(country, population) AS country " +
+			"FROM geonames_candidates GROUP BY spr_id"
+	)
+
+	await loadMatchAncestors(db, options.candidateDB)
+
+	// The #3156 decision checks a match before it decides a required row: its country
+	// (the join requires it), its administrative parent where both sources record one,
+	// and the competing same-name candidates.
+	//
+	// GeoNames' first-level division and WOF's region can sit at different levels
+	// (England against Greater London).
+	// The parent agrees when the GeoNames division matches any of the place's WOF ancestors.
+	// A competitor is another primary WOF place of the same band and folded name
+	// within the radius of the GeoNames feature.
+	// It could claim the population as well.
+	// A record of another band with the name, such as a borough's own district record,
+	// describes the same area.
+	await db.run(
+		"CREATE TABLE geonames_check AS SELECT m.spr_id, " +
+			"CASE WHEN EXISTS (SELECT 1 FROM folded o WHERE o.country = m.country AND o.band = w.band AND o.fold = w.fold " +
+			`AND o.spr_id <> m.spr_id AND o.lat IS NOT NULL AND ${SQL_HAVERSINE_KM("o.lat", "o.lon", "m.lat", "m.lon")} <= ${GEONAMES_MATCH_KM} ` +
+			// A same-name record within the twin radius is the place's own twin. The two take one rank.
+			`AND ${SQL_HAVERSINE_KM("o.lat", "o.lon", "w.lat", "w.lon")} > ${TWIN_KM}) ` +
+			"THEN 'competing-candidate' " +
+			"WHEN a.key IS NOT NULL AND EXISTS (SELECT 1 FROM match_ancestors x WHERE x.spr_id = m.spr_id) AND NOT EXISTS (" +
+			`SELECT 1 FROM match_ancestors x WHERE x.spr_id = m.spr_id AND (${PARENT_NAMES_AGREE_SQL("x.fold", "a.fold")} OR ${PARENT_NAMES_AGREE_SQL("x.fold", "a.ascii_fold")})) ` +
+			"THEN 'admin-parent-mismatch' ELSE 'verified' END AS geonames_check " +
+			"FROM geonames_match m JOIN folded w ON w.spr_id = m.spr_id " +
+			"LEFT JOIN admin1 a ON a.key = m.country || '.' || m.admin1"
 	)
 
 	await db.run(
@@ -371,17 +473,18 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 			`coalesce(w.importance, ${referentialSQL("w.population")}, ${referentialSQL("m.population")}) AS score, ` +
 			"CASE WHEN w.importance IS NOT NULL THEN 'importance' WHEN coalesce(w.population, 0) > 0 THEN 'population' " +
 			"WHEN m.population IS NOT NULL THEN 'geonames' ELSE 'unscored' END AS score_source, " +
-			"coalesce(nullif(w.population, 0), m.population) AS population_used " +
-			"FROM folded w LEFT JOIN geonames_match m ON m.spr_id = w.spr_id"
+			"coalesce(nullif(w.population, 0), m.population) AS population_used, " +
+			"m.geonameid AS geonames_id, m.km AS geonames_km, c.geonames_check " +
+			"FROM folded w LEFT JOIN geonames_match m ON m.spr_id = w.spr_id LEFT JOIN geonames_check c ON c.spr_id = w.spr_id"
 	)
 
 	// A locality and its localadmin can share a name and a centroid (Zürich, WOF 101748463 and 1394254167).
-	// The lower-scored twin within 10 km is dropped, so one place takes one rank.
+	// The lower-scored twin within TWIN_KM is dropped, so one place takes one rank.
 	await db.run(
 		"CREATE TABLE twins AS SELECT DISTINCT b.spr_id FROM scored a JOIN scored b ON a.country = b.country " +
 			"AND a.band = b.band AND a.fold = b.fold AND a.spr_id <> b.spr_id AND a.score IS NOT NULL AND b.score IS NOT NULL " +
 			"AND (a.score > b.score OR (a.score = b.score AND a.spr_id < b.spr_id)) AND " +
-			`${SQL_HAVERSINE_KM("a.lat", "a.lon", "b.lat", "b.lon")} <= 10`
+			`${SQL_HAVERSINE_KM("a.lat", "a.lon", "b.lat", "b.lon")} <= ${TWIN_KM}`
 	)
 
 	await db.run(
@@ -408,11 +511,56 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 			` ${SQL_HAVERSINE_KM("r.lat", "r.lon", "c.lat", "c.lon")} <= ${CAPITAL_MATCH_KM}) AS capital, ` +
 			"r.parent_locality, g.name AS region, " +
 			"CASE WHEN g.abbrs = '' THEN []::VARCHAR[] ELSE string_split(g.abbrs, chr(31)) END AS region_abbrs, " +
-			"EXISTS (SELECT 1 FROM postal_names p WHERE p.country = r.country AND p.fold = r.fold) AS postal_name " +
+			"EXISTS (SELECT 1 FROM postal_names p WHERE p.country = r.country AND p.fold = r.fold) AS postal_name, " +
+			// A postal record inside the place's bounding box speaks for the place.
+			// A postal record of the name elsewhere in the country speaks only for the name.
+			"CASE WHEN EXISTS (SELECT 1 FROM postal p WHERE p.country = r.country AND p.fold = r.fold AND " +
+			"p.lat BETWEEN r.min_lat AND r.max_lat AND p.lon BETWEEN r.min_lon AND r.max_lon) THEN 'place' " +
+			"WHEN EXISTS (SELECT 1 FROM postal_names p WHERE p.country = r.country AND p.fold = r.fold) THEN 'name' " +
+			"ELSE 'none' END AS postal_evidence, r.geonames_id, r.geonames_km, r.geonames_check " +
 			`FROM ranked r LEFT JOIN regions g ON g.spr_id = r.region_id) TO ${quoted(`${options.out}/places.parquet`)} (FORMAT PARQUET)`
 	)
 
 	log(`[prominent] wrote ${options.out}/places.parquet`)
+
+	const counts = (
+		await db.runAndReadAll(
+			`SELECT band, score_source, count(*)::INTEGER AS places, count(*) FILTER (WHERE by_rank)::INTEGER AS selected, ` +
+				"count(*) FILTER (WHERE geonames_check = 'verified')::INTEGER AS geonames_verified " +
+				`FROM read_parquet(${quoted(`${options.out}/places.parquet`)}) GROUP BY ALL ORDER BY band, score_source`
+		)
+	)
+		.getRowObjectsJson()
+		.map((row) => ({
+			band: String(row["band"]),
+			score_source: String(row["score_source"]),
+			places: Number(row["places"]),
+			selected: Number(row["selected"]),
+			geonames_verified: Number(row["geonames_verified"]),
+		}))
+
+	log("[prominent] hashing the inputs")
+
+	const record: ProminentPlacesRecord = {
+		version: PROMINENT_PLACES_RECORD_VERSION,
+		written_at: new Date().toISOString(),
+		candidate_db: options.candidateDB,
+		candidate_db_sha256: await sha256File(options.candidateDB),
+		geonames_postal: options.geonamesPostal,
+		geonames_postal_sha256: await sha256File(options.geonamesPostal),
+		geonames_admin1: options.geonamesAdmin1,
+		geonames_admin1_sha256: await sha256File(options.geonamesAdmin1),
+		geonames_glob: options.geonamesGlob,
+		places_sha256: await sha256File(`${options.out}/places.parquet`),
+		rule: {
+			selection: `min(n, clamp(ceil(sqrt(n)), ${PROMINENT_MINIMUM}, ${PROMINENT_MAXIMUM})) per country and band, plus the national capital`,
+			geonames_match_km: GEONAMES_MATCH_KM,
+			capital_match_km: CAPITAL_MATCH_KM,
+		},
+		counts,
+	}
+
+	await writeLocalJSONFile(record, `${options.out}/${PROMINENT_PLACES_RECORD}`)
 }
 
 // #endregion
@@ -553,16 +701,6 @@ export async function scanShortAdminRows(options: ShortAdminScanOptions): Promis
 // #endregion
 
 // #region Coverage
-
-/**
- * The ordinary query shapes the census grades, by how the second segment relates to the place.
- */
-export const QUERY_SHAPES = ["bare", "parent", "region", "region_abbr", "country"] as const
-
-/**
- * One query shape.
- */
-export type QueryShape = (typeof QUERY_SHAPES)[number]
 
 /**
  * Writes `place-shapes.parquet`, one row per place and applicable shape with its
