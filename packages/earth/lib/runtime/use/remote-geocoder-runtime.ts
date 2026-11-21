@@ -11,15 +11,17 @@
 
 import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
 import type { EngineStamp } from "@mailwoman/core/license"
+import { offlineReason } from "@mailwoman/core/network/connectivity"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import { GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
+import { type GeocoderProvider, GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
 import type { GeocoderRuntime, MapBias, ResolvedMapPlace, Suggestion } from "@mailwoman/react/map"
 import { useConnectivity } from "@mailwoman/react/network/ReachabilityProvider"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import type { EarthConfig } from "#config"
 import { openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam } from "#routes"
+import { BROWSER_PROVIDER_ID, type LocalFallbackQuery } from "#runtime/local-fallback"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { loadPointReader } from "#runtime/point/point-reader"
 import { REMOTE_PARSE_STAGE_LABELS, remoteGeocode } from "#runtime/remote-geocoder"
@@ -77,14 +79,42 @@ async function noRemoteSuggestions(): Promise<Suggestion[]> {
 	return []
 }
 
-interface RemoteQuery {
-	input: string
+/**
+ * One query as both providers read it.
+ *
+ * The hosted API takes `bias`, and the browser pipeline takes `viewport`.
+ */
+export interface RemoteQuery extends LocalFallbackQuery {
 	bias: GeocodeBiasPoint[]
 }
 
-interface RemoteAnswer {
+/**
+ * One answer from either provider.
+ *
+ * `engine` is the hosted engine's stamp, and `null` when the browser pipeline answered.
+ */
+export interface RemoteAnswer {
 	result: ParseResult
 	engine: EngineStamp | null
+}
+
+/**
+ * The browser pipeline a hosted page falls back to.
+ */
+export interface LocalFallback {
+	/**
+	 * The provider the service asks when the hosted API cannot answer.
+	 *
+	 * It reports itself ready once the browser runtime has loaded its release.
+	 */
+	provider: GeocoderProvider<RemoteQuery, RemoteAnswer>
+	/**
+	 * Asks the page to mount the browser runtime.
+	 *
+	 * The mount starts the model download.
+	 * Repeated calls are harmless.
+	 */
+	request: () => void
 }
 
 /**
@@ -100,19 +130,31 @@ export function remoteGeocoderHealthURL(apiURL: URL): URL {
 /**
  * Build the {@link GeocoderRuntime} that sends each address to the hosted API at `apiURL`.
  *
- * The runtime asks a {@linkcode GeocoderService} that holds only the remote provider,
- * so a query made while the nearest `ReachabilityProvider` reads offline rejects at
- * once with a connectivity error instead of a failed fetch.
+ * The runtime asks a {@linkcode GeocoderService} that binds the remote provider.
+ * With a `fallback`, the service also binds the browser pipeline as its local provider.
+ *
+ * A query made while the nearest `ReachabilityProvider` reads offline skips the request.
+ * It goes to the local provider when that provider is ready.
+ *
+ * Otherwise it rejects at once with a connectivity error instead of a failed fetch.
+ *
+ * The first remote failure asks the page for the browser runtime.
+ * So does the first offline reading.
+ *
+ * The query that met the failure still rejects, because the model hasn't loaded yet.
+ * A later query is answered in the browser.
  */
 export function useRemoteGeocoderRuntime(
 	apiURL: URL,
-	{ config, initialCenter, initialZoom = 3 }: GeocoderRuntimeOptions
+	{ config, initialCenter, initialZoom = 3 }: GeocoderRuntimeOptions,
+	fallback: LocalFallback | null = null
 ): GeocoderRuntimeHandle {
 	const mapStyle = useEarthMapStyle(config)
 	const overlays = useEarthOverlays(config)
 	const geoBias = useGeoBias()
 	const [engine, setEngine] = useState<EngineStamp | null>(null)
-	const { read, recheck } = useConnectivity()
+	const [answeredInBrowser, setAnsweredInBrowser] = useState(false)
+	const { reading, read, recheck } = useConnectivity()
 
 	const service = useMemo(
 		() =>
@@ -123,11 +165,24 @@ export function useRemoteGeocoderRuntime(
 					isReady: () => true,
 					geocode: ({ input, bias }, { signal, onStage }) => remoteGeocode(apiURL, input, bias, { onStage }, signal),
 				},
+				local: fallback?.provider ?? null,
 				connectivity: read,
-				onRemoteUnavailable: recheck,
+				onRemoteUnavailable: () => {
+					recheck()
+					fallback?.request()
+				},
 			}),
-		[apiURL, read, recheck]
+		[apiURL, read, recheck, fallback]
 	)
+
+	const ruledOut = offlineReason(reading) !== null
+
+	// The service skips the request while the reading rules it out, so it reports no remote failure then.
+	useEffect(() => {
+		if (ruledOut) {
+			fallback?.request()
+		}
+	}, [ruledOut, fallback])
 
 	// A `wof:` query reads the containment chain from the browser gazetteer, opened on the first such query.
 	// The hosted runtime loads no polygon file, so the reader states that the id cannot be placed.
@@ -165,9 +220,10 @@ export function useRemoteGeocoderRuntime(
 				bias.push({ ...geoBias.locationRef.current, weight: DEVICE_LOCATION_BIAS_WEIGHT })
 			}
 
-			const { answer } = await service.geocode({ input, bias }, { onStage: hooks.onStage })
+			const { answer, placement } = await service.geocode({ input, bias, viewport }, { onStage: hooks.onStage })
 
 			setEngine(answer.engine)
+			setAnsweredInBrowser(placement === ProviderPlacement.Local)
 
 			return answer.result
 		},
@@ -178,6 +234,12 @@ export function useRemoteGeocoderRuntime(
 		(input: string, hooks: { onStage: (stage: number) => void }) => runParseWithBias(input, null, hooks),
 		[runParseWithBias]
 	)
+
+	const activeBackend = useMemo(() => {
+		if (answeredInBrowser) return `${BROWSER_PROVIDER_ID} (${apiURL.host} did not answer)`
+
+		return engine ? `${apiURL.host} (mailwoman ${engine.version})` : apiURL.host
+	}, [answeredInBrowser, apiURL, engine])
 
 	const runtime = useMemo<GeocoderRuntime>(
 		() => ({
@@ -194,9 +256,9 @@ export function useRemoteGeocoderRuntime(
 			initialZoom,
 			calibrator: null,
 			resolveMapPlace,
-			activeBackend: engine ? `${apiURL.host} (mailwoman ${engine.version})` : apiURL.host,
+			activeBackend,
 		}),
-		[apiURL, engine, initialCenter, initialZoom, mapStyle, overlays, runParse, runParseWithBias]
+		[activeBackend, initialCenter, initialZoom, mapStyle, overlays, runParse, runParseWithBias]
 	)
 
 	return {
