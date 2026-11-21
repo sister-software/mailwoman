@@ -101,8 +101,8 @@ export interface RegisterRowTerms {
 	/**
 	 * The obligations an elected decision records in the publisher's words, or `null` when it records none.
 	 *
-	 * An elected decision that refuses redistribution keeps them, since an indemnity
-	 * is the reason such a decision refuses.
+	 * An elected decision that refuses redistribution keeps them, so a refused
+	 * row still shows what its terms ask.
 	 */
 	obligations: readonly TermsObligation[] | null
 	/**

@@ -266,8 +266,8 @@ export interface ElectedLicense<Operation extends string = string> {
 	 * An absent field adds no obligation.
 	 * An elected open license still owes what its identifier owes.
 	 *
-	 * A decision with an `indemnity` it requires refuses `redistribute-data`,
-	 * because redistributing the rows extends that undertaking to every downstream use.
+	 * An obligation, an `indemnity` included, decides no operation's permission.
+	 * An indemnity allocates liability and restricts no use, so the decision's operations stand without it.
 	 */
 	obligations?: readonly TermsObligation[]
 	/**
@@ -467,7 +467,7 @@ function auditElected<Operation extends string>(
 		}
 	}
 
-	problems.push(...auditObligations(decision, named, known))
+	problems.push(...auditObligations(decision, named))
 
 	return problems
 }
@@ -476,15 +476,12 @@ const LICENSE_OBLIGATIONS = new Set<string>(Object.values(LicenseObligation))
 const OBLIGATION_STRENGTHS = new Set<string>(Object.values(ObligationStrength))
 
 /**
- * The operation that redistributes a publisher's rows, in a register that performs one.
+ * Every problem with a decision's recorded obligations.
+ *
+ * Each entry, an `indemnity` included, needs a known class, a known strength and the publisher's words.
+ * An obligation states what the user owes and decides no operation's permission.
  */
-const REDISTRIBUTE_DATA = "redistribute-data"
-
-function auditObligations<Operation extends string>(
-	decision: ElectedLicense<Operation>,
-	named: string,
-	known: ReadonlySet<string>
-): string[] {
+function auditObligations<Operation extends string>(decision: ElectedLicense<Operation>, named: string): string[] {
 	const problems: string[] = []
 
 	for (const entry of decision.obligations ?? []) {
@@ -504,21 +501,6 @@ function auditObligations<Operation extends string>(
 
 		if (entry.text != null && !entry.text) {
 			problems.push(`license ${named} records ${entry.obligation} with an empty notice text`)
-		}
-	}
-
-	const indemnity = decision.obligations?.some(
-		(entry) => entry.obligation === LicenseObligation.Indemnity && entry.strength === ObligationStrength.Required
-	)
-
-	if (indemnity && known.has(REDISTRIBUTE_DATA)) {
-		const reading = decision.operations?.[REDISTRIBUTE_DATA as Operation]
-
-		if (reading?.permission !== OperationPermission.Refused) {
-			problems.push(
-				`license ${named} records an indemnity and does not refuse ${REDISTRIBUTE_DATA}. Redistributing the rows ` +
-					"extends the undertaking to every downstream use, so the decision refuses it."
-			)
 		}
 	}
 

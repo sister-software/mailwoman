@@ -74,9 +74,7 @@ const LICENSES: LicenseDecision[] = [
 		retrievedCopy: "receipts/denver/",
 		electedBecause: "The terms restrict no use and require an indemnity.",
 		obligations: [{ obligation: "indemnity", strength: "required", quote: "The user agrees to indemnify the City." }],
-		operations: {
-			"redistribute-data": { permission: "refused", because: "An indemnity is a contract term." },
-		},
+		operations: redistribute("other-documented"),
 	},
 	{
 		licenseID: "overture-terms",
@@ -227,10 +225,11 @@ describe("describeMixedAddressLayer", () => {
 			obligationClass: ObligationClass.UseRestriction,
 		})
 
-		// The indemnity is why the decision refuses redistribution, and the source keeps it.
+		// An indemnity restricts no use, so the source stays redistributable and counts under the indemnity class.
 		expect(byID["openaddresses:us/il/denver"]).toMatchObject({
-			basis: "refused",
+			basis: "no-restricting-terms",
 			obligations: [expect.objectContaining({ obligation: "indemnity" })],
+			obligationClass: ObligationClass.Indemnity,
 		})
 	})
 
@@ -315,9 +314,9 @@ describe("tallyObligationClasses", () => {
 		const tally = tallyObligationClasses(await describeFixture())
 
 		expect(Object.fromEntries(tally.map((entry) => [entry.obligationClass, entry.sources]))).toEqual({
-			[ObligationClass.Unknown]: 4,
+			[ObligationClass.Unknown]: 3,
 			[ObligationClass.ShareAlike]: 0,
-			[ObligationClass.Indemnity]: 0,
+			[ObligationClass.Indemnity]: 1,
 			[ObligationClass.UseRestriction]: 1,
 			[ObligationClass.NoticePassThrough]: 0,
 			[ObligationClass.Attribution]: 1,

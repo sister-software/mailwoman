@@ -33,15 +33,17 @@ export function grantsCommercialTerms(key: LicenseKeyVerification | null | undef
  *   to network users (AGPL-3.0 section 13).
  *
  * Three more classes arise only from a publisher's own terms, never from an SPDX license,
- * so `KNOWN_OBLIGATIONS` assigns none of them. A license decision records them in its
- * `obligations` field with the publisher's words.
+ * so `KNOWN_OBLIGATIONS` assigns none of them.
+ * A license decision records them in its `obligations` field with the publisher's words.
  *
- * - `use_restriction` limits a use of the data without withholding it, such as a mailing-list ban
- *   or `not intended for use in mapping products for resale`. The quoted limit is the obligation.
- * - `notice_pass_through` requires a text, such as a disclaimer, to travel with the data or
- *   with an application built on it. The text is printed verbatim wherever the data is passed on.
+ * - `use_restriction` limits a use of the data without withholding it, such as a
+ *   mailing-list ban or `not intended for use in mapping products for resale`.
+ *   The quoted limit is the obligation.
+ * - `notice_pass_through` requires a text, such as a disclaimer, to travel with the data
+ *   or with an application built on it.
+ *   The text is printed verbatim wherever the data is passed on.
  * - `indemnity` requires the user to indemnify, defend or hold harmless the publisher.
- *   It is a contract term, so a reading that the data has no copyright doesn't clear it.
+ *   It allocates liability and restricts no use, so it decides no operation's permission.
  */
 export const LicenseObligation = {
 	Attribution: "attribution",
