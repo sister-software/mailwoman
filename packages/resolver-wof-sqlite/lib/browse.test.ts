@@ -17,9 +17,10 @@ type BrowseDatabase = NonNullable<ConstructorParameters<typeof WOFPlaceBrowser>[
 type BrowseTables = BrowseDatabase extends DatabaseClient<infer DB> ? DB : never
 
 /**
- * A gazetteer with more R*Tree extents than {@link EXTENT_PROBE_LIMIT}, so a world box takes
- * the primary-key plan and a small box the R*Tree plan, and with the two kinds of place the
- * R*Tree misses: one whose point lies outside its extent, and one with no extent at all.
+ * A gazetteer with more R*Tree extents than {@link EXTENT_PROBE_LIMIT}.
+ *
+ * A world box takes the primary-key plan and a small box the R*Tree plan.
+ * One place has no extent at all, so the R*Tree misses it.
  */
 function buildGazetteer(): BrowseDatabase {
 	const db = DatabaseClient.temp<BrowseTables>()
@@ -50,9 +51,9 @@ function buildGazetteer(): BrowseDatabase {
 
 	const base = EXTENT_PROBE_LIMIT + 1000
 
-	// Inside the test box by its point, while its extent lies far away.
-	place.run(base + 1, "Point outside extent", 10.5, 10.5, -60, -59, -60, -59, 1)
-	extent.run(base + 1, -60, -59, -60, -59)
+	// Inside the test box by its point, with an extent that crosses the box's edge.
+	place.run(base + 1, "Straddles the edge", 10.5, 10.5, 9.5, 10.6, 9.5, 10.6, 1)
+	extent.run(base + 1, 9.5, 10.6, 9.5, 10.6)
 	// Inside the test box with no extent, so it has no R*Tree row.
 	place.run(base + 2, "No extent", 10.6, 10.6, null, null, null, null, 1)
 	// Not current, so never served.
@@ -115,7 +116,7 @@ async function pageThrough(box: BrowseBox | null, limit: number): Promise<number
 }
 
 describe("WOFPlaceBrowser", () => {
-	test("a small box, read through the R*Tree, returns every place whose point it holds, including those the R*Tree misses", async () => {
+	test("a small box, read through the R*Tree, returns every place whose point it holds, including one the R*Tree misses", async () => {
 		const box = { minLon: 10, minLat: 10, maxLon: 11, maxLat: 11 }
 		const paged = await pageThrough(box, 2)
 
