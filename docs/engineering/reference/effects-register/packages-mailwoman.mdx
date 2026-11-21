@@ -1350,6 +1350,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | Kind  | Interface            | Target                   | Calls |
 | ----- | -------------------- | ------------------------ | ----- |
 | read  | `openBuiltClient`    | `unresolved (parameter)` | 2     |
+| read  | `pathExists`         | `unresolved (call)`      | 2     |
 | write | `writeLocalJSONFile` | `unresolved (template)`  | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/prominent/probe.ts`
@@ -3606,7 +3607,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 8 times
+- `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 2 times
 
 ## `packages/mailwoman/tools/training/audits/prominent/coverage.ts`
