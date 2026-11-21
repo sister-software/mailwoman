@@ -228,6 +228,59 @@ export interface USStateSources<Entry> {
 }
 
 /**
+ * A build's admission policy over its sources, with the sources it has excluded
+ * and those it admitted unread.
+ */
+export interface SourceAdmitter {
+	/**
+	 * Whether the build reads the source.
+	 *
+	 * Each source is decided and listed on its first call, and a later call returns the same answer.
+	 */
+	admits: (source: string) => boolean
+	excluded: LayerSourceExclusion[]
+	/**
+	 * Sources admitted with unread terms or no register row, because the build doesn't exclude them.
+	 */
+	admittedUnread: LayerSourceExclusion[]
+}
+
+/**
+ * Applies `admission` under a build's policy.
+ *
+ * A refused source is always excluded.
+ * A source with unread terms or no register row is excluded when `excludeUnread` holds,
+ * and admitted and listed in `admittedUnread` otherwise.
+ */
+export function createSourceAdmitter(
+	admission: USAddressSourceAdmission,
+	excludeUnread: boolean = EXCLUDE_UNREAD_SOURCES
+): SourceAdmitter {
+	const excluded: LayerSourceExclusion[] = []
+	const admittedUnread: LayerSourceExclusion[] = []
+	const decided = new Map<string, boolean>()
+
+	const admits = (source: string): boolean => {
+		const known = decided.get(source)
+
+		if (typeof known === "boolean") return known
+
+		const exclusion = admission(source)
+		const admitted = !exclusion || (exclusion.reason !== LayerExclusionReason.Refused && !excludeUnread)
+
+		if (exclusion) {
+			;(admitted ? admittedUnread : excluded).push(exclusion)
+		}
+
+		decided.set(source, admitted)
+
+		return admitted
+	}
+
+	return { admits, excluded, admittedUnread }
+}
+
+/**
  * Keeps the state's sources that `admission` admits.
  *
  * NAD is read as `usgov-nad`, each Overture dataset as `overture:<dataset>`
@@ -244,25 +297,7 @@ export function admitUSStateSources<Entry extends { member: string; skip?: boole
 	admission: USAddressSourceAdmission,
 	excludeUnread: boolean = EXCLUDE_UNREAD_SOURCES
 ): USStateSources<Entry> {
-	const excluded: LayerSourceExclusion[] = []
-	const admittedUnread: LayerSourceExclusion[] = []
-
-	const admits = (source: string): boolean => {
-		const exclusion = admission(source)
-
-		if (!exclusion) return true
-
-		if (exclusion.reason === LayerExclusionReason.Refused || excludeUnread) {
-			excluded.push(exclusion)
-
-			return false
-		}
-
-		admittedUnread.push(exclusion)
-
-		return true
-	}
-
+	const { admits, excluded, admittedUnread } = createSourceAdmitter(admission, excludeUnread)
 	const prefix = `us/${state.toLowerCase()}/`
 
 	return {
