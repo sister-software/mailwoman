@@ -57,6 +57,11 @@
 #    widening what the model sees.
 #    `augment_exclude_sources` lists the source for the reason `rendered-prominent-places` is listed, and
 #    `former-divisions-exposure` floors its draws at 0.9 of expected.
+# 6. `source_weights` gives `nz-charities-register` 0.0, so the run draws none of its rows, and the source leaves
+#    `source_reps` (0.2 in v8.9.0) and `required_corpus_receipts` (`nz-charities-register-exposure`). The model-release
+#    check of #3278 refuses its register row `nz-charity-nonprofit-1` (CC BY 3.0 NZ): clause 2.1 bars imposing terms
+#    on an Adaptation, and whether trained weights are one is unsettled. The corpus keeps the source's rows. The sampler
+#    refuses a train source that `source_weights` leaves out, so the source is listed at 0.0 rather than dropped.
 #
 # Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
 # section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
@@ -133,6 +138,8 @@ data:
     state-ny-notaries: 2.0
     state-ia-contractors: 0.0
     usgov-imls-pls: 0.0
+    # This config's header, point 6 (#3278).
+    nz-charities-register: 0.0
     deepseek-kryptonite: 3.0
     invented-intersection: 1.0
     rendered-de: 6.0
@@ -217,7 +224,6 @@ data:
     es-sanidad-centros-ap: 0.2
     it-miur-scuole: 0.2
     au-acnc-register: 0.2
-    nz-charities-register: 0.2
     # v8.8.0's header, point 2.
     rendered-us-county: 5.0
     rendered-us-city-county: 0.55
@@ -545,10 +551,6 @@ data:
       min_fraction_of_expected: 0.9
       source: au-acnc-register
       country: AU
-    - name: nz-charities-register-exposure
-      min_fraction_of_expected: 0.9
-      source: nz-charities-register
-      country: NZ
     # v8.8.0's header, point 4: the three county sources.
     - name: us-county-exposure
       min_fraction_of_expected: 0.9
