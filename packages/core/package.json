@@ -652,6 +652,11 @@
 			"node": "./lib/promises.ts",
 			"default": "./out/promises.js"
 		},
+		"./abort": {
+			"types": "./out/abort.d.ts",
+			"node": "./lib/abort.ts",
+			"default": "./out/abort.js"
+		},
 		"./load-ledger": {
 			"types": "./out/load-ledger.d.ts",
 			"node": "./lib/load-ledger.ts",
