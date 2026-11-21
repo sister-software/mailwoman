@@ -216,7 +216,10 @@ for (const [state, members] of states) {
 
 				const cell = hasCell ? shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_POINT_H3_RESOLUTION)) : null
 
-				insert.run(...columns.map((column) => (column === "h3_cell" ? cell : row[column as keyof typeof row])))
+				// A column the run's row doesn't fill, such as a national build's `admin_code`, is stored as NULL.
+				insert.run(
+					...columns.map((column) => (column === "h3_cell" ? cell : (row[column as keyof typeof row] ?? null)))
+				)
 
 				added++
 			}
