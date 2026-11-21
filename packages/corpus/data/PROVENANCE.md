@@ -73,6 +73,11 @@ own row and Overture. The house-venue tuple reader keeps a row only when every r
 elected decision permitting transform and train. The bodies were read on 2026-10-17 under the US factual-data
 reading. The bare `openaddresses` value of the Hawaii database identifies no body and has no entry.
 
+Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 maps to its publisher's row, the row whose
+`access` names the run (#3260, #3269). The US address layer build, `situs address-points` and the county
+address-point builder admit a source only when every row its value maps to permits fetch, extract and
+redistribute-data.
+
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 
 Hand-maintained. Each corpus source id maps to the register `sourceID`s whose text reaches its rows and the

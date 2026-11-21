@@ -131,6 +131,34 @@ describe("readUSAddressSourceAdmission", () => {
 		expect(refused.map((source) => admission(source)?.reason)).toEqual(refused.map(() => "refused"))
 	})
 
+	it("decides the 2026-11-21 terms reading's runs through their publishers' rows", async () => {
+		const admission = await readUSAddressSourceAdmission()
+
+		const reasons = Object.fromEntries(
+			[
+				// WVDHSEM's SAMS data, refused on its redistribution clause across the statewide run and the county copies.
+				"openaddresses:us/wv/statewide",
+				"openaddresses:us/wv/lewis",
+				// Buncombe's no-sale clause refuses redistribute-data and permits training.
+				"openaddresses:us/nc/buncombe",
+				// Contractor-hosted with only the contractor's metadata.
+				"openaddresses:us/ia/cass",
+				// Elected on metadata that states no terms, and on CC0 1.0.
+				"openaddresses:us/ri/city_of_cranston",
+				"openaddresses:us/tx/anderson",
+			].map((source) => [source, admission(source)?.reason ?? "admitted"])
+		)
+
+		expect(reasons).toEqual({
+			"openaddresses:us/wv/statewide": "refused",
+			"openaddresses:us/wv/lewis": "refused",
+			"openaddresses:us/nc/buncombe": "refused",
+			"openaddresses:us/ia/cass": "unread",
+			"openaddresses:us/ri/city_of_cranston": "admitted",
+			"openaddresses:us/tx/anderson": "admitted",
+		})
+	})
+
 	it("admits NAD and excludes a run no register row names", async () => {
 		const admission = await readUSAddressSourceAdmission()
 
