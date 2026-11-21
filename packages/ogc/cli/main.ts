@@ -25,6 +25,7 @@ import {
 	gazetteerFreshness,
 	loadClassifierOrExit,
 	openAPICommand,
+	readListenPort,
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
@@ -207,7 +208,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		allowPositionals: true,
 	})
 
-	const port = Number(values.port) || OGC_DEFAULT_PORT
+	const port = readListenPort(values.port)
 	const host = values.host ?? "0.0.0.0"
 	const baseURL = values["base-url"]
 
@@ -299,8 +300,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		fetch: app.fetch,
 		port,
 		hostname: host,
-		onListen: () => {
-			console.error(`[@mailwoman/ogc] listening on http://${host}:${port}`)
+		onListen: (info) => {
+			console.error(`[@mailwoman/ogc] listening on http://${host}:${info.port}`)
 			console.error(`  base URL: ${baseURL ?? "(the request's own origin)"}`)
 
 			for (const line of gazetteerBannerLines(gazetteer)) {

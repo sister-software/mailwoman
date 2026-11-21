@@ -10,6 +10,7 @@
 
 import { type ClockLike, systemClock } from "@mailwoman/core/api/clock"
 
+import { describeAnnotation, type ReadCheckAnnotations } from "#check-kit/pull-request/annotations"
 import {
 	checkDidNotPass,
 	ChecksCondition,
@@ -68,6 +69,7 @@ export const PullRequestExit = {
 export interface PullRequestStatusServices {
 	run?: RunGitHub
 	download?: DownloadJobLog
+	readAnnotations?: ReadCheckAnnotations
 	logDirectory?: string
 	clock?: ClockLike
 	/**
@@ -130,7 +132,11 @@ async function withFailedLogs(
 ): Promise<PullRequestStatus> {
 	const failedLogs =
 		reading.condition === ChecksCondition.Failed && reading.checks
-			? await readFailedCheckLogs(reading.checks, { download: services.download, directory: services.logDirectory })
+			? await readFailedCheckLogs(reading.checks, {
+					download: services.download,
+					directory: services.logDirectory,
+					readAnnotations: services.readAnnotations,
+				})
 			: []
 
 	return { reading, failedLogs, exitCode: exitCodeOf(reading) }
@@ -228,10 +234,14 @@ export function renderPullRequestStatus(status: PullRequestStatus, wait?: PullRe
 	}
 
 	for (const log of status.failedLogs) {
-		lines.push(`${log.job}: log ${log.logPath ?? "(not downloaded)"}`)
+		lines.push(log.jobID == null ? `${log.job}: no job log` : `${log.job}: log ${log.logPath ?? "(not downloaded)"}`)
 
 		if (!log.parsed) {
 			lines.push(`  unparsed: ${log.reason}`)
+		}
+
+		for (const annotation of log.annotations?.read ? log.annotations.annotations : []) {
+			lines.push(`  ${describeAnnotation(annotation)}`)
 		}
 
 		for (const test of log.failingTests) {

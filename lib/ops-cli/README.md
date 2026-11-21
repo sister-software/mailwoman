@@ -1,7 +1,7 @@
 # ops-cli
 
-`mwops`, the operator CLI for CI and humans, dispatches the release, shop, repository health, storage, host and pull
-request registries.
+`mwops`, the operator CLI for CI and humans, dispatches the release, shop, repository health, storage, host, pull
+request, worktree and probe registries.
 
 ```
 mwops release preflight
@@ -60,7 +60,32 @@ each check with its bucket. `mwops pr wait <number> --max-minutes N` reads the c
 was cancelled, 3 when a check is pending at the end, 4 when `gh` returned no checks JSON, and 5 when the head has zero
 checks, because of a merge conflict or because none started. On exit 1 each failed job's log is written under the cache
 root's `checks/ci-logs` directory, and the command prints the failing tests the Vitest parser reads from it, or states
-that the log held none.
+that the log held none. A failed check that isn't a GitHub Actions job, such as CodeQL, has no job log. Its link ends in
+`/runs/<id>`, and the command reads that check run's annotations through
+`gh api repos/sister-software/mailwoman/check-runs/<id>/annotations` and prints each one's level, path, start line,
+title and message under the check. When that call fails or returns zero annotations, the command says which, and the
+check stays failed.
+
+`mwops probe <workspace> --get <path> [--get <path> …]` starts one workspace's server from this checkout without a
+shell, bound to 127.0.0.1 with `--port 0`, and waits for the line that states `listening on http://<host>:<port>`. It
+sends each GET to that port on loopback, in order, then stops the server by the process id it started: SIGTERM, and
+SIGKILL after 15 seconds. It then checks by process id that neither the server nor a descendant remains. The targets
+are read from the checkout: each workspace whose `cli/main.ts` hands a `serve` command to `runDropInCLI` runs from
+source, and `api` runs the compiled `mailwoman serve --cpus 1`, whose command imports `@mailwoman/api`. Each request
+reports its status, content type, duration and body up to `--max-bytes` with a `truncated` marker, or the value at
+`--json-path` in a JSON body, which an absent path reports as absent. A request without a response reports the
+socket's cause code, such as `ECONNREFUSED`.
+
+`--env NAME=value` adds a value to the inherited environment, and `--env-file <file>` passes Node's `--env-file` to the
+server. The result records the environment names and never their values. Flags after `--` reach the server, except
+`--host` and `--port`. The server's output goes to a log under the cache root's `checks` directory, or under
+`--log-dir`. The result states the time from process start to the listening line, the startup output, the peak
+resident memory of the server's process tree from `/proc/<pid>/status`, and how the server stopped. The command exits 0
+when the server listened, every request received an HTTP response and the server stopped; 1 when a request received
+none; 3 when the server exited before listening, with its exit status and last output lines; 4 when the startup wait,
+`--startup-timeout-seconds` (default 60), expired; 6 when a server process remained; and 130 on an interrupt, after the
+server is stopped. An HTTP 4xx or 5xx is a response. A probe takes no host lock: on the lab data root each server's
+process tree peaked between 419 and 742 MiB of resident memory, below what the lock exists for.
 
 `health baseline debt` is the one mutation the health verb performs: it rewrites `lib/repo-health/baseline.json`
 from the current readings, after a reviewed reduction. Every other `health` invocation only reads.

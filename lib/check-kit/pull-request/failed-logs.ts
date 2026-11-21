@@ -21,6 +21,11 @@ import { checkOutputLines } from "#check-kit/output-lines"
 import { type FailingTest, MAX_ERROR_LINES, type ParsedSource } from "#check-kit/parsed"
 import { parseScriptOutput } from "#check-kit/parsers/scripts"
 import { parseVitestText } from "#check-kit/parsers/vitest"
+import {
+	type CheckAnnotationsReading,
+	readCheckRunAnnotations,
+	type ReadCheckAnnotations,
+} from "#check-kit/pull-request/annotations"
 import { type CheckBucket, PULL_REQUEST_REPO } from "#check-kit/pull-request/checks"
 
 /**
@@ -51,6 +56,13 @@ export interface FailedJobLog {
 	 */
 	failingChecks: string[]
 	errorLines: string[]
+	/**
+	 * The check run's annotations, for a failed check without an Actions job
+	 * and with a link that ends in `/runs/<id>`.
+	 *
+	 * It is `null` for an Actions job and for a check whose link holds neither id.
+	 */
+	annotations: CheckAnnotationsReading | null
 }
 
 /**
@@ -113,6 +125,7 @@ function parseFailedJobLog(
 			failingTests: vitest.failingTests,
 			failingChecks: [],
 			errorLines: vitest.errorLines,
+			annotations: null,
 		}
 	}
 
@@ -128,6 +141,7 @@ function parseFailedJobLog(
 			failingTests: [],
 			failingChecks: script.failingChecks,
 			errorLines: script.errorLines,
+			annotations: null,
 		}
 	}
 
@@ -143,6 +157,7 @@ function parseFailedJobLog(
 		failingTests: [],
 		failingChecks: [],
 		errorLines: annotationLines(text),
+		annotations: null,
 	}
 }
 
@@ -171,6 +186,7 @@ async function readFailedJobLog(
 			failingTests: [],
 			failingChecks: [],
 			errorLines: [],
+			annotations: null,
 		}
 	}
 
@@ -189,34 +205,50 @@ export interface FailedCheckRef {
 	bucket: CheckBucket
 	runID: number | null
 	jobID: number | null
+	checkRunID: number | null
 }
 
 /**
  * Read the log of every failed check whose link holds an Actions job id.
  *
- * A failed check without a job id, such as an external status, is returned unparsed with that reason.
+ * A failed check without a job id has no job log.
+ * When its link ends in `/runs/<id>`, as CodeQL's does, that check run's annotations are read instead.
+ *
+ * The check stays unparsed either way, with the reason stating which of the two happened.
  */
 export async function readFailedCheckLogs(
 	checks: readonly FailedCheckRef[],
-	options: { download?: DownloadJobLog; directory?: string } = {}
+	options: { download?: DownloadJobLog; directory?: string; readAnnotations?: ReadCheckAnnotations } = {}
 ): Promise<FailedJobLog[]> {
 	const results: FailedJobLog[] = []
+	const readAnnotations = options.readAnnotations ?? ((id: number) => readCheckRunAnnotations(id))
 
 	for (const check of checks) {
 		if (check.bucket !== "fail") continue
 
 		if (check.jobID == null) {
+			const annotations = check.checkRunID == null ? null : await readAnnotations(check.checkRunID)
+
+			const reason = !annotations
+				? "the check's link names no GitHub Actions job and no check run, so it has no job log or annotations to read"
+				: !annotations.read
+					? `the check has no GitHub Actions job log, and its check run ${annotations.checkRunID}'s annotations are unread: ${annotations.error}`
+					: annotations.annotations.length
+						? `the check has no GitHub Actions job log; its check run ${annotations.checkRunID} holds ${annotations.annotations.length} annotation(s)`
+						: `the check has no GitHub Actions job log, and its check run ${annotations.checkRunID} holds zero annotations`
+
 			results.push({
 				job: check.name,
 				runID: check.runID,
 				jobID: null,
 				logPath: null,
 				parsed: false,
-				reason: "the check's link names no GitHub Actions job, so it has no job log to read",
+				reason,
 				source: null,
 				failingTests: [],
 				failingChecks: [],
 				errorLines: [],
+				annotations,
 			})
 
 			continue

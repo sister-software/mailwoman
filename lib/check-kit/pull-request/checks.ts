@@ -53,6 +53,14 @@ export interface PullRequestCheck {
 	 */
 	runID: number | null
 	jobID: number | null
+	/**
+	 * The id at the end of a link of the form `…/runs/<id>`, for a check that
+	 * isn't an Actions job, such as CodeQL.
+	 *
+	 * It is `null` for an Actions job.
+	 * An Actions job's id is its check run id.
+	 */
+	checkRunID: number | null
 	startedAt: string | null
 	completedAt: string | null
 }
@@ -149,6 +157,12 @@ const NO_CHECKS_MESSAGE = /no checks reported/iu
 const JOB_LINK = /\/actions\/runs\/(\d+)\/job\/(\d+)/u
 
 /**
+ * The check run id in the link of a check that isn't an Actions job,
+ * such as `https://github.com/<owner>/<repo>/runs/<id>`.
+ */
+const CHECK_RUN_LINK = /^https:\/\/github\.com\/[^/]+\/[^/]+\/runs\/(\d+)$/u
+
+/**
  * The most reads the reader makes when the head moved between the view and the checks.
  */
 const HEAD_READ_ATTEMPTS = 3
@@ -164,6 +178,7 @@ function timeOrNull(value: string | undefined): string | null {
 
 function toCheck(raw: RawCheck): PullRequestCheck {
 	const ids = JOB_LINK.exec(raw.link ?? "")
+	const checkRun = ids ? null : CHECK_RUN_LINK.exec(raw.link ?? "")
 
 	return {
 		workflow: raw.workflow,
@@ -173,6 +188,7 @@ function toCheck(raw: RawCheck): PullRequestCheck {
 		link: raw.link,
 		runID: ids ? Number(ids[1]) : null,
 		jobID: ids ? Number(ids[2]) : null,
+		checkRunID: checkRun ? Number(checkRun[1]) : null,
 		startedAt: timeOrNull(raw.startedAt),
 		completedAt: timeOrNull(raw.completedAt),
 	}
