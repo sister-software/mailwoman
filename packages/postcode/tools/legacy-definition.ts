@@ -4,8 +4,8 @@
 /**
  *   Builds the family definition of the `postcode_legacy` family from the legacy-formats table.
  *
- *   The definition is the input format `recognize-build --definition` compiles.
- *   See `packages/recognizer/crates/recognize-build/src/definition.rs`
+ *   The definition is the input format `recognizer-build --definition` compiles.
+ *   See `packages/recognizer/crates/recognizer-build/src/definition.rs`
  *   and `packages/recognizer/definitions/family-definition.schema.json`.
  *
  *   Shape IDs are plain identifiers.
@@ -63,7 +63,7 @@ export interface LegacyDefinitionShape {
 }
 
 /**
- * The definition `recognize-build --definition` reads.
+ * The definition `recognizer-build --definition` reads.
  */
 export interface LegacyDefinition {
 	format: string
@@ -105,7 +105,7 @@ export function legacyDefinition(): LegacyDefinition {
 	}))
 
 	return {
-		format: "mailwoman.recognize.family-definition",
+		format: "mailwoman.recognizer.family-definition",
 		version: 1,
 		family: FAMILY_ID,
 		generator: GENERATOR,

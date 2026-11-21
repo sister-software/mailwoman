@@ -25,22 +25,22 @@ Parity procedure) until the spread read changed which rows a row-limited train e
 
 ## What runs where
 
-| Stage                                                           | Implementation                                                                            |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Corpus listing, sha256 verification, split attribute, deletions | Rust: `mtf-sampler/src/corpus_files.rs`                                                   |
-| Row-group reads, row filters, country acceptance, coarse filter | Rust: `file_rows.rs` over the `parquet` crate                                             |
-| Source mixture, source restarts, held-out quotas                | Rust: `mixture.rs`                                                                        |
-| Shuffle buffer, astral skip, observer events, `seed + epoch`    | Rust: `sampler.rs`                                                                        |
-| Augmentation and the affix relabel                              | Rust: `augment/`, `relabel.rs`, `emit.rs`                                                 |
-| `source_reps` weights                                           | Rust: `source_reps.rs`                                                                    |
-| Tokenization                                                    | Rust: `mtf-core`                                                                          |
-| Label projection                                                | Rust: `mtf-channels/src/labels.rs`                                                        |
-| Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`                                        |
-| Postcode spans and postcode-syntax acceptance                   | Rust, the `finders` feature: `finders.rs` over `recognize-core` and the `postal` artifact |
-| Array packing                                                   | Rust: `encoder.rs`                                                                        |
-| The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                                                      |
-| `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order                                           |
-| Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice`                                   |
+| Stage                                                           | Implementation                                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Corpus listing, sha256 verification, split attribute, deletions | Rust: `mtf-sampler/src/corpus_files.rs`                                                    |
+| Row-group reads, row filters, country acceptance, coarse filter | Rust: `file_rows.rs` over the `parquet` crate                                              |
+| Source mixture, source restarts, held-out quotas                | Rust: `mixture.rs`                                                                         |
+| Shuffle buffer, astral skip, observer events, `seed + epoch`    | Rust: `sampler.rs`                                                                         |
+| Augmentation and the affix relabel                              | Rust: `augment/`, `relabel.rs`, `emit.rs`                                                  |
+| `source_reps` weights                                           | Rust: `source_reps.rs`                                                                     |
+| Tokenization                                                    | Rust: `mtf-core`                                                                           |
+| Label projection                                                | Rust: `mtf-channels/src/labels.rs`                                                         |
+| Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`                                         |
+| Postcode spans and postcode-syntax acceptance                   | Rust, the `finders` feature: `finders.rs` over `recognizer-core` and the `postal` artifact |
+| Array packing                                                   | Rust: `encoder.rs`                                                                         |
+| The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                                                       |
+| `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order                                            |
+| Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice`                                    |
 
 The painters and the label projection compile without a regex engine. The serving side can therefore
 adopt them later through `mtf-wasm`. For now it keeps its own painters, because the serving painters
@@ -124,7 +124,7 @@ The Rust code reproduces the reference interpreter's string semantics rather tha
   with that trainer (#2874), so the committed tables are the record. Rust's `char::is_alphanumeric` admits marks such as U+0940
   that Python's `isalnum` rejects, and its `is_whitespace` rejects U+001C..U+001F.
 - `str.lower` applies CPython's final-sigma rule.
-- The postcode finders no longer read Python semantics. They read the `postal` family through `recognize-core`.
+- The postcode finders no longer read Python semantics. They read the `postal` family through `recognizer-core`.
   A shape writes `\d` as `[0-9]` and matches either case by Unicode simple case folding, which also matches U+212A
   and U+017F, and the family states one case rule for serving and training. The one place the finder tests a
   character itself is the white space after a printed prefix, which it reads as JavaScript's `\s`, the class the
@@ -237,7 +237,7 @@ address-system registry, which has changed since 2026-10-29.
 
 ## The postal finders
 
-The encoder's two postcode finders read the `postal` family of `@mailwoman/postcode` through `recognize-core`.
+The encoder's two postcode finders read the `postal` family of `@mailwoman/postcode` through `recognizer-core`.
 They don't read a regular-expression engine, a shape record or a syntax record. The serving side reads the same artifact.
 
 **What the finders return.** `Finders::postcode_spans` returns the family's embedded candidates in the order they
@@ -334,6 +334,17 @@ countries with `countriesAcceptingPostcode`, and its result is in `docs/records/
 `parity.run.ts capture --name <record> --config <yaml> --records-dir <directory>` writes a record in the format
 `verify` reads from the current sampler and encoder, and never under the data root. The Python capture is gone, and the
 independent second implementation is serving's finder, which the agreement above holds to the encoder's on 72,209 rows.
+
+The three postal records were first captured on 2026-11-16 at `66631371cf`, on a branch that didn't hold the spread
+read (`283a1d64fb`, `243b23e881`). The spread read reached `origin/main` in `fbf505cc51`, so on `origin/main` the two
+train records failed `verify` at row 0 (#3120). With only `mtf-sampler` restored to its state before the spread read,
+`postal-v870-train-5k` verified with 0 differing rows on every tensor. With `mtf-sampler` at `243b23e881` it failed at row
+0, as `origin/main` did. `postal-v870-val-5k` reads no mixture and still verified. All three were captured again on
+2026-11-21 at `50bd12b983`, with the recognizer crates and the format identifiers renamed (#3217), and each verified with
+0 differing rows in a fresh process. The new train record shares 18 of its 5,000 row identities with the old one, and the
+code-unit record 13. The validation record's row identities and tensor digests are unchanged. Its header moved: the
+revision, the config file's sha256, and the sha256 of the postal artifact and definition, which the Eircode pattern of
+#3143 and the renamed format identifier changed. The register `encoder-parity-records.json` lists the old and new digests.
 
 ## Measured cost
 

@@ -5,7 +5,7 @@
  *   The Cloudflare Workers entry, selected by the `workerd` export condition.
  *
  *   Workers refuse to compile WebAssembly from bytes, so this entry imports the
- *   package's own `recognize.wasm` instead of the embedded copy.
+ *   package's own `recognizer.wasm` instead of the embedded copy.
  *   The bundler or the platform compiles it at deploy time, and the first
  *   recognition instantiates it synchronously.
  *   The path is the same from `lib/` and from `out/`.
@@ -13,7 +13,7 @@
 
 import { setDefaultSource } from "#runtime/state"
 
-import wasmModule from "../wasm/recognize.wasm"
+import wasmModule from "../wasm/recognizer.wasm"
 
 setDefaultSource(() => wasmModule)
 

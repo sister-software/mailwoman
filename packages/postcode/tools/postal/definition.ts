@@ -5,8 +5,8 @@
  *   Builds the family definition of the `postal` family from the package's own
  *   readers of every country's postcode syntax.
  *
- *   The definition is the input format `recognize-build --definition` compiles.
- *   See `packages/recognizer/crates/recognize-build/src/definition.rs`.
+ *   The definition is the input format `recognizer-build --definition` compiles.
+ *   See `packages/recognizer/crates/recognizer-build/src/definition.rs`.
  *
  *   # What a recognition reports
  *
@@ -91,8 +91,8 @@ export const FAMILY_ID = "postal"
 /**
  * The largest dense serialization the compiler accepts for the postal family's automata.
  *
- * The generator passes it to `recognize-build --dense-bytes`, so the family chooses
- * its own backend and no global limit changes.
+ * The generator passes it to `recognizer-build --dense-bytes`, so the family
+ * chooses its own backend and no global limit changes.
  * An automaton over the budget is stored sparse.
  *
  * The manifest records the backend of each automaton and the budget under `limits.denseBytes`.
@@ -356,7 +356,7 @@ export function postalProbeDefinition(): DefinitionDocument {
 		}
 	}
 
-	return { format: "mailwoman.recognize.family-definition", version: 1, family: "postal_probe", shapes }
+	return { format: "mailwoman.recognizer.family-definition", version: 1, family: "postal_probe", shapes }
 }
 
 /**
@@ -372,7 +372,7 @@ export interface DefinitionShape {
 }
 
 /**
- * The definition `recognize-build --definition` reads.
+ * The definition `recognizer-build --definition` reads.
  */
 export interface DefinitionDocument {
 	format: string
@@ -384,7 +384,7 @@ export interface DefinitionDocument {
 }
 
 /**
- * A pair the compiler reports, as `recognize-build --definition --list-overlaps` prints it.
+ * A pair the compiler reports, as `recognizer-build --definition --list-overlaps` prints it.
  */
 export interface ReportedOverlap {
 	a: { family: string; shape: string }
@@ -508,7 +508,7 @@ export function postalDefinition(
 	}
 
 	return {
-		format: "mailwoman.recognize.family-definition",
+		format: "mailwoman.recognizer.family-definition",
 		version: 1,
 		family: FAMILY_ID,
 		generator: GENERATOR,

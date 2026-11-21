@@ -17,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ABI_VERSION } from "#runtime/abi"
 import { type CompiledModule, type ModuleBytes, wasm } from "#runtime/webassembly"
 
-const wasmPath = workspacePath("recognizer", "wasm", "recognize.wasm")
+const wasmPath = workspacePath("recognizer", "wasm", "recognizer.wasm")
 
 /**
  * A module whose `rcg_abi_version` returns 2, the previous ABI and the smallest

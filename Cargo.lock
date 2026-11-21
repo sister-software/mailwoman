@@ -1406,7 +1406,7 @@ name = "mtf-channels"
 version = "0.1.0"
 dependencies = [
  "mtf-core",
- "recognize-core",
+ "recognizer-core",
  "serde",
  "serde_json",
 ]
@@ -2053,18 +2053,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "recognize-build"
+name = "recognizer-build"
 version = "0.1.0"
 dependencies = [
  "proptest",
- "recognize-core",
+ "recognizer-core",
  "regex-automata",
  "regex-syntax",
  "serde_json",
 ]
 
 [[package]]
-name = "recognize-core"
+name = "recognizer-core"
 version = "0.1.0"
 dependencies = [
  "regex-automata",
@@ -2075,10 +2075,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "recognize-wasm"
+name = "recognizer-wasm"
 version = "0.1.0"
 dependencies = [
- "recognize-core",
+ "recognizer-core",
  "serde_json",
 ]
 

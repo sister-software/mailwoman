@@ -1,7 +1,7 @@
 {
-	"format": "mailwoman.recognize.ir",
+	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "319a5fa686a3bb4a06bf0b0d972cc2421279297aabc6a316063dd2c05f68b8c5",
+	"hash": "430bbbd318241c5a04b859de913b1d0ae18cdbba4bb93c26132db4172a062b2e",
 	"family": "identifiers",
 	"terms": [
 		{
@@ -12,7 +12,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 93
 			}
 		},
@@ -34,7 +34,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 95
 			}
 		},
@@ -50,7 +50,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 109
 			}
 		},
@@ -73,7 +73,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 110
 			}
 		}
@@ -164,7 +164,7 @@
 				"with": ["h3.cell", "number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 75
 			}
 		},
@@ -253,7 +253,7 @@
 				"with": ["number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 75
 			}
 		},
@@ -308,7 +308,7 @@
 				"with": ["number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 75
 			}
 		},
@@ -346,7 +346,7 @@
 				"with": ["number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 75
 			}
 		},
@@ -418,7 +418,7 @@
 				"with": ["number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 75
 			}
 		},
@@ -556,7 +556,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 126
 			}
 		},
@@ -648,7 +648,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 139
 			}
 		},
@@ -1181,7 +1181,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 150
 			}
 		},
@@ -1224,7 +1224,7 @@
 				"with": ["census.geoid_block", "number.digit_run", "number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 161
 			}
 		},
@@ -1295,7 +1295,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 170
 			}
 		},
@@ -1477,7 +1477,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 178
 			}
 		},
@@ -1814,7 +1814,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/identifiers.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/identifiers.rs",
 				"line": 189
 			}
 		}

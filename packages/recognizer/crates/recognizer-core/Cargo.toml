@@ -1,0 +1,19 @@
+[package]
+name = "recognizer-core"
+description = "The declarative grammar AST, its builders, validation, the deterministic JSON intermediate representation, and the search runtime that loads compiled family artifacts."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = { version = "0.11", default-features = false }
+# Only the search half: `dfa-search` reads a serialized DFA and runs it. The regex parser, the NFA compiler and the DFA
+# builder (`syntax`, `nfa-thompson`, `dfa-build`) belong to `recognizer-build`.
+regex-automata = { version = "0.4.18", default-features = false, features = ["std", "dfa-search"] }
+
+[dev-dependencies]
+# Compile-fail tests for the generated declarations: a validator with no binding, and captures with no payload variant.
+trybuild = "=1.0.123"

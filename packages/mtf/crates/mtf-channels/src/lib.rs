@@ -11,7 +11,7 @@
 //!
 //! The painters and the label projection need no search engine, so the serving side can share them through
 //! WebAssembly. The `finders` feature adds the postcode finders the postal anchor and the code-unit channel read,
-//! which run the `postal` family's artifact through `recognize-core`.
+//! which run the `postal` family's artifact through `recognizer-core`.
 
 pub mod anchor;
 pub mod channel;

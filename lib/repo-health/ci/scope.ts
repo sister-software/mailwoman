@@ -66,7 +66,7 @@ export interface CIScope {
 
 /**
  * The crates the `rust` job tests: the mtf crates, core's Deflate64 crate,
- * the recognize crates, and the root cargo workspace files.
+ * the recognizer crates, and the root cargo workspace files.
  *
  * `@mailwoman/mtf`, `@mailwoman/core` and `@mailwoman/recognizer` also build their WebAssembly from them.
  * A change to a crate therefore still selects the owning workspace's suites.
@@ -368,7 +368,7 @@ export function selectCIScope(
 		react: has("@mailwoman/react"),
 		planetary: has("@mailwoman/planetary"),
 		opportunity: has("@mailwoman/opportunity-app"),
-		// The recognize engine's first-call tests run under the Workers pool and in Chromium beside the workers' tests.
+		// The recognizer engine's first-call tests run under the Workers pool and in Chromium beside the workers' tests.
 		worker: has("@mailwoman/license-worker") || has("@mailwoman/gazetteer-worker") || has("@mailwoman/recognizer"),
 		smoke:
 			full ||

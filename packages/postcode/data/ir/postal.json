@@ -1,7 +1,7 @@
 {
-	"format": "mailwoman.recognize.ir",
+	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "e7e69ddf30403b63bc4b8afd65f351fe398af8eead7636a8dc075da456995906",
+	"hash": "ee69a384964adaf15ee1fdd7a223c15bb5593bf8d5ae2738448da9e80adfa614",
 	"family": "postal",
 	"terms": [],
 	"shapes": [

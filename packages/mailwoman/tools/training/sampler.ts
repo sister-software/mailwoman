@@ -44,7 +44,7 @@ export function trainerDataPath(name: string): string {
 /**
  * The `postal` family's artifact.
  *
- * The postcode finders run it through `recognize-core`.
+ * The postcode finders run it through `recognizer-core`.
  * The serving side reads the same artifact in `@mailwoman/postcode`.
  */
 export const POSTAL_ARTIFACT_PATH = workspacePath("postcode", "data", "artifacts", "postal.rca1").toString()

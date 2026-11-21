@@ -27,7 +27,7 @@ tch = "0.26.0"
 mtf-core = { path = "packages/mtf/crates/mtf-core" }
 mtf-channels = { path = "packages/mtf/crates/mtf-channels" }
 mtf-sampler = { path = "packages/mtf/crates/mtf-sampler" }
-recognize-core = { path = "packages/recognizer/crates/recognize-core" }
+recognizer-core = { path = "packages/recognizer/crates/recognizer-core" }
 
 # The size-optimized profile `wasm/mtf.wasm` is built with.
 [profile.release]

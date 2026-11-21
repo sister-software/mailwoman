@@ -1,13 +1,13 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://mailwoman.dev/schemas/recognizer/family-definition-1.json",
-	"title": "Mailwoman recognize family definition, version 1",
-	"description": "A shape-only grammar family defined as data by a package other than recognize-core: regular-expression shapes, their scopes and overlap declarations, and metadata the generated TypeScript carries. recognize-build --definition compiles it into the IR, an artifact and generated TypeScript. A shape that declares captures, a validator or a handler is refused with a diagnostic.",
+	"title": "Mailwoman recognizer family definition, version 1",
+	"description": "A shape-only grammar family defined as data by a package other than recognizer-core: regular-expression shapes, their scopes and overlap declarations, and metadata the generated TypeScript carries. recognizer-build --definition compiles it into the IR, an artifact and generated TypeScript. A shape that declares captures, a validator or a handler is refused with a diagnostic.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["format", "version", "family", "shapes"],
 	"properties": {
-		"format": { "const": "mailwoman.recognize.family-definition" },
+		"format": { "const": "mailwoman.recognizer.family-definition" },
 		"version": { "const": 1 },
 		"family": { "$ref": "#/$defs/dottedName" },
 		"generator": {

@@ -15,7 +15,7 @@
  *   A caller that classifies one codepoint or one token at a time, in a loop that runs
  *   thousands of times, calls these functions instead and pays no WebAssembly call for each.
  *
- *   The ranges are the ones the `structure` family compiles from `crates/recognize-core/src/charset.rs`.
+ *   The ranges are the ones the `structure` family compiles from `crates/recognizer-core/src/charset.rs`.
  *   `charset.test.ts` checks every range against `\p{Script=…}`, and `tools/differential.test.ts`
  *   checks the family against the frozen output of the classifier these functions come from.
  */

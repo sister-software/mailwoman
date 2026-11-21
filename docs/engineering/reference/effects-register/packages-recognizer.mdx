@@ -41,17 +41,17 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 - `runs a statement at module scope`, 3 times
 - `awaits at module scope`, 3 times
 
-| Kind        | Interface               | Target                                                                          | Calls |
-| ----------- | ----------------------- | ------------------------------------------------------------------------------- | ----- |
-| read        | `readLocalBuffer`       | `repo:packages/recognizer/wasm/recognize.wasm`                                  | 1     |
-| read        | `readLocalBuffer`       | `repo:target/recognize-wasm/wasm32-unknown-unknown/release/recognize_wasm.wasm` | 1     |
-| read        | `readLocalTextFile`     | `repo:packages/recognizer/lib/embedded.generated.ts`                            | 1     |
-| write       | `replaceFileAtomically` | `repo:packages/recognizer/wasm/recognize.wasm`                                  | 1     |
-| write       | `replaceFileAtomically` | `repo:target/recognize-wasm/wasm32-unknown-unknown/release/recognize_wasm.wasm` | 1     |
-| write       | `writeLocalFile`        | `repo:packages/recognizer/lib/embedded.generated.ts`                            | 1     |
-| process     | `runFile`               | `literal:cargo`                                                                 | 1     |
-| environment | `process.env`           | `environment:CARGO_HOME`                                                        | 1     |
-| environment | `process.env`           | `environment:HOME`                                                              | 1     |
+| Kind        | Interface               | Target                                                                            | Calls |
+| ----------- | ----------------------- | --------------------------------------------------------------------------------- | ----- |
+| read        | `readLocalBuffer`       | `repo:packages/recognizer/wasm/recognizer.wasm`                                   | 1     |
+| read        | `readLocalBuffer`       | `repo:target/recognizer-wasm/wasm32-unknown-unknown/release/recognizer_wasm.wasm` | 1     |
+| read        | `readLocalTextFile`     | `repo:packages/recognizer/lib/embedded.generated.ts`                              | 1     |
+| write       | `replaceFileAtomically` | `repo:packages/recognizer/wasm/recognizer.wasm`                                   | 1     |
+| write       | `replaceFileAtomically` | `repo:target/recognizer-wasm/wasm32-unknown-unknown/release/recognizer_wasm.wasm` | 1     |
+| write       | `writeLocalFile`        | `repo:packages/recognizer/lib/embedded.generated.ts`                              | 1     |
+| process     | `runFile`               | `literal:cargo`                                                                   | 1     |
+| environment | `process.env`           | `environment:CARGO_HOME`                                                          | 1     |
+| environment | `process.env`           | `environment:HOME`                                                                | 1     |
 
 ## `packages/recognizer/tools/frozen.ts`
 
@@ -66,16 +66,16 @@ The workspace's `sideEffects` declaration lists this module. Its import-time eff
 - `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 3 times
 
-| Kind    | Interface           | Target                                | Calls |
-| ------- | ------------------- | ------------------------------------- | ----- |
-| read    | `readLocalBuffer`   | `unresolved (parameter)`              | 1     |
-| read    | `readLocalBuffer`   | `unresolved (template)`               | 1     |
-| read    | `readLocalTextFile` | `unresolved (identifier)`             | 1     |
-| read    | `readLocalTextFile` | `unresolved (template)`               | 4     |
-| write   | `writeLocalFile`    | `unresolved (parameter)`              | 1     |
-| process | `runFile`           | `literal:cargo`                       | 1     |
-| process | `runFile`           | `literal:rustfmt`                     | 1     |
-| process | `runFile`           | `repo:target/release/recognize-build` | 1     |
+| Kind    | Interface           | Target                                 | Calls |
+| ------- | ------------------- | -------------------------------------- | ----- |
+| read    | `readLocalBuffer`   | `unresolved (parameter)`               | 1     |
+| read    | `readLocalBuffer`   | `unresolved (template)`                | 1     |
+| read    | `readLocalTextFile` | `unresolved (identifier)`              | 1     |
+| read    | `readLocalTextFile` | `unresolved (template)`                | 4     |
+| write   | `writeLocalFile`    | `unresolved (parameter)`               | 1     |
+| process | `runFile`           | `literal:cargo`                        | 1     |
+| process | `runFile`           | `literal:rustfmt`                      | 1     |
+| process | `runFile`           | `repo:target/release/recognizer-build` | 1     |
 
 ## `packages/recognizer/tools/profile.run.ts`
 

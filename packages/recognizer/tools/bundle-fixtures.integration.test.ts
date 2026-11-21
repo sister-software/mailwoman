@@ -20,11 +20,11 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { build } from "esbuild"
 import { describe, expect, it } from "vitest"
 
-const recognize = workspacePath("recognizer").toString()
+const recognizerDirectory = workspacePath("recognizer").toString()
 
 async function bundle(source: string, conditions: string[] = ["browser", "default"]): Promise<string> {
 	const result = await build({
-		stdin: { contents: source, resolveDir: recognize, loader: "ts" },
+		stdin: { contents: source, resolveDir: recognizerDirectory, loader: "ts" },
 		bundle: true,
 		write: false,
 		format: "esm",
@@ -89,7 +89,7 @@ describe("bundle fixtures", () => {
 		)
 
 		expect(text).not.toContain(await payload("embedded.generated.ts"))
-		expect(text).toContain("recognize.wasm")
+		expect(text).toContain("recognizer.wasm")
 		expect(text).toContain(await payload("artifacts/coordinates.generated.ts"))
 	})
 

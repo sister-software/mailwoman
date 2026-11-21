@@ -6,7 +6,7 @@
  *   artifact to `data/artifacts/<family>.rca1`, the build manifest to `data/manifests/artifacts.json`,
  *   each family's declarations as data to `data/declarations/<family>.json`,
  *   the compiler report to `data/reports/compiler-report.json` and the overlap witnesses
- *   to `data/fixtures/overlap-witnesses.json`, all with `crates/recognize-build`.
+ *   to `data/fixtures/overlap-witnesses.json`, all with `crates/recognizer-build`.
  *
  *   The build binary validates and compiles every family first.
  *   A grammar that fails validation or exceeds a compiler limit prints each diagnostic
@@ -18,7 +18,7 @@
  *
  *   Usage: `node packages/recognizer/tools/generate.run.ts [--check]`
  *
- *   It also writes each family's generated declarations: `crates/recognize-core/src/declared.rs`
+ *   It also writes each family's generated declarations: `crates/recognizer-core/src/declared.rs`
  *   and `declared/<family>.rs` (formatted with rustfmt), and `lib/<family>.generated.ts`
  *   and `lib/artifacts/<family>.generated.ts` (formatted with oxfmt).
  *   Edit the grammar or the generator and not these files.
@@ -43,21 +43,21 @@ import { type FormatConfig, format } from "oxfmt"
 import { IR_FORMAT, IR_VERSION } from "#ir"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
-const recognize = (...segments: string[]): string => workspacePath("recognizer", ...segments)
+const recognizerPath = (...segments: string[]): string => workspacePath("recognizer", ...segments)
 
-await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build"], {
+await runFile("cargo", ["build", "--release", "--locked", "-p", "recognizer-build"], {
 	cwd: workspacePath("recognizer"),
 })
 
-await using scratch = await temporaryDirectory("recognize-generate-")
+await using scratch = await temporaryDirectory("recognizer-generate-")
 const built = scratch.path.toString()
-const binary = repoRootPath("target", "release", "recognize-build")
+const binary = repoRootPath("target", "release", "recognizer-build")
 
 // A refused grammar exits 1 and prints `file:line: kind: message` diagnostics on stderr.
 const printed = await runFile(binary, [built]).catch((error: { stderr?: string }) => {
 	console.error(error.stderr ?? String(error))
 
-	throw new Error("recognize-build refused a grammar", { cause: error })
+	throw new Error("recognizer-build refused a grammar", { cause: error })
 })
 
 let stale = 0
@@ -72,7 +72,7 @@ const { default: formatConfig } = (await import(repoRootPath("oxfmt.config.ts").
 const written = parseJSONStrict<Array<{ family: string; hash: string; sha256: string }>>(printed.stdout)
 
 if (!written.length) {
-	throw new Error("recognize-build wrote no family")
+	throw new Error("recognizer-build wrote no family")
 }
 
 /**
@@ -106,10 +106,10 @@ for (const { family, hash, sha256 } of written) {
 		throw new Error(`${family}: the artifact's SHA-256 is not the ${sha256} the binary printed`)
 	}
 
-	await settle(recognize("data", "artifacts", `${family}.rca1`), artifact, sha256)
+	await settle(recognizerPath("data", "artifacts", `${family}.rca1`), artifact, sha256)
 
 	const generated = await readLocalTextFile(`${built}/${family}.json`)
-	const target = recognize("data", "ir", `${family}.json`)
+	const target = recognizerPath("data", "ir", `${family}.json`)
 	const identity = parseJSONStrict<{ format: string; version: number; hash: string }>(generated)
 
 	if (identity.format !== IR_FORMAT || identity.version !== IR_VERSION || identity.hash !== hash) {
@@ -129,7 +129,7 @@ for (const { family, hash, sha256 } of written) {
 	await settle(target, formatted.code, hash)
 }
 
-// The generated declarations: the Rust modules `recognize-core` compiles
+// The generated declarations: the Rust modules `recognizer-core` compiles
 // and the TypeScript the package ships.
 // The binary writes them in a layout close to the formatters', and each formatter then has the last word.
 const rustFiles = ["declared.rs", ...written.map(({ family }) => `declared/${family.replaceAll(".", "_")}.rs`)]
@@ -139,14 +139,14 @@ for (const file of rustFiles) {
 		"--edition",
 		"2021",
 		"--config-path",
-		recognize("rustfmt.toml").toString(),
+		recognizerPath("rustfmt.toml").toString(),
 		`${built}/rust/${file}`,
 	])
 }
 
 for (const file of rustFiles) {
 	await settle(
-		recognize("crates", "recognize-core", "src", file),
+		recognizerPath("crates", "recognizer-core", "src", file),
 		await readLocalTextFile(`${built}/rust/${file}`),
 		"declarations"
 	)
@@ -154,7 +154,7 @@ for (const file of rustFiles) {
 
 // Each family's declarations as data, for the generated reference documentation.
 for (const { family } of written) {
-	const to = recognize("data", "declarations", `${family}.json`)
+	const to = recognizerPath("data", "declarations", `${family}.json`)
 	const formatted = await format(to, await readLocalTextFile(`${built}/declarations/${family}.json`), formatConfig)
 
 	if (formatted.errors.length) {
@@ -166,8 +166,8 @@ for (const { family } of written) {
 
 for (const { family } of written) {
 	for (const [from, to] of [
-		[`${built}/ts/${family}.generated.ts`, recognize("lib", `${family}.generated.ts`)],
-		[`${built}/ts/artifacts/${family}.generated.ts`, recognize("lib", "artifacts", `${family}.generated.ts`)],
+		[`${built}/ts/${family}.generated.ts`, recognizerPath("lib", `${family}.generated.ts`)],
+		[`${built}/ts/artifacts/${family}.generated.ts`, recognizerPath("lib", "artifacts", `${family}.generated.ts`)],
 	] as const) {
 		const formatted = await format(to, await readLocalTextFile(from), formatConfig)
 
@@ -183,9 +183,13 @@ for (const { family } of written) {
 // The compiler report states each family's shapes, unreachable shapes and overlapping pairs.
 // The witness fixture holds the shortest string each declared overlapping pair shares.
 const documents = [
-	{ from: "artifacts.json", to: recognize("data", "manifests", "artifacts.json"), label: "manifest" },
-	{ from: "compiler-report.json", to: recognize("data", "reports", "compiler-report.json"), label: "report" },
-	{ from: "overlap-witnesses.json", to: recognize("data", "fixtures", "overlap-witnesses.json"), label: "witnesses" },
+	{ from: "artifacts.json", to: recognizerPath("data", "manifests", "artifacts.json"), label: "manifest" },
+	{ from: "compiler-report.json", to: recognizerPath("data", "reports", "compiler-report.json"), label: "report" },
+	{
+		from: "overlap-witnesses.json",
+		to: recognizerPath("data", "fixtures", "overlap-witnesses.json"),
+		label: "witnesses",
+	},
 ]
 
 for (const { from, to, label } of documents) {
