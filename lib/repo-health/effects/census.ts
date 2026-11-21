@@ -154,7 +154,7 @@ async function collectEffectCensus(context: RepoContext): Promise<EffectCensus> 
 }
 
 /**
- * Where `mwops effects` writes the edge file, under the repository's generated `out/` tree.
+ * Where `mwops effects --census` writes the edge file, under the repository's generated `out/` tree.
  */
 export function effectCensusPath(repoRoot: string): string {
 	return resolvePath(repoRoot, "out", "repo-health", "effects", "edges.json").toString()

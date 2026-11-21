@@ -55,7 +55,7 @@ export interface StateMachine<
 	/**
 	 * One event for each case the transition distinguishes, keyed by a label for that case.
 	 *
-	 * The effects register applies every event to every state to print the machine's
+	 * `yarn mwops effects` applies every event to every state to print the machine's
 	 * transition table, and a test can assert the same table.
 	 */
 	readonly events?: Readonly<Record<string, TEvent>>
