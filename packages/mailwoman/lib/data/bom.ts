@@ -14,6 +14,12 @@
  *   CycloneDX 1.5 rather than a schema of this repository's own, because the existing validators run against
  *   it and the software SBOMs beside it are already in that format. The components are of type `data`.
  *
+ *   **A mixed layer is listed by source.** A layer whose license is a `LicenseRef-<name>-Mixed` expression,
+ *   such as the US address layer's `LicenseRef-US-Mixed`, gets its own component with one nested `data`
+ *   component per source its ledgers name. Each records the publisher, the register decision and its basis,
+ *   the terms URL and the attribution and share-alike states `#data/mixed-layer` reads. A source the
+ *   register doesn't cover is emitted with `mailwoman:registerUncovered` rather than dropped.
+ *
  *   **The document is deterministic.** `metadata.timestamp` stores the snapshot's `measuredAt` rather than
  *   the run's own clock. No `serialNumber` is emitted, so re-running over an unchanged snapshot produces
  *   identical bytes and the committed file diffs only when a measurement changed.
@@ -29,6 +35,13 @@ import { prettyJSON } from "@mailwoman/core/json"
 
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL, type DataBundle } from "#data/bundles"
 import { Provenance, type InventoryEntry, type InventoryReport } from "#data/inventory"
+import {
+	isMixedLicenseExpression,
+	mixedAddressLayerOf,
+	type MixedLayerDescription,
+	type MixedLayerSource,
+	tallyObligationClasses,
+} from "#data/mixed-layer"
 import { MeasurementStatus, type PublishedBundlesSnapshot } from "#data/published-bundles"
 
 /**
@@ -68,6 +81,10 @@ interface BOMProperty {
 export interface DataBOMComponent {
 	type: "data"
 	"bom-ref": string
+	/**
+	 * The organization that published the component, as it spells its own name.
+	 */
+	publisher?: string
 	name: string
 	version: string
 	description?: string
@@ -75,6 +92,25 @@ export interface DataBOMComponent {
 	hashes?: Array<{ alg: string; content: string }>
 	externalReferences?: Array<{ type: string; url: string }>
 	properties: BOMProperty[]
+	/**
+	 * The components this one contains: a mixed layer's sources, each under its own terms.
+	 */
+	components?: DataBOMComponent[]
+}
+
+/**
+ * A mixed layer the document lists by source, and where its description was read.
+ */
+export interface DataBOMMixedLayer {
+	description: MixedLayerDescription
+	/**
+	 * Where the manifest and ledgers were read: the data root's `db/` directory or the bucket's base URL.
+	 */
+	readFrom: string
+	/**
+	 * Whether the attribution notice exists beside the manifest where the layer was read.
+	 */
+	noticePresent: boolean
 }
 
 export interface DataBOM {
@@ -113,6 +149,17 @@ export interface DataBOMOptions {
 	 * be read for any of the 106 bundle artifacts measured 2026-09-27.
 	 */
 	inventory?: InventoryReport
+
+	/**
+	 * The mixed layers to list by source, each nested under its own component.
+	 */
+	mixedLayers?: readonly DataBOMMixedLayer[]
+
+	/**
+	 * A mixed layer the caller couldn't describe, with the reason, recorded in
+	 * the metadata in place of its sources.
+	 */
+	mixedLayersUnread?: ReadonlyArray<{ license: string; reason: string }>
 }
 
 function property(name: string, value: string | number | null | undefined): BOMProperty[] {
@@ -189,7 +236,130 @@ function bundleComponents(
 	return components
 }
 
-function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
+/**
+ * Where a manifested database with a mixed license has its sources listed, or why it has none.
+ */
+function mixedListing(path: string, license: string | undefined, layers: readonly DataBOMMixedLayer[]): BOMProperty[] {
+	if (!license || !isMixedLicenseExpression(license)) return []
+
+	const listing = layers.find(
+		({ description }) =>
+			description.license === license &&
+			path.startsWith(`db/addresses/${description.country.toLowerCase()}-`) &&
+			path.includes(`/${description.version}/`)
+	)
+
+	if (listing) return property("mailwoman:mixedSourcesListedUnder", layerReference(listing.description))
+
+	return property(
+		"mailwoman:mixedSourcesUnlisted",
+		mixedAddressLayerOf(license)
+			? "this database's version is not the layer version this document lists by source"
+			: `no reader lists the sources of ${license}, so this document records the expression only`
+	)
+}
+
+const layerReference = (description: MixedLayerDescription): string => `layer/${description.id}/${description.version}`
+
+/**
+ * One source of a mixed layer, with its publisher's register decision, basis, terms and obligations.
+ */
+function mixedSourceComponent(description: MixedLayerDescription, source: MixedLayerSource): DataBOMComponent {
+	const deciding = source.deciding
+
+	const statement =
+		deciding && deciding.decision !== "unchecked" ? (source.statement ?? "unrecorded in the register") : null
+
+	return {
+		type: "data",
+		"bom-ref": `${layerReference(description)}/source/${source.source}`,
+		...(source.publisher ? { publisher: source.publisher } : {}),
+		name: source.source,
+		version: description.version,
+		// An SPDX expression only where the register elected one.
+		// Every other source states no license this document can name.
+		licenses: [{ expression: source.spdx ?? "NOASSERTION" }],
+		...(source.termsURL ? { externalReferences: [{ type: "license", url: source.termsURL }] } : {}),
+		properties: [
+			...property("mailwoman:records", source.records),
+			...property("mailwoman:regions", source.regions.join(", ")),
+			...property("mailwoman:registerSources", source.rows.map((row) => row.registerSource).join(", ")),
+			...property(
+				"mailwoman:registerUncovered",
+				source.rows.length ? null : "the source table maps this source to no register row"
+			),
+			...property("mailwoman:registerDecision", deciding ? (deciding.decision ?? "no decision") : "uncovered"),
+			...property("mailwoman:termsBasis", source.basis),
+			...property("mailwoman:termsStatement", statement),
+			...property("mailwoman:spdx", source.spdx),
+			...property("mailwoman:electedTerms", deciding?.electedTerms),
+			...property("mailwoman:termsURL", source.termsURL),
+			...property("mailwoman:termsRetrievedCopy", deciding?.retrievedCopy),
+			...property("mailwoman:decisionBecause", deciding?.because),
+			...property("mailwoman:attribution", source.attribution),
+			...property("mailwoman:attributionText", source.attributionText),
+			...property("mailwoman:shareAlike", source.shareAlike),
+			...property("mailwoman:obligationClass", source.obligationClass),
+			...property("mailwoman:layerRecordedLicense", source.recordedLicense),
+			...property(
+				"mailwoman:openAddressesAttribution",
+				source.openAddresses?.attribution == null ? null : String(source.openAddresses.attribution)
+			),
+			...property("mailwoman:openAddressesAttributionName", source.openAddresses?.attributionName),
+			...property(
+				"mailwoman:openAddressesShareAlike",
+				source.openAddresses?.shareAlike == null ? null : String(source.openAddresses.shareAlike)
+			),
+			...source.rows.flatMap((row) =>
+				property("mailwoman:registerRow", `${row.registerSource}: ${row.decision ?? "no decision"}, ${row.basis}`)
+			),
+		],
+	}
+}
+
+/**
+ * A mixed layer's own component, with one nested component per source.
+ */
+function mixedLayerComponent(layer: DataBOMMixedLayer): DataBOMComponent {
+	const { description } = layer
+	const base = layer.readFrom.endsWith("/") ? layer.readFrom : `${layer.readFrom}/`
+
+	return {
+		type: "data",
+		"bom-ref": layerReference(description),
+		name: description.manifestPath,
+		version: description.version,
+		description:
+			`The ${description.country} address layer: ${description.regions} regions whose rows come from ` +
+			`${description.sources.length} sources under their publishers' own terms, each listed as a nested component.`,
+		licenses: [{ expression: description.license }],
+		externalReferences: [
+			{ type: "distribution", url: `${PUBLIC_BUCKET_BASE_URL}${description.manifestPath}` },
+			...(layer.noticePresent ? [{ type: "license", url: `${PUBLIC_BUCKET_BASE_URL}${description.noticePath}` }] : []),
+		],
+		properties: [
+			...property("mailwoman:readFrom", base),
+			...property("mailwoman:regions", description.regions),
+			...property("mailwoman:records", description.records),
+			...property("mailwoman:sources", description.sources.length),
+			...tallyObligationClasses(description).flatMap((tally) =>
+				property(
+					"mailwoman:obligationClassCount",
+					`${tally.obligationClass}: ${tally.sources} sources, ${tally.records} records`
+				)
+			),
+			...(layer.noticePresent
+				? property("mailwoman:attributionNotice", description.noticePath)
+				: property(
+						"mailwoman:attributionNoticeAbsent",
+						`${description.noticePath} does not exist where the layer was read. Write it with \`mailwoman situs attribution-manifest --layer-version ${description.version}\``
+					)),
+		],
+		components: description.sources.map((source) => mixedSourceComponent(description, source)),
+	}
+}
+
+function inventoryComponent(entry: InventoryEntry, layers: readonly DataBOMMixedLayer[]): DataBOMComponent {
 	const manifest = entry.manifest!
 
 	return {
@@ -224,6 +394,7 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 			...property("mailwoman:linkTarget", entry.linkTarget),
 			// Whether the active selection lists the artifact, for an artifact the catalog holds.
 			...property("mailwoman:selection", entry.selection),
+			...mixedListing(entry.path, manifest.license, layers),
 		],
 	}
 }
@@ -241,8 +412,14 @@ export function buildDataBOM(options: DataBOMOptions): DataBOM {
 
 	const manifested = (options.inventory?.entries ?? []).filter((entry) => entry.provenance === Provenance.Manifested)
 
+	const layers = options.mixedLayers ?? []
+
 	for (const entry of manifested) {
-		components.push(inventoryComponent(entry))
+		components.push(inventoryComponent(entry, layers))
+	}
+
+	for (const layer of layers) {
+		components.push(mixedLayerComponent(layer))
 	}
 
 	const unprovenanced = options.inventory?.counts[Provenance.Unprovenanced]
@@ -274,6 +451,12 @@ export function buildDataBOM(options: DataBOMOptions): DataBOM {
 					!unprovenanced
 						? undefined
 						: `${unprovenanced} databases under the data root carry no layer_manifest row and are not components here`
+				),
+				...layers.flatMap(({ description }) =>
+					property("mailwoman:mixedLayer", `${description.license} ${layerReference(description)}`)
+				),
+				...(options.mixedLayersUnread ?? []).flatMap(({ license, reason }) =>
+					property("mailwoman:mixedLayerUnread", `${license}: ${reason}`)
 				),
 			],
 		},

@@ -18,6 +18,7 @@ import {
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 
+import { ObligationClass } from "#data/mixed-layer"
 import { obligationFindings, type ObligationRefusal } from "#data/obligations"
 
 /**
@@ -750,6 +751,111 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 	if (!recognized) return "unrecognized license"
 
 	return obligations.length ? obligations.join(", ") : "none"
+}
+
+/**
+ * One attached mixed address layer: the newest version under the data root,
+ * described by source, or the error that stopped the description.
+ */
+export interface MixedLayerObservation {
+	license: string
+	country: string
+	version: string
+	/**
+	 * The count of sources and records in each obligation class, or null
+	 * when the layer couldn't be described.
+	 */
+	tally: Array<{ obligationClass: ObligationClass; sources: number; records: number }> | null
+	error: string | null
+	/**
+	 * The attribution notice's path under the data root, and whether it exists.
+	 */
+	noticePath: string
+	noticePresent: boolean
+	/**
+	 * The data bill of materials for this build's version, as the docs site serves it.
+	 */
+	bomURL: string
+}
+
+/**
+ * Reports an attached mixed layer by the obligation classes of its sources, rather than
+ * one line per source, and points to the bill of materials and the notice that list them.
+ *
+ * A source whose terms the register hasn't read counts as unknown, so a layer with any degrades the check.
+ * The check is informational and never core.
+ */
+export function mixedLayerCheck(o: MixedLayerObservation): DoctorCheck {
+	const base = {
+		id: `license-addresses-${o.country.toLowerCase()}`,
+		label: `License (${o.country} address layer ${o.version})`,
+		core: false,
+		fix: null,
+		license: null,
+	}
+
+	// The notice and the bill of materials name every source, so the check prints counts and points to them.
+	const pointers =
+		(o.noticePresent
+			? `the notice ${o.noticePath} lists every credit to ship with the layer`
+			: `no notice at ${o.noticePath}; write it with \`mailwoman situs attribution-manifest --layer-version ${o.version}\``) +
+		`; ${o.bomURL} lists each source with its publisher's decision and terms`
+
+	const license: LicensePosture = {
+		subject: base.id,
+		expression: o.license,
+		applied: o.license,
+		obligations: [],
+		recognized: false,
+		attribution: pointers,
+		licensee: null,
+		keyID: null,
+		keyStatus: null,
+		lid: null,
+		lidStatus: null,
+	}
+
+	if (!o.tally) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail: `${o.license}: the layer's sources could not be read${o.error ? `: ${firstLine(o.error)}` : ""}`,
+			consequence: "Without the layer's sources the doctor cannot say what their publishers ask of you.",
+			license,
+		}
+	}
+
+	const total = o.tally.reduce((sum, entry) => sum + entry.sources, 0)
+	const present = new Set(o.tally.filter((entry) => entry.sources).map((entry) => entry.obligationClass))
+	const unknown = o.tally.find((entry) => entry.obligationClass === ObligationClass.Unknown)?.sources ?? 0
+	const shareAlike = present.has(ObligationClass.ShareAlike)
+
+	const attribution =
+		shareAlike || present.has(ObligationClass.Attribution) || present.has(ObligationClass.AttributionRecorded)
+
+	const counts = o.tally
+		.filter((entry) => entry.sources)
+		.map((entry) => `${entry.obligationClass} ${entry.sources.toLocaleString("en-US")}`)
+		.join(", ")
+
+	return {
+		...base,
+		status: unknown ? CheckStatus.Degraded : CheckStatus.OK,
+		detail: `${o.license} · ${total.toLocaleString("en-US")} sources by obligation: ${counts}`,
+		consequence: unknown
+			? `${unknown.toLocaleString("en-US")} sources have terms the register has not established, so what they ask of you is unknown.`
+			: null,
+		license: {
+			...license,
+			// The union over the sources whose terms are read.
+			// `recognized` is false while any source's terms are unknown.
+			obligations: [
+				...(attribution ? [LicenseObligation.Attribution] : []),
+				...(shareAlike ? [LicenseObligation.ShareAlike] : []),
+			],
+			recognized: !unknown,
+		},
+	}
 }
 
 /**

@@ -322,12 +322,13 @@ Write the data bill of materials: one CycloneDX 1.5 component per artifact a rel
 mailwoman data bom [options]
 ```
 
-| Flag                      | Type    | Default | Description                                                                                                                                                           |
-| ------------------------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--json`                  | boolean | `false` | Write the document to stdout instead of to the file                                                                                                                   |
-| `--out [out]`             | string  | —       | Override the output path                                                                                                                                              |
-| `--data-root [data-root]` | string  | —       | Override the data root                                                                                                                                                |
-| `--skip-inventory`        | boolean | `false` | Leave out the data root's manifested databases. The document then lists only the four bundles, and no component records attribution, source vintage or build revision |
+| Flag                                          | Type    | Default  | Description                                                                                                                                                                                                                  |
+| --------------------------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--json`                                      | boolean | `false`  | Write the document to stdout instead of to the file                                                                                                                                                                          |
+| `--out [out]`                                 | string  | —        | Override the output path                                                                                                                                                                                                     |
+| `--data-root [data-root]`                     | string  | —        | Override the data root                                                                                                                                                                                                       |
+| `--skip-inventory`                            | boolean | `false`  | Leave out the data root's manifested databases. The document then lists only the four bundles, and no component records attribution, source vintage or build revision                                                        |
+| `--address-layers-from [address-layers-from]` | string  | `bucket` | Where to read the served address layers that release.config.json's addressLayers pins: the public bucket, or the data root's db/ directory. Each layer's sources are listed under its component with their publishers' terms |
 
 ### `mailwoman data build`
 

@@ -47,6 +47,7 @@ function healthyDeps(): DoctorDeps {
 		checkLicenseStatus: async () => "unknown",
 		refusedObligations: () => [],
 		loadONNX: async () => {},
+		mixedLayers: async () => [],
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
 		overlayLocales: ["fr-fr"],

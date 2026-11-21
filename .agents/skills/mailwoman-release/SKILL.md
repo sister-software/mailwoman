@@ -263,9 +263,12 @@ Run `gh workflow run docker-publish.yml --ref main -f tag=<target>` once the reg
 Then fast-forward local main: `git merge --ff-only origin/main`.
 
 The publish job attaches `mailwoman-<version>.spdx.json`, `mailwoman-<version>.cdx.json` and
-`mailwoman-data-<version>.cdx.json` to the GitHub release after the publish loop. The post-release docs
-PR (the matrix row and the status page) also commits those three files under `docs/static/sbom/`, because
-the job cannot commit to main.
+`mailwoman-data-<version>.cdx.json` to the GitHub release after the publish loop, then opens the
+auto-merging PR `release/v<version>-sbom` that commits them under `docs/static/sbom/`, because the job
+cannot push to main. Check that PR merged: `gh pr list --head release/v<target>-sbom --state all`. The
+data bill of materials lists the sources of the address-layer version `release.config.json`'s
+`addressLayers` pins, so set that pin in the prepare commit when `mailwoman situs publish` served a new
+version.
 
 Both jobs run `yarn mwops release rights-audit`, which fails when a graph package's model card records a
 corpus that has no frozen training manifest under `packages/corpus/data/training-manifests/`. A model

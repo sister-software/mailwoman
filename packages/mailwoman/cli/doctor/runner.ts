@@ -11,6 +11,7 @@ import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase, ServingRole } from "@mailwoman/core/layers"
 import {
+	docsSiteURL,
 	isSelfServicePayload,
 	type LicenseKeyVerification,
 	readInstallationID,
@@ -20,7 +21,7 @@ import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwom
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilderLike } from "path-ts"
+import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	assembleReport,
@@ -30,6 +31,7 @@ import {
 	gazetteerCheck,
 	layerLicenseCheck,
 	localeOverlayCheck,
+	mixedLayerCheck,
 	nodeVersionCheck,
 	obligationPostureCheck,
 	onnxRuntimeCheck,
@@ -40,6 +42,7 @@ import {
 	type GazetteerObservation,
 	type LayerIdentity,
 	type LayerLicenseObservation,
+	type MixedLayerObservation,
 	type POIObservation,
 	type WeightsObservation,
 } from "#cli/doctor/checks"
@@ -159,6 +162,10 @@ export interface DoctorDeps {
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
 	loadONNX(): Promise<void>
+	/**
+	 * Each mixed address layer the session attaches, the newest version under the data root, by source.
+	 */
+	mixedLayers(): Promise<MixedLayerObservation[]>
 	nodeVersion: string
 	enginesFloor: string
 	overlayLocales: string[]
@@ -251,6 +258,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
+		mixedLayers: () => gatherMixedLayers(dataRoot),
 		nodeVersion: process.versions.node,
 		enginesFloor: await readEnginesFloor(),
 		overlayLocales: ["fr-fr"],
@@ -382,6 +390,56 @@ async function gatherAddressPointLicense(
 	}
 }
 
+/**
+ * Describes each mixed address layer the session would attach: the newest version under
+ * the data root's `db/`, the manifest `readLatestAddressLayerManifest` serves.
+ *
+ * A country with no layer on disk yields no observation.
+ * A layer whose sources can't be read yields one carrying the error.
+ */
+async function gatherMixedLayers(dataRoot: PathBuilderLike): Promise<MixedLayerObservation[]> {
+	const [mixed, { readLatestAddressLayerManifest }, { version }] = await Promise.all([
+		import("#data/mixed-layer"),
+		import("@mailwoman/resolver-wof-sqlite/address/keys/layout"),
+		readMailwomanManifest(),
+	])
+
+	const root = resolvePathBuilder(dataRoot, "db")
+	const read = mixed.localLayerFileReader(root)
+	const bomURL = `${docsSiteURL()}/sbom/mailwoman-data-${version}.cdx.json`
+	const observations: MixedLayerObservation[] = []
+
+	for (const { license, country } of mixed.listableMixedAddressLayers()) {
+		const manifest = await readLatestAddressLayerManifest(root, country)
+
+		if (!manifest) continue
+
+		const noticePath = root("addresses", country.toLowerCase(), manifest.version, mixed.ATTRIBUTION_NOTICE_FILE)
+		const base = { license, country, version: manifest.version, noticePath: noticePath.toString(), bomURL }
+		const noticePresent = await pathExists(noticePath)
+
+		try {
+			const description = await mixed.describeMixedAddressLayer({ license, version: manifest.version, read })
+
+			observations.push({
+				...base,
+				noticePresent,
+				tally: mixed.tallyObligationClasses(description),
+				error: null,
+			})
+		} catch (error) {
+			observations.push({
+				...base,
+				noticePresent,
+				tally: null,
+				error: error instanceof Error ? error.message : String(error),
+			})
+		}
+	}
+
+	return observations
+}
+
 async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCheck> {
 	const packageName = deps.weightsPackageName(locale)
 
@@ -458,6 +516,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const layerObservations = [...fixedLayerObservations, ...addressPointObservations]
 
 	const layerLicenses = layerObservations.map(layerLicenseCheck)
+	const mixedLayers = (await deps.mixedLayers()).map(mixedLayerCheck)
 
 	const posture = await gatherObligationPosture(deps, gazetteerObservation, layerObservations)
 
@@ -472,6 +531,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		poi,
 		runtimeLicense,
 		...layerLicenses,
+		...mixedLayers,
 		...(posture ? [posture] : []),
 		...overlays,
 	])

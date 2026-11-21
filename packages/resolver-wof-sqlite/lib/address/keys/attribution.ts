@@ -14,6 +14,11 @@ import { addressLayerFiles } from "#address/keys/layout"
 import type { AddressDetailDatabase, AddressLookupDatabase } from "#address/keys/schema"
 
 /**
+ * The name of the ledger file beside each region's `lookup.db`.
+ */
+export const ADDRESS_LAYER_ATTRIBUTION_FILE = "ATTRIBUTION.json"
+
+/**
  * One source and authority of a region's rows, with the terms the source records.
  */
 export interface AddressLayerAttribution {
@@ -111,7 +116,7 @@ export async function writeAddressLayerAttribution(
 		})
 		.toSorted((left, right) => right.records - left.records)
 
-	const path = resolvePathBuilder(dirname(files.lookup), "ATTRIBUTION.json")
+	const path = resolvePathBuilder(dirname(files.lookup), ADDRESS_LAYER_ATTRIBUTION_FILE)
 
 	await writeLocalJSONFile(entries, path)
 

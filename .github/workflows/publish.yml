@@ -194,7 +194,8 @@ jobs:
     permissions:
       contents: write # push the version tag + create the GitHub release
       id-token: write # npm Trusted Publishing (OIDC)
-      actions: write # dispatch the Docker publish for the released version
+      actions: write # dispatch the Docker publish and the Test workflow for the SBOM PR
+      pull-requests: write # open the auto-merging PR that commits the SBOMs under docs/static/sbom
     steps:
       - uses: actions/checkout@v7
         with:
@@ -354,8 +355,50 @@ jobs:
           BOM="${RUNNER_TEMP}/bom"
           mkdir -p "${BOM}"
           yarn mwops release sbom --version "${VERSION}" --out "${BOM}"
+          # The runner holds no data root, so the data BOM lists the bundles and, read from the public bucket,
+          # each source of the address layers release.config.json's addressLayers pins.
           node packages/mailwoman/out/cli/main.js data bom --skip-inventory --out "${BOM}/mailwoman-data-${VERSION}.cdx.json"
           gh release upload "v${VERSION}" "${BOM}"/* --clobber
+
+      # The ruleset refuses a push to main, so the docs copy of the three documents arrives through a PR
+      # that merges when `test` passes. Until 11.0.0 a post-release docs PR committed them by hand. From 11.1.0
+      # the release matrix moved into the prepare commit and the post-release PR stopped, so 11.1.0 and
+      # 11.2.0 reached the GitHub release only. This step commits them without a person in the loop.
+      - name: Open the auto-merging PR that commits the SBOMs under docs/static/sbom
+        if: ${{ !inputs.dry_run && steps.sbom.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          # The same token rule as the release PR: the PAT lets `on: pull_request` run Test, and without it
+          # the step dispatches Test against the branch.
+          GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          HAS_RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: | # shell
+          set -euo pipefail
+          BRANCH="release/v${VERSION}-sbom"
+          FILES="docs/static/sbom/mailwoman-${VERSION}.spdx.json docs/static/sbom/mailwoman-${VERSION}.cdx.json docs/static/sbom/mailwoman-data-${VERSION}.cdx.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B "${BRANCH}" origin/main
+          cp "${RUNNER_TEMP}/bom/"*.json docs/static/sbom/
+          yarn oxfmt ${FILES}
+          # Only the three documents are staged: the weights fetched earlier also sit in the tree.
+          git add ${FILES}
+          if git diff --cached --quiet; then
+            echo "docs/static/sbom already holds the v${VERSION} documents"
+            exit 0
+          fi
+          git commit -m "docs: record the v${VERSION} SBOMs and data bill of materials"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+          PR_URL=$(gh pr create --base main --head "${BRANCH}" \
+            --title "docs: record the v${VERSION} SBOMs and data bill of materials" \
+            --body "Automated by publish.yml mode=publish. Commits the documents attached to the v${VERSION} GitHub release under docs/static/sbom/. Auto-merges when the required \`test\` check passes.")
+          echo "SBOM PR: ${PR_URL}"
+          if [ "${HAS_RELEASE_PR_TOKEN}" != "true" ]; then
+            gh workflow run test.yml --ref "${BRANCH}"
+          fi
+          gh pr merge --auto --squash "${PR_URL}"
 
       # The release this job creates uses GITHUB_TOKEN, and GitHub starts no workflow from an event
       # that token raises, so docker-publish.yml's release trigger never fires for it. The image installs

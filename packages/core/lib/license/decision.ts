@@ -114,6 +114,44 @@ export interface OperationDecision {
 }
 
 /**
+ * What a reviewer found on the page that holds a publisher's terms.
+ */
+export const TermsStatement = {
+	/**
+	 * The publisher states terms: a license, a use clause, or a disclaimer.
+	 */
+	Terms: "terms",
+	/**
+	 * Every field the reviewer read was empty or only described the data, so the publisher states no terms.
+	 *
+	 * This is a finding about the page, kept apart from terms that were read and found not to restrict.
+	 */
+	NoStatement: "no-statement",
+} as const
+
+/**
+ * One of the {@link TermsStatement} values.
+ */
+export type TermsStatement = (typeof TermsStatement)[keyof typeof TermsStatement]
+
+/**
+ * Where a reviewer read a publisher's terms, and what was there.
+ *
+ * A decision that records none has its terms page only in its prose and its retrieved copy.
+ */
+export interface TermsReading {
+	/**
+	 * The page or metadata record that holds the publisher's terms, such as an ArcGIS item's JSON.
+	 */
+	url: string
+	found: TermsStatement
+	/**
+	 * The publisher's words, verbatim, or the empty fields the reviewer read.
+	 */
+	quote?: string
+}
+
+/**
  * A license decision whose terms a reviewer read and under which one grant was elected.
  */
 export interface ElectedLicense<Operation extends string = string> {
@@ -154,6 +192,7 @@ export interface ElectedLicense<Operation extends string = string> {
 	 * The reason for electing this grant, or a note that the source offers only one.
 	 */
 	electedBecause: string
+	reading?: TermsReading
 	/**
 	 * The permission for each reviewed operation.
 	 *
@@ -170,6 +209,7 @@ export interface RefusedLicense {
 	state: typeof LicenseReviewState.Refused
 	publisherStatement?: string
 	refusedBecause: string
+	reading?: TermsReading
 }
 
 /**
@@ -268,14 +308,39 @@ export function auditLicenseDecision<Operation extends string>(
 			return decision.publisherStatement ? [] : [`license ${named} is unchecked and records no publisher statement`]
 
 		case LicenseReviewState.Refused:
-			return decision.refusedBecause ? [] : [`license ${named} is refused and gives no reason`]
+			return [
+				...(decision.refusedBecause ? [] : [`license ${named} is refused and gives no reason`]),
+				...auditReading(decision.reading, named),
+				// A refusal rests on terms that spell out a restriction, and a page with an empty statement holds none.
+				...(decision.reading?.found === TermsStatement.NoStatement
+					? [`license ${named} is refused on a reading that found no statement`]
+					: []),
+			]
 
 		case LicenseReviewState.Elected:
-			return auditElected(decision, named, knownOperations)
+			return [...auditElected(decision, named, knownOperations), ...auditReading(decision.reading, named)]
 
 		default:
 			return [`license ${named} carries an unknown review state`]
 	}
+}
+
+const TERMS_STATEMENTS = new Set<string>(Object.values(TermsStatement))
+
+function auditReading(reading: TermsReading | undefined, named: string): string[] {
+	if (!reading) return []
+
+	const problems: string[] = []
+
+	if (!reading.url) {
+		problems.push(`license ${named} records a terms reading with no URL`)
+	}
+
+	if (!TERMS_STATEMENTS.has(reading.found)) {
+		problems.push(`license ${named} records an unknown terms finding ${stringifyJSON(reading.found)}`)
+	}
+
+	return problems
 }
 
 function auditElected<Operation extends string>(

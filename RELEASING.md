@@ -203,14 +203,23 @@ The publish job writes the Software Bill of Materials for the released `mailwoma
 open standards (SPDX 2.3 + CycloneDX 1.5) and the data bill of materials, and attaches all three files
 to the GitHub release. The generator reads the **published** tarball, so it runs after the publish loop
 and waits for the registry to serve the version. The job cannot commit to `main` under the branch
-ruleset, so the docs copy is a post-release commit:
+ruleset, so it opens a PR, `release/v<version>-sbom`, that commits the three files under
+`docs/static/sbom/` and merges when `test` passes. Until 11.0.0 a post-release docs PR committed them by
+hand. When the release matrix moved into the commit before the prepare dispatch, the post-release PR
+stopped, so 11.1.0 and 11.2.0 reached the GitHub release only.
+
+The data bill of materials lists each source inside a mixed address layer, such as the US layer under
+`LicenseRef-US-Mixed`, with its publisher's register decision, basis, terms URL and obligations. It reads
+the layer version `release.config.json`'s `addressLayers` pins from the public bucket. After `mailwoman
+situs publish` serves a new version, set that pin in the release's prepare commit. To regenerate a
+document by hand:
 
 ```sh
-yarn mwops release sbom --version <version>   # writes docs/static/sbom/mailwoman-<version>.{spdx,cdx}.json
-node packages/mailwoman/cli/main.ts data bom   # writes docs/static/sbom/mailwoman-data-<version>.cdx.json
+yarn mwops release sbom --version <version>                                        # docs/static/sbom/mailwoman-<version>.{spdx,cdx}.json
+node packages/mailwoman/out/cli/main.js data bom --skip-inventory                  # docs/static/sbom/mailwoman-data-<version>.cdx.json
 ```
 
-Commit the three files in the docs PR that records the release. Validation commands and rationale live
+When the job couldn't open the PR, commit the three files the release carries. Validation commands and rationale live
 in [`docs/records/site-2026-08/licensing/sbom.md`](./docs/records/site-2026-08/licensing/sbom.md),
 and the script header explains the SPDX normalization.
 
