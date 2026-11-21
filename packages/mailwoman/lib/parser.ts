@@ -20,8 +20,11 @@ import type { PathBuilderLike } from "path-ts"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
 import { ClassifierService, registerClassifierService } from "#services/classifier"
-import { ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
-import { need } from "#services/registry"
+import {
+	ParsePriorsService,
+	registerParsePriorsService,
+	registerShippedParsePriorArtifacts,
+} from "#services/parse-priors"
 
 /**
  * Options for {@link createParser}.
@@ -127,15 +130,13 @@ export async function createParser(options: ParserOptions = {}): Promise<Parser>
 		})
 	}
 
-	registerParsePriorsService(scope, {
-		select: (primary) => primary,
-		load: { venueHeadPrior: false, label: `locale ${locale}` },
-	})
+	registerShippedParsePriorArtifacts(scope)
+	registerParsePriorsService(scope, { venueHeadPrior: false, label: `locale ${locale}` })
 
 	try {
 		const [classifier, { priors }] = await Promise.all([
-			need(scope, ClassifierService),
-			need(scope, ParsePriorsService),
+			scope.resolve(ClassifierService),
+			scope.resolve(ParsePriorsService),
 		])
 
 		const pipeline = createRuntimePipeline({

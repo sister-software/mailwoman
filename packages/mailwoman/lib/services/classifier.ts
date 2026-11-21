@@ -8,15 +8,14 @@
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import type { ServiceRegistry } from "async-init"
+import { createToken, type ServiceRegistry, type ServiceToken } from "async-init"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-
-import { noInputs, provide, serviceKey, type ServiceTimings } from "#services/registry"
 
 /**
  * The token of the script-routed neural classifier.
  */
-export const ClassifierService = serviceKey<ScriptRoutedClassifier<NeuralAddressClassifier>>("classifier")
+export const ClassifierService: ServiceToken<ScriptRoutedClassifier<NeuralAddressClassifier>> =
+	createToken("classifier")
 
 /**
  * The options the classifier reads its weights with.
@@ -49,24 +48,22 @@ export interface ClassifierServiceOptions {
  *
  * The weights load when a caller first needs the service.
  */
-export function registerClassifierService(
-	registry: ServiceRegistry,
-	options: ClassifierServiceOptions,
-	timings: ServiceTimings = {}
-): void {
-	provide(registry, timings, ClassifierService, noInputs, async () => {
-		try {
-			return await NeuralAddressClassifier.loadRoutedFromWeights({
-				locale: options.locale,
-				...(options.dataRoot ? { overlayRoot: resolvePath(options.dataRoot, "weights") } : {}),
-				...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
-			})
-		} catch (error) {
-			throw new CommandError(
-				`Loading the neural weights for ${options.locale} failed. Install ${weightsPackageName(options.locale)}, ` +
-					"or choose a locale whose weights package is installed.",
-				{ cause: error }
-			)
-		}
+export function registerClassifierService(registry: ServiceRegistry, options: ClassifierServiceOptions): void {
+	registry.define(ClassifierService, {
+		build: async () => {
+			try {
+				return await NeuralAddressClassifier.loadRoutedFromWeights({
+					locale: options.locale,
+					...(options.dataRoot ? { overlayRoot: resolvePath(options.dataRoot, "weights") } : {}),
+					...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
+				})
+			} catch (error) {
+				throw new CommandError(
+					`Loading the neural weights for ${options.locale} failed. Install ${weightsPackageName(options.locale)}, ` +
+						"or choose a locale whose weights package is installed.",
+					{ cause: error }
+				)
+			}
+		},
 	})
 }
