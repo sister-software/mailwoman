@@ -45,7 +45,6 @@ import {
 	ceasedWOFDivision,
 	type CoveredSettlement,
 	planFormerDivisionTuples,
-	FORMER_DIVISION_PLACETYPES,
 	type FormerDivisionCensusRow,
 	type GeonamesHistoricalDivision,
 	readGeonamesDivisions,
@@ -53,6 +52,7 @@ import {
 	readRowsCarryingCodes,
 	wofPlacesOfGeonamesIDs,
 } from "#tools/pipeline/admin/former-divisions"
+import { FORMER_DIVISION_PLACETYPES } from "#tools/pipeline/wof/slim"
 import {
 	refreshWOFRecordStore,
 	storedWOFRecords,

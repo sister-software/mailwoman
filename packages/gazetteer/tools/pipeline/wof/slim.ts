@@ -17,6 +17,7 @@
 
 import { md5Hex } from "@mailwoman/core/hash"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
 import { TextSpliterator } from "spliterator"
 
@@ -67,14 +68,114 @@ interface WOFRecordShape {
 }
 
 /**
- * Whether a parsed record lists a successor in `wof:superseded_by`.
- *
- * This is the rule the admin ingest uses to drop a record.
+ * The ids a record's `wof:superseded_by` lists.
  */
-export function isSupersededRecord(record: WOFRecordShape): boolean {
+function successorIDs(record: WOFRecordShape): number[] {
 	const successors = record.properties?.["wof:superseded_by"]
 
-	return Array.isArray(successors) && successors.length > 0
+	return Array.isArray(successors) ? successors.filter((id): id is number => Number.isInteger(id)) : []
+}
+
+/**
+ * Every name a record's properties state: `wof:name` and each `name:*` value, in every language.
+ */
+export function wofRecordNames(properties: object): string[] {
+	const names = new Set<string>()
+
+	for (const [key, value] of Object.entries(properties)) {
+		if (key === "wof:name" && typeof value === "string" && value.trim()) {
+			names.add(value.trim())
+		}
+
+		if (!key.startsWith("name:") || !Array.isArray(value)) continue
+
+		for (const item of value) {
+			if (typeof item === "string" && item.trim()) {
+				names.add(item.trim())
+			}
+		}
+	}
+
+	return [...names]
+}
+
+/**
+ * The WOF placetypes of an administrative division, the placetypes a ceased record is kept at.
+ *
+ * A ceased settlement isn't kept: WOF's 2023-03-21 import re-issued Indian localities
+ * under respelled names (Bhagwangarh as Bhagwan Garh), which no name fold matches.
+ */
+export const FORMER_DIVISION_PLACETYPES: ReadonlySet<string> = new Set([
+	"country",
+	"dependency",
+	"macroregion",
+	"region",
+	"macrocounty",
+	"county",
+	"localadmin",
+])
+
+/**
+ * Whether a record is a ceased administrative division: a division placetype,
+ * `mz:is_current` 0 and a dated `edtf:cessation`.
+ */
+function isCeasedDivision(properties: Record<string, unknown>): boolean {
+	const cessation = properties["edtf:cessation"]
+
+	return (
+		FORMER_DIVISION_PLACETYPES.has(String(properties["wof:placetype"] ?? "")) &&
+		properties["mz:is_current"] === 0 &&
+		typeof cessation === "string" &&
+		/^\d/.test(cessation)
+	)
+}
+
+/**
+ * The names of the record with an id, in every language, or `null` when the caller can't read that record.
+ */
+export type WOFNamesOf = (id: number) => readonly string[] | null
+
+/**
+ * Whether a parsed record is superseded, the rule the forks, the doctor
+ * and the admin ingest remove a record by.
+ *
+ * A record that lists a successor in `wof:superseded_by` is superseded, unless it is
+ * a ceased administrative division whose successors all have other names.
+ * Who's On First re-issues a place under a new id with the same name, and the old record
+ * then lists the new one, so a successor that shares a name in any language marks a duplicate.
+ *
+ * A ceased division whose successors share no name is a former division,
+ * as the county of Avon is, and is kept.
+ *
+ * Names are compared as the candidate table's name keys.
+ * Without `namesOf`, or with a successor `namesOf` can't read, a ceased division counts as superseded.
+ */
+export function isSupersededRecord(record: { properties?: object }, namesOf?: WOFNamesOf): boolean {
+	// Any record's properties, such as `WOFProperties`, read as a plain property bag.
+	const properties: Record<string, unknown> = Object.fromEntries(Object.entries(record.properties ?? {}))
+	const successors = successorIDs({ properties })
+
+	if (!successors.length) return false
+
+	if (!isCeasedDivision(properties) || !namesOf) return true
+
+	const own = new Set(
+		wofRecordNames(properties)
+			.map(nameKey)
+			.filter((key) => key.length > 0)
+	)
+
+	for (const id of successors) {
+		const names = namesOf(id)
+
+		if (!names || names.some((name) => own.has(nameKey(name)))) return true
+	}
+
+	return false
+}
+
+function nameKey(name: string): string {
+	return normalizeLocalityForKey(name)
 }
 
 /**
@@ -86,7 +187,7 @@ export function isSupersededRecord(record: WOFRecordShape): boolean {
 export function isDeprecatedWithoutSuccessor(record: WOFRecordShape): boolean {
 	const deprecated = record.properties?.["edtf:deprecated"]
 
-	return typeof deprecated === "string" && /^\d/.test(deprecated) && !isSupersededRecord(record)
+	return typeof deprecated === "string" && /^\d/.test(deprecated) && !successorIDs(record).length
 }
 
 /**

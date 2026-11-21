@@ -11,9 +11,11 @@ import type { PathBuilderLike } from "path-ts"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
 import { type ExtractedWOFFeature, extractParsedWOFFeature } from "#tools/pipeline/admin/wof/feature"
+import { wofRecordNames } from "#tools/pipeline/wof/slim"
 import type { WOFFeature } from "#whosonfirst"
 import {
 	refreshWOFRecordStore,
+	storedWOFRecord,
 	storedWOFRecords,
 	wofRecordStorePathFor,
 	wofRepositories,
@@ -156,6 +158,14 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		.filter((repo) => placetypes.has("postalcode") || !repo.startsWith("whosonfirst-data-postalcode-"))
 
 	using store = new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true })
+
+	// A ceased division's successors are read from the store, whatever repository holds them.
+	const namesOf = (id: number) => {
+		const successor = storedWOFRecord<WOFFeature>(store, id)
+
+		return successor ? wofRecordNames(successor.feature.properties ?? {}) : null
+	}
+
 	let filesFound = 0
 
 	const sprInsert = db.prepare(
@@ -195,7 +205,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		if (!DATA_PATH.test(stored.path)) continue
 
 		filesFound++
-		const feature = extractParsedWOFFeature(stored.feature, placetypes)
+		const feature = extractParsedWOFFeature(stored.feature, placetypes, namesOf)
 
 		if (!feature) {
 			skipped++

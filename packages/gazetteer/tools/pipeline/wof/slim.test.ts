@@ -129,6 +129,68 @@ describe("isSupersededRecord", () => {
 		expect(isSupersededRecord({ properties: { "wof:superseded_by": [] } })).toBe(false)
 		expect(isSupersededRecord({ properties: {} })).toBe(false)
 	})
+
+	// Avon (1974 to 1996), succeeded by Bristol and three other authorities.
+	const avon = {
+		properties: {
+			"wof:name": "Avon",
+			"wof:placetype": "county",
+			"mz:is_current": 0,
+			"edtf:cessation": "1996-04-01",
+			"wof:superseded_by": [1_360_698_747, 1_360_698_775],
+		},
+	}
+
+	it("keeps a ceased place whose successors all have other names", () => {
+		const names: Record<number, string[]> = {
+			1_360_698_747: ["Bristol"],
+			1_360_698_775: ["Bath and North East Somerset"],
+		}
+
+		expect(isSupersededRecord(avon, (id) => names[id] ?? null)).toBe(false)
+	})
+
+	it("removes a ceased division a successor re-issued under a shared name in any language", () => {
+		// WOF re-issued Republika Srpska as Republic of Srpska, and the two share their Serbian name.
+		const srpska = {
+			properties: {
+				"wof:name": "Republika Srpska",
+				"name:srp_x_preferred": ["Република Српска"],
+				"wof:placetype": "region",
+				"mz:is_current": 0,
+				"edtf:cessation": "2017-01-30",
+				"wof:superseded_by": [85_683_001],
+			},
+		}
+
+		expect(isSupersededRecord(srpska, () => ["Republic of Srpska", "Република Српска"])).toBe(true)
+	})
+
+	it("removes a ceased settlement even when its successor has another name", () => {
+		// WOF's 2023-03-21 import re-issued Indian localities under respelled names.
+		const bhagwangarh = {
+			properties: {
+				"wof:name": "Bhagwangarh",
+				"wof:placetype": "locality",
+				"mz:is_current": 0,
+				"edtf:cessation": "2023-03-21",
+				"wof:superseded_by": [1_830_000_001],
+			},
+		}
+
+		expect(isSupersededRecord(bhagwangarh, () => ["Bhagwan Garh"])).toBe(true)
+	})
+
+	it("removes a ceased place when a successor can't be read, or no reader is given", () => {
+		expect(isSupersededRecord(avon, () => null)).toBe(true)
+		expect(isSupersededRecord(avon)).toBe(true)
+	})
+
+	it("removes a superseded record without a cessation date whatever its successors are called", () => {
+		const withoutCessation = { properties: { ...avon.properties, "edtf:cessation": "uuuu" } }
+
+		expect(isSupersededRecord(withoutCessation, () => ["Bristol"])).toBe(true)
+	})
 })
 
 describe("repointRecordReferences", () => {
