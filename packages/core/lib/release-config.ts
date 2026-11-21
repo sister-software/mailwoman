@@ -96,6 +96,14 @@ export interface ReleaseConfig {
 	charWeights?: Record<string, CharWeightsRecipe>
 	softFeed?: SoftFeedRecipe
 	assets?: { hfBucket?: string; [key: string]: unknown }
+	/**
+	 * The address-layer version the release serves, keyed by ISO 3166-1 country code,
+	 * such as `{ "US": "2026-11-13" }`.
+	 *
+	 * The data bill of materials reads that version's manifest and ledgers to list the layer's sources.
+	 * A key starting with `$` is a comment.
+	 */
+	addressLayers?: Record<string, string>
 }
 
 /**

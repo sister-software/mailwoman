@@ -4,6 +4,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { describe, expect, it } from "vitest"
 
+import { ObligationClass } from "#data/mixed-layer"
 import {
 	assembleReport,
 	checkPOI,
@@ -13,6 +14,7 @@ import {
 	gazetteerCheck,
 	layerLicenseCheck,
 	localeOverlayCheck,
+	mixedLayerCheck,
 	nodeVersionCheck,
 	obligationPostureCheck,
 	onnxRuntimeCheck,
@@ -394,6 +396,50 @@ describe("Every failing check states its consequence", () => {
 		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.consequence).toBeNull()
+	})
+})
+
+describe("mixedLayerCheck", () => {
+	const observation = {
+		license: "LicenseRef-US-Mixed",
+		country: "US",
+		version: "2026-11-13",
+		error: null,
+		noticePath: "/data/db/addresses/us/2026-11-13/NOTICE.txt",
+		noticePresent: false,
+		bomURL: "https://mailwoman.post/sbom/mailwoman-data-11.2.0.cdx.json",
+	}
+
+	const tally = (unknown: number) => [
+		{ obligationClass: ObligationClass.Unknown, sources: unknown, records: unknown * 10 },
+		{ obligationClass: ObligationClass.ShareAlike, sources: 0, records: 0 },
+		{ obligationClass: ObligationClass.Attribution, sources: 2, records: 20 },
+		{ obligationClass: ObligationClass.None, sources: 3000, records: 30_000 },
+	]
+
+	it("prints one line of counts by obligation class, not a line per source, and points to the notice and BOM", () => {
+		const check = mixedLayerCheck({ ...observation, tally: tally(0) })
+
+		expect(check.status).toBe(CheckStatus.OK)
+		expect(check.detail).toBe("LicenseRef-US-Mixed · 3,002 sources by obligation: attribution 2, none 3,000")
+		expect(check.license?.attribution).toContain("situs attribution-manifest --layer-version 2026-11-13")
+		expect(check.license?.attribution).toContain(observation.bomURL)
+		expect(check.consequence).toBeNull()
+	})
+
+	it("degrades while any source's terms are unknown", () => {
+		const check = mixedLayerCheck({ ...observation, tally: tally(5) })
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.detail).toContain("unknown 5")
+		expect(check.license?.recognized).toBe(false)
+	})
+
+	it("degrades, naming the error, when the layer's sources could not be read", () => {
+		const check = mixedLayerCheck({ ...observation, tally: null, error: "ATTRIBUTION.json is absent\nstack" })
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.detail).toContain("ATTRIBUTION.json is absent")
 	})
 })
 

@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { RegisterTermsBasis } from "@mailwoman/corpus/source-register/terms"
 import { describe, expect, it } from "vitest"
 
-import { buildDataBOM, LicenseBasis } from "#data/bom"
+import { buildDataBOM, type DataBOMComponent, type DataBOMMixedLayer, LicenseBasis, serializeDataBOM } from "#data/bom"
 import { Provenance, type InventoryReport } from "#data/inventory"
+import { type MixedLayerSource, ObligationClass } from "#data/mixed-layer"
 
 const OSM_PATH = "db/osm/address-points-nz-nz.db"
 
@@ -67,5 +69,131 @@ describe("buildDataBOM over a locally built OpenStreetMap layer", () => {
 
 		// The layer is reported independently: no bundle component claims its path.
 		expect(document.components.filter((entry) => entry.name === OSM_PATH)).toHaveLength(1)
+	})
+})
+
+const SOURCE_BASE: Omit<MixedLayerSource, "source" | "deciding" | "basis" | "statement" | "obligationClass"> = {
+	records: 10,
+	regions: ["us-fl"],
+	recordedLicense: null,
+	openAddresses: null,
+	rows: [],
+	publisher: null,
+	termsURL: null,
+	spdx: null,
+	attribution: "none",
+	shareAlike: "none",
+	attributionText: null,
+}
+
+const row = (registerSource: string, statement: "terms" | "no-statement") => ({
+	registerSource,
+	publisher: registerSource,
+	licenseID: registerSource,
+	decision: "elected" as const,
+	basis: RegisterTermsBasis.NoRestrictingTerms,
+	spdx: null,
+	electedTerms: "US factual data published without a use restriction",
+	statement,
+	termsURL: `https://example.org/${registerSource}`,
+	retrievedCopy: null,
+	because: "Read.",
+})
+
+const MIXED: DataBOMMixedLayer = {
+	readFrom: "https://example.org/",
+	noticePresent: false,
+	description: {
+		id: "addresses-us",
+		license: "LicenseRef-US-Mixed",
+		country: "US",
+		version: "2026-11-13",
+		manifestPath: "addresses/us/2026-11-13/manifest.json",
+		noticePath: "addresses/us/2026-11-13/NOTICE.txt",
+		regions: 1,
+		records: 30,
+		sources: [
+			{
+				...SOURCE_BASE,
+				source: "openaddresses:us/ca/marin",
+				rows: [row("marin", "terms")],
+				deciding: row("marin", "terms"),
+				basis: RegisterTermsBasis.NoRestrictingTerms,
+				statement: "terms",
+				obligationClass: ObligationClass.None,
+			},
+			{
+				...SOURCE_BASE,
+				source: "openaddresses:us/fl/alachua",
+				rows: [row("alachua", "no-statement")],
+				deciding: row("alachua", "no-statement"),
+				termsURL: "https://example.org/alachua",
+				basis: RegisterTermsBasis.NoRestrictingTerms,
+				statement: "no-statement",
+				obligationClass: ObligationClass.None,
+			},
+			{
+				...SOURCE_BASE,
+				source: "openaddresses:us/fl/unmapped",
+				deciding: null,
+				basis: RegisterTermsBasis.Unregistered,
+				statement: null,
+				attribution: "unknown",
+				shareAlike: "unknown",
+				obligationClass: ObligationClass.Unknown,
+			},
+		],
+	},
+}
+
+describe("buildDataBOM over a mixed layer", () => {
+	const document = buildDataBOM({
+		mailwomanVersion: "11.2.0",
+		snapshot: { measuredAt: "2026-10-31T00:00:00.000Z", bucket: "https://example.org/", bundles: [] },
+		mixedLayers: [MIXED],
+	})
+
+	const layer = document.components.find((entry) => entry["bom-ref"] === "layer/addresses-us/2026-11-13")!
+	const props = (component: DataBOMComponent) => Object.fromEntries(component.properties.map((p) => [p.name, p.value]))
+
+	it("nests one component per source under the layer, an uncovered source included", () => {
+		expect(layer.licenses).toEqual([{ expression: "LicenseRef-US-Mixed" }])
+		expect(layer.components?.map((entry) => entry.name)).toEqual(MIXED.description.sources.map((s) => s.source))
+
+		const unmapped = layer.components!.find((entry) => entry.name === "openaddresses:us/fl/unmapped")!
+
+		expect(unmapped.licenses).toEqual([{ expression: "NOASSERTION" }])
+
+		expect(props(unmapped)).toMatchObject({
+			"mailwoman:registerDecision": "uncovered",
+			"mailwoman:registerUncovered": "the source table maps this source to no register row",
+			"mailwoman:attribution": "unknown",
+		})
+	})
+
+	it("keeps a page that stated nothing apart from terms read and found not to restrict", () => {
+		const [marin, alachua] = layer.components!
+
+		expect(props(marin!)["mailwoman:termsStatement"]).toBe("terms")
+		expect(props(alachua!)["mailwoman:termsStatement"]).toBe("no-statement")
+		expect(alachua!.externalReferences).toEqual([{ type: "license", url: "https://example.org/alachua" }])
+	})
+
+	it("says where to write the notice when it is absent, rather than linking a file that is not there", () => {
+		expect(layer.externalReferences?.map((entry) => entry.type)).toEqual(["distribution"])
+
+		expect(props(layer)["mailwoman:attributionNoticeAbsent"]).toContain(
+			"situs attribution-manifest --layer-version 2026-11-13"
+		)
+	})
+
+	it("is the same bytes on a second build", () => {
+		const again = buildDataBOM({
+			mailwomanVersion: "11.2.0",
+			snapshot: { measuredAt: "2026-10-31T00:00:00.000Z", bucket: "https://example.org/", bundles: [] },
+			mixedLayers: [MIXED],
+		})
+
+		expect(serializeDataBOM(again)).toBe(serializeDataBOM(document))
 	})
 })

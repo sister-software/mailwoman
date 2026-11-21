@@ -15,6 +15,12 @@
  *   This regenerates a small JSON manifest from read-only databases (it builds no large DB),
  *   so — as in the original script — `attribution.json` is written directly in place.
  *   Per-database progress streams to stderr. the summary lands on stdout.
+ *
+ *   With `--layer-version`, the command writes the attribution notice a customer ships with the
+ *   versioned US address layer instead: `NOTICE.txt` beside `addresses/us/<version>/manifest.json`,
+ *   generated from each region's `ATTRIBUTION.json` and the address-source register,
+ *   the same join the data bill of materials and `mailwoman doctor` read.
+ *   `situs publish` uploads it with the manifest.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -38,7 +44,8 @@ import {
  */
 export const spec = {
 	name: "attribution-manifest",
-	description: "Regenerate the address-point attribution manifest",
+	description:
+		"Regenerate the address-point attribution manifest, or with --layer-version write a US address-layer version's attribution notice",
 	options: {
 		"out-dir": {
 			type: "string",
@@ -49,8 +56,49 @@ export const spec = {
 			default: OVERTURE_ADDRESSES_RELEASE,
 			description: "Overture release tag stamped into the manifest (the addresses-theme pin)",
 		},
+		"layer-version": {
+			type: "string",
+			description:
+				"Write the attribution notice of this US address-layer version instead, an ISO date such as 2026-11-13: " +
+				"NOTICE.txt beside the version's manifest under <data-root>/db/addresses/us/, listing every credit its sources " +
+				"require or record and every source whose terms are unread. `situs publish` uploads it with the manifest",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * Writes the attribution notice of one US address-layer version beside its manifest.
+ */
+async function writeLayerNotice(version: string): Promise<string[]> {
+	const [{ dataRootPath }, { writeLocalTextFile }, mixed] = await Promise.all([
+		import("@mailwoman/core/data-root"),
+		import("@mailwoman/core/fs/writers"),
+		import("#data/mixed-layer"),
+	])
+
+	const root = dataRootPath("db")
+
+	const description = await mixed.describeMixedAddressLayer({
+		license: "LicenseRef-US-Mixed",
+		version,
+		read: mixed.localLayerFileReader(root),
+	})
+
+	const path = root(description.noticePath)
+
+	await writeLocalTextFile(mixed.renderAttributionNotice(description), path)
+
+	return [
+		`notice: ${path}`,
+		`${description.sources.length.toLocaleString("en-US")} sources over ${description.regions} regions`,
+		...mixed
+			.tallyObligationClasses(description)
+			.map(
+				({ obligationClass, sources, records }) =>
+					`  ${obligationClass}: ${sources.toLocaleString("en-US")} sources, ${records.toLocaleString("en-US")} records`
+			),
+	]
+}
 
 interface StateLedger {
 	ok: boolean
@@ -61,6 +109,8 @@ interface StateLedger {
 
 const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		if (options.layerVersion) return writeLayerNotice(options.layerVersion)
+
 		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)

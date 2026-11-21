@@ -69,6 +69,8 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 			temporary: { temporaryDirectory },
 			writers: { createSymbolicLink, makeDirectories },
 			layout: { addressLayerManifestPath },
+			attributionLedger: { ADDRESS_LAYER_ATTRIBUTION_FILE },
+			mixedLayer: { ATTRIBUTION_NOTICE_FILE },
 			publicBucket: { formatPublicBucketPublishResult, publishToPublicBucket, verifyPublicBucketUploads },
 			pathTs: { dirname, resolvePath },
 			sleep: { sleep },
@@ -79,6 +81,8 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 			temporary: import("@mailwoman/core/fs/temporary"),
 			writers: import("@mailwoman/core/fs/writers"),
 			layout: import("@mailwoman/resolver-wof-sqlite/address/keys/layout"),
+			attributionLedger: import("@mailwoman/resolver-wof-sqlite/address/keys/attribution"),
+			mixedLayer: import("#data/mixed-layer"),
 			publicBucket: import("@mailwoman/gazetteer/tools/publish/public-bucket"),
 			pathTs: import("path-ts"),
 			sleep: import("@mailwoman/core/utils/sleep"),
@@ -159,18 +163,32 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 		for (const region of built) {
 			regionPaths.push(region.lookup.path, region.detail.path)
 
-			const attribution = `${dirname(region.lookup.path)}/ATTRIBUTION.json`
+			const attribution = `${dirname(region.lookup.path)}/${ADDRESS_LAYER_ATTRIBUTION_FILE}`
 
 			if (await pathExists(resolvePath(root, attribution))) {
 				regionPaths.push(attribution)
 			}
 		}
 
+		// The notice lists the credits every source of the version requires, so a version is served only with it.
+		const notice = `addresses/us/${version}/${ATTRIBUTION_NOTICE_FILE}`
+
+		if (!(await pathExists(resolvePath(root, notice)))) {
+			throw new CommandError(
+				`no attribution notice at ${resolvePath(root, notice)}. Write it with \`mailwoman situs attribution-manifest --layer-version ${version}\``
+			)
+		}
+
 		lines.push(`${version}: ${built.length} regions built in this version: ${built.map((r) => r.region).join(", ")}`)
 
 		await publishPaths(regionPaths, true)
-		// A manifest rewritten with one more region can keep its size, so it is always sent.
-		await publishPaths([`addresses/us/${version}/manifest.json`], false)
+		// A manifest rewritten with one more region can keep its size, so it is always sent, and the notice with it.
+		await publishPaths([notice, `addresses/us/${version}/manifest.json`], false)
+
+		lines.push(
+			`The data bill of materials lists the sources of the version release.config.json's addressLayers pins. ` +
+				`To serve this one, set "US": "${version}" there.`
+		)
 
 		return lines
 	})
