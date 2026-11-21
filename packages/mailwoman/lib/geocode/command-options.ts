@@ -65,6 +65,13 @@ export interface GeocodeCommandOptions {
 	 */
 	countyDesignatorFallback: boolean
 	/**
+	 * A `subregion` or `region` value naming a former division linked to the resolved locality is accepted.
+	 * Off by default.
+	 *
+	 * `--former-divisions` opts in.
+	 */
+	formerDivisions: boolean
+	/**
 	 * A soft country scope acts inside retrieval, and a hard scope reports the places it excluded.
 	 * Off by default.
 	 *
@@ -148,6 +155,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		adminContainmentRerank: GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
 		dependentLocalityContainment: GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 		countyDesignatorFallback: GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
+		formerDivisions: GEOCODE_SWITCH_DEFAULTS.formerDivisions,
 		scopeCountryRetrieval: GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval,
 		siblingLocalityContainment: GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
 		pairPriorWordPieces: GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,

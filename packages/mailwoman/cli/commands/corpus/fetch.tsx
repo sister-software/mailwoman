@@ -59,6 +59,7 @@ const sources = [
 	"ryhti",
 	"sk-inspire",
 	"geonames-dump",
+	"geonames-hierarchy",
 	"geonames-postal",
 	"hrsa",
 	"imls-pls",
@@ -270,6 +271,8 @@ const FETCHERS = {
 			},
 			reportToStderr
 		),
+	"geonames-hierarchy": async (base) =>
+		(await import("@mailwoman/corpus/tools/fetch/geonames/hierarchy")).fetchGeonamesHierarchy(base, reportToStderr),
 	// Null when the flag is absent takes the module's own default set, the countries the corpus wants.
 	// An empty array would fetch no countries while looking deliberate.
 	"geonames-postal": async (base, options) =>

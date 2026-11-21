@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 253 of the group's 434 library and tool modules.
+This page lists 255 of the group's 436 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -976,6 +976,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | write | `appendLocalTextFile` | `unresolved (parameter)` | 1     |
 | write | `writeLocalJSONFile`  | `unresolved (parameter)` | 1     |
 
+## `packages/corpus/lib/recipes/former-divisions.ts`
+
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
+
 ## `packages/corpus/lib/recipes/fragment-assay/build.ts`
 
 | Kind  | Interface                   | Target                   | Calls |
@@ -1224,6 +1230,14 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `readLocalTextFile`   | `unresolved (call)`     | 1     |
 | write | `makeDirectories`     | `unresolved (property)` | 1     |
 | write | `removePathIfPresent` | `unresolved (call)`     | 2     |
+
+## `packages/corpus/lib/tools/fetch/geonames/hierarchy.ts`
+
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `readLocalBuffer`     | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/geonames/postal.ts`
 

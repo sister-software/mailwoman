@@ -70,6 +70,8 @@ const KNOB_OPTION_KINDS = {
 	adminContainmentRerank: "boolean",
 	dependentLocalityContainment: "boolean",
 	countyDesignatorFallback: "boolean",
+	formerDivisions: "boolean",
+	formerDivisionLookup: null,
 	scopeCountryRetrieval: "boolean",
 	siblingLocalityContainment: "boolean",
 	traceSink: null,

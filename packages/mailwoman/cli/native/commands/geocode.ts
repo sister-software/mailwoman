@@ -159,6 +159,12 @@ export const spec = {
 			description:
 				"Resolve a locality span written with its country's county designator (Harris County, TX) as the region's county when no locality of that name is there.",
 		},
+		"former-divisions": {
+			type: "boolean",
+			default: false,
+			description:
+				"Accept a county or region that's a former division linked to the resolved locality (Avon in 34 Coldharbour Rd, Redland, Avon, Bristol BS6 7NA), without letting it scope the result.",
+		},
 		"scope-country-retrieval": {
 			type: "boolean",
 			default: false,
@@ -294,6 +300,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
 		countyDesignatorFallback: booleanValue(values, "county-designator-fallback"),
+		formerDivisions: booleanValue(values, "former-divisions"),
 		scopeCountryRetrieval: booleanValue(values, "scope-country-retrieval"),
 		siblingLocalityContainment: booleanValue(values, "sibling-locality-containment"),
 		pairPriorWordPieces: booleanValue(values, "pair-prior-word-pieces"),

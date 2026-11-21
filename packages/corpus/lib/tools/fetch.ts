@@ -37,6 +37,7 @@ import { fetchACRASG } from "#sg/tools/fetch/acra"
 import { fetchSKInspire } from "#sk/tools/fetch/inspire"
 import { fetchCORDIS } from "#tools/fetch/cordis"
 import { fetchGeonamesDumps } from "#tools/fetch/geonames/dump"
+import { fetchGeonamesHierarchy } from "#tools/fetch/geonames/hierarchy"
 import { fetchGeonamesPostal } from "#tools/fetch/geonames/postal"
 import { fetchGLEIF } from "#tools/fetch/gleif"
 import { fetchOpenAddresses } from "#tools/fetch/openaddresses"
@@ -92,6 +93,7 @@ export const FETCH_SOURCES = {
 	ryhti: fetchRyhti,
 	"sk-inspire": fetchSKInspire,
 	"geonames-dump": fetchGeonamesDumps,
+	"geonames-hierarchy": fetchGeonamesHierarchy,
 	"geonames-postal": fetchGeonamesPostal,
 	hrsa: fetchHRSA,
 	"imls-pls": fetchIMLSPLS,

@@ -6,6 +6,8 @@ import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman
 import {
 	type DefaultCountry,
 	EMPTY_PLACE_FIELDS,
+	type FormerDivisionLookup,
+	type FormerDivisionMatch,
 	hardCountryOf,
 	type ParentPlaceScope,
 	type ResolveCandidateTrace,
@@ -336,6 +338,17 @@ export interface ResolutionState {
 	 * the region matches it and its value is written with its country's county designator.
 	 */
 	countyDesignatorFallback: boolean
+
+	/**
+	 * The former divisions a `subregion` or `region` value is checked against when no
+	 * current division answers it, present only under the `formerDivisions` switch.
+	 */
+	formerDivisionLookup?: FormerDivisionLookup
+
+	/**
+	 * The walked nodes no current division answered, with the former divisions their values name.
+	 */
+	pendingFormerDivisions?: Map<AddressNode, readonly FormerDivisionMatch[]>
 
 	/**
 	 * The tree's first region value.

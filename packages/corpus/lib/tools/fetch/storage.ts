@@ -83,6 +83,7 @@ export const SOURCE_STORAGE_CLASSES = {
 	"gb-os-open": StorageClass.current,
 	"gcis-tw": StorageClass.current,
 	"geonames-dump": StorageClass.current,
+	"geonames-hierarchy": StorageClass.current,
 	"geonames-postal": StorageClass.current,
 	// The fetcher deletes older golden copies, so one copy is kept, and a refetch replaces it.
 	gleif: StorageClass.current,
@@ -200,6 +201,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 	"gb-os-open": ["gb-os-open"],
 	"gcis-tw": ["gcis-tw"],
 	"geonames-dump": ["geonames-dump"],
+	"geonames-hierarchy": ["geonames-hierarchy"],
 	"geonames-postal": ["geonames-postal"],
 	gleif: ["gleif"],
 	hrsa: ["usgov-hrsa-fqhc"],

@@ -35,6 +35,7 @@ export const HELDOUT_ARM_DECODER_SWITCHES = [
  */
 export const HELDOUT_ARM_SWITCHES = [
 	"countyDesignatorFallback",
+	"formerDivisions",
 	"scopeCountryRetrieval",
 	"siblingLocalityContainment",
 	"adminContainmentRerank",

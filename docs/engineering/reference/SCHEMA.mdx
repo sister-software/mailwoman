@@ -221,6 +221,20 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 **Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). An explicit `subregion` field is better than forcing the value into `region` or `locality`.
 
+**How is a former administrative division tagged?** A division that no longer exists, written in an
+address that still names it, takes the tag of the level it sat at: `subregion` at county level, `region` at
+the first level, `locality` for a former municipality, and `country` for a former country. Avon, a county of
+England from 1974 to 1996, is `subregion` in `34 Coldharbour Rd, Redland, Avon, Bristol BS6 7NA`. The tag
+records the span's role in the address, so the `ComponentTag` set has no separate tag for former divisions.
+The former divisions table (`@mailwoman/resolver-wof-sqlite/former-divisions`, built by
+`packages/gazetteer/tools/former-divisions.run.ts`) states each division's level for every country: a ceased
+Who's On First record's placetype, or the placetype the country's current GeoNames divisions of the same
+level map to. The resolver's `formerDivisions` switch accepts such a span when the table links the division
+to the resolved locality, and the span then scopes no lookup.
+
+A name written before the house number, as in `Avon, 52 Upper Belgrave Rd, Clifton, Bristol BS8 2XP`, is a
+premise name and takes `venue`, even when it is also a former division's name.
+
 **Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction rather than a postcode. FR postcode statistics become inaccurate if a model classifies it as a postcode.
 
 **Why does `street` have no hierarchy level of its own?** WOF's placetype DAG has no `street` node:

@@ -29,6 +29,7 @@ import { bareCountryRecipe } from "#recipes/bare/country"
 import { barePostcodeRecipe } from "#recipes/bare/postcode"
 import { boundaryStressRecipe } from "#recipes/boundary-stress"
 import { countryBalancedRecipe } from "#recipes/country-balanced"
+import { formerDivisionsRecipe } from "#recipes/former-divisions"
 import { houseVenueRecipe } from "#recipes/house/venue"
 import { intersectionRecipe } from "#recipes/intersection"
 import { poBoxRecipe } from "#recipes/po/box"
@@ -60,6 +61,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	trailingRegionRecipe,
 	usCountyRecipe,
 	prominentPlacesRecipe,
+	formerDivisionsRecipe,
 	reviewedPostcodeTailRecipe,
 	streetRecipe,
 	streetBareRecipe,
