@@ -64,6 +64,8 @@ jobs:
       slow_files: ${{ steps.select.outputs.slow_files }}
       slow_hosted: ${{ steps.select.outputs.slow_hosted }}
       slow_hosted_files: ${{ steps.select.outputs.slow_hosted_files }}
+      fast_data: ${{ steps.select.outputs.fast_data }}
+      fast_data_files: ${{ steps.select.outputs.fast_data_files }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -535,10 +537,11 @@ jobs:
 
   # unit-slow runs the slow test files that skip or fail without the data root or model weights.
   # Its suites use `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a
-  # hosted runner they'd skip and pass.
+  # hosted runner they'd skip and pass. It also runs the fast test files that skip without the data
+  # root. unit-fast runs those files hosted.
   unit-slow:
     needs: [data-fleet, scope]
-    if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.slow == 'true'
+    if: needs.data-fleet.outputs.up == 'true' && (needs.scope.outputs.slow == 'true' || needs.scope.outputs.fast_data == 'true')
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -595,7 +598,17 @@ jobs:
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 
+      # unit-fast runs these fast files on a hosted runner, where their data-root tests skip.
+      # They run here too, so those tests run on a runner that holds the data.
+      - name: Test (fast files that skip without the data root)
+        if: needs.scope.outputs.fast_data == 'true'
+        env:
+          TEST_FILES: ${{ needs.scope.outputs.fast_data_files }}
+          CI_TEST_MAX_WORKERS: "4"
+        run: yarn mwops ci-test fast
+
       - name: Test (slow)
+        if: needs.scope.outputs.slow == 'true'
         env:
           # The scope lists this job's files on every run, a full one included.
           TEST_FILES: ${{ needs.scope.outputs.slow_files }}
@@ -982,7 +995,7 @@ jobs:
           node --input-type=module <<'JS'
           const jobs = JSON.parse(process.env.JOBS);
           const scope = jobs.scope.outputs;
-          for (const key of ['full', 'fast', 'slow', 'slow_hosted', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
+          for (const key of ['full', 'fast', 'fast_data', 'slow', 'slow_hosted', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
             if (!['true', 'false'].includes(scope[key])) {
               throw new Error("Scope didn't report a boolean for " + key);
             }
@@ -995,7 +1008,7 @@ jobs:
             rust: scope.rust === 'true',
             'unit-fast': scope.fast === 'true',
             'unit-slow-hosted': scope.slow_hosted === 'true',
-            'unit-slow': fleet && scope.slow === 'true',
+            'unit-slow': fleet && (scope.slow === 'true' || scope.fast_data === 'true'),
             'lexicon-full': fleet && scope.lexicon === 'true',
             react: ['react', 'planetary', 'opportunity', 'worker'].some(key => scope[key] === 'true'),
             // The earth job is disabled (see its definition), so it is never selected.
