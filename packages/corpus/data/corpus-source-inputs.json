@@ -2937,6 +2937,81 @@
 					"registerSource": "us-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-us-overture-maps-foundation",
 					"reads": "addresses-tw.parquet"
+				},
+				{
+					"registerSource": "tw-property-building-1",
+					"license": "unchecked-corpus-input-tw-new-taipei-city-government-civil-affairs-bure",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/New Taipei City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-2",
+					"license": "unchecked-corpus-input-tw-taichung-city-government-digital-development",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Taichung City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-3",
+					"license": "unchecked-corpus-input-tw-kaohsiung-city-government-civil-affairs-burea",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Kaohsiung City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-4",
+					"license": "unchecked-corpus-input-tw-taipei-city-government-civil-affairs-bureau",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Taipei City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-5",
+					"license": "unchecked-corpus-input-tw-taoyuan-city-government-civil-affairs-bureau",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Taoyuan City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-6",
+					"license": "unchecked-corpus-input-tw-tainan-city-government-civil-affairs-bureau",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Tainan City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-7",
+					"license": "unchecked-corpus-input-tw-changhua-county-government-civil-affairs-depa",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Changhua County Government Civil Affairs Office"
+				},
+				{
+					"registerSource": "tw-property-building-8",
+					"license": "unchecked-corpus-input-tw-pingtung-county-government",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Pingtung County Government"
+				},
+				{
+					"registerSource": "tw-property-building-9",
+					"license": "unchecked-corpus-input-tw-yunlin-county-government",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Yunlin County Government"
+				},
+				{
+					"registerSource": "tw-property-building-10",
+					"license": "unchecked-corpus-input-tw-hsinchu-county-government-civil-affairs-depar",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Hsinchu County Civil Affairs Office"
+				},
+				{
+					"registerSource": "tw-property-building-11",
+					"license": "unchecked-corpus-input-tw-miaoli-county-government",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Miaoli Civil Affairs Office"
+				},
+				{
+					"registerSource": "tw-property-building-12",
+					"license": "unchecked-corpus-input-tw-hsinchu-city-government-civil-affairs-departm",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Hsinchu City Civil Affairs Office"
+				},
+				{
+					"registerSource": "tw-property-building-13",
+					"license": "unchecked-corpus-input-tw-keelung-city-government-civil-affairs-departm",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Keelung City Government Civil Affairs Bureau"
+				},
+				{
+					"registerSource": "tw-property-building-14",
+					"license": "unchecked-corpus-input-tw-penghu-county-government",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Penghu County Government"
+				},
+				{
+					"registerSource": "tw-property-building-15",
+					"license": "unchecked-corpus-input-tw-kinmen-county-government-civil-affairs-depart",
+					"reads": "addresses-tw.parquet rows whose sources[].dataset is OpenAddresses/Kinmen County Civil Affairs Office"
 				}
 			]
 		},
