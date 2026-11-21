@@ -20,7 +20,12 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
 import {
+	PostcodePlaceBrowser,
+	wofDatabaseHoldsPostcodes,
+} from "@mailwoman/resolver-wof-sqlite/candidate/postcode-browse"
+import {
 	corsBannerLine,
+	type GazetteerPaths,
 	gazetteerBannerLines,
 	gazetteerFreshness,
 	loadClassifierOrExit,
@@ -189,6 +194,86 @@ async function openPlaceItems(
 	}
 }
 
+/**
+ * Whether the gazetteer holds postcode places, and the `postcodes` collection's item source.
+ */
+interface PostcodeItems {
+	held: boolean
+	source: OGCItemSource | null
+	bannerLines: string[]
+}
+
+/**
+ * Read whether the gazetteer `/search` resolves against holds postcode places, and open the
+ * candidate gazetteer as the `postcodes` collection's item source when the operator asked for items.
+ *
+ * The candidate gazetteer holds the postcode places when the server resolves against it.
+ * Otherwise they come from the WOF databases it opened.
+ * Those databases serve no items.
+ *
+ * The obligation refusal applies as it does to `places`, from the candidate gazetteer's recorded license.
+ */
+function openPostcodeItems(
+	serveItems: boolean,
+	gazetteer: GazetteerPaths,
+	candidate: ArtifactFreshness | undefined,
+	ancestorsOf: AncestorsOf | undefined
+): PostcodeItems {
+	if (!gazetteer.candidateDB) {
+		const held = gazetteer.wofPaths.some((path) => wofDatabaseHoldsPostcodes(path))
+
+		return {
+			held,
+			source: null,
+			bannerLines: serveItems && held ? ["  postcodes items: none, because no candidate gazetteer was opened"] : [],
+		}
+	}
+
+	let browser: PostcodePlaceBrowser
+
+	try {
+		browser = new PostcodePlaceBrowser({ databasePath: gazetteer.candidateDB })
+	} catch (error) {
+		// The gazetteer records postcode places but can't page them, so `/search` still answers postcodes.
+		return {
+			held: true,
+			source: null,
+			bannerLines: serveItems
+				? [
+						`  postcodes items: none, because ${gazetteer.candidateDB} can't be paged: ${error instanceof Error ? error.message : String(error)}`,
+					]
+				: [],
+		}
+	}
+
+	const held = browser.holdsPostcodes()
+
+	if (!serveItems || !held) {
+		browser[Symbol.dispose]()
+
+		return { held, source: null, bannerLines: [] }
+	}
+
+	const license = candidate?.license ?? null
+	const refusal = itemsRefusal(license, parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""]))
+
+	if (refusal) {
+		browser[Symbol.dispose]()
+
+		return {
+			held,
+			source: null,
+			bannerLines: [`  postcodes items: none, because ${refusal} in ${gazetteer.candidateDB}`],
+		}
+	}
+
+	return {
+		held,
+		source: placeItemSource(browser, ancestorsOf),
+		bannerLines: [`  postcodes items: ${gazetteer.candidateDB} (${license ?? "license unrecorded in layer_manifest"})`],
+	}
+}
+
 async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { values } = parseArguments({
 		options: {
@@ -247,6 +332,16 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const searchLayers = artifacts.filter((artifact) => artifact.name !== "reverse-admin").map(layerTermsOf)
 	const placeLayers = artifacts.map(layerTermsOf)
 	const placeItems = await openPlaceItems(values["serve-items"], admin, ancestorsOf)
+	const candidate = artifacts.find((artifact) => artifact.path === gazetteer.candidateDB)
+	const postcodeItems = openPostcodeItems(values["serve-items"], gazetteer, candidate, ancestorsOf)
+
+	const itemsOf = (id: OGCCollectionID): OGCItemSource | null => {
+		if (id === OGCCollectionID.Places) return placeItems.source
+
+		if (id === OGCCollectionID.Postcodes) return postcodeItems.source
+
+		return null
+	}
 
 	// The gazetteer collections read the manifests above, and the address and street
 	// collections read the manifests of the region files their providers report.
@@ -268,12 +363,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	}
 
 	const engine: OGCEngine = {
-		collections: servedCollections(probes).map((collection) => {
-			return {
-				...collection,
-				...layersOf(collection.id),
-				...(collection.id === OGCCollectionID.Places && placeItems.source ? { items: placeItems.source } : {}),
-			}
+		collections: servedCollections(probes, { postcodes: postcodeItems.held }).map((collection) => {
+			const items = itemsOf(collection.id)
+
+			return { ...collection, ...layersOf(collection.id), ...(items ? { items } : {}) }
 		}),
 		async search(q) {
 			// The call sets no country constraint, so the placer routes the query to its own country.
@@ -293,7 +386,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		cors: values.cors,
 		engine: engineStamp.stamp,
 		baseURL,
-		serveItems: placeItems.source != null,
+		serveItems: placeItems.source != null || postcodeItems.source != null,
 	})
 
 	await serveNode({
@@ -314,15 +407,17 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				)
 			}
 
-			for (const line of [...placeItems.bannerLines, ...unattachedLayerLines(rooftops)]) {
+			for (const line of [...placeItems.bannerLines, ...postcodeItems.bannerLines, ...unattachedLayerLines(rooftops)]) {
 				console.error(line)
 			}
 
+			const itemRoutes = engine.collections
+				.filter(({ items }) => items)
+				.map(({ id }) => `  GET /collections/${id}/items  GET /collections/${id}/items/{featureId}`)
+
 			console.error(corsBannerLine(values.cors))
 			console.error(
-				`  endpoints: GET /  GET /conformance  GET /api  GET /collections  GET /search  GET /openapi.json${
-					placeItems.source ? "  GET /collections/places/items  GET /collections/places/items/{featureId}" : ""
-				}`
+				`  endpoints: GET /  GET /conformance  GET /api  GET /collections  GET /search  GET /openapi.json${itemRoutes.join("")}`
 			)
 		},
 	})

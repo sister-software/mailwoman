@@ -148,10 +148,22 @@ export function regionLayerFiles(probes: readonly RegionLayerProbe[]): RegionLay
 }
 
 /**
+ * What the opened gazetteer holds, for the collections it backs.
+ */
+export interface GazetteerHoldings {
+	/**
+	 * Whether the gazetteer holds at least one postcode place.
+	 */
+	postcodes: boolean
+}
+
+/**
  * The collections an engine serves, from the layers its providers opened.
  *
  * The gazetteer is always open, because the engine refuses to start without one,
- * so places, postcodes and plus codes are always served.
+ * so places and plus codes are always served.
+ * Postcodes are served when the gazetteer holds postcode places.
+ *
  * Addresses and streets are served when some region has an address-point, interpolation
  * or street-centroid layer, and their descriptions name those regions.
  *
@@ -160,7 +172,10 @@ export function regionLayerFiles(probes: readonly RegionLayerProbe[]): RegionLay
  * A provider opens a region's layers when asked for the region.
  * A query for that region would open them as well.
  */
-export function servedCollections(probes: readonly RegionLayerProbe[]): OGCServedCollection[] {
+export function servedCollections(
+	probes: readonly RegionLayerProbe[],
+	gazetteer: GazetteerHoldings
+): OGCServedCollection[] {
 	const addressRegions = new Set<string>()
 	const streetRegions = new Set<string>()
 
@@ -188,11 +203,11 @@ export function servedCollections(probes: readonly RegionLayerProbe[]): OGCServe
 		served.push({ id: OGCCollectionID.Streets, regions: [...streetRegions].toSorted() })
 	}
 
-	served.push(
-		{ id: OGCCollectionID.Postcodes, regions: null },
-		{ id: OGCCollectionID.Places, regions: null },
-		{ id: OGCCollectionID.PlusCodes, regions: null }
-	)
+	if (gazetteer.postcodes) {
+		served.push({ id: OGCCollectionID.Postcodes, regions: null })
+	}
+
+	served.push({ id: OGCCollectionID.Places, regions: null }, { id: OGCCollectionID.PlusCodes, regions: null })
 
 	return served
 }

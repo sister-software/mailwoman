@@ -206,3 +206,38 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
+
+/**
+ * The partial index over the primary rows of postcode places, in `spr_id` order.
+ *
+ * It holds `spr_id`, the point and the name.
+ * Each entry also stores the clustered key.
+ *
+ * A page of postcode places in id order, with or without a box, therefore reads only the index.
+ */
+export const CANDIDATE_POSTCODE_PLACE_INDEX = "candidate_postcode_place"
+
+/**
+ * The placetype of postcode places in `placetype_codes`.
+ */
+export const POSTCODE_PLACETYPE = "postalcode"
+
+/**
+ * Create {@link CANDIDATE_POSTCODE_PLACE_INDEX} on the built `candidate` table.
+ *
+ * A partial index selects its rows with a literal, so the placetype's dictionary id is
+ * written into the index and a reader states the same literal to use it.
+ *
+ * @param placetypeID The id `placetype_codes` gives {@link POSTCODE_PLACETYPE}.
+ */
+export async function createCandidatePostcodePlaceIndex(
+	db: Kysely<CandidateDatabase>,
+	placetypeID: number
+): Promise<void> {
+	await db.schema
+		.createIndex(CANDIDATE_POSTCODE_PLACE_INDEX)
+		.on("candidate")
+		.columns(["spr_id", "latitude", "longitude", "name"])
+		.where(sql<boolean>`placetype_id = ${sql.lit(placetypeID)} AND is_primary = 1`)
+		.execute()
+}

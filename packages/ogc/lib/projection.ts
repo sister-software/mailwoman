@@ -11,12 +11,25 @@
 
 import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
-import { matchCountry } from "@mailwoman/codex/country"
+import { ISO2_TO_NAME } from "@mailwoman/codex/country"
 import type { GeocodeCandidate, GeocodeResult } from "@mailwoman/core/geocode"
 import { type Ancestor, ScoreUnmeasuredReason, wofIDFromPlaceID } from "@mailwoman/core/resolver"
 
 import { collectionOfPlacetype, collectionOfTier, OGCCollectionID } from "#collections"
 import type { OGCSearchHit } from "#engine"
+
+/**
+ * The country a record's ISO 3166-1 alpha-2 code names, read from the code table.
+ *
+ * `matchCountry` reads free-form address text and resolves only some two-letter codes,
+ * such as `FR` but not `EE`, so a recorded code is looked up directly.
+ */
+function countryOfCode(code: string | null): { iso2: string; name: string } | null {
+	const iso2 = code?.trim().toUpperCase()
+	const name = iso2 ? ISO2_TO_NAME.get(iso2) : undefined
+
+	return iso2 && name ? { iso2, name } : null
+}
 
 function hierarchyName(result: GeocodeResult, tag: string): string | null {
 	return result.hierarchy.find((entry) => entry.tag === tag)?.name ?? null
@@ -35,7 +48,7 @@ function hierarchyLabel(result: GeocodeResult): string {
 		}
 	}
 
-	const country = matchCountry(result.countryCode)?.canonical
+	const country = countryOfCode(result.countryCode)?.name
 
 	if (names.length && country && !names.includes(country)) {
 		names.push(country)
@@ -48,7 +61,7 @@ function hierarchyLabel(result: GeocodeResult): string {
  * The one-line address of a house-grade or street-grade answer, in the country's own order.
  */
 function addressLabel(result: GeocodeResult, withHouseNumber: boolean): string {
-	const country = matchCountry(result.countryCode)
+	const country = countryOfCode(result.countryCode)
 
 	const postcode = result.postcode ?? result.rooftop?.postcode ?? null
 	const locality = hierarchyName(result, "locality") ?? result.locality
@@ -61,7 +74,7 @@ function addressLabel(result: GeocodeResult, withHouseNumber: boolean): string {
 		...(postcode ? { postcode } : {}),
 		...(locality ? { locality } : {}),
 		...(region ? { region } : {}),
-		...(country?.canonical ? { country: country.canonical } : {}),
+		...(country ? { country: country.name } : {}),
 	}
 
 	const formatted = country ? formatAddress(components, country.iso2, { singleLine: true, withRegion: true }) : ""
@@ -116,7 +129,7 @@ export function placeLabel(candidate: LabeledPlace, ancestorsOf: AncestorsOf | u
 		}
 	}
 
-	const country = matchCountry(candidate.countryCode)?.canonical
+	const country = countryOfCode(candidate.countryCode)?.name
 
 	if (country && !names.includes(country)) {
 		names.push(country)

@@ -198,3 +198,91 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 		expect(result.labelPointOverrides).toBe(0)
 	})
 })
+
+describe("ingestWOF extents (#3164)", () => {
+	it("widens each located record's extent to its stored point and leaves an unlocated record unlocated", async () => {
+		await using rootDirectory = await temporaryDirectory("mw-ingest-extent-")
+		const root = rootDirectory.path
+		const dataDir = root("whosonfirst-data-admin-au", "data", "000", "000")
+
+		await makeDirectories(dataDir)
+
+		// Modeled on wof:85768715: a point geometry whose label point lies 1 km away.
+		await writeLocalFile(
+			feature(11, {
+				"wof:placetype": "neighbourhood",
+				"geom:bbox": "145.055017,-37.81984,145.055017,-37.81984",
+				"geom:latitude": -37.81984,
+				"geom:longitude": 145.055017,
+				"lbl:latitude": -37.820951,
+				"lbl:longitude": 145.044274,
+			}),
+			dataDir("11.geojson")
+		)
+
+		// Modeled on wof:421166765: WOF rounds the geometry point to fewer decimals than its bbox.
+		await writeLocalFile(
+			feature(12, {
+				"wof:placetype": "locality",
+				"geom:bbox": "4.2972845,36.5756625,4.2972845,36.5756625",
+				"geom:latitude": 36.575662,
+				"geom:longitude": 4.297284,
+			}),
+			dataDir("12.geojson")
+		)
+
+		// Modeled on wof:1125269345: no location at all, recorded as zeros.
+		await writeLocalFile(
+			feature(13, {
+				"wof:placetype": "localadmin",
+				"geom:bbox": "0.0,0.0,0.0,0.0",
+				"geom:latitude": 0,
+				"geom:longitude": 0,
+				"lbl:latitude": 0,
+				"lbl:longitude": 0,
+			}),
+			dataDir("13.geojson")
+		)
+
+		using db = DatabaseClient.temp<WOFDatabase>()
+
+		await createUnifiedSchema(db)
+		await ingestWOF(db, { dataDir: root, recordStore: root("records.db") })
+
+		const rows = db
+			.prepare(
+				"SELECT id, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude FROM spr ORDER BY id"
+			)
+			.all() as Array<Record<string, number>>
+
+		expect(rows).toEqual([
+			{
+				id: 11,
+				latitude: -37.820951,
+				longitude: 145.044274,
+				min_latitude: -37.820951,
+				min_longitude: 145.044274,
+				max_latitude: -37.81984,
+				max_longitude: 145.055017,
+			},
+			{
+				id: 12,
+				latitude: 36.575662,
+				longitude: 4.297284,
+				min_latitude: 36.575662,
+				min_longitude: 4.297284,
+				max_latitude: 36.5756625,
+				max_longitude: 4.2972845,
+			},
+			{
+				id: 13,
+				latitude: 0,
+				longitude: 0,
+				min_latitude: 0,
+				min_longitude: 0,
+				max_latitude: 0,
+				max_longitude: 0,
+			},
+		])
+	})
+})

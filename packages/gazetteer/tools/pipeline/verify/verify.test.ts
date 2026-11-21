@@ -49,10 +49,28 @@ test("verifyAdmin passes a complete fixture", async () => {
 		"names-source:true",
 		"concordances-source:true",
 		"fts-bbox:true",
+		"point-in-extent:true",
 		"bbox-extents:true",
 	])
 
 	expect(r.ok).toBe(true)
+})
+
+test("verifyAdmin fails point-in-extent when a located place lies outside its extent or records none (#3164)", async () => {
+	using db = await fixtureDB()
+	db.exec("UPDATE spr SET latitude = 1.7 WHERE id = 3")
+
+	db.exec(
+		"INSERT INTO spr (id, name, placetype, country, latitude, longitude) VALUES (4, 'Pointville', 'locality', 'TL', 1.2, 1.2)"
+	)
+
+	// The unlocated sentinel: no point and no extent, so it needs neither.
+	db.exec("INSERT INTO spr (id, name, placetype, country) VALUES (5, 'Nowhere', 'localadmin', 'XX')")
+
+	const check = verifyAdmin(db, TINY_BASELINE).checks.find((c) => c.check === "point-in-extent")!
+
+	expect(check.ok).toBe(false)
+	expect(check.detail).toBe("1 located places lie outside their extent, 1 record no extent")
 })
 
 test("verifyAdmin fails names-source when a writer left a row's source empty", async () => {

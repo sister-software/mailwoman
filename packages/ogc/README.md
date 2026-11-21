@@ -52,7 +52,7 @@ coordinate, and the tier decides the collection:
 | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------- |
 | `addresses`  | `address_point`, `interpolated`                              | a region has an address-point or interpolation layer          |
 | `streets`    | `street`                                                     | a region has a street-centroid layer                          |
-| `postcodes`  | `postcode`, and postcode places                              | always, because postcode places come from the gazetteer       |
+| `postcodes`  | `postcode`, and postcode places                              | the gazetteer holds postcode places                           |
 | `places`     | `admin`, and the other gazetteer places the resolver weighed | always                                                        |
 | `plus-codes` | `plus_code`                                                  | always, because the engine decodes plus codes without a layer |
 
@@ -117,12 +117,18 @@ Items are served only when `serve` is started with `--serve-items`, or `createOG
 with `{ "error": "collection serves no items" }`, `/search` features carry no `href`, and `/conformance` lists
 only the OGC API Common classes. The startup banner states whether items are served, and why not when they aren't.
 
-`places` is the one collection that serves items. It reads the admin gazetteer's current places, the
-`admin-global-priority.db` the server resolves under `$MAILWOMAN_DATA_ROOT/db/wof`, through its primary key and
-its `place_bbox` R*Tree. The other collections serve no items:
+Two collections serve items:
 
-- `postcodes`: its places live only in the candidate gazetteer. That database has no index on a place's id or
-  position, so a page would scan the whole table.
+- `places` reads the admin gazetteer's current places, the `admin-global-priority.db` the server resolves under
+  `$MAILWOMAN_DATA_ROOT/db/wof`, through its primary key and its `place_bbox` R*Tree.
+- `postcodes` reads the candidate gazetteer's postcode places through its `candidate_postcode_place` index, which
+  holds each postcode's id, point and name in id order. A candidate gazetteer built without that index serves no
+  postcode items, and the banner says so. A server that resolves against WOF databases rather than a candidate
+  gazetteer serves no postcode items either. The candidate gazetteer's recorded license decides an obligation
+  refusal, as the admin gazetteer's does for `places`.
+
+The other collections serve no items:
+
 - `plus-codes`: the engine decodes plus codes and stores none.
 - `addresses` and `streets`: out of scope for now.
 
@@ -135,7 +141,10 @@ its `place_bbox` R*Tree. The other collections serve no items:
 | `f`        | `json` (GeoJSON) or `html`.                                                                                 |
 
 A page lists places in ascending WOF id order. Its `next` link continues after the page's last id, so a deep page
-costs what the first page costs, and following the links visits every place in the box once. The last page has no
+costs what the first page costs, and following the links visits every place in the box once. A `postcodes` box
+page walks the index in id order and keeps the postcodes whose point lies inside the box. A box with few postcodes
+therefore reads more of the index before its page fills. On the 2026-11-21 candidate gazetteer, a box with no
+postcodes read the whole index of 4,098,848 rows in 246 ms. The last page has no
 `next` link. A response carries `timeStamp`, `numberReturned`, `self`, `alternate` and `collection` links, and
 omits the optional `numberMatched`, because counting a large box's places costs a scan.
 

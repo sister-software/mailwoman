@@ -23,9 +23,11 @@ import { refuseNicknamesOfNamesakes } from "#candidate/nickname-namesakes"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
 	CANDIDATE_COLUMNS,
+	createCandidatePostcodePlaceIndex,
 	createCandidateStagingTables,
 	createCandidateTable,
 	type CandidateDatabase,
+	POSTCODE_PLACETYPE,
 } from "#candidate/schema"
 import { createCapitalTable } from "#capital-schema"
 import type { CapitalPoint } from "#capitals"
@@ -517,7 +519,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const folded = foldExtract({
 			out: kdb,
 			extractPath: pcDB,
-			extractPlacetype: "postalcode",
+			extractPlacetype: POSTCODE_PLACETYPE,
 			ccID,
 			ptID,
 			stageRow,
@@ -613,6 +615,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	progress("fts", "building FTS5-trigram fuzzy index")
 	createCandidateFTS(kdb)
+
+	const postcodePlacetypeID = ptcodes.get(POSTCODE_PLACETYPE)
+
+	if (postcodePlacetypeID != null) {
+		progress("postcode-index", `indexing postcode places by spr_id (placetype id ${postcodePlacetypeID})`)
+		await createCandidatePostcodePlaceIndex(kdb, postcodePlacetypeID)
+	}
 
 	kdb.exec("PRAGMA page_size=8192")
 	kdb.exec("VACUUM")

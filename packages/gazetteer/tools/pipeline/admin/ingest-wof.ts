@@ -101,10 +101,39 @@ export interface IngestWOFResult {
 }
 
 /**
+ * The `[west, south, east, north]` extent that covers both `bbox` and the point.
+ *
+ * WOF's `geom:bbox` bounds the geometry, and the stored point is the label point when the record has one.
+ * The stored point can lie outside the bbox in three ways.
+ *
+ * A point geometry can have a separate label point.
+ * A polygon's label point can fall outside the polygon.
+ *
+ * WOF can round a geometry point to fewer decimals than its bbox.
+ * A box page selects a place by its point through the extent, so the extent must contain it.
+ *
+ * The point `0, 0` is the gazetteer's unlocated sentinel, and the bbox is returned unchanged for it.
+ * Without a `bbox`, the extent is the point.
+ */
+function extentCoveringPoint(
+	bbox: readonly [number, number, number, number] | null,
+	latitude: number,
+	longitude: number
+): [number, number, number, number] {
+	if (latitude === 0 && longitude === 0) return bbox ? [...bbox] : [0, 0, 0, 0]
+
+	if (!bbox) return [longitude, latitude, longitude, latitude]
+
+	const [west, south, east, north] = bbox
+
+	return [Math.min(west, longitude), Math.min(south, latitude), Math.max(east, longitude), Math.max(north, latitude)]
+}
+
+/**
  * Chooses a record's stored point and bounding box.
  *
  * A locality with both points takes the point GeoNames adjudication chooses when an anchor lookup is given.
- * A record without a `geom:bbox` takes its final point as its bounding box.
+ * The bounding box covers the record's `geom:bbox` and that final point.
  */
 async function placeFeature(
 	feature: ExtractedWOFFeature,
@@ -128,7 +157,7 @@ async function placeFeature(
 		pointChoice = chosen.choice
 	}
 
-	return { latitude, longitude, bbox: feature.bbox ?? [longitude, latitude, longitude, latitude], pointChoice }
+	return { latitude, longitude, bbox: extentCoveringPoint(feature.bbox, latitude, longitude), pointChoice }
 }
 
 /**
