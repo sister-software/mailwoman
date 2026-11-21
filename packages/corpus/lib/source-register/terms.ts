@@ -14,6 +14,7 @@ import {
 	PermissionBasis,
 	permissionFor,
 	TermsStatement,
+	type TermsObligation,
 } from "@mailwoman/core/license/decision"
 
 import type { RegisterDecisions } from "#source-register/corpus-inputs"
@@ -98,6 +99,13 @@ export interface RegisterRowTerms {
 	 */
 	retrievedCopy: string | null
 	/**
+	 * The obligations an elected decision records in the publisher's words, or `null` when it records none.
+	 *
+	 * An elected decision that refuses redistribution keeps them, since an indemnity
+	 * is the reason such a decision refuses.
+	 */
+	obligations: readonly TermsObligation[] | null
+	/**
 	 * The first sentence of the reason the decision gives for redistribution.
 	 */
 	because: string
@@ -124,6 +132,7 @@ export function registerRowTerms(register: RegisterTermsInput, registerSource: s
 		statement: null,
 		termsURL: null,
 		retrievedCopy: null,
+		obligations: null,
 	}
 
 	if (!row || !decision) {
@@ -163,7 +172,14 @@ export function registerRowTerms(register: RegisterTermsInput, registerSource: s
 	}
 
 	const redistribution = permissionFor(decision, SourceOperation.RedistributeData)
-	const elected = { ...base, ...reading, decision: decision.state, because: firstSentence(redistribution.because) }
+
+	const elected = {
+		...base,
+		...reading,
+		decision: decision.state,
+		obligations: decision.obligations ?? null,
+		because: firstSentence(redistribution.because),
+	}
 
 	if (redistribution.permission === OperationPermission.Refused) {
 		return { ...elected, basis: RegisterTermsBasis.Refused }

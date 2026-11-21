@@ -19,8 +19,14 @@ import type { APIClient } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { TermsStatement } from "@mailwoman/core/license/decision"
+import {
+	obligationNoticeText,
+	ObligationStrength,
+	type TermsObligation,
+	type TermsStatement,
+} from "@mailwoman/core/license/decision"
 import { licenseIdentifiers, LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obligations"
+import { mentionsShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
 import type { ReleaseConfig } from "@mailwoman/core/release-config"
 import { RegisterTermsBasis, type RegisterRowTerms } from "@mailwoman/corpus/source-register/terms"
 import {
@@ -59,6 +65,10 @@ const ObligationState = {
 	 * the register asserting a duty.
 	 */
 	Recorded: "recorded",
+	/**
+	 * The terms the register read ask for it without making it a condition.
+	 */
+	Requested: "requested",
 	None: "none",
 	/**
 	 * The register records no reading of the publisher's terms for it,
@@ -71,11 +81,28 @@ export type ObligationState = (typeof ObligationState)[keyof typeof ObligationSt
 
 /**
  * The obligation classes a mixed layer's sources are counted by, most demanding first.
+ *
+ * A source counts under its most demanding class.
+ * The bill of materials and the notice list every obligation it owes.
  */
 export const ObligationClass = {
 	Unknown: "unknown",
 	ShareAlike: "share-alike",
+	/**
+	 * The terms require indemnifying the publisher.
+	 * The register refuses redistributing such rows.
+	 */
+	Indemnity: "indemnity",
+	/**
+	 * The terms limit a use of the data, in words the notice quotes.
+	 */
+	UseRestriction: "use-restriction",
+	/**
+	 * The terms require a text, such as a disclaimer, to travel with the data.
+	 */
+	NoticePassThrough: "notice-pass-through",
 	Attribution: "attribution",
+	AttributionRequested: "attribution requested",
 	AttributionRecorded: "attribution recorded by OpenAddresses",
 	None: "none",
 } as const
@@ -137,6 +164,11 @@ export interface MixedLayerSource {
 	 * The credit a notice prints, or `null` when the source owes none.
 	 */
 	attributionText: string | null
+	/**
+	 * The obligations the deciding row's decision records in the publisher's words,
+	 * empty when it records none.
+	 */
+	obligations: readonly TermsObligation[]
 	obligationClass: ObligationClass
 }
 
@@ -293,40 +325,108 @@ const BLOCKING: ReadonlySet<RegisterTermsBasis> = new Set([
 ])
 
 /**
+ * The state one recorded obligation class reaches in a decision's `obligations`,
+ * or `None` when it records none.
+ */
+function recordedState(obligations: readonly TermsObligation[], obligation: LicenseObligation): ObligationState {
+	const entries = obligations.filter((entry) => entry.obligation === obligation)
+
+	if (!entries.length) return ObligationState.None
+
+	return entries.some((entry) => entry.strength === ObligationStrength.Required)
+		? ObligationState.Required
+		: ObligationState.Requested
+}
+
+/**
+ * The more demanding of two states for one obligation.
+ */
+function stronger(left: ObligationState, right: ObligationState): ObligationState {
+	const order: readonly ObligationState[] = [
+		ObligationState.Unknown,
+		ObligationState.Required,
+		ObligationState.Requested,
+		ObligationState.Recorded,
+		ObligationState.None,
+	]
+
+	return order.indexOf(left) <= order.indexOf(right) ? left : right
+}
+
+/**
  * One register row's attribution and share-alike states.
+ *
+ * An open license owes what its identifier's table records and what the decision adds in its `obligations`.
+ * A publisher's own grant owes what the decision records, and reads unknown while the field is absent.
+ *
+ * A row elected on no restricting terms owes what its decision records,
+ * and `none` while the field is absent.
  */
 function rowObligations(row: RegisterRowTerms): { attribution: ObligationState; shareAlike: ObligationState } {
+	const unknown = { attribution: ObligationState.Unknown, shareAlike: ObligationState.Unknown }
+	const recorded = row.obligations ?? []
+
+	const fromRecord = {
+		attribution: recordedState(recorded, LicenseObligation.Attribution),
+		shareAlike: recordedState(recorded, LicenseObligation.ShareAlike),
+	}
+
 	switch (row.basis) {
 		case RegisterTermsBasis.OpenLicense: {
 			const summary = summarizeLicense(row.spdx!)
 
-			if (!summary.recognized) return { attribution: ObligationState.Unknown, shareAlike: ObligationState.Unknown }
+			if (!summary.recognized) return unknown
 
 			const state = (obligation: LicenseObligation) =>
 				summary.obligations.includes(obligation) ? ObligationState.Required : ObligationState.None
 
-			return { attribution: state(LicenseObligation.Attribution), shareAlike: state(LicenseObligation.ShareAlike) }
+			return {
+				attribution: stronger(state(LicenseObligation.Attribution), fromRecord.attribution),
+				shareAlike: stronger(state(LicenseObligation.ShareAlike), fromRecord.shareAlike),
+			}
 		}
 
+		// A grant whose terms cite a share-alike license without its version, such as `CC-BY-SA`, owes
+		// attribution and share-alike under every version, so those two obligations are known.
+		case RegisterTermsBasis.PublisherGrant:
+			if (row.electedTerms && mentionsShareAlike(readLicenseRecord(row.electedTerms))) {
+				return { attribution: ObligationState.Required, shareAlike: ObligationState.Required }
+			}
+
+			return row.obligations ? fromRecord : unknown
+
 		case RegisterTermsBasis.NoRestrictingTerms:
-			return { attribution: ObligationState.None, shareAlike: ObligationState.None }
+			return fromRecord
 
 		default:
-			return { attribution: ObligationState.Unknown, shareAlike: ObligationState.Unknown }
+			return unknown
 	}
 }
 
 /**
- * The class a source is counted under: an unknown obligation first, then share-alike, then attribution.
+ * The class a source is counted under: an unknown obligation first, then share-alike,
+ * indemnity, a use restriction, a notice to pass on, and attribution.
  */
-export function obligationClassOf(source: Pick<MixedLayerSource, "attribution" | "shareAlike">): ObligationClass {
+export function obligationClassOf(
+	source: Pick<MixedLayerSource, "attribution" | "shareAlike" | "obligations">
+): ObligationClass {
 	if (source.attribution === ObligationState.Unknown || source.shareAlike === ObligationState.Unknown) {
 		return ObligationClass.Unknown
 	}
 
 	if (source.shareAlike !== ObligationState.None) return ObligationClass.ShareAlike
 
+	const owes = (obligation: LicenseObligation) => source.obligations.some((entry) => entry.obligation === obligation)
+
+	if (owes(LicenseObligation.Indemnity)) return ObligationClass.Indemnity
+
+	if (owes(LicenseObligation.UseRestriction)) return ObligationClass.UseRestriction
+
+	if (owes(LicenseObligation.NoticePassThrough)) return ObligationClass.NoticePassThrough
+
 	if (source.attribution === ObligationState.Required) return ObligationClass.Attribution
+
+	if (source.attribution === ObligationState.Requested) return ObligationClass.AttributionRequested
 
 	if (source.attribution === ObligationState.Recorded) return ObligationClass.AttributionRecorded
 
@@ -370,6 +470,9 @@ function describeSource(source: string, tally: LedgerTally, terms: USAddressSour
 	const publisher =
 		deciding?.publisher ?? rows.find((row) => row.publisher)?.publisher ?? openAddresses?.attributionName ?? null
 
+	const obligations = deciding?.obligations ?? []
+	const credit = obligations.find((entry) => entry.obligation === LicenseObligation.Attribution)
+
 	return {
 		source,
 		records: tally.records,
@@ -386,8 +489,11 @@ function describeSource(source: string, tally: LedgerTally, terms: USAddressSour
 		attribution,
 		shareAlike,
 		attributionText:
-			attribution === ObligationState.None ? null : (openAddresses?.attributionName ?? publisher ?? null),
-		obligationClass: obligationClassOf({ attribution, shareAlike }),
+			attribution === ObligationState.None
+				? null
+				: (credit?.text ?? openAddresses?.attributionName ?? publisher ?? null),
+		obligations,
+		obligationClass: obligationClassOf({ attribution, shareAlike, obligations }),
 	}
 }
 
@@ -478,8 +584,30 @@ export function tallyObligationClasses(
  */
 export function renderAttributionNotice(description: MixedLayerDescription): string {
 	const credited = description.sources.filter(
-		(source) => source.attribution === ObligationState.Required || source.attribution === ObligationState.Recorded
+		(source) =>
+			source.attribution === ObligationState.Required ||
+			source.attribution === ObligationState.Requested ||
+			source.attribution === ObligationState.Recorded
 	)
+
+	const count = (state: ObligationState) => credited.filter((source) => source.attribution === state).length
+
+	// Each clause is printed verbatim under the source it binds, so the notice holds the publisher's words.
+	const clauses = (obligation: LicenseObligation) =>
+		description.sources.flatMap((source) =>
+			source.obligations.filter((entry) => entry.obligation === obligation).map((entry) => ({ source, entry }))
+		)
+
+	const clauseLines = (entries: ReturnType<typeof clauses>) =>
+		entries.flatMap(({ source, entry }) => [
+			`  ${source.publisher ?? "(no publisher recorded)"} [${source.source}]` +
+				(entry.strength === ObligationStrength.Requested ? " (requested)" : ""),
+			`    ${obligationNoticeText(entry)}`,
+		])
+
+	const notices = clauses(LicenseObligation.NoticePassThrough)
+	const restrictions = clauses(LicenseObligation.UseRestriction)
+	const indemnities = clauses(LicenseObligation.Indemnity)
 
 	const unknown = description.sources.filter((source) => source.obligationClass === ObligationClass.Unknown)
 
@@ -498,11 +626,36 @@ export function renderAttributionNotice(description: MixedLayerDescription): str
 		`License: ${description.license}. The layer combines ${description.sources.length.toLocaleString("en-US")} sources ` +
 			`under their publishers' own terms. Ship this notice with any copy or service of the layer's data.`,
 		"",
-		`Sources whose terms require credit (${credited.filter((source) => source.attribution === ObligationState.Required).length}) ` +
-			`or whose OpenAddresses definition records a credit (${credited.filter((source) => source.attribution === ObligationState.Recorded).length}):`,
+		`Sources whose terms require credit (${count(ObligationState.Required)}), ask for it (${count(ObligationState.Requested)}) ` +
+			`or whose OpenAddresses definition records a credit (${count(ObligationState.Recorded)}):`,
 		...credited.map(line),
 		"",
 	]
+
+	if (notices.length) {
+		lines.push(
+			`Notices whose publishers require them to travel with the data (${notices.length}). Pass each one on, verbatim, with any copy or application of the source's rows:`,
+			...clauseLines(notices),
+			""
+		)
+	}
+
+	if (restrictions.length) {
+		lines.push(
+			`Use restrictions the publishers' terms state (${restrictions.length}), in their words:`,
+			...clauseLines(restrictions),
+			""
+		)
+	}
+
+	if (indemnities.length) {
+		lines.push(
+			`Sources whose terms require the user to indemnify the publisher (${indemnities.length}). The register refuses ` +
+				"redistributing their rows, and a build of a later version excludes them:",
+			...clauseLines(indemnities),
+			""
+		)
+	}
 
 	if (shareAlike.length) {
 		lines.push(

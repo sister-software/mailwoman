@@ -24,13 +24,10 @@
  *   the large-artifact atomicity lives one level down in the database builder.
  *   Progress streams to stderr. the final summary lands on stdout.
  *
- *   licensing (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
- *   OpenAddresses (32%, government open data) with zero OpenStreetMap/ODbL rows.
- *   So the default is no license filter — `--license-filter NAD` would drop a
- *   third of coverage for no benefit.
+ *   licensing: each child admits an Overture dataset only on its register decisions, the
+ *   admission the US address layer applies, and `--[no-]exclude-unread-sources` passes through.
+ *   The per-row `overture:<dataset>` provenance is summarized into `<out-dir>/attribution.json`.
  *
- *   The only obligation is attribution: the per-row `overture:<dataset>` provenance
- *   is summarized into `<out-dir>/attribution.json`.
  *   Pass `--license-filter <datasets>` to build a narrowed database.
  *
  *   idempotency: a state is skipped only if its database is complete — non-empty
@@ -47,6 +44,7 @@ import { allKeyed } from "@mailwoman/core/promises"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
@@ -76,6 +74,12 @@ export const spec = {
 		concurrency: { type: "number", default: 4, validate: positiveInteger, description: "Parallel state builds" },
 		threads: { type: "number", validate: positiveInteger, description: "DuckDB threads per child" },
 		force: { type: "boolean", default: false, description: "Rebuild complete databases" },
+		"exclude-unread-sources": {
+			type: "boolean",
+			default: EXCLUDE_UNREAD_SOURCES,
+			description:
+				"Exclude sources whose register terms are unread or that have no register row. Refused sources are always excluded",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -226,6 +230,8 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				if (options.licenseFilter) {
 					argv.push("--license-filter", options.licenseFilter)
 				}
+
+				argv.push(options.excludeUnreadSources ? "--exclude-unread-sources" : "--no-exclude-unread-sources")
 
 				const t = Date.now()
 				const child = spawnProcess(process.execPath, argv)

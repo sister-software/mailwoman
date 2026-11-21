@@ -5,11 +5,21 @@
  *   Merges the OpenAddresses source runs a plan file lists into their state address-point databases.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/openaddresses.run.ts \
- *   --plan <plan.json> --release <date> [--states nh,nv]
+ *   --plan <plan.json> --release <date> [--states nh,nv] [--out-dir <dir>] [--no-exclude-unread-sources]
  *
  *   The plan is a JSON array of `{ member, license }`, such
  *   as `{ "member": "us/nh/statewide", "license": null }`.
- *   Each state builds beside its database and swaps into place once sealed.
+ *   A run is merged only when the register admits `openaddresses:<member>`,
+ *   the admission the US address layer applies: a refused run is always left out,
+ *   and an unread or unmapped one unless `--no-exclude-unread-sources` is passed.
+ *
+ *   A rerun deletes the rows of every run it merged before, so a run the register
+ *   now excludes leaves the database.
+ *   Each state builds beside its database and swaps into place once sealed,
+ *   or is written to `--out-dir` with the live database left unchanged.
+ *
+ *   A database already in `--out-dir` is the base it merges into, so a staged
+ *   `situs address-points` build gains its runs there.
  */
 
 import { currentSourcePath } from "@mailwoman/core/data-root"
@@ -20,13 +30,14 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { isAdmittedSource } from "@mailwoman/corpus/address-records/admission"
+import { createSourceAdmitter, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
 import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { addressPointDatabasePath, interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { latLngToCell } from "@sister.software/h3"
+import { dirname, resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import {
@@ -37,7 +48,14 @@ import {
 } from "#tools/dev-tools/us/address-coverage/openaddresses"
 
 const { values } = parseArguments({
-	options: { plan: { type: "string" }, release: { type: "string" }, states: { type: "string" } },
+	options: {
+		plan: { type: "string" },
+		release: { type: "string" },
+		states: { type: "string" },
+		"out-dir": { type: "string" },
+		"exclude-unread-sources": { type: "boolean" },
+	},
+	allowNegative: true,
 })
 
 if (!values.plan || !values.release) throw new Error("--plan and --release are required")
@@ -49,7 +67,17 @@ const cache = currentSourcePath("openaddresses")
 
 await makeDirectories(cache)
 
-const admitted = plan.filter((source) => isAdmittedSource(source.member, source.license))
+const admitter = createSourceAdmitter(await readUSAddressSourceAdmission(), values["exclude-unread-sources"])
+const admitted = plan.filter((source) => admitter.admits(`openaddresses:${source.member}`))
+
+for (const { source, reason, because } of admitter.excluded) {
+	console.log(`excluded ${source}: ${reason}: ${because}`)
+}
+
+for (const { source, reason } of admitter.admittedUnread) {
+	console.log(`admitted unread ${source}: ${reason}`)
+}
+
 const states = new Map<string, string[]>()
 
 for (const { member } of admitted) {
@@ -65,17 +93,22 @@ console.log(`plan ${plan.length}, admitted ${admitted.length}, states ${states.s
 await using scratch = await temporaryDirectory("us-openaddresses-")
 
 for (const [state, members] of states) {
-	const out = addressPointDatabasePath(`address-points-us-${state}.db`)
+	const live = addressPointDatabasePath(`address-points-us-${state}.db`)
+	const out = values["out-dir"] ? resolvePath(values["out-dir"], `address-points-us-${state}.db`) : live
 	const tmp = `${out.toString()}.tmp-${process.pid}`
 
+	await makeDirectories(dirname(out))
 	await removePathIfPresent(tmp)
 
-	if (await pathExists(out)) {
-		using source = new DatabaseClient<never>(out, { readOnly: true })
+	// A database already staged under `--out-dir`, such as a fresh `situs address-points` build, is the base.
+	const base = (await pathExists(out)) ? out : live
+
+	if (await pathExists(base)) {
+		using source = new DatabaseClient<never>(base, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${tmp}'`)
 	} else {
-		throw new Error(`No address-point database for ${state} at ${out.toString()}`)
+		throw new Error(`No address-point database for ${state} at ${live.toString()}`)
 	}
 
 	let read = 0

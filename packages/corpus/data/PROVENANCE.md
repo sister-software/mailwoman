@@ -42,12 +42,14 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 1,661 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 1,676 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
 OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, the 118 county and
 state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`), and one row per
 publisher of the 1,993 US OpenAddresses runs whose terms were read on 2026-11-21 (origin
-`2026-11-21_rights_review`). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
+`2026-11-21_rights_review`), and one row per Taiwanese civil-affairs or county body whose house-number
+coordinates reach `addresses-tw.parquet` and `address-points-tw.db` through Overture (15 rows, origin
+`2026-11-21_rights_review`, #3267). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
 until `license-decisions.json` records one. They sit in this repository because `corpus-source-inputs.json`,
 the table that names them, sits here (#2643).
 
@@ -58,13 +60,31 @@ publisher's metadata answered with empty license, access and copyright fields). 
 terms page it rests on, with `found: "no-statement"` for a `no-statement-found` acceptance and `found: "terms"`,
 with the publisher's words, for the others.
 
+`found: "site-terms-not-applied"` records a reading where the dataset's metadata states no terms and the
+publisher's website states site-wide terms that the decision doesn't read as the dataset's grant. Oneida and
+Waukesha counties in Wisconsin read that way. A noncommercial site policy over the site that leads to the file
+refuses `redistribute-data` and leaves `transform` and `train` permitted, as on those two rows and on St.
+Mary's County, Maryland, whose file the policy's own site serves.
+
+Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw
+listing, the Taoyuan City Government's portal page or the Keelung City Government's site-wide open-data
+declaration states the Open Government Data License, version 1.0 (`OGDL-Taiwan-1.0`). Its `reading` quotes that
+statement, and its `electedBecause` names the attribution statement the license's 三(二) requires.
+
 ## `us-situs-sources.json` — which register rows each US situs `source` value comes from (#2650)
 
 Hand-maintained. Maps each `source` value of the `address-points-us-*.db` databases to the register rows its data
 comes from: `overture:NAD` to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to that body's
 own row and Overture. The house-venue tuple reader keeps a row only when every row its value maps to holds an
 elected decision permitting transform and train. The bodies were read on 2026-10-17 under the US factual-data
-reading. The bare `openaddresses` value of the Hawaii database identifies no body and has no entry.
+reading. The bare `openaddresses` value of the Hawaii database built before 2026-11-21 identifies no body and
+has no entry. `situs address-points --oa-csv` now writes each row's run as `openaddresses:<member>`, read from
+the CSV's path, so a rebuilt Hawaii database maps to the four county rows.
+
+Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 maps to its publisher's row, the row whose
+`access` names the run (#3260, #3269). The US address layer build, `situs address-points` and the county
+address-point builder admit a source only when every row its value maps to permits fetch, extract and
+redistribute-data.
 
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 

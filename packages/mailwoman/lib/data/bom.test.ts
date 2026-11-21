@@ -72,6 +72,25 @@ describe("buildDataBOM over a locally built OpenStreetMap layer", () => {
 	})
 })
 
+describe("buildDataBOM over a bundle whose artifacts have different sources", () => {
+	it("labels a US interpolation database with TIGER's expression, not the street bundle's", () => {
+		const document = buildDataBOM({
+			mailwomanVersion: "11.2.0",
+			snapshot: { measuredAt: "2026-10-17T00:00:00.000Z", bucket: "https://example.org/", bundles: [] },
+		})
+
+		const licenseOf = (suffix: string) =>
+			document.components.find((entry) => entry.name.startsWith("street/us/ak/") && entry.name.endsWith(suffix))
+				?.licenses
+
+		expect(licenseOf("/interp.db")).toEqual([{ expression: "LicenseRef-USGov-Public-Domain" }])
+
+		expect(licenseOf("/situs.db")).toEqual([
+			{ expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource" },
+		])
+	})
+})
+
 const SOURCE_BASE: Omit<MixedLayerSource, "source" | "deciding" | "basis" | "statement" | "obligationClass"> = {
 	records: 10,
 	regions: ["us-fl"],
@@ -84,6 +103,7 @@ const SOURCE_BASE: Omit<MixedLayerSource, "source" | "deciding" | "basis" | "sta
 	attribution: "none",
 	shareAlike: "none",
 	attributionText: null,
+	obligations: [],
 }
 
 const row = (registerSource: string, statement: "terms" | "no-statement") => ({
@@ -97,6 +117,7 @@ const row = (registerSource: string, statement: "terms" | "no-statement") => ({
 	statement,
 	termsURL: `https://example.org/${registerSource}`,
 	retrievedCopy: null,
+	obligations: null,
 	because: "Read.",
 })
 
@@ -120,7 +141,8 @@ const MIXED: DataBOMMixedLayer = {
 				deciding: row("marin", "terms"),
 				basis: RegisterTermsBasis.NoRestrictingTerms,
 				statement: "terms",
-				obligationClass: ObligationClass.None,
+				obligations: [{ obligation: "use_restriction", strength: "required", quote: "Not for use as a mailing list." }],
+				obligationClass: ObligationClass.UseRestriction,
 			},
 			{
 				...SOURCE_BASE,
@@ -175,6 +197,7 @@ describe("buildDataBOM over a mixed layer", () => {
 		const [marin, alachua] = layer.components!
 
 		expect(props(marin!)["mailwoman:termsStatement"]).toBe("terms")
+		expect(props(marin!)["mailwoman:obligation:use_restriction"]).toBe("required: Not for use as a mailing list.")
 		expect(props(alachua!)["mailwoman:termsStatement"]).toBe("no-statement")
 		expect(alachua!.externalReferences).toEqual([{ type: "license", url: "https://example.org/alachua" }])
 	})

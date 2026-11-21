@@ -51,6 +51,14 @@ export interface BundleArtifact {
 	family?: "address-points" | "interpolation"
 
 	/**
+	 * The SPDX expression this registry assigns to this artifact, where its sources differ from the bundle's.
+	 *
+	 * An artifact without one takes {@linkcode BundleRights.expression}.
+	 * Like that field, it stands in only where the artifact's own `layer_manifest` couldn't be read.
+	 */
+	expression?: string
+
+	/**
 	 * Gives the lowercase US state or territory slug, such as `ca`.
 	 * The `--only` option can match this value.
 	 */
@@ -279,6 +287,8 @@ function usStreetArtifacts(): BundleArtifact[] {
 				md5Sidecar: false,
 				approxBytes: sizes.interp,
 				family: "interpolation",
+				// `situs interpolation` reads no input but TIGER/Line edges and stamps this expression in its `layer_manifest`.
+				expression: "LicenseRef-USGov-Public-Domain",
 				stateSlug: slug,
 			})
 		}

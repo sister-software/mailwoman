@@ -191,7 +191,7 @@ function bundleComponents(
 		const manifest = served?.manifest
 		const measuredManifest = manifest?.status === MeasurementStatus.Measured ? manifest : null
 
-		const expression = measuredManifest?.expression ?? bundle.rights.expression
+		const expression = measuredManifest?.expression ?? artifact.expression ?? bundle.rights.expression
 		const basis = measuredManifest?.expression ? LicenseBasis.ArtifactManifest : LicenseBasis.BundleRegistry
 
 		components.push({
@@ -300,6 +300,9 @@ function mixedSourceComponent(description: MixedLayerDescription, source: MixedL
 			...property("mailwoman:attributionText", source.attributionText),
 			...property("mailwoman:shareAlike", source.shareAlike),
 			...property("mailwoman:obligationClass", source.obligationClass),
+			...source.obligations.flatMap((entry) =>
+				property(`mailwoman:obligation:${entry.obligation}`, `${entry.strength}: ${entry.quote}`)
+			),
 			...property("mailwoman:layerRecordedLicense", source.recordedLicense),
 			...property(
 				"mailwoman:openAddressesAttribution",
