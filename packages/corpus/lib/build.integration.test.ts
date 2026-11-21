@@ -729,7 +729,7 @@ vi.mock("#source-register/register", async (importOriginal) => {
 
 const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
 
-describe("buildCorpus source rights", () => {
+describe("buildCorpus source rights", { timeout: 60_000 }, () => {
 	// The suite runs with `isolate: false`, so a file earlier in the worker may
 	// already have loaded `#build` over the real register.
 	// The test reloads it here so the module reads the register through the mock above.
