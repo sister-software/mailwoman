@@ -137,7 +137,12 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		}
 
 		const STATE = options.state.toUpperCase()
-		const { parseTIGERRelease } = await import("@mailwoman/tiger")
+
+		const [{ parseTIGERRelease }, { TIGER_SOURCE_NAME }] = await Promise.all([
+			import("@mailwoman/tiger"),
+			import("@mailwoman/tiger/source"),
+		])
+
 		const vintage = parseTIGERRelease(options.release)
 		const edgesDir = options.edgesDir ?? resolvePath(dataRootPath("census", `tiger${vintage}-edges`))
 
@@ -320,7 +325,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			tier: LayerTier.BuildLocal,
 			license: "LicenseRef-USGov-Public-Domain",
 			attribution: "US Census Bureau TIGER/Line",
-			source: "tiger",
+			source: TIGER_SOURCE_NAME,
 			sourceVintage: options.release,
 			buildCmd: "mailwoman situs interpolation-database",
 			buildSHA: buildSHA(repoRootPath()),

@@ -20,6 +20,9 @@ import { licensePageURL } from "#license/stamp"
  */
 const LICENSE_REF_TEXT_URLS: ReadonlyMap<string, () => string> = new Map([
 	["LicenseRef-WhosOnFirst-Mixed", () => "https://github.com/whosonfirst-data/whosonfirst-data/blob/master/LICENSE.md"],
+	// A US Government work has no copyright under 17 U.S.C. § 105, so its text is that section,
+	// as the U.S. Copyright Office publishes Title 17.
+	["LicenseRef-USGov-Public-Domain", () => "https://www.copyright.gov/title17/92chap1.html#105"],
 	// The license page lives on the docs site.
 	// A deployment may configure the site's base URL.
 	["LicenseRef-Commercial", () => licensePageURL()],

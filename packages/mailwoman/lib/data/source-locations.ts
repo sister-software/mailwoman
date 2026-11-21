@@ -27,7 +27,7 @@ export interface SourceLocations {
 	table: Readonly<Record<string, SourceLocation>>
 	locate: SourceLocator
 	/**
-	 * Packages whose table is absent from this installation, such as the optional `@mailwoman/osm`.
+	 * Optional packages absent from this installation, such as `@mailwoman/osm` or `@mailwoman/tiger`.
 	 *
 	 * A source those packages own reads as unlocated, and a report states the package.
 	 */
@@ -35,26 +35,41 @@ export interface SourceLocations {
 }
 
 /**
- * Join every owner's source table.
+ * The module an optional package exports, or null when the package isn't installed.
  *
- * `@mailwoman/osm` is an optional peer, so its table is imported when installed
- * and its absence is reported in `unavailable`.
- *
- * @throws When `@mailwoman/osm` is installed and its table fails to load.
+ * Only an absent package reads as null.
+ * Any other failure is a fault to report.
  */
-export async function readSourceLocations(): Promise<SourceLocations> {
-	const unavailable: string[] = []
-
-	const osm = await import("@mailwoman/osm/source").catch((error: unknown) => {
-		// Only an absent package means "no OSM table".
-		// Any other failure is a fault to report.
+function importWhenInstalled<T>(load: Promise<T>): Promise<T | null> {
+	return load.catch((error: unknown) => {
 		if ((error as { code?: unknown } | null)?.code === "ERR_MODULE_NOT_FOUND") return null
 
 		throw error
 	})
+}
+
+/**
+ * Join every owner's source table.
+ *
+ * `@mailwoman/osm` is an optional peer and `@mailwoman/tiger` an optional dependency.
+ * Each table is imported when its package is installed, and an absent package is reported in `unavailable`.
+ *
+ * @throws When `@mailwoman/osm` or `@mailwoman/tiger` is installed and its table fails to load.
+ */
+export async function readSourceLocations(): Promise<SourceLocations> {
+	const unavailable: string[] = []
+
+	const [osm, tiger] = await Promise.all([
+		importWhenInstalled(import("@mailwoman/osm/source")),
+		importWhenInstalled(import("@mailwoman/tiger/source")),
+	])
 
 	if (!osm) {
 		unavailable.push("@mailwoman/osm")
+	}
+
+	if (!tiger) {
+		unavailable.push("@mailwoman/tiger")
 	}
 
 	const table: Record<string, SourceLocation> = {
@@ -63,6 +78,7 @@ export async function readSourceLocations(): Promise<SourceLocations> {
 		...US_ADDRESS_LAYER_SOURCE_LOCATIONS,
 		...GNAF_SOURCE_LOCATIONS,
 		...osm?.OSM_SOURCE_LOCATIONS,
+		...tiger?.TIGER_SOURCE_LOCATIONS,
 	}
 
 	return {
