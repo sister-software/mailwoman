@@ -438,14 +438,14 @@ the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwo
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                         | Meaning                                                                                                                                                                                   | Obligations |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                | attribution |
-| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                      | none        |
-| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records. They're subject to 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
-| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                    | unknown     |
-| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                   | attribution |
-| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                       | attribution |
+| `LicenseRef`                         | Meaning                                                                                                                                                                                      | Obligations              |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution              |
+| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none                     |
+| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution, share-alike |
+| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                       | unknown                  |
+| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution              |
+| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution              |
 
 `LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
 publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only
@@ -454,10 +454,60 @@ undersea layer uses them as map labels and search names. The layer credits "IHO-
 Undersea Feature Names, www.gebco.net". A request for written confirmation has gone to GEBCO. If GEBCO's reply
 restricts reuse, the layer moves to GeoNames class `U` under CC BY 4.0.
 
-`LicenseRef-WhosOnFirst-Mixed` and `LicenseRef-Undeclared-Input` are deliberately absent from the
-obligations table, so `summarizeLicense` reports them as unrecognized and `refusalsForPublication` refuses
-a layer that includes either. A grant no one has read imposes unknown obligations rather than none, and an
-expression that omitted the fold would read as a complete list of the artifact's terms.
+`LicenseRef-Undeclared-Input` is deliberately absent from the obligations table, so `summarizeLicense`
+reports it as unrecognized and `refusalsForPublication` refuses a layer that includes it. A grant no one has
+read imposes unknown obligations rather than none, and an expression that omitted the fold would read as a
+complete list of the artifact's terms.
+
+### Who's On First's obligations
+
+`LicenseRef-WhosOnFirst-Mixed` records attribution and share-alike (#3163). The reading rests on three texts and
+one count.
+
+Each WOF repository's `LICENSE.md` states: "Crediting Who's On First is recommended and linking back to this
+License is required." It continues: "The Who's On First dataset is both original work and a modification of
+existing open data. Some of those open data projects **do** require attribution." The attribution notice holds
+the link back, and the OGC server's `license` link for this identifier points to that text.
+
+The [WOF source list](https://github.com/whosonfirst/whosonfirst-sources/blob/master/data/sources-spec-latest.json)
+(182 entries, retrieved 2026-11-21), types 16 entries as restricted or non-commercial: 14 `Restricted`, `eg` as `Restricted Use License
+(non-commercial)` and `wmo` as `CC BY-NC-ND 4.0`. Each has `usage_geometry: 0`. All but `iso` and `itu` also have
+`usage_property: 0`. `wikipedia` is `CC BY-SA 3.0` with `usage_geometry: 1` and `usage_property: 1`, which is the
+share-alike term.
+
+`LICENSE.md` describes Quattroshapes geometry with `qs_source:EuroGlobalMap` and asks for credit to the European
+national mapping agencies it lists. The non-commercial `eg` entry isn't that data. Its description reads:
+"EuroGeographics restricts this usage to non-commercial, so this source is used for concordance values only.
+EuroGeographics also offers other commercial data products, and some open data with a coarser resolution
+1:1,000,000 scale in their EuroGlobalMap project (which is aggregated by both Quattroshapes and Mesoshapes)." The
+source list types `quattroshapes` as `CC BY 2.0`.
+
+Measured 2026-11-21 over the 271 clones under the WOF repositories root, parsing every record file
+(8,787,297 records, the count the record store holds, plus 685,831 alternate-geometry files). One alternate file
+in `whosonfirst-data-admin-alt` is a Git LFS pointer and doesn't parse.
+
+| What a record holds                                                                          | Records                   | In `admin-global-priority.db` `spr` | In `candidate.db` |
+| -------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------- | ----------------- |
+| a `src:*` value (`src:geom`, `src:geom_alt`, `src:population`, …) naming a restricted source | 0                         | 0                                   | 0                 |
+| `qs:source` naming EuroGlobalMap                                                             | 74,359                    | 74,276                              | 74,230            |
+| of those, `src:geom` = `quattroshapes`                                                       | 28,558                    | 28,477                              | 28,431            |
+| `iso:country`, `iso:subdivision`, `iso:parent`, `itu:country_code`, `itu:region`             | 8,784,819 property values | none stored                         | none stored       |
+
+The EuroGlobalMap records are in 52 countries, FR 19,043, DE 9,864, IT 8,674 and UA 6,198 the largest. They're
+Quattroshapes data under CC BY 2.0, and the attribution obligation covers the agencies' credit. The
+`iso:` and `itu:` properties never reach a layer, because the WOF record store keeps only `wof:` and `name:`
+properties and a short list of `geom:`, `lbl:`, `gn:`, `mz:` and `edtf:` ones (`isStoredProperty`).
+
+Restricted sources reach the admin build as identifiers only, in the `concordances` table: `fct:id` 78,938,
+`eg:gisco_id` 74,066, `iso:code` 4,506, `iso:id` 3,850, and under 1,000 each for `nyt`, `digitalenvoy`, `m49`,
+`itu`, `ioc`, `uncrt`, `icao`, `wmo` and `latimes`. That's the concordance usage the source list records for
+each of them.
+
+Wikipedia is the `src:geom` of 14 records and the `src:population` of 2,338 (`wikipedia` or its prefix `wk`).
+Of those 2,352 records, 2,331 are in the admin build's `spr` table, 2,330 in its `place_population` table and
+2,330 in `candidate.db`, so its CC BY-SA 3.0 term reaches the layers through centroids, boxes and populations.
+
+Issue #3163 records the scan's per-country and per-property tables.
 
 `LicenseRef-INEGI-Terms` is in the table, because its terms were read. They permit copying, publishing,
 adapting, extracting and commercial use, require the credit `Fuente: INEGI, <product name>`, and state no

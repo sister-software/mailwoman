@@ -17,8 +17,10 @@ describe("itemsRefusal", () => {
 	})
 
 	test("an identifier with no recorded obligations keeps items off under unresolved", () => {
-		expect(itemsRefusal(ADMIN_LICENSE, [ObligationRefusal.Unresolved])).toContain(
-			"LicenseRef-WhosOnFirst-Mixed resolves to no recorded obligations"
+		expect(itemsRefusal(ADMIN_LICENSE, [ObligationRefusal.Unresolved])).toBeNull()
+
+		expect(itemsRefusal(`${ADMIN_LICENSE} AND LicenseRef-Undeclared-Input`, [ObligationRefusal.Unresolved])).toContain(
+			"LicenseRef-Undeclared-Input resolves to no recorded obligations"
 		)
 
 		expect(itemsRefusal(null, [ObligationRefusal.Unresolved])).toContain("records no license")
