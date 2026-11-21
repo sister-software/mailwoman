@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isOrtsteilStreet, ortsteilStreetComponents, ortsteilSurface } from "#de/recipes/locale"
+import { isOrtsteilStreet, ortsteilStreetComponents, ortsteilSurface } from "#de/recipes/ortsteil"
 
 describe("streetless hamlets", () => {
 	it("reads a street that spells one of its locality's Ortsteile as a hamlet, under either WOF fold", () => {
