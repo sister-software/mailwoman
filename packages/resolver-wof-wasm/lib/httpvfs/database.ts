@@ -131,8 +131,15 @@ const liveClients = new Set<RangeWorkerClient>()
  *
  * A worker that fails to answer is counted in `workers` and left out of `cachedBytes`,
  * and `unanswered` counts it, so a partial sum doesn't read as a complete one.
+ *
+ * `restarts` counts the workers this page has replaced after a failure.
  */
-export async function rangeWorkerMemory(): Promise<{ workers: number; cachedBytes: number; unanswered: number }> {
+export async function rangeWorkerMemory(): Promise<{
+	workers: number
+	cachedBytes: number
+	unanswered: number
+	restarts: number
+}> {
 	const clients = [...liveClients]
 	const replies = await Promise.allSettled(clients.map((client) => client.call({ type: "stats" })))
 	let cachedBytes = 0
@@ -146,31 +153,107 @@ export async function rangeWorkerMemory(): Promise<{ workers: number; cachedByte
 		}
 	}
 
-	return { workers: clients.length, cachedBytes, unanswered }
+	return { workers: clients.length, cachedBytes, unanswered, restarts: workerRestarts }
+}
+
+/**
+ * The most times a range worker is replaced inside {@link RANGE_WORKER_RESTART_WINDOW_MS}.
+ *
+ * It is a starting value with no measurement behind it.
+ *
+ * @public
+ */
+export const RANGE_WORKER_RESTART_LIMIT = 3
+
+/**
+ * The span over which {@link RANGE_WORKER_RESTART_LIMIT} counts replacements.
+ *
+ * @public
+ */
+export const RANGE_WORKER_RESTART_WINDOW_MS = 60_000
+
+/**
+ * A range worker failed again after {@link RANGE_WORKER_RESTART_LIMIT} replacements inside the window.
+ *
+ * The client stops replacing it, and every later call rejects with this error.
+ * `cause` holds the worker's last failure.
+ *
+ * @public
+ */
+export class RangeWorkerUnavailableError extends Error {
+	constructor(cause: Error) {
+		super(
+			`The range worker failed ${RANGE_WORKER_RESTART_LIMIT + 1} times in ${RANGE_WORKER_RESTART_WINDOW_MS / 1000} seconds: ${cause.message}`,
+			{ cause }
+		)
+
+		this.name = "RangeWorkerUnavailableError"
+	}
+}
+
+/**
+ * The count of range workers this page has replaced after a failure.
+ */
+let workerRestarts = 0
+
+/**
+ * One call awaiting the worker's reply.
+ */
+interface PendingCall {
+	request: RangeWorkerRequest
+	resolve: (value: unknown) => void
+	reject: (error: Error) => void
+	/**
+	 * Whether a worker failed while it held this call, and the call was posted again.
+	 */
+	reissued: boolean
 }
 
 class RangeWorkerClient implements RangeDatabase {
-	readonly #worker: Worker
-	readonly #pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>()
+	readonly #workerURL: string
+	#worker: Worker
+	readonly #pending = new Map<number, PendingCall>()
 	#nextID = 0
 	/**
-	 * The error from the worker's `error` event.
+	 * The open request the worker answered, replayed to each replacement worker.
 	 *
-	 * The worker answers each call's own failure with a reply, so this event means the
-	 * worker itself failed and its database state is unknown.
+	 * A range worker serves one read-only database, and this request determines its whole state.
+	 */
+	#opened: RangeWorkerRequest | null = null
+	/**
+	 * Whether a replacement worker is opening the database.
+	 *
+	 * A query the worker receives before its open finishes fails, so calls wait in `#held`.
+	 */
+	#reopening = false
+	#held: PendingCall[] = []
+	/**
+	 * When each replacement inside the window happened, in epoch milliseconds.
+	 */
+	#restarts: number[] = []
+	/**
+	 * Why the client stopped: the worker failed before its first open,
+	 * failed past the restart bound, or was closed.
+	 *
 	 * Every later call rejects with this error.
 	 */
 	#failure: Error | null = null
 
 	constructor(workerURL: string) {
-		this.#worker = new Worker(workerURL, { type: "module" })
+		this.#workerURL = workerURL
+		this.#worker = this.#start()
 		liveClients.add(this)
+	}
 
-		this.#worker.addEventListener("message", (event: MessageEvent<RangeWorkerReply>) => {
+	#start(): Worker {
+		const worker = new Worker(this.#workerURL, { type: "module" })
+
+		worker.addEventListener("message", (event: MessageEvent<RangeWorkerReply>) => {
 			const reply = event.data
 			const waiter = this.#pending.get(reply.id)
 
-			if (!waiter) return
+			// A replaced worker's late reply finds no waiter, because its calls were taken back.
+			if (!waiter || worker !== this.#worker) return
 
 			this.#pending.delete(reply.id)
 
@@ -181,17 +264,105 @@ class RangeWorkerClient implements RangeDatabase {
 			}
 		})
 
-		this.#worker.addEventListener("error", (event) => {
-			const error = new Error(event.message || `The range worker at ${workerURL} failed to load`)
+		worker.addEventListener("error", (event) => {
+			if (worker !== this.#worker || this.#failure) return
 
-			this.#failure = error
-
-			for (const waiter of this.#pending.values()) {
-				waiter.reject(error)
-			}
-
-			this.#pending.clear()
+			this.#recover(new Error(event.message || `The range worker at ${this.#workerURL} failed to load`))
 		})
+
+		return worker
+	}
+
+	/**
+	 * Replaces a worker that failed, replays its open, and posts again each call the failed worker held.
+	 *
+	 * The worker answers each call's own failure with a reply, so an `error` event means
+	 * the worker itself failed and its database state is unknown.
+	 *
+	 * Every call is a read of an immutable database, so posting one again is safe.
+	 * A call is posted again once: a call that two workers failed on rejects with the second failure.
+	 */
+	#recover(error: Error): void {
+		const interrupted = [...this.#pending.values()]
+
+		this.#pending.clear()
+
+		// A worker that never opened has no state to replay, and the opener reports its failure.
+		if (!this.#opened) {
+			this.#stop(error, interrupted)
+
+			return
+		}
+
+		const now = Date.now()
+
+		this.#restarts = this.#restarts.filter((at) => now - at < RANGE_WORKER_RESTART_WINDOW_MS)
+
+		if (this.#restarts.length >= RANGE_WORKER_RESTART_LIMIT) {
+			this.#stop(new RangeWorkerUnavailableError(error), interrupted)
+
+			return
+		}
+
+		this.#restarts.push(now)
+
+		workerRestarts++
+
+		for (const call of interrupted) {
+			// The replayed open is the client's own call, and the next replacement replays it again.
+			if (call.request === this.#opened) continue
+
+			if (call.reissued) {
+				call.reject(error)
+			} else {
+				call.reissued = true
+				this.#held.push(call)
+			}
+		}
+
+		this.#worker.terminate()
+		this.#worker = this.#start()
+		this.#reopening = true
+
+		this.#post({
+			request: this.#opened,
+			reissued: true,
+			resolve: () => {
+				const held = this.#held
+
+				this.#held = []
+				this.#reopening = false
+
+				for (const call of held) {
+					this.#post(call)
+				}
+			},
+			reject: (openError) => this.#stop(openError, []),
+		})
+	}
+
+	/**
+	 * Ends the client: rejects `calls` and every held call with `error`, and every later call too.
+	 */
+	#stop(error: Error, calls: readonly PendingCall[]): void {
+		const held = this.#held
+
+		this.#failure = error
+		this.#held = []
+		this.#reopening = false
+		liveClients.delete(this)
+		this.#worker.terminate()
+
+		for (const call of [...calls, ...held]) {
+			call.reject(error)
+		}
+	}
+
+	#post(call: PendingCall): void {
+		const id = this.#nextID++
+
+		this.#pending.set(id, call)
+		this.#worker.postMessage({ ...call.request, id } as RangeWorkerCall)
 	}
 
 	call<Request extends RangeWorkerRequest>(request: Request): Promise<RangeWorkerResults[Request["type"]]> {
@@ -202,14 +373,27 @@ class RangeWorkerClient implements RangeDatabase {
 				return
 			}
 
-			const id = this.#nextID++
+			const call: PendingCall = { request, resolve, reject, reissued: false }
 
-			this.#pending.set(id, { resolve, reject })
-			this.#worker.postMessage({ ...request, id } satisfies RangeWorkerCall)
+			if (this.#reopening) {
+				this.#held.push(call)
+
+				return
+			}
+
+			this.#post(call)
 		})
 
 		// The worker answers each request type with that type's result.
-		return reply as Promise<RangeWorkerResults[Request["type"]]>
+		const answered = reply as Promise<RangeWorkerResults[Request["type"]]>
+
+		if (request.type !== "open") return answered
+
+		return answered.then((result) => {
+			this.#opened = request
+
+			return result
+		})
 	}
 
 	query<Row = Record<string, SQLValue>>(sql: string, parameters: readonly SQLValue[] = []): Promise<Row[]> {
@@ -228,17 +412,12 @@ class RangeWorkerClient implements RangeDatabase {
 	}
 
 	close(): void {
-		const error = new Error("The range database is closed")
+		if (this.#failure) return
 
-		liveClients.delete(this)
-		this.#failure ??= error
-		this.#worker.terminate()
-
-		for (const waiter of this.#pending.values()) {
-			waiter.reject(error)
-		}
+		const interrupted = [...this.#pending.values()]
 
 		this.#pending.clear()
+		this.#stop(new Error("The range database is closed"), interrupted)
 	}
 }
 

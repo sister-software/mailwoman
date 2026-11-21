@@ -64,7 +64,7 @@ interface Sample {
 	longFrames: number | null
 	longFrameType: string | null
 	heap: ChromiumHeap | null
-	rangeWorkers: { workers: number; cachedBytes: number; unanswered: number } | null
+	rangeWorkers: { workers: number; cachedBytes: number; unanswered: number; restarts: number } | null
 	tiles: ReturnType<typeof mapTileEstimate>
 }
 
@@ -230,7 +230,8 @@ export function MemoryPanel() {
 				<dd className={styles.count}>
 					{sample?.rangeWorkers
 						? `${mib(sample.rangeWorkers.cachedBytes)} across ${sample.rangeWorkers.workers} workers` +
-							(sample.rangeWorkers.unanswered ? `, ${sample.rangeWorkers.unanswered} not answering` : "")
+							(sample.rangeWorkers.unanswered ? `, ${sample.rangeWorkers.unanswered} not answering` : "") +
+							(sample.rangeWorkers.restarts ? `, ${sample.rangeWorkers.restarts} replaced after a failure` : "")
 						: "…"}
 				</dd>
 

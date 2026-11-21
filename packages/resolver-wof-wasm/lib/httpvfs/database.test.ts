@@ -15,8 +15,11 @@ import {
 	isSQLiteReadFailure,
 	openRangeDatabase,
 	openWholeDatabase,
+	RANGE_WORKER_RESTART_LIMIT,
+	RANGE_WORKER_RESTART_WINDOW_MS,
 	rangeWorkerMemory,
 	RangeWorkerError,
+	RangeWorkerUnavailableError,
 } from "#httpvfs/database"
 import type { RangeWorkerCall } from "#httpvfs/worker-protocol"
 
@@ -220,18 +223,143 @@ describe("rangeWorkerMemory", () => {
 	})
 })
 
+/**
+ * A worker that leaves a query of the `slow` table unanswered, as one does while the statement still runs.
+ */
+class SlowQueryWorker extends FakeWorker {
+	override postMessage(call: RangeWorkerCall): void {
+		if (
+			call.type === "query" &&
+			call.sql.includes("slow") &&
+			FakeWorker.created.at(-1) === this &&
+			SlowQueryWorker.stalled
+		) {
+			FakeWorker.posted.push(call)
+
+			return
+		}
+
+		super.postMessage(call)
+	}
+
+	static stalled = true
+}
+
+function failWorker(message = "worker crashed"): void {
+	FakeWorker.created.at(-1)!.dispatchEvent(Object.assign(new Event("error"), { message }))
+}
+
 describe("a failed worker", () => {
-	test("rejects every later call with the worker's error, without posting it", async () => {
+	afterEach(() => {
+		SlowQueryWorker.stalled = true
+		vi.useRealTimers()
+	})
+
+	test("is replaced, its open is replayed, and the next query is answered by the new worker", async () => {
 		vi.stubGlobal("Worker", FakeWorker)
 		vi.stubGlobal("location", { href: "https://example.test/page" })
 
 		const database = await openRangeDatabase("/data.db", "/sqlite/")
-		const postedBeforeFailure = FakeWorker.posted.length
+		const before = (await rangeWorkerMemory()).restarts
+		const first = FakeWorker.created.at(-1)!
+		const opened = FakeWorker.posted.find((call) => call.type === "open")!
 
-		FakeWorker.created.at(-1)!.dispatchEvent(Object.assign(new Event("error"), { message: "worker crashed" }))
+		FakeWorker.posted = []
+		failWorker()
 
-		await expect(database.query("SELECT 1")).rejects.toThrow("worker crashed")
-		await expect(database.bytesRead()).rejects.toThrow("worker crashed")
-		expect(FakeWorker.posted).toHaveLength(postedBeforeFailure)
+		await expect(database.query("SELECT 1")).resolves.toEqual([{ n: 1 }])
+
+		expect(FakeWorker.created.at(-1)).not.toBe(first)
+		expect(FakeWorker.posted.map((call) => call.type)).toEqual(["open", "query"])
+		expect(FakeWorker.posted[0]).toMatchObject({ ...opened, id: expect.any(Number) })
+		expect((await rangeWorkerMemory()).restarts - before).toBe(1)
+
+		database.close?.()
+	})
+
+	test("posts a query it held again on the new worker, once", async () => {
+		vi.stubGlobal("Worker", SlowQueryWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		const database = await openRangeDatabase("/data.db", "/sqlite/")
+		const answered = database.query("SELECT n FROM slow")
+
+		SlowQueryWorker.stalled = false
+		failWorker()
+
+		await expect(answered).resolves.toEqual([{ n: 1 }])
+
+		// A query that two workers failed on rejects with the second worker's failure.
+		SlowQueryWorker.stalled = true
+
+		const twice = database.query("SELECT n FROM slow")
+
+		failWorker("first crash")
+		await Promise.resolve()
+		await Promise.resolve()
+		failWorker("second crash")
+
+		await expect(twice).rejects.toThrow("second crash")
+
+		database.close?.()
+	})
+
+	test("stops replacing the worker at the fourth failure inside the window", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] })
+		vi.stubGlobal("Worker", FakeWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		const database = await openRangeDatabase("/data.db", "/sqlite/")
+
+		for (let failure = 0; failure < RANGE_WORKER_RESTART_LIMIT; failure++) {
+			failWorker()
+			await expect(database.query("SELECT 1")).resolves.toEqual([{ n: 1 }])
+		}
+
+		const workers = FakeWorker.created.length
+
+		failWorker("out of memory")
+
+		await expect(database.query("SELECT 1")).rejects.toBeInstanceOf(RangeWorkerUnavailableError)
+		await expect(database.bytesRead()).rejects.toThrow("out of memory")
+		expect(FakeWorker.created).toHaveLength(workers)
+	})
+
+	test("is replaced again once the earlier failures are older than the window", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] })
+		vi.stubGlobal("Worker", FakeWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		const database = await openRangeDatabase("/data.db", "/sqlite/")
+
+		for (let failure = 0; failure < RANGE_WORKER_RESTART_LIMIT; failure++) {
+			failWorker()
+			await expect(database.query("SELECT 1")).resolves.toEqual([{ n: 1 }])
+		}
+
+		vi.setSystemTime(Date.now() + RANGE_WORKER_RESTART_WINDOW_MS)
+		failWorker()
+
+		await expect(database.query("SELECT 1")).resolves.toEqual([{ n: 1 }])
+
+		database.close?.()
+	})
+
+	test("that never opened rejects its open with the worker's error, and starts no replacement", async () => {
+		class NeverOpensWorker extends FakeWorker {
+			override postMessage(call: RangeWorkerCall): void {
+				FakeWorker.posted.push(call)
+
+				queueMicrotask(() =>
+					this.dispatchEvent(Object.assign(new Event("error"), { message: "script failed to load" }))
+				)
+			}
+		}
+
+		vi.stubGlobal("Worker", NeverOpensWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		await expect(openRangeDatabase("/data.db", "/sqlite/")).rejects.toThrow("script failed to load")
+		expect(FakeWorker.created).toHaveLength(1)
 	})
 })
