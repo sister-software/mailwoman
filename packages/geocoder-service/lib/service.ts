@@ -5,6 +5,7 @@
  * @file Chooses which geocoder provider answers each query.
  */
 
+import { AbortKind, abortKindOf } from "@mailwoman/core/abort"
 import { type ConnectivityReading, offlineReason, offlineResourceError } from "@mailwoman/core/network/connectivity"
 
 import type { GeocoderProvider, ProviderPlacement } from "#provider"
@@ -139,8 +140,9 @@ export class GeocoderService<Q, A> {
 			} catch (error) {
 				if (callerSignal.aborted) throw error
 
-				// The engine reports the deadline's abort with an error of its own, such as `fetch`'s `AbortError`.
-				const unavailable = isUnavailableError(error) || (signal !== callerSignal && signal.aborted)
+				// The engine reports the deadline's abort with an error of its own, such as `fetch`'s
+				// `AbortError`, so the deadline is read from the signal rather than from the error.
+				const unavailable = isUnavailableError(error) || abortKindOf(signal) === AbortKind.Deadline
 
 				if (!unavailable) throw error
 
