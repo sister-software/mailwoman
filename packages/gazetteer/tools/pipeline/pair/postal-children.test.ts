@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	type ChildLocations,
+	isPostalLocalityPair,
 	nearestPostalPlace,
 	partitionPostalChildren,
 	postalGridCell,
@@ -64,6 +65,23 @@ describe("partitionPostalChildren", () => {
 		const { kept } = partitionPostalChildren([{ child: "brooklyn", parent: "kings" }], postal, locations)
 
 		expect(kept).toEqual([{ child: "brooklyn", parent: "kings" }])
+	})
+})
+
+describe("isPostalLocalityPair", () => {
+	const regions = new Set(["new york", "georgia"])
+	const brooklyn = locations.get("brooklyn\0new york")!
+
+	it("reads a postal child beside a parent that is also a first-level region as a locality and its region", () => {
+		expect(isPostalLocalityPair(postal, brooklyn, { child: "brooklyn", parent: "new york" }, regions)).toBe(true)
+	})
+
+	it("keeps the dependent-locality reading when the parent names no region, or the child isn't postal", () => {
+		expect(isPostalLocalityPair(postal, brooklyn, { child: "brooklyn", parent: "kings" }, regions)).toBe(false)
+
+		const atlanta = locations.get("brooklyn\0atlanta")!
+
+		expect(isPostalLocalityPair(postal, atlanta, { child: "brooklyn", parent: "georgia" }, regions)).toBe(false)
 	})
 })
 

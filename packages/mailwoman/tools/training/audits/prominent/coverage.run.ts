@@ -60,8 +60,17 @@ console.log(`  presence: ${presence.covered_forms} of ${presence.required_forms}
 
 console.log(
 	`  demand share: ${demand.passing} of ${demand.cells} cells reach half of decile 1's population share ` +
-		`in ${report.epoch.draws.toLocaleString("en-US")} expected epoch draws`
+		`in ${report.epoch.draws.toLocaleString("en-US")} expected epoch draws; ${demand.failing_count} fail, ` +
+		`${demand.unwritable} are unwritable`
 )
+
+for (const cell of demand.unwritable_cells) {
+	console.log(
+		`    unwritable: ${cell.country} ${cell.band} ${cell.query_shape}: ` +
+			cell.reasons.map((reason) => `${reason.reason} (${reason.examples.join(", ")})`).join("; ")
+	)
+}
+
 console.log(`  coherence: ${coherence.rows} short admin train rows write a dependent locality without a locality`)
 
 if (values.json) {

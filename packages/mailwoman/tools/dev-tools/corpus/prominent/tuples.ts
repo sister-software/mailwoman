@@ -35,6 +35,8 @@
  *   checks gets no demand rows, as it can't be required either.
  *
  *   A sub-locality written bare or with its region or country gets no rows, as `prominentPlaceTag` states.
+ *   Each tuple copies the places table's `postal_pair`, the reading the recipe
+ *   writes a sub-locality's pair in.
  *
  *   The scan must be of the base corpus the recipe's output joins, before the recipe's rows exist.
  */
@@ -61,6 +63,7 @@ import {
 	DEMAND_SHARE_FRACTION,
 	decileOneDeficit,
 	readProminentPlacesRecord,
+	writablePlaceSQL,
 } from "#tools/training/audits/prominent/coverage"
 
 /**
@@ -197,10 +200,9 @@ export function apportionUnderCap(total: number, weights: readonly number[]): nu
 }
 
 /**
- * The places the recipe may write, as SQL over `ranked`: every required place, and every decile-1
- * place whose score rests on no GeoNames population or on a GeoNames match that passed its checks.
+ * The places the recipe may write.
  */
-const WRITABLE_PLACE_SQL = "(required OR (decile = 1 AND (score_source <> 'geonames' OR geonames_check = 'verified')))"
+const WRITABLE_PLACE_SQL = writablePlaceSQL()
 
 /**
  * Each country's primary WOF name in the candidate table, keyed by its ISO code.
@@ -260,6 +262,7 @@ interface PlaceRow {
 	parent_locality: string | null
 	region: string | null
 	region_abbrs: string[]
+	postal_pair: boolean
 }
 
 export interface ProminentTuplesSummary {
@@ -368,7 +371,7 @@ export async function writeProminentTuples(options: {
 		(
 			await queryRows(
 				db,
-				"SELECT spr_id, country, band, name, parent_locality, region, region_abbrs FROM ranked " +
+				"SELECT spr_id, country, band, name, parent_locality, region, region_abbrs, postal_pair FROM ranked " +
 					`WHERE ${WRITABLE_PLACE_SQL}`,
 				(row): PlaceRow => ({
 					spr_id: row.number("spr_id"),
@@ -378,6 +381,7 @@ export async function writeProminentTuples(options: {
 					parent_locality: row.optionalText("parent_locality"),
 					region: row.optionalText("region"),
 					region_abbrs: row.textList("region_abbrs"),
+					postal_pair: row.text("postal_pair") === "true",
 				})
 			)
 		).map((place) => [place.spr_id, place])

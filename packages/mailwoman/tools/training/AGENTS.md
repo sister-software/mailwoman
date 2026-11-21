@@ -113,7 +113,12 @@ The prominent-place coverage receipt (#3156) reads the places table that
 `data.prominent_place_coverage`, and scans the corpus's short admin train rows itself, in about two minutes. It
 fails when a required prominent place has no drawable train row in a required shape, when a country's decile 1
 holds less than half its population share of a shape's expected epoch draws, or when a short admin row writes a
-dependent locality without a locality. The draws are what the config's sampler reads in one epoch. A row's
+dependent locality without a locality. A cell short of its target whose decile-1 places none can be written in the
+shape (no WOF region for the shape, or a GeoNames-fallback score that failed its checks) is `unwritable`: it
+doesn't fail the receipt, and the report lists it with its reasons. A cell with a writable decile-1 place that
+misses its target fails. A sub-locality's pair with its parent is required as `locality` and `region` when the
+places table marks it `postal_pair` (`isPostalLocalityPair` in `@mailwoman/gazetteer/tools/pipeline/pair/postal-children`),
+and as `dependent_locality` and `locality` otherwise. The draws are what the config's sampler reads in one epoch. A row's
 expected draws are its source's requested share of `train_rows_per_epoch` over the source's admitted rows, times
 its country's admission chance, the arithmetic of `drawsPerAdmittedRow` and `countryAdmission` in
 `exposure/shapes.ts`, over the train rows `exposure/train-shapes.ts` counts. A row of a source weighted at zero
