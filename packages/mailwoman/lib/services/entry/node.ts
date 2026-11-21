@@ -12,7 +12,7 @@ import { createToken, type ServiceToken } from "async-init"
 import { resolvePath } from "path-ts"
 
 import { openBANRegionDatabases } from "#geocode/ban-layers"
-import type { LayerContribution, NationalDatabaseSource } from "#geocode/layer-contributions"
+import type { LayerContribution, NationalDatabaseSource } from "#geocode/contributions"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { USStateDatabaseProvider } from "#geocode/regions"

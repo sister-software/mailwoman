@@ -42,14 +42,14 @@ import type { LayerCatalog } from "#data/catalog"
 import { holdActiveSelection } from "#data/retention"
 import { loadBundledCoarsePlacer } from "#default/placer"
 import { $public } from "#env"
-import type { GeocodeDeps } from "#geocode/core"
-import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import {
 	firstCoveringSource,
 	type LayerContribution,
 	type NationalDatabaseSource,
 	type UnavailableLayer,
-} from "#geocode/layer-contributions"
+} from "#geocode/contributions"
+import type { GeocodeDeps } from "#geocode/core"
+import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import type { openOSMRegionDatabases } from "#geocode/osm-layers"
 import type { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"

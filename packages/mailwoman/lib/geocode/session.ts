@@ -38,6 +38,7 @@ import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
+import type { LayerContribution } from "#geocode/contributions"
 import {
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
@@ -47,7 +48,6 @@ import {
 	type GeocodeDeps,
 } from "#geocode/core"
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
-import type { LayerContribution } from "#geocode/layer-contributions"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {

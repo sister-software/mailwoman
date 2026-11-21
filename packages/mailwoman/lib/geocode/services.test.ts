@@ -6,7 +6,7 @@ import { createToken, ServiceRegistry } from "async-init"
 import { expect, test } from "vitest"
 
 import { createGeocodeCommandOptions } from "#geocode/command-options"
-import type { LayerContribution, NationalDatabaseSource } from "#geocode/layer-contributions"
+import type { LayerContribution, NationalDatabaseSource } from "#geocode/contributions"
 import {
 	describeGeocodeServices,
 	GenerationServices,
