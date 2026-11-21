@@ -72,6 +72,25 @@ describe("buildDataBOM over a locally built OpenStreetMap layer", () => {
 	})
 })
 
+describe("buildDataBOM over a bundle whose artifacts have different sources", () => {
+	it("labels a US interpolation database with TIGER's expression, not the street bundle's", () => {
+		const document = buildDataBOM({
+			mailwomanVersion: "11.2.0",
+			snapshot: { measuredAt: "2026-10-17T00:00:00.000Z", bucket: "https://example.org/", bundles: [] },
+		})
+
+		const licenseOf = (suffix: string) =>
+			document.components.find((entry) => entry.name.startsWith("street/us/ak/") && entry.name.endsWith(suffix))
+				?.licenses
+
+		expect(licenseOf("/interp.db")).toEqual([{ expression: "LicenseRef-USGov-Public-Domain" }])
+
+		expect(licenseOf("/situs.db")).toEqual([
+			{ expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource" },
+		])
+	})
+})
+
 const SOURCE_BASE: Omit<MixedLayerSource, "source" | "deciding" | "basis" | "statement" | "obligationClass"> = {
 	records: 10,
 	regions: ["us-fl"],
