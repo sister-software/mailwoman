@@ -6,9 +6,6 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { SeededRandom } from "@mailwoman/core/random"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { capitalize, splitWhitespace } from "@mailwoman/core/strings/unicode"
@@ -19,6 +16,7 @@ import { sampleAddressPoints } from "#recipes/address-points"
 import type { HouseVenueTuple } from "#recipes/house/venue/tuples"
 import { type RegisterDecisions, registerSourcePermitsTraining } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
+import { readUSSitusSources, usSitusSourcesPath } from "#us/address-records/rights"
 
 /**
  * The directory holding one database per state, `address-points-us-<state>.db`.
@@ -30,25 +28,11 @@ export function usSitusDirectory() {
 const SITUS_PREFIX = "address-points-us-"
 
 /**
- * The table mapping each situs `source` value to the register rows its data comes from.
- *
- * `overture:NAD` maps to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to
- * that body's own row and Overture, because OpenAddresses doesn't relicense what it collects.
- */
-export function usSitusSourcesPath() {
-	return resolvePackagePath("@mailwoman/corpus", "data", "us-situs-sources.json")
-}
-
-/**
  * Probes per requested row.
  *
  * A state whose admitted rows are a few percent of its table needs dozens of probes per kept row.
  */
 export const US_SITUS_PROBE_BUDGET = 512
-
-interface SitusSourcesFile {
-	sources: Record<string, readonly string[]>
-}
 
 /**
  * The situs `source` values whose every register row holds a decision permitting transform and train.
@@ -61,13 +45,11 @@ export async function admittedSitusSources(
 	register?: RegisterDecisions,
 	path: PathBuilderLike = usSitusSourcesPath()
 ): Promise<Set<string>> {
-	if (!(await pathExists(path))) throw new Error(`No US situs source table at ${path.toString()}`)
-
-	const table = await readLocalJSONFile<SitusSourcesFile>(path)
+	const table = await readUSSitusSources(path)
 	const registerFile = register ?? (await readAddressSourceRegister())
 
 	return new Set(
-		Object.entries(table.sources)
+		Object.entries(table)
 			.filter(([, rows]) => rows.length > 0 && rows.every((row) => registerSourcePermitsTraining(registerFile, row)))
 			.map(([source]) => source)
 	)

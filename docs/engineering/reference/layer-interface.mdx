@@ -534,10 +534,15 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
 An aggregator's row, such as Overture's, sets no obligation of its own: OpenAddresses and Overture grant no
 license over address rows, so the publishing body's row decides unless the aggregator's row blocks.
 
-The US layer build (`packages/corpus/lib/us/address-records/layer.ts`) combines three sources per state. It
-takes NAD release 24, the Overture addresses rows from every dataset other than NAD, and the OpenAddresses runs
-`isAdmittedSource` admits. That function reads the terms an OpenAddresses source definition records, and it
-admits a definition that records none. It doesn't consult the register.
+The US layer build (`packages/corpus/lib/us/address-records/layer.ts`) combines three sources per state:
+NAD release 24, the Overture addresses rows from the datasets other than NAD, and the OpenAddresses runs of
+the plan. Since #3241 the build admits each source by its register decisions. `packages/corpus/data/us-situs-sources.json`
+maps each source id to the register rows its data comes from. `admitUSStateSources` keeps a source only when
+every row holds an elected decision permitting `fetch`, `extract` and `redistribute-data`, the rule the corpus
+build applies to `transform` and `train`. A refused decision, an unread one and a source with no row are each
+excluded. Each region's `build.json` lists the excluded sources with their reasons, and `mailwoman situs layer`
+prints them. Before #3241 the build read only the terms an OpenAddresses source definition records, and the
+measurement below describes a layer built that way.
 
 The source texts, retrieved 2026-11-21:
 
@@ -580,7 +585,7 @@ The 22 refused source ids are 13 publishers' files, 12 OpenAddresses runs with 1
 datasets with 28,852: the counties of San Luis Obispo, El Dorado, Madera, Tehama, Mono and Mariposa in California, Brevard and
 Hernando in Florida, Kent, Muskegon and Allegan in Michigan, Cook County in Illinois and the City of Boise's Ada
 County file in Idaho. Each decision states the restriction, such as Cook County's clause withholding
-redistribution. The build admits them because their OpenAddresses definitions record no restricting terms.
+redistribution. The 2026-11-13 build admitted them because their OpenAddresses definitions record no restricting terms.
 
 The 7 unchecked source ids are SanGIS, Placer, Stanislaus and Santa Cruz in California and Lee and Sumter in
 Florida. Of the 1,988 runs without a register row, 1,691 record no terms (39,746,932 records), 210 record an
