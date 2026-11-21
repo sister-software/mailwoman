@@ -8,7 +8,7 @@
 import { env, exports } from "cloudflare:workers"
 import { describe, expect, test } from "vitest"
 
-import { OSM_PLACES_DATABASE_KEY } from "#index"
+import { OSM_PLACES_DATABASE_KEY } from "#services"
 
 describe("the landmark route with an absent database", () => {
 	test("answers 503 with the cross-origin header, so a browser reads the status", async () => {

@@ -35,6 +35,7 @@
 	"dependencies": {
 		"@journeyapps/wa-sqlite": "2.0.10",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
+		"async-init": "^2.0.0",
 		"mailwoman": "workspace:*"
 	},
 	"devDependencies": {

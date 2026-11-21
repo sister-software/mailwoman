@@ -5,7 +5,7 @@ import type { StreetRouteResponse } from "@mailwoman/resolver-wof-wasm/remote/st
 import { env, exports } from "cloudflare:workers"
 import { beforeAll, describe, expect, test } from "vitest"
 
-import { candidateDatabaseKey, LANDMARK_DATABASE_KEY, OSM_PLACES_DATABASE_KEY, STREET_TABLE_KEY } from "#index"
+import { candidateDatabaseKey, LANDMARK_DATABASE_KEY, OSM_PLACES_DATABASE_KEY, STREET_TABLE_KEY } from "#services"
 
 const bytes = (base64: string) => Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
 

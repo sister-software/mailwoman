@@ -12,7 +12,7 @@ import { silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 
-import { installBundledWasm, ORT_WASM_TAG_URL } from "#bundled-wasm"
+import { installBundledWasm, ORT_WASM_TAG } from "#bundled-wasm"
 import type { ReleasePipeline } from "#engine"
 
 /**
@@ -28,7 +28,7 @@ export async function loadDefaultReleasePipeline(): Promise<ReleasePipeline> {
 
 	if (!release) throw new Error("The en-us releases manifest lists no default release")
 
-	const assets = await loadReleaseAssets(release, silentAssetProgress(), { ortWASMURL: ORT_WASM_TAG_URL })
+	const assets = await loadReleaseAssets(release, silentAssetProgress(), { ortWASMBinary: ORT_WASM_TAG })
 
 	return {
 		version: release.version,

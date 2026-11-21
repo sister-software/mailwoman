@@ -39,6 +39,7 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
+		"async-init": "^2.0.0",
 		"mailwoman": "workspace:*",
 		"onnxruntime-web": "1.31.1"
 	},
