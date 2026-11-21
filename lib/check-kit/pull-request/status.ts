@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * A pull request's check status, read once or waited on until every check concludes,
- * with the failing tests of each failed job read from its log.
+ * A pull request's check status, read once or waited on until a check fails or every
+ * check concludes, with the failing tests of each failed job read from its log.
  *
  * `mwops pr status`, `mwops pr wait` and `mwdev_pull_request`'s `status` action return this result.
  */
@@ -46,11 +46,11 @@ export const PullRequestExit = {
 	 */
 	Passed: 0,
 	/**
-	 * At least one check failed or was cancelled.
+	 * At least one check failed or was cancelled, whether or not others are still pending.
 	 */
 	Failed: 1,
 	/**
-	 * At least one check is still pending: for `wait`, when the bound expired.
+	 * At least one check is still pending and zero have failed: for `wait`, when the bound expired.
 	 */
 	Pending: 3,
 	/**
@@ -96,12 +96,14 @@ export interface PullRequestStatus {
  * How a wait ended, beside the last status.
  *
  * - `concluded`: zero checks pending.
- * - `expired`: the bound expired with a check pending.
+ * - `failed-early`: a check failed or was cancelled while others were still pending.
+ *   The wait ends at the first such read, because the pull request cannot pass after it.
+ * - `expired`: the bound expired with a check pending and zero checks failed.
  * - `unread`: the bound expired while the checks were unread.
  * - `no-checks`: the head has a merge conflict, or no check started within the bound.
  */
 export interface PullRequestWait extends PullRequestStatus {
-	outcome: "concluded" | "expired" | "unread" | "no-checks"
+	outcome: "concluded" | "failed-early" | "expired" | "unread" | "no-checks"
 	waitedMs: number
 	maxWaitMs: number
 	reads: number
@@ -153,7 +155,10 @@ export async function readPullRequestStatus(
 }
 
 /**
- * Read a pull request's checks until zero are pending, or `maxWaitMs` passes.
+ * Read a pull request's checks until one fails, zero are pending, or `maxWaitMs` passes.
+ *
+ * The first read that shows a failed or cancelled check ends the wait, with the other
+ * checks still running, and the failed jobs' logs are read at that moment.
  *
  * A conflicting head ends the wait at once, because GitHub starts no run for it.
  * A head with zero checks and no conflict is read again, because its runs may not have started yet.
@@ -174,8 +179,14 @@ export async function waitForPullRequestConclusion(
 		const waitedMs = clock.now() - startedAt
 		const end = (outcome: PullRequestWait["outcome"]) => ({ outcome, waitedMs, maxWaitMs, reads })
 
-		if (reading.condition === ChecksCondition.Passed || reading.condition === ChecksCondition.Failed) {
+		if (reading.condition === ChecksCondition.Passed) {
 			return { ...(await withFailedLogs(reading, services)), ...end("concluded") }
+		}
+
+		if (reading.condition === ChecksCondition.Failed) {
+			const outcome = reading.counts?.pending ? "failed-early" : "concluded"
+
+			return { ...(await withFailedLogs(reading, services)), ...end(outcome) }
 		}
 
 		if (reading.condition === ChecksCondition.NoChecks && reading.conflicting) {
@@ -217,7 +228,9 @@ export function renderPullRequestStatus(status: PullRequestStatus, wait?: PullRe
 		summary.push(
 			wait.outcome === "concluded"
 				? `concluded after ${Math.round(wait.waitedMs / 1000)} s`
-				: `${wait.outcome} after ${Math.round(wait.waitedMs / 1000)} s of a ${Math.round(wait.maxWaitMs / 60_000)}-minute bound`
+				: wait.outcome === "failed-early"
+					? `a check failed after ${Math.round(wait.waitedMs / 1000)} s with ${counts?.pending ?? 0} still pending`
+					: `${wait.outcome} after ${Math.round(wait.waitedMs / 1000)} s of a ${Math.round(wait.maxWaitMs / 60_000)}-minute bound`
 		)
 	}
 

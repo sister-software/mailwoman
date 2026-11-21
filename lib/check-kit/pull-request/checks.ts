@@ -69,8 +69,8 @@ export interface PullRequestCheck {
  * The overall condition of a pull request's checks.
  *
  * - `passed`: every check concluded, and none failed or was cancelled.
- * - `failed`: every check concluded, and at least one failed or was cancelled.
- * - `pending`: at least one check hasn't concluded.
+ * - `failed`: at least one check failed or was cancelled, whether or not others are still running.
+ * - `pending`: at least one check hasn't concluded, and none has failed or been cancelled.
  * - `no-checks`: GitHub reports zero checks on the head; `noChecksReason` states why.
  * - `unread`: `gh` returned no checks JSON; `checksError` states what it printed.
  */
@@ -246,13 +246,18 @@ function countBuckets(checks: readonly PullRequestCheck[]): Record<CheckBucket, 
 
 /**
  * The condition a set of read checks produces.
+ *
+ * A failed or cancelled check decides the condition before a pending one does.
+ *
+ * The pull request cannot pass once one check has failed.
+ * A `pending` condition held until the last check concludes would hide that failure.
  */
 function conditionOf(counts: Record<CheckBucket, number>, total: number): ChecksCondition {
 	if (!total) return ChecksCondition.NoChecks
 
-	if (counts.pending) return ChecksCondition.Pending
+	if (counts.fail || counts.cancel) return ChecksCondition.Failed
 
-	return counts.fail || counts.cancel ? ChecksCondition.Failed : ChecksCondition.Passed
+	return counts.pending ? ChecksCondition.Pending : ChecksCondition.Passed
 }
 
 function noChecksReason(view: RawPullRequestView, conflicting: boolean): string {

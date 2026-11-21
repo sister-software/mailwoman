@@ -4,7 +4,8 @@
 /**
  * Reads the failing tests out of a failed GitHub Actions job's log.
  *
- * The log comes from `gh run view --job <id> --log-failed`, which prints only the failed steps.
+ * The log comes from `gh run view --job <id> --log-failed`, which prints only the failed steps,
+ * or from the jobs API when that command refuses a job whose run is still in progress.
  * It is written under the cache root's `checks/ci-logs` directory, outside every
  * checkout, and read by the Vitest text parser.
  *
@@ -75,13 +76,44 @@ export type DownloadJobLog = (runID: number | null, jobID: number) => Promise<st
  */
 const LOG_DOWNLOAD_TIMEOUT_MS = 180_000
 
-const downloadJobLog: DownloadJobLog = async (_runID, jobID) =>
-	(
-		await runFile("gh", ["run", "view", "--job", String(jobID), "--log-failed", "--repo", PULL_REQUEST_REPO], {
-			timeout: LOG_DOWNLOAD_TIMEOUT_MS,
-			maxBuffer: 256 * 1024 * 1024,
-		})
-	).stdout
+const LOG_DOWNLOAD_OPTIONS = { timeout: LOG_DOWNLOAD_TIMEOUT_MS, maxBuffer: 256 * 1024 * 1024 }
+
+/**
+ * Download one job's log.
+ *
+ * `gh run view --log-failed` prints only the failed steps.
+ * It refuses a job whose run still has other jobs in progress.
+ *
+ * The jobs API returns a concluded job's whole log while its run continues.
+ * A refusal from the first command is answered by the second.
+ *
+ * @throws The second command's error when both fail, with the first command's error appended.
+ */
+const downloadJobLog: DownloadJobLog = async (_runID, jobID) => {
+	try {
+		const failedSteps = await runFile(
+			"gh",
+			["run", "view", "--job", String(jobID), "--log-failed", "--repo", PULL_REQUEST_REPO],
+			LOG_DOWNLOAD_OPTIONS
+		)
+
+		return failedSteps.stdout
+	} catch (failedStepsError) {
+		try {
+			const wholeJob = await runFile(
+				"gh",
+				["api", "--allow-escape-sequences", `repos/${PULL_REQUEST_REPO}/actions/jobs/${jobID}/logs`],
+				LOG_DOWNLOAD_OPTIONS
+			)
+
+			return wholeJob.stdout
+		} catch (wholeJobError) {
+			const describe = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
+			throw new Error(`${describe(wholeJobError)} (after \`gh run view --log-failed\`: ${describe(failedStepsError)})`)
+		}
+	}
+}
 
 /**
  * The directory failed-job logs are written to.

@@ -46,7 +46,7 @@ export interface ProbeContext extends OperationContext {
  * On the lab data root the servers printed their listening line 2.2 to 4.3 seconds after process start,
  * so the bound is about 14 times the slowest warm startup and leaves room for a cold page cache.
  */
-export const DEFAULT_STARTUP_TIMEOUT_SECONDS = 60
+const DEFAULT_STARTUP_TIMEOUT_SECONDS = 60
 
 /**
  * The flags a probe refuses after `--`, because the probe binds the server itself.
@@ -79,7 +79,7 @@ type ProbeInput = z.output<typeof PROBE_INPUT_SCHEMA>
 /**
  * The result of `mwops probe`: the target, the command, and the probe, or why it didn't run.
  */
-export interface ProbeOperationResult {
+interface ProbeOperationResult {
 	workspace: string
 	target: ProbeTarget | null
 	command: string[] | null
@@ -91,7 +91,7 @@ export interface ProbeOperationResult {
 /**
  * The command that starts `target` from the checkout at `repoRoot`, bound to loopback with port 0.
  */
-export function planProbeCommand(
+function planProbeCommand(
 	repoRoot: string,
 	target: ProbeTarget,
 	options: { envFile?: string; serverArgs?: readonly string[] } = {}
@@ -189,7 +189,7 @@ async function runProbeOperation(input: ProbeInput, context: ProbeContext): Prom
  * Human lines for a probe: the summary, each request, the memory, the startup output
  * of a server that never listened, and the log path.
  */
-export function renderProbeResult(output: ProbeOperationResult): string[] {
+function renderProbeResult(output: ProbeOperationResult): string[] {
 	const lines = [output.summary]
 	const { probe } = output
 

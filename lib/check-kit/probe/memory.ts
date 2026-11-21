@@ -17,7 +17,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 /**
  * One process's memory reading, or why it couldn't be read.
  */
-export type ProcessMemory =
+type ProcessMemory =
 	| { pid: number; read: true; peakKiB: number; residentKiB: number }
 	| { pid: number; read: false; error: string }
 

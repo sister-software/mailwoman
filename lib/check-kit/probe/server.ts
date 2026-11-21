@@ -59,7 +59,7 @@ export const ProbeExit = {
 /**
  * How the server's startup ended.
  */
-export const ProbeOutcome = {
+const ProbeOutcome = {
 	Listened: "listened",
 	ExitedBeforeListening: "exited-before-listening",
 	DidNotStart: "did-not-start",
@@ -67,7 +67,7 @@ export const ProbeOutcome = {
 	Interrupted: "interrupted",
 } as const
 
-export type ProbeOutcome = (typeof ProbeOutcome)[keyof typeof ProbeOutcome]
+type ProbeOutcome = (typeof ProbeOutcome)[keyof typeof ProbeOutcome]
 
 /**
  * The address every request goes to.
@@ -103,7 +103,7 @@ export interface ProbeCommand {
 /**
  * Options for {@link runProbe}.
  */
-export interface RunProbeOptions {
+interface RunProbeOptions {
 	/**
 	 * The workspace name the log file name and the result record.
 	 */
@@ -137,7 +137,7 @@ export interface RunProbeOptions {
  *
  * `body` is the text up to the cap, and is left out when a JSON projection was asked for and found.
  */
-export interface ProbeRequest {
+interface ProbeRequest {
 	path: string
 	url: string
 	status: number | null
@@ -158,7 +158,7 @@ export interface ProbeRequest {
 /**
  * How the server stopped.
  */
-export interface ProbeStop {
+interface ProbeStop {
 	pid: number | null
 	/**
 	 * The signal the stop sent, or `null` when the server had already exited.

@@ -102,6 +102,20 @@ describe("waitForPullRequestConclusion", () => {
 		expect(wait.failedLogs.map((log) => [log.job, log.parsed])).toEqual([["unit-fast", false]])
 	})
 
+	it("ends at the first read that shows a failed check, while other checks are still pending", async () => {
+		const failedBesidePending = reading("failed", {
+			counts: { pass: 3, fail: 1, pending: 2, skipping: 0, cancel: 0 },
+		})
+
+		// The readings after the failure would keep the wait going to its bound if it waited for zero pending.
+		const wait = await waitOver([reading("pending"), failedBesidePending, reading("pending")])
+
+		expect(wait).toMatchObject({ outcome: "failed-early", exitCode: PullRequestExit.Failed, reads: 2 })
+		expect(wait.waitedMs).toBe(60_000)
+		expect(wait.failedLogs.map((log) => log.job)).toEqual(["unit-fast"])
+		expect(renderPullRequestStatus(wait, wait)[0]).toContain("a check failed after 60 s with 2 still pending")
+	})
+
 	it("exits 3 when the bound expires with a check pending", async () => {
 		const wait = await waitOver([reading("pending")])
 

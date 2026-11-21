@@ -146,7 +146,7 @@ function usage(io: DispatchIO): number {
 			"  mwops host status [--json]       (the host lock holder and the queued or in-progress CI runs)",
 			"  mwops host wait-idle [--max-minutes N] [--json]   (exit 0 when idle, 3 when the bound expired busy, 4 when CI stayed unread)",
 			"  mwops pr status <number> [--json]   (one pull request's checks; exit 0 passed, 1 failed, 3 pending, 4 unread, 5 no checks)",
-			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until zero checks are pending; the same exit statuses)",
+			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until a check fails or zero are pending; the same exit statuses)",
 			"  mwops worktree status --path <dir> [--json]   (what the working tree at <dir> lacks; exit 0 when ready, 1 when not)",
 			"  mwops worktree prepare --path <dir> [--json] [--dry-run] [--max-wait-minutes N] [--log-dir <dir>]   (run the missing install, compile and copy-weights steps there)",
 			"  mwops probe <workspace> --get <path> [--get <path> …] [--json] [--json-path <dotted path>] [--max-bytes N] [--env NAME=value …] [--env-file <file>] [--startup-timeout-seconds N] [--log-dir <dir>] [-- <server flags…>]",

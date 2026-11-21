@@ -15,11 +15,11 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { ProbeExit, ProbeOutcome, type RunProbeOptions, runProbe } from "#check-kit/probe/server"
+import { ProbeExit, runProbe } from "#check-kit/probe/server"
 
 const FIXTURE = repoRootPath("test", "fixtures", "check-kit", "probe-server.ts").toString()
 
-async function probe(mode: string, options: Partial<RunProbeOptions> = {}) {
+async function probe(mode: string, options: Partial<Parameters<typeof runProbe>[0]> = {}) {
 	await using scratch = await temporaryDirectory("probe-test-")
 
 	const result = await runProbe({
@@ -46,7 +46,7 @@ describe("runProbe", () => {
 	it("waits for the listening line, projects a JSON body, and reports a 500 as a response", async () => {
 		const result = await probe("listen", { gets: ["/json", "/fail"], jsonPath: "meta.count" })
 
-		expect(result).toMatchObject({ outcome: ProbeOutcome.Listened, exitCode: ProbeExit.Passed })
+		expect(result).toMatchObject({ outcome: "listened", exitCode: ProbeExit.Passed })
 		expect(result.listening?.line).toContain("listening on http://127.0.0.1:")
 
 		const [json, failure] = result.requests
@@ -70,7 +70,7 @@ describe("runProbe", () => {
 		const result = await probe("exit-early", { gets: ["/json"] })
 
 		expect(result).toMatchObject({
-			outcome: ProbeOutcome.ExitedBeforeListening,
+			outcome: "exited-before-listening",
 			exitCode: ProbeExit.ExitedBeforeListening,
 			earlyExit: { exitCode: 3, signal: null },
 			requests: [],
@@ -83,7 +83,7 @@ describe("runProbe", () => {
 	it("stops a server that never listens once the startup wait expires", async () => {
 		const result = await probe("silent", { gets: ["/json"], clock: createFakeClock() })
 
-		expect(result).toMatchObject({ outcome: ProbeOutcome.StartupExpired, exitCode: ProbeExit.StartupExpired })
+		expect(result).toMatchObject({ outcome: "startup-expired", exitCode: ProbeExit.StartupExpired })
 		expect(result.requests).toEqual([])
 	})
 

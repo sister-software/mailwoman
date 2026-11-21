@@ -57,7 +57,7 @@ const SERVE_KEY = /^\s*serve[,:]/mu
 /**
  * Whether a `cli/main.ts` text passes a `serve` command to `runDropInCLI`.
  */
-export function servesThroughDropIn(text: string): boolean {
+function servesThroughDropIn(text: string): boolean {
 	const call = text.indexOf(DROP_IN_RUNNER)
 
 	return call !== -1 && SERVE_KEY.test(text.slice(call + DROP_IN_RUNNER.length))

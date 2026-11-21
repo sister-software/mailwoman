@@ -56,8 +56,8 @@ The command then reads the status again and exits 0 only when that status is rea
 would run.
 
 `mwops pr status <number>` reads one pull request's head commit, base branch, mergeable and merge-state values, and
-each check with its bucket. `mwops pr wait <number> --max-minutes N` reads the checks every `--poll-seconds` (default 45) until zero are pending or the bound (default 40) expires. Both exit 0 when every check passed, 1 when one failed or
-was cancelled, 3 when a check is pending at the end, 4 when `gh` returned no checks JSON, and 5 when the head has zero
+each check with its bucket. `mwops pr wait <number> --max-minutes N` reads the checks every `--poll-seconds` (default 45) until one fails, zero are pending, or the bound (default 40) expires. It returns at the first read that shows a failed check, while the others still run. Both exit 0 when every check passed, 1 when one failed or
+was cancelled, 3 when a check is pending and zero have failed, 4 when `gh` returned no checks JSON, and 5 when the head has zero
 checks, because of a merge conflict or because none started. On exit 1 each failed job's log is written under the cache
 root's `checks/ci-logs` directory, and the command prints the failing tests the Vitest parser reads from it, or states
 that the log held none. A failed check that isn't a GitHub Actions job, such as CodeQL, has no job log. Its link ends in
@@ -80,12 +80,19 @@ socket's cause code, such as `ECONNREFUSED`.
 server. The result records the environment names and never their values. Flags after `--` reach the server, except
 `--host` and `--port`. The server's output goes to a log under the cache root's `checks` directory, or under
 `--log-dir`. The result states the time from process start to the listening line, the startup output, the peak
-resident memory of the server's process tree from `/proc/<pid>/status`, and how the server stopped. The command exits 0
-when the server listened, every request received an HTTP response and the server stopped; 1 when a request received
-none; 3 when the server exited before listening, with its exit status and last output lines; 4 when the startup wait,
-`--startup-timeout-seconds` (default 60), expired; 6 when a server process remained; and 130 on an interrupt, after the
-server is stopped. An HTTP 4xx or 5xx is a response. A probe takes no host lock: on the lab data root each server's
-process tree peaked between 419 and 742 MiB of resident memory, below what the lock exists for.
+resident memory of the server's process tree from `/proc/<pid>/status`, and how the server stopped.
+
+The command's exit statuses:
+
+- 0 when the server listened, every request received an HTTP response and the server stopped.
+- 1 when a request received zero response.
+- 3 when the server exited before listening. The command prints the server's exit status and last output lines.
+- 4 when the startup wait, `--startup-timeout-seconds` (default 60), expired.
+- 6 when a server process remained after the stop.
+- 130 on an interrupt, after the server is stopped.
+
+An HTTP 4xx or 5xx is a response. A probe takes no host lock: on the lab data root each server's process tree peaked
+between 419 and 742 MiB of resident memory, below what the lock exists for.
 
 `health baseline debt` is the one mutation the health verb performs: it rewrites `lib/repo-health/baseline.json`
 from the current readings, after a reviewed reduction. Every other `health` invocation only reads.
