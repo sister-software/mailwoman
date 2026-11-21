@@ -148,6 +148,89 @@ describe("variantsFor, structural chains of the canonical and colloquial names",
 	})
 })
 
+describe("variantsFor in a country whose towns WOF types as localadmin", () => {
+	const nz = (over: Partial<TestRecord>) => rec({ country: "NZ", ...over })
+	const newZealand = nz({ id: 85_633_345, name: "New Zealand", placetype: "country" })
+	const aucklandRegion = nz({ id: 85_687_243, name: "Auckland Region", placetype: "region" })
+	const aucklandCounty = nz({ id: 102_079_403, name: "Auckland", placetype: "county" })
+	const aucklandTown = nz({ id: 1_729_238_453, name: "Auckland", placetype: "localadmin" })
+	const invercargillCouncil = nz({ id: 102_079_397, name: "Invercargill City", placetype: "county" })
+	const invercargillTown = nz({ id: 1_729_238_483, name: "Invercargill", placetype: "localadmin" })
+	const southland = nz({ id: 85_687_253, name: "Southland Region", placetype: "region" })
+	const inAuckland = { subregion: aucklandTown, region: aucklandRegion, country: newZealand }
+
+	const variantsOf = (record: TestRecord, ancestry: Parameters<typeof variantsFor>[1]) =>
+		variantsFor(record, ancestry, { key: "default", value: record.name })
+
+	it("writes a suburb as the dependent locality beside its town as the locality", () => {
+		const papatoetoe = nz({ id: 1_125_922_189, name: "Papatoetoe" })
+		const variants = variantsOf(papatoetoe, inAuckland)
+
+		expect(variants.map((v) => v.components)).toContainEqual({ dependent_locality: "Papatoetoe", locality: "Auckland" })
+
+		for (const variant of variants) {
+			expect(variant.components.dependent_locality, variant.suffix).toBe("Papatoetoe")
+			expect(variant.components.locality, variant.suffix).toBe("Auckland")
+			expect(variant.components.subregion, variant.suffix).toBeUndefined()
+		}
+	})
+
+	it("writes a neighborhood inside a suburb beside the town, without the suburb", () => {
+		const papatoetoe = nz({ id: 1_125_922_189, name: "Papatoetoe" })
+		const puhinui = nz({ id: 85_772_141, name: "Puhinui", placetype: "neighbourhood" })
+
+		for (const variant of variantsOf(puhinui, { ...inAuckland, locality: papatoetoe })) {
+			expect(variant.components.dependent_locality, variant.suffix).toBe("Puhinui")
+			expect(variant.components.locality, variant.suffix).toBe("Auckland")
+			expect(variant.components.subregion, variant.suffix).toBeUndefined()
+		}
+	})
+
+	it("keeps the town's own locality record, and the town itself, as the locality", () => {
+		const auckland = nz({ id: 101_914_257, name: "Auckland" })
+
+		for (const variant of [
+			...variantsOf(auckland, inAuckland),
+			...variantsOf(aucklandTown, { subregion: aucklandCounty, region: aucklandRegion, country: newZealand }),
+		]) {
+			expect(variant.components.locality, variant.suffix).toBe("Auckland")
+			expect(variant.components.dependent_locality, variant.suffix).toBeUndefined()
+			expect(variant.components.subregion, variant.suffix).toBeUndefined()
+		}
+	})
+
+	it("writes a town without the council it heads", () => {
+		const ancestry = { subregion: invercargillCouncil, region: southland, country: newZealand }
+
+		expect(variantsOf(invercargillTown, ancestry).map((v) => v.components)).toContainEqual({
+			locality: "Invercargill",
+			region: "Southland Region",
+		})
+
+		expect(variantsOf(invercargillTown, ancestry).some((v) => v.components.subregion != null)).toBe(false)
+	})
+
+	it("leaves a rural locality in a district, and every other country's localadmin, as they were", () => {
+		const waverley = nz({ id: 101_915_841, name: "Waverley" })
+		const southTaranaki = nz({ id: 102_079_295, name: "South Taranaki District", placetype: "county" })
+
+		expect(
+			variantsOf(waverley, { subregion: southTaranaki, country: newZealand }).map((v) => v.components)
+		).toContainEqual({
+			locality: "Waverley",
+			subregion: "South Taranaki District",
+		})
+
+		const amherstTown = rec({ id: 404_475_231, name: "Amherst", placetype: "localadmin" })
+		const northAmherst = rec({ id: 85_949_123, name: "North Amherst" })
+
+		expect(variantsOf(northAmherst, { subregion: amherstTown }).map((v) => v.components)).toContainEqual({
+			locality: "North Amherst",
+			subregion: "Amherst",
+		})
+	})
+})
+
 describe("variantsFor (pure)", () => {
 	it("locality yields 3 variants when region + country are in ancestry", () => {
 		const v = variantsFor(
