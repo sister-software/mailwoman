@@ -466,7 +466,7 @@ one count.
 
 Each WOF repository's `LICENSE.md` states: "Crediting Who's On First is recommended and linking back to this
 License is required." It continues: "The Who's On First dataset is both original work and a modification of
-existing open data. Some of those open data projects **do** require attribution." The attribution notice carries
+existing open data. Some of those open data projects **do** require attribution." The attribution notice holds
 the link back, and the OGC server's `license` link for this identifier points to that text.
 
 The [WOF source list](https://github.com/whosonfirst/whosonfirst-sources/blob/master/data/sources-spec-latest.json)
@@ -483,10 +483,10 @@ EuroGeographics also offers other commercial data products, and some open data w
 source list types `quattroshapes` as `CC BY 2.0`.
 
 Measured 2026-11-21 over the 271 clones under the WOF repositories root, parsing every record file
-(8,787,297 records, the count the record store holds, plus 685,831 alternate-geometry files; one alternate file
-in `whosonfirst-data-admin-alt` is a Git LFS pointer and doesn't parse):
+(8,787,297 records, the count the record store holds, plus 685,831 alternate-geometry files). One alternate file
+in `whosonfirst-data-admin-alt` is a Git LFS pointer and doesn't parse.
 
-| What a record carries                                                                        | Records                   | In `admin-global-priority.db` `spr` | In `candidate.db` |
+| What a record holds                                                                          | Records                   | In `admin-global-priority.db` `spr` | In `candidate.db` |
 | -------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------- | ----------------- |
 | a `src:*` value (`src:geom`, `src:geom_alt`, `src:population`, …) naming a restricted source | 0                         | 0                                   | 0                 |
 | `qs:source` naming EuroGlobalMap                                                             | 74,359                    | 74,276                              | 74,230            |
