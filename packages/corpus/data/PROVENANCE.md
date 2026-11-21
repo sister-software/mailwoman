@@ -71,7 +71,14 @@ Hand-maintained. Maps each `source` value of the `address-points-us-*.db` databa
 comes from: `overture:NAD` to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to that body's
 own row and Overture. The house-venue tuple reader keeps a row only when every row its value maps to holds an
 elected decision permitting transform and train. The bodies were read on 2026-10-17 under the US factual-data
-reading. The bare `openaddresses` value of the Hawaii database identifies no body and has no entry.
+reading. The bare `openaddresses` value of the Hawaii database built before 2026-11-21 identifies no body and
+has no entry. `situs address-points --oa-csv` now writes each row's run as `openaddresses:<member>`, read from
+the CSV's path, so a rebuilt Hawaii database maps to the four county rows.
+
+Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 maps to its publisher's row, the row whose
+`access` names the run (#3260, #3269). The US address layer build, `situs address-points` and the county
+address-point builder admit a source only when every row its value maps to permits fetch, extract and
+redistribute-data.
 
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 

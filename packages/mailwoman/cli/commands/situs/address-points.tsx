@@ -10,6 +10,7 @@ import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { basename, dirname, resolvePath } from "path-ts"
 
@@ -49,8 +50,36 @@ export const spec = {
 		"license-filter": { type: "string", description: "Dataset allow-list" },
 		threads: { type: "string", description: "DuckDB thread cap" },
 		"oa-csv": { type: "string", description: "OpenAddresses CSV paths" },
+		"exclude-unread-sources": {
+			type: "boolean",
+			default: EXCLUDE_UNREAD_SOURCES,
+			description:
+				"Exclude sources whose register terms are unread or that have no register row. Refused sources are always excluded",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The OpenAddresses run a CSV holds, read from its path: `…/us/hi/honolulu.csv` as an
+ * OpenAddresses archive lays it out, or `us__hi__honolulu.csv` as the source cache names it.
+ *
+ * @throws When the path holds no run id, because a file the register cannot
+ * place is never admitted silently.
+ */
+function openAddressesMemberOf(path: string): string {
+	const file = basename(path).replace(/\.csv$/u, "")
+	const cached = /^([a-z]{2})__([a-z0-9_-]+)__([a-z0-9_.-]+)$/u.exec(file)
+
+	if (cached) return `${cached[1]}/${cached[2]}/${cached[3]}`
+
+	const laidOut = /(?:^|\/)([a-z]{2})\/([a-z0-9_-]+)\/([a-z0-9_.-]+)\.csv$/u.exec(path)
+
+	if (laidOut) return `${laidOut[1]}/${laidOut[2]}/${laidOut[3]}`
+
+	throw new CommandError(
+		`--oa-csv ${path} holds no OpenAddresses run id; call the file us__<state>__<run>.csv or keep the archive's us/<state>/<run>.csv path`
+	)
+}
 
 /**
  * The number of `--bbox` fields: minLon, minLat, maxLon, maxLat.
@@ -65,6 +94,10 @@ const BBOX_FIELDS = 4
  * `--country` builds one national database for `OvertureNationalDatabaseProvider`.
  *
  * `--oa-csv` builds from OpenAddresses CSVs for states that Overture doesn't cover.
+ *
+ * A US build admits each source by its register decisions through the US address layer's admission,
+ * so a source the register refuses never reaches the database, and the summary lists each exclusion.
+ * A `--country` build reads every dataset, because the US source table maps no other country's sources.
  *
  * Keys come from the shared normalizer in `@mailwoman/resolver-wof-sqlite`,
  * which the lookup tier also applies at query time.
@@ -223,11 +256,27 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		let kept = 0
 		let totalReturned = 0
 
+		// A US source is admitted by its register decisions, as the US address layer admits it:
+		// an Overture dataset as `overture:<dataset>` and an OpenAddresses CSV as `openaddresses:<member>`.
+		const { createSourceAdmitter, readUSAddressSourceAdmission } =
+			await import("@mailwoman/corpus/us/address-records/rights")
+
+		const admitter = createSourceAdmitter(await readUSAddressSourceAdmission(), options.excludeUnreadSources)
+
 		const oaCSVList = OA_MODE
 			? extractDelimited(options.oaCSV)
+					.filter((p) => admitter.admits(`openaddresses:${openAddressesMemberOf(p)}`))
 					.map((p) => `'${p}'`)
 					.join(", ")
 			: ""
+
+		if (OA_MODE && !oaCSVList) {
+			throw new CommandError(
+				`the register admits none of the --oa-csv files: ${admitter.excluded.map((e) => `${e.source} (${e.reason})`).join(", ")}`
+			)
+		}
+
+		const excludedRows = new Map<string, number>()
 
 		const bboxFilter = bbox ? `AND lon BETWEEN ${bbox[0]} AND ${bbox[2]} AND lat BETWEEN ${bbox[1]} AND ${bbox[3]}` : ""
 
@@ -236,9 +285,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
 							NULLIF(trim(POSTCODE), '') AS postcode,
 							NULLIF(trim(CITY), '') AS locality,
-							'openaddresses' AS dataset,
+							filename AS dataset,
 							LAT AS lat, LON AS lon
-						FROM read_csv([${oaCSVList}], header = true, all_varchar = true)
+						FROM read_csv([${oaCSVList}], header = true, all_varchar = true, filename = true)
 						WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
 			: COUNTRY
 				? `SELECT
@@ -278,7 +327,16 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 			for (const r of rows) {
 				totalReturned++
-				const dataset = String(r.dataset ?? "unknown")
+				// An OpenAddresses row is counted and stored under its run, `us/hi/honolulu`, read from its file's path.
+				const dataset = OA_MODE ? openAddressesMemberOf(String(r.dataset)) : String(r.dataset ?? "unknown")
+
+				// An OpenAddresses CSV was admitted as a file before the scan, and a national build admits every dataset.
+				if (!OA_MODE && !COUNTRY && !admitter.admits(`overture:${dataset}`)) {
+					excludedRows.set(dataset, (excludedRows.get(dataset) ?? 0) + 1)
+
+					continue
+				}
+
 				datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
 
 				const streetRaw = String(r.street)
@@ -314,7 +372,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					streetRaw,
 					lat,
 					lon,
-					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
+					OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`,
 					OA_MODE ? "openaddresses-latest" : options.release,
 					// Only a national build has an admin code: the third admin level, such as the Taiwanese 村里.
 					r.admin_code ? String(r.admin_code) : null,
@@ -349,7 +407,21 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
 		for (const [dataset, count] of sortedDatasets) {
-			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
+			lines.push(
+				`  ${(OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`
+			)
+		}
+
+		for (const exclusion of admitter.excluded) {
+			const rows = excludedRows.get(exclusion.source.replace(/^overture:/u, ""))
+
+			lines.push(
+				`  excluded ${exclusion.source}: ${exclusion.reason}: ${exclusion.because}${typeof rows === "number" ? ` (${rows.toLocaleString()} rows)` : ""}`
+			)
+		}
+
+		for (const exclusion of admitter.admittedUnread) {
+			lines.push(`  admitted unread ${exclusion.source}: ${exclusion.reason}: ${exclusion.because}`)
 		}
 
 		if (allowedDatasets.size) {

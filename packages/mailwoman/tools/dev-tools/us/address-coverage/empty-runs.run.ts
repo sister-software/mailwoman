@@ -21,8 +21,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { isAdmittedSource } from "@mailwoman/corpus/address-records/admission"
 import { cachedRun, type OpenAddressesPlanEntry } from "@mailwoman/corpus/us/address-records/layer"
+import { createSourceAdmitter, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
 import {
 	addressLayerManifestPath,
 	type AddressLayerCountryManifest,
@@ -62,10 +62,13 @@ for (const region of manifest.regions) {
 const empty: Array<{ member: string; region: string; cached: "geojson" | "zip" }> = []
 let checked = 0
 
-for (const { member, license, skip } of plan) {
+// The layer build's own admission decides which runs it reads.
+const { admits } = createSourceAdmitter(await readUSAddressSourceAdmission())
+
+for (const { member, skip } of plan) {
 	const [country, state] = member.split("/")
 
-	if (country !== "us" || !state || skip || !isAdmittedSource(member, license)) continue
+	if (country !== "us" || !state || skip || !admits(`openaddresses:${member}`)) continue
 
 	const region = `us-${state}`
 	const records = recordsByRegion.get(region)

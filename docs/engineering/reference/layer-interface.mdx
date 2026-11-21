@@ -592,8 +592,9 @@ redistribution. The 2026-11-13 build admitted them because their OpenAddresses d
 The 7 unchecked source ids are SanGIS, Placer, Stanislaus and Santa Cruz in California and Lee and Sumter in
 Florida. Of the 1,988 runs without a register row, 1,691 record no terms (39,746,932 records), 210 record an
 attribution grant (4,751,624), 83 record a public-domain statement (4,541,960) and 4 record other text (270,040).
-`REVIEWED_OPEN` in `packages/corpus/lib/address-records/admission.ts` holds a reviewer's reading of three of
-those four: San Antonio, Somerset County and Commerce City.
+Every one of those runs now has a register row from the 2026-11-21 terms reading (#3260), and the register
+decides each through `createSourceAdmitter` in `packages/corpus/lib/us/address-records/rights.ts`, which the
+layer build, `situs address-points` and the county address-point builder share.
 
 The register's own reviews show why a definition that records no terms doesn't settle the reading. The layer
 holds 88 OpenAddresses runs that record no terms and have a register row. Readers elected 76 of them and found
