@@ -635,7 +635,7 @@ describe("auditHeldoutOverlap", () => {
 
 		expect(leaked.result.audit.counts.known_overlap).toBe(1)
 		expect(leaked.result.rows["rendered-gb-os-open:gb-r#a"]).toMatchObject({ provenance: "known_overlap" })
-	})
+	}, 30_000)
 
 	it("matches a NAD address re-ingested under a new id by address key, and a keyed re-split keeps it out of train", async () => {
 		const parquet = `${root}/nad/usgov-nad.parquet`

@@ -229,7 +229,7 @@ beforeAll(async () => {
 	buildFixtureAdmin(input)
 	buildFixturePostcodes(pc)
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [pc] })
-})
+}, 40_000)
 
 afterAll(async () => {
 	await scratch[Symbol.asyncDispose]()

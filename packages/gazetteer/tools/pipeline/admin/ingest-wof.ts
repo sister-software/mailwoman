@@ -6,7 +6,7 @@
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
@@ -14,12 +14,12 @@ import { type ExtractedWOFFeature, extractParsedWOFFeature } from "#tools/pipeli
 import { wofRecordNames } from "#tools/pipeline/wof/slim"
 import type { WOFFeature } from "#whosonfirst"
 import {
+	openWOFRecordStoreReader,
 	refreshWOFRecordStore,
 	storedWOFRecord,
 	storedWOFRecords,
 	wofRecordStorePathFor,
 	wofRepositories,
-	type WOFRecordStoreDatabase,
 	type WOFRepoRefresh,
 } from "#whosonfirst/record-store"
 
@@ -157,7 +157,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		.map((repo) => repo.basename())
 		.filter((repo) => placetypes.has("postalcode") || !repo.startsWith("whosonfirst-data-postalcode-"))
 
-	using store = new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true })
+	using store = openWOFRecordStoreReader(storePath)
 
 	// A ceased division's successors are read from the store, whatever repository holds them.
 	const namesOf = (id: number) => {

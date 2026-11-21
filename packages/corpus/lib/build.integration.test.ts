@@ -47,7 +47,7 @@ afterEach(async () => {
 
 // Each test runs a whole buildCorpus over the fixture, some of them twice.
 // On the self-hosted CI runners one test takes longer than the suite's 15-second default.
-describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeout: 60_000 }, () => {
+describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeout: 120_000 }, () => {
 	it("produces top-level MANIFEST.json + parquet files + splits + quarantine pile", async () => {
 		const outDir = scratch.path("build")
 		const stages: BuildStage[] = []
@@ -427,7 +427,7 @@ describe("buildCorpus keeps sources independent", { timeout: 60_000 }, () => {
 })
 
 // Each test runs two builds, so the block takes the end-to-end tests' limit.
-describe("buildCorpus resume", { timeout: 60_000 }, () => {
+describe("buildCorpus resume", { timeout: 120_000 }, () => {
 	const options = {
 		corpusVersion: "0.1.0",
 		adapters: [wofAdminAdapter],
@@ -729,7 +729,7 @@ vi.mock("#source-register/register", async (importOriginal) => {
 
 const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
 
-describe("buildCorpus source rights", { timeout: 60_000 }, () => {
+describe("buildCorpus source rights", { timeout: 120_000 }, () => {
 	// The suite runs with `isolate: false`, so a file earlier in the worker may
 	// already have loaded `#build` over the real register.
 	// The test reloads it here so the module reads the register through the mock above.

@@ -54,9 +54,9 @@ import {
 } from "#tools/pipeline/admin/former-divisions"
 import { FORMER_DIVISION_PLACETYPES } from "#tools/pipeline/wof/slim"
 import {
+	openWOFRecordStoreReader,
 	refreshWOFRecordStore,
 	storedWOFRecords,
-	type WOFRecordStoreDatabase,
 	wofRecordStorePathFor,
 } from "#whosonfirst/record-store"
 
@@ -148,7 +148,7 @@ if (values["refresh-store"]) {
 const ceased: CeasedWOFDivision[] = []
 
 {
-	using store = new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true })
+	using store = openWOFRecordStoreReader(storePath)
 
 	for (const record of storedWOFRecords(store, { placetypes: FORMER_DIVISION_PLACETYPES })) {
 		const division = ceasedWOFDivision(record.id, record.feature.properties ?? {})

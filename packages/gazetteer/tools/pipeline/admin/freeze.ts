@@ -21,12 +21,12 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { allKeyed } from "@mailwoman/core/promises"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed/db"
 import type { PathBuilderLike } from "path-ts"
 
 import type { WOFFeature } from "#whosonfirst"
-import { storedWOFRecord, wofRecordStorePathFor, type WOFRecordStoreDatabase } from "#whosonfirst/record-store"
+import { openWOFRecordStoreReader, storedWOFRecord, wofRecordStorePathFor } from "#whosonfirst/record-store"
 
 export interface FreezeAdminOptions {
 	/**
@@ -104,9 +104,7 @@ export async function freezeAdmin(
 	if (opts.dataDir) {
 		phase("hierarchy-backfill", "places whose ancestry chain never reaches a country")
 
-		using store = new DatabaseClient<WOFRecordStoreDatabase>(opts.recordStore ?? wofRecordStorePathFor(opts.dataDir), {
-			readOnly: true,
-		})
+		using store = openWOFRecordStoreReader(opts.recordStore ?? wofRecordStorePathFor(opts.dataDir))
 
 		// Only real WOF places have a `wof:hierarchy`; synthetic Overture and GeoNames rows
 		// (ids >= OVERTURE_ID_BASE) take their ancestry from the parent_id closure.
