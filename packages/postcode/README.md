@@ -44,7 +44,7 @@ export:
 - `@mailwoman/postcode/recognizer/legacy` holds `postcodeLegacy`, a family of `@mailwoman/recognizer` that fills the
   `knownFormats` field with the postcode and PO box formats the parse pipeline reads: the thirteen legacy names,
   their confidences, spans and order. Compose it with the `structure` family, whose tokens it reads. A
-  composition without `structure` throws a `RecognizeCompositionError` at construction. The family reports no
+  composition without `structure` throws a `RecognizerCompositionError` at construction. The family reports no
   recognitions of its own. `@mailwoman/postcode/recognizer/query-shape` composes the two once and exports
   `computeQueryShape`, which the pipeline's stages call.
 

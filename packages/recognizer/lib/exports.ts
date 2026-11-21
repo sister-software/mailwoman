@@ -26,11 +26,11 @@ export { defineFamily } from "#family"
 
 export {
 	createRecognizer,
-	type RecognizeOptions,
-	type RecognizeResult,
 	type Recognizer,
+	type RecognizerOptions,
+	type RecognizerResult,
 	type ShapePrefixStatus,
-	type TracedRecognizeResult,
+	type TracedRecognizerResult,
 } from "#recognizer"
 
 export type { PrefixStatus } from "#runtime/engine"
@@ -61,11 +61,11 @@ export type {
 } from "#types"
 
 export {
-	RecognizeArtifactError,
-	RecognizeCompositionError,
-	RecognizeError,
-	RecognizeInitializationError,
-	RecognizeRuntimeError,
+	RecognizerArtifactError,
+	RecognizerCompositionError,
+	RecognizerError,
+	RecognizerInitializationError,
+	RecognizerRuntimeError,
 } from "#runtime/errors"
 
 export { init, type InitOptions } from "#runtime/state"

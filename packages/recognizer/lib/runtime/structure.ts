@@ -27,7 +27,7 @@ import {
 	TOKEN_WORDS,
 } from "#runtime/abi"
 import { stageText } from "#runtime/engine"
-import { RecognizeError } from "#runtime/errors"
+import { RecognizerError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
 import type {
 	CharacterClass,
@@ -216,7 +216,7 @@ export function structureFields(
 
 			if (exports.rcg_error_code() === ErrorCode.InputTooLong) throw new RangeError(message)
 
-			throw new RecognizeError(message)
+			throw new RecognizerError(message)
 		}
 
 		const words = new Uint32Array(exports.memory.buffer, exports.rcg_result_ptr(), count)

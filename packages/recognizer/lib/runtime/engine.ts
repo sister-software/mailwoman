@@ -14,7 +14,7 @@
 import type { AnyFamily, Rejected, Unvalidated, Validated } from "#family"
 import { offsetMap } from "#offsets"
 import { ErrorCode, MAX_FAMILIES, PREFIX_STATUSES, PREFIX_WORDS, RECORD_WORDS, Status } from "#runtime/abi"
-import { RecognizeArtifactError, RecognizeError } from "#runtime/errors"
+import { RecognizerArtifactError, RecognizerError } from "#runtime/errors"
 import { type Instance, trapped } from "#runtime/state"
 import type { Trace, TraceSpan } from "#trace"
 
@@ -105,7 +105,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 
 	if (known) {
 		if (known.declarationsHash !== family.declarationsHash) {
-			throw new RecognizeArtifactError(
+			throw new RecognizerArtifactError(
 				`family ${family.id} is already loaded with declarations hash ${known.declarationsHash}, ` +
 					`and this declaration has ${family.declarationsHash}`
 			)
@@ -115,7 +115,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 	}
 
 	if (instance.families.size >= MAX_FAMILIES) {
-		throw new RecognizeError(`an engine instance loads at most ${MAX_FAMILIES} families`)
+		throw new RecognizerError(`an engine instance loads at most ${MAX_FAMILIES} families`)
 	}
 
 	try {
@@ -138,7 +138,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 		if (handle < 0) {
 			const message = lastErrorMessage(instance)
 
-			throw new RecognizeArtifactError(
+			throw new RecognizerArtifactError(
 				exports.rcg_error_code() === ErrorCode.DeclarationsHash
 					? `the artifact of family ${family.id} was not built from the declarations it is loaded beside: ${message}`
 					: `the engine refused the artifact of family ${family.id}: ${message}`
@@ -147,7 +147,7 @@ export function loadFamily(instance: Instance, family: AnyFamily): number {
 
 		const tableLength = exports.rcg_shapes(handle)
 
-		if (tableLength < 0) throw new RecognizeError(lastErrorMessage(instance))
+		if (tableLength < 0) throw new RecognizerError(lastErrorMessage(instance))
 
 		const table = decoder.decode(memoryBytes(instance, exports.rcg_json_ptr(), tableLength))
 
@@ -186,7 +186,7 @@ export function recognizeText(instance: Instance, text: string, mask: number): L
 
 			if (code === ErrorCode.InputTooLong) throw new RangeError(message)
 
-			throw new RecognizeError(message)
+			throw new RecognizerError(message)
 		}
 
 		return readRecognitions(instance, text, written, count)
@@ -232,7 +232,7 @@ export function prefixStatuses(instance: Instance, text: string, mask: number): 
 
 			if (exports.rcg_error_code() === ErrorCode.InputTooLong) throw new RangeError(message)
 
-			throw new RecognizeError(message)
+			throw new RecognizerError(message)
 		}
 
 		const words = new Uint32Array(exports.memory.buffer, exports.rcg_result_ptr(), count * PREFIX_WORDS)
@@ -242,7 +242,7 @@ export function prefixStatuses(instance: Instance, text: string, mask: number): 
 			const table = tables[words[index]!]!
 			const status = PREFIX_STATUSES[words[index + 2]!]
 
-			if (!status) throw new RecognizeError(`the engine answered prefix status word ${words[index + 2]}`)
+			if (!status) throw new RecognizerError(`the engine answered prefix status word ${words[index + 2]}`)
 
 			out.push({ kind: table.shapes[words[index + 1]!]!, family: table.id, status })
 		}
@@ -281,7 +281,7 @@ export function traceText(instance: Instance, text: string, mask: number, explai
 
 			if (exports.rcg_error_code() === ErrorCode.InputTooLong) throw new RangeError(message)
 
-			throw new RecognizeError(message)
+			throw new RecognizerError(message)
 		}
 
 		// The engine writes the document in the shape of `Trace` with UTF-8 byte spans.

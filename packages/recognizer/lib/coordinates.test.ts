@@ -14,7 +14,7 @@ import { describe, expect, expectTypeOf, it, vi } from "vitest"
 
 import { coordinates } from "#coordinates"
 import { isDeterministicCoordinate } from "#deterministic"
-import { createRecognizer, type RecognizeResult, type TracedRecognizeResult } from "#index"
+import { createRecognizer, type RecognizerResult, type TracedRecognizerResult } from "#index"
 import { primitives } from "#primitives"
 import { Outcome, type Trace, TraceResult } from "#trace"
 
@@ -224,9 +224,9 @@ describe("traces are opt-in", () => {
 		const asked = recognizer.recognize("1, 2", { trace: true })
 		const options = recognizer.recognize("1, 2", { trace: { explain: [] } })
 
-		expectTypeOf(plain).toEqualTypeOf<RecognizeResult<typeof families>>()
-		expectTypeOf(optional).toEqualTypeOf<RecognizeResult<typeof families>>()
-		expectTypeOf(asked).toEqualTypeOf<TracedRecognizeResult<typeof families>>()
+		expectTypeOf(plain).toEqualTypeOf<RecognizerResult<typeof families>>()
+		expectTypeOf(optional).toEqualTypeOf<RecognizerResult<typeof families>>()
+		expectTypeOf(asked).toEqualTypeOf<TracedRecognizerResult<typeof families>>()
 		expectTypeOf(options.traces).toEqualTypeOf<readonly Trace[]>()
 		// @ts-expect-error the default result has no traces
 		void plain.traces
