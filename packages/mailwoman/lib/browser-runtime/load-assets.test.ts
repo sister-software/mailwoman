@@ -113,6 +113,34 @@ describe("loadReleaseAssets", () => {
 		expect(assets.calibrator).toBeNull()
 	})
 
+	test("a host's own wasm binary reaches the classifier, and the loader requests no wasm URL", async () => {
+		const requested: string[] = []
+		const binary = new Uint8Array([0, 97, 115, 109])
+
+		vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+			requested.push(String(input))
+
+			return new Response(null, { status: 404 })
+		})
+
+		let handed: Uint8Array | null = null
+
+		classifierLoad.mockImplementation(async (opts: { runner?: { wasmBinary?: Promise<Uint8Array | null> } }) => {
+			handed = (await opts.runner?.wasmBinary) ?? null
+
+			return { classifier: {}, diagnostics: null }
+		})
+
+		await loadReleaseAssets(
+			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: false } as Parameters<typeof loadReleaseAssets>[0],
+			makeProgress([]),
+			{ ortWASMBinary: binary, ortWASMURL: WASM_URL }
+		)
+
+		expect(handed).toBe(binary)
+		expect(requested).not.toContain(WASM_URL)
+	})
+
 	test("the card, model, embedding and tokenizer fetches start before the loader runs and are handed to it", async () => {
 		const requested: string[] = []
 

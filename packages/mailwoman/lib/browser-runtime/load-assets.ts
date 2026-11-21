@@ -146,6 +146,14 @@ export interface LoadReleaseAssetsOptions {
 	ortWASMURL?: string
 
 	/**
+	 * The onnxruntime-web `.wasm` binary itself, for a host that has it without a fetch.
+	 *
+	 * A Cloudflare Worker bundles the runtime as a compiled module and cannot fetch its bytes.
+	 * Given this, the loader hands it to the session and requests no `ortWASMURL`.
+	 */
+	ortWASMBinary?: Uint8Array
+
+	/**
 	 * The bucket directory the release lives under, `en-us` by default.
 	 *
 	 * A weights family such as `cjk` publishes its releases under its own directory.
@@ -269,11 +277,17 @@ export async function loadReleaseAssets(
 		// The stages are still awaited in order, so the step labels advance in order.
 		const ortWASMURL = options.ortWASMURL
 
-		const wasmBinary = ortWASMURL
-			? settleOptional(
-					recordedFetch(ortWASMURL).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null))
-				)
-			: null
+		const fetchWASMBinary = (url: string): Promise<Uint8Array | null> =>
+			settleOptional(recordedFetch(url).then(async (res) => (res.ok ? new Uint8Array(await res.arrayBuffer()) : null)))
+
+		// A host's own binary wins, and the loader then requests no URL.
+		let wasmBinary: Promise<Uint8Array | null> | null = null
+
+		if (options.ortWASMBinary) {
+			wasmBinary = Promise.resolve(options.ortWASMBinary)
+		} else if (ortWASMURL) {
+			wasmBinary = fetchWASMBinary(ortWASMURL)
+		}
 
 		// A release without a table leaves `calibrator` null and the host shows raw softmax scores.
 		// An entry that declares no table skips the request, so the page logs no 404 for it.

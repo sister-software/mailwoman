@@ -18,17 +18,12 @@ import { setTokenizerRuntimeSource } from "@mailwoman/neural/tokenizer"
 import ortModule from "onnxruntime-web/ort-wasm-simd-threaded.wasm"
 
 /**
- * The bytes the loader hands onnxruntime-web as its `wasmBinary`.
+ * The bytes the loader hands onnxruntime-web as its `wasmBinary`, passed to
+ * `loadReleaseAssets` as `ortWASMBinary`.
  *
  * A real WebAssembly binary starts with the 4-byte `\0asm` magic, so a 3-byte buffer is never one.
  */
 export const ORT_WASM_TAG = new Uint8Array(3)
-
-/**
- * The URL `loadReleaseAssets` fetches the onnxruntime binary from. {@link installBundledWasm}
- * answers it with {@link ORT_WASM_TAG} and sends every other URL to the network.
- */
-export const ORT_WASM_TAG_URL = "https://bundled.invalid/ort-wasm-simd-threaded.wasm"
 
 let installed = false
 
@@ -49,16 +44,6 @@ export function installBundledWasm(): void {
 
 		return instantiate(source as WebAssembly.Module, imports)
 	}) as typeof WebAssembly.instantiate
-
-	const fetchFromNetwork = globalThis.fetch.bind(globalThis)
-
-	globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-		const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url
-
-		if (url === ORT_WASM_TAG_URL) return Promise.resolve(new Response(ORT_WASM_TAG))
-
-		return fetchFromNetwork(input, init)
-	}) as typeof fetch
 
 	setTokenizerRuntimeSource(mtfModule)
 }

@@ -15,13 +15,9 @@
  *   so this bounded lookup is the one way to read it.
  */
 
-import type { R2Bucket } from "@cloudflare/workers-types"
 import type { LandmarkHit } from "@mailwoman/core/resolver"
 import type { CrossingHit, StreetTableArea, StreetTableHit } from "@mailwoman/resolver-wof-sqlite/street/table"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-import { RangeLandmarkLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/landmark"
-import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
-import { RangeStreetTable } from "@mailwoman/resolver-wof-wasm/httpvfs/street/table"
 import {
 	LANDMARK_ROUTE,
 	LandmarkSource,
@@ -29,24 +25,14 @@ import {
 } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import { CROSSING_ROUTE, STREET_ROUTE, type StreetRouteResponse } from "@mailwoman/resolver-wof-wasm/remote/street"
 import { WorkerEntrypoint } from "cloudflare:workers"
-import { ADMIN_GAZETTEER_VERSION } from "mailwoman/browser-runtime/resources"
 
-import { openR2Database } from "#r2-database"
-
-/**
- * The bindings `wrangler.toml` declares.
- */
-export interface GazetteerWorkerEnv {
-	/**
-	 * The public asset bucket.
-	 * It holds `candidate.db` at {@link candidateDatabaseKey}.
-	 */
-	PUBLIC_BUCKET: R2Bucket
-	/**
-	 * The bucket that holds the OpenStreetMap place database, at a key no tile Worker route serves.
-	 */
-	OSM_PLACES_BUCKET: R2Bucket
-}
+import {
+	GazetteerServices,
+	type GazetteerWorkerEnv,
+	gazetteerScope,
+	LandmarkLookupServices,
+	readCandidateDatabaseStats,
+} from "#services"
 
 /**
  * One `findPlace` query, as the browser resolver's cascade sends it.
@@ -57,32 +43,6 @@ export type PlaceQuery = Parameters<MailwomanLookupLike["findPlace"]>[0]
  * The candidates for one query, in the shape the cascade reads.
  */
 export type PlaceCandidates = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-
-/**
- * The key of the admin gazetteer's candidate database in the public bucket:
- * the browser's `adminGazetteerURL()` path, without the bucket's host.
- */
-export function candidateDatabaseKey(): string {
-	return `mailwoman/gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
-}
-
-/**
- * The key of the Wikidata landmark database in the public bucket.
- */
-export const LANDMARK_DATABASE_KEY = "mailwoman/landmarks/2026-11-06/landmarks.db"
-
-/**
- * The key of the OpenStreetMap place database.
- * The key states the planet index its rows came from.
- */
-export const OSM_PLACES_DATABASE_KEY = "osm-places/planet-2026-08-03/places-osm.db"
-
-/**
- * The most rows one name reads from a landmark layer, best first.
- *
- * On the 2026-08-03 planet build, 1,303 of 3,778,629 names hold more rows than this.
- */
-const LANDMARK_ROW_LIMIT = 100
 
 /**
  * The longest name the route reads.
@@ -98,64 +58,9 @@ const LANDMARK_LICENSES: Record<LandmarkSource, Pick<LandmarkRouteResponse, "att
 	[LandmarkSource.OpenStreetMap]: { attribution: "© OpenStreetMap contributors", license: "ODbL-1.0" },
 }
 
-/**
- * Returns the one call that opens a resource for this isolate.
- * A failed open is forgotten so the next call retries it.
- */
-function openOncePerIsolate<T>(open: (env: GazetteerWorkerEnv) => Promise<T>) {
-	let opened: Promise<T> | null = null
-
-	return {
-		open(env: GazetteerWorkerEnv): Promise<T> {
-			const opening = (opened ??= open(env))
-
-			opening.catch(() => {
-				if (opened === opening) {
-					opened = null
-				}
-			})
-
-			return opening
-		},
-		current: () => opened,
-	}
-}
-
-const gazetteer = openOncePerIsolate(async (env) => {
-	const database = await openR2Database(env.PUBLIC_BUCKET, candidateDatabaseKey())
-
-	return { database, lookup: new WOFCandidateTableLookup(database) }
-})
-
-// A landmark read probes one clustered key, so 64 chunks of 64 KiB hold it, a quarter of the candidate cache.
-const LANDMARK_CACHE = { maxChunks: 64 }
-
-const landmarkLookups: Record<LandmarkSource, ReturnType<typeof openOncePerIsolate<RangeLandmarkLookup>>> = {
-	[LandmarkSource.Wikidata]: openOncePerIsolate(
-		async (env) =>
-			new RangeLandmarkLookup(
-				await openR2Database(env.PUBLIC_BUCKET, LANDMARK_DATABASE_KEY, LANDMARK_CACHE),
-				LANDMARK_ROW_LIMIT
-			)
-	),
-	[LandmarkSource.OpenStreetMap]: openOncePerIsolate(
-		async (env) =>
-			new RangeLandmarkLookup(
-				await openR2Database(env.OSM_PLACES_BUCKET, OSM_PLACES_DATABASE_KEY, LANDMARK_CACHE),
-				LANDMARK_ROW_LIMIT
-			)
-	),
-}
-
 function isLandmarkSource(source: string | null): source is LandmarkSource {
 	return source === LandmarkSource.Wikidata || source === LandmarkSource.OpenStreetMap
 }
-
-/**
- * The key of the street table in the public bucket.
- * The key states the source and date its rows came from.
- */
-export const STREET_TABLE_KEY = "mailwoman/streets/gb-os-open-roads-2026-11-07b/streets.db"
 
 /**
  * The credit the street table's source requires beside its answers.
@@ -176,10 +81,6 @@ const STREET_PLACE_LIMIT = 8
  * The largest radius a street read searches, in meters.
  */
 const STREET_RADIUS_LIMIT = 20_000
-
-const streetTable = openOncePerIsolate(
-	async (env) => new RangeStreetTable(await openR2Database(env.PUBLIC_BUCKET, STREET_TABLE_KEY, LANDMARK_CACHE))
-)
 
 /**
  * Reads the route's repeated `place` parameter, or null when one is malformed or they exceed the limit.
@@ -223,7 +124,7 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 	 * Answers one query with the browser lookup's candidates.
 	 */
 	async findPlace(query: PlaceQuery): Promise<PlaceCandidates> {
-		const { lookup } = await gazetteer.open(this.env)
+		const lookup = await gazetteerScope(this.env).resolve(GazetteerServices.candidateLookup)
 
 		return lookup.findPlace(query)
 	}
@@ -232,7 +133,7 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 	 * Answers one name from one landmark layer, best first.
 	 */
 	async findLandmarks(name: string, source: LandmarkSource): Promise<LandmarkHit[]> {
-		const lookup = await landmarkLookups[source].open(this.env)
+		const lookup = await gazetteerScope(this.env).resolve(LandmarkLookupServices[source])
 
 		return lookup.find(name)
 	}
@@ -240,10 +141,8 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 	/**
 	 * Reports the open database's read counters, or null before the first query opens it.
 	 */
-	async readStats() {
-		const opening = gazetteer.current()
-
-		return opening ? (await opening).database.stats() : null
+	readStats() {
+		return readCandidateDatabaseStats()
 	}
 
 	/**
@@ -301,7 +200,7 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 		}
 
 		try {
-			const lookup = await streetTable.open(this.env)
+			const lookup = await gazetteerScope(this.env).resolve(GazetteerServices.streetTable)
 			let hits: Array<StreetTableHit | CrossingHit>
 
 			if (url.pathname === STREET_ROUTE) {
