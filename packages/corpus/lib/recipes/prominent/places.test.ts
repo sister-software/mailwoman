@@ -95,4 +95,23 @@ describe("prominent-places recipe", () => {
 		expect(countries.length).toBeGreaterThan(0)
 		expect(countries.every((country) => country.length >= 3)).toBe(true)
 	})
+
+	it("writes no case form that changes a letter, so every row keeps the place's surface", async () => {
+		const paphos: ProminentPlaceTuple = {
+			spr_id: 421_174_423,
+			country: "CY",
+			band: "locality",
+			name: "Πάφος",
+			parent_locality: null,
+			region: "Πάφος",
+			region_abbrs: [],
+			country_name: "Cyprus",
+			rows: { bare: 3 },
+		}
+
+		const { rows } = await run([paphos], [])
+
+		// Upper case would write `ΠΆΦΟΣ`, whose final `Σ` lower-cases to `σ` rather than `ς`.
+		expect(rows.map((row) => row.raw)).toEqual(["Πάφος", "πάφος", "Πάφος"])
+	})
 })

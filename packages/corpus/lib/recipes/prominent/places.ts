@@ -139,13 +139,31 @@ function secondForms(
 }
 
 /**
+ * Each code point's simple lower-case mapping, without the context rules of `toLowerCase`:
+ * `Σ` maps to `σ` at a word's end too, and `İ` to `i`.
+ *
+ * The surface fold the launch receipt keys rows by lower-cases the same way.
+ */
+function simpleLowerCase(value: string): string {
+	return Array.from(value, (char) => String.fromCodePoint(char.toLowerCase().codePointAt(0)!)).join("")
+}
+
+/**
  * The case forms of one row's components: as written, then upper and lower case where the script has case.
+ *
+ * A case form must spell the same letters in another case.
+ * Upper-casing changes the letters of `Πάφος` (`ς` becomes `Σ`, then `σ`), `Landstraße` (`SS`)
+ * and `Bakı` (`I`, then `i`), so those rows would write another surface than the place's.
  */
 function caseForms(components: Partial<Record<ComponentTag, string>>): Array<Partial<Record<ComponentTag, string>>> {
 	const forms = [components]
 
 	for (const change of [(value: string) => value.toUpperCase(), (value: string) => value.toLowerCase()]) {
-		const changed = Object.fromEntries(Object.entries(components).map(([tag, value]) => [tag, change(value!)]))
+		const entries = Object.entries(components).map(([tag, value]) => [tag, value!, change(value!)] as const)
+
+		if (entries.some(([, value, changed]) => simpleLowerCase(changed) !== simpleLowerCase(value))) continue
+
+		const changed = Object.fromEntries(entries.map(([tag, , value]) => [tag, value]))
 
 		if (!forms.some((form) => stringifyJSON(form) === stringifyJSON(changed))) {
 			forms.push(changed)

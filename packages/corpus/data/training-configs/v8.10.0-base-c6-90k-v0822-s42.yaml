@@ -39,6 +39,13 @@
 # - not done: the epoch-mixture audit meets every receipt;
 # - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. On v0.8.21 it fails, as
 #   #3156 records.
+# - done: the places table `data.prominent_place_coverage` names is frozen on the host at
+#   /mnt/mw/audits/prominent-places/candidate-global-2026-11-19/ (`places.parquet` sha256 707f9ba7a0961cf4…). Only the
+#   host reads it: the preflight re-roots /data at MAILWOMAN_DATA_ROOT before the receipt and the receipt key read it,
+#   and of the volume's files the sandbox checks only the corpus MANIFEST. The volume copy keeps the mirror whole and starts no read. It is
+#   written from the host with the operator's launch go, as
+#   `modal volume put mailwoman-training /mnt/mw/audits/prominent-places/candidate-global-2026-11-19 audits/prominent-places/candidate-global-2026-11-19`.
+#   A mounted container doesn't see a `modal volume put` file, and none reads this one.
 #
 # Run shape: from scratch, as v8.9.0. Control: the v8.9.0 seed 42 run, the same recipe and seed on v0.8.21.
 # Seed 42, as v8.9.0. The launch waits for the operator's go.
