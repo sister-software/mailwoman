@@ -6921,6 +6921,7 @@ __metadata:
     "@types/react-dom": "npm:^19.3.0"
     "@types/three": "npm:0.186.0"
     "@vitejs/plugin-react": "npm:^6.1.2"
+    async-init: "npm:^2.0.0"
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.16.0"
     onnxruntime-web: "npm:1.31.1"

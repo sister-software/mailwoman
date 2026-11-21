@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { ClosingLRU, closeWhenOpen } from "#runtime/closing-lru"
+import { ClosingLRU } from "#runtime/closing-lru"
 
 class Handle {
 	closed = false
@@ -125,17 +125,5 @@ describe("ClosingLRU", () => {
 
 	test("refuses a capacity below one", () => {
 		expect(() => new ClosingLRU<Handle>(0)).toThrow(RangeError)
-	})
-})
-
-describe("closeWhenOpen", () => {
-	test("ignores a missing or failed open", async () => {
-		expect(() => closeWhenOpen(null)).not.toThrow()
-
-		const failed = Promise.reject(new Error("offline"))
-
-		closeWhenOpen(failed)
-
-		await expect(failed).rejects.toThrow("offline")
 	})
 })
