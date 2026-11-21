@@ -57,7 +57,7 @@ exist:
 
 | Country | Largest address sources in the dev collections | Rows outside every corpus                                                           | Reader                                       |
 | ------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
-| US      | `usgov-nad`, `tiger`, `usgov-nppes`            | NPPES `2026-11` snapshot on disk; NAD `r24` is the newest release and is read whole | `heldout/snapshot/candidates.run.ts` (NPPES) |
+| US      | `usgov-nad`, `tiger`, `usgov-nppes`            | NPPES `2026-11` snapshot on disk. NAD `r24` is the newest release and is read whole | `heldout/snapshot/candidates.run.ts` (NPPES) |
 | FR      | `ban`                                          | BAN export of 2026-11-17 on disk                                                    | `heldout/snapshot/candidates.run.ts`         |
 | AU      | `gnaf`                                         | `gnaf` rows the build didn't sample (149,969 corpus rows)                           | `heldout/snapshot/candidates.run.ts`         |
 | ES, IT  | `overture`                                     | `overture` rows the build didn't sample                                             | `heldout/snapshot/candidates.run.ts`         |
@@ -79,7 +79,7 @@ reverse the operator's 2026-11-18 decision. The pending corpus fixes already req
 training run, so this draw adds no build of its own.
 
 The build splits each rebuilt source under the holdout policy before the evaluation-group re-split. Its held-out
-places are the pool. The audit against `v0.8.21-retention-overlay` keeps only the rows 11.2.0 never read, which
+places are the pool. The audit against `v0.8.21-retention-overlay` keeps only the rows 11.2.0 never read. Those
 are the rows the build holds and no v0.8.21 file holds, so a country's pool is as large as the rows v0.8.22 adds
 for it. A country short of 75 comparison-eligible groups after the redraw of step 2 reads insufficient evidence,
 and the release report names it. The collection's groups go on the list before the re-split, so the candidate
@@ -131,7 +131,7 @@ node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/resplit
   --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json \
   --validation-groups <build directory>/VALIDATION_GROUPS.json --jobs 4
 
-# 6. The register, from the manifest and the audit; no model reads the rows.
+# 6. The register, from the manifest and the audit. No model reads the rows.
 node packages/mailwoman/tools/eval-harness/heldout/dataset/coverage/register.run.ts \
   --dataset /mnt/mw/corpus/heldout/heldout-confirm-v0.8.22.json \
   --spec packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v14.json \
@@ -144,12 +144,12 @@ with the frozen ids and their rows sha256.
 ## 5. NAD grouping (#3125) and the development role
 
 `nadAddressKey` (`packages/corpus/lib/us/adapters/usgov/nad/address-key.ts`) keys a NAD row by state, five-digit
-ZIP Code, house number, street and unit. NAD rows carry no county, so the ZIP Code within its state stands in for
+ZIP Code, house number, street and unit. NAD rows hold no county column, so the ZIP Code within its state stands in for
 it. Over the NAD rows of the frozen collections the key is one per group: 3,134 rows of `heldout-dev-v0.8.21` give
 3,123 keys for 3,123 groups, and `heldout-dev-v0.8.18` v4 and `heldout-confirm-v0.8.18` v3 give 791 and 797, with no
 group holding two keys and no key two groups. `evaluation-groups.v0.8.22.json` is `evaluation-groups.v0.8.21.json`
 with the 5,553 address keys of the NAD rows of those three collections and `heldout-confirm-v0.8.20`. Its 173,180
-groups are v0.8.21's. Only the next re-split applies it; v0.8.21 isn't re-split.
+groups are v0.8.21's. Only the next re-split applies it. v0.8.21 isn't re-split.
 
 The overlap audit of `heldout-dev-v0.8.21` with `--match-text --match-address` against corpora
 `v0.8.18-retention-overlay` and `v0.8.21-retention-overlay`, 10.8.0's card and v8.9.0's config, run 2026-11-20
@@ -168,7 +168,7 @@ address-key match in `v0.8.18-retention-overlay`, where another rendering of the
 corpus no longer bounds a comparison once 11.2.0 is the comparator. 11.2.0 trained on the US rows of 88 more groups
 than text matching finds, and those stay `known_overlap` against it whatever the next corpus does. Every other
 objective country reads the same under both audits: FR 3,923, DE 3,798, ES 3,851, IT 3,999 and AU 913 groups unseen
-by 11.2.0, and GB, IN and NZ none in this collection. Their development rows are `heldout-dev-v0.8.18`'s, which the
+by 11.2.0, and GB, IN and NZ none in this collection. Their development rows are `heldout-dev-v0.8.18`'s. The
 identity and group audit beside the v0.8.21 manifest (`overlap-heldout-dev-v0.8.18.json`) finds in no train or val
 file. That audit compared no text and no address key, so the GB, IN and NZ counts against 11.2.0 are unmeasured
 until `heldout-dev-v0.8.18` is audited with `--match-text --match-address`.
