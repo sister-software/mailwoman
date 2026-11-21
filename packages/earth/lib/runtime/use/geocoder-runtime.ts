@@ -408,9 +408,21 @@ export function useGeocoderRuntime({
 
 	const loadManifest = useCallback(async (): Promise<ReleaseManifest<ReleaseInfo> | null> => takeReleasesManifest(), [])
 
-	const { keptGazetteer, loadAssets, disposeAssets } = useReleaseAssetLoader(sqliteRuntimeBaseURL, ortWASMURL)
+	// The page's range-read handles for this runtime base: the resolver's candidate lookup,
+	// the polygon file and the gazetteer a `wof:` query reads.
+	const pageScopeRef = useRef<ServiceRegistry | null>(null)
+
+	/**
+	 * The scope of the page's range-read handles, created on the first read after a mount or a base change.
+	 */
+	const pageScope = useCallback(
+		(): ServiceRegistry => (pageScopeRef.current ??= createPageScope(sqliteRuntimeBaseURL)),
+		[sqliteRuntimeBaseURL]
+	)
+
+	const { loadAssets, disposeAssets } = useReleaseAssetLoader(pageScope, ortWASMURL)
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
-	const { reloadGazetteer, reloadModel } = useStackReloads(rt, sqliteRuntimeBaseURL, keptGazetteer)
+	const { reloadGazetteer, reloadModel } = useStackReloads(rt, pageScope)
 
 	// A weights family other than the base loads its own bundle on the first input written in its script.
 	// The bundle reads the base release's gazetteer through the cascade, so it loads no gazetteer of its own.
@@ -456,16 +468,6 @@ export function useGeocoderRuntime({
 	// Value `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
-	// The page's range-read handles for this runtime base: the polygon file and the gazetteer a `wof:` query reads.
-	const pageScopeRef = useRef<ServiceRegistry | null>(null)
-
-	/**
-	 * The scope of the page's range-read handles, created on the first read after a mount or a base change.
-	 */
-	const pageScope = useCallback(
-		(): ServiceRegistry => (pageScopeRef.current ??= createPageScope(sqliteRuntimeBaseURL)),
-		[sqliteRuntimeBaseURL]
-	)
 
 	// URLs are version-scoped, so reset polygon state on version change.
 	// The cleanup closes the polygon file's range worker, and the next read opens it again.
