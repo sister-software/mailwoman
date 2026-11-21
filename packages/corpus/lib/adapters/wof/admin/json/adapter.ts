@@ -48,6 +48,8 @@ import { layoutForCountry, layoutPrintsLargestFirst, lineJoinForCountry } from "
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { countrySurfaceForms } from "@mailwoman/codex/country/country"
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
+import { foldToken } from "@mailwoman/codex/normalize"
+import { postalTownPlacetypeForCountry } from "@mailwoman/codex/placetype-map"
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { isPresent } from "@mailwoman/core/objects"
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
@@ -196,7 +198,57 @@ const LANGUAGE_LAYOUTS = new Map<string, string | null>()
  * ({@linkcode writesParentLocality}), so a record without a locality ancestor renders no row.
  */
 export function variantsFor(row: WOFRecord, ancestry: AncestorRecords, slot: NameSlot): WOFVariantSpec[] {
-	return candidateVariants(row, ancestry, slot).filter((variant) => writesParentLocality(variant.components))
+	return candidateVariants(row, postalTownAncestry(row, ancestry), slot).filter((variant) =>
+		writesParentLocality(variant.components)
+	)
+}
+
+/**
+ * A record's ancestry with its country's postal town as its locality.
+ *
+ * In a country whose towns WOF types as another placetype ({@linkcode postalTownPlacetypeForCountry}),
+ * a record inside one has that town as its nearest `subregion` ancestor.
+ * The town is the locality its addresses write, so it fills the locality level too.
+ *
+ * A WOF locality ancestor of another name is a suburb of the town, and the one slot below
+ * the locality is the record's own, so the suburb is left out: `Puhinui, Auckland`.
+ * The town's own locality record (`Auckland` inside `Auckland`) stays the locality.
+ */
+function postalTownAncestry(row: WOFRecord, ancestry: AncestorRecords): AncestorRecords {
+	const town = postalTownPlacetypeForCountry(row.country)
+	const parent = ancestry.subregion
+
+	if (!town || parent?.placetype !== town) return ancestry
+
+	if (ancestry.locality && foldToken(ancestry.locality.name) === foldToken(parent.name)) return ancestry
+
+	return { ...ancestry, locality: parent }
+}
+
+/**
+ * The tag a record's own name takes in its rows.
+ *
+ * A postal town ({@linkcode postalTownPlacetypeForCountry}) is the locality, and a WOF locality
+ * inside a postal town of another name is a dependent locality: New Zealand's `Papatoetoe, Auckland`.
+ * The town's own locality record (`Auckland` inside `Auckland`) stays the locality.
+ *
+ * Every other record takes {@linkcode placetypeToTag}'s tag.
+ */
+function recordTag(row: WOFRecord, ancestry: AncestorRecords): ComponentTag | null {
+	const tag = placetypeToTag(row.placetype)
+	const town = postalTownPlacetypeForCountry(row.country)
+
+	if (!town) return tag
+
+	if (row.placetype === town) return "locality"
+
+	const parent = ancestry.locality
+
+	if (tag === "locality" && parent?.placetype === town && foldToken(parent.name) !== foldToken(row.name)) {
+		return "dependent_locality"
+	}
+
+	return tag
 }
 
 /**
@@ -214,7 +266,7 @@ export function writesParentLocality(components: Partial<Record<ComponentTag, st
 }
 
 function candidateVariants(row: WOFRecord, ancestry: AncestorRecords, slot: NameSlot): WOFVariantSpec[] {
-	const selfTag = placetypeToTag(row.placetype)
+	const selfTag = recordTag(row, ancestry)
 
 	if (!selfTag) return []
 
@@ -340,6 +392,19 @@ const CHAIN_LEVELS: Partial<Record<ComponentTag, readonly ChainLevel[]>> = {
 }
 
 /**
+ * The ancestor levels a record's chain can include.
+ *
+ * A postal town keeps the levels of its WOF tier, so `Invercargill` is written without
+ * the council it heads (`Invercargill City`), as it was when it was tagged `subregion`.
+ */
+function chainLevels(row: WOFRecord, selfTag: ComponentTag): readonly ChainLevel[] {
+	const tier = placetypeToTag(row.placetype)
+	const town = row.placetype === postalTownPlacetypeForCountry(row.country)
+
+	return (town && tier ? CHAIN_LEVELS[tier] : CHAIN_LEVELS[selfTag]) ?? []
+}
+
+/**
  * Whether a slot renders every structural chain.
  *
  * The canonical name and each colloquial name (`NYC`, `Big Apple`) do.
@@ -434,7 +499,7 @@ function structuralVariants(
 ): WOFVariantSpec[] {
 	const nameOf = (ancestor: WOFRecord) => (localized ? preferredName(ancestor, localized.language) : ancestor.name)
 
-	const levels = (CHAIN_LEVELS[selfTag] ?? []).filter((level) => {
+	const levels = chainLevels(row, selfTag).filter((level) => {
 		const ancestor = ancestry[level]
 
 		if (!ancestor) return false

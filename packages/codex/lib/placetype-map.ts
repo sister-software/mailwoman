@@ -63,6 +63,31 @@ export function placetypeMapForCountry(countryCode: string | null): PlacetypeMap
 }
 
 /**
+ * Per-country WOF placetype whose records are the town or city an address writes
+ * as its locality, where that placetype isn't `locality`.
+ *
+ * WOF types each of New Zealand's 87 towns and cities (Auckland, Hamilton, Invercargill, Gore)
+ * as a `localadmin` and the suburbs inside them as `locality`.
+ * NZ Post writes the suburb above the town or city line (`Papatoetoe, Auckland 2025`),
+ * so the suburb is the dependent locality.
+ *
+ * Elsewhere a WOF `locality` inside a `localadmin` or `county` that shares its name with another
+ * locality is commonly a postal place of its own (`Thomaston` in Marengo County, Alabama),
+ * so the reading is a country's fact rather than a hierarchy shape.
+ */
+const COUNTRY_POSTAL_TOWN_PLACETYPES: Readonly<Record<string, string>> = {
+	nz: "localadmin",
+}
+
+/**
+ * The WOF placetype whose records are a country's postal towns, for an ISO alpha-2 code
+ * in any case, or `null` when the country's towns are WOF localities.
+ */
+export function postalTownPlacetypeForCountry(countryCode: string): string | null {
+	return COUNTRY_POSTAL_TOWN_PLACETYPES[countryCode.toLowerCase()] ?? null
+}
+
+/**
  * The placetypes a lookup filter accepts for each requested placetype.
  *
  * WOF spreads one addressing tier across several placetypes.
