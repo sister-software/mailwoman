@@ -219,7 +219,8 @@ ZIP Code, house number, street and unit, folded so that every augmentation of on
 (`nadAddressKey`). NAD rows carry no county, and the ZIP Code within its state stands in for it. The frozen list
 records the address key of every frozen NAD row (`addressKeys`, written by `evaluation-groups.run.ts`), a row
 whose key the list holds is frozen with the group it repeats, and its record's other rows follow it to `test`.
-A list written before #3125 holds no keys. The overlap audit compares NAD rows by address key
+A list written before #3125 holds no keys, and `evaluation-groups.v0.8.22.json` is the first with them: v0.8.21's
+groups and the 5,553 keys of the frozen NAD rows. The overlap audit compares NAD rows by address key
 under `--match-address`, and `--preview-evaluation-groups <list>` audits a corpus as a re-split under that list
 would write it.
 
