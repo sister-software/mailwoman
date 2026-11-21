@@ -16,6 +16,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createGeocodeCommandOptions } from "#geocode/command-options"
 import { describeGeocodeServices } from "#geocode/services"
 import { geocodeSessionSettings } from "#geocode/session"
+import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 
 async function main(): Promise<void> {
 	const { values: cli } = parseArguments({
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
 	})
 
 	const options = createGeocodeCommandOptions(cli.locale ? { locale: cli.locale } : {})
-	const services = await describeGeocodeServices(options, geocodeSessionSettings(options))
+	const services = await describeGeocodeServices(options, geocodeSessionSettings(options), NODE_LAYER_CONTRIBUTIONS)
 
 	if (cli.json) {
 		console.log(
