@@ -140,11 +140,16 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 	const onDataRunner = new Set(scope.dataRootFiles)
 	const slowDataFiles = scope.slowFiles.filter((file) => onDataRunner.has(file))
 	const slowHostedFiles = scope.slowFiles.filter((file) => !onDataRunner.has(file))
+	// `unit-fast` runs every fast file on a hosted runner, where these skip their data-root tests.
+	// `unit-slow` runs them again on the data runner, so those tests run somewhere.
+	const fastDataFiles = scope.fastFiles.filter((file) => onDataRunner.has(file))
 
 	const outputs = {
 		...Object.fromEntries(Object.entries(scope).filter(([, value]) => typeof value === "boolean")),
 		slow: slowDataFiles.length > 0,
 		slow_hosted: slowHostedFiles.length > 0,
+		fast_data: fastDataFiles.length > 0,
+		fast_data_files: stringifyJSON(fastDataFiles),
 		fast_files: stringifyJSON(scope.full ? [] : scope.fastFiles),
 		slow_files: stringifyJSON(slowDataFiles),
 		slow_hosted_files: stringifyJSON(slowHostedFiles),
@@ -177,6 +182,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 				`Selected fast test files: ${scope.fastFiles.length}. Selected slow test files: ${scope.slowFiles.length}.`,
 				`Slow test files for \`unit-slow\` on a \`mailwoman-data\` runner, which alone holds the data root: ${slowDataFiles.length}.`,
 				`Slow test files for \`unit-slow-hosted\`: ${slowHostedFiles.length}.`,
+				`Fast test files that \`unit-slow\` runs again on the data runner: ${fastDataFiles.length}.`,
 				"Unselected suites did not run. Main and dispatched runs select every suite.",
 				"",
 			].join("\n"),
