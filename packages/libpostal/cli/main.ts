@@ -15,7 +15,13 @@
 import { serveNode } from "@mailwoman/api-kit"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
-import { corsBannerLine, loadClassifierOrExit, openAPICommand, runDropInCLI } from "mailwoman/cli/kit/dropin"
+import {
+	corsBannerLine,
+	loadClassifierOrExit,
+	openAPICommand,
+	readListenPort,
+	runDropInCLI,
+} from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
 
 import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "#index"
@@ -35,7 +41,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		allowPositionals: true,
 	})
 
-	const port = Number(values.port) || 8081
+	const port = readListenPort(values.port)
 	const host = values.host ?? "0.0.0.0"
 
 	// The neural BIO tagger is the sole engine (v7 rules-parser excision).
@@ -71,8 +77,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		fetch: app.fetch,
 		port,
 		hostname: host,
-		onListen: () => {
-			console.error(`[@mailwoman/libpostal] listening on http://${host}:${port}`)
+		onListen: (info) => {
+			console.error(`[@mailwoman/libpostal] listening on http://${host}:${info.port}`)
 			console.error(corsBannerLine(values.cors))
 			console.error(`  endpoints: GET /  POST/GET /parse  POST/GET /expand  GET /openapi.json`)
 		},

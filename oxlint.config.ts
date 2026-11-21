@@ -216,9 +216,11 @@ export default {
 				"packages/neural/lib/web/browser-slo.integration.test.ts",
 				"packages/resolver-wof-sqlite/lib/lookup-readonly-open.integration.test.ts",
 				"packages/tiger/tools/serve-range.ts",
-				// `mwdev_http_get` checks address ranges with `node:net`, and its test starts a `node:http` server.
-				"lib/dev-mcp/tools/http-get.ts",
+				// The GET client checks address ranges with `node:net`, its test starts a `node:http` server,
+				// and the probe's fixture server is a `node:http` server started as a child process.
+				"lib/check-kit/http-get.ts",
 				"lib/dev-mcp/tools/http-get.test.ts",
+				"test/fixtures/check-kit/probe-server.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",

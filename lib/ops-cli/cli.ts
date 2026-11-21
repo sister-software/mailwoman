@@ -65,5 +65,14 @@ process.exitCode =
 			repoRoot,
 			trackedFiles: () => trackedFiles(repoRoot),
 			root: sudo.isRoot(),
+			watchInterrupts: () => {
+				const controller = new AbortController()
+
+				for (const signalName of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
+					process.once(signalName, () => controller.abort(new Error(`received ${signalName}`)))
+				}
+
+				return controller.signal
+			},
 		})
 	})) ?? 0

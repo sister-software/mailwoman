@@ -66,7 +66,8 @@ The hook's interface is:
 - PR creation starts verification. It doesn't complete the task. Wait for the checks with
   `yarn mwops pr wait <number> --max-minutes 40`, which exits 0 when every check passed, 1 when one failed,
   3 when the bound expired, 4 when the checks stayed unread and 5 when the head has no checks. On a
-  failure it prints each failed job's failing tests and log path. Fix failures, push, and wait for the
+  failure it prints each failed job's failing tests and log path, and for a failed check without a job
+  log, such as CodeQL, each annotation's path, line, title and message. Fix failures, push, and wait for the
   checks on the new head.
 - PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
   After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool

@@ -12,8 +12,9 @@ import type { AddressInfo } from "node:net"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
+import type { HTTPGetServices } from "#check-kit/http-get"
 import type { DevToolDeps } from "#dev-mcp/tool-kit"
-import { httpGetTool, type HTTPGetServices } from "#dev-mcp/tools/http-get"
+import { httpGetTool } from "#dev-mcp/tools/http-get"
 
 /**
  * The fields of a reply these tests read.
@@ -31,7 +32,7 @@ interface HTTPReply {
 	json: unknown
 }
 
-async function httpGet(args: Record<string, unknown>, services: HTTPGetServices = {}): Promise<HTTPReply> {
+async function getThroughTool(args: Record<string, unknown>, services: HTTPGetServices = {}): Promise<HTTPReply> {
 	return (await httpGetTool({} as DevToolDeps, services).handler(args)) as HTTPReply
 }
 
@@ -85,7 +86,7 @@ afterAll(() => {
 
 describe("httpGet", () => {
 	it("projects a JSON body by a dotted path, and sends no cookie, credential or project name", async () => {
-		const result = await httpGet({ url: `${origin}/json`, json_path: "meta.count" })
+		const result = await getThroughTool({ url: `${origin}/json`, json_path: "meta.count" })
 
 		expect(result).toMatchObject({ status: 200, json: { present: true, value: 2 }, truncated: false })
 
@@ -97,7 +98,7 @@ describe("httpGet", () => {
 	})
 
 	it("reports an absent path as absent rather than as null", async () => {
-		const result = await httpGet({ url: `${origin}/json`, json_path: "meta.total" })
+		const result = await getThroughTool({ url: `${origin}/json`, json_path: "meta.total" })
 
 		expect(result.json).toEqual({
 			path: "meta.total",
@@ -107,21 +108,21 @@ describe("httpGet", () => {
 	})
 
 	it("states that a body which isn't JSON was not projected", async () => {
-		const result = await httpGet({ url: `${origin}/missing`, json_path: "meta" })
+		const result = await getThroughTool({ url: `${origin}/missing`, json_path: "meta" })
 
 		expect(result.status).toBe(404)
 		expect(result.json).toMatchObject({ present: false, error: expect.stringContaining("not JSON") })
 	})
 
 	it("truncates the body at max_bytes and reports the full length the server declared", async () => {
-		const result = await httpGet({ url: `${origin}/large`, max_bytes: 100 })
+		const result = await getThroughTool({ url: `${origin}/large`, max_bytes: 100 })
 
 		expect(result).toMatchObject({ truncated: true, bytesRead: 100, fullLength: 5000 })
 		expect(result.body).toHaveLength(100)
 	})
 
 	it("follows a redirect chain and reports each hop", async () => {
-		const result = await httpGet({ url: `${origin}/hop/2` })
+		const result = await getThroughTool({ url: `${origin}/hop/2` })
 
 		expect(result.finalURL).toBe(`${origin}/json`)
 
@@ -133,11 +134,11 @@ describe("httpGet", () => {
 	})
 
 	it("refuses a chain longer than five redirects", async () => {
-		await expect(httpGet({ url: `${origin}/hop/9` })).rejects.toThrow(/at most 5 redirects/)
+		await expect(getThroughTool({ url: `${origin}/hop/9` })).rejects.toThrow(/at most 5 redirects/)
 	})
 
 	it("returns a binary type's length and type without the body", async () => {
-		const result = await httpGet({ url: `${origin}/binary` })
+		const result = await getThroughTool({ url: `${origin}/binary` })
 
 		expect(result).toMatchObject({ binary: true, body: null, contentType: "image/png", fullLength: 1024 })
 	})
@@ -145,7 +146,7 @@ describe("httpGet", () => {
 	it("connects a host name to the address the check admitted", async () => {
 		const port = new URL(origin).port
 
-		const result = await httpGet(
+		const result = await getThroughTool(
 			{ url: `http://service.example:${port}/json`, json_path: "meta.count" },
 			resolvesTo("127.0.0.1")
 		)
@@ -162,16 +163,16 @@ describe("httpGet", () => {
 		"fe80::1",
 		"::ffff:192.168.0.1",
 	])("refuses a host that resolves to %s", async (address) => {
-		await expect(httpGet({ url: "http://intranet.example/" }, resolvesTo(address))).rejects.toThrow(
+		await expect(getThroughTool({ url: "http://intranet.example/" }, resolvesTo(address))).rejects.toThrow(
 			`resolves to ${address}, in a private`
 		)
 	})
 
 	it("refuses a private address written as the host", async () => {
-		await expect(httpGet({ url: "http://10.0.0.1/" })).rejects.toThrow("resolves to 10.0.0.1, in a private")
+		await expect(getThroughTool({ url: "http://10.0.0.1/" })).rejects.toThrow("resolves to 10.0.0.1, in a private")
 	})
 
 	it("refuses a scheme other than http and https", async () => {
-		await expect(httpGet({ url: "file:///etc/hostname" })).rejects.toThrow(/http and https URLs only/)
+		await expect(getThroughTool({ url: "file:///etc/hostname" })).rejects.toThrow(/http and https URLs only/)
 	})
 })

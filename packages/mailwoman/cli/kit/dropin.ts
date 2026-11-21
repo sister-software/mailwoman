@@ -15,6 +15,7 @@
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { NamedPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
@@ -122,6 +123,27 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Pr
 	}
 
 	return { adminDBPath: wofPaths[0], candidateDB, wofPaths }
+}
+
+/**
+ * The largest TCP port number: the port field is 16 bits wide.
+ */
+const MAX_TCP_PORT = 65_535
+
+/**
+ * Read a server's `--port` value: an integer from 0 to 65535.
+ *
+ * Port 0 asks the system for an unused port, and the listening line then prints the bound port.
+ * A value that isn't such an integer ends the process with an error rather than falling back to a default.
+ */
+export function readListenPort(value: string): number {
+	const port = Number(value)
+
+	if (!value.trim() || !Number.isInteger(port) || port < 0 || port > MAX_TCP_PORT) {
+		failScript(`--port must be an integer from 0 to ${MAX_TCP_PORT}; received ${stringifyJSON(value)}`)
+	}
+
+	return port
 }
 
 /**
