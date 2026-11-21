@@ -229,6 +229,36 @@ describe("geocodeSearchHits", () => {
 		expect(looked).toEqual([404_475_697])
 	})
 
+	test("a postcode without a recorded ancestry is labeled with its own country, whichever code it records (#3164)", () => {
+		// `/search?q=75008` on the 2026-11-19 gazetteer: the Estonian postcode was labeled "75008", without its country.
+		const postcode = (placeID: string, countryCode: string, lat: number, lon: number) => ({
+			name: "75008",
+			tag: "postcode",
+			value: "75008",
+			placetype: "postalcode",
+			lat,
+			lon,
+			countryCode,
+			placeID,
+			score: null,
+			scoreUnmeasured: "population_unrecorded" as const,
+		})
+
+		const hits = geocodeSearchHits(
+			geocodeResult({
+				input: "75008",
+				candidates: [
+					postcode("wof:9500000088047", "EE", 59.1094, 25.4043),
+					postcode("wof:421307191", "FR", 48.872527, 2.312582),
+					postcode("wof:9500000042424", "SE", 59.8585, 17.6454),
+				],
+			}),
+			() => []
+		)
+
+		expect(hits.map(({ displayName }) => displayName)).toEqual(["75008, Estonia", "75008, France", "75008, Sweden"])
+	})
+
 	test("a result without a coordinate or candidates has no match", () => {
 		expect(geocodeSearchHits(geocodeResult({ input: "zzzz" }))).toEqual([])
 	})

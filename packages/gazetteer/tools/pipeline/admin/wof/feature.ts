@@ -8,7 +8,7 @@
  * The GeoNames anchor lookup stays with the caller, because it reads opened GeoNames extracts.
  *
  * The lookup can move a locality's point.
- * A record without a `geom:bbox` takes that final point as its bounding box.
+ * The ingest widens the record's `geom:bbox` to cover that final point.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -151,7 +151,8 @@ export function extractParsedWOFFeature(
 	if (typeof bboxStr === "string") {
 		const parts = bboxStr.split(",").map(Number)
 
-		if (parts.length === BBOX_2D_LENGTH && parts.every((n) => Number.isFinite(n))) {
+		// An all-zero bbox is WOF's unlocated sentinel rather than an extent at `0, 0`.
+		if (parts.length === BBOX_2D_LENGTH && parts.every((n) => Number.isFinite(n)) && parts.some((n) => n !== 0)) {
 			bbox = parts as [number, number, number, number]
 		}
 	}

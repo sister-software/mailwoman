@@ -246,6 +246,7 @@ export async function ingestOvertureDivisions(
 	// The `type=division` row's bbox is only its label point.
 	// The query takes the real extent from the matching `type=division_area` rows
 	// and falls back to the point bbox when a division has no area.
+	// The extent also covers the stored point, because an area need not contain its division's point.
 	const areaGlob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division_area/*`
 
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -277,8 +278,10 @@ export async function ingestOvertureDivisions(
 			d.country AS country,
 			ST_Y(ST_Centroid(d.geometry)) AS lat,
 			ST_X(ST_Centroid(d.geometry)) AS lon,
-			COALESCE(a.ymin, d.bbox.ymin) AS min_lat, COALESCE(a.ymax, d.bbox.ymax) AS max_lat,
-			COALESCE(a.xmin, d.bbox.xmin) AS min_lon, COALESCE(a.xmax, d.bbox.xmax) AS max_lon,
+			LEAST(COALESCE(a.ymin, d.bbox.ymin), ST_Y(ST_Centroid(d.geometry))) AS min_lat,
+			GREATEST(COALESCE(a.ymax, d.bbox.ymax), ST_Y(ST_Centroid(d.geometry))) AS max_lat,
+			LEAST(COALESCE(a.xmin, d.bbox.xmin), ST_X(ST_Centroid(d.geometry))) AS min_lon,
+			GREATEST(COALESCE(a.xmax, d.bbox.xmax), ST_X(ST_Centroid(d.geometry))) AS max_lon,
 			d.parent_division_id AS parent_division_id,
 			d.population AS population,
 			d.wikidata AS wikidata

@@ -49,6 +49,12 @@ export function loadDefaultBaseline(): VerifyBaseline {
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
 /**
+ * The all-zero extent.
+ * The `place_bbox` build treats it as no extent.
+ */
+const ZERO_EXTENT = "(min_latitude = 0 AND max_latitude = 0 AND min_longitude = 0 AND max_longitude = 0)"
+
+/**
  * Runs the structural checks against an open admin database using only SQL.
  */
 export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
@@ -159,6 +165,28 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 			check: "fts-bbox",
 			ok,
 			detail: `place_search=${tableExists(db, "place_search")}, place_bbox ${bboxCount.toLocaleString()} vs spr ${sprCount.toLocaleString()}`,
+		})
+	}
+
+	// A box page selects a place by its point through `place_bbox`, so every
+	// located place's extent holds its point.
+	// The point `0, 0` is the unlocated sentinel, and an unlocated place belongs on no box page.
+	{
+		const { outside, unboxed } = db
+			.prepare(
+				`SELECT
+					SUM(CASE WHEN NOT ${ZERO_EXTENT} AND (latitude < min_latitude OR latitude > max_latitude
+						OR longitude < min_longitude OR longitude > max_longitude) THEN 1 ELSE 0 END) AS outside,
+					SUM(CASE WHEN ${ZERO_EXTENT} THEN 1 ELSE 0 END) AS unboxed
+				FROM spr
+				WHERE is_current != 0 AND is_deprecated = 0 AND NOT (latitude = 0 AND longitude = 0)`
+			)
+			.get() as { outside: number | null; unboxed: number | null }
+
+		checks.push({
+			check: "point-in-extent",
+			ok: !outside && !unboxed,
+			detail: `${(outside ?? 0).toLocaleString()} located places lie outside their extent, ${(unboxed ?? 0).toLocaleString()} record no extent`,
 		})
 	}
 
