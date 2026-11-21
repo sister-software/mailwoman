@@ -215,25 +215,56 @@ function sameFoldedName(a: string, b: string): boolean {
 }
 
 /**
- * Whether an entry's child is the place name of the postcode nearest one of its WOF records.
+ * Whether `child`, a folded name, is the place name of the postcode point nearest one of its WOF records.
  *
- * An entry no WOF record locates isn't a postal child, since a name without a
+ * A child no record locates isn't postal at its location, since a name without a
  * location doesn't separate a postal locality from a namesake.
+ */
+export function isPostalAtLocation(
+	postal: Pick<PostalPoints, "grid">,
+	records: ReadonlyArray<{ lat: number; lon: number }>,
+	child: string
+): boolean {
+	return records.some((record) => {
+		const nearest = nearestPostalPlace(postal, record.lat, record.lon)
+
+		return nearest !== null && sameFoldedName(nearest, child)
+	})
+}
+
+/**
+ * Whether a sub-locality pair `<child>, <parent>` reads as `locality: child, region: parent`
+ * rather than `dependent_locality: child, locality: parent`.
+ *
+ * Both must hold:
+ *
+ * - the child is the postal place at its own location ({@linkcode isPostalAtLocation}), and
+ * - the parent's name is also the name of a first-level WOF region of the same
+ *   country, one of `regionNames`.
+ *
+ * `Brooklyn, New York` reads as a locality and its region.
+ * `Park Slope, Brooklyn` (the nearest postcode names Brooklyn) and `Venice, Los Angeles`
+ * (WOF records no region called Los Angeles) keep the dependent-locality reading.
+ * Every name is folded by `normalizeFSTToken`.
+ */
+export function isPostalLocalityPair(
+	postal: Pick<PostalPoints, "grid">,
+	records: ReadonlyArray<{ lat: number; lon: number }>,
+	pair: { child: string; parent: string },
+	regionNames: ReadonlySet<string>
+): boolean {
+	return regionNames.has(pair.parent) && isPostalAtLocation(postal, records, pair.child)
+}
+
+/**
+ * Whether an entry's child is the place name of the postcode nearest one of its WOF records.
  */
 function isPostalChild(
 	postal: Pick<PostalPoints, "grid">,
 	locations: ChildLocations,
 	entry: Pick<PairIndexEntry, "child" | "parent">
 ): boolean {
-	const records = locations.get(`${entry.child}\0${entry.parent}`)
-
-	return Boolean(
-		records?.some((record) => {
-			const nearest = nearestPostalPlace(postal, record.lat, record.lon)
-
-			return nearest !== null && sameFoldedName(nearest, entry.child)
-		})
-	)
+	return isPostalAtLocation(postal, locations.get(`${entry.child}\0${entry.parent}`) ?? [], entry.child)
 }
 
 /**

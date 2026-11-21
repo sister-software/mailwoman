@@ -4,8 +4,9 @@
 /**
  * @file `prominent-places` — the #3156 label policy on the rows the recipe writes.
  *
- *   A sub-locality is written as a dependent locality only beside its parent locality, and in no other
- *   form while its postal reading is unresolved. Every row aligns.
+ *   A sub-locality is written only beside its parent: as a locality beside its region when its pair is a
+ *   postal pair, else as a dependent locality beside its locality. It takes no other form while its
+ *   postal reading is unresolved. Every row aligns.
  */
 
 import { describe, expect, it } from "vitest"
@@ -25,6 +26,7 @@ const brooklyn: ProminentPlaceTuple = {
 	parent_locality: "New York",
 	region: "New York",
 	region_abbrs: ["NY"],
+	postal_pair: true,
 	country_name: "United States",
 	rows: everyShape,
 }
@@ -37,6 +39,7 @@ const kensington: ProminentPlaceTuple = {
 	parent_locality: "London",
 	region: "England",
 	region_abbrs: [],
+	postal_pair: false,
 	country_name: "United Kingdom",
 	rows: everyShape,
 }
@@ -49,6 +52,7 @@ const lyon: ProminentPlaceTuple = {
 	parent_locality: null,
 	region: "Auvergne-Rhône-Alpes",
 	region_abbrs: ["ARA"],
+	postal_pair: false,
 	country_name: "France",
 	rows: { bare: 3, region: 1, region_abbr: 1, country: 4 },
 }
@@ -58,22 +62,34 @@ describe("the #3156 label policy", () => {
 		expect(prominentPlaceTag("locality", "region_abbr")).toBe("locality")
 		expect(prominentPlaceTag("locality", "parent")).toBeNull()
 		expect(prominentPlaceTag("sublocality", "parent")).toBe("dependent_locality")
+		expect(prominentPlaceTag("sublocality", "parent", true)).toBe("locality")
 
 		for (const shape of ["bare", "region", "region_abbr", "country"] as const) {
 			expect(prominentPlaceTag("sublocality", shape)).toBeNull()
+			expect(prominentPlaceTag("sublocality", shape, true)).toBeNull()
 		}
 	})
 })
 
 describe("prominent-places recipe", () => {
-	it("writes every sub-locality beside its locality and in no other form", async () => {
+	it("writes every sub-locality beside its parent and in no other form", async () => {
 		const { rows } = await run([brooklyn, kensington], [])
 
 		expect(rows.map((row) => row.raw).toSorted()).toEqual(
 			["Brooklyn, New York", "Kensington, London", "KENSINGTON, LONDON", "BROOKLYN, NEW YORK"].toSorted()
 		)
+	})
 
-		expect(rows.every((row) => row.components?.["dependent_locality"] && row.components["locality"])).toBe(true)
+	it("writes a postal pair as a locality and its region, and any other pair as a dependent locality and its locality", async () => {
+		const { rows } = await run([brooklyn, kensington], [])
+
+		for (const row of rows) {
+			const expected = row.raw.toLowerCase().startsWith("brooklyn")
+				? { locality: row.raw.split(", ")[0], region: row.raw.split(", ")[1] }
+				: { dependent_locality: row.raw.split(", ")[0], locality: row.raw.split(", ")[1] }
+
+			expect(row.components).toEqual(expected)
+		}
 	})
 
 	it("writes each shape's count, cycling case forms, with a source id per row", async () => {
@@ -105,6 +121,7 @@ describe("prominent-places recipe", () => {
 			parent_locality: null,
 			region: "Πάφος",
 			region_abbrs: [],
+			postal_pair: false,
 			country_name: "Cyprus",
 			rows: { bare: 3 },
 		}

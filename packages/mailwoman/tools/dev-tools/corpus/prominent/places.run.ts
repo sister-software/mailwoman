@@ -6,7 +6,7 @@
  *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts places --out <dir> \
- *       [--candidate-db <path>] [--geonames-glob <glob>] [--geonames-postal <path>]
+ *       [--candidate-db <path>] [--geonames-glob <glob>] [--geonames-postal <path>] [--geonames-postal-dir <dir>]
  *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts scan --out <dir> --manifest <MANIFEST.json> \
  *       [--limit-files N]
  *     node packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts coverage --out <dir>
@@ -58,6 +58,7 @@ const { values, positionals } = parseArguments({
 		"geonames-glob": { type: "string" },
 		"geonames-postal": { type: "string" },
 		"geonames-admin1": { type: "string" },
+		"geonames-postal-dir": { type: "string" },
 		"limit-files": { type: "string" },
 		"per-band": { type: "string" },
 		include: { type: "string" },
@@ -85,6 +86,7 @@ if (command === "places") {
 		geonamesGlob: values["geonames-glob"] ?? dataRootPath("geonames", "[A-Z][A-Z].txt").toString(),
 		geonamesPostal: values["geonames-postal"] ?? dataRootPath("geonames", "allCountries-postal.txt").toString(),
 		geonamesAdmin1: values["geonames-admin1"] ?? dataRootPath("geonames", "admin1CodesASCII.txt").toString(),
+		geonamesPostalDirectory: values["geonames-postal-dir"] ?? dataRootPath("geonames-postal").toString(),
 		out,
 		limits,
 		log,

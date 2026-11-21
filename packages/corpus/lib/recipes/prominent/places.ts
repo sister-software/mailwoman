@@ -17,6 +17,8 @@
  *   - A locality is written as `locality` in every shape.
  *   - A sub-locality is written as `dependent_locality` beside the parent locality
  *     WOF's hierarchy records (`Camden, London`).
+ *   - A postal pair is written as `locality` and `region` (`Brooklyn, New York`): the sub-locality is
+ *     the postal place at its own location, and its parent's name is also a first-level WOF region's.
  *   - A sub-locality written bare or with its region or country gets no row.
  *     `dependent_locality` without a locality is never written, and its postal reading is unresolved.
  *
@@ -66,6 +68,12 @@ export type QueryShape = (typeof QUERY_SHAPES)[number]
  *
  * The launch receipt requires the same tag, and defers a shape this returns `null` for.
  *
+ * A sub-locality beside its parent is a dependent locality, unless its pair is a postal pair
+ * (`postalPair`): the child is the postal place at its own location and the parent's name
+ * is also a first-level WOF region's, so `Brooklyn, New York` is a locality and its region.
+ * The census decides a pair by `isPostalLocalityPair` in the gazetteer's pair tools,
+ * the predicate a pair-index build can also read.
+ *
  * A sub-locality written bare or with its region or country is its postal form.
  * The only planetary evidence for that reading is a GeoNames postal-name match.
  *
@@ -74,10 +82,36 @@ export type QueryShape = (typeof QUERY_SHAPES)[number]
  * post town is London, so even a match that lies on the place can't decide the label.
  * Those forms wait for a postal authority's own list.
  */
-export function prominentPlaceTag(band: PlaceBand, shape: QueryShape): "locality" | "dependent_locality" | null {
+export function prominentPlaceTag(
+	band: PlaceBand,
+	shape: QueryShape,
+	postalPair = false
+): "locality" | "dependent_locality" | null {
 	if (band === "locality") return shape === "parent" ? null : "locality"
 
-	return shape === "parent" ? "dependent_locality" : null
+	if (shape !== "parent") return null
+
+	return postalPair ? "locality" : "dependent_locality"
+}
+
+/**
+ * The tag of a shape's second segment: a sub-locality's parent is a locality,
+ * or the region of a postal pair.
+ *
+ * A region or its abbreviation is a region, a country a country, and a bare shape has none.
+ */
+export function prominentSecondTag(shape: QueryShape, postalPair = false): "locality" | "region" | "country" | null {
+	switch (shape) {
+		case "bare":
+			return null
+		case "parent":
+			return postalPair ? "region" : "locality"
+		case "region":
+		case "region_abbr":
+			return "region"
+		case "country":
+			return "country"
+	}
 }
 
 /**
@@ -91,6 +125,12 @@ export interface ProminentPlaceTuple {
 	parent_locality: string | null
 	region: string | null
 	region_abbrs: readonly string[]
+	/**
+	 * Whether a sub-locality's pair with its parent locality reads
+	 * as `locality: name, region: parent_locality`.
+	 * See {@linkcode prominentPlaceTag}.
+	 */
+	postal_pair: boolean
 	/**
 	 * The country's WOF name, or its English region name for a territory WOF records under no
 	 * country or dependency, written when the codex lists no display name for the country.
@@ -118,15 +158,17 @@ function secondForms(
 	tuple: ProminentPlaceTuple,
 	shape: QueryShape
 ): { tag: ComponentTag | null; forms: readonly string[] } | null {
+	const tag = prominentSecondTag(shape, tuple.postal_pair)
+
 	switch (shape) {
 		case "bare":
-			return { tag: null, forms: [""] }
+			return { tag, forms: [""] }
 		case "parent":
-			return tuple.parent_locality ? { tag: "locality", forms: [tuple.parent_locality] } : null
+			return tuple.parent_locality ? { tag, forms: [tuple.parent_locality] } : null
 		case "region":
-			return tuple.region ? { tag: "region", forms: [tuple.region] } : null
+			return tuple.region ? { tag, forms: [tuple.region] } : null
 		case "region_abbr":
-			return tuple.region_abbrs.length ? { tag: "region", forms: tuple.region_abbrs } : null
+			return tuple.region_abbrs.length ? { tag, forms: tuple.region_abbrs } : null
 		case "country": {
 			const forms = [
 				COUNTRY_DISPLAY_NAME[tuple.country] ?? tuple.country_name,
@@ -198,7 +240,7 @@ function prominentPlaceVariants(
 	tuple: ProminentPlaceTuple,
 	shape: QueryShape
 ): Array<Partial<Record<ComponentTag, string>>> {
-	const tag = prominentPlaceTag(tuple.band, shape)
+	const tag = prominentPlaceTag(tuple.band, shape, tuple.postal_pair)
 	const second = secondForms(tuple, shape)
 
 	if (!tag || !second) return []

@@ -21,6 +21,7 @@
  *   and every place name is folded by the same SQL before the join.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import {
@@ -33,8 +34,11 @@ import { PLACE_BANDS, type PlaceBand } from "@mailwoman/corpus/recipes/prominent
 import type { CorpusDeletion } from "@mailwoman/corpus/tools/overlay/deletions"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { foldSurfaceSQL, stageTrainRows, type TrainManifestFile } from "@mailwoman/corpus/tools/support-index"
+import { isPostalLocalityPair, readPostalPoints } from "@mailwoman/gazetteer/tools/pipeline/pair/postal-children"
+import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
+import { resolvePath } from "path-ts"
 
 import {
 	PROMINENT_PLACES_RECORD,
@@ -121,6 +125,14 @@ export interface ProminentPlacesOptions {
 	 * They hold a fallback match's administrative parent.
 	 */
 	geonamesAdmin1: string
+	/**
+	 * The directory of GeoNames' per-country postal exports, `<CC>.txt` or `<CC>.zip`,
+	 * the files the postal-children location test of #3165 and the pair-index build read.
+	 *
+	 * The full GB export locates a postcode at its unit, where `allCountries-postal.txt`
+	 * holds GB's outward codes only.
+	 */
+	geonamesPostalDirectory: string
 	out: string
 	limits?: DuckDBLimits
 	log?: (line: string) => void
@@ -354,6 +366,85 @@ async function loadMatchAncestors(db: DisposableDuckDB, candidateDB: string): Pr
 }
 
 /**
+ * Writes `postal_locality_pairs (spr_id)`: the ranked sub-localities whose pair with their parent
+ * locality reads as `locality: child, region: parent` by {@linkcode isPostalLocalityPair},
+ * and returns their count with the postal exports read.
+ *
+ * The postcode points are the country's export in `postalDirectory`, read by
+ * {@linkcode readPostalPoints} as the pair-index build reads them, and the regions
+ * are the candidate table's first-level WOF regions (`regions`).
+ * A country with no export there has no location evidence, so none of its pairs move,
+ * and the record lists it.
+ */
+async function loadPostalLocalityPairs(
+	db: DisposableDuckDB,
+	postalDirectory: string
+): Promise<{ pairs: number; exports: ProminentPlacesRecord["postal_pair_exports"]; without_export: string[] }> {
+	const pairs = (
+		await db.runAndReadAll(
+			"SELECT spr_id, country, name, parent_locality, lat, lon FROM ranked WHERE band = 'sublocality' " +
+				"AND rank IS NOT NULL AND parent_locality IS NOT NULL AND lat IS NOT NULL AND lon IS NOT NULL ORDER BY country"
+		)
+	).getRowObjectsJson()
+
+	const regionNames = new Map<string, Set<string>>()
+
+	for (const row of (await db.runAndReadAll("SELECT country, name FROM regions")).getRowObjectsJson()) {
+		const country = String(row["country"])
+		const names = regionNames.get(country) ?? new Set<string>()
+
+		names.add(normalizeFSTToken(String(row["name"])))
+		regionNames.set(country, names)
+	}
+
+	await db.run("CREATE TABLE postal_locality_pairs (spr_id BIGINT)")
+
+	const appender = await db.createAppender("postal_locality_pairs")
+	const exports: ProminentPlacesRecord["postal_pair_exports"] = []
+	const withoutExport: string[] = []
+	let count = 0
+
+	for (const [country, rows] of Map.groupBy(pairs, (row) => String(row["country"]))) {
+		const regions = regionNames.get(country)
+
+		// A country whose regions share no parent's name moves no pair, and its postcodes needn't be read.
+		if (!regions || !rows.some((row) => regions.has(normalizeFSTToken(String(row["parent_locality"]))))) continue
+
+		const hasExport =
+			(await pathExists(resolvePath(postalDirectory, `${country}.txt`))) ||
+			(await pathExists(resolvePath(postalDirectory, `${country}.zip`)))
+
+		if (!hasExport) {
+			withoutExport.push(country)
+
+			continue
+		}
+
+		const postal = await readPostalPoints(postalDirectory, country)
+
+		exports.push({ country, artifact: postal.artifact, sha256: await sha256File(postal.artifact) })
+
+		for (const row of rows) {
+			const pair = {
+				child: normalizeFSTToken(String(row["name"])),
+				parent: normalizeFSTToken(String(row["parent_locality"])),
+			}
+
+			if (isPostalLocalityPair(postal, [{ lat: Number(row["lat"]), lon: Number(row["lon"]) }], pair, regions)) {
+				appender.appendBigInt(BigInt(Number(row["spr_id"])))
+				appender.endRow()
+
+				count++
+			}
+		}
+	}
+
+	appender.closeSync()
+
+	return { pairs: count, exports, without_export: withoutExport }
+}
+
+/**
  * The SQL expression of {@linkcode referentialFromPopulation}, with a population of zero or none
  * read as no score. {@linkcode buildProminentPlaces} checks it against the function before use.
  */
@@ -368,7 +459,9 @@ function referentialSQL(population: string): string {
  * Writes `places.parquet`: every primary place of the two bands with its score,
  * its score's source, its rank and decile within its country and band, whether it is prominent
  * and whether it is a capital, its parent locality, region and region abbreviations, and
- * whether GeoNames' postal export lists its name as a postcode place name in its country.
+ * whether GeoNames' postal export lists its name as a postcode place name in its country,
+ * and, for a sub-locality, whether its pair with its parent locality reads as a locality
+ * and its region (`postal_pair`, {@linkcode isPostalLocalityPair}).
  */
 export async function buildProminentPlaces(options: ProminentPlacesOptions): Promise<void> {
 	const log = options.log ?? (() => {})
@@ -501,6 +594,15 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 			"FROM capitals WHERE level = 'national'"
 	)
 
+	log("[prominent] reading sub-locality pairs by the postal-locality rule")
+
+	const postalPairs = await loadPostalLocalityPairs(db, options.geonamesPostalDirectory)
+
+	log(
+		`[prominent] ${postalPairs.pairs} sub-locality pairs read as a locality and its region; ` +
+			`${postalPairs.exports.length} postal exports read, none for ${postalPairs.without_export.join(", ") || "no country"}`
+	)
+
 	await db.run(
 		`COPY (SELECT r.spr_id, r.country, r.band, r.placetype, r.name, r.fold, r.lat, r.lon, r.min_lat, r.min_lon, ` +
 			"r.max_lat, r.max_lon, r.score, r.score_source, r.population_used, r.rank, r.scored_in_band, r.places_in_band, " +
@@ -517,7 +619,8 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 			"CASE WHEN EXISTS (SELECT 1 FROM postal p WHERE p.country = r.country AND p.fold = r.fold AND " +
 			"p.lat BETWEEN r.min_lat AND r.max_lat AND p.lon BETWEEN r.min_lon AND r.max_lon) THEN 'place' " +
 			"WHEN EXISTS (SELECT 1 FROM postal_names p WHERE p.country = r.country AND p.fold = r.fold) THEN 'name' " +
-			"ELSE 'none' END AS postal_evidence, r.geonames_id, r.geonames_km, r.geonames_check " +
+			"ELSE 'none' END AS postal_evidence, r.geonames_id, r.geonames_km, r.geonames_check, " +
+			"r.spr_id IN (SELECT spr_id FROM postal_locality_pairs) AS postal_pair " +
 			`FROM ranked r LEFT JOIN regions g ON g.spr_id = r.region_id) TO ${quoted(`${options.out}/places.parquet`)} (FORMAT PARQUET)`
 	)
 
@@ -551,6 +654,10 @@ export async function buildProminentPlaces(options: ProminentPlacesOptions): Pro
 		geonames_admin1: options.geonamesAdmin1,
 		geonames_admin1_sha256: await sha256File(options.geonamesAdmin1),
 		geonames_glob: options.geonamesGlob,
+		geonames_postal_directory: options.geonamesPostalDirectory,
+		postal_pair_exports: postalPairs.exports,
+		postal_pair_countries_without_export: postalPairs.without_export,
+		postal_pairs: postalPairs.pairs,
 		places_sha256: await sha256File(`${options.out}/places.parquet`),
 		rule: {
 			selection: `min(n, clamp(ceil(sqrt(n)), ${PROMINENT_MINIMUM}, ${PROMINENT_MAXIMUM})) per country and band, plus the national capital`,

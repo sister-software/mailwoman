@@ -182,3 +182,16 @@ training rows, and no row of the collection overlaps by identity, group or addre
 folded text under other sources, 1 of them US (a `tiger` row). US address groups unseen by that corpus: 3,985. A
 candidate trained on a v0.8.22 re-split under the list is therefore compared with 11.2.0 on 1,666 US groups, the
 groups neither has read.
+
+## 6. The candidate's decoder settings
+
+Decided on 2026-11-21: the v14 candidate's graded arms run with these decoder settings (#3171, #3187). Each is off
+by default, so the release report states the arms' pins.
+
+| Decoder switch                | Graded arms | Reason                                                                                                                                                                               |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pairPriorWordPieces`         | on          | The pair bias wrote `I-<tag>` on the `,` after a child: 386 of 466 held-out flips in #3165. The bias on word pieces alone fixed 368 rows (+385/−0 pieces) and changed no word label. |
+| `pairPriorChildPostcodeStrip` | on          | The child window took the postcode in GB (`Sutton Coldfield B72 1PU`, `Brighton BN1 1AH`), so the child bias fell on the postcode.                                                   |
+| `pairIndexOwnCountry`         | off         | The locale head misreads rows: the Lebanese rows read as GB, and on 400 US probes 220 word labels changed.                                                                           |
+| `fstCountryRouting`           | off         | It routes by the same locale-head read as `pairIndexOwnCountry`, so the same misreads choose another country's FST (inferred, and unmeasured on these probes).                       |
+| postal-children pair index    | not shipped | At least 97 of the 184 US pairs it drops decode as two adjacent localities.                                                                                                          |

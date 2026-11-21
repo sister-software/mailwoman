@@ -24,17 +24,36 @@ import {
  */
 const PLACES_SQL =
 	"SELECT * FROM (VALUES " +
-	"(1, 'GB', 'locality', 'Alpha', 'alpha', 1, 1, true, false, 'importance', NULL, NULL, NULL, 1000, NULL, 'England', ['ENG'], 'none'), " +
-	"(2, 'GB', 'locality', 'Beta', 'beta', 10, 10, false, false, 'importance', NULL, NULL, NULL, 10, NULL, 'England', ['ENG'], 'none'), " +
-	"(3, 'GB', 'sublocality', 'Soho', 'soho', 1, 1, true, false, 'importance', NULL, NULL, NULL, 50, 'Alpha', 'England', ['ENG'], 'name'), " +
-	"(4, 'GB', 'locality', 'Gamma', 'gamma', 1, 2, true, false, 'geonames', 'competing-candidate', 3.2, '123', 500, NULL, 'England', ['ENG'], 'none')" +
+	"(1, 'GB', 'locality', 'Alpha', 'alpha', 1, 1, true, false, 'importance', NULL, NULL, NULL, 1000, NULL, 'England', ['ENG'], 'none', false), " +
+	"(2, 'GB', 'locality', 'Beta', 'beta', 10, 10, false, false, 'importance', NULL, NULL, NULL, 10, NULL, 'England', ['ENG'], 'none', false), " +
+	"(3, 'GB', 'sublocality', 'Soho', 'soho', 1, 1, true, false, 'importance', NULL, NULL, NULL, 50, 'Alpha', 'England', ['ENG'], 'name', false), " +
+	"(4, 'GB', 'locality', 'Gamma', 'gamma', 1, 2, true, false, 'geonames', 'competing-candidate', 3.2, '123', 500, NULL, 'England', ['ENG'], 'none', false)" +
 	") AS t(spr_id, country, band, name, fold, decile, rank, by_rank, capital, score_source, geonames_check, geonames_km, " +
-	"geonames_id, population_used, parent_locality, region, region_abbrs, postal_evidence)"
+	"geonames_id, population_used, parent_locality, region, region_abbrs, postal_evidence, postal_pair)"
+
+/**
+ * {@linkcode PLACES_SQL} with Soho's pair read as a locality and its region.
+ */
+const SOHO_POSTAL_PAIR_SQL = PLACES_SQL.replace(
+	"'Alpha', 'England', ['ENG'], 'name', false",
+	"'Alpha', 'England', ['ENG'], 'name', true"
+)
+
+/**
+ * {@linkcode PLACES_SQL} with Beta required and Alpha recorded under no region.
+ *
+ * The locality region cell's only decile-1 places are then Alpha, without a region,
+ * and Gamma, with a GeoNames match that failed its checks.
+ */
+const NO_WRITABLE_REGION_SQL = PLACES_SQL.replace(
+	"1000, NULL, 'England', ['ENG'], 'none', false",
+	"1000, NULL, NULL, []::VARCHAR[], 'none', false"
+).replace("'Beta', 'beta', 10, 10, false", "'Beta', 'beta', 10, 10, true")
 
 type ShortRow = [shape: string, s1: string, s2: string | null, rows: number, source?: string]
 
-async function fixture(db: DisposableDuckDB, directory: string, shortRows: readonly ShortRow[]) {
-	await db.run(`COPY (${PLACES_SQL}) TO '${directory}/places.parquet' (FORMAT PARQUET)`)
+async function fixture(db: DisposableDuckDB, directory: string, shortRows: readonly ShortRow[], places = PLACES_SQL) {
+	await db.run(`COPY (${places}) TO '${directory}/places.parquet' (FORMAT PARQUET)`)
 
 	const values = shortRows
 		.map(
@@ -70,11 +89,16 @@ const RATES: EpochRates = {
 	admission: new Map([["GB", 1]]),
 }
 
-async function evaluate(directory: string, shortRows: readonly ShortRow[], rates: EpochRates = RATES) {
+async function evaluate(
+	directory: string,
+	shortRows: readonly ShortRow[],
+	rates: EpochRates = RATES,
+	places = PLACES_SQL
+) {
 	{
 		using writer = await openDuckDB()
 
-		await fixture(writer, directory, shortRows)
+		await fixture(writer, directory, shortRows, places)
 	}
 
 	using db = await openDuckDB()
@@ -136,6 +160,50 @@ describe("prominent_place_coverage", () => {
 		])
 
 		expect(presence.covered_forms).toBe(4)
+	})
+
+	it("requires a postal pair as a locality beside its parent written as the region", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+		const rows = COVERED.filter(([shape]) => shape !== "dependent_locality|locality")
+
+		const administrative = await evaluate(
+			directory.path.toString(),
+			[...rows, ["dependent_locality|locality", "soho", "alpha", 1]],
+			RATES,
+			SOHO_POSTAL_PAIR_SQL
+		)
+
+		expect(administrative.presence.failing.map((form) => form.name)).toEqual(["Soho"])
+
+		const postal = await evaluate(
+			directory.path.toString(),
+			[...rows, ["locality|region", "soho", "alpha", 1]],
+			RATES,
+			SOHO_POSTAL_PAIR_SQL
+		)
+
+		expect(postal.presence.covered_forms).toBe(postal.presence.required_forms)
+	})
+
+	it("lists a cell with no writable decile-1 place as unwritable, with its reasons, and doesn't fail it", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		const { demand_share } = await evaluate(directory.path.toString(), COVERED, RATES, NO_WRITABLE_REGION_SQL)
+		const region = demand_share.unwritable_cells.find((cell) => cell.query_shape === "region")
+
+		expect(region).toMatchObject({ country: "GB", band: "locality", decile1_places: 2 })
+
+		expect(region?.reasons).toEqual([
+			{ reason: "no WOF region", places: 1, examples: ["Alpha (1)"] },
+			{ reason: "GeoNames check failed: competing-candidate", places: 1, examples: ["Gamma (4)"] },
+		])
+
+		expect(demand_share.failing.some((cell) => cell.query_shape === "region")).toBe(false)
+		expect(demand_share.failing_count).toBe(demand_share.failing.length)
+		expect(demand_share.passing + demand_share.unwritable + demand_share.failing_count).toBe(demand_share.cells)
+
+		// The bare cell has a writable decile-1 place, Alpha, and still misses its target, so it fails.
+		expect(demand_share.failing.some((cell) => cell.band === "locality" && cell.query_shape === "bare")).toBe(true)
 	})
 
 	it("fails a cell whose decile 1 falls short of half its population share, and passes it after the deficit", async () => {

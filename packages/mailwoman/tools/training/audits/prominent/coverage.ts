@@ -12,13 +12,19 @@
  *   The census's `scanShortAdminRows` counts those rows.
  *   Three rules decide it:
  *
- *   1. **Presence.** Every required prominent place has a train row the sampler can draw
- *      in each required shape, under the tag {@linkcode prominentPlaceTag} names.
+ *   1. **Presence.** Every required prominent place has a train row the sampler can
+ *      draw in each required shape, under the tags {@linkcode prominentPlaceTag}
+ *      and {@linkcode prominentSecondTag} name for its pair reading (`postal_pair`).
  *      Every row belongs to an independent group, so a row is a group.
  *   2. **Demand share.** Per country, band and shape, decile 1's share of the expected epoch
  *      draws of the train rows that write a ranked place under the expected tag is at least
  *      {@linkcode DEMAND_SHARE_FRACTION} of decile 1's share of the country's ranked-place population.
  *      A row whose surface several ranked places share counts once, toward the best-ranked one.
+ *      A cell short of its target is `unwritable` when no decile-1 place can be
+ *      written in the shape: each lacks the shape's second segment (no WOF region)
+ *      or rests on a GeoNames match that failed its checks.
+ *      Such a cell doesn't fail the receipt, and the report lists it with its reasons.
+ *      A cell with a writable decile-1 place that still misses its target fails.
  *   3. **Label coherence.** No short admin train row writes a dependent locality without a locality.
  *
  *   The demand share is measured in what a training run reads rather than in rows on disk.
@@ -46,9 +52,9 @@ import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB }
 import {
 	PLACE_BANDS,
 	prominentPlaceTag,
+	prominentSecondTag,
 	type PlaceBand,
 	QUERY_SHAPES,
-	type QueryShape,
 } from "@mailwoman/corpus/recipes/prominent/places"
 import { foldSurfaceSQL } from "@mailwoman/corpus/tools/support-index"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
@@ -142,7 +148,7 @@ export const PROMINENT_PLACES_RECORD = "PLACES.json"
 /**
  * Bumped when `places.parquet` gains, loses or redefines a column the receipt reads.
  */
-export const PROMINENT_PLACES_RECORD_VERSION = 2
+export const PROMINENT_PLACES_RECORD_VERSION = 3
 
 export interface ProminentPlacesRecord {
 	version: number
@@ -151,6 +157,23 @@ export interface ProminentPlacesRecord {
 	candidate_db_sha256: string
 	geonames_postal: string
 	geonames_postal_sha256: string
+	/**
+	 * The directory of per-country GeoNames postal exports the postal-pair location test reads.
+	 */
+	geonames_postal_directory: string
+	/**
+	 * Each export the location test read, for a country where a parent shares a region's name.
+	 */
+	postal_pair_exports: Array<{ country: string; artifact: string; sha256: string }>
+	/**
+	 * Countries with such a parent and no export.
+	 * Their pairs keep the dependent-locality reading.
+	 */
+	postal_pair_countries_without_export: string[]
+	/**
+	 * The ranked sub-localities whose pair reads as a locality and its region.
+	 */
+	postal_pairs: number
 	geonames_admin1: string
 	geonames_admin1_sha256: string
 	geonames_glob: string
@@ -184,17 +207,43 @@ function quoted(value: string): string {
 }
 
 /**
- * The tag the receipt requires in each band and shape, as SQL rows `(band, shape, tag)`.
+ * The tags the receipt requires in each band, shape and pair reading, as SQL rows
+ * `(band, shape, postal_pair, tag, second_tag)`: the place's own tag and its second segment's.
  * A deferred shape has no row.
  */
 function requirementValuesSQL(): string {
 	const rows = (Object.keys(PLACE_BANDS) as PlaceBand[]).flatMap((band) =>
-		QUERY_SHAPES.map((shape) => [band, shape, prominentPlaceTag(band, shape)] as const).filter(
-			(row): row is readonly [PlaceBand, QueryShape, "locality" | "dependent_locality"] => row[2] != null
+		QUERY_SHAPES.flatMap((shape) =>
+			[false, true].flatMap((postalPair) => {
+				const tag = prominentPlaceTag(band, shape, postalPair)
+				const second = prominentSecondTag(shape, postalPair)
+
+				return tag ? [{ band, shape, postalPair, tag, second }] : []
+			})
 		)
 	)
 
-	return rows.map(([band, shape, tag]) => `(${quoted(band)}, ${quoted(shape)}, ${quoted(tag)})`).join(", ")
+	return rows
+		.map(
+			(row) =>
+				`(${quoted(row.band)}, ${quoted(row.shape)}, ${row.postalPair}, ${quoted(row.tag)}, ` +
+				`${row.second ? quoted(row.second) : "NULL"})`
+		)
+		.join(", ")
+}
+
+/**
+ * The places the recipe may write, as SQL over `ranked` or its alias `table`:
+ * every required place, and every decile-1 place whose score rests on no GeoNames
+ * population or on a GeoNames match that passed its checks.
+ */
+export function writablePlaceSQL(table?: string): string {
+	const column = (name: string) => (table ? `${table}.${name}` : name)
+
+	return (
+		`(${column("required")} OR (${column("decile")} = 1 AND ` +
+		`(${column("score_source")} <> 'geonames' OR ${column("geonames_check")} = 'verified')))`
+	)
 }
 
 /**
@@ -280,20 +329,22 @@ export async function createProminentCoverageTables(
 			"LEFT JOIN admission c USING (country)"
 	)
 
-	await db.run(`CREATE OR REPLACE TABLE requirements (band VARCHAR, query_shape VARCHAR, tag VARCHAR)`)
+	await db.run(
+		"CREATE OR REPLACE TABLE requirements (band VARCHAR, query_shape VARCHAR, postal_pair BOOLEAN, tag VARCHAR, second_tag VARCHAR)"
+	)
 
 	await db.run(`INSERT INTO requirements VALUES ${requirementValuesSQL()}`)
 
-	// The second segment's tag: the parent is a locality, a region or its abbreviation a region.
+	// The second segment's tag comes with the place's own: a parent is a locality, or a postal pair's region.
 	await db.run(
-		"CREATE OR REPLACE TABLE forms AS SELECT f.*, q.tag FROM (" +
-			"SELECT spr_id, country, band, fold, decile, 'bare' AS query_shape, NULL::VARCHAR AS second, NULL::VARCHAR AS second_tag FROM ranked UNION ALL " +
-			`SELECT spr_id, country, band, fold, decile, 'parent', ${foldSurfaceSQL("parent_locality")}, 'locality' FROM ranked WHERE parent_locality IS NOT NULL UNION ALL ` +
-			`SELECT spr_id, country, band, fold, decile, 'region', ${foldSurfaceSQL("region")}, 'region' FROM ranked WHERE region IS NOT NULL UNION ALL ` +
-			`SELECT spr_id, country, band, fold, decile, 'region_abbr', ${foldSurfaceSQL("abbr")}, 'region' FROM ` +
-			"(SELECT spr_id, country, band, fold, decile, unnest(region_abbrs) AS abbr FROM ranked) UNION ALL " +
-			"SELECT spr_id, country, band, fold, decile, 'country', NULL, 'country' FROM ranked" +
-			") f JOIN requirements q ON q.band = f.band AND q.query_shape = f.query_shape"
+		"CREATE OR REPLACE TABLE forms AS SELECT f.*, q.tag, q.second_tag FROM (" +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM ranked UNION ALL " +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM ranked WHERE parent_locality IS NOT NULL UNION ALL ` +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM ranked WHERE region IS NOT NULL UNION ALL ` +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region_abbr', ${foldSurfaceSQL("abbr")} FROM ` +
+			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM ranked) UNION ALL " +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM ranked" +
+			") f JOIN requirements q ON q.band = f.band AND q.query_shape = f.query_shape AND q.postal_pair = f.postal_pair"
 	)
 
 	// The place's own span is the dependent locality when the row writes one, else the locality,
@@ -397,8 +448,31 @@ export interface ProminentCoverageReport {
 		fraction_of_population_share: number
 		cells: number
 		passing: number
+		/**
+		 * Cells short of their target with no decile-1 place the recipe can write in the shape.
+		 *
+		 * They don't count against `passed`, and {@linkcode ProminentCoverageReport}
+		 * lists each with its reasons.
+		 */
+		unwritable: number
+		/**
+		 * Cells short of their target that have a writable decile-1 place.
+		 * Any one fails the receipt.
+		 */
+		failing_count: number
 		cells_without_population: number
-		by_band_shape: Array<{ band: string; query_shape: string; cells: number; passing: number }>
+		by_band_shape: Array<{ band: string; query_shape: string; cells: number; passing: number; unwritable: number }>
+		/**
+		 * Every unwritable cell, with the draws it lacks and why each of its decile-1 places can't be written.
+		 */
+		unwritable_cells: Array<{
+			country: string
+			band: string
+			query_shape: string
+			decile1_places: number
+			deficit_draws: number
+			reasons: Array<{ reason: string; places: number; examples: string[] }>
+		}>
 		failing: Array<{
 			country: string
 			band: string
@@ -490,6 +564,63 @@ export function readDemandCells(db: DisposableDuckDB): Promise<DemandCell[]> {
 }
 
 /**
+ * The key of one demand cell: its country, band and shape.
+ */
+export function demandCellKey(cell: { country: string; band: string; query_shape: string }): string {
+	return `${cell.country}\u0000${cell.band}\u0000${cell.query_shape}`
+}
+
+/**
+ * Why the recipe can't write one decile-1 place in a shape, or `null` when it can.
+ */
+export interface DecileOnePlace {
+	country: string
+	band: string
+	query_shape: string
+	spr_id: number
+	name: string
+	reason: string | null
+}
+
+/**
+ * The reason a place without the shape's second segment can't be written in it.
+ */
+const MISSING_SEGMENT_SQL =
+	"CASE c.query_shape WHEN 'parent' THEN 'no WOF parent locality' WHEN 'region' THEN 'no WOF region' " +
+	"WHEN 'region_abbr' THEN 'no WOF region abbreviation' ELSE 'no form in the shape' END"
+
+/**
+ * Every decile-1 place of each demand cell's country and band, with why the recipe
+ * can't write it in the cell's shape: it has no second segment for the shape,
+ * or its GeoNames-fallback score failed its checks.
+ */
+export function readDecileOneWritability(db: DisposableDuckDB): Promise<DecileOnePlace[]> {
+	return queryRows(
+		db,
+		"SELECT c.country, c.band, c.query_shape, r.spr_id, any_value(r.name) AS name, " +
+			`CASE WHEN count(f.spr_id) = 0 THEN ${MISSING_SEGMENT_SQL} ` +
+			`WHEN NOT any_value(${writablePlaceSQL("r")}) ` +
+			"THEN 'GeoNames check failed: ' || coalesce(any_value(r.geonames_check), 'unchecked') END AS reason " +
+			"FROM cells c JOIN ranked r ON r.country = c.country AND r.band = c.band AND r.decile = 1 " +
+			"LEFT JOIN forms f ON f.spr_id = r.spr_id AND f.query_shape = c.query_shape " +
+			"GROUP BY c.country, c.band, c.query_shape, r.spr_id ORDER BY c.country, c.band, c.query_shape, r.spr_id",
+		(row) => ({
+			country: row.text("country"),
+			band: row.text("band"),
+			query_shape: row.text("query_shape"),
+			spr_id: row.number("spr_id"),
+			name: row.text("name"),
+			reason: row.optionalText("reason"),
+		})
+	)
+}
+
+/**
+ * The decile-1 places of a cell the report names under each reason.
+ */
+const LISTED_UNWRITABLE_PLACES = 5
+
+/**
  * The three rules over tables {@linkcode createProminentCoverageTables} made.
  */
 export async function evaluateProminentCoverage(
@@ -535,11 +666,16 @@ export async function evaluateProminentCoverage(
 		})
 	)
 
+	const writability = Map.groupBy(await readDecileOneWritability(db), demandCellKey)
+
 	const judged = (await readDemandCells(db)).map((cell) => {
 		const target = cell.decile1_population_share == null ? null : DEMAND_SHARE_FRACTION * cell.decile1_population_share
 		const share = cell.draws > 0 ? cell.decile1_draws / cell.draws : 0
+		const passed = target == null || (cell.draws > 0 && share >= target)
+		const places = writability.get(demandCellKey(cell)) ?? []
+		const unwritable = !passed && !places.some((place) => place.reason == null)
 
-		return { ...cell, share, target, passed: target == null || (cell.draws > 0 && share >= target) }
+		return { ...cell, share, target, passed, unwritable, places }
 	})
 
 	const [epochDraws] = await queryRows(db, "SELECT draws FROM epoch", (row) => row.number("draws"))
@@ -556,14 +692,22 @@ export async function evaluateProminentCoverage(
 		})
 	)
 
-	const shapes = new Map<string, { band: string; query_shape: string; cells: number; passing: number }>()
+	const shapes = new Map<string, ProminentCoverageReport["demand_share"]["by_band_shape"][number]>()
 
 	for (const cell of judged) {
 		const key = `${cell.band}\u0000${cell.query_shape}`
-		const entry = shapes.get(key) ?? { band: cell.band, query_shape: cell.query_shape, cells: 0, passing: 0 }
+
+		const entry = shapes.get(key) ?? {
+			band: cell.band,
+			query_shape: cell.query_shape,
+			cells: 0,
+			passing: 0,
+			unwritable: 0,
+		}
 
 		entry.cells++
 		entry.passing += cell.passed ? 1 : 0
+		entry.unwritable += cell.unwritable ? 1 : 0
 		shapes.set(key, entry)
 	}
 
@@ -608,7 +752,22 @@ export async function evaluateProminentCoverage(
 		geonamesAudit.push({ band_km: `${lower}-${upper}`, accepted: accepted ?? 0, sample })
 	}
 
-	const failingCells = judged.filter((cell) => !cell.passed)
+	const failingCells = judged.filter((cell) => !cell.passed && !cell.unwritable)
+
+	const unwritableCells = judged
+		.filter((cell) => cell.unwritable)
+		.map((cell) => ({
+			country: cell.country,
+			band: cell.band,
+			query_shape: cell.query_shape,
+			decile1_places: cell.places.length,
+			deficit_draws: decileOneDeficit(cell.draws, cell.decile1_draws, cell.target!),
+			reasons: [...Map.groupBy(cell.places, (place) => place.reason!)].map(([reason, places]) => ({
+				reason,
+				places: places.length,
+				examples: places.slice(0, LISTED_UNWRITABLE_PLACES).map((place) => `${place.name} (${place.spr_id})`),
+			})),
+		}))
 
 	return {
 		epoch: { draws: epochDraws ?? 0, sources: epochSources },
@@ -625,8 +784,11 @@ export async function evaluateProminentCoverage(
 			fraction_of_population_share: DEMAND_SHARE_FRACTION,
 			cells: judged.length,
 			passing: judged.filter((cell) => cell.passed).length,
+			unwritable: unwritableCells.length,
+			failing_count: failingCells.length,
 			cells_without_population: judged.filter((cell) => cell.target == null).length,
 			by_band_shape: [...shapes.values()],
+			unwritable_cells: unwritableCells,
 			failing: failingCells.slice(0, LISTED_FAILURES).map((cell) => ({
 				country: cell.country,
 				band: cell.band,
@@ -698,7 +860,7 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 
 	const passed =
 		rules.presence.covered_forms === rules.presence.required_forms &&
-		rules.demand_share.passing === rules.demand_share.cells &&
+		rules.demand_share.failing_count === 0 &&
 		rules.coherence.rows === 0
 
 	return {
