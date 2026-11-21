@@ -161,7 +161,7 @@ returns 404.
 The items routes serve the gazetteer in bulk, so with `--serve-items` the server reads the database's recorded
 license at startup and prints it. When `MAILWOMAN_REFUSE_OBLIGATIONS` refuses a class that license carries, `places`
 serves no items and the banner states the refusal. The database records `LicenseRef-WhosOnFirst-Mixed`
-(attribution and share-alike) beside `ODbL-1.0` and `CC-BY-4.0`. An operator who sets
+(attribution) beside `ODbL-1.0` (attribution and share-alike) and `CC-BY-4.0`. An operator who sets
 `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike` therefore serves no items, and one who sets `unresolved` serves them.
 
 ## Search

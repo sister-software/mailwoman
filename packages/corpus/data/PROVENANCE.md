@@ -60,6 +60,12 @@ publisher's metadata answered with empty license, access and copyright fields). 
 terms page it rests on, with `found: "no-statement"` for a `no-statement-found` acceptance and `found: "terms"`,
 with the publisher's words, for the others.
 
+`found: "site-terms-not-applied"` records a reading where the dataset's metadata states no terms and the
+publisher's website states site-wide terms that the decision doesn't read as the dataset's grant. Oneida and
+Waukesha counties in Wisconsin read that way. A noncommercial site policy over the site that leads to the file
+refuses `redistribute-data` and leaves `transform` and `train` permitted, as on those two rows and on St.
+Mary's County, Maryland, whose file the policy's own site serves.
+
 Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw
 listing, the Taoyuan City Government's portal page or the Keelung City Government's site-wide open-data
 declaration states the Open Government Data License, version 1.0 (`OGDL-Taiwan-1.0`). Its `reading` quotes that

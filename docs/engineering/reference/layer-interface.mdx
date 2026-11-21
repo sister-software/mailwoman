@@ -438,15 +438,15 @@ the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwo
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                         | Meaning                                                                                                                                                                                      | Obligations              |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution              |
-| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none                     |
-| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution, share-alike |
-| `LicenseRef-US-Mixed`                | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown                  |
-| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                       | unknown                  |
-| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution              |
-| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution              |
+| `LicenseRef`                         | Meaning                                                                                                                                                                                      | Obligations |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution |
+| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none        |
+| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution |
+| `LicenseRef-US-Mixed`                | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown     |
+| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                       | unknown     |
+| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution |
+| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution |
 
 `LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
 publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only
@@ -462,8 +462,8 @@ complete list of the artifact's terms.
 
 ### Who's On First's obligations
 
-`LicenseRef-WhosOnFirst-Mixed` records attribution and share-alike (#3163). The reading rests on three texts and
-one count.
+`LicenseRef-WhosOnFirst-Mixed` records attribution only (#3163). The reading rests on four texts and
+two counts.
 
 Each WOF repository's `LICENSE.md` states: "Crediting Who's On First is recommended and linking back to this
 License is required." It continues: "The Who's On First dataset is both original work and a modification of
@@ -473,8 +473,7 @@ the link back, and the OGC server's `license` link for this identifier points to
 The [WOF source list](https://github.com/whosonfirst/whosonfirst-sources/blob/master/data/sources-spec-latest.json)
 (182 entries, retrieved 2026-11-21), types 16 entries as restricted or non-commercial: 14 `Restricted`, `eg` as `Restricted Use License
 (non-commercial)` and `wmo` as `CC BY-NC-ND 4.0`. Each has `usage_geometry: 0`. All but `iso` and `itu` also have
-`usage_property: 0`. `wikipedia` is `CC BY-SA 3.0` with `usage_geometry: 1` and `usage_property: 1`, which is the
-share-alike term.
+`usage_property: 0`. `wikipedia` is `CC BY-SA 3.0` with `usage_geometry: 1` and `usage_property: 1`.
 
 `LICENSE.md` describes Quattroshapes geometry with `qs_source:EuroGlobalMap` and asks for credit to the European
 national mapping agencies it lists. The non-commercial `eg` entry isn't that data. Its description reads:
@@ -506,7 +505,17 @@ each of them.
 
 Wikipedia is the `src:geom` of 14 records and the `src:population` of 2,338 (`wikipedia` or its prefix `wk`).
 Of those 2,352 records, 2,331 are in the admin build's `spr` table, 2,330 in its `place_population` table and
-2,330 in `candidate.db`, so its CC BY-SA 3.0 term reaches the layers through centroids, boxes and populations.
+2,330 in `candidate.db`, where they supply centroids, boxes and populations.
+
+Those values carry no share-alike term. The
+[CC BY-SA 3.0 legal code](https://creativecommons.org/licenses/by-sa/3.0/legalcode) defines the Work as "the
+literary and/or artistic work offered under the terms of this License". Its Section 2, "Fair Dealing Rights", opens by stating that no part of the License is
+"intended to reduce, limit, or restrict any uses free from copyright". A population figure and a coordinate are facts rather than literary or artistic work. The license grants no
+right over them and imposes no condition on them, share-alike included. The 14 geometries are each a single `Point` with a `geom:area` of 0, read on 2026-11-21 from the
+WOF record store's located GeoJSON for the issue's record-ID list. They're airport and airfield `campus` records,
+such as Innsbruck Airport (`102556255`) and Istanbul Airport (`1779770747`). None is a drawn polygon, which
+would be the one Wikipedia contribution that could carry authorship. The table therefore records attribution
+alone.
 
 Issue #3163 records the scan's per-country and per-property tables.
 
@@ -523,8 +532,9 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
 
 - The data bill of materials (`mailwoman data bom`) nests one component per source under the layer's component.
   Each states the publisher, the register decision, the basis (`open-license`, `publisher-grant`,
-  `no-restricting-terms`, `refused`, `unread` or `unregistered`), whether the terms page stated terms or held an
-  empty statement (`terms` or `no-statement`), the terms URL, the attribution and share-alike states and the record count. A source with no register
+  `no-restricting-terms`, `refused`, `unread` or `unregistered`), what the terms page held (`terms`, an empty
+  statement as `no-statement`, or site-wide terms the decision didn't read as the dataset's as
+  `site-terms-not-applied`), the terms URL, the attribution and share-alike states and the record count. A source with no register
   row reads `unregistered` with unknown obligations.
 - `mailwoman doctor` prints the count of sources in each obligation class for the attached layer and points to
   the other two.

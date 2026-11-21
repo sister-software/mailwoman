@@ -106,11 +106,14 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// Each repository's `LICENSE.md` requires a link back to that license.
 	// The attribution notice holds the link.
 	// Its sources' grants require their credits.
-	// Wikipedia supplies geometry and populations under CC BY-SA 3.0, hence share-alike.
+	// Wikipedia supplies 14 point geometries and 2,338 populations under CC BY-SA 3.0.
+	// Those are facts.
+	// The license's Section 2 leaves uses free from copyright unrestricted.
+	// Its share-alike term therefore reaches none of them.
 	// No record the admin build reads takes geometry or a stored property from
 	// a source the WOF source list types as restricted or non-commercial.
 	// docs/engineering/reference/layer-interface.mdx records the count.
-	["LicenseRef-WhosOnFirst-Mixed", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	["LicenseRef-WhosOnFirst-Mixed", [LicenseObligation.Attribution]],
 	// `LicenseRef-US-Mixed`, the US address layer, is deliberately absent.
 	// Its read sources owe attribution at most.
 	// The publishers of 30% of its records have terms no reader recorded.

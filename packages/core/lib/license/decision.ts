@@ -127,6 +127,14 @@ export const TermsStatement = {
 	 * This is a finding about the page, kept apart from terms that were read and found not to restrict.
 	 */
 	NoStatement: "no-statement",
+	/**
+	 * The dataset's own metadata states no terms, and the reviewer found site-wide
+	 * terms on the publisher's website.
+	 *
+	 * The decision doesn't read the site terms as the dataset's grant.
+	 * Its `operations` record what it decides about them, such as a refused `redistribute-data`.
+	 */
+	SiteTermsNotApplied: "site-terms-not-applied",
 } as const
 
 /**
