@@ -266,8 +266,12 @@ pub fn probe_family() -> Family {
 
 /// Compiles the families under `limits` and loads each artifact into one engine.
 pub fn engine_with(families: Vec<Family>, limits: &Limits) -> Engine {
-	let built = compile_families(families, limits)
-		.unwrap_or_else(|diagnostics| panic!("the families do not compile:\n{}", recognizer_core::render(&diagnostics)));
+	let built = compile_families(families, limits).unwrap_or_else(|diagnostics| {
+		panic!(
+			"the families do not compile:\n{}",
+			recognizer_core::render(&diagnostics)
+		)
+	});
 	let mut engine = Engine::new();
 
 	for family in &built {

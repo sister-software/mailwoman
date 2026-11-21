@@ -36,8 +36,12 @@ fn analysis_of(families: Vec<Family>) -> Analysis {
 
 	documents.sort_by(|a, b| a.family.cmp(&b.family));
 
-	recognizer_build::analysis::analyze(&documents, &Limits::default())
-		.unwrap_or_else(|diagnostics| panic!("the families do not analyze:\n{}", recognizer_core::render(&diagnostics)))
+	recognizer_build::analysis::analyze(&documents, &Limits::default()).unwrap_or_else(|diagnostics| {
+		panic!(
+			"the families do not analyze:\n{}",
+			recognizer_core::render(&diagnostics)
+		)
+	})
 }
 
 fn overlap<'a>(analysis: &'a Analysis, a: &str, b: &str) -> Option<&'a Overlap> {
