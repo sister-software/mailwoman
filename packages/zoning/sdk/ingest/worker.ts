@@ -7,8 +7,8 @@
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/core/scripting/ingest-chunk-script"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/sqlite/ingest-chunk-script"
 
 import type { ZoningDatabase } from "#schema"
 import { createExportFeatureSource } from "#sdk/ingest"
