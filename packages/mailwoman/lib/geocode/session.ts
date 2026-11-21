@@ -47,16 +47,18 @@ import {
 	type GeocodeDeps,
 } from "#geocode/core"
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
+import type { LayerContribution } from "#geocode/layer-contributions"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {
-	nationalDatabasesOf,
 	registerGenerationServices,
 	registerProcessServices,
 	resolveGenerationServices,
+	unavailableLayers,
 } from "#geocode/services"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import type { CapitalTier } from "#resolver-backend"
+import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
 
 /**
@@ -385,6 +387,13 @@ export interface GeocodeSessionScope {
 	 * Absent, the session builds every service and disposes them with itself.
 	 */
 	parent?: ServiceRegistry
+
+	/**
+	 * The data layers the session composes, in the order it consults their national sources.
+	 *
+	 * @defaultValue `NODE_LAYER_CONTRIBUTIONS` in `#services/entry/node`
+	 */
+	layers?: readonly LayerContribution[]
 }
 
 /**
@@ -400,6 +409,13 @@ export interface GeocodeSession extends AsyncDisposable {
 	 * Services build in parallel, so the per-service figures overlap.
 	 */
 	initTiming: PipelineTiming
+
+	/**
+	 * Each optional layer that failed to open, with the message of what it threw.
+	 *
+	 * The session answers without those layers, and prints one line for each to stderr as it starts.
+	 */
+	unavailableLayers: { layer: string; reason: string }[]
 
 	/**
 	 * The artifact paths that this session opened, where missing artifacts are skipped
@@ -488,7 +504,7 @@ export async function createGeocodeSession(
 
 	recordServiceTimings(registry, timings)
 	registerProcessServices(registry, options)
-	registerGenerationServices(registry, options, settings)
+	registerGenerationServices(registry, options, settings, scope.layers ?? NODE_LAYER_CONTRIBUTIONS)
 
 	progress("Loading the gazetteer, neural model and data layers…")
 
@@ -551,7 +567,16 @@ export async function createGeocodeSession(
 
 	const venueHead = priors.venueHeadFor(venueHeadCountry)
 	const resolver = createWOFResolver(lookup)
-	const nationalDatabases = nationalDatabasesOf(services.ban, services.overture)
+	const { nationalDatabases } = services
+
+	const unavailable = unavailableLayers(registry).map(({ layer, error }) => ({
+		layer,
+		reason: error instanceof Error ? error.message : String(error),
+	}))
+
+	for (const { layer, reason } of unavailable) {
+		console.error(`  unavailable: ${layer}, because ${reason}`)
+	}
 
 	const capitalLevel = capitals
 		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
@@ -773,6 +798,7 @@ export async function createGeocodeSession(
 
 	return {
 		initTiming,
+		unavailableLayers: unavailable,
 
 		artifacts: {
 			...(fst && priorArtifacts.fstPath ? { fstPath: priorArtifacts.fstPath } : {}),
