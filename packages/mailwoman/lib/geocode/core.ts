@@ -20,6 +20,7 @@ import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	type CaseNormalization,
+	type ClassifierOpts,
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,
@@ -147,6 +148,25 @@ export interface GeocodeSwitches {
 	 * It needs {@link GeocodeDeps.postcodePrefixIndex}.
 	 */
 	postcodePrefixPrior: boolean
+	/**
+	 * Leaves the separator pieces after a placetype-pair window unbiased, such as the `,` after a child name.
+	 */
+	pairPriorWordPieces: boolean
+	/**
+	 * Keeps a segment child's placetype-pair bias off the same-field postcode,
+	 * as in `Sutton Coldfield B72 1PU`.
+	 */
+	pairPriorChildPostcodeStrip: boolean
+	/**
+	 * Applies the placetype-pair index only when the parse's country is the index's country:
+	 * {@link GeocodeDeps.parseCountry} when set, else the locale head's confident verdict.
+	 */
+	pairIndexOwnCountry: boolean
+	/**
+	 * Parses with the gazetteer FST of the country the locale head confidently reads,
+	 * through {@link GeocodeDeps.fstForCountry}, when that country ships one.
+	 */
+	fstCountryRouting: boolean
 }
 
 /**
@@ -171,6 +191,10 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	scopeCountryRetrieval: RESOLVE_SWITCH_DEFAULTS.scopeCountryRetrieval,
 	siblingLocalityContainment: RESOLVE_SWITCH_DEFAULTS.siblingLocalityContainment,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
+	pairPriorWordPieces: false,
+	pairPriorChildPostcodeStrip: false,
+	pairIndexOwnCountry: false,
+	fstCountryRouting: false,
 }
 
 /**
@@ -217,6 +241,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Gazetteer FST prior.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
+	/**
+	 * The gazetteer FST shipped for each country, read under {@link GeocodeSwitches.fstCountryRouting}.
+	 */
+	fstForCountry?: import("@mailwoman/core/pipeline").CountryFSTLookup
+	/**
+	 * The country the caller states for the parse, such as the session's default
+	 * or locale country, read under {@link GeocodeSwitches.pairIndexOwnCountry}.
+	 */
+	parseCountry?: string
 	/**
 	 * Street-morphology matcher for street-context checks.
 	 */
@@ -376,6 +409,57 @@ export interface GeocodeParseInputs {
 	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
 }
 
+/**
+ * The geocode switches that change only the parse's decode, each off by default.
+ */
+export const DECODER_SETTING_KEYS = [
+	"pairPriorWordPieces",
+	"pairPriorChildPostcodeStrip",
+	"pairIndexOwnCountry",
+	"fstCountryRouting",
+] as const satisfies readonly (keyof GeocodeSwitches)[]
+
+/**
+ * A choice of {@link DECODER_SETTING_KEYS} values, where an unset key keeps its default.
+ */
+export type DecoderSettings = Partial<Pick<GeocodeSwitches, (typeof DECODER_SETTING_KEYS)[number]>>
+
+/**
+ * The decoder settings a geocode's parse reads, and the inputs they read.
+ */
+export type GeocodeDecoderSettingDeps = Pick<
+	GeocodeDeps,
+	| "pairPriorWordPieces"
+	| "pairPriorChildPostcodeStrip"
+	| "pairIndexOwnCountry"
+	| "fstCountryRouting"
+	| "fstForCountry"
+	| "parseCountry"
+>
+
+/**
+ * The classifier options for the decoder settings that are on.
+ *
+ * An unset setting adds no option, so the classifier runs as it does without the setting.
+ */
+export function decoderSettingOptions(
+	deps: GeocodeDecoderSettingDeps & Pick<GeocodeDeps, "fst">
+): Pick<
+	ClassifierOpts,
+	"pairPriorWordPieces" | "pairPriorChildPostcodeStrip" | "pairIndexOwnCountry" | "fstForCountry"
+> {
+	const switches = geocodeSwitches(deps)
+
+	return {
+		...(switches.pairPriorWordPieces ? { pairPriorWordPieces: true } : {}),
+		...(switches.pairPriorChildPostcodeStrip ? { pairPriorChildPostcodeStrip: true } : {}),
+		...(switches.pairIndexOwnCountry
+			? { pairIndexOwnCountry: { declaredCountry: deps.parseCountry?.toUpperCase() || null } }
+			: {}),
+		...(switches.fstCountryRouting && deps.fst && deps.fstForCountry ? { fstForCountry: deps.fstForCountry } : {}),
+	}
+}
+
 export function geocodeParseInputs(
 	input: string,
 	deps: Pick<
@@ -391,6 +475,7 @@ export function geocodeParseInputs(
 		| "venueHeadOpts"
 		| "channelPins"
 	> &
+		GeocodeDecoderSettingDeps &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// Stage-1 input normalization before parse.
@@ -441,6 +526,7 @@ export function geocodeParseInputs(
 					...(deps.venueHeadOpts ? { venueHeadOpts: deps.venueHeadOpts } : {}),
 				}
 			),
+			...decoderSettingOptions(deps),
 		},
 	}
 }
@@ -463,7 +549,8 @@ export async function parseForGeocode(
 		| "anchorRegions"
 		| "venueHead"
 		| "venueHeadOpts"
-	>
+	> &
+		GeocodeDecoderSettingDeps
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)
 	const { parseInput, opts, queryShape } = geocodeParseInputs(input, { ...deps, classifier })

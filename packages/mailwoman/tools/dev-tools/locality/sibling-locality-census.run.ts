@@ -18,6 +18,12 @@
  * `--outside-every k` also geocodes every k-th row outside the population with both arms,
  * to check that the parse-tree count bounds the rows the setting can change.
  *
+ * `--setting <name>` measures another setting the same way: `siblingLocalityContainment`
+ * (the default) or a decoder setting.
+ * A decoder setting's trigger population is the rows whose decoded path the setting changes.
+ *
+ * `--ids <file>` limits the held-out rows to the ids it lists, one per line.
+ *
  * `--inputs` reads a tab-separated literal set (`input<TAB>country`) with no truth, geocoded on both routes.
  *
  * This command isn't a release eval.
@@ -40,6 +46,7 @@ import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
+import { DECODER_SETTING_KEYS } from "#geocode/core"
 import {
 	buildGauntletDeps,
 	PRODUCTION_RESOLVER_PINS,
@@ -63,8 +70,31 @@ const { values } = parseArguments({
 		label: { type: "string" },
 		limit: { type: "string" },
 		"outside-every": { type: "string" },
+		// The setting the two arms differ in.
+		setting: { type: "string" },
+		// A file of held-out row ids, one per line, that limits the rows read.
+		ids: { type: "string" },
 	},
 })
+
+const MEASURED_SETTINGS = ["siblingLocalityContainment", ...DECODER_SETTING_KEYS] as const
+
+type MeasuredSetting = (typeof MEASURED_SETTINGS)[number]
+
+const setting = (values.setting ?? "siblingLocalityContainment") as MeasuredSetting
+
+if (!(MEASURED_SETTINGS as readonly string[]).includes(setting)) {
+	throw new Error(`unknown --setting ${setting}; the settings are ${MEASURED_SETTINGS.join(", ")}`)
+}
+
+const decoderSetting = setting !== "siblingLocalityContainment"
+
+const idFilter = values.ids
+	? new Set(
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- A list of row ids a census run wrote.
+			(await readLocalTextFile(values.ids)).split("\n").filter((line) => line.trim())
+		)
+	: null
 
 const outDir = values["out-dir"] ?? "/mnt/mw/audits/sibling-heldout"
 const limit = values.limit ? Number(values.limit) : Number.POSITIVE_INFINITY
@@ -109,6 +139,8 @@ async function* censusRows(): AsyncGenerator<CensusRow> {
 	}
 
 	for await (const { collection, row } of readHeldoutCollectionRows(values.heldout ?? [])) {
+		if (idFilter && !idFilter.has(heldoutRowID(row))) continue
+
 		yield { collection, row, graded: true }
 	}
 }
@@ -259,6 +291,7 @@ async function checkpoint(final: boolean): Promise<void> {
 			final,
 			processed,
 			seconds: Math.round((Date.now() - startedAt) / 1000),
+			setting,
 			routes,
 			outsideEvery,
 			baseOnlyCountries: [...baseOnly],
@@ -282,12 +315,22 @@ async function localitySpans(deps: GauntletDeps, input: string, opts: GauntletGe
 	return collectNodes(tree.roots, (node) => node.tag === "locality").map((node) => node.value)
 }
 
+/**
+ * Whether a decoder setting changes the row's decoded path, the population a decoder setting is measured on.
+ */
+async function parseChanges(input: string, opts: GauntletGeocodeOpts): Promise<boolean> {
+	const off = await offDeps.diagnoseParse(input, opts)
+	const on = await offDeps.diagnoseParse(input, opts, undefined, { [setting]: true })
+
+	return off.trace.path.some((labelIndex, piece) => on.trace.path[piece] !== labelIndex)
+}
+
 using offDeps = await buildGauntletDeps({
-	pins: { ...PRODUCTION_RESOLVER_PINS, siblingLocalityContainment: "off" },
+	pins: { ...PRODUCTION_RESOLVER_PINS, [setting]: "off" },
 })
 
 using onDeps = await buildGauntletDeps({
-	pins: { ...PRODUCTION_RESOLVER_PINS, siblingLocalityContainment: "on" },
+	pins: { ...PRODUCTION_RESOLVER_PINS, [setting]: "on" },
 })
 
 const baseOnly = new Set<string>()
@@ -304,7 +347,7 @@ for await (const entry of censusRows()) {
 
 		tally.rows++
 		const spans = await localitySpans(offDeps, row.raw, opts)
-		const inPopulation = spans.length >= 2
+		const inPopulation = decoderSetting ? await parseChanges(row.raw, opts) : spans.length >= 2
 		const outside = !inPopulation && outsideEvery > 0 && processed % outsideEvery === 0
 
 		if (route === "country" && row.country && offDeps.gradedBaseOnly(row.country)) {

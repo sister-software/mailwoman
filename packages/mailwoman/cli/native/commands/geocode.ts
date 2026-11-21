@@ -171,6 +171,28 @@ export const spec = {
 			description:
 				"Resolve one of two locality spans inside the other when the gazetteer contains it there (Kensington, London).",
 		},
+		"pair-prior-word-pieces": {
+			type: "boolean",
+			default: false,
+			description: "Leave the comma after a place-pair child unbiased, biasing only the pieces with letters or digits.",
+		},
+		"pair-prior-child-postcode-strip": {
+			type: "boolean",
+			default: false,
+			description: "Keep a place-pair child's bias off the postcode in its own segment (Sutton Coldfield B72 1PU).",
+		},
+		"pair-index-own-country": {
+			type: "boolean",
+			default: false,
+			description:
+				"Apply the place-pair index only when the address's country is the index's country. The country is the default country, a chosen locale's country, or the locale head's verdict.",
+		},
+		"fst-country-routing": {
+			type: "boolean",
+			default: false,
+			description:
+				"Parse with the gazetteer FST of the country the locale head reads, when one ships for that country. Otherwise the locale's FST applies.",
+		},
 		parent: {
 			type: "number",
 			hint: "wof id",
@@ -274,6 +296,10 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		countyDesignatorFallback: booleanValue(values, "county-designator-fallback"),
 		scopeCountryRetrieval: booleanValue(values, "scope-country-retrieval"),
 		siblingLocalityContainment: booleanValue(values, "sibling-locality-containment"),
+		pairPriorWordPieces: booleanValue(values, "pair-prior-word-pieces"),
+		pairPriorChildPostcodeStrip: booleanValue(values, "pair-prior-child-postcode-strip"),
+		pairIndexOwnCountry: booleanValue(values, "pair-index-own-country"),
+		fstCountryRouting: booleanValue(values, "fst-country-routing"),
 		...(numberValue(values, "parent") !== null
 			? {
 					parentPlace: {

@@ -56,11 +56,12 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
+import { heldoutArmDecoderSettings, parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
 import {
 	type HeldoutRowOutcome,
 	assertPairedArms,
@@ -337,13 +338,16 @@ async function scoreAndReport(): Promise<void> {
 	const capabilitySources = capabilityProbeSources(spec)
 
 	const parseSources: HeldoutParseSource[] = []
-	// Arms that share a weights cache root parse identically, because their pins act only in the resolver.
+	// Arms that share a weights cache root and decoder pins parse identically,
+	// because their other pins act only in the resolver.
 	const parsesByRoot = new Map<string, Awaited<ReturnType<typeof parseHeldoutRows>>>()
 
 	for (const [index, arm] of parsedArms.entries()) {
 		console.error(`scoring arm ${index + 1} of ${arms.length}: ${arm.label}`)
 
-		let parsed = parsesByRoot.get(arm.cacheRoot)
+		const decoderSettings = heldoutArmDecoderSettings(arm)
+		const parseKey = `${arm.cacheRoot}\n${stringifyJSON(decoderSettings)}`
+		let parsed = parsesByRoot.get(parseKey)
 
 		if (!parsed) {
 			parsed = await parseHeldoutRows(rows, arm.cacheRoot, {
@@ -351,10 +355,11 @@ async function scoreAndReport(): Promise<void> {
 				workers: Number(values.workers),
 				threads: Number(values.threads),
 				localeHint: values["no-hint"] ? "none" : "row-country",
+				decoderSettings,
 				...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
 			})
 
-			parsesByRoot.set(arm.cacheRoot, parsed)
+			parsesByRoot.set(parseKey, parsed)
 		}
 
 		const { parses, source } = parsed

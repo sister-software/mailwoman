@@ -14,6 +14,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
+	decoderSettingOptions,
 	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
 	geocodeSwitches,
@@ -846,5 +847,39 @@ describe("epistemic_status — what the evidence permits, beside how the coordin
 
 		expect(r.resolution_tier).toBe("admin")
 		expect(r.epistemic_status).toBe("observed")
+	})
+})
+
+describe("decoderSettingOptions", () => {
+	const fst: NonNullable<GeocodeDeps["fst"]> = { walk: () => null, walkFrom: () => null, accepting: () => [] }
+	const fstForCountry = () => null
+
+	it("adds no classifier option at the defaults, so a default parse decodes as before the settings existed", () => {
+		expect(decoderSettingOptions({ fst, fstForCountry, parseCountry: "GB" })).toEqual({})
+	})
+
+	it("passes each setting that is on, with the stated country beside the pair-index country setting", () => {
+		expect(
+			decoderSettingOptions({
+				fst,
+				fstForCountry,
+				parseCountry: "gb",
+				pairPriorWordPieces: true,
+				pairPriorChildPostcodeStrip: true,
+				pairIndexOwnCountry: true,
+				fstCountryRouting: true,
+			})
+		).toEqual({
+			pairPriorWordPieces: true,
+			pairPriorChildPostcodeStrip: true,
+			pairIndexOwnCountry: { declaredCountry: "GB" },
+			fstForCountry,
+		})
+	})
+
+	it("leaves the head to decide when no country is stated, and routes no FST into a parse that has none", () => {
+		expect(decoderSettingOptions({ pairIndexOwnCountry: true, fstCountryRouting: true, fstForCountry })).toEqual({
+			pairIndexOwnCountry: { declaredCountry: null },
+		})
 	})
 })

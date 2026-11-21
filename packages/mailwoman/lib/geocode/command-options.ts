@@ -8,7 +8,7 @@ import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prio
 import type { PathBuilderLike } from "path-ts"
 
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/core"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { GEOCODE_DEFAULT_LOCALE, GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import type { CapitalTier } from "#resolver-backend"
 
 export interface GeocodeCommandOptions {
@@ -79,6 +79,34 @@ export interface GeocodeCommandOptions {
 	 */
 	siblingLocalityContainment: boolean
 	/**
+	 * The placetype-pair prior leaves separator pieces unbiased.
+	 * Off by default.
+	 *
+	 * `--pair-prior-word-pieces` opts in.
+	 */
+	pairPriorWordPieces: boolean
+	/**
+	 * A segment child's placetype-pair bias leaves out its same-field postcode.
+	 * Off by default.
+	 *
+	 * `--pair-prior-child-postcode-strip` opts in.
+	 */
+	pairPriorChildPostcodeStrip: boolean
+	/**
+	 * The placetype-pair index applies only when the parse's country is the index's.
+	 * Off by default.
+	 *
+	 * `--pair-index-own-country` opts in.
+	 */
+	pairIndexOwnCountry: boolean
+	/**
+	 * A parse takes the gazetteer FST of the country the locale head reads, when one ships.
+	 * Off by default.
+	 *
+	 * `--fst-country-routing` opts in.
+	 */
+	fstCountryRouting: boolean
+	/**
 	 * A parent place that scopes every lookup (`--parent <wof id>` with `--parent-scope hard|soft`).
 	 */
 	parentPlace?: ParentPlaceScope
@@ -104,7 +132,7 @@ export interface GeocodeCommandOptions {
 
 export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOptions> = {}): GeocodeCommandOptions {
 	return {
-		locale: "en-US",
+		locale: GEOCODE_DEFAULT_LOCALE,
 		countryScope: "auto",
 		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
@@ -122,6 +150,10 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		countyDesignatorFallback: GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
 		scopeCountryRetrieval: GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval,
 		siblingLocalityContainment: GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
+		pairPriorWordPieces: GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,
+		pairPriorChildPostcodeStrip: GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip,
+		pairIndexOwnCountry: GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry,
+		fstCountryRouting: GEOCODE_SWITCH_DEFAULTS.fstCountryRouting,
 		capitalTier: GEOCODE_SESSION_DEFAULTS.capitalTier,
 		variantAliasExemption: GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
 		placeCountryThreshold: 0.9,

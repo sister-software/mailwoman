@@ -95,8 +95,8 @@ export interface CandidateWindow {
 	 * as for a segment whose key had a same-field postcode stripped.
 	 * Absent when the two coincide.
 	 *
-	 * The whole-edge parent write ({@link applyParentTagBias}) reads this field,
-	 * while the child write spans the whole segment.
+	 * The whole-edge parent write ({@link applyParentTagBias}) reads this field, The child
+	 * write spans the whole segment unless `childKeyPiecesOnly` narrows it to this range.
 	 */
 	keyPieceIndices?: number[]
 }

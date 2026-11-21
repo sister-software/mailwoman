@@ -90,6 +90,30 @@ export interface EngineConfig {
 	 */
 	sibling_locality_containment?: SwitchPin
 	/**
+	 * Whether the placetype-pair prior leaves separator pieces unbiased.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces`
+	 */
+	pair_prior_word_pieces?: SwitchPin
+	/**
+	 * Whether a segment child's placetype-pair bias leaves out its same-field postcode.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip`
+	 */
+	pair_prior_child_postcode_strip?: SwitchPin
+	/**
+	 * Whether the placetype-pair index applies only when the parse's country is the index's.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry`
+	 */
+	pair_index_own_country?: SwitchPin
+	/**
+	 * Whether a parse takes the gazetteer FST of the country the locale head reads.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.fstCountryRouting`
+	 */
+	fst_country_routing?: SwitchPin
+	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
@@ -151,6 +175,10 @@ export const EFFECTIVE_KEY_FOR = {
 	county_designator_fallback: "countyDesignatorFallback",
 	scope_country_retrieval: "scopeCountryRetrieval",
 	sibling_locality_containment: "siblingLocalityContainment",
+	pair_prior_word_pieces: "pairPriorWordPieces",
+	pair_prior_child_postcode_strip: "pairPriorChildPostcodeStrip",
+	pair_index_own_country: "pairIndexOwnCountry",
+	fst_country_routing: "fstCountryRouting",
 	poi_venue_tier: "poiVenueTier",
 	capital_tier: "capitalTier",
 	variant_alias_exemption: "variantAliasExemption",
@@ -228,6 +256,13 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 			config.sibling_locality_containment ?? "production",
 			production.siblingLocalityContainment
 		),
+		pairPriorWordPieces: pinnedSwitch(config.pair_prior_word_pieces ?? "production", production.pairPriorWordPieces),
+		pairPriorChildPostcodeStrip: pinnedSwitch(
+			config.pair_prior_child_postcode_strip ?? "production",
+			production.pairPriorChildPostcodeStrip
+		),
+		pairIndexOwnCountry: pinnedSwitch(config.pair_index_own_country ?? "production", production.pairIndexOwnCountry),
+		fstCountryRouting: pinnedSwitch(config.fst_country_routing ?? "production", production.fstCountryRouting),
 		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,
 		variantAliasExemption: config.variant_alias_exemption ?? production.variantAliasExemption,

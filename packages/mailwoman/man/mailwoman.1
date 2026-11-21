@@ -165,6 +165,19 @@ Options:
   \-\-sibling\-locality\-containment              Resolve one of two locality spans inside the other
                                               when the gazetteer contains it there (Kensington,
                                               London). (default: false)
+  \-\-pair\-prior\-word\-pieces                    Leave the comma after a place\-pair child unbiased,
+                                              biasing only the pieces with letters or digits.
+                                              (default: false)
+  \-\-pair\-prior\-child\-postcode\-strip           Keep a place\-pair child's bias off the postcode in its
+                                              own segment (Sutton Coldfield B72 1PU). (default:
+                                              false)
+  \-\-pair\-index\-own\-country                    Apply the place\-pair index only when the address's
+                                              country is the index's country. The country is the
+                                              default country, a chosen locale's country, or the
+                                              locale head's verdict. (default: false)
+  \-\-fst\-country\-routing                       Parse with the gazetteer FST of the country the locale
+                                              head reads, when one ships for that country. Otherwise
+                                              the locale's FST applies. (default: false)
   \-\-parent <wof id>                           A parent place that scopes every lookup, such as a
                                               borough, city, region or country WOF id.
   \-\-parent\-scope <string>                     How \-\-parent acts. Hard keeps only places its lineage

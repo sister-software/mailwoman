@@ -815,6 +815,23 @@ export interface VenueHeadStage {
 }
 
 /**
+ * The stated country that `pairIndexOwnCountry` compares against a placetype-pair index's own country.
+ */
+export interface PairIndexOwnCountry {
+	/**
+	 * The country the caller states for the parse, such as its locale's or default country.
+	 *
+	 * `null` leaves the decision to the locale head's confident verdict.
+	 */
+	declaredCountry: string | null
+}
+
+/**
+ * Returns the gazetteer FST shipped for an ISO 3166-1 alpha-2 country, or `null` when none ships.
+ */
+export type CountryFSTLookup = (country: string) => FSTMatcherLike | null | Promise<FSTMatcherLike | null>
+
+/**
  * Options for {@link AddressClassifier.parse}.
  */
 export interface ClassifierOpts {
@@ -880,6 +897,22 @@ export interface ClassifierOpts {
 	 */
 	enforceWordConsistency?: WordConsistencySetting
 	placetypePair?: PlacetypePairSelection
+	/**
+	 * Whether the placetype-pair prior leaves separator pieces unbiased.
+	 */
+	pairPriorWordPieces?: boolean
+	/**
+	 * Whether a segment child's pair bias leaves out the same-field postcode its probe key stripped.
+	 */
+	pairPriorChildPostcodeStrip?: boolean
+	/**
+	 * Applies the placetype-pair index only when the parse's country is the index's country.
+	 */
+	pairIndexOwnCountry?: PairIndexOwnCountry
+	/**
+	 * The gazetteer FST for the country the locale head reads, used in place of `fst` when one ships.
+	 */
+	fstForCountry?: CountryFSTLookup
 }
 
 /**

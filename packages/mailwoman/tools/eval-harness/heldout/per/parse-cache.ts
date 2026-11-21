@@ -27,6 +27,7 @@ import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import type { DecoderSettings } from "#geocode/core"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import { parseRowsWithWorkers, type ParseRow } from "#tools/eval-harness/battery/parse/rows"
 import {
@@ -56,6 +57,10 @@ export interface HeldoutParseCacheKey {
 	 * A hinted key leaves it out, so the files hinted runs cached before the field existed keep their names.
 	 */
 	localeHint?: "none"
+	/**
+	 * The decoder settings the parses took, present only when an arm pinned one.
+	 */
+	decoderSettings?: DecoderSettings
 }
 
 /**
@@ -139,6 +144,12 @@ export interface HeldoutParseOptions {
 	 * @defaultValue `"row-country"`
 	 */
 	localeHint?: "row-country" | "none"
+	/**
+	 * The decoder settings the parses take.
+	 *
+	 * @defaultValue none, every setting at its default
+	 */
+	decoderSettings?: DecoderSettings
 }
 
 /**
@@ -159,7 +170,15 @@ export async function parseHeldoutRows(
 ): Promise<{ parses: Map<string, readonly BatterySpan[]>; source: HeldoutParseSource }> {
 	const parseRows = heldoutParseRows(rows)
 	const localeHint = options.localeHint ?? "row-country"
-	const pool = { cacheRoot, workers: options.workers, threads: options.threads, localeHint }
+	const decoderSettings = options.decoderSettings ?? {}
+
+	const pool = {
+		cacheRoot,
+		workers: options.workers,
+		threads: options.threads,
+		localeHint,
+		decoderSettings,
+	}
 
 	const cacheDirectory =
 		options.cacheDirectory === undefined ? dataRootPath("models", "arms", "heldout-parses") : options.cacheDirectory
@@ -190,6 +209,7 @@ export async function parseHeldoutRows(
 		),
 		commit: await gitHead(),
 		...(localeHint === "none" ? { localeHint } : {}),
+		...(Object.keys(decoderSettings).length ? { decoderSettings } : {}),
 	}
 
 	const name = sha256Hex(stringifyJSON(key)).slice(0, 16)
