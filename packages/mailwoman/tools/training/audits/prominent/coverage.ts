@@ -12,17 +12,25 @@
  *   The census's `scanShortAdminRows` counts those rows.
  *   Three rules decide it:
  *
- *   1. **Presence.** Every required prominent place has a train row in each required shape,
- *      under the tag {@linkcode prominentPlaceTag} names.
+ *   1. **Presence.** Every required prominent place has a train row the sampler can draw
+ *      in each required shape, under the tag {@linkcode prominentPlaceTag} names.
  *      Every row belongs to an independent group, so a row is a group.
- *   2. **Demand share.** Per country, band and shape, decile 1's share of the train rows that
- *      write a ranked place under the expected tag is at least {@linkcode DEMAND_SHARE_FRACTION}
- *      of decile 1's share of the country's ranked-place population.
+ *   2. **Demand share.** Per country, band and shape, decile 1's share of the expected epoch
+ *      draws of the train rows that write a ranked place under the expected tag is at least
+ *      {@linkcode DEMAND_SHARE_FRACTION} of decile 1's share of the country's ranked-place population.
  *      A row whose surface several ranked places share counts once, toward the best-ranked one.
  *   3. **Label coherence.** No short admin train row writes a dependent locality without a locality.
  *
- *   A place is required when the selection rule picks it
- *   (`min(n, clamp(ceil(sqrt(n)), 5, 100))` per country and band, plus the national capital).
+ *   The demand share is measured in what a training run reads rather than in rows on disk.
+ *   The sampler draws each source at its requested share of the epoch and every admitted
+ *   row of a source alike, so a row's expected draws are its source's draws per admitted
+ *   row times its country's admission chance ({@linkcode EpochRates}, from the arithmetic
+ *   the exposure report's `drawsPerAdmittedRow` and `countryAdmission` apply).
+ *
+ *   A row of a source weighted at zero, or of a country the config doesn't admit, has none.
+ *
+ *   A place is required when the selection rule picks it (`min(n, clamp(ceil(sqrt(n)), 5, 100))`
+ *   per country and band, plus the national capital) and the config admits its country.
  *   A place whose score rests on a GeoNames population is required only when that
  *   match passed its checks (`geonames_check = 'verified'`).
  *
@@ -43,9 +51,87 @@ import {
 	type QueryShape,
 } from "@mailwoman/corpus/recipes/prominent/places"
 import { foldSurfaceSQL } from "@mailwoman/corpus/tools/support-index"
+import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
+import type { MTFNode, SourceCount } from "@mailwoman/mtf/tools/sampler/native"
 import { PathBuilder } from "path-ts"
 
 import type { ShortAdminScanRecord } from "#tools/dev-tools/corpus/prominent/places"
+
+import { countryAdmission, countSourceShapes, drawsPerAdmittedRow } from "../../exposure/shapes.ts"
+import { countTrainShapes, type TrainShapeCount } from "../../exposure/train-shapes.ts"
+import { epochRows } from "../census.ts"
+import { requestedShares, resolveSourceWeights } from "../epoch/mixture.ts"
+
+/**
+ * What one epoch of a config draws: its length, each source's requested share,
+ * the country weights, and the corpus's train rows by source, country and span tags.
+ */
+export interface EpochMeasure {
+	draws: number
+	requested: ReadonlyMap<string, number>
+	countryWeights: Readonly<Record<string, number>>
+	trainShapes: readonly TrainShapeCount[]
+}
+
+/**
+ * Reads a config's {@linkcode EpochMeasure} over the corpus at `corpusDir`.
+ *
+ * `rowsBySource` replaces the corpus's rows per source in the `source_reps` derivation,
+ * for a simulation of a corpus not yet built.
+ */
+export async function readEpochMeasure(
+	mtf: MTFNode,
+	config: TrainingConfig,
+	options: { corpusDir: string; limits?: DuckDBLimits; rowsBySource?: readonly SourceCount[] }
+): Promise<EpochMeasure> {
+	const { weights } = resolveSourceWeights(mtf, config, options.corpusDir, options.rowsBySource)
+	const manifest = PathBuilder.from(options.corpusDir)("MANIFEST.json").toString()
+
+	return {
+		draws: epochRows(config, null),
+		requested: requestedShares(weights),
+		countryWeights: config.data.country_weights,
+		trainShapes: await countTrainShapes(manifest, options.limits ?? {}),
+	}
+}
+
+/**
+ * Each row's expected draws in one epoch, as two factors: its source's draws per
+ * admitted row, and its country's admission chance.
+ */
+export interface EpochRates {
+	draws: number
+	/**
+	 * Every requested source's expected draws per admitted train row.
+	 * A source not listed draws none.
+	 */
+	perAdmittedRow: ReadonlyMap<string, number>
+	/**
+	 * Every admitted country's admission chance.
+	 * A country not listed is never drawn.
+	 */
+	admission: ReadonlyMap<string, number>
+}
+
+/**
+ * The {@linkcode EpochRates} of a measure.
+ *
+ * @throws For a requested source with no train rows, as the sampler refuses one.
+ */
+export function epochRates(measure: EpochMeasure): EpochRates {
+	const admit = countryAdmission(measure.countryWeights)
+	const sources = countSourceShapes(measure.trainShapes, measure.countryWeights)
+
+	return {
+		draws: measure.draws,
+		perAdmittedRow: drawsPerAdmittedRow(measure.requested, measure.draws, sources),
+		admission: new Map(
+			Object.keys(measure.countryWeights)
+				.map((country) => [country, admit(country)] as const)
+				.filter(([, chance]) => chance > 0)
+		),
+	}
+}
 
 /**
  * The record the census's `places` writes beside `places.parquet`: the inputs it read
@@ -152,22 +238,46 @@ function placesRecordPath(placesPath: string): string {
  * - `ranked`: every ranked place, with `required` set on the places the rule requires.
  * - `forms`: one row per ranked place and shape the place has a second segment for,
  *   with the tag the shape requires.
- * - `hits`: the train rows of each form's surface key under its required tag.
- * - `cells`: per country, band and shape, the rows, decile 1's rows and decile 1's population share.
+ * - `hits`: the drawable train rows of each form's surface key under its required tag,
+ *   and their expected draws.
+ * - `cells`: per country, band and shape, the rows and draws, decile 1's rows
+ *   and draws, and decile 1's population share.
  */
 export async function createProminentCoverageTables(
 	db: DisposableDuckDB,
 	placesPath: string,
-	shortAdminPath: string
+	shortAdminPath: string,
+	rates: EpochRates
 ): Promise<void> {
-	await db.run(
-		`CREATE OR REPLACE TABLE ranked AS SELECT *, (by_rank OR capital) AND ` +
-			"(score_source <> 'geonames' OR geonames_check = 'verified') AS required " +
-			`FROM read_parquet(${quoted(placesPath)}) WHERE rank IS NOT NULL`
-	)
+	await db.run("CREATE OR REPLACE TABLE source_rates (source VARCHAR, per_row DOUBLE)")
+	await db.run("CREATE OR REPLACE TABLE admission (country VARCHAR, chance DOUBLE)")
+
+	const values = (entries: ReadonlyMap<string, number>) =>
+		[...entries].map(([key, value]) => `(${quoted(key)}, ${value})`).join(", ")
+
+	if (rates.perAdmittedRow.size) {
+		await db.run(`INSERT INTO source_rates VALUES ${values(rates.perAdmittedRow)}`)
+	}
+
+	if (rates.admission.size) {
+		await db.run(`INSERT INTO admission VALUES ${values(rates.admission)}`)
+	}
+
+	await db.run(`CREATE OR REPLACE TABLE epoch AS SELECT ${rates.draws}::DOUBLE AS draws`)
 
 	await db.run(
-		`CREATE OR REPLACE TABLE agg AS SELECT *, string_split(shape, '|') AS tags FROM read_parquet(${quoted(shortAdminPath)})`
+		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, ` +
+			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND " +
+			"(p.score_source <> 'geonames' OR p.geonames_check = 'verified') AS required " +
+			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) WHERE p.rank IS NOT NULL`
+	)
+
+	// A row's expected draws: its source's draws per admitted row times its country's admission chance.
+	await db.run(
+		"CREATE OR REPLACE TABLE agg AS SELECT a.*, string_split(a.shape, '|') AS tags, " +
+			"a.rows * coalesce(s.per_row, 0) * coalesce(c.chance, 0) AS draws " +
+			`FROM read_parquet(${quoted(shortAdminPath)}) a LEFT JOIN source_rates s USING (source) ` +
+			"LEFT JOIN admission c USING (country)"
 	)
 
 	await db.run(`CREATE OR REPLACE TABLE requirements (band VARCHAR, query_shape VARCHAR, tag VARCHAR)`)
@@ -192,16 +302,18 @@ export async function createProminentCoverageTables(
 		"CREATE OR REPLACE TABLE keyed AS SELECT country, " +
 			"CASE WHEN place = 1 THEN s1 ELSE s2 END AS s1, CASE WHEN len(tags) = 1 THEN NULL WHEN place = 1 THEN s2 ELSE s1 END AS s2, " +
 			"CASE WHEN len(tags) = 1 THEN 'bare' ELSE tags[3 - place] END AS second_tag, " +
-			"tags[place] AS place_tag, sum(rows)::BIGINT AS rows FROM (" +
+			"tags[place] AS place_tag, coalesce(sum(rows) FILTER (WHERE draws > 0), 0)::BIGINT AS rows, " +
+			"sum(draws) AS draws FROM (" +
 			"SELECT *, CASE WHEN list_contains(tags, 'dependent_locality') THEN list_position(tags, 'dependent_locality') " +
 			"WHEN list_contains(tags, 'locality') THEN list_position(tags, 'locality') ELSE 1 END AS place FROM agg WHERE len(tags) <= 2" +
 			") GROUP BY ALL"
 	)
 
-	// A form's rows: the short rows of its surfaces whose own span holds the required tag.
+	// A form's rows: the drawable short rows of its surfaces whose own span holds the required tag.
 	await db.run(
 		"CREATE OR REPLACE TABLE hits AS SELECT f.spr_id, f.country, f.band, f.query_shape, f.decile, f.fold, f.second, " +
-			"coalesce(sum(k.rows), 0)::BIGINT AS rows FROM forms f LEFT JOIN keyed k ON k.country = f.country AND " +
+			"coalesce(sum(k.rows), 0)::BIGINT AS rows, coalesce(sum(k.draws), 0)::DOUBLE AS draws " +
+			"FROM forms f LEFT JOIN keyed k ON k.country = f.country AND " +
 			"k.s1 = f.fold AND k.place_tag = f.tag AND (" +
 			"(f.query_shape = 'bare' AND k.second_tag = 'bare') OR (f.query_shape = 'country' AND k.second_tag = 'country') OR " +
 			"(f.query_shape IN ('parent', 'region', 'region_abbr') AND k.second_tag = f.second_tag AND k.s2 = f.second)) " +
@@ -210,14 +322,14 @@ export async function createProminentCoverageTables(
 
 	// A place with several region abbreviations is covered in that shape by a row in any of them.
 	await db.run(
-		"CREATE OR REPLACE TABLE place_shapes AS SELECT spr_id, country, band, query_shape, sum(rows)::BIGINT AS rows " +
-			"FROM hits GROUP BY ALL"
+		"CREATE OR REPLACE TABLE place_shapes AS SELECT spr_id, country, band, query_shape, sum(rows)::BIGINT AS rows, " +
+			"sum(draws) AS draws FROM hits GROUP BY ALL"
 	)
 
 	// Each surface key counts once in its cell, toward the best decile among the ranked places that write it.
 	await db.run(
 		"CREATE OR REPLACE TABLE surface_rows AS SELECT country, band, query_shape, fold, second, " +
-			"min(decile) AS decile, any_value(rows) AS rows FROM hits GROUP BY ALL"
+			"min(decile) AS decile, any_value(rows) AS rows, any_value(draws) AS draws FROM hits GROUP BY ALL"
 	)
 
 	await db.run(
@@ -228,7 +340,9 @@ export async function createProminentCoverageTables(
 
 	await db.run(
 		"CREATE OR REPLACE TABLE cells AS SELECT s.country, s.band, s.query_shape, sum(s.rows)::BIGINT AS rows, " +
-			"coalesce(sum(s.rows) FILTER (WHERE s.decile = 1), 0)::BIGINT AS decile1_rows, p.decile1_population_share " +
+			"coalesce(sum(s.rows) FILTER (WHERE s.decile = 1), 0)::BIGINT AS decile1_rows, " +
+			"sum(s.draws)::DOUBLE AS draws, coalesce(sum(s.draws) FILTER (WHERE s.decile = 1), 0)::DOUBLE AS decile1_draws, " +
+			"p.decile1_population_share " +
 			"FROM surface_rows s JOIN (SELECT DISTINCT f.country, f.band, f.query_shape FROM forms f " +
 			"JOIN ranked r USING (spr_id) WHERE r.required) c USING (country, band, query_shape) " +
 			"LEFT JOIN population p USING (country, band) GROUP BY s.country, s.band, s.query_shape, p.decile1_population_share"
@@ -236,18 +350,18 @@ export async function createProminentCoverageTables(
 }
 
 /**
- * The rows decile 1 lacks in one cell for its share to reach the target: the smallest `d`
- * with `(decile1 + d) / (rows + d) >= target`, or 0 when the cell already reaches it.
+ * The draws decile 1 lacks in one cell for its share to reach the target: the least `d`
+ * with `(decile1 + d) / (total + d) >= target`, or 0 when the cell already reaches it.
  *
- * Rows added for decile-1 places raise both counts.
- * The gap is therefore larger than `target × rows − decile1`.
+ * Draws added for decile-1 places raise both amounts.
+ * The gap is therefore larger than `target × total − decile1`.
  */
-export function decileOneDeficit(rows: number, decile1Rows: number, target: number): number {
+export function decileOneDeficit(total: number, decile1: number, target: number): number {
 	if (target <= 0) return 0
 
-	if (target >= 1) throw new Error(`a demand target of ${target} can't be reached by adding rows`)
+	if (target >= 1) throw new Error(`a demand target of ${target} can't be reached by adding draws`)
 
-	return Math.max(0, Math.ceil((target * rows - decile1Rows) / (1 - target) - 1e-9))
+	return Math.max(0, (target * total - decile1) / (1 - target))
 }
 
 export interface ProminentCoverageReport {
@@ -270,7 +384,16 @@ export interface ProminentCoverageReport {
 		failing_by_band_shape: Array<{ band: string; query_shape: string; forms: number; failing: number }>
 		failing: Array<{ country: string; band: string; query_shape: string; spr_id: number; name: string }>
 	}
+	/**
+	 * The epoch the demand share is measured in: its draws, and each short admin row source's
+	 * expected draws per admitted row, short admin train rows and their expected draws.
+	 */
+	epoch: {
+		draws: number
+		sources: Array<{ source: string; draws_per_admitted_row: number; short_rows: number; short_draws: number }>
+	}
 	demand_share: {
+		measure: "expected epoch draws"
 		fraction_of_population_share: number
 		cells: number
 		passing: number
@@ -282,9 +405,11 @@ export interface ProminentCoverageReport {
 			query_shape: string
 			rows: number
 			decile1_rows: number
-			decile1_row_share: number
+			draws: number
+			decile1_draws: number
+			decile1_draw_share: number
 			target: number
-			deficit: number
+			deficit_draws: number
 		}>
 	}
 	coherence: { rows: number; by_source: Array<{ source: string; shape: string; rows: number }> }
@@ -343,6 +468,8 @@ export interface DemandCell {
 	query_shape: string
 	rows: number
 	decile1_rows: number
+	draws: number
+	decile1_draws: number
 	decile1_population_share: number | null
 }
 
@@ -356,6 +483,8 @@ export function readDemandCells(db: DisposableDuckDB): Promise<DemandCell[]> {
 		query_shape: row.text("query_shape"),
 		rows: row.number("rows"),
 		decile1_rows: row.number("decile1_rows"),
+		draws: row.number("draws"),
+		decile1_draws: row.number("decile1_draws"),
 		decile1_population_share: row.optionalNumber("decile1_population_share"),
 	}))
 }
@@ -365,7 +494,7 @@ export function readDemandCells(db: DisposableDuckDB): Promise<DemandCell[]> {
  */
 export async function evaluateProminentCoverage(
 	db: DisposableDuckDB
-): Promise<Pick<ProminentCoverageReport, "presence" | "demand_share" | "coherence" | "geonames_audit">> {
+): Promise<Pick<ProminentCoverageReport, "epoch" | "presence" | "demand_share" | "coherence" | "geonames_audit">> {
 	const [presenceTotals] = await queryRows(
 		db,
 		"SELECT count(DISTINCT h.spr_id)::INTEGER AS places, count(*)::INTEGER AS forms, " +
@@ -375,7 +504,8 @@ export async function evaluateProminentCoverage(
 
 	const notRequired = await queryRows(
 		db,
-		"SELECT coalesce(geonames_check, 'unchecked') AS reason, count(*)::INTEGER AS places FROM ranked " +
+		"SELECT CASE WHEN NOT admitted THEN 'country-not-admitted' ELSE coalesce(geonames_check, 'unchecked') END AS reason, " +
+			"count(*)::INTEGER AS places FROM ranked " +
 			"WHERE (by_rank OR capital) AND NOT required GROUP BY ALL ORDER BY reason",
 		(row) => [row.text("reason"), row.number("places")] as const
 	)
@@ -407,10 +537,24 @@ export async function evaluateProminentCoverage(
 
 	const judged = (await readDemandCells(db)).map((cell) => {
 		const target = cell.decile1_population_share == null ? null : DEMAND_SHARE_FRACTION * cell.decile1_population_share
-		const share = cell.rows ? cell.decile1_rows / cell.rows : 0
+		const share = cell.draws > 0 ? cell.decile1_draws / cell.draws : 0
 
-		return { ...cell, share, target, passed: target == null || (cell.rows > 0 && share >= target) }
+		return { ...cell, share, target, passed: target == null || (cell.draws > 0 && share >= target) }
 	})
+
+	const [epochDraws] = await queryRows(db, "SELECT draws FROM epoch", (row) => row.number("draws"))
+
+	const epochSources = await queryRows(
+		db,
+		"SELECT a.source, coalesce(any_value(s.per_row), 0) AS per_row, sum(a.rows)::BIGINT AS rows, sum(a.draws) AS draws " +
+			"FROM agg a LEFT JOIN source_rates s USING (source) GROUP BY a.source ORDER BY draws DESC, a.source",
+		(row) => ({
+			source: row.text("source"),
+			draws_per_admitted_row: row.number("per_row"),
+			short_rows: row.number("rows"),
+			short_draws: row.number("draws"),
+		})
+	)
 
 	const shapes = new Map<string, { band: string; query_shape: string; cells: number; passing: number }>()
 
@@ -467,6 +611,7 @@ export async function evaluateProminentCoverage(
 	const failingCells = judged.filter((cell) => !cell.passed)
 
 	return {
+		epoch: { draws: epochDraws ?? 0, sources: epochSources },
 		presence: {
 			required_places: presenceTotals?.places ?? 0,
 			required_forms: presenceTotals?.forms ?? 0,
@@ -476,6 +621,7 @@ export async function evaluateProminentCoverage(
 			failing: failingPlaces,
 		},
 		demand_share: {
+			measure: "expected epoch draws",
 			fraction_of_population_share: DEMAND_SHARE_FRACTION,
 			cells: judged.length,
 			passing: judged.filter((cell) => cell.passed).length,
@@ -487,9 +633,11 @@ export async function evaluateProminentCoverage(
 				query_shape: cell.query_shape,
 				rows: cell.rows,
 				decile1_rows: cell.decile1_rows,
-				decile1_row_share: cell.share,
+				draws: cell.draws,
+				decile1_draws: cell.decile1_draws,
+				decile1_draw_share: cell.share,
 				target: cell.target!,
-				deficit: decileOneDeficit(cell.rows, cell.decile1_rows, cell.target!),
+				deficit_draws: decileOneDeficit(cell.draws, cell.decile1_draws, cell.target!),
 			})),
 		},
 		coherence: {
@@ -509,12 +657,17 @@ export interface ProminentCoverageOptions {
 	 * The corpus `MANIFEST.json` whose train rows the receipt reads.
 	 */
 	manifest: string
+	/**
+	 * The training config's epoch over the same corpus, from {@linkcode readEpochMeasure}.
+	 */
+	epoch: EpochMeasure
 	limits?: DuckDBLimits
 	log?: (line: string) => void
 }
 
 /**
- * Runs the receipt: scans the corpus's short admin train rows and applies the three rules.
+ * Runs the receipt: scans the corpus's short admin train rows and applies the three rules,
+ * the demand share in the config's expected epoch draws.
  */
 export async function prominentCoverageReport(options: ProminentCoverageOptions): Promise<ProminentCoverageReport> {
 	const record = await readProminentPlacesRecord(options.places)
@@ -534,7 +687,12 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 
 	using db = await openDuckDB(options.limits)
 
-	await createProminentCoverageTables(db, options.places, scratch.path("short-admin-rows.parquet").toString())
+	await createProminentCoverageTables(
+		db,
+		options.places,
+		scratch.path("short-admin-rows.parquet").toString(),
+		epochRates(options.epoch)
+	)
 
 	const rules = await evaluateProminentCoverage(db)
 

@@ -77,6 +77,20 @@ export interface SourceShapeRows {
 }
 
 /**
+ * The chance the sampler admits a row of `country`: its weight over the largest weight,
+ * and 0 for a row with no country or a country weighted at or below zero.
+ */
+export function countryAdmission(countryWeights: Readonly<Record<string, number>>): (country: string | null) => number {
+	const maxWeight = Math.max(0, ...Object.values(countryWeights))
+
+	return (country) => {
+		const weight = country == null ? 0 : (countryWeights[country] ?? 0)
+
+		return weight > 0 ? weight / maxWeight : 0
+	}
+}
+
+/**
  * Counts each source's train rows per country–shape key, each row at the chance
  * the sampler admits its country (`weight / max weight`).
  *
@@ -93,15 +107,15 @@ export function countSourceShapes(
 	}>,
 	countryWeights: Readonly<Record<string, number>>
 ): Map<string, SourceShapeRows> {
-	const maxWeight = Math.max(0, ...Object.values(countryWeights))
+	const admit = countryAdmission(countryWeights)
 	const bySource = new Map<string, SourceShapeRows>()
 
 	for (const row of rows) {
-		const weight = row.country == null ? 0 : (countryWeights[row.country] ?? 0)
+		const chance = admit(row.country)
 
-		if (row.source == null || !(weight > 0)) continue
+		if (row.source == null || !(chance > 0)) continue
 
-		const admission = (weight / maxWeight) * (row.rows ?? 1)
+		const admission = chance * (row.rows ?? 1)
 		let entry = bySource.get(row.source)
 
 		if (!entry) {
@@ -141,17 +155,41 @@ export function intendedShapeDraws(
 ): Map<string, number> {
 	const intended = new Map<string, number>()
 
+	for (const [source, perRow] of drawsPerAdmittedRow(requested, draws, sources)) {
+		for (const [key, rows] of sources.get(source)!.keys) {
+			intended.set(key, (intended.get(key) ?? 0) + perRow * rows)
+		}
+	}
+
+	return intended
+}
+
+/**
+ * The draws the mixture intends per admitted train row of each requested source over
+ * `draws` rows: the source's requested share of the draws over its admitted rows.
+ *
+ * A row of a country admitted with chance `a` takes `a` times that.
+ *
+ * Every row of a source is equally likely to be drawn, so this is each row's expected draws.
+ *
+ * @throws For a requested source with no counted rows, since the sampler refuses one.
+ */
+export function drawsPerAdmittedRow(
+	requested: ReadonlyMap<string, number>,
+	draws: number,
+	sources: ReadonlyMap<string, SourceShapeRows>
+): Map<string, number> {
+	const perRow = new Map<string, number>()
+
 	for (const [source, share] of requested) {
 		const entry = sources.get(source)
 
 		if (!entry || !(entry.rows > 0)) throw new Error(`requested source '${source}' has no counted train rows`)
 
-		for (const [key, rows] of entry.keys) {
-			intended.set(key, (intended.get(key) ?? 0) + (draws * share * rows) / entry.rows)
-		}
+		perRow.set(source, (draws * share) / entry.rows)
 	}
 
-	return intended
+	return perRow
 }
 
 /**

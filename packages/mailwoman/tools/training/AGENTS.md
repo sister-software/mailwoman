@@ -111,7 +111,14 @@ node packages/mailwoman/tools/training/audits/prominent/coverage.run.ts <yaml> -
 The prominent-place coverage receipt (#3156) reads the places table that
 `tools/dev-tools/corpus/prominent/places.run.ts places` writes for one candidate database, named by
 `data.prominent_place_coverage`, and scans the corpus's short admin train rows itself, in about two minutes. It
-fails when a required prominent place has no train row in a required shape, when a country's decile 1 holds less
-than half its population share of a shape's rows, or when a short admin row writes a dependent locality without a
-locality. The receipt key binds the table's `PLACES.json`. The census's `tuples` step writes the
-`prominent-places` recipe's input from the same tables, against the base corpus the recipe joins.
+fails when a required prominent place has no drawable train row in a required shape, when a country's decile 1
+holds less than half its population share of a shape's expected epoch draws, or when a short admin row writes a
+dependent locality without a locality. The draws are what the config's sampler reads in one epoch. A row's
+expected draws are its source's requested share of `train_rows_per_epoch` over the source's admitted rows, times
+its country's admission chance, the arithmetic of `drawsPerAdmittedRow` and `countryAdmission` in
+`exposure/shapes.ts`, over the train rows `exposure/train-shapes.ts` counts. A row of a source weighted at zero
+has zero expected draws and covers no form. The receipt requires places only in the countries the config admits. The receipt key binds the table's
+`PLACES.json`. The census's `tuples` step (`--config <yaml>`) writes the `prominent-places` recipe's input from the
+same tables in the same units, against the base corpus the recipe joins: the config's weight for
+`rendered-prominent-places` sets the recipe's draws, and the step solves for the row counts whose draws close each
+cell.
