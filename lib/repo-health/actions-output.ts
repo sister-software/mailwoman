@@ -136,10 +136,18 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		readRelated: (inputs, config) => readRelatedCITests(root, inputs, config),
 	})
 
+	// The slow suite runs as two jobs, so each receives its own files even when every suite is selected.
+	const onDataRunner = new Set(scope.dataRootFiles)
+	const slowDataFiles = scope.slowFiles.filter((file) => onDataRunner.has(file))
+	const slowHostedFiles = scope.slowFiles.filter((file) => !onDataRunner.has(file))
+
 	const outputs = {
 		...Object.fromEntries(Object.entries(scope).filter(([, value]) => typeof value === "boolean")),
+		slow: slowDataFiles.length > 0,
+		slow_hosted: slowHostedFiles.length > 0,
 		fast_files: stringifyJSON(scope.full ? [] : scope.fastFiles),
-		slow_files: stringifyJSON(scope.full ? [] : scope.slowFiles),
+		slow_files: stringifyJSON(slowDataFiles),
+		slow_hosted_files: stringifyJSON(slowHostedFiles),
 	}
 
 	if (ciEnvironment.GITHUB_OUTPUT) {
@@ -167,7 +175,8 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 					.map(([key, value]) => `| ${key} | ${value} |`),
 				"",
 				`Selected fast test files: ${scope.fastFiles.length}. Selected slow test files: ${scope.slowFiles.length}.`,
-				`Selected test files that read the data root, which only a \`mailwoman-data\` runner holds: ${scope.dataRootFiles.length}.`,
+				`Slow test files for \`unit-slow\` on a \`mailwoman-data\` runner, which alone holds the data root: ${slowDataFiles.length}.`,
+				`Slow test files for \`unit-slow-hosted\`: ${slowHostedFiles.length}.`,
 				"Unselected suites did not run. Main and dispatched runs select every suite.",
 				"",
 			].join("\n"),
