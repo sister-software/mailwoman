@@ -10,6 +10,10 @@
  *   already selects. A repeated build transfers no bytes and reuses the extraction.
  */
 
+// The OpenStreetMap build runs GDAL's `ogr2ogr`, which a hosted runner's image doesn't have.
+
+// ci-runner: mailwoman-data
+
 import { APIClient } from "@mailwoman/core/api"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
