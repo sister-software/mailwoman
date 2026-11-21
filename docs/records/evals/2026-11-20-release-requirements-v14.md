@@ -170,10 +170,28 @@ than text matching finds, and those stay `known_overlap` against it whatever the
 objective country reads the same under both audits: FR 3,923, DE 3,798, ES 3,851, IT 3,999 and AU 913 groups unseen
 by 11.2.0, and GB, IN and NZ none in this collection. Their development rows are `heldout-dev-v0.8.18`'s. The
 identity and group audit beside the v0.8.21 manifest (`overlap-heldout-dev-v0.8.18.json`) finds in no train or val
-file. That audit compared no text and no address key, so the GB, IN and NZ counts against 11.2.0 are unmeasured
-until `heldout-dev-v0.8.18` is audited with `--match-text --match-address`.
+file. That audit compared no text and no address key.
 
-**The 75-group US target is met against 11.2.0: 1,666 groups.** GB, IN and NZ are unmeasured.
+The overlap audit of `heldout-dev-v0.8.18` v4 (`heldout-dev-v0.8.18@771811f7a5a8e4da`, rows sha256
+`91f795d6…627c4448`) with `--match-text --match-address` against `v0.8.21-retention-overlay`, the corpus v8.9.0's config
+names, run 2026-11-21 10:00–10:13 UTC (`/mnt/mw/audits/v14-dev-counts/heldout-dev-v0.8.18.v4.provenance-11.2.0.json`):
+83,346 `verified_unseen` and 3,499 `known_overlap` of 86,845 rows, with no identity or group overlap. It finds 3,491
+rows by folded text and 581 by address key. Address groups unseen by 11.2.0, counted through `readHeldoutDatasetRows`
+and `heldoutRowKind` as the US counts were:
+
+| Country | Address groups | Text only | With the address key | Target | Rows not admitted                       |
+| ------- | -------------: | --------: | -------------------: | -----: | --------------------------------------- |
+| GB      |            981 |       978 |                  978 |     75 | 3, folded text from `spliced-sub-venue` |
+| IN      |            888 |       887 |                  887 |     75 | 1, folded text from `osm-in`            |
+| NZ      |            738 |       561 |                  561 |     75 | 177, folded text from `fragment-assay`  |
+
+The address key applies to NAD rows only, so it moves no GB, IN or NZ row. The NZ rows not admitted are
+`fragment-assay` place-name fragments whose folded text, such as "falmouth", is a training row of
+`part-fragment-v078.parquet`. This collection's 581 address-key rows are US, and 418 of its 1,000 US groups stay
+unseen by 11.2.0.
+
+**The 75-group target is met against 11.2.0 for US (1,666 groups in `heldout-dev-v0.8.21`), GB (978), IN (887) and
+NZ (561).**
 
 The next corpus side, measured by previewing `v0.8.21-retention-overlay` as a re-split under
 `evaluation-groups.v0.8.22.json` would write it (`--preview-evaluation-groups`, 2026-11-20 19:59–20:17 UTC,
