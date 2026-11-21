@@ -37,6 +37,19 @@ export const spec = {
 			description: "Admin database to score. Default <data-root>/db/wof/admin-global-priority.db",
 		},
 		tsv: { type: "string", description: "Pre-downloaded Wikimedia importance data" },
+		"sub-locality-estimates": {
+			type: "boolean",
+			default: false,
+			description:
+				"Also write place_population_estimate: a population for each sub-locality with none, " +
+				"its containing settlement's divided among that settlement's children",
+		},
+		out: {
+			type: "string",
+			description:
+				"Write the importance database here instead of beside the admin DB. " +
+				"Pass the same path to `gazetteer build candidate --importance`",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -59,8 +72,19 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		const r = await buildImportance({
 			adminDB: options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB),
 			tsv: options.tsv,
+			subLocalityEstimates: options.subLocalityEstimates,
+			out: options.out,
 			onProgress: progress.stage("importance"),
 		})
+
+		const estimates = r.subLocality
+			? [
+					`Sub-locality estimates: ${r.subLocality.stats.estimated} of ${r.subLocality.stats.subLocalities} sub-localities` +
+						(r.subLocality.calibration
+							? `, rank factor ${r.subLocality.calibration.rankFactor.toFixed(4)} from ${r.subLocality.calibration.compared} measured`
+							: ", none written: no measured sub-locality to calibrate against"),
+				]
+			: []
 
 		const elapsed = ((performance.now() - t0) / 1000).toFixed(1)
 
@@ -71,6 +95,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 			`Referential only (no article): ${r.referentialOnly} places`,
 			`Total in place_importance: ${r.total} places`,
 			`Fan-out guard: ${r.fanout.droppedPlaces} places dropped from ${r.fanout.unresolvableGroups + r.fanout.populationGroups} ambiguous Wikidata ids (#1497)`,
+			...estimates,
 		]
 	})
 

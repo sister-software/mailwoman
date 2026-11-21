@@ -47,7 +47,9 @@ import {
 import {
 	blendImportance,
 	createPlaceImportanceTable,
+	createPlacePopulationEstimateTable,
 	type PlaceImportanceDatabase,
+	type PlacePopulationEstimateDatabase,
 } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows } from "@mailwoman/sqlite/introspection"
@@ -63,6 +65,10 @@ import {
 	recordFanout,
 	resolveConcordanceFanout,
 } from "#tools/pipeline/importance/fanout"
+import {
+	estimateSubLocalityPopulations,
+	type SubLocalityEstimates,
+} from "#tools/pipeline/importance/sub-locality-estimate"
 
 /**
  * Columns a Wikidata concordance row needs before it contains a usable mapping.
@@ -84,6 +90,21 @@ export interface BuildImportanceOptions {
 	 * @defaultValue The cached download under the cache root, fetched when absent.
 	 */
 	tsv?: PathBuilderLike
+	/**
+	 * Write `place_population_estimate`: a population estimate, from the containing settlement,
+	 * for each sub-locality with none (`importance/sub-locality-estimate.ts`).
+	 * The candidate build ranks by it only when asked to.
+	 *
+	 * @defaultValue false
+	 */
+	subLocalityEstimates?: boolean
+	/**
+	 * Where to write the importance database instead of beside the admin database.
+	 * The candidate build then needs this path passed explicitly.
+	 *
+	 * @defaultValue `importanceDatabasePath(adminDB, admin.md5)`
+	 */
+	out?: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 
@@ -97,6 +118,10 @@ export interface BuildImportanceResult {
 	referentialOnly: number
 	total: number
 	fanout: FanoutStats
+	/**
+	 * The sub-locality estimate's counts and calibration, or null when the build wrote no estimates.
+	 */
+	subLocality: Omit<SubLocalityEstimates, "estimates"> | null
 }
 
 /**
@@ -112,7 +137,7 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 
 	// The stamp is the admin file's identity, the same md5 and size an FST records as its source.
 	const admin = await readWOFSourceIdentity(adminPath)
-	const out = importanceDatabasePath(adminPath, admin.md5)
+	const out = options.out?.toString() ?? importanceDatabasePath(adminPath, admin.md5)
 	const dbPath = `${out}.tmp-${process.pid}`
 
 	progress(`importance build for ${adminPath} (md5 ${admin.md5}) → ${out}`)
@@ -124,7 +149,10 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 	// The admin database is sealed, and its copy keeps the read-only mode.
 	await changeMode(dbPath, 0o644)
 
-	const kdb = new DatabaseClient<PlaceImportanceDatabase & ImportanceSourceDatabase>(dbPath, { open: true })
+	const kdb = new DatabaseClient<PlaceImportanceDatabase & PlacePopulationEstimateDatabase & ImportanceSourceDatabase>(
+		dbPath,
+		{ open: true }
+	)
 
 	// DDL goes through the Kysely schema-builder.
 	// The hot insert loop stays on the raw `db` handle.
@@ -320,11 +348,52 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 	// The two counters describe what the run tried to do rather than what the table contains.
 	const total = countRows(kdb, "place_importance")
 
+	let subLocality: BuildImportanceResult["subLocality"] = null
+
+	if (options.subLocalityEstimates) {
+		progress("estimating sub-locality populations from their settlements")
+
+		const { estimates, calibration, stats } = estimateSubLocalityPopulations(kdb)
+
+		await createPlacePopulationEstimateTable(kdb)
+
+		const estimateStmt = kdb.prepare(
+			"INSERT INTO place_population_estimate (id, population, rank_population, parent_id, siblings) VALUES (?, ?, ?, ?, ?)"
+		)
+
+		kdb.exec("BEGIN TRANSACTION")
+
+		for (const e of estimates) {
+			estimateStmt.run(e.id, e.population, e.rankPopulation, e.parentID, e.siblings)
+		}
+
+		kdb.exec("COMMIT")
+
+		subLocality = { calibration, stats }
+
+		progress(
+			`sub-locality estimates: ${stats.estimated} of ${stats.subLocalities} sub-localities ` +
+				`(${stats.measured} measured, ${stats.measuredAsWhole} of them at their parent's figure; ${stats.unestimable} unestimable)` +
+				(calibration
+					? `; log10(measured/estimate) p10 ${calibration.p10.toFixed(3)} p50 ${calibration.p50.toFixed(3)} ` +
+						`p90 ${calibration.p90.toFixed(3)} over ${calibration.compared}, rank factor ${calibration.rankFactor.toFixed(4)}`
+					: "; no measured sub-locality to calibrate against, so none written")
+		)
+	}
+
 	await writeImportanceSource(kdb, { path: adminPath, ...admin })
 	await kdb.destroy() // closes the underlying `db` handle
 
 	await sealDatabase(dbPath)
 	await swapDatabaseIntoPlace(dbPath, out)
 
-	return { out, admin, encyclopedic: encyclopedicCount, referentialOnly: referentialOnlyCount, total, fanout }
+	return {
+		out,
+		admin,
+		encyclopedic: encyclopedicCount,
+		referentialOnly: referentialOnlyCount,
+		total,
+		fanout,
+		subLocality,
+	}
 }

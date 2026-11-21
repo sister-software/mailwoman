@@ -200,6 +200,13 @@ export interface BuildOptions {
 	 */
 	importanceDB?: string | false
 	/**
+	 * Rank each unmeasured place by the importance build's population
+	 * estimate (`mailwoman gazetteer importance --sub-locality-estimates`).
+	 *
+	 * @defaultValue false
+	 */
+	populationEstimates?: boolean
+	/**
 	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
 	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
@@ -306,6 +313,7 @@ export async function buildCandidate(
 			postcodes: postcodeDatabases,
 			localities: localityDatabases,
 			...(importance ? { importance: importance.path } : {}),
+			...(opts.populationEstimates ? { populationEstimates: true } : {}),
 			...(capitals?.length ? { capitals } : {}),
 			onProgress: opts.onProgress,
 		})
@@ -336,6 +344,7 @@ export async function buildCandidate(
 				adminDBPath: opts.adminDB,
 				contributingDatabases: { postcodes: postcodeDatabases, localities: localityDatabases },
 				importance,
+				populationEstimated: result.populationEstimated,
 				buildSHA: sha,
 				version: isoDate(),
 				createdAt: new Date().toISOString(),

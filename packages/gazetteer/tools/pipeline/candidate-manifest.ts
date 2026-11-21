@@ -63,6 +63,11 @@ export interface CandidateManifestInput {
 	 * This changes ranking in a way the schema doesn't show.
 	 */
 	importance: { path: string; md5: string } | null
+	/**
+	 * The count of places ranked by the importance build's population estimates,
+	 * or absent when the build didn't rank by them.
+	 */
+	populationEstimated?: number | null
 	buildSHA: string
 	version: string
 	createdAt: string
@@ -303,6 +308,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 			(input.importance
 				? `importance=${input.importance.path} importance-md5=${input.importance.md5}`
 				: "importance=none") +
+			(typeof input.populationEstimated === "number" ? ` population-estimates=${input.populationEstimated}` : "") +
 			// Each fold's rows and places, measured on the built table. Recorded here because a fold's share
 			// is recoverable from the artifact itself only while its upstream release is still served.
 			(input.foldCensus?.length

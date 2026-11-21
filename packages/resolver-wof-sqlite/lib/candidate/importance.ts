@@ -40,6 +40,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { CandidateDatabase } from "#candidate/schema"
+import { loadPopulationEstimates, type PlacePopulationEstimateDatabase } from "#place-importance-schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
@@ -86,6 +87,11 @@ export interface ImportanceIndexStats {
 	 * (non-Latin punctuation-only names, blanks).
 	 */
 	unkeyable: number
+	/**
+	 * Population estimates read from `place_population_estimate`, or null
+	 * when the loader wasn't asked for them.
+	 */
+	estimates: number | null
 }
 
 /**
@@ -120,10 +126,36 @@ export class ImportanceIndex {
 	 * It doesn't mean the radius is too tight.
 	 */
 	refused = 0
+	/**
+	 * Places {@link estimatedPopulation} returned an estimate for.
+	 */
+	estimated = 0
 
-	constructor(groups: Map<string, ScoredPlace[]>, stats: ImportanceIndexStats) {
+	readonly #estimates: ReadonlyMap<number, number>
+
+	constructor(
+		groups: Map<string, ScoredPlace[]>,
+		stats: ImportanceIndexStats,
+		estimates: ReadonlyMap<number, number> = new Map()
+	) {
 		this.#groups = groups
 		this.stats = stats
+		this.#estimates = estimates
+	}
+
+	/**
+	 * The ranking population the importance build estimated for the place with WOF
+	 * id `id`, or undefined when it holds none.
+	 * Ask only for a place without a measured population.
+	 */
+	estimatedPopulation(id: number): number | undefined {
+		const estimate = this.#estimates.get(id)
+
+		if (typeof estimate === "number") {
+			this.estimated++
+		}
+
+		return estimate
 	}
 
 	/**
@@ -183,9 +215,19 @@ export class ImportanceIndex {
  *
  * The whole table is held in memory on purpose, because the build probes it once for every place
  * and the alternative is a prepared statement per place against a multi-gigabyte database.
+ *
+ * With `populationEstimates`, it also reads `place_population_estimate`, keyed by WOF id
+ * because the importance database is a copy of the admin database the candidate build reads.
+ *
+ * @throws With `populationEstimates`, when the database holds no estimates table.
  */
-export function loadImportanceIndex(databasePath: PathBuilderLike): ImportanceIndex {
-	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
+export function loadImportanceIndex(
+	databasePath: PathBuilderLike,
+	options: { populationEstimates?: boolean } = {}
+): ImportanceIndex {
+	using db = new DatabaseClient<CandidateDatabase & PlacePopulationEstimateDatabase>(databasePath, {
+		readOnly: true,
+	})
 
 	const groups = new Map<string, ScoredPlace[]>()
 	let places = 0
@@ -223,5 +265,11 @@ export function loadImportanceIndex(databasePath: PathBuilderLike): ImportanceIn
 		places++
 	}
 
-	return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
+	const estimates = options.populationEstimates ? loadPopulationEstimates(db) : null
+
+	return new ImportanceIndex(
+		groups,
+		{ places, keys: groups.size, unkeyable, estimates: estimates ? estimates.size : null },
+		estimates ?? undefined
+	)
 }

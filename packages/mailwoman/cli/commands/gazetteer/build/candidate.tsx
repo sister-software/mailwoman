@@ -39,6 +39,13 @@ export const spec = {
 				"Either way the build refuses an importance build stamped with another admin DB",
 		},
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
+		"population-estimates": {
+			type: "boolean",
+			default: false,
+			description:
+				"Rank each place with no population by the importance build's place_population_estimate " +
+				"(`gazetteer importance --sub-locality-estimates`). Population stays empty",
+		},
 		"include-build-local": {
 			type: "boolean",
 			default: false,
@@ -80,6 +87,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			postcodeDatabases: databases,
 			// Without `--importance` the build finds the importance build for this admin DB itself.
 			importanceDB: options.skipImportance ? false : options.importance,
+			populationEstimates: options.populationEstimates,
 			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: progress.report,
 		})
@@ -91,6 +99,9 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			r.importanceScored === null
 				? "importance: not joined (no score source) — the column is empty"
 				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceFiltered?.toLocaleString() ?? 0} refused as a different same-name place`,
+			...(r.populationEstimated === null
+				? []
+				: [`population estimates: ${r.populationEstimated.toLocaleString()} places ranked by one`]),
 			`phases: ${formatPhaseTimings(r.phaseSeconds)}`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
 		]

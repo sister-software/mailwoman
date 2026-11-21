@@ -5,7 +5,7 @@ import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { memoizeResettable } from "@mailwoman/core/memoize"
 import { isPresent } from "@mailwoman/core/objects"
-import { referentialFromPopulation, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
+import { populationScoreUnmeasured, referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import {
 	rankByPrimaryPreference,
@@ -234,7 +234,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				score: -(row.neg_rank as number),
 				// An artifact without the population column can't say whether `neg_rank` measured a population.
 				...("population" in row && !(typeof row.population === "number" && row.population > 0)
-					? { scoreUnmeasured: ScoreUnmeasuredReason.PopulationUnrecorded }
+					? { scoreUnmeasured: populationScoreUnmeasured(null, Number(row.neg_rank)) }
 					: {}),
 				prominence: -Number(row.effectiveNegRank),
 
