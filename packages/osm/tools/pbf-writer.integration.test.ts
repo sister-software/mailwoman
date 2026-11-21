@@ -5,6 +5,10 @@
  *   GDAL's OSM driver reads back every node `writePBF` wrote, with its address tags and its coordinate.
  */
 
+// The extractor runs GDAL's `ogr2ogr`, which a hosted runner's image doesn't have.
+
+// ci-runner: mailwoman-data
+
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { expect, it } from "vitest"

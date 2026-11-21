@@ -9,6 +9,10 @@
  *   A repeated build transfers neither file again. Run `yarn compile` before this suite.
  */
 
+// The OpenStreetMap build runs GDAL's `ogr2ogr`, which a hosted runner's image doesn't have.
+
+// ci-runner: mailwoman-data
+
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { md5Hex } from "@mailwoman/core/hash"

@@ -10,6 +10,10 @@
  *   address point, under the published object keys. Run `yarn compile` before this suite.
  */
 
+// The `geocode` step loads the en-US weights, and the test fails without them.
+
+// ci-runner: mailwoman-data
+
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

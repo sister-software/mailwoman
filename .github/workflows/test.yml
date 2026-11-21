@@ -4,7 +4,8 @@
 # publish.yml auto-merges the release PR on it, so do not rename that job.
 #
 # The legs split by what they need.
-# - static, unit-fast, react and earth need no gazetteer data and run on GitHub-hosted runners.
+# - static, unit-fast, unit-slow-hosted, react and earth need no gazetteer data and run on
+#   GitHub-hosted runners.
 # - unit-slow, lexicon-full and smoke read databases or weights under $MAILWOMAN_DATA_ROOT.
 #   They run on self-hosted runners with the `mailwoman-data` label.
 # A data-dependent test added to unit-fast therefore fails on the hosted runner instead of
@@ -61,6 +62,8 @@ jobs:
       rust: ${{ steps.select.outputs.rust }}
       fast_files: ${{ steps.select.outputs.fast_files }}
       slow_files: ${{ steps.select.outputs.slow_files }}
+      slow_hosted: ${{ steps.select.outputs.slow_hosted }}
+      slow_hosted_files: ${{ steps.select.outputs.slow_hosted_files }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -346,8 +349,8 @@ jobs:
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo clippy -p mtf-node --features panic-probe --locked -- -D warnings
 
-  # The root Vitest sweep runs as two concurrent legs. unit-fast runs every test that needs no
-  # model, WOF database or CLI harness. unit-slow runs the rest.
+  # The root Vitest sweep runs as three concurrent legs. unit-fast runs the fast suite.
+  # unit-slow-hosted runs the slow files that need no model or database, and unit-slow runs the rest.
   unit-fast:
     needs: scope
     if: needs.scope.outputs.fast == 'true'
@@ -458,9 +461,81 @@ jobs:
             packages/*/out
           key: ${{ steps.out-key.outputs.key }}
 
-  # unit-slow runs the database-dependent half of the Vitest sweep. Its suites use
-  # `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a hosted runner
-  # they'd skip and pass.
+  # unit-slow-hosted runs the slow test files that need neither the data root nor model weights.
+  # `lib/repo-health/ci/data-runner.ts` assigns a file here when it has no skip guard and declares
+  # no runner. The job fails when a selected test skips, so a test that gains a guard moves to
+  # unit-slow rather than running on no runner.
+  unit-slow-hosted:
+    needs: scope
+    if: needs.scope.outputs.slow_hosted == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      # This leg shares the compiled-tree cache with unit-fast. See that job for the key's inputs.
+      - name: Compute compiled-tree cache key
+        id: out-key
+        run: echo "key=out-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/package.json', '**/tsconfig*.json', 'yarn.lock', '.nvmrc', '.yarnrc.yml', '!**/*.test.ts', '!**/*.test.tsx', '!**/node_modules/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiled tree
+        id: out-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: ${{ steps.out-key.outputs.key }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
+      - name: Install ripgrep (dev-mcp symbol index)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+
+      # The mtf sampler tests load the `mtf-node` addon. Cargo builds it on first use.
+      - name: Setup Rust (mtf-node addon)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.1"
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Cargo (mtf-node addon)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+
+      - name: Test (slow, hosted)
+        env:
+          TEST_FILES: ${{ needs.scope.outputs.slow_hosted_files }}
+          CI_TEST_REFUSE_SKIPS: "true"
+        run: yarn mwops ci-test slow
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-unit-slow-hosted
+          path: test-results/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+  # unit-slow runs the slow test files that skip or fail without the data root or model weights.
+  # Its suites use `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a
+  # hosted runner they'd skip and pass.
   unit-slow:
     needs: [data-fleet, scope]
     if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.slow == 'true'
@@ -522,8 +597,8 @@ jobs:
 
       - name: Test (slow)
         env:
+          # The scope lists this job's files on every run, a full one included.
           TEST_FILES: ${{ needs.scope.outputs.slow_files }}
-          FULL_SCOPE: ${{ needs.scope.outputs.full }}
           # Four runners share the lab host's 16 cores, so each slow suite takes a quarter of them.
           CI_TEST_MAX_WORKERS: "4"
           # The dev weights linkers that weights.integration.test.ts runs write here rather than into
@@ -894,7 +969,7 @@ jobs:
   # The ruleset and release auto-merge require this `test` check. `if: always()` makes it report
   # after a leg fails, because a skipped required check blocks the merge.
   test:
-    needs: [data-fleet, scope, static, rust, unit-fast, unit-slow, lexicon-full, react, earth, smoke]
+    needs: [data-fleet, scope, static, rust, unit-fast, unit-slow-hosted, unit-slow, lexicon-full, react, earth, smoke]
     if: always()
     # The aggregator runs hosted so that it still reports when the lab fleet is down.
     runs-on: ubuntu-latest
@@ -907,7 +982,7 @@ jobs:
           node --input-type=module <<'JS'
           const jobs = JSON.parse(process.env.JOBS);
           const scope = jobs.scope.outputs;
-          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
+          for (const key of ['full', 'fast', 'slow', 'slow_hosted', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
             if (!['true', 'false'].includes(scope[key])) {
               throw new Error("Scope didn't report a boolean for " + key);
             }
@@ -919,6 +994,7 @@ jobs:
             static: true,
             rust: scope.rust === 'true',
             'unit-fast': scope.fast === 'true',
+            'unit-slow-hosted': scope.slow_hosted === 'true',
             'unit-slow': fleet && scope.slow === 'true',
             'lexicon-full': fleet && scope.lexicon === 'true',
             react: ['react', 'planetary', 'opportunity', 'worker'].some(key => scope[key] === 'true'),
@@ -948,6 +1024,7 @@ jobs:
             echo "| --- | --- | --- |"
             echo "| static | hosted | ${{ needs.static.result }} |"
             echo "| unit-fast | hosted | ${{ needs.unit-fast.result }} |"
+            echo "| unit-slow-hosted | hosted | ${{ needs.unit-slow-hosted.result }} |"
             echo "| react | hosted | ${{ needs.react.result }} |"
             echo "| earth | hosted | ${{ needs.earth.result }} |"
             echo "| unit-slow | \`mailwoman-data\` | ${{ needs.unit-slow.result }} |"

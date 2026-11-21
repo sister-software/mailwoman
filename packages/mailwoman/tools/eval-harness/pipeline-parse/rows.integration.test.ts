@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+// The pooled workers and the in-process pipeline both load the en-US weights,
+// and the test fails without them.
+
+// ci-runner: mailwoman-data
+
 import { walkNodes } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"

@@ -17,7 +17,8 @@ import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, isAbsolute, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
-import { type RuntimeReads, summarizeRuntimeReads } from "#repo-health/ci/runtime-reads"
+import { declaresDataRunner } from "#repo-health/ci/data-runner"
+import { isTestSource, type RuntimeReads, summarizeRuntimeReads } from "#repo-health/ci/runtime-reads"
 import { readImportedPaths } from "#repo-health/effects/census"
 
 /**
@@ -32,6 +33,11 @@ export interface CIWorkspace {
 	 * for each module that reads a file outside its imports.
 	 */
 	runtimeReads?: Record<string, RuntimeReads>
+	/**
+	 * The workspace's test files that skip without an artifact or declare the data runner,
+	 * as `declaresDataRunner` reads them.
+	 */
+	dataRunnerTests?: string[]
 }
 
 /**
@@ -44,8 +50,10 @@ export interface CIScope {
 	fastFiles: string[]
 	slowFiles: string[]
 	/**
-	 * The selected test files that read under the data root.
-	 * Only a `mailwoman-data` runner holds the data root.
+	 * The selected test files that run on a `mailwoman-data` runner.
+	 * Those runners are the only ones that hold the data root.
+	 *
+	 * The slow files among them run in `unit-slow`, and the other slow files run in `unit-slow-hosted`.
 	 */
 	dataRootFiles: string[]
 	fast: boolean
@@ -201,6 +209,10 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					;(owner.runtimeReads ??= {})[file] = reads
 				}
 
+				if (isTestSource(file) && declaresDataRunner(source.text)) {
+					;(owner.dataRunnerTests ??= []).push(file)
+				}
+
 				// A declared path that doesn't exist would match no change and drop the tests that depend on it.
 				for (const declared of declaredLoads) {
 					if (!(await pathExists(resolvePath(repoRoot, declared)))) {
@@ -252,15 +264,19 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 }
 
 /**
- * The test files among `selected` whose runtime reads reach under the data root.
+ * The test files among `selected` that run on a `mailwoman-data` runner.
+ *
+ * A file is one when its own runtime reads reach under the data root, when it skips
+ * without an artifact, or when it declares the runner.
  */
 export function dataRootReaders(workspaces: readonly CIWorkspace[], selected: readonly string[]): string[] {
 	const readers = new Set(
-		workspaces.flatMap((workspace) =>
-			Object.entries(workspace.runtimeReads ?? {})
+		workspaces.flatMap((workspace) => [
+			...Object.entries(workspace.runtimeReads ?? {})
 				.filter(([, reads]) => reads.dataRoot)
-				.map(([file]) => file)
-		)
+				.map(([file]) => file),
+			...(workspace.dataRunnerTests ?? []),
+		])
 	)
 
 	return [...new Set(selected)].filter((file) => readers.has(file)).toSorted()

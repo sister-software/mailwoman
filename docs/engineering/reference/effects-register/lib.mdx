@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `lib`
 
 The manifest at `package.json` has no `sideEffects` field.
-This page lists 134 of the group's 312 library and tool modules.
+This page lists 135 of the group's 313 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -936,6 +936,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | ------------------- | ------------------- | ----- |
 | read | `pathExists`        | `unresolved (call)` | 1     |
 | read | `readLocalTextFile` | `unresolved (call)` | 1     |
+
+## `lib/repo-health/ci/test.ts`
+
+| Kind | Interface           | Target                              | Calls |
+| ---- | ------------------- | ----------------------------------- | ----- |
+| read | `readLocalJSONFile` | `literal:test-results/results.json` | 1     |
 
 ## `lib/repo-health/comment/triage.ts`
 

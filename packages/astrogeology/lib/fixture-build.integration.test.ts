@@ -15,6 +15,10 @@
  *   ends. 1024 pixels across lands the MBTiles step at zoom 2, where the pyramid has levels to build.
  */
 
+// The builds run `tippecanoe` and GDAL's `gdalinfo`, which a hosted runner's image doesn't have.
+
+// ci-runner: mailwoman-data
+
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
