@@ -106,10 +106,9 @@ export interface ReleaseAssets {
 	 * A host that loads a second bundle over a page's life (a version switch,
 	 * a backend-force toggle, compare mode) must call this on the one it is replacing.
 	 *
-	 * It also closes the gazetteer this load opened, unless `keepLookup` is set
-	 * because the host hands that gazetteer to the next bundle.
+	 * The gazetteer in `lookup` belongs to the host that opened it, and stays open.
 	 */
-	release: (options?: { keepLookup?: boolean }) => Promise<void>
+	release: () => Promise<void>
 	calibrator: Calibrator | null
 	/**
 	 * Per-parse placetype-pair prior selection.
@@ -126,15 +125,17 @@ export interface ReleaseAssets {
 
 export interface LoadReleaseAssetsOptions {
 	/**
-	 * Load the byte-range gazetteer lookup, given the same-origin base for the staged
-	 * range worker and sqlite-wasm runtime (for example `/mailwoman/sqlite`).
+	 * The host's byte-range gazetteer lookup, read through `open` during the gazetteer step.
 	 *
 	 * Omit it and `lookup` is `null` without a gazetteer step.
 	 *
-	 * Given `lookup`, the bundle takes that open gazetteer instead of opening another, as
-	 * when a host reloads the classifier and keeps the gazetteer it already has.
+	 * The host owns the lookup `open` resolves to.
+	 * The bundle never closes it, so a host that reloads the classifier answers
+	 * `open` with the gazetteer it already has.
+	 *
+	 * An `open` that throws leaves `lookup` null and sets `gazetteerError`.
 	 */
-	gazetteer?: { sqliteRuntimeBaseURL: string; lookup?: MailwomanLookupLike | null }
+	gazetteer?: { open: () => Promise<MailwomanLookupLike | null> }
 
 	/**
 	 * The URL of the onnxruntime-web `.wasm` binary the host's bundle serves.
@@ -207,8 +208,7 @@ export async function loadReleaseAssets(
 	progress: AssetLoadProgress,
 	options: LoadReleaseAssetsOptions = {}
 ): Promise<ReleaseAssets> {
-	const keptLookup = release.hasWOFDB ? (options.gazetteer?.lookup ?? null) : null
-	const gazetteer = release.hasWOFDB && !keptLookup ? options.gazetteer : null
+	const gazetteer = release.hasWOFDB ? options.gazetteer : null
 	const locale = options.locale ?? DEFAULT_LOCALE
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
@@ -392,7 +392,7 @@ export async function loadReleaseAssets(
 			advanceStep()
 		}
 
-		let lookup: MailwomanLookupLike | null = keptLookup
+		let lookup: MailwomanLookupLike | null = null
 		let gazetteerError: string | null = null
 
 		if (gazetteer) {
@@ -403,7 +403,7 @@ export async function loadReleaseAssets(
 			ledger.start(gazetteerURL, ArtifactRole.Gazetteer)
 
 			try {
-				lookup = await openCandidateTableLookup(gazetteer.sqliteRuntimeBaseURL, progress.signal)
+				lookup = await gazetteer.open()
 				ledger.settle(gazetteerURL, { state: "done", source: "unknown", error: null })
 			} catch (error) {
 				// The parse still runs without the gazetteer, so the failure is reported rather than thrown.
@@ -426,13 +426,7 @@ export async function loadReleaseAssets(
 			modelBytes: diagnostics?.modelBytes ?? null,
 			calibrator,
 			selectPairIndex: selectPairIndexForText ?? null,
-			release: async ({ keepLookup = false } = {}) => {
-				// The gazetteer's range worker holds its own sqlite-wasm heap.
-				// That heap outlives this bundle unless the lookup is closed.
-				if (!keepLookup) {
-					lookup?.close?.()
-				}
-
+			release: async () => {
 				await releaseClassifier?.()
 			},
 		}

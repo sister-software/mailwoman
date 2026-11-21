@@ -34,7 +34,7 @@ vi.mock("#browser-runtime/resources", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-const { loadReleaseAssets } = await import("#browser-runtime/load-assets")
+const { loadReleaseAssets, openCandidateTableLookup } = await import("#browser-runtime/load-assets")
 const { ArtifactLoadError } = await import("#browser-runtime/artifact-ledger")
 
 const WASM_URL = "https://earth.example/assets/ort-wasm-simd-threaded.wasm"
@@ -216,24 +216,32 @@ describe("loadReleaseAssets", () => {
 		expect(model).toMatchObject({ role: "weights", state: "failed", error: "body truncated" })
 	})
 
-	test("a kept gazetteer is reused without a gazetteer step or a second open", async () => {
+	test("the bundle reads the host's gazetteer, and releasing the bundle leaves it open", async () => {
 		const events: string[] = []
-		const kept = { findPlace: async () => [] }
+		const closed: string[] = []
+		const hosted = { findPlace: async () => [], close: () => void closed.push("gazetteer") }
 
 		vi.stubGlobal("fetch", async () => new Response(null, { status: 404 }))
-		classifierLoad.mockResolvedValue({ classifier: {}, diagnostics: null })
+
+		classifierLoad.mockResolvedValue({
+			classifier: {},
+			diagnostics: null,
+			release: async () => void closed.push("classifier"),
+		})
 
 		const assets = await loadReleaseAssets(
 			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: true } as Parameters<typeof loadReleaseAssets>[0],
 			makeProgress(events),
-			{ gazetteer: { sqliteRuntimeBaseURL: "/sqlite", lookup: kept } }
+			{ gazetteer: { open: async () => hosted } }
 		)
 
-		// The mocked open throws, so a reopen would have set `gazetteerError`.
-		expect(assets.lookup).toBe(kept)
+		expect(assets.lookup).toBe(hosted)
 		expect(assets.gazetteerError).toBeNull()
-		expect(events).toContain("labels:Loading classifier")
-		expect(events.filter((event) => event.startsWith("step:"))).toEqual(["step:0", "step:1"])
+		expect(events.filter((event) => event.startsWith("step:"))).toEqual(["step:0", "step:1", "step:2"])
+
+		await assets.release()
+
+		expect(closed).toEqual(["classifier"])
 	})
 
 	test("a gazetteer that fails to open is reported as degraded, and the steps still finish", async () => {
@@ -246,7 +254,7 @@ describe("loadReleaseAssets", () => {
 		const assets = await loadReleaseAssets(
 			{ version: "v1", label: "v1", hasFST: false, hasWOFDB: true } as Parameters<typeof loadReleaseAssets>[0],
 			{ ...makeProgress(events), setLedger: (snapshot) => snapshots.push(snapshot) },
-			{ gazetteer: { sqliteRuntimeBaseURL: "/sqlite" } }
+			{ gazetteer: { open: () => openCandidateTableLookup("/sqlite") } }
 		)
 
 		expect(assets.lookup).toBeNull()

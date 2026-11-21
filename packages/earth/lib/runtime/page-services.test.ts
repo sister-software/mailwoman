@@ -5,7 +5,14 @@ import { describe, expect, test } from "vitest"
 
 import type { Gazetteer } from "#explorers/Gazette/gazetteer"
 import type { PolygonDB } from "#runtime/basemap"
-import { createPageScope, GazetteerService, PolygonDatabaseService, retireFailedHandle } from "#runtime/page-services"
+import {
+	CandidateLookupService,
+	createPageScope,
+	GazetteerService,
+	PolygonDatabaseService,
+	reopenCandidateLookup,
+	retireFailedHandle,
+} from "#runtime/page-services"
 
 type PageServiceOpeners = NonNullable<Parameters<typeof createPageScope>[1]>
 
@@ -14,7 +21,7 @@ type PageServiceOpeners = NonNullable<Parameters<typeof createPageScope>[1]>
  */
 function countingOpeners() {
 	const log: string[] = []
-	const state = { opens: 0, failing: false }
+	const state = { opens: 0, lookups: 0, failing: false }
 
 	const openers: PageServiceOpeners = {
 		openPolygons: async (): Promise<PolygonDB> => {
@@ -32,6 +39,15 @@ function countingOpeners() {
 				codes: { placetypes: new Map(), countries: new Map() },
 				version: "2026-08-25",
 			}
+		},
+		openCandidateLookup: async () => {
+			if (state.failing) throw new Error("Range 0-65535 of candidate.db returned HTTP 502")
+
+			const generation = ++state.lookups
+
+			log.push(`opened lookup ${generation}`)
+
+			return { findPlace: async () => [], close: () => void log.push(`closed lookup ${generation}`) }
 		},
 	}
 
@@ -91,6 +107,51 @@ describe("createPageScope", () => {
 		await scope.dispose()
 
 		expect(log).toEqual(["opened gazetteer", "closed gazetteer", "closed polygons 1"])
+	})
+})
+
+describe("the candidate lookup", () => {
+	test("a second read returns the open lookup, as a classifier reload does", async () => {
+		const { openers, log } = countingOpeners()
+
+		await using scope = createPageScope("/sqlite", openers)
+
+		const first = await scope.resolve(CandidateLookupService)
+
+		expect(await scope.resolve(CandidateLookupService)).toBe(first)
+		expect(log).toEqual(["opened lookup 1"])
+	})
+
+	test("a reopen closes the old lookup before it opens the new one", async () => {
+		const { openers, log } = countingOpeners()
+
+		await using scope = createPageScope("/sqlite", openers)
+
+		const first = await scope.resolve(CandidateLookupService)
+		const reading = await reopenCandidateLookup(scope)
+
+		expect(reading.lookup).not.toBe(first)
+		expect(reading.gazetteerError).toBeNull()
+		expect(log).toEqual(["opened lookup 1", "closed lookup 1", "opened lookup 2"])
+	})
+
+	test("a reopen that fails reports the reason, and the next read opens again", async () => {
+		const { openers, log, state } = countingOpeners()
+
+		await using scope = createPageScope("/sqlite", openers)
+
+		await scope.resolve(CandidateLookupService)
+		state.failing = true
+
+		await expect(reopenCandidateLookup(scope)).resolves.toEqual({
+			lookup: null,
+			gazetteerError: "Range 0-65535 of candidate.db returned HTTP 502",
+		})
+
+		state.failing = false
+		await scope.resolve(CandidateLookupService)
+
+		expect(log).toEqual(["opened lookup 1", "closed lookup 1", "opened lookup 2"])
 	})
 })
 
