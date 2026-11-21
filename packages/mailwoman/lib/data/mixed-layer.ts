@@ -90,7 +90,8 @@ export const ObligationClass = {
 	ShareAlike: "share-alike",
 	/**
 	 * The terms require indemnifying the publisher.
-	 * The register refuses redistributing such rows.
+	 *
+	 * The clause allocates liability and restricts no use, so it leaves the row's permissions as they are.
 	 */
 	Indemnity: "indemnity",
 	/**
@@ -650,8 +651,8 @@ export function renderAttributionNotice(description: MixedLayerDescription): str
 
 	if (indemnities.length) {
 		lines.push(
-			`Sources whose terms require the user to indemnify the publisher (${indemnities.length}). The register refuses ` +
-				"redistributing their rows, and a build of a later version excludes them:",
+			`Sources whose terms require the user to indemnify the publisher (${indemnities.length}), in their words. ` +
+				"A user of the layer takes on each undertaking toward that publisher:",
 			...clauseLines(indemnities),
 			""
 		)

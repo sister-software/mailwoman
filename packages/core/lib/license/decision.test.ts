@@ -18,32 +18,25 @@ const elected = (overrides: Partial<ElectedLicense<(typeof OPERATIONS)[number]>>
 	}) as const
 
 describe("auditLicenseDecision obligations", () => {
-	const indemnity = [
-		{ obligation: "indemnity", strength: "required", quote: "The user agrees to indemnify the County." },
-	] as const
-
-	it("refuses an indemnity whose decision still permits redistributing the rows", () => {
+	it("admits an indemnity beside a permitted redistribution, because the clause restricts no use", () => {
 		const problems = auditLicenseDecision(
 			elected({
-				obligations: indemnity,
+				obligations: [
+					{ obligation: "indemnity", strength: "required", quote: "The user agrees to indemnify the County." },
+				],
 				operations: { "redistribute-data": { permission: "permitted", basis: "other-documented", because: "Facts." } },
 			}),
 			OPERATIONS
 		)
 
-		expect(problems).toEqual([expect.stringContaining("records an indemnity and does not refuse redistribute-data")])
+		expect(problems).toEqual([])
 	})
 
-	it("admits the indemnity once redistribution is refused, and refuses an obligation without the publisher's words", () => {
-		const refused = { "redistribute-data": { permission: "refused", because: "An indemnity." } } as const
-
-		expect(auditLicenseDecision(elected({ obligations: indemnity, operations: refused }), OPERATIONS)).toEqual([])
-
-		expect(
-			auditLicenseDecision(
-				elected({ obligations: [{ obligation: "use_restriction", strength: "required", quote: "" }] }),
-				OPERATIONS
-			)
-		).toEqual([expect.stringContaining("without the publisher's words")])
+	it("refuses an indemnity or any other obligation recorded without the publisher's words", () => {
+		for (const obligation of ["indemnity", "use_restriction"] as const) {
+			expect(
+				auditLicenseDecision(elected({ obligations: [{ obligation, strength: "required", quote: "" }] }), OPERATIONS)
+			).toEqual([expect.stringContaining(`records ${obligation} without the publisher's words`)])
+		}
 	})
 })

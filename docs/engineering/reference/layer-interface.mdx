@@ -547,9 +547,9 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
 A decision records each condition its terms set in its `obligations` field
 (`packages/core/lib/license/decision.ts`): `attribution`, `share_alike`, `use_restriction` (a limit on one use,
 such as a mailing-list ban), `notice_pass_through` (a text, such as a disclaimer, that must travel with the data)
-and `indemnity`. Each entry quotes the publisher and says whether the terms require it or only ask for it. A
-decision whose terms require an indemnity refuses `redistribute-data`, because the US factual-data reading
-doesn't clear a contract term (#3274).
+and `indemnity`. Each entry quotes the publisher and says whether the terms require it or only ask for it. An
+obligation decides no operation's permission: an indemnity allocates liability and restricts no use, so a decision
+recording one keeps its operations.
 
 An aggregator's row, such as Overture's, sets no obligation of its own: OpenAddresses and Overture grant no
 license over address rows, so the publishing body's row decides unless the aggregator's row blocks.
@@ -575,8 +575,8 @@ The source texts, retrieved 2026-11-21:
   subject to individual state statutes that prohibit it's use as a mailing list." The register records that limit
   as a `use_restriction`. The disclaimer also states that users "agree to indemnify, defend, and hold harmless
   USDOT for any and all liability of any nature arising out of or resulting from the lack of accuracy or
-  correctness of the data, or the use of the data." Since #3274 the NAD decision records that clause as an
-  `indemnity` and refuses `redistribute-data`, so a layer built after it excludes NAD.
+  correctness of the data, or the use of the data." The NAD decision records that clause as an `indemnity`,
+  and NAD stays admitted.
 - The [OpenAddresses README](https://github.com/openaddresses/openaddresses#license) states that the
   pipeline's data keeps the original sources' licenses: "Individual sources will have their own licenses. The
   OpenAddresses team does its best to summarize the source licenses in the source
@@ -602,9 +602,6 @@ joining each source to its row in `address-source-register.json`. An Overture da
 | register rows no reviewer has read (`unchecked`)                | 7          | 1,367,947   | no                            | unknown     |
 | OpenAddresses runs with no register row                         | 1,988      | 49,310,556  | no, except three in admission | unknown     |
 | All                                                             | 2,197      | 171,152,075 |                               | unknown     |
-
-The table describes the 2026-11-13 layer. Since #3274, 35 decisions whose terms require an indemnity refuse
-`redistribute-data`, NAD's among them, so a build after it excludes those sources as well.
 
 Of the 179 elected, 177 are elected under the US factual-data reading, the City of Berkeley under its portal's
 reuse statement, and `us/dc/statewide` under CC BY 4.0, which brings in the attribution term.

@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "48af8f13c672c10f733c7cbd94304e528091edff5b4f2014387eab945f41340c",
+	"contentDigest": "031a7b24f7b5d799325e33c639f8f9f665d695a0c9c9290b004ac50fd22567b7",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -4370,8 +4370,9 @@
 					"because": "Use is defined to include modifying and adapting for commercial purposes, and the licence carries no share-alike term. Its one exclusion, personal data, is a question for the personal-data review in `source-resolutions.json`."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `You shall indemnify the Agency against all liabilities, damages, costs (including legal costs) and expenses arising directly or indirectly from: any claim ma...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The licence permits the datasets to be distributed and transmitted, on the condition of the conspicuous source notice with a link to the licence, for example `Contains information from OneMap addresses accessed on <date> from Singapore Land Authority which is made available under the terms of the Singapore Open Data Licence version 1.0`."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -6937,8 +6938,9 @@
 					"because": "US factual-data reading (Feist). Aurora, CO, Colorado states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `Requestor agrees to indemnify and hold harmless City`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Aurora, CO, Colorado states no restriction on this operation. Obligations recorded: indemnify and hold harmless the City."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -10203,8 +10205,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Carson City, Nevada (consolidated municipality) GIS states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `You further agree to defend, indemnify and hold harmless Carson City, its officials and employees from any and all claims and expenses, including attorney’s ...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Carson City, Nevada (consolidated municipality) GIS states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -12752,8 +12755,9 @@
 					"because": "US factual-data reading (Feist). City of Chicago, Illinois states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `any user of the data provided at this website shall indemnify and hold harmless the City from any claim, loss, damage, injury, or liability of any kind (incl...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City of Chicago, Illinois states no restriction on this operation. Obligations recorded: include the City's prescribed disclaimer in any application using the data; the City may require a user to terminate display, distribution or use; indemnity."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -13622,8 +13626,9 @@
 					"because": "US factual-data reading (Feist). City of Fayetteville, AR, Arkansas states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `by acceptance of this data, the user does hereby agree to indemnify the City of Fayetteville and hold the City of Fayetteville harmless from and without liab...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City of Fayetteville, AR, Arkansas states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -13777,8 +13782,9 @@
 					"because": "US factual-data reading (Feist). City of Fort Collins GIS, Colorado states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `further covenants and agrees to hold the City harmless from and against all damage, loss, or liability arising from any use of this map product`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City of Fort Collins GIS, Colorado states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -14562,8 +14568,9 @@
 					"because": "US factual-data reading (Feist). City of Hot Springs, AR, Arkansas states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `with the acceptance of this data, the user does hereby hold the City of Hot Springs harmless and without liability from any claims, cost or damage of any nat...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City of Hot Springs, AR, Arkansas states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -15562,8 +15569,9 @@
 					"because": "US factual-data reading (Feist). City of Littleton, Colorado states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `further covenants and agrees to hold the city harmless from and against all damage, loss, or liability arising from any use of this map product`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City of Littleton, Colorado states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -19881,8 +19889,9 @@
 					"because": "US factual-data reading (Feist). Clearfield County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Clearfield County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -20931,8 +20940,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Alameda, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `In addition to Your obligation to indemnify the County, You specifically acknowledge and agree that You have an immediate and independent obligation to defen...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Alameda, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -21670,8 +21680,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Kern, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The Recipient hereby agrees to defend, save, hold harmless and indemnify the Data Providers and signatories to its data sharing agreements and its/their offi...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Kern, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -21727,8 +21738,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Los Angeles, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `You agree to indemnify, defend and hold us harmless, at your own expense, from and against any liability, fees (including attorney’s fees) and/or costs arisi...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Los Angeles, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -21878,8 +21890,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Monterey, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `users accept sole responsibility for ensuring the protection of their own computer equipment and specifically hold COUNTY harmless from any damage or liabili...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of Monterey, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -22157,8 +22170,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of San Benito, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `the user further agrees to indemnify, defend, and hold harmless the County of San Benito`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of San Benito, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -22208,8 +22222,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of San Joaquin, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `the applicant agrees, to defend, to hold harmless and indemnify the County of San Joaquin from and against all claims, liabilities, losses, damages and costs...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. County of San Joaquin, California states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -24306,8 +24321,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. DeSoto County, Mississippi (DCMS GIS) states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The user agrees to hold harmless DeSoto County`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. DeSoto County, Mississippi (DCMS GIS) states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -26159,8 +26175,9 @@
 					"because": "US factual-data reading (Feist). Fayette County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Fayette County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -27936,8 +27953,9 @@
 					"because": "US factual-data reading (Feist). Grant County, Washington states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `In using the data, users further agree to indemnify, defend, and hold harmless Grant County for any and all liability of any nature arising out of or resulti...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Grant County, Washington states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -29990,8 +30008,9 @@
 					"because": "US factual-data reading (Feist). Indiana County, Pennsylvania (Indiana County EMA/9-1-1) states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Indiana County, Pennsylvania (Indiana County EMA/9-1-1) states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -30759,8 +30778,9 @@
 					"because": "US factual-data reading (Feist). Jackson County, WI, Wisconsin states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `In using the data, users further agree to indemnify, defend, and hold harmless Jackson County for any and all liability of any nature arising out of or resul...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Jackson County, WI, Wisconsin states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -33572,8 +33592,9 @@
 					"because": "US factual-data reading (Feist). Lexington-Fayette Urban County Government (LFUCG), Kentucky states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `You shall indemnify and save harmless the LFUCG, from any claim ... that arise directly or indirectly, in whole or in part, from Your use of the Data, includ...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Lexington-Fayette Urban County Government (LFUCG), Kentucky states no restriction on this operation. Obligations recorded: indemnify and defend LFUCG against claims arising from use of the Data (no attribution or share-alike)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -34019,8 +34040,9 @@
 					"because": "US factual-data reading (Feist). Lucas County Auditor, Ohio states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `agrees to hold Lucas County, and all its agents, harmless`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Lucas County Auditor, Ohio states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -40392,8 +40414,9 @@
 					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Oakland County, Michigan states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `Notwithstanding Your indemnification obligation, the County reserves the right at its sole discretion to defend any such claim`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading, decided by the operator on 2026-10-17. Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. A publisher whose terms spell out a restricted use (the FCC Fabric's CostQuest license, the Hawaii Department of Education's commercial-use prohibition, Cook County's redistribution clause) states a restriction, and those decisions stay refused. Oakland County, Michigan states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -42613,8 +42636,9 @@
 					"because": "US factual-data reading (Feist). Pottawattamie County GIS, Iowa states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `Users of Pottawattamie County (The County) GIS data agree that he/she will at all times indemnify and hold The County and its officers, employees, and agents...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Pottawattamie County GIS, Iowa states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -44089,8 +44113,9 @@
 					"because": "US factual-data reading (Feist). Saint Louis County GIS Service Center, Missouri states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `further agrees to hold St. Louis County Government harmless from and against any damage, loss or liability arising from any use of the map product`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Saint Louis County GIS Service Center, Missouri states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -44400,8 +44425,9 @@
 					"because": "US factual-data reading (Feist). SanGIS, California states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `In using these data, you further agree to indemnify, defend, and hold harmless and release SanGIS for any and all liability of any nature arising out of or r...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). SanGIS, California states no restriction on this operation. Obligations recorded: portal terms of use require the user to indemnify and defend the City (section VI); no attribution or share-alike; indemnify, defend and hold harmless SanGIS; altered data must not be redistributed as an original SanGIS product or name SanGIS as sole source; SanGIS must not be attributed as source at scales below 1:24,000."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -45007,8 +45033,9 @@
 					"because": "US factual-data reading (Feist). Seneca County Auditor, Ohio states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `In using the data, users further agree to indemnify, defend, and hold harmless the county for any and all liability of any nature arising out of or resulting...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Seneca County Auditor, Ohio states no restriction on this operation. Obligations recorded: indemnify the county for liability arising from the data."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -45568,8 +45595,9 @@
 					"because": "US factual-data reading (Feist). Snohomish County, Washington states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `All persons accessing or otherwise using this Data assume all responsibility for use thereof and agree to hold Snohomish County harmless from and against any...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Snohomish County, Washington states no restriction on this operation. Obligations recorded: RCW 42.56: lists of individuals may not be used for commercial purposes."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -45629,8 +45657,9 @@
 					"because": "US factual-data reading (Feist). Snyder County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Snyder County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -45780,8 +45809,9 @@
 					"because": "US factual-data reading (Feist). Somerset County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Somerset County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -48592,8 +48622,9 @@
 					"because": "US factual-data reading (Feist). The City and County of Denver, Colorado states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `the user agrees to indemnify and hold harmless the City and County of Denver, its officials, officers and employees from any liability arising out of the use...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). The City and County of Denver, Colorado states no restriction on this operation."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -48748,8 +48779,9 @@
 					"because": "US factual-data reading (Feist). The County of Blair, Blair County GIS Department, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). The County of Blair, Blair County GIS Department, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -50088,8 +50120,9 @@
 					"because": "The publisher places no restriction on use except that the data is not for use as a mailing list; training a parser is not that use."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `agree to indemnify, defend, and hold harmless USDOT for any and all liability of any nature arising out of or resulting from the lack of accuracy or correctn...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Re-use without restriction covers republishing rows. A published split must not be offered or usable as a mailing list, which the state statutes the disclaimer names prohibit; the dataset card states that limit."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -50376,8 +50409,9 @@
 					"because": "US factual-data reading (Feist). Union County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Union County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
@@ -54967,8 +55001,9 @@
 					"because": "US factual-data reading (Feist). Venango County, Pennsylvania states no restriction on this operation."
 				},
 				"redistribute-data": {
-					"permission": "refused",
-					"because": "The terms require the user to indemnify the publisher: `The USER shall indemnify, save harmless, and, if requested, defend those parties involved with the development and distribution of this data, their officers,...`. An indemnity is a contract term, so the US factual-data reading, which rests on facts carrying no copyright, doesn't clear it. Redistributing the rows would extend the undertaking to every downstream use of them, so redistribution is refused; fetch, extract, transform and train keep their permissions (decided 2026-11-21, #3274)."
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Venango County, Pennsylvania states no restriction on this operation. Obligations recorded: indemnify the parties involved in developing and distributing the data (PASDA Distribution_Liability)."
 				},
 				"redistribute-model": {
 					"permission": "permitted",
