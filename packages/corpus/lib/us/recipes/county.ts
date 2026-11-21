@@ -26,9 +26,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
 import { mulberry32, shuffleWith } from "@mailwoman/core/random"
 import {
+	openWOFRecordStoreReader,
 	storedWOFRecords,
 	wofRecordStorePathFor,
-	type WOFRecordStoreDatabase,
 } from "@mailwoman/gazetteer/whosonfirst/record-store"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -136,7 +136,7 @@ export async function readUSCountyPool(paths: USCountyPoolPaths = {}): Promise<U
 	const written = new Map<number, unknown[]>()
 
 	{
-		using store = new DatabaseClient<WOFRecordStoreDatabase>(recordStore, { readOnly: true })
+		using store = openWOFRecordStoreReader(recordStore)
 
 		for (const record of storedWOFRecords(store, { country: "US", placetypes: new Set(["county"]) })) {
 			const properties = record.feature.properties ?? {}

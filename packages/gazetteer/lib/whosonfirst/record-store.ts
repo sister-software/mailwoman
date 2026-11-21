@@ -74,6 +74,11 @@ export interface WOFRepoStateTable {
 
 /**
  * The record store's schema, for `new DatabaseClient<WOFRecordStoreDatabase>(...)`.
+ *
+ * A reader opens the store with {@linkcode openWOFRecordStoreReader}.
+ * A writer outside this module, such as a test building a store, names the schema itself.
+ *
+ * @public
  */
 export interface WOFRecordStoreDatabase {
 	wof_record: WOFRecordTable
@@ -336,6 +341,27 @@ export async function refreshWOFRecordStore(
  * The largest lab clones took up to a few minutes.
  */
 const REFRESH_BUSY_TIMEOUT_MS = 30 * 60 * 1000
+
+/**
+ * How long a reader waits for a lock another process holds on the store, in milliseconds.
+ *
+ * A WAL reader isn't blocked by a writer's transaction.
+ * It still meets `SQLITE_BUSY` while another connection holds the store exclusively: a refresh's
+ * last connection checkpointing the WAL as it closes, or a connection recovering the WAL index.
+ * Each lasts well under a second.
+ */
+const READ_BUSY_TIMEOUT_MS = 60 * 1000
+
+/**
+ * Opens the store at `storePath` read-only, waiting out another process's brief exclusive lock.
+ *
+ * Two processes read one store at once when a parallel corpus build runs `wof-admin`
+ * and `wof-postalcode`, or when a refresh of the same store closes beside a reader.
+ * Without a busy timeout, such a reader fails with `database is locked`.
+ */
+export function openWOFRecordStoreReader(storePath: PathBuilderLike): DatabaseClient<WOFRecordStoreDatabase> {
+	return new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true, timeout: READ_BUSY_TIMEOUT_MS })
+}
 
 function deleteRepo(db: DatabaseClient<WOFRecordStoreDatabase>, repo: string): void {
 	db.exec("BEGIN IMMEDIATE")

@@ -50,7 +50,7 @@ function fixtureRows(): ParquetRow[] {
 	return rows
 }
 
-describe("splitOverlaySlice", () => {
+describe("splitOverlaySlice", { timeout: 30_000 }, () => {
 	it("decides every row's split exactly as splitForRow does under the same policy", async () => {
 		const input = root.path("part-gb.parquet")
 		const rows = fixtureRows()

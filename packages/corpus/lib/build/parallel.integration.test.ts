@@ -163,7 +163,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 			await expect(snapshot(outDir)).resolves.toEqual(serial)
 			await expect(pathExists(outDir(BUILD_LOCK_DIRECTORY))).resolves.toBe(false)
 		}
-	})
+	}, 600_000)
 
 	it("records each source's parts, derivation and sorted ids, and reports each worker's heap and peak RSS", async () => {
 		const outDir = scratch.path("records")

@@ -50,7 +50,7 @@ if (!canRun) {
 	)
 }
 
-describe.skipIf(!canRun)("runStaticDebug", () => {
+describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
 

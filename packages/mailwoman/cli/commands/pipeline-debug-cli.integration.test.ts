@@ -94,7 +94,7 @@ describe("parse --debug (runtime pipeline)", () => {
 		expect(timing["kind-classifier"]).toBeGreaterThanOrEqual(0)
 		// Fast-path skips token-classify.
 		expect(timing["token-classify"]).toBeUndefined()
-	}, 20_000)
+	}, 40_000)
 
 	test("locality_only fast-path identifies single-word inputs", async () => {
 		const stdout = await parseDebug("Paris")
@@ -102,7 +102,7 @@ describe("parse --debug (runtime pipeline)", () => {
 		const result = extractJSON(stdout) as Record<string, unknown>
 		const kind = result["kind"] as Record<string, unknown>
 		expect(kind["kind"]).toBe("locality_only")
-	}, 20_000)
+	}, 40_000)
 
 	test("queryShape carries the detected known-format hit for postcode inputs", async () => {
 		const stdout = await parseDebug("10118-1234")
@@ -111,7 +111,7 @@ describe("parse --debug (runtime pipeline)", () => {
 		const shape = result["queryShape"] as Record<string, unknown>
 		const formats = shape["knownFormats"] as Array<Record<string, unknown>>
 		expect(formats.some((f) => f["format"] === "us_zip4")).toBe(true)
-	}, 20_000)
+	}, 40_000)
 
 	test("normalize records the offsetMap so consumers can map spans back to raw", async () => {
 		const stdout = await parseDebug("  Paris  ")
@@ -123,5 +123,5 @@ describe("parse --debug (runtime pipeline)", () => {
 		// offsetMap[0] should point at 'P' in raw — index 2 (after the leading two spaces).
 		const offsetMap = normalized["offsetMap"] as number[]
 		expect(offsetMap[0]).toBe(2)
-	}, 20_000)
+	}, 40_000)
 })

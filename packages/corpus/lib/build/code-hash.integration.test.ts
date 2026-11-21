@@ -149,7 +149,7 @@ describe("moduleGraphHashes", () => {
 	})
 })
 
-describe("adapterModules", () => {
+describe("adapterModules", { timeout: 30_000 }, () => {
 	it("keeps each adapter out of another source's reach, the OSM adapter included", async () => {
 		const modules = await adapterModules([banAdapter, wofAdminAdapter, osmAdapter])
 

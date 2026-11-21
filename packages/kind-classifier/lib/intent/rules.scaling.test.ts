@@ -83,12 +83,10 @@ function bestOf(run: () => void): number {
  * and then all large trials (even as best-of-N).
  * The test host also runs the CI fleet, so that condition occurs.
  *
- * It triggered the 3x bar three times in one night at 3.19–3.25x while both
- * arms remained individually healthy.
  * Each pair exposes both arms to the same burst.
  * The median removes corrupted pairs in either direction.
  *
- * A quadratic run still shows ~4x in every clean pair.
+ * A quadratic run still shows ~16x in every clean pair.
  */
 function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
 	small()
@@ -132,19 +130,23 @@ test("the intent rules stay linear in input length", () => {
 		}
 	}
 
-	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement
-	// lands under 0.3 ms, where scheduler noise on a parallel test runner is larger than the signal
-	// and the ratio flakes (measured: 3.25x on a run where both arms were sub-millisecond).
-	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes The
-	// work grows linearly with the full string length.
+	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes.
+	// It grows linearly with the full string length.
 	// The length check rejects everything else at 30 characters.
-	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
+	//
+	// The input grows fourfold, so linear cost reads ~4x and quadratic ~16x.
+	// The bar of 8x is their geometric midpoint, so contention has to double one
+	// arm against the other before a linear rule fails.
+	// Below 250,000 characters the small arm falls under a millisecond,
+	// where scheduler noise exceeds the signal.
+	// The large arm stays under the recognizer's 1 MiB input limit.
+	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(250_000), runAt(1_000_000))
 
 	expect(
 		ratio,
-		`doubling the input multiplied the intent-rule cost by ${ratio.toFixed(2)}x ` +
-			`(best ${smallMs.toFixed(3)}ms -> ${largeMs.toFixed(3)}ms). Linear is ~2x; quadratic is ~4x.`
-	).toBeLessThan(3)
+		`quadrupling the input multiplied the intent-rule cost by ${ratio.toFixed(2)}x ` +
+			`(best ${smallMs.toFixed(3)}ms -> ${largeMs.toFixed(3)}ms). Linear is ~4x; quadratic is ~16x.`
+	).toBeLessThan(8)
 })
 
 /**

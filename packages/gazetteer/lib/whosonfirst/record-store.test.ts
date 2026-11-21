@@ -6,16 +6,16 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/git"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { spawnProcess } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import {
+	openWOFRecordStoreReader,
 	reduceWOFFeature,
 	refreshWOFRecordStore,
 	storedWOFRecord,
 	storedWOFRecords,
-	type WOFRecordStoreDatabase,
 } from "#whosonfirst/record-store"
 
 const fixtures = new AsyncDisposableStack()
@@ -109,10 +109,40 @@ describe("refreshWOFRecordStore", () => {
 
 		expect(afterEdit.map((r) => r.action)).toEqual(["reused", "reduced"])
 
-		using db = new DatabaseClient<WOFRecordStoreDatabase>(store, { readOnly: true })
+		using db = openWOFRecordStoreReader(store)
 
 		expect(storedWOFRecord(db, 85_977_539)?.feature.properties?.["wof:name"]).toBe("New York City")
 		expect([...storedWOFRecords(db)].map((r) => r.id)).toEqual([85_977_539, 101_751_119])
+	})
+
+	it("lets a reader wait out another process's exclusive hold rather than fail as locked", async () => {
+		const { root, store } = await dataRoot()
+
+		await refreshWOFRecordStore(store, root)
+
+		// The child holds the store exclusively, as a closing connection's checkpoint does, then releases it.
+		const holder = spawnProcess(process.execPath, [
+			"-e",
+			`const { DatabaseSync } = require("node:sqlite")
+			const db = new DatabaseSync(${stringifyJSON(store)})
+			db.exec("PRAGMA locking_mode = EXCLUSIVE")
+			db.exec("DELETE FROM wof_repo_state WHERE 0")
+			console.log("held")
+			setTimeout(() => db.close(), 500)`,
+		])
+
+		const exited = new Promise<void>((resolve) => {
+			holder.once("exit", () => resolve())
+		})
+
+		await new Promise<void>((resolve) => {
+			holder.stdout.once("data", () => resolve())
+		})
+
+		using db = openWOFRecordStoreReader(store)
+
+		expect([...storedWOFRecords(db)].map((r) => r.id)).toEqual([85_977_539, 101_751_119])
+		await exited
 	})
 
 	it("refuses two files holding one wof:id, naming both", async () => {

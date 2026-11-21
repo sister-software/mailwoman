@@ -467,7 +467,9 @@ jobs:
     runs-on:
       - self-hosted
       - mailwoman-data
-    timeout-minutes: 25
+    # The slow suite shares the lab host with the other runners and agent sessions, and its duration
+    # grows with that load. A loaded run takes 21 to 25 minutes, against about 11 on a quiet host.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
 

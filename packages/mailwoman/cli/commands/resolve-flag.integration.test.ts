@@ -20,7 +20,7 @@ const hasWOFDB = await pathExists(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 
-describe("npx mailwoman parse --resolve error paths", () => {
+describe("npx mailwoman parse --resolve error paths", { timeout: 30_000 }, () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		await expect(
 			runFile("node", [cliBin, "parse", "--resolve", "123 Main St"], {

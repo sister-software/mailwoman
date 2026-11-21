@@ -77,13 +77,16 @@ function bestOfBoth(smallReps: number, largeReps: number): { small: number; larg
 	return { small, large }
 }
 
-test("computeQueryShape stays linear as the segment count doubles", () => {
-	const { small, large } = bestOfBoth(4000, 8000)
+test("computeQueryShape stays linear as the segment count quadruples", () => {
+	// 16,000 records are 576,000 bytes, under the recognizer's 1 MiB input limit.
+	const { small, large } = bestOfBoth(4000, 16_000)
 	const ratio = large / Math.max(small, 0.001)
 
-	// Linear is about 2x and quadratic is about 4x, so 3.5 separates the two and tolerates a loaded runner.
+	// Linear is about 4x and quadratic about 16x.
+	// The bar of 8x is their geometric midpoint, so contention has to double one arm
+	// against the other before a linear routine fails.
 	expect(
 		ratio,
-		`doubling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms)`
-	).toBeLessThan(3.5)
+		`quadrupling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms)`
+	).toBeLessThan(8)
 })

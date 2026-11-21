@@ -12,15 +12,14 @@
  */
 
 import {
+	openWOFRecordStoreReader,
 	refreshWOFRecordStore,
 	storedWOFRecord,
 	storedWOFRecords,
 	wofRecordStorePathFor,
 	wofRepositories,
-	type WOFRecordStoreDatabase,
 	type WOFRepoRefresh,
 } from "@mailwoman/gazetteer/whosonfirst/record-store"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFRecordEntry } from "#adapters/wof/json-rows"
 import type { AdapterOptions } from "#types"
@@ -88,7 +87,7 @@ export async function openStoredRecordEntries<A extends object>(
 	const repos = (await wofRepositories(opts.inputPath)).map((repo) => repo.basename())
 	const inScope = new Set(repos)
 	const refuted = await readRefutedParentIDs()
-	const db = new DatabaseClient<WOFRecordStoreDatabase>(storePath, { readOnly: true })
+	const db = openWOFRecordStoreReader(storePath)
 
 	const parseKept = (feature: WOFFeature): WOFRecord | null => {
 		const record = recordFromFeature(feature, refuted)
