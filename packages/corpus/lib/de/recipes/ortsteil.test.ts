@@ -3,7 +3,30 @@
 
 import { describe, expect, it } from "vitest"
 
-import { ortsteilSurface } from "#de/recipes/locale"
+import { isOrtsteilStreet, ortsteilStreetComponents, ortsteilSurface } from "#de/recipes/ortsteil"
+
+describe("streetless hamlets", () => {
+	it("reads a street that spells one of its locality's Ortsteile as a hamlet, under either WOF fold", () => {
+		expect(isOrtsteilStreet("Loga", ["Holschdubrau", "Loga"])).toBe(true)
+		expect(isOrtsteilStreet("Göda", ["Goeda"])).toBe(true)
+		expect(isOrtsteilStreet("Hauptstraße", ["Loga"])).toBe(false)
+		expect(isOrtsteilStreet("Loga", undefined)).toBe(false)
+	})
+
+	it("keeps the hamlet as the street when a house number follows it", () => {
+		const components = { street: "Kotten", house_number: "5", postcode: "02997", locality: "Wittichenau" }
+
+		expect(ortsteilStreetComponents(components)).toEqual(components)
+	})
+
+	it("tags a numberless hamlet dependent_locality beside its municipality", () => {
+		expect(ortsteilStreetComponents({ street: "Kotten", postcode: "02997", locality: "Wittichenau" })).toEqual({
+			dependent_locality: "Kotten",
+			postcode: "02997",
+			locality: "Wittichenau",
+		})
+	})
+})
 
 describe("ortsteilSurface", () => {
 	it("takes the German name whose fold equals the ASCII spr label, not a co-located feature's", () => {
