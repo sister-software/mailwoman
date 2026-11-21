@@ -4,7 +4,8 @@
 /**
  * Reads the failing tests out of a failed GitHub Actions job's log.
  *
- * The log comes from `gh run view --job <id> --log-failed`, which prints only the failed steps.
+ * The log comes from `gh run view --job <id> --log-failed`, which prints only the failed steps,
+ * or from the jobs API when that command refuses a job whose run is still in progress.
  * It is written under the cache root's `checks/ci-logs` directory, outside every
  * checkout, and read by the Vitest text parser.
  *
@@ -21,6 +22,11 @@ import { checkOutputLines } from "#check-kit/output-lines"
 import { type FailingTest, MAX_ERROR_LINES, type ParsedSource } from "#check-kit/parsed"
 import { parseScriptOutput } from "#check-kit/parsers/scripts"
 import { parseVitestText } from "#check-kit/parsers/vitest"
+import {
+	type CheckAnnotationsReading,
+	readCheckRunAnnotations,
+	type ReadCheckAnnotations,
+} from "#check-kit/pull-request/annotations"
 import { type CheckBucket, PULL_REQUEST_REPO } from "#check-kit/pull-request/checks"
 
 /**
@@ -51,6 +57,13 @@ export interface FailedJobLog {
 	 */
 	failingChecks: string[]
 	errorLines: string[]
+	/**
+	 * The check run's annotations, for a failed check without an Actions job
+	 * and with a link that ends in `/runs/<id>`.
+	 *
+	 * It is `null` for an Actions job and for a check whose link holds neither id.
+	 */
+	annotations: CheckAnnotationsReading | null
 }
 
 /**
@@ -63,13 +76,44 @@ export type DownloadJobLog = (runID: number | null, jobID: number) => Promise<st
  */
 const LOG_DOWNLOAD_TIMEOUT_MS = 180_000
 
-const downloadJobLog: DownloadJobLog = async (_runID, jobID) =>
-	(
-		await runFile("gh", ["run", "view", "--job", String(jobID), "--log-failed", "--repo", PULL_REQUEST_REPO], {
-			timeout: LOG_DOWNLOAD_TIMEOUT_MS,
-			maxBuffer: 256 * 1024 * 1024,
-		})
-	).stdout
+const LOG_DOWNLOAD_OPTIONS = { timeout: LOG_DOWNLOAD_TIMEOUT_MS, maxBuffer: 256 * 1024 * 1024 }
+
+/**
+ * Download one job's log.
+ *
+ * `gh run view --log-failed` prints only the failed steps.
+ * It refuses a job whose run still has other jobs in progress.
+ *
+ * The jobs API returns a concluded job's whole log while its run continues.
+ * A refusal from the first command is answered by the second.
+ *
+ * @throws The second command's error when both fail, with the first command's error appended.
+ */
+const downloadJobLog: DownloadJobLog = async (_runID, jobID) => {
+	try {
+		const failedSteps = await runFile(
+			"gh",
+			["run", "view", "--job", String(jobID), "--log-failed", "--repo", PULL_REQUEST_REPO],
+			LOG_DOWNLOAD_OPTIONS
+		)
+
+		return failedSteps.stdout
+	} catch (failedStepsError) {
+		try {
+			const wholeJob = await runFile(
+				"gh",
+				["api", "--allow-escape-sequences", `repos/${PULL_REQUEST_REPO}/actions/jobs/${jobID}/logs`],
+				LOG_DOWNLOAD_OPTIONS
+			)
+
+			return wholeJob.stdout
+		} catch (wholeJobError) {
+			const describe = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
+			throw new Error(`${describe(wholeJobError)} (after \`gh run view --log-failed\`: ${describe(failedStepsError)})`)
+		}
+	}
+}
 
 /**
  * The directory failed-job logs are written to.
@@ -113,6 +157,7 @@ function parseFailedJobLog(
 			failingTests: vitest.failingTests,
 			failingChecks: [],
 			errorLines: vitest.errorLines,
+			annotations: null,
 		}
 	}
 
@@ -128,6 +173,7 @@ function parseFailedJobLog(
 			failingTests: [],
 			failingChecks: script.failingChecks,
 			errorLines: script.errorLines,
+			annotations: null,
 		}
 	}
 
@@ -143,6 +189,7 @@ function parseFailedJobLog(
 		failingTests: [],
 		failingChecks: [],
 		errorLines: annotationLines(text),
+		annotations: null,
 	}
 }
 
@@ -171,6 +218,7 @@ async function readFailedJobLog(
 			failingTests: [],
 			failingChecks: [],
 			errorLines: [],
+			annotations: null,
 		}
 	}
 
@@ -189,34 +237,50 @@ export interface FailedCheckRef {
 	bucket: CheckBucket
 	runID: number | null
 	jobID: number | null
+	checkRunID: number | null
 }
 
 /**
  * Read the log of every failed check whose link holds an Actions job id.
  *
- * A failed check without a job id, such as an external status, is returned unparsed with that reason.
+ * A failed check without a job id has no job log.
+ * When its link ends in `/runs/<id>`, as CodeQL's does, that check run's annotations are read instead.
+ *
+ * The check stays unparsed either way, with the reason stating which of the two happened.
  */
 export async function readFailedCheckLogs(
 	checks: readonly FailedCheckRef[],
-	options: { download?: DownloadJobLog; directory?: string } = {}
+	options: { download?: DownloadJobLog; directory?: string; readAnnotations?: ReadCheckAnnotations } = {}
 ): Promise<FailedJobLog[]> {
 	const results: FailedJobLog[] = []
+	const readAnnotations = options.readAnnotations ?? ((id: number) => readCheckRunAnnotations(id))
 
 	for (const check of checks) {
 		if (check.bucket !== "fail") continue
 
 		if (check.jobID == null) {
+			const annotations = check.checkRunID == null ? null : await readAnnotations(check.checkRunID)
+
+			const reason = !annotations
+				? "the check's link names no GitHub Actions job and no check run, so it has no job log or annotations to read"
+				: !annotations.read
+					? `the check has no GitHub Actions job log, and its check run ${annotations.checkRunID}'s annotations are unread: ${annotations.error}`
+					: annotations.annotations.length
+						? `the check has no GitHub Actions job log; its check run ${annotations.checkRunID} holds ${annotations.annotations.length} annotation(s)`
+						: `the check has no GitHub Actions job log, and its check run ${annotations.checkRunID} holds zero annotations`
+
 			results.push({
 				job: check.name,
 				runID: check.runID,
 				jobID: null,
 				logPath: null,
 				parsed: false,
-				reason: "the check's link names no GitHub Actions job, so it has no job log to read",
+				reason,
 				source: null,
 				failingTests: [],
 				failingChecks: [],
 				errorLines: [],
+				annotations,
 			})
 
 			continue

@@ -19,6 +19,7 @@ import {
 	loadClassifierOrExit,
 	openAPICommand,
 	resolveGazetteerOrExit,
+	readListenPort,
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
@@ -75,7 +76,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		allowPositionals: true,
 	})
 
-	const port = Number(values.port) || 2322
+	const port = readListenPort(values.port)
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
@@ -217,8 +218,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		fetch: app.fetch,
 		port,
 		hostname: host,
-		onListen: () => {
-			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
+		onListen: (info) => {
+			console.error(`[@mailwoman/photon] listening on http://${host}:${info.port}`)
 
 			for (const line of [...gazetteerBannerLines(gazetteer), ...unattachedLayerLines(rooftops)]) {
 				console.error(line)

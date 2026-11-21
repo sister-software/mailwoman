@@ -90,6 +90,26 @@ describe("readPullRequestChecks", () => {
 		expect(reading.checks?.[0]?.completedAt).toBeNull()
 	})
 
+	it("reports a failed check beside pending ones as failed, the state pull request #3189 was in", async () => {
+		const reading = await readPullRequestChecks(
+			3189,
+			stubGitHub(VIEW, () => {
+				throw exited(
+					8,
+					stringifyJSON([
+						check("static", "fail", "FAILURE", 1),
+						check("unit-slow", "pending", "IN_PROGRESS", 2),
+						check("unit-fast", "pass", "SUCCESS", 3),
+					]),
+					""
+				)
+			})
+		)
+
+		expect(reading.condition).toBe(ChecksCondition.Failed)
+		expect(reading.counts).toMatchObject({ fail: 1, pending: 1, pass: 1 })
+	})
+
 	it("reports zero checks on a conflicting head as their own condition, with the reason", async () => {
 		const reading = await readPullRequestChecks(
 			3100,

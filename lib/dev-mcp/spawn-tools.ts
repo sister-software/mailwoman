@@ -39,10 +39,10 @@ import { summarizeJob, type DevTool } from "#dev-mcp/tool-kit"
 const promotionEvalOutDirs = new Map<string, string>()
 
 /**
- * The jobs `mwdev_check` and `mwdev_worktree` started.
+ * The jobs `mwdev_check`, `mwdev_probe` and `mwdev_worktree` started.
  *
- * Their stdout is the `mwops check --json` or `mwops worktree prepare --json` result,
- * and `mwdev_job` returns it parsed.
+ * Their stdout is the `mwops check --json`, `mwops probe --json`
+ * or `mwops worktree prepare --json` result, and `mwdev_job` returns it parsed.
  */
 const repositoryCheckJobs = new Set<string>()
 
@@ -301,6 +301,94 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					checkout: cwd,
 					command: [process.execPath, ...argv].join(" "),
 					note: "Started. Poll with mwdev_job; the finished job's `result` is the parsed `mwops check --json` output.",
+				}
+			},
+		},
+
+		{
+			name: "mwdev_probe",
+			description:
+				"Start one workspace's server (`mwops probe`) in a checkout on 127.0.0.1 with an unused port, send each GET " +
+				"path to it, stop it by its process id, and return a job id. The job runs that checkout's own " +
+				"`lib/ops-cli/cli.ts`, so a worktree's server runs from its own source. Poll with mwdev_job; a finished job " +
+				"returns the parsed result: the startup time and output, each request's status, content type and body or " +
+				"projected value, the peak memory, and how the server stopped. A server that exited before listening returns " +
+				"its exit status and last output lines.",
+			inputSchema: z.object({
+				workspace: z
+					.string()
+					.min(1)
+					.describe("The probe target, such as `ogc`, `photon`, `nominatim`, `libpostal` or `api`."),
+				get: z
+					.array(z.string().startsWith("/"))
+					.min(1)
+					.describe("Request paths, each starting with `/`, sent in order."),
+				checkout: z
+					.string()
+					.min(1)
+					.optional()
+					.describe("Absolute path of the working tree whose server runs. Defaults to the server's checkout."),
+				json_path: z.string().min(1).optional().describe("A dotted path projected out of each JSON body."),
+				max_bytes: z.number().int().positive().optional(),
+				env: z
+					.array(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*=/u))
+					.default([])
+					.describe("NAME=value pairs."),
+				env_file: z.string().min(1).optional().describe("A file Node reads with --env-file before the server starts."),
+				startup_timeout_seconds: z.number().positive().optional(),
+				log_dir: z.string().optional().describe("Absolute directory for the server log. Defaults to the cache root."),
+				server_args: z.array(z.string()).default([]).describe("Flags passed to the server after `--`."),
+			}),
+			handler: async (args) => {
+				const cwd = await resolveCheckout(registry.repoRoot, args["checkout"] as string | undefined)
+				const locality = await readCheckoutLocality(cwd)
+
+				if (locality?.nodeModules.state === NodeModulesState.Absent) {
+					throw new Error(`${cwd} has no node_modules. Run \`yarn install\` there before mwdev_probe.`)
+				}
+
+				const workspace = args["workspace"] as string
+				const argv = [resolvePath(cwd, "lib", "ops-cli", "cli.ts"), "probe", workspace, "--json"]
+
+				for (const path of args["get"] as string[]) {
+					argv.push("--get", path)
+				}
+
+				for (const assignment of (args["env"] as string[] | undefined) ?? []) {
+					argv.push("--env", assignment)
+				}
+
+				for (const [flag, key] of [
+					["--json-path", "json_path"],
+					["--max-bytes", "max_bytes"],
+					["--env-file", "env_file"],
+					["--startup-timeout-seconds", "startup_timeout_seconds"],
+					["--log-dir", "log_dir"],
+				] as const) {
+					const value = args[key]
+
+					if (value != null) {
+						argv.push(flag, String(value))
+					}
+				}
+
+				const serverArgs = (args["server_args"] as string[] | undefined) ?? []
+
+				if (serverArgs.length) {
+					argv.push("--", ...serverArgs)
+				}
+
+				// A job cancel sends SIGTERM to the command.
+				// The command then stops the server it started.
+				const job = jobs.start(`probe:${workspace}`, process.execPath, argv, cwd)
+
+				repositoryCheckJobs.add(job.jobID)
+
+				return {
+					job_id: job.jobID,
+					checkout: cwd,
+					command: [process.execPath, ...argv].join(" "),
+					note: "Started. Poll with mwdev_job; the finished job's `result` is the parsed `mwops probe --json` output.",
 				}
 			},
 		},

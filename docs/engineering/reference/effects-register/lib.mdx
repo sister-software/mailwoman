@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `lib`
 
 The manifest at `package.json` has no `sideEffects` field.
-This page lists 130 of the group's 306 library and tool modules.
+This page lists 134 of the group's 312 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -30,12 +30,46 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read  | `tryReadLocalJSONFile` | `unresolved (template)`  | 1     |
 | write | `makeDirectories`      | `unresolved (call)`      | 1     |
 
+## `lib/check-kit/http-get.ts`
+
+| Kind    | Interface         | Target                  | Calls |
+| ------- | ----------------- | ----------------------- | ----- |
+| network | `APIClient.fetch` | `unresolved (property)` | 1     |
+
+## `lib/check-kit/probe/memory.ts`
+
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (template)` | 2     |
+
+## `lib/check-kit/probe/operations.ts`
+
+| Kind | Interface    | Target               | Calls |
+| ---- | ------------ | -------------------- | ----- |
+| read | `pathExists` | `unresolved (call)`  | 1     |
+| read | `pathExists` | `unresolved (other)` | 1     |
+
+## `lib/check-kit/probe/server.ts`
+
+| Kind        | Interface         | Target               | Calls |
+| ----------- | ----------------- | -------------------- | ----- |
+| write       | `makeDirectories` | `unresolved (other)` | 1     |
+| write       | `openWriteStream` | `unresolved (call)`  | 1     |
+| environment | `process.env`     | `environment:*`      | 1     |
+
+## `lib/check-kit/probe/targets.ts`
+
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 2     |
+| read | `readLocalTextFile` | `unresolved (call)` | 2     |
+
 ## `lib/check-kit/pull-request/failed-logs.ts`
 
 | Kind    | Interface            | Target                  | Calls |
 | ------- | -------------------- | ----------------------- | ----- |
 | write   | `writeLocalTextFile` | `unresolved (template)` | 1     |
-| process | `runFile`            | `literal:gh`            | 1     |
+| process | `runFile`            | `literal:gh`            | 2     |
 
 ## `lib/check-kit/runner.ts`
 
@@ -344,12 +378,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | --------------------- | ------------------------- | ----- |
 | write | `removePathIfPresent` | `unresolved (call)`       | 1     |
 | write | `writeLocalJSONFile`  | `unresolved (identifier)` | 1     |
-
-## `lib/dev-mcp/tools/http-get.ts`
-
-| Kind    | Interface         | Target                  | Calls |
-| ------- | ----------------- | ----------------------- | ----- |
-| network | `APIClient.fetch` | `unresolved (property)` | 1     |
 
 ## `lib/dev-mcp/tools/sql.ts`
 

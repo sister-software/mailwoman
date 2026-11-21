@@ -53,6 +53,14 @@ export interface PullRequestCheck {
 	 */
 	runID: number | null
 	jobID: number | null
+	/**
+	 * The id at the end of a link of the form `…/runs/<id>`, for a check that
+	 * isn't an Actions job, such as CodeQL.
+	 *
+	 * It is `null` for an Actions job.
+	 * An Actions job's id is its check run id.
+	 */
+	checkRunID: number | null
 	startedAt: string | null
 	completedAt: string | null
 }
@@ -61,8 +69,8 @@ export interface PullRequestCheck {
  * The overall condition of a pull request's checks.
  *
  * - `passed`: every check concluded, and none failed or was cancelled.
- * - `failed`: every check concluded, and at least one failed or was cancelled.
- * - `pending`: at least one check hasn't concluded.
+ * - `failed`: at least one check failed or was cancelled, whether or not others are still running.
+ * - `pending`: at least one check hasn't concluded, and none has failed or been cancelled.
  * - `no-checks`: GitHub reports zero checks on the head; `noChecksReason` states why.
  * - `unread`: `gh` returned no checks JSON; `checksError` states what it printed.
  */
@@ -149,6 +157,12 @@ const NO_CHECKS_MESSAGE = /no checks reported/iu
 const JOB_LINK = /\/actions\/runs\/(\d+)\/job\/(\d+)/u
 
 /**
+ * The check run id in the link of a check that isn't an Actions job,
+ * such as `https://github.com/<owner>/<repo>/runs/<id>`.
+ */
+const CHECK_RUN_LINK = /^https:\/\/github\.com\/[^/]+\/[^/]+\/runs\/(\d+)$/u
+
+/**
  * The most reads the reader makes when the head moved between the view and the checks.
  */
 const HEAD_READ_ATTEMPTS = 3
@@ -164,6 +178,7 @@ function timeOrNull(value: string | undefined): string | null {
 
 function toCheck(raw: RawCheck): PullRequestCheck {
 	const ids = JOB_LINK.exec(raw.link ?? "")
+	const checkRun = ids ? null : CHECK_RUN_LINK.exec(raw.link ?? "")
 
 	return {
 		workflow: raw.workflow,
@@ -173,6 +188,7 @@ function toCheck(raw: RawCheck): PullRequestCheck {
 		link: raw.link,
 		runID: ids ? Number(ids[1]) : null,
 		jobID: ids ? Number(ids[2]) : null,
+		checkRunID: checkRun ? Number(checkRun[1]) : null,
 		startedAt: timeOrNull(raw.startedAt),
 		completedAt: timeOrNull(raw.completedAt),
 	}
@@ -230,13 +246,18 @@ function countBuckets(checks: readonly PullRequestCheck[]): Record<CheckBucket, 
 
 /**
  * The condition a set of read checks produces.
+ *
+ * A failed or cancelled check decides the condition before a pending one does.
+ *
+ * The pull request cannot pass once one check has failed.
+ * A `pending` condition held until the last check concludes would hide that failure.
  */
 function conditionOf(counts: Record<CheckBucket, number>, total: number): ChecksCondition {
 	if (!total) return ChecksCondition.NoChecks
 
-	if (counts.pending) return ChecksCondition.Pending
+	if (counts.fail || counts.cancel) return ChecksCondition.Failed
 
-	return counts.fail || counts.cancel ? ChecksCondition.Failed : ChecksCondition.Passed
+	return counts.pending ? ChecksCondition.Pending : ChecksCondition.Passed
 }
 
 function noChecksReason(view: RawPullRequestView, conflicting: boolean): string {

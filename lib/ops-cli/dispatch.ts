@@ -12,6 +12,7 @@
  *   and `host` reads the host lock and CI through its operation registry.
  *
  *   `worktree` reads another working tree's setup state and runs its missing setup steps.
+ *   `probe` starts one workspace's server on loopback, sends GET requests to it, and stops it.
  *
  *   Dispatch receives its output streams and checkout path from the entry point.
  *
@@ -33,6 +34,7 @@ import { resolvePath } from "path-ts"
 import { HOST_BUSY_EXIT, renderCheckResult, runPreflight, runRegisteredCheck } from "#check-kit/check"
 import { DEFAULT_MAX_WAIT_MINUTES } from "#check-kit/host"
 import { hostExitCode, hostOperations } from "#check-kit/host/operations"
+import { type ProbeContext, probeExitCode, probeOperationArgs, probeOperations } from "#check-kit/probe/operations"
 import {
 	pullRequestExitCode,
 	pullRequestOperationArgs,
@@ -82,6 +84,12 @@ export interface DispatchIO {
 	 * Whether the process holds root, resolved by the bin wrapper so dispatch stays free of `process`.
 	 */
 	root?: boolean
+	/**
+	 * Start watching for SIGINT, SIGTERM and SIGHUP, and return a signal that aborts on the first.
+	 *
+	 * The bin wrapper owns the process, so it provides this, and only `probe` calls it.
+	 */
+	watchInterrupts?: () => AbortSignal
 }
 
 /**
@@ -138,9 +146,11 @@ function usage(io: DispatchIO): number {
 			"  mwops host status [--json]       (the host lock holder and the queued or in-progress CI runs)",
 			"  mwops host wait-idle [--max-minutes N] [--json]   (exit 0 when idle, 3 when the bound expired busy, 4 when CI stayed unread)",
 			"  mwops pr status <number> [--json]   (one pull request's checks; exit 0 passed, 1 failed, 3 pending, 4 unread, 5 no checks)",
-			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until zero checks are pending; the same exit statuses)",
+			"  mwops pr wait <number> [--max-minutes N] [--poll-seconds S] [--json]   (wait until a check fails or zero are pending; the same exit statuses)",
 			"  mwops worktree status --path <dir> [--json]   (what the working tree at <dir> lacks; exit 0 when ready, 1 when not)",
 			"  mwops worktree prepare --path <dir> [--json] [--dry-run] [--max-wait-minutes N] [--log-dir <dir>]   (run the missing install, compile and copy-weights steps there)",
+			"  mwops probe <workspace> --get <path> [--get <path> …] [--json] [--json-path <dotted path>] [--max-bytes N] [--env NAME=value …] [--env-file <file>] [--startup-timeout-seconds N] [--log-dir <dir>] [-- <server flags…>]",
+			"                                   (start the server on 127.0.0.1 with an unused port, GET each path, stop it by pid; exit 0 answered, 1 a request got no response, 3 exited before listening, 4 startup wait expired, 6 a process remained, 130 interrupted)",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops code-blocks [--fix] [--no-cache] [--summary] [--json]   (lint the docs pages' JavaScript and TypeScript code blocks with oxlint)",
@@ -162,6 +172,7 @@ function usage(io: DispatchIO): number {
 			`host operations:    ${hostOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`pr operations:      ${pullRequestOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`worktree operations: ${worktreeOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
+			`probe operations:   ${probeOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.heavy ? ", heavy" : ""})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
@@ -221,6 +232,13 @@ const worktreeView: OperationView<WorktreeContext> = {
 	registry: worktreeOperations,
 	context: (base, io) => ({ ...base, repoRoot: io.repoRoot }),
 	exitCode: worktreeExitCode,
+}
+
+const probeView: OperationView<ProbeContext> = {
+	verb: "probe",
+	registry: probeOperations,
+	context: (base, io) => ({ ...base, repoRoot: io.repoRoot, watchInterrupts: io.watchInterrupts }),
+	exitCode: probeExitCode,
 }
 
 const storageView: OperationView<StorageContext> = {
@@ -903,6 +921,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 			return runOperation(pullRequestView, pullRequestOperationArgs(rest), io)
 		case "worktree":
 			return runOperation(worktreeView, rest, io)
+		case "probe":
+			return runOperation(probeView, probeOperationArgs(rest), io)
 		case "checkout":
 			return reportCheckoutLocality(io)
 		case "ci-scope":

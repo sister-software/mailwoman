@@ -34,7 +34,10 @@ const SUMMARY_JOB_LOG = [
 ].join("\n")
 
 async function readOne(name: string, download: DownloadJobLog, directory?: string) {
-	const [log] = await readFailedCheckLogs([{ name, bucket: "fail", runID: 1, jobID: 2 }], { download, directory })
+	const [log] = await readFailedCheckLogs([{ name, bucket: "fail", runID: 1, jobID: 2, checkRunID: null }], {
+		download,
+		directory,
+	})
 
 	return log!
 }

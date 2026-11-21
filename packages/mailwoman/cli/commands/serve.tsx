@@ -269,7 +269,13 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				fetch: app.fetch,
 				port,
 				hostname: host,
-				onListen: () => cluster.worker?.send("HTTP server ready"),
+				// The line states the bound port.
+				// It differs from `--port` when `--port` is 0.
+				onListen: (info) => {
+					console.error(`[mailwoman] native /v1 API listening on http://${info.address}:${info.port}`)
+
+					cluster.worker?.send("HTTP server ready")
+				},
 			})
 
 			// The listener drains its connections before the engine closes the sessions they read.

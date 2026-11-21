@@ -1,0 +1,16 @@
+[
+	[
+		{
+			"path": "lib/dev-mcp/tools/sql.ts",
+			"blob_href": "https://github.com/sister-software/mailwoman/blob/1f5dbcf45a85cfbf79a8956032dd7cb04933d71e/lib/dev-mcp/tools/sql.ts",
+			"start_line": 41,
+			"start_column": 51,
+			"end_line": 41,
+			"end_column": 59,
+			"annotation_level": "failure",
+			"title": "Inefficient regular expression",
+			"message": "This part of the regular expression may cause exponential backtracking on strings starting with '/*' and containing many repetitions of '*//*'.",
+			"raw_details": null
+		}
+	]
+]

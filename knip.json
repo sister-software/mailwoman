@@ -37,6 +37,7 @@
 				"lib/release-mcp/cli.ts",
 				"lib/**/*.test.ts",
 				"lib/**/*.test.tsx",
+				"test/fixtures/check-kit/probe-server.ts",
 				"vitest.fast.config.ts",
 				"vitest.full.config.ts",
 				"vitest.slow.config.ts"

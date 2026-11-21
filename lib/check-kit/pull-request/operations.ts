@@ -43,11 +43,11 @@ const pullRequestStatusOperation = definePullRequestOperation({
 })
 
 /**
- * `pr.wait`: read the checks until zero are pending or `--max-minutes` passes.
+ * `pr.wait`: read the checks until one fails, zero are pending, or `--max-minutes` passes.
  */
 const pullRequestWaitOperation = definePullRequestOperation({
 	id: "pr.wait",
-	description: "Wait until zero checks on one pull request are pending, for at most --max-minutes.",
+	description: "Wait until a check on one pull request fails or zero are pending, for at most --max-minutes.",
 	effect: OperationEffect.Read,
 	options: { ...NUMBER_OPTION, "max-minutes": { type: "string" }, "poll-seconds": { type: "string" } },
 	inputSchema: z
