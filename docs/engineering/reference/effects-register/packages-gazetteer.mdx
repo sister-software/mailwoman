@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 70 of the group's 110 library and tool modules.
+This page lists 68 of the group's 110 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -40,6 +40,7 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind  | Interface           | Target                   | Calls |
 | ----- | ------------------- | ------------------------ | ----- |
+| read  | `DatabaseClient`    | `unresolved (parameter)` | 1     |
 | read  | `gitHead`           | `unresolved (call)`      | 1     |
 | read  | `Globerator.from`   | `unresolved (parameter)` | 1     |
 | read  | `pathExists`        | `unresolved (call)`      | 5     |
@@ -59,7 +60,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 | Kind  | Interface            | Target                      | Calls |
 | ----- | -------------------- | --------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (call)`         | 2     |
+| read  | `DatabaseClient`     | `unresolved (call)`         | 1     |
 | read  | `pathExists`         | `data-root:geonames-postal` | 1     |
 | read  | `sortedGlob`         | `unresolved (call)`         | 1     |
 | write | `writeLocalJSONFile` | `unresolved (call)`         | 1     |
@@ -111,18 +112,6 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | ------------------- | ------------------- | ----- |
 | read | `pathExists`        | `unresolved (call)` | 1     |
 | read | `readLocalJSONFile` | `unresolved (call)` | 1     |
-
-## `packages/gazetteer/tools/pipeline/admin/freeze.ts`
-
-| Kind | Interface        | Target               | Calls |
-| ---- | ---------------- | -------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (other)` | 1     |
-
-## `packages/gazetteer/tools/pipeline/admin/ingest-wof.ts`
-
-| Kind | Interface        | Target               | Calls |
-| ---- | ---------------- | -------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (other)` | 1     |
 
 ## `packages/gazetteer/tools/pipeline/admin/inputs.ts`
 
