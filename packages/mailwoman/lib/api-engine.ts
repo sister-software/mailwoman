@@ -38,7 +38,6 @@ import { createGeocodeProcessScope, createGeocodeSession, type GeocodeSessionOpt
 import { GeocodeSessionSlot } from "#geocode/session/slot"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
 import { ClassifierService } from "#services/classifier"
-import { need } from "#services/registry"
 
 const DATA_ROOT = dataRootPath()
 
@@ -204,7 +203,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	let parse: MailwomanAPIEngine["parse"]
 
 	try {
-		const classifier = (await need(processScope, ClassifierService)).primary
+		const classifier = (await processScope.resolve(ClassifierService)).primary
 
 		parse = async (address, opts) => {
 			const inputMode =

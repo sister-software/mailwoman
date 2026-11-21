@@ -57,7 +57,7 @@ import {
 } from "#geocode/services"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import type { CapitalTier } from "#resolver-backend"
-import type { ServiceTimings } from "#services/registry"
+import { recordServiceTimings, type ServiceTimings } from "#services/timings"
 
 /**
  * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.
@@ -479,11 +479,13 @@ export async function createGeocodeSession(
 	// A session without a process scope owns its classifier, so its one registry holds both scopes.
 	const registry = scope.process ? scope.process.createChild() : new ServiceRegistry()
 
+	recordServiceTimings(registry, timings)
+
 	if (!scope.process) {
-		registerProcessServices(registry, options, timings)
+		registerProcessServices(registry, options)
 	}
 
-	registerGenerationServices(registry, options, settings, timings)
+	registerGenerationServices(registry, options, settings)
 
 	progress("Loading the gazetteer, neural model and data layers…")
 

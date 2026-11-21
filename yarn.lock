@@ -6731,7 +6731,7 @@ __metadata:
     "@types/trusted-types": "npm:^2.0.7"
     "@types/yauzl-promise": "npm:^4.0.1"
     adm-zip: "npm:^0.6.1"
-    async-init: "npm:^1.1.0"
+    async-init: "npm:^2.0.0"
     axios: "npm:^1.21.0"
     axios-cache-interceptor: "npm:^1.13.0"
     change-case: "npm:^5.4.4"
@@ -14338,10 +14338,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"async-init@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "async-init@npm:1.1.0"
-  checksum: 10/72cc8bec1beb03031d1c812b91fa13a99ffc20cbfdf66308e611028f725f234796a1fd33c4bcaf793ff92fbce1e546033cfee259035a9208230eade778a71f0f
+"async-init@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "async-init@npm:2.0.0"
+  checksum: 10/c9845dd5b680d799cbe7303e0a45e330c673b3ae8c92415cc705d5d492aac49d3db31f897600e388c0dd14672e40d84ac7bf51a28601fdb188f7c762e57172e3
   languageName: node
   linkType: hard
 
@@ -22140,7 +22140,7 @@ __metadata:
     "@mailwoman/variant-aliases": "workspace:*"
     "@mailwoman/zoning": "workspace:*"
     "@sister.software/h3": "npm:^1.1.0"
-    async-init: "npm:^1.1.0"
+    async-init: "npm:^2.0.0"
     chalk: "npm:^6.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
     ink: "npm:^8.0.0"
