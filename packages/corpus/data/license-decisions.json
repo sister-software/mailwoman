@@ -51099,6 +51099,771 @@
 					"because": "The publisher's terms read `licenseInfo: \"Weston County authorized use only.\"`. That restriction is a term of use, which the US factual-data reading does not set aside."
 				}
 			}
+		},
+		"unchecked-corpus-input-tw-new-taipei-city-government-civil-affairs-bure": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. New Taipei City Government Civil Affairs Bureau (新北市政府民政局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/168887` (530,195 bytes, sha256 `f00e6c22f4c53038b2b638e47c9b6adcc5739be978ed683962c40083b2a67dc2`), read on 2026-11-21, reads `新北市門牌位置數值資料`, `提供機關 新北市政府民政局`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/nwt/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/New Taipei City Government Civil Affairs Bureau`: 1,981,172 of the 9,712,173 points in `address-points-tw.db` and 1,981,879 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `新北市政府民政局` and the dataset title `新北市門牌位置數值資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/168887",
+				"found": "terms",
+				"quote": "提供機關 新北市政府民政局; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 新北市政府民政局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-taichung-city-government-digital-development": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Taichung City Government Digital Development Bureau (臺中市政府數位發展局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/177460` (525,947 bytes, sha256 `fc733fcc70cb16e954e6ee11abd22eaee88f752459498221f1bfcca8668b72bf`), read on 2026-11-21, reads `臺中市115年1月至各月份GIS門牌資料`, `提供機關 臺中市政府數位發展局`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/txg/regionwide.json` names this page as its `website`. OpenAddresses and Overture credit the dataset to the Taichung City Government Civil Affairs Bureau; the page names 臺中市政府數位發展局 (the Digital Development Bureau) as 提供機關, and the annex's attribution statement names the 提供機關, so the credit is 臺中市政府數位發展局. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Taichung City Government Civil Affairs Bureau`: 1,321,398 of the 9,712,173 points in `address-points-tw.db` and 1,322,992 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `臺中市政府數位發展局` and the dataset title `臺中市115年1月至各月份GIS門牌資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/177460",
+				"found": "terms",
+				"quote": "提供機關 臺中市政府數位發展局; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 臺中市政府數位發展局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-kaohsiung-city-government-civil-affairs-burea": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Kaohsiung City Government Civil Affairs Bureau (高雄市政府民政局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/177859` (572,830 bytes, sha256 `9f5be4161c390158514434e3badecf722385b9e7aaea849eeb341ebf8f6297a5`), read on 2026-11-21, reads `高雄市115年門牌坐標資料-TWD97`, `提供機關 高雄市政府民政局`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/khh/regionwide.json` names `https://data.kcg.gov.tw/DataSet/Detail/1d7e3a54-6884-4cb0-b07c-c7c9cd411414` as its `website`; on 2026-11-21 that page (twice) and `https://data.kcg.gov.tw/` (once) timed out with no response, and the Wayback Machine holds no copy. The bureau's own data.gov.tw listing of the 2026 (民國115年) release of the same series is read instead. The file OpenAddresses uploaded is `kaohsiung_2026_06.zip`, so this listing is the same series and year but no resource checksum ties it to the upload. The page's resource note links `https://data.kcg.gov.tw/DataSet/Detail/7d92ad41-81a0-495e-aa45-3180f2ee72ab` for the district codes. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Kaohsiung City Government Civil Affairs Bureau`: 1,283,802 of the 9,712,173 points in `address-points-tw.db` and 1,283,832 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `高雄市政府民政局` and the dataset title `高雄市115年門牌坐標資料-TWD97`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/177859",
+				"found": "terms",
+				"quote": "提供機關 高雄市政府民政局; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 高雄市政府民政局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-taipei-city-government-civil-affairs-bureau": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Taipei City Government Civil Affairs Bureau (臺北市政府民政局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/155472` (528,714 bytes, sha256 `f8d68ce088fd19f584f4ae88b8b514cb1a6a2791587d04aacf49624c0df91574`), read on 2026-11-21, reads `臺北市門牌位置數值資料`, `提供機關 臺北市政府民政局`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/tpe/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Taipei City Government Civil Affairs Bureau`: 1,150,092 of the 9,712,173 points in `address-points-tw.db` and 1,153,709 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `臺北市政府民政局` and the dataset title `臺北市門牌位置數值資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/155472",
+				"found": "terms",
+				"quote": "提供機關 臺北市政府民政局; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 臺北市政府民政局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-taoyuan-city-government-civil-affairs-bureau": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Taoyuan City Government Civil Affairs Bureau (桃園市政府民政局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The Taoyuan City Government's open-data portal page `https://opendata.tycg.gov.tw/datalist/ec47dbd5-9ed8-4c8d-8ce1-ccb63b1b72e6` (983,041 bytes, sha256 `d75c76c508c3a6431fbf8add5457897bd7dbb5d13f1075ce87cafc162d3701dd`), read on 2026-11-21, reads `桃園市門牌位置坐標資料 - 桃園資料開放平台`, `授權方式 政府資料開放授權條款-第1版`, `資料提供機關 民政局`. OpenAddresses' definition `sources/tw/tao/regionwide.json` names this page, on the Taoyuan City Government's own open-data portal, as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Taoyuan City Government Civil Affairs Bureau`: 1,099,398 of the 9,712,173 points in `address-points-tw.db` and 1,099,399 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `民政局` and the dataset title `桃園市門牌位置坐標資料`.",
+			"reading": {
+				"url": "https://opendata.tycg.gov.tw/datalist/ec47dbd5-9ed8-4c8d-8ce1-ccb63b1b72e6",
+				"found": "terms",
+				"quote": "授權方式 政府資料開放授權條款-第1版; 資料提供機關 民政局"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 民政局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-tainan-city-government-civil-affairs-bureau": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Tainan City Government Civil Affairs Bureau (臺南市政府民政局) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/120044` (571,727 bytes, sha256 `d849202735c5605e280df76aa6e3aa8f827dfbec14ec248319f98cd1716aaebb`), read on 2026-11-21, reads `臺南市門牌坐標資料-僅供參考`, `提供機關 臺南市政府民政局`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/tnn/regionwide.json` names this page as its `website`. The title's `僅供參考` (for reference only) and the description's `非準確坐標位置，僅供參考` state that the points are hand-placed approximations; that is an accuracy notice, not a restriction on use. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Tainan City Government Civil Affairs Bureau`: 847,063 of the 9,712,173 points in `address-points-tw.db` and 847,065 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `臺南市政府民政局` and the dataset title `臺南市門牌坐標資料-僅供參考`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/120044",
+				"found": "terms",
+				"quote": "提供機關 臺南市政府民政局; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 臺南市政府民政局."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-changhua-county-government-civil-affairs-depa": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Changhua County Government Civil Affairs Department (彰化縣政府民政處) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/170727` (523,987 bytes, sha256 `1fea2a47c75d16059b19c587632a142af0a8a5c9ff47f16985d4874a16921578`), read on 2026-11-21, reads `彰化縣門牌點位資料`, `提供機關 彰化縣政府民政處`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/cha/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Changhua County Government Civil Affairs Office`: 452,665 of the 9,712,173 points in `address-points-tw.db` and 466,191 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `彰化縣政府民政處` and the dataset title `彰化縣門牌點位資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/170727",
+				"found": "terms",
+				"quote": "提供機關 彰化縣政府民政處; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 彰化縣政府民政處."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-pingtung-county-government": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Pingtung County Government (屏東縣政府) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/170847` (520,668 bytes, sha256 `5e54b91495dc76cad247c4254a981ffc64414dd4e32de264c50bcc43845a186d`), read on 2026-11-21, reads `屏東縣全縣門牌檔`, `提供機關 屏東縣政府`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/pif/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Pingtung County Government`: 327,100 of the 9,712,173 points in `address-points-tw.db` and 327,206 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `屏東縣政府` and the dataset title `屏東縣全縣門牌檔`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/170847",
+				"found": "terms",
+				"quote": "提供機關 屏東縣政府; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 屏東縣政府."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-yunlin-county-government": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Yunlin County Government (雲林縣政府) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/166201` (553,817 bytes, sha256 `e432abc408c077304cf0709cf001173dff0c9c6bfc4248cfb2b789100bd78c5d`), read on 2026-11-21, reads `雲林縣門牌座標資料`, `提供機關 雲林縣政府`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/yun/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Yunlin County Government`: 283,135 of the 9,712,173 points in `address-points-tw.db` and 283,343 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `雲林縣政府` and the dataset title `雲林縣門牌座標資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/166201",
+				"found": "terms",
+				"quote": "提供機關 雲林縣政府; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 雲林縣政府."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-hsinchu-county-government-civil-affairs-depar": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Hsinchu County Government Civil Affairs Department (新竹縣政府民政處) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/172380` (528,840 bytes, sha256 `d9509e5c56d146014b2da70a0bbb4cfdc050add8aad18c546f4741f7e00537d6`), read on 2026-11-21, reads `新竹縣門牌位置`, `提供機關 民政處`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/hsq/regionwide.json` names this page as its `website`. The page names the 提供機關 only as `民政處`; its distributions are served from the county government's host `ws.hsinchu.gov.tw`, and its description reads `本資料產自新竹縣門牌點位系統，僅供參考`, an accuracy notice. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Hsinchu County Civil Affairs Office`: 262,712 of the 9,712,173 points in `address-points-tw.db` and 262,744 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `新竹縣政府民政處` and the dataset title `新竹縣門牌位置`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/172380",
+				"found": "terms",
+				"quote": "提供機關 民政處; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 新竹縣政府民政處."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-miaoli-county-government": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Miaoli County Government (苗栗縣政府) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/178083` (523,580 bytes, sha256 `6a0233242ecee2166eb42a230568595f1ef1a31ba32796cb64f41d7b2aa6a2ae`), read on 2026-11-21, reads `苗栗縣迄115年6月30日門牌點位維護系統門牌座標資料`, `提供機關 苗栗縣政府`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/mia/regionwide-zh.json` names this page as its `website`. The description's `存有誤差且偶有標點錯誤情形，僅供參考使用` is an accuracy notice. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Miaoli Civil Affairs Office`: 228,486 of the 9,712,173 points in `address-points-tw.db` and 228,486 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `苗栗縣政府` and the dataset title `苗栗縣迄115年6月30日門牌點位維護系統門牌座標資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/178083",
+				"found": "terms",
+				"quote": "提供機關 苗栗縣政府; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 苗栗縣政府."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-hsinchu-city-government-civil-affairs-departm": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Hsinchu City Government Civil Affairs Department (新竹市政府民政處) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/157547` (556,898 bytes, sha256 `1703b4721b4c21c69b5ba905c0a2fc3c4b65c1a9bea4e81957a96d0d741ca358`), read on 2026-11-21, reads `新竹市門牌坐標資料-僅供參考`, `提供機關 民政處`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/hsz/regionwide.json` names this page as its `website`. The page names the 提供機關 only as `民政處`; its distributions are served from the city government's host `odws.hccg.gov.tw`. The title's `僅供參考` is an accuracy notice. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Hsinchu City Civil Affairs Office`: 210,371 of the 9,712,173 points in `address-points-tw.db` and 210,371 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `新竹市政府民政處` and the dataset title `新竹市門牌坐標資料-僅供參考`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/157547",
+				"found": "terms",
+				"quote": "提供機關 民政處; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 新竹市政府民政處."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-keelung-city-government-civil-affairs-departm": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Keelung City Government Civil Affairs Department (基隆市政府民政處) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The department's own download page `https://www.klcg.gov.tw/tw/civil/2209-292163.html` (24,232 bytes, sha256 `5ab01b2dc6c8b7b07a4ac1e57e3872333fa9abf07928eee342a3aff45a1968d2`), read on 2026-11-21, reads `基隆市政府民政處－檔案下載－基隆市門牌資料`, `資料集提供機關 民政處`, `資料授權 公開`, `發布單位：基隆市政府民政處戶政科`; `公開` (public) is an access label, not a grant. The grant is the Keelung City Government's site-wide open-data declaration, linked from that page's footer as `政府網站資料開放宣告`: `https://www.klcg.gov.tw/tw/klcg1/3259-110276.html` (26,031 bytes, sha256 `8eff0a98ebfa4609f4befb7de34837c8574e9cf4d7a3d1467657968ec474b5ec`) reads `基隆市政府網站上刊載之所有資料與素材，其得受著作權保護之範圍，採政府資料開放授權條款-第1版發布，以無償、非專屬、得由使用者再授權之方式提供公眾使用，使用者得不限時間及地域，重製、改作、編輯、公開傳輸或為其他方式之利用，開發各種產品或服務（簡稱加值衍生物），此一授權行為不會嗣後撤回，使用者亦無須取得本機關之書面或其他方式授權；然使用時應註明出處。`. The CSV the page serves sits under `www.klcg.gov.tw/wSite/public/Attachment/`, so it is material published on that website. OpenAddresses' definition `sources/tw/kee/regionwide.json` names this page, the department's own download page, as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Keelung City Government Civil Affairs Bureau`: 192,187 of the 9,712,173 points in `address-points-tw.db` and 192,193 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `基隆市政府民政處` and the dataset title `基隆市門牌資料`.",
+			"reading": {
+				"url": "https://www.klcg.gov.tw/tw/klcg1/3259-110276.html",
+				"found": "terms",
+				"quote": "基隆市政府網站上刊載之所有資料與素材，其得受著作權保護之範圍，採政府資料開放授權條款-第1版發布，以無償、非專屬、得由使用者再授權之方式提供公眾使用，使用者得不限時間及地域，重製、改作、編輯、公開傳輸或為其他方式之利用，開發各種產品或服務（簡稱加值衍生物），此一授權行為不會嗣後撤回，使用者亦無須取得本機關之書面或其他方式授權；然使用時應註明出處。"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 基隆市政府民政處."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-penghu-county-government": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Penghu County Government (澎湖縣政府) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/170852` (527,455 bytes, sha256 `3ab9a3e93b4864a3d61e44627c182c0664715811b06534f71dfd64d5174c72cd`), read on 2026-11-21, reads `澎湖縣門牌位置數值資料`, `提供機關 澎湖縣政府`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/pen/regionwide.json` names this page as its `website`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Penghu County Government`: 40,602 of the 9,712,173 points in `address-points-tw.db` and 40,603 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `澎湖縣政府` and the dataset title `澎湖縣門牌位置數值資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/170852",
+				"found": "terms",
+				"quote": "提供機關 澎湖縣政府; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 澎湖縣政府."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
+		},
+		"unchecked-corpus-input-tw-kinmen-county-government-civil-affairs-depart": {
+			"state": "elected",
+			"electedTerms": "政府資料開放授權條款－第1版 (Open Government Data License, version 1.0)",
+			"spdx": "OGDL-Taiwan-1.0",
+			"termsVersion": "1.0, 中華民國104年7月27日訂定 (adopted 2015-07-27)",
+			"retrievedCopy": "internal/strategy/rights-receipts/tw-terms-2026-11-21/",
+			"retrievedAt": "2026-11-21",
+			"electedBecause": "Acceptance basis: `publisher-grant`. Kinmen County Government Civil Affairs Department (金門縣政府民政處) publishes its house-number coordinate file (門牌坐標) under the Open Government Data License, version 1.0. The providing agency's data.gov.tw listing `https://data.gov.tw/dataset/171571` (526,537 bytes, sha256 `3bed0e9f1add08b443afdf0b5763a50a8d047cbaae4679fba3d364adc64a97b8`), read on 2026-11-21, reads `金門縣門牌位置數值資料`, `提供機關 民政處`, `授權方式 政府資料開放授權條款-第1版`, `計費方式 免費`. OpenAddresses' definition `sources/tw/kin/regionwide.json` names this page as its `website`. The page names the 提供機關 only as `民政處`; its distributions are served from the county government's host `ws.kinmen.gov.tw`. The licence text at `https://data.gov.tw/license` (484,109 bytes, sha256 `39bff52e960eda98af20efb87869feca9c92cbfebd4e7b16b71f0daa8af4e023`), titled `政府資料開放授權條款－第1版` and dated `中華民國104年7月27日訂定`, grants at 二(一) `各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸、公開播送、公開口述、公開上映、公開演出、編輯、改作，包括但不限於開發各種產品或服務型態之衍生物`, so 改作 (adaptation) and 衍生物 (derivatives) are named, and at 二(二) `使用者得再轉授權他人為前項之利用`. 一(五) brings `不受著作權法保護之純粹紀錄` supplied with the data under the same terms, which covers house numbers and coordinates. The condition is 三(二): `使用者利用依本條款提供之開放資料，及後續之衍生物，應以符合附件所示「顯名聲明」要求之方式，明確標示原資料提供機關之相關聲明；未盡顯名標示義務者，視為自始未取得開放資料之授權`. The annex's attribution statement is `提供機關／單位 [年份] [開放資料釋出名稱與版本號]` followed by `此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。` and the licence URL. 四(二) states `本條款與「創用CC授權 姓名標示 4.0 國際版本」相容，使用者依本條款利用開放資料，如後續以「創用CC授權 姓名標示 4.0 國際版本」規定之方式利用，視為符合本條款之規定`, so use on CC BY 4.0's terms satisfies this licence. 二(四) excludes patents and trademarks. `packages/corpus/lib/tw/AGENTS.md` elects Taiwan's government data on this licence where its publisher states it, and the operations follow the reading of the same licence in `unchecked-national-terms-tw-ministry-of-economic-affairs-gcis`. OpenAddresses' definition summarises the terms as `CC BY 4.0` with `url` `https://data.gov.tw/license`, and Overture's attribution page lists Taiwan's civil-affairs offices under CC BY 4.0; both are third parties' labels, and the publisher states this licence, so its identifier is recorded. Reaches this repository through Overture addresses 2026-06-17.0 as `OpenAddresses/Kinmen County Civil Affairs Office`: 31,990 of the 9,712,173 points in `address-points-tw.db` and 31,996 rows of `addresses-tw.parquet`, which the `overture-tw` corpus source reads. A layer, corpus or model that uses the rows carries the attribution statement naming `金門縣政府民政處` and the dataset title `金門縣門牌位置數值資料`.",
+			"reading": {
+				"url": "https://data.gov.tw/dataset/171571",
+				"found": "terms",
+				"quote": "提供機關 民政處; 授權方式 政府資料開放授權條款-第1版; 計費方式 免費"
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 重製 (reproduction) for any purpose, royalty-free."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 編輯 and 改作 (editing and adaptation), which covers reading the address fields out of the file."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 改作 and the development of 衍生物 (derivatives) in any product form."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant is `不限目的` (for any purpose) and names derivatives in any product or service form."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(一) grants 散布 and 公開傳輸, conditioned by 三(二) on the 顯名聲明 attribution to 金門縣政府民政處."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "三(二) extends the attribution duty to `後續之衍生物` (later derivatives), so the grant reaches the weights and the model card must carry the 顯名聲明."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "二(二) states `使用者得再轉授權他人為前項之利用` (users may sublicense others for those uses), and the grant has no non-commercial limit."
+				}
+			}
 		}
 	}
 }

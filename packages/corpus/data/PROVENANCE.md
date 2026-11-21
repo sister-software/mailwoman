@@ -42,12 +42,14 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 1,661 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 1,676 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
 OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, the 118 county and
 state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`), and one row per
 publisher of the 1,993 US OpenAddresses runs whose terms were read on 2026-11-21 (origin
-`2026-11-21_rights_review`). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
+`2026-11-21_rights_review`), and one row per Taiwanese civil-affairs or county body whose house-number
+coordinates reach `addresses-tw.parquet` and `address-points-tw.db` through Overture (15 rows, origin
+`2026-11-21_rights_review`, #3267). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
 until `license-decisions.json` records one. They sit in this repository because `corpus-source-inputs.json`,
 the table that names them, sits here (#2643).
 
@@ -57,6 +59,11 @@ publisher's metadata answered with empty license, access and copyright fields). 
 `US factual data published with no statement of terms`, so a stricter policy can refuse those rows by label. Each of these decisions also records `reading`: the
 terms page it rests on, with `found: "no-statement"` for a `no-statement-found` acceptance and `found: "terms"`,
 with the publisher's words, for the others.
+
+Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw
+listing, the Taoyuan City Government's portal page or the Keelung City Government's site-wide open-data
+declaration states the Open Government Data License, version 1.0 (`OGDL-Taiwan-1.0`). Its `reading` quotes that
+statement, and its `electedBecause` names the attribution statement the license's 三(二) requires.
 
 ## `us-situs-sources.json` — which register rows each US situs `source` value comes from (#2650)
 
