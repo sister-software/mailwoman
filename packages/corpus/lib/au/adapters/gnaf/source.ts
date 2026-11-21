@@ -20,7 +20,7 @@ export const GNAF_SOURCE_NAME = "gnaf"
  */
 export const GNAF_SOURCE_LOCATIONS: Readonly<Record<string, SourceLocation>> = {
 	[GNAF_SOURCE_NAME]: {
-		title: "Geoscape Australia, G-NAF",
+		title: "Geoscape Geocoded National Address File (G-NAF)",
 		url: "https://data.gov.au/data/dataset/geocoded-national-address-file-g-naf",
 	},
 }
