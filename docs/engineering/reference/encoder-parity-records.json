@@ -10,32 +10,52 @@
 	],
 	"postal_finder_records": {
 		"README": [
-			"Three records captured on 2026-11-16 from the Rust sampler and the Rust encoder with `anchor_paint_mode: postal`, after the",
-			"cross-side agreement of postcode-agreement.run.ts (0 of 72,209 rows differ) and the country resolution rule. Each verified with",
-			"0 differing rows through `parity.run.ts verify`. They are new directories under $MAILWOMAN_DATA_ROOT/audits/encoder-parity/,",
-			"and no existing record was touched. An earlier capture of the same names, made before the resolution rule, was never written there."
+			"Three records captured from the Rust sampler and the Rust encoder with `anchor_paint_mode: postal`. The first capture,",
+			"on 2026-11-16 at 66631371cf, came after the cross-side agreement of postcode-agreement.run.ts (0 of 72,209 rows differ) and the",
+			"country resolution rule, on a branch without the spread read (283a1d64fb, 243b23e881), which reached main in fbf505cc51. Its two",
+			"train records then failed `verify` at row 0 on main (#3120). The records were captured again on 2026-11-21 at 50bd12b983, the",
+			"commit of #3217 that renames the recognizer crates and format identifiers, and each verified with 0 differing rows in a fresh",
+			"process. `superseded` holds each 2026-11-16 record's digest, kept beside the new one as record.2026-11-16.json."
 		],
 		"records": {
 			"postal-v870-train-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-train-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
 				"emitted_rows": 5000,
 				"path": "/mnt/mw/audits/encoder-parity/postal-v870-train-5k/record.json",
-				"record_json_sha256": "237aa6882114168833bc8c1f7d4e4b9579fc1b3202b43d8791dafc2576681ebd",
-				"verified_differing_rows": 0
+				"source_revision": "50bd12b983ef20952dce15073c80cb1c3f1bc1d8",
+				"record_json_sha256": "0aa6acce085594c09b275d932b011e4f7de12395c7725294513f014e5e6a0f78",
+				"verified_differing_rows": 0,
+				"superseded": {
+					"source_revision": "66631371cfc5047cacf69c0b9c2af06b4a9f5791",
+					"record_json_sha256": "237aa6882114168833bc8c1f7d4e4b9579fc1b3202b43d8791dafc2576681ebd",
+					"reason": "drawn before the spread read; 18 of its 5,000 row identities appear in the new record"
+				}
 			},
 			"postal-v870-val-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-v870-val-5k --config packages/corpus/data/training-configs/v8.7.0-base-c6-90k-usgs-structures-s42.yaml --records-dir <directory> --split val --seed 43 --rows 5000 --set data.anchor_paint_mode=postal",
 				"emitted_rows": 4664,
 				"path": "/mnt/mw/audits/encoder-parity/postal-v870-val-5k/record.json",
-				"record_json_sha256": "7c7602a7c1225c1d063be894ba70a4aa0445ec30d490628c96e292dbbf7a72d9",
-				"verified_differing_rows": 0
+				"source_revision": "50bd12b983ef20952dce15073c80cb1c3f1bc1d8",
+				"record_json_sha256": "33ba388cb22da0c6f11f7e92f2a33f03b0921e54bcc57eb4ee9f0aebefd11126",
+				"verified_differing_rows": 0,
+				"superseded": {
+					"source_revision": "66631371cfc5047cacf69c0b9c2af06b4a9f5791",
+					"record_json_sha256": "7c7602a7c1225c1d063be894ba70a4aa0445ec30d490628c96e292dbbf7a72d9",
+					"reason": "every row identity and tensor digest is unchanged; the revision, the config file's sha256 and the postal artifact and definition sha256s moved"
+				}
 			},
 			"postal-code-unit-5k": {
 				"command": "node packages/mailwoman/tools/training/sampler/parity.run.ts capture --name postal-code-unit-5k --config packages/corpus/data/training-configs/v8.3.0-probe-code-unit-2k.yaml --records-dir <directory> --split train --seed 43 --rows 5000 --set data.anchor_paint_mode=postal plus the six host lexicon overrides of the c6-train-2k record",
 				"emitted_rows": 5000,
 				"path": "/mnt/mw/audits/encoder-parity/postal-code-unit-5k/record.json",
-				"record_json_sha256": "e679ed6b913b9d8210ea41315986ebb1c1ab08d451ec4218b1ec3dd1da388564",
-				"verified_differing_rows": 0
+				"source_revision": "50bd12b983ef20952dce15073c80cb1c3f1bc1d8",
+				"record_json_sha256": "4c0c33f64ada83ebcf67b147950edf83b6a57b39dea855f60b041f59ea9b1cc2",
+				"verified_differing_rows": 0,
+				"superseded": {
+					"source_revision": "66631371cfc5047cacf69c0b9c2af06b4a9f5791",
+					"record_json_sha256": "e679ed6b913b9d8210ea41315986ebb1c1ab08d451ec4218b1ec3dd1da388564",
+					"reason": "a row-limited train draw from before the spread read; 13 of its 5,000 row identities appear in the new record"
+				}
 			}
 		}
 	},
