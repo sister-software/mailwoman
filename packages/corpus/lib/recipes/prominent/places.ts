@@ -183,7 +183,10 @@ export interface ProminentPlaceRow {
 	sourceID: string
 }
 
-const PROMINENT_PLACES_SOURCE = defaultRecipeSource("synth-prominent-places")
+/**
+ * The `source` of every row the recipe writes, the key a training config weights it under.
+ */
+export const PROMINENT_PLACES_SOURCE = defaultRecipeSource("synth-prominent-places")
 
 /**
  * The distinct components one place is written with in one shape:

@@ -3,20 +3,28 @@
 
 /**
  *   The `prominent-places` recipe's input: for each required prominent place,
- *   the rows to write in each shape so a corpus built from the scanned base plus the
- *   recipe meets the `prominent_place_coverage` receipt on rows.
+ *   the rows to write in each shape so a corpus built from the scanned base plus the recipe
+ *   meets the `prominent_place_coverage` receipt under the training config it runs for.
+ *
+ *   The receipt measures the demand share in expected epoch draws, so the counts are set in draws too.
+ *   The config gives the recipe's source a fixed share of the epoch, its draw budget.
+ *
+ *   The sampler spreads that budget over the recipe's admitted rows alike.
+ *   A recipe row of a country admitted with chance `a` therefore takes `a × budget / A`
+ *   draws, where `A` is the recipe's admitted rows, and {@linkcode solveRecipeRows}
+ *   finds the row counts whose own `A` gives each cell its deficit.
  *
  *   The counts are stratified by country, placetype band and shape:
  *
- *   - **Presence.** A required place with no train row in a required shape gets one.
- *   - **Demand share.** A cell whose decile 1 falls short of its target gets
- *     {@linkcode decileOneDeficit} rows, divided by {@linkcode apportionUnderCap} among
- *     every decile-1 place of the cell that the receipt can count, required or not.
+ *   - **Presence.** A required place with no drawable train row in a required shape gets one.
+ *   - **Demand share.** A cell whose decile 1 falls short of its target in draws gets the rows
+ *     whose draws close its {@linkcode decileOneDeficit}, divided by {@linkcode apportionUnderCap}
+ *     among every decile-1 place of the cell that the receipt can count, required or not.
  *
  *   Two caps follow from the rule, and neither is a fitted number:
  *
- *   - **Per country.** A country's demand rows are exactly the sum of its own cells' deficits,
- *     each measured against that country's own base rows, so no country writes rows another
+ *   - **Per country.** A country's demand rows are exactly the sum of its own cells' rows,
+ *     each set against that country's own base draws, so no country writes rows another
  *     country's cell needs. {@linkcode writeProminentTuples} throws when the sum differs.
  *   - **Per place.** No place takes more of a cell's deficit than `ceil(deficit / places)`,
  *     the smallest equal count that meets the cell.
@@ -34,19 +42,134 @@
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import type { PlaceBand, ProminentPlaceTuple, QueryShape } from "@mailwoman/corpus/recipes/prominent/places"
+import {
+	PROMINENT_PLACES_SOURCE,
+	type PlaceBand,
+	type ProminentPlaceTuple,
+	type QueryShape,
+} from "@mailwoman/corpus/recipes/prominent/places"
 import { createDisplayCountryName } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/render"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
 import {
 	createProminentCoverageTables,
+	epochRates,
+	type EpochMeasure,
 	queryRows,
 	readDemandCells,
 	DEMAND_SHARE_FRACTION,
 	decileOneDeficit,
 	readProminentPlacesRecord,
 } from "#tools/training/audits/prominent/coverage"
+
+/**
+ * One demand cell as {@linkcode solveRecipeRows} reads it: its base draws, decile 1's base draws,
+ * its target share, the presence rows the recipe writes into it, and the country's admission chance.
+ */
+export interface DemandCellPlan {
+	draws: number
+	decile1Draws: number
+	target: number
+	presenceRows: number
+	decile1PresenceRows: number
+	admission: number
+}
+
+/**
+ * The recipe's row counts under its draw budget: the demand rows of each cell,
+ * and the draws one recipe row takes per unit of admission chance, `budget / A`.
+ */
+export interface RecipeRowSolution {
+	demandRows: number[]
+	drawsPerAdmittedRow: number
+	/**
+	 * The recipe's admitted rows `A`: each presence and demand row at its country's admission chance.
+	 */
+	admittedRows: number
+	/**
+	 * The draws the cells lack before any recipe row: the least budget that could meet them.
+	 */
+	deficitDraws: number
+}
+
+/**
+ * The demand rows one cell needs when each recipe row of its country takes `perRow` draws.
+ */
+function cellDemandRows(cell: DemandCellPlan, perRow: number): number {
+	const deficit = decileOneDeficit(
+		cell.draws + cell.presenceRows * perRow,
+		cell.decile1Draws + cell.decile1PresenceRows * perRow,
+		cell.target
+	)
+
+	return deficit > 0 ? Math.ceil(deficit / perRow - 1e-9) : 0
+}
+
+/**
+ * The rounds {@linkcode solveRecipeRows} runs before it refuses.
+ *
+ * Each round that continues adds at least one row, so the bound stops a solve whose rows keep growing.
+ */
+const SOLVE_ROUNDS = 10_000
+
+/**
+ * The fewest recipe rows whose draws meet every cell when `budget` draws spread over them.
+ *
+ * A recipe row's draws, `budget / A`, fall as rows are added, and a cell's
+ * need grows as each row draws less.
+ * The first round counts only the presence rows.
+ *
+ * Each round raises every cell to the rows it needs at the current per-row draws and recomputes them.
+ * A cell's rows never fall, so the rounds stop once every cell holds enough at the draws its rows give.
+ *
+ * @throws When the deficits, counted without the presence rows, take the whole budget
+ * or more: no row count meets them, and the source's weight must rise.
+ */
+export function solveRecipeRows(
+	cells: readonly DemandCellPlan[],
+	presenceAdmitted: number,
+	budget: number
+): RecipeRowSolution {
+	const floor = cells.reduce(
+		(sum, cell) => sum + (cell.admission > 0 ? decileOneDeficit(cell.draws, cell.decile1Draws, cell.target) : 0),
+		0
+	)
+
+	if (floor >= budget) {
+		throw new Error(
+			`the demand cells lack ${floor.toFixed(1)} draws, at or above the recipe's budget of ${budget.toFixed(1)}; ` +
+				"raise the source's weight"
+		)
+	}
+
+	const rows = cells.map(() => 0)
+	let admitted = presenceAdmitted
+
+	for (let round = 0; round < SOLVE_ROUNDS; round++) {
+		// Before any row exists, the first row would take the whole budget.
+		const perRow = admitted > 0 ? budget / admitted : budget
+		let changed = false
+
+		for (const [index, cell] of cells.entries()) {
+			if (!(cell.admission > 0)) continue
+
+			const need = cellDemandRows(cell, perRow * cell.admission)
+
+			if (need > rows[index]!) {
+				admitted += (need - rows[index]!) * cell.admission
+				rows[index] = need
+				changed = true
+			}
+		}
+
+		if (!changed) {
+			return { demandRows: rows, drawsPerAdmittedRow: perRow, admittedRows: admitted, deficitDraws: floor }
+		}
+	}
+
+	throw new Error(`the recipe's row counts did not settle in ${SOLVE_ROUNDS} rounds`)
+}
 
 /**
  * Divides `total` among `weights.length` places so no part exceeds `ceil(total / places)`,
@@ -154,20 +277,60 @@ export interface ProminentTuplesSummary {
 	 */
 	largest_place_part: number
 	/**
-	 * Cells short of their target with no decile-1 place the recipe can write.
+	 * Cells short of their target with no decile-1 place the recipe can write, with the draws they lack.
 	 */
-	unmet_cells: Array<{ country: string; band: string; query_shape: string; deficit: number }>
+	unmet_cells: Array<{ country: string; band: string; query_shape: string; deficit_draws: number }>
+	/**
+	 * The epoch the counts are set in: its draws, the recipe source's requested share
+	 * and the draws that share gives it, the draws the demand cells lack before any
+	 * recipe row, and the draws one admitted recipe row takes.
+	 */
+	epoch: {
+		draws: number
+		requested_share: number
+		budget_draws: number
+		deficit_draws: number
+		draws_per_admitted_row: number
+	}
 }
 
 /**
- * Writes `prominent-tuples.jsonl` into `out` from `places.parquet` and the base
- * corpus's `short-admin-rows.parquet` there.
+ * Writes `prominent-tuples.jsonl` into `out` from `places.parquet` and the base corpus's
+ * `short-admin-rows.parquet` there, under the training config's epoch over that base.
+ *
+ * @throws When the config requests no draws of the recipe's source, or the base already holds its rows.
  */
 export async function writeProminentTuples(options: {
 	out: string
+	/**
+	 * The training config's epoch over the base corpus the scan read.
+	 */
+	epoch: EpochMeasure
 	limits?: DuckDBLimits
 }): Promise<ProminentTuplesSummary> {
 	const placesPath = `${options.out}/places.parquet`
+	const share = options.epoch.requested.get(PROMINENT_PLACES_SOURCE)
+
+	if (!share) {
+		throw new Error(
+			`the training config requests no draws of ${PROMINENT_PLACES_SOURCE}; give it a source_weights entry`
+		)
+	}
+
+	if (options.epoch.trainShapes.some((row) => row.source === PROMINENT_PLACES_SOURCE)) {
+		throw new Error(`the base corpus already holds ${PROMINENT_PLACES_SOURCE} rows; scan the corpus the recipe joins`)
+	}
+
+	const budget = options.epoch.draws * share
+
+	// The base sources' rates.
+	// The recipe's rows don't exist yet, and the solve below sets their draws.
+	const rates = epochRates({
+		...options.epoch,
+		requested: new Map([...options.epoch.requested].filter(([source]) => source !== PROMINENT_PLACES_SOURCE)),
+	})
+
+	const admission = (country: string) => rates.admission.get(country) ?? 0
 
 	const record = await readProminentPlacesRecord(placesPath)
 	const countryNames = await readCandidateCountryNames(record.candidate_db)
@@ -176,7 +339,7 @@ export async function writeProminentTuples(options: {
 
 	using db = await openDuckDB(options.limits)
 
-	await createProminentCoverageTables(db, placesPath, `${options.out}/short-admin-rows.parquet`)
+	await createProminentCoverageTables(db, placesPath, `${options.out}/short-admin-rows.parquet`, rates)
 
 	const placeShapes = await queryRows(
 		db,
@@ -241,18 +404,22 @@ export async function writeProminentTuples(options: {
 		return entry
 	}
 
+	let presenceAdmitted = 0
+
 	for (const row of placeShapes) {
 		if (row.required && row.rows === 0) {
 			add(row.spr_id, row.query_shape, 1)
 
 			presenceRows++
+			presenceAdmitted += admission(row.country)
 
 			tally(row.country).presence_rows++
 		}
 	}
 
-	let largestPart = 0
 	const unmet: ProminentTuplesSummary["unmet_cells"] = []
+	const demandCells: Array<{ cell: (typeof cells)[number]; members: PlaceShapeRow[]; plan: DemandCellPlan }> = []
+	const unwritable: Array<{ cell: (typeof cells)[number]; plan: DemandCellPlan }> = []
 
 	for (const cell of cells) {
 		if (cell.decile1_population_share == null) continue
@@ -261,27 +428,54 @@ export async function writeProminentTuples(options: {
 		const members = writable.filter((row) => row.decile === 1)
 
 		// The presence rows written above count toward the cell, and a decile-1 place's toward decile 1.
-		const presence = writable.filter((row) => row.required && row.rows === 0).length
-		const decile1Presence = members.filter((row) => row.required && row.rows === 0).length
-
-		const deficit = decileOneDeficit(
-			cell.rows + presence,
-			cell.decile1_rows + decile1Presence,
-			DEMAND_SHARE_FRACTION * cell.decile1_population_share
-		)
-
-		if (!deficit) continue
-
-		if (!members.length) {
-			unmet.push({ country: cell.country, band: cell.band, query_shape: cell.query_shape, deficit })
-
-			continue
+		const plan: DemandCellPlan = {
+			draws: cell.draws,
+			decile1Draws: cell.decile1_draws,
+			target: DEMAND_SHARE_FRACTION * cell.decile1_population_share,
+			presenceRows: writable.filter((row) => row.required && row.rows === 0).length,
+			decile1PresenceRows: members.filter((row) => row.required && row.rows === 0).length,
+			admission: admission(cell.country),
 		}
 
-		tally(cell.country).deficit += deficit
+		if (members.length) {
+			demandCells.push({ cell, members, plan })
+		} else {
+			unwritable.push({ cell, plan })
+		}
+	}
+
+	const solution = solveRecipeRows(
+		demandCells.map(({ plan }) => plan),
+		presenceAdmitted,
+		budget
+	)
+
+	// A cell with no writable decile-1 place keeps its deficit, counted with the draws its presence rows take.
+	for (const { cell, plan } of unwritable) {
+		const perRow = solution.drawsPerAdmittedRow * plan.admission
+
+		const deficit = decileOneDeficit(
+			plan.draws + plan.presenceRows * perRow,
+			plan.decile1Draws + plan.decile1PresenceRows * perRow,
+			plan.target
+		)
+
+		if (deficit > 0) {
+			unmet.push({ country: cell.country, band: cell.band, query_shape: cell.query_shape, deficit_draws: deficit })
+		}
+	}
+
+	let largestPart = 0
+
+	for (const [cellIndex, { cell, members }] of demandCells.entries()) {
+		const cellRows = solution.demandRows[cellIndex]!
+
+		if (!cellRows) continue
+
+		tally(cell.country).deficit += cellRows
 
 		const parts = apportionUnderCap(
-			deficit,
+			cellRows,
 			members.map((row) => row.population_used ?? 0)
 		)
 
@@ -300,7 +494,7 @@ export async function writeProminentTuples(options: {
 
 	for (const [country, entry] of byCountry) {
 		if (entry.demand_rows !== entry.deficit) {
-			throw new Error(`${country} takes ${entry.demand_rows} demand rows against its own deficit of ${entry.deficit}`)
+			throw new Error(`${country} takes ${entry.demand_rows} demand rows against its own cells' ${entry.deficit}`)
 		}
 	}
 
@@ -341,5 +535,12 @@ export async function writeProminentTuples(options: {
 			.toSorted((a, b) => b.presence_rows + b.demand_rows - (a.presence_rows + a.demand_rows)),
 		largest_place_part: largestPart,
 		unmet_cells: unmet,
+		epoch: {
+			draws: options.epoch.draws,
+			requested_share: share,
+			budget_draws: budget,
+			deficit_draws: solution.deficitDraws,
+			draws_per_admitted_row: solution.drawsPerAdmittedRow,
+		},
 	}
 }

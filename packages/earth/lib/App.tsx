@@ -11,13 +11,14 @@ import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
-import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
+import { Geocoder, type GeocoderPanels, type GeocoderRuntime } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
 import { ReachabilityProvider } from "@mailwoman/react/network/ReachabilityProvider"
 import { EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { useMemoryProfile } from "#memory/profile"
 import { pageTitle } from "#page-title"
 import {
 	cameraFromLocation,
@@ -28,6 +29,7 @@ import {
 	runtimeModeFromSearch,
 	searchWithQuery,
 } from "#routes"
+import { BrowserRuntimeSlot, createLocalFallbackProvider, localFallbackPermitted } from "#runtime/local-fallback"
 import { DEFAULT_CENTER, useBrowserGeolocation } from "#runtime/use/browser-geolocation"
 import {
 	type GeocoderRuntimeHandle,
@@ -35,6 +37,7 @@ import {
 	useGeocoderRuntime,
 } from "#runtime/use/geocoder-runtime"
 import {
+	type LocalFallback,
 	remoteGeocoderHealthURL,
 	remoteGeocoderURL,
 	useRemoteGeocoderRuntime,
@@ -129,9 +132,54 @@ function RemoteGeocoder({ apiURL, route, url }: { apiURL: URL; route: Route; url
 }
 
 function RemoteGeocoderView({ apiURL, route, url }: { apiURL: URL; route: Route; url: URLQuery }) {
-	const handle = useRemoteGeocoderRuntime(apiURL, useRuntimeOptions())
+	const options = useRuntimeOptions()
+	const profile = useMemoryProfile()
+	const [fallbackWanted, setFallbackWanted] = useState(false)
+	const [browserRuntime] = useState(() => new BrowserRuntimeSlot())
 
-	return <GeocoderView handle={handle} route={route} url={url} />
+	const fallback = useMemo<LocalFallback>(
+		() => ({
+			provider: createLocalFallbackProvider(browserRuntime.read, (result) => ({ result, engine: null })),
+			request: () => setFallbackWanted(true),
+		}),
+		[browserRuntime]
+	)
+
+	const handle = useRemoteGeocoderRuntime(apiURL, options, fallback)
+
+	return (
+		<>
+			{fallbackWanted && localFallbackPermitted(profile) ? (
+				<BrowserFallbackRuntime options={options} onRuntime={browserRuntime.set} />
+			) : null}
+			<GeocoderView handle={handle} route={route} url={url} />
+		</>
+	)
+}
+
+/**
+ * Loads the browser runtime beside the hosted one and reports it to `onRuntime`.
+ *
+ * It renders no markup.
+ * A hook cannot run conditionally, so the page mounts this component when the hosted API
+ * first fails, and the model download starts then rather than on the cold load.
+ */
+function BrowserFallbackRuntime({
+	options,
+	onRuntime,
+}: {
+	options: GeocoderRuntimeOptions
+	onRuntime: (runtime: GeocoderRuntime | null) => void
+}) {
+	const { runtime } = useGeocoderRuntime(options)
+
+	useEffect(() => {
+		onRuntime(runtime)
+
+		return () => onRuntime(null)
+	}, [runtime, onRuntime])
+
+	return null
 }
 
 function GeocoderView({ handle, route, url }: { handle: GeocoderRuntimeHandle; route: Route; url: URLQuery }) {
