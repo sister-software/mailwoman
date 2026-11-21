@@ -8,7 +8,7 @@
  *   Declared once so no test re-asserts it with a cast.
  */
 
-import type { GazetteerWorkerEnv } from "@mailwoman/gazetteer-worker"
+import type { GazetteerWorkerEnv } from "@mailwoman/gazetteer-worker/services"
 
 declare global {
 	namespace Cloudflare {

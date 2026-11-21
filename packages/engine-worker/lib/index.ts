@@ -16,8 +16,8 @@ import type GazetteerWorker from "@mailwoman/gazetteer-worker"
 import { LandmarkSource } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import mailwomanPackage from "mailwoman/package.json" with { type: "json" }
 
-import { createEngineWorkerEngine, type ReleasePipeline } from "#engine"
-import { loadDefaultReleasePipeline } from "#release-pipeline"
+import { createEngineWorkerEngine } from "#engine"
+import { engineScope, ReleasePipelineService } from "#services"
 
 /**
  * The bindings `wrangler.toml` declares.
@@ -31,24 +31,6 @@ export interface EngineWorkerEnv {
 }
 
 /**
- * The isolate's pipeline load.
- * A failed load is forgotten so the next request retries it.
- */
-let pipeline: Promise<ReleasePipeline> | null = null
-
-function loadPipeline(): Promise<ReleasePipeline> {
-	const loading = (pipeline ??= loadDefaultReleasePipeline())
-
-	loading.catch(() => {
-		if (pipeline === loading) {
-			pipeline = null
-		}
-	})
-
-	return loading
-}
-
-/**
  * The engine stamp the API attaches to every response, for the `mailwoman`
  * package version this Worker bundles.
  */
@@ -57,7 +39,7 @@ const ENGINE_STAMP = buildEngineStamp({ version: mailwomanPackage.version, expre
 export default {
 	fetch(request: Request, env: EngineWorkerEnv): Promise<Response> | Response {
 		const engine = createEngineWorkerEngine({
-			pipeline: loadPipeline,
+			pipeline: () => engineScope().resolve(ReleasePipelineService),
 			lookup: { findPlace: (query) => env.GAZETTEER.findPlace(query) },
 			landmarkLayers: {
 				landmarks: { find: (name) => env.GAZETTEER.findLandmarks(name, LandmarkSource.Wikidata) },
