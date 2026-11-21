@@ -40,6 +40,14 @@ const LICENSES: LicenseDecision[] = [
 		reading: { url: "https://www.arcgis.com/sharing/rest/content/items/8c82?f=json", found: "no-statement" },
 		operations: redistribute("other-documented"),
 	},
+	{
+		licenseID: "portland-sa",
+		state: "elected",
+		electedTerms: "CC-BY-SA (version unstated), as the publisher's open-data site item states it",
+		retrievedCopy: "receipts/portland/",
+		electedBecause: "The site item states CC-BY-SA with no version.",
+		operations: redistribute("publisher-grant"),
+	},
 	{ licenseID: "cook-refused", state: "refused", refusedBecause: "The county withholds redistribution." },
 	{
 		licenseID: "overture-terms",
@@ -55,6 +63,7 @@ const REGISTER: RegisterTermsInput = {
 	sources: [
 		{ sourceID: "us-dc", license: "dc-cc-by", publisher: "District of Columbia", name: "dc" },
 		{ sourceID: "us-alachua", license: "alachua-facts", publisher: "Alachua County GIS", name: "alachua" },
+		{ sourceID: "us-portland", license: "portland-sa", publisher: "City of Portland, Oregon", name: "portland" },
 		{ sourceID: "us-cook", license: "cook-refused", publisher: "Cook County", name: "cook" },
 		{ sourceID: "us-overture", license: "overture-terms", publisher: "Overture Maps Foundation", name: "overture" },
 	],
@@ -65,6 +74,7 @@ const TABLE: Record<string, string[]> = {
 	"openaddresses:us/dc/statewide": ["us-dc"],
 	"openaddresses:us/fl/alachua": ["us-alachua"],
 	"openaddresses:us/il/cook": ["us-cook"],
+	"openaddresses:us/or/city_of_portland": ["us-portland"],
 	"overture:OpenAddresses/FL/Alachua County": ["us-alachua", "us-overture"],
 	"overture:OpenAddresses/IL/Cook County": ["us-overture", "us-cook"],
 }
@@ -185,6 +195,48 @@ describe("describeMixedAddressLayer", () => {
 		expect(byID["overture:OpenAddresses/IL/Cook County"]).toMatchObject({
 			basis: "refused",
 			deciding: expect.objectContaining({ registerSource: "us-cook" }),
+		})
+	})
+
+	it("reads a grant that names CC-BY-SA without its version as owing attribution and share-alike", async () => {
+		const ledger = `addresses/us-or/${VERSION}/ATTRIBUTION.json`
+		const portland = { source: "openaddresses:us/or/city_of_portland", authority: null, records: 5, recorded: null }
+
+		const files: Record<string, unknown> = {
+			[`addresses/us/${VERSION}/manifest.json`]: {
+				country: "US",
+				version: VERSION,
+				splitRows: 10_000_000,
+				regions: [
+					{
+						region: "us-or",
+						subdivision: "US-OR",
+						records: 0,
+						lookup: { path: `addresses/us-or/${VERSION}/lookup.db` },
+					},
+				],
+			},
+			[ledger]: [{ ...portland, license: null }],
+		}
+
+		const read: LayerFileReader = {
+			origin: "fixture/",
+			readJSON: async (path) => files[path],
+			exists: async (path) => path in files,
+		}
+
+		const description = await describeMixedAddressLayer({
+			license: "LicenseRef-US-Mixed",
+			version: VERSION,
+			read,
+			terms,
+		})
+
+		expect(description.sources[0]).toMatchObject({
+			basis: "publisher-grant",
+			attribution: "required",
+			shareAlike: "required",
+			obligationClass: ObligationClass.ShareAlike,
 		})
 	})
 

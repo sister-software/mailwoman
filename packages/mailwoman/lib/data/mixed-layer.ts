@@ -21,6 +21,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { TermsStatement } from "@mailwoman/core/license/decision"
 import { licenseIdentifiers, LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obligations"
+import { mentionsShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
 import type { ReleaseConfig } from "@mailwoman/core/release-config"
 import { RegisterTermsBasis, type RegisterRowTerms } from "@mailwoman/corpus/source-register/terms"
 import {
@@ -310,6 +311,13 @@ function rowObligations(row: RegisterRowTerms): { attribution: ObligationState; 
 
 		case RegisterTermsBasis.NoRestrictingTerms:
 			return { attribution: ObligationState.None, shareAlike: ObligationState.None }
+
+		// A grant whose terms cite a share-alike license without its version, such as `CC-BY-SA`, owes
+		// attribution and share-alike under every version, so those two obligations are known.
+		case RegisterTermsBasis.PublisherGrant:
+			return row.electedTerms && mentionsShareAlike(readLicenseRecord(row.electedTerms))
+				? { attribution: ObligationState.Required, shareAlike: ObligationState.Required }
+				: { attribution: ObligationState.Unknown, shareAlike: ObligationState.Unknown }
 
 		default:
 			return { attribution: ObligationState.Unknown, shareAlike: ObligationState.Unknown }
