@@ -10,13 +10,11 @@
  *   A source the table doesn't map is returned with no rows, so a reader reports it as uncovered.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
 import { registerRowTerms, type RegisterRowTerms, type RegisterTermsInput } from "#source-register/terms"
-import { usSitusSourcesPath } from "#us/recipes/house-venue-tuples"
+import { readUSSitusSources, usSitusSourcesPath } from "#us/address-records/rights"
 
 /**
  * The register rows one layer source maps to, each with its terms for redistribution.
@@ -48,11 +46,9 @@ export async function readUSAddressSourceTerms(
 	register?: RegisterTermsInput,
 	tablePath: PathBuilderLike = usSitusSourcesPath()
 ): Promise<USAddressSourceTermsReader> {
-	if (!(await pathExists(tablePath))) throw new Error(`No US situs source table at ${tablePath.toString()}`)
-
-	const [decisions, table] = await Promise.all([
+	const [decisions, sources] = await Promise.all([
 		register ?? readAddressSourceRegister(),
-		readLocalJSONFile<{ sources: Record<string, readonly string[]> }>(tablePath),
+		readUSSitusSources(tablePath),
 	])
 
 	const cache = new Map<string, RegisterRowTerms>()
@@ -70,6 +66,6 @@ export async function readUSAddressSourceTerms(
 
 	return (source) => ({
 		source,
-		rows: (Object.hasOwn(table.sources, source) ? table.sources[source]! : []).map(rowTerms),
+		rows: (Object.hasOwn(sources, source) ? sources[source]! : []).map(rowTerms),
 	})
 }
