@@ -443,6 +443,7 @@ unrecognized on every machine that opens it.
 | `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution              |
 | `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none                     |
 | `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution, share-alike |
+| `LicenseRef-US-Mixed`                | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown                  |
 | `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                       | unknown                  |
 | `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution              |
 | `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution              |
@@ -508,6 +509,72 @@ Of those 2,352 records, 2,331 are in the admin build's `spr` table, 2,330 in its
 2,330 in `candidate.db`, so its CC BY-SA 3.0 term reaches the layers through centroids, boxes and populations.
 
 Issue #3163 records the scan's per-country and per-property tables.
+
+### The US address layer's obligations
+
+`LicenseRef-US-Mixed` records unknown obligations, so it stays out of the obligations table. The sources whose
+terms were read owe attribution at most. The publishers of 30% of the layer's records have terms no reader has
+recorded, and 13 publishers whose terms the register refuses have files in the layer. The OGC server's `license`
+link for this identifier points to this section. No other document states the combined terms. Each region's
+`ATTRIBUTION.json` lists that region's sources with the terms OpenAddresses records for each.
+
+The US layer build (`packages/corpus/lib/us/address-records/layer.ts`) combines three sources per state. It
+takes NAD release 24, the Overture addresses rows from every dataset other than NAD, and the OpenAddresses runs
+`isAdmittedSource` admits. That function reads the terms an OpenAddresses source definition records, and it
+admits a definition that records none. It doesn't consult the register.
+
+The source texts, retrieved 2026-11-21:
+
+- USDOT's
+  [NAD disclaimer](https://www.transportation.gov/mission/open/gis/national-address-database/national-address-database-nad-disclaimer)
+  states that the NAD is a federal work outside copyright under 17 U.S.C. § 105 and is "available for re-use
+  without limitation or restriction." It also states that the NAD isn't intended as a mailing list and "is
+  subject to individual state statutes that prohibit it's use as a mailing list." That limit comes from state law rather than from a license term, so no
+  obligation class records it.
+- The [OpenAddresses README](https://github.com/openaddresses/openaddresses#license) states that the
+  pipeline's data keeps the original sources' licenses: "Individual sources will have their own licenses. The
+  OpenAddresses team does its best to summarize the source licenses in the source
+  JSON for each source." A definition's recorded license is OpenAddresses' summary of the publisher's terms.
+  A definition with no license field means no summary was written. It doesn't mean the publisher states no terms.
+- Overture's [attribution page](https://docs.overturemaps.org/attribution/) states that the addresses data "comes
+  from a variety of sources. All carry permissive open licenses. Some have special terms or require
+  attribution." It lists, for example, El Dorado County as "Public domain by judicial interpretation of the
+  Public Records Act". The register refuses El Dorado County after reading the county's own page, so Overture's
+  labels are a third party's claim.
+
+The US position in `packages/corpus/lib/us/AGENTS.md` elects a public body's file published without restricting
+terms. A register decision records that reading of the publisher's page. Measured 2026-11-21 over the 52 regions
+of the served manifest, `addresses/us/2026-11-13/manifest.json`, by reading each region's `ATTRIBUTION.json` and
+joining each source to its row in `address-source-register.json`. An Overture dataset joins through
+`us-situs-sources.json`, and an OpenAddresses run through the row whose `access` names the run.
+
+| Sources                                                         | Source ids | Records     | Terms read                    | Obligations |
+| --------------------------------------------------------------- | ---------- | ----------- | ----------------------------- | ----------- |
+| NAD (`usgov-nad`)                                               | 1          | 99,223,239  | yes, elected                  | none        |
+| register-elected OpenAddresses runs and Overture datasets       | 179        | 19,903,690  | yes, elected                  | attribution |
+| register-refused: the publisher's terms spell out a restriction | 22         | 1,346,643   | yes, refused                  | unknown     |
+| register rows no reviewer has read (`unchecked`)                | 7          | 1,367,947   | no                            | unknown     |
+| OpenAddresses runs with no register row                         | 1,988      | 49,310,556  | no, except three in admission | unknown     |
+| All                                                             | 2,197      | 171,152,075 |                               | unknown     |
+
+Of the 179 elected, 177 are elected under the US factual-data reading, the City of Berkeley under its portal's
+reuse statement, and `us/dc/statewide` under CC BY 4.0, which brings in the attribution term.
+
+The 22 refused source ids are 13 publishers' files, 12 OpenAddresses runs with 1,317,791 records and 10 Overture
+datasets with 28,852: the counties of San Luis Obispo, El Dorado, Madera, Tehama, Mono and Mariposa in California, Brevard and
+Hernando in Florida, Kent, Muskegon and Allegan in Michigan, Cook County in Illinois and the City of Boise's Ada
+County file in Idaho. Each decision states the restriction, such as Cook County's clause withholding
+redistribution. The build admits them because their OpenAddresses definitions record no restricting terms.
+
+The 7 unchecked source ids are SanGIS, Placer, Stanislaus and Santa Cruz in California and Lee and Sumter in
+Florida. Of the 1,988 runs without a register row, 1,691 record no terms (39,746,932 records), 210 record an
+attribution grant (4,751,624), 83 record a public-domain statement (4,541,960) and 4 record other text (270,040).
+`REVIEWED_OPEN` in `packages/corpus/lib/address-records/admission.ts` holds a reviewer's reading of three of
+those four: San Antonio, Somerset County and Commerce City.
+
+The register's own reviews show why a definition that records no terms doesn't settle the reading. The layer
+holds 88 OpenAddresses runs that record no terms and have a register row. Readers elected 76 of them and found
+restricting terms on 11, and one is unread.
 
 `LicenseRef-INEGI-Terms` is in the table, because its terms were read. They permit copying, publishing,
 adapting, extracting and commercial use, require the credit `Fuente: INEGI, <product name>`, and state no

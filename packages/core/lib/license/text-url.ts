@@ -23,6 +23,14 @@ const LICENSE_REF_TEXT_URLS: ReadonlyMap<string, () => string> = new Map([
 	// A US Government work has no copyright under 17 U.S.C. § 105, so its text is that section,
 	// as the U.S. Copyright Office publishes Title 17.
 	["LicenseRef-USGov-Public-Domain", () => "https://www.copyright.gov/title17/92chap1.html#105"],
+	// The US address layer combines about two thousand publishers' files.
+	// No one document states their terms.
+	// The layer-interface section lists each source class's terms and what remains unread.
+	[
+		"LicenseRef-US-Mixed",
+		() =>
+			"https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx#the-us-address-layers-obligations",
+	],
 	// The license page lives on the docs site.
 	// A deployment may configure the site's base URL.
 	["LicenseRef-Commercial", () => licensePageURL()],
