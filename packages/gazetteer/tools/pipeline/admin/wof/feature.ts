@@ -15,6 +15,7 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { GeoCoordinate } from "@mailwoman/spatial/position"
 
+import { isSupersededRecord, type WOFNamesOf } from "#tools/pipeline/wof/slim"
 import type { WOFFeature, WOFProperties } from "#whosonfirst"
 
 /**
@@ -101,18 +102,19 @@ export function extractWOFFeature(text: string, placetypes: ReadonlySet<string>)
  * Extracts the stored fields from one parsed WOF record, such as a record store's reduced feature.
  *
  * @returns `null` for a record with no properties, a superseded record, or a placetype outside `placetypes`.
+ * `namesOf` reads a successor's names, so a ceased administrative division whose
+ * successors have other names is kept (`isSupersededRecord`).
  */
 export function extractParsedWOFFeature(
 	feature: Pick<WOFFeature, "properties">,
-	placetypes: ReadonlySet<string>
+	placetypes: ReadonlySet<string>,
+	namesOf?: WOFNamesOf
 ): ExtractedWOFFeature | null {
 	const props: WOFProperties | undefined = feature.properties
 
 	if (!props) return null
 
-	const supersededBy = props["wof:superseded_by"]
-
-	if (supersededBy && supersededBy.length) return null
+	if (isSupersededRecord({ properties: props }, namesOf)) return null
 
 	const placetype = props["wof:placetype"]
 

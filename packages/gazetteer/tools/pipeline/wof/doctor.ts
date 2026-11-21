@@ -25,7 +25,8 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 import { parallelMap, TextSpliterator } from "spliterator"
 
-import { isDeprecatedWithoutSuccessor, isSupersededRecord } from "#tools/pipeline/wof/slim"
+import { wofRecordPath } from "#tools/pipeline/wof/record"
+import { isDeprecatedWithoutSuccessor, isSupersededRecord, wofRecordNames } from "#tools/pipeline/wof/slim"
 import { hierarchyAncestorsInAnyBranch } from "#whosonfirst/hierarchy"
 
 /**
@@ -60,6 +61,11 @@ export interface RecordReferences {
 	 */
 	references: Array<{ key: string; id: number }>
 	superseded: boolean
+	/**
+	 * A ceased administrative division that lists successors: whether it's superseded depends
+	 * on their names. {@linkcode diagnoseClones} reads those names after the scan.
+	 */
+	successorNamesDecide: boolean
 	deprecated: boolean
 }
 
@@ -86,11 +92,14 @@ export function recordReferences(properties: Record<string, unknown>): RecordRef
 	}
 
 	const record = { properties }
+	// With no successor name known, only a ceased division escapes the rule, so the two readings differ exactly there.
+	const successorNamesDecide = isSupersededRecord(record) && !isSupersededRecord(record, () => [])
 
 	return {
 		id,
 		references,
-		superseded: isSupersededRecord(record),
+		superseded: isSupersededRecord(record) && !successorNamesDecide,
+		successorNamesDecide,
 		deprecated: isDeprecatedWithoutSuccessor(record),
 	}
 }
@@ -205,6 +214,36 @@ export interface WOFDoctorReport {
 	}
 }
 
+/**
+ * A successor's names in every language, read from the clone that holds it at its WOF path,
+ * or `null` when no clone holds it or its file can't be read.
+ * A `null` leaves the ceased division superseded.
+ */
+async function readSuccessorNames(holder: DoctorClone | undefined, id: number): Promise<readonly string[] | null> {
+	if (!holder) return null
+
+	try {
+		return wofRecordNames((await readRecordProperties(wofRecordPath(holder.directory, id))).properties)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Counts one retired record in the report.
+ */
+function countRetired(report: WOFDoctorReport, repo: string, id: number, kind: "superseded" | "deprecated"): void {
+	const counts = (report.retired.byRepo[repo] ??= { superseded: 0, deprecated: 0 })
+
+	counts[kind]++
+
+	report.retired[kind]++
+
+	if (report.retired.sample.length < SAMPLE_LIMIT) {
+		report.retired.sample.push({ repo, id, kind })
+	}
+}
+
 interface DanglingCandidate {
 	references: number
 	keys: Set<string>
@@ -269,7 +308,10 @@ export async function diagnoseClones(
 	} = {}
 ): Promise<WOFDoctorReport> {
 	const listRecords = opts.listRecords ?? trackedRecordPaths
-	const present = new Set<number>()
+	// Each record's id, with the clone that holds it, so a successor's record can be read again.
+	const present = new Map<number, DoctorClone>()
+	// Ceased divisions whose successors' names decide whether they're superseded.
+	const ceased: Array<{ repo: string; id: number; properties: Record<string, unknown> }> = []
 	const candidates = new Map<number, DanglingCandidate>()
 
 	const report: WOFDoctorReport = {
@@ -282,7 +324,9 @@ export async function diagnoseClones(
 		mapping: { read: mapping !== null, entries: mapping?.size ?? 0, successorMissing: 0, sample: [] },
 	}
 
-	for (const { repo, directory } of clones) {
+	for (const clone of clones) {
+		const { repo, directory } = clone
+
 		const read = parallelMap(
 			listRecords(directory),
 			async (
@@ -324,19 +368,12 @@ export async function diagnoseClones(
 				report.wholeFileParses++
 			}
 
-			present.add(refs.id)
+			present.set(refs.id, clone)
 
-			if (refs.superseded || refs.deprecated) {
-				const kind = refs.superseded ? "superseded" : "deprecated"
-				const counts = (report.retired.byRepo[repo] ??= { superseded: 0, deprecated: 0 })
-
-				counts[kind]++
-
-				report.retired[kind]++
-
-				if (report.retired.sample.length < SAMPLE_LIMIT) {
-					report.retired.sample.push({ repo, id: refs.id, kind })
-				}
+			if (refs.successorNamesDecide && "properties" in result) {
+				ceased.push({ repo, id: refs.id, properties: result.properties })
+			} else if (refs.superseded || refs.deprecated) {
+				countRetired(report, repo, refs.id, refs.superseded ? "superseded" : "deprecated")
 			}
 
 			for (const { key, id } of refs.references) {
@@ -359,6 +396,25 @@ export async function diagnoseClones(
 
 		report.records += records
 		opts.onClone?.(repo, records)
+	}
+
+	// A ceased division is superseded when a successor shares one of its names, or when no clone holds a successor.
+	const successorNames = new Map<number, readonly string[] | null>()
+
+	for (const { properties } of ceased) {
+		const successors = properties["wof:superseded_by"] as number[]
+
+		for (const successor of successors) {
+			if (successorNames.has(successor)) continue
+
+			successorNames.set(successor, await readSuccessorNames(present.get(successor), successor))
+		}
+	}
+
+	for (const { repo, id, properties } of ceased) {
+		if (isSupersededRecord({ properties }, (successor) => successorNames.get(successor) ?? null)) {
+			countRetired(report, repo, id, "superseded")
+		}
 	}
 
 	for (const [id, candidate] of candidates) {

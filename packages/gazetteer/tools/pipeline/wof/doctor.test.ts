@@ -194,6 +194,41 @@ describe("diagnoseClones", () => {
 		expect(report.mapping).toMatchObject({ read: true, entries: 2, successorMissing: 1 })
 		expect(report.mapping.sample).toEqual([{ id: 600, successors: [601] }])
 	})
+
+	it("keeps a ceased place its successors don't share a name with, and reports a same-name re-issue", async () => {
+		await using scratch = await temporaryDirectory("wof-doctor-")
+
+		const ceased = { "wof:placetype": "county", "mz:is_current": 0, "edtf:cessation": "1996-04-01" }
+
+		// Successors sit at their WOF paths, where the doctor reads them back.
+		const files: Record<string, string> = {
+			"data/101/750/367/101750367.geojson": exportedRecord({ "wof:id": 101_750_367, "wof:name": "Bristol" }),
+			"data/avon.geojson": exportedRecord({
+				"wof:id": 9_895_008_294,
+				"wof:name": "Avon",
+				...ceased,
+				"wof:superseded_by": [101_750_367],
+			}),
+			"data/old-bristol.geojson": exportedRecord({
+				"wof:id": 85_684_063,
+				"wof:name": "City of Bristol",
+				"name:eng_x_variant": ["Bristol"],
+				...ceased,
+				"wof:superseded_by": [101_750_367],
+			}),
+		}
+
+		for (const [path, text] of Object.entries(files)) {
+			await write(scratch.path("clone", path), text)
+		}
+
+		const report = await diagnoseClones([{ repo: "clone", directory: scratch.path("clone") }], null, {
+			listRecords: () => Object.keys(files),
+		})
+
+		expect(report.retired.superseded).toBe(1)
+		expect(report.retired.sample).toEqual([{ repo: "clone", id: 85_684_063, kind: "superseded" }])
+	})
 })
 
 describe("readDeprecatedMapping", () => {

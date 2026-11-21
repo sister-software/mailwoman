@@ -38,6 +38,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
+import { FORMER_DIVISION_PLACETYPES, wofRecordNames } from "#tools/pipeline/wof/slim"
+
 /**
  * The GeoNames feature codes of a historical division, with the admin level each sits at.
  * `PCLH` is a former country, level 0.
@@ -67,19 +69,6 @@ const CURRENT_DIVISION_LEVELS: ReadonlyMap<string, number> = new Map([
  * The dump holds admin codes for levels 1 to 4 (columns 11 to 14).
  */
 const CODED_LEVELS = 4
-
-/**
- * The WOF placetypes a ceased record may be a former division at.
- */
-export const FORMER_DIVISION_PLACETYPES: ReadonlySet<string> = new Set([
-	"country",
-	"dependency",
-	"macroregion",
-	"region",
-	"macrocounty",
-	"county",
-	"localadmin",
-])
 
 type DivisionTag = FormerDivisionRecord["tag"]
 
@@ -436,17 +425,7 @@ export function ceasedWOFDivision(id: number, properties: Record<string, unknown
 
 	if (!name) return null
 
-	const names = new Set([name])
-
-	for (const [key, value] of Object.entries(properties)) {
-		if (!key.startsWith("name:") || !Array.isArray(value)) continue
-
-		for (const item of value) {
-			if (typeof item === "string" && item.trim()) {
-				names.add(item.trim())
-			}
-		}
-	}
+	const names = new Set([name, ...wofRecordNames(properties)])
 
 	const concordances = properties["wof:concordances"] as Record<string, unknown> | undefined
 	const geonamesID = Number(concordances?.["gn:id"])
