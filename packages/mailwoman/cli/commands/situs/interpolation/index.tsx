@@ -5,7 +5,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { scriptEntryPath } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -69,7 +69,7 @@ export const spec = {
 /**
  * The cached county-population ranking.
  */
-const RANKED_FILE = repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json")
+const RANKED_FILE = resolvePackagePath("mailwoman", "data", "county-population-ranked.json")
 
 /**
  * The entry script of the running CLI.
