@@ -54,7 +54,9 @@ the table that names them, sits here (#2643).
 An elected US decision from the 2026-11-21 reading opens its `electedBecause` with its acceptance basis:
 `terms-read` (a page with terms text), `open-license` (an SPDX identifier) or `no-statement-found` (the
 publisher's metadata answered with empty license, access and copyright fields). A `no-statement-found` decision's `electedTerms` begins
-`US factual data published with no statement of terms`, so a stricter policy can refuse those rows by label.
+`US factual data published with no statement of terms`, so a stricter policy can refuse those rows by label. Each of these decisions also records `reading`: the
+terms page it rests on, with `found: "no-statement"` for a `no-statement-found` acceptance and `found: "terms"`,
+with the publisher's words, for the others.
 
 ## `us-situs-sources.json` — which register rows each US situs `source` value comes from (#2650)
 
