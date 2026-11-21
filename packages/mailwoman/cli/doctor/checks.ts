@@ -831,7 +831,18 @@ export function mixedLayerCheck(o: MixedLayerObservation): DoctorCheck {
 	const shareAlike = present.has(ObligationClass.ShareAlike)
 
 	const attribution =
-		shareAlike || present.has(ObligationClass.Attribution) || present.has(ObligationClass.AttributionRecorded)
+		shareAlike ||
+		present.has(ObligationClass.Attribution) ||
+		present.has(ObligationClass.AttributionRequested) ||
+		present.has(ObligationClass.AttributionRecorded)
+
+	// A source counts under its most demanding class, so a class above attribution may hide a credit.
+	// The union lists the classes the tally shows, and the notice lists every credit.
+	const termsClasses = [
+		[ObligationClass.UseRestriction, LicenseObligation.UseRestriction],
+		[ObligationClass.NoticePassThrough, LicenseObligation.NoticePassThrough],
+		[ObligationClass.Indemnity, LicenseObligation.Indemnity],
+	] as const
 
 	const counts = o.tally
 		.filter((entry) => entry.sources)
@@ -852,6 +863,7 @@ export function mixedLayerCheck(o: MixedLayerObservation): DoctorCheck {
 			obligations: [
 				...(attribution ? [LicenseObligation.Attribution] : []),
 				...(shareAlike ? [LicenseObligation.ShareAlike] : []),
+				...termsClasses.filter(([found]) => present.has(found)).map(([, obligation]) => obligation),
 			],
 			recognized: !unknown,
 		},

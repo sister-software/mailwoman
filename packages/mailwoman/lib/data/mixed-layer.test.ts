@@ -50,6 +50,35 @@ const LICENSES: LicenseDecision[] = [
 	},
 	{ licenseID: "cook-refused", state: "refused", refusedBecause: "The county withholds redistribution." },
 	{
+		licenseID: "chicago-facts",
+		state: "elected",
+		electedTerms: "US factual data published without a use restriction",
+		retrievedCopy: "receipts/chicago/",
+		electedBecause: "The terms restrict no use.",
+		obligations: [
+			{
+				obligation: "notice_pass_through",
+				strength: "required",
+				quote: "Include the following disclaimer: “The data is used at one's own risk.”",
+				text: "The data is used at one's own risk.",
+			},
+			{ obligation: "use_restriction", strength: "required", quote: "Not for use as a mailing list." },
+			{ obligation: "attribution", strength: "requested", quote: "Credit to the City is requested.", text: "City" },
+		],
+		operations: redistribute("other-documented"),
+	},
+	{
+		licenseID: "denver-indemnity",
+		state: "elected",
+		electedTerms: "US factual data published without a use restriction",
+		retrievedCopy: "receipts/denver/",
+		electedBecause: "The terms restrict no use and require an indemnity.",
+		obligations: [{ obligation: "indemnity", strength: "required", quote: "The user agrees to indemnify the City." }],
+		operations: {
+			"redistribute-data": { permission: "refused", because: "An indemnity is a contract term." },
+		},
+	},
+	{
 		licenseID: "overture-terms",
 		state: "elected",
 		electedTerms: "Overture Maps per-theme terms: Addresses theme under each source's own licence",
@@ -66,6 +95,8 @@ const REGISTER: RegisterTermsInput = {
 		{ sourceID: "us-portland", license: "portland-sa", publisher: "City of Portland, Oregon", name: "portland" },
 		{ sourceID: "us-cook", license: "cook-refused", publisher: "Cook County", name: "cook" },
 		{ sourceID: "us-overture", license: "overture-terms", publisher: "Overture Maps Foundation", name: "overture" },
+		{ sourceID: "us-chicago", license: "chicago-facts", publisher: "City of Chicago", name: "chicago" },
+		{ sourceID: "us-denver", license: "denver-indemnity", publisher: "City of Denver", name: "denver" },
 	],
 	licenses: LICENSES,
 }
@@ -75,6 +106,8 @@ const TABLE: Record<string, string[]> = {
 	"openaddresses:us/fl/alachua": ["us-alachua"],
 	"openaddresses:us/il/cook": ["us-cook"],
 	"openaddresses:us/or/city_of_portland": ["us-portland"],
+	"openaddresses:us/il/city_of_chicago": ["us-chicago"],
+	"openaddresses:us/il/denver": ["us-denver"],
 	"overture:OpenAddresses/FL/Alachua County": ["us-alachua", "us-overture"],
 	"overture:OpenAddresses/IL/Cook County": ["us-overture", "us-cook"],
 }
@@ -107,6 +140,8 @@ const FILES: Record<string, unknown> = {
 	],
 	[`addresses/us-il/${VERSION}/ATTRIBUTION.json`]: [
 		{ source: "openaddresses:us/il/cook", authority: null, records: 900, license: null, recorded: null },
+		{ source: "openaddresses:us/il/city_of_chicago", authority: null, records: 20, license: null, recorded: null },
+		{ source: "openaddresses:us/il/denver", authority: null, records: 5, license: null, recorded: null },
 		{ source: "openaddresses:us/fl/alachua", authority: null, records: 1, license: null, recorded: null },
 		{ source: "overture:OpenAddresses/FL/Alachua County", authority: null, records: 3, license: null, recorded: null },
 		{ source: "overture:OpenAddresses/IL/Cook County", authority: null, records: 2, license: null, recorded: null },
@@ -134,7 +169,9 @@ describe("describeMixedAddressLayer", () => {
 			"openaddresses:us/dc/statewide",
 			"openaddresses:us/fl/alachua",
 			"openaddresses:us/fl/unmapped",
+			"openaddresses:us/il/city_of_chicago",
 			"openaddresses:us/il/cook",
+			"openaddresses:us/il/denver",
 			"overture:OpenAddresses/FL/Alachua County",
 			"overture:OpenAddresses/IL/Cook County",
 		])
@@ -142,7 +179,7 @@ describe("describeMixedAddressLayer", () => {
 		const alachua = description.sources.find((source) => source.source === "openaddresses:us/fl/alachua")!
 
 		expect(alachua).toMatchObject({ records: 101, regions: ["us-fl", "us-il"], publisher: "Alachua County GIS" })
-		expect(description.records).toBe(1053)
+		expect(description.records).toBe(1078)
 
 		const unmapped = description.sources.find((source) => source.source === "openaddresses:us/fl/unmapped")!
 
@@ -177,6 +214,23 @@ describe("describeMixedAddressLayer", () => {
 		expect(byID["openaddresses:us/il/cook"]).toMatchObject({
 			basis: "refused",
 			obligationClass: ObligationClass.Unknown,
+		})
+	})
+
+	it("reads the conditions a no-restricting-terms decision records, rather than reading it as owing nothing", async () => {
+		const byID = Object.fromEntries((await describeFixture()).sources.map((source) => [source.source, source]))
+
+		expect(byID["openaddresses:us/il/city_of_chicago"]).toMatchObject({
+			basis: "no-restricting-terms",
+			attribution: "requested",
+			attributionText: "City",
+			obligationClass: ObligationClass.UseRestriction,
+		})
+
+		// The indemnity is why the decision refuses redistribution, and the source keeps it.
+		expect(byID["openaddresses:us/il/denver"]).toMatchObject({
+			basis: "refused",
+			obligations: [expect.objectContaining({ obligation: "indemnity" })],
 		})
 	})
 
@@ -261,9 +315,13 @@ describe("tallyObligationClasses", () => {
 		const tally = tallyObligationClasses(await describeFixture())
 
 		expect(Object.fromEntries(tally.map((entry) => [entry.obligationClass, entry.sources]))).toEqual({
-			[ObligationClass.Unknown]: 3,
+			[ObligationClass.Unknown]: 4,
 			[ObligationClass.ShareAlike]: 0,
+			[ObligationClass.Indemnity]: 0,
+			[ObligationClass.UseRestriction]: 1,
+			[ObligationClass.NoticePassThrough]: 0,
 			[ObligationClass.Attribution]: 1,
+			[ObligationClass.AttributionRequested]: 0,
 			[ObligationClass.AttributionRecorded]: 1,
 			[ObligationClass.None]: 1,
 		})
@@ -280,6 +338,11 @@ describe("renderAttributionNotice", () => {
 		expect(notice).toContain("(no publisher recorded) [openaddresses:us/fl/unmapped]")
 		// An unknown share-alike term is listed with the unknown sources, never as a share-alike source.
 		expect(notice).not.toContain("share-alike terms")
+		// A pass-through text and a use restriction are printed verbatim, and a requested credit is credited.
+		expect(notice).toContain("    The data is used at one's own risk.")
+		expect(notice).toContain("    Not for use as a mailing list.")
+		expect(notice).toContain("  City [openaddresses:us/il/city_of_chicago]")
+		expect(notice).toContain("    The user agrees to indemnify the City.")
 		expect(renderAttributionNotice(await describeFixture())).toBe(notice)
 	})
 })

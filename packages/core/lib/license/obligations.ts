@@ -31,11 +31,25 @@ export function grantsCommercialTerms(key: LicenseKeyVerification | null | undef
  * - `share_alike` requires a derived work or database to use the same license, as in ODbL and AGPL.
  * - `source_offer` requires offering the source, including modifications,
  *   to network users (AGPL-3.0 section 13).
+ *
+ * Three more classes arise only from a publisher's own terms, never from an SPDX license,
+ * so `KNOWN_OBLIGATIONS` assigns none of them. A license decision records them in its
+ * `obligations` field with the publisher's words.
+ *
+ * - `use_restriction` limits a use of the data without withholding it, such as a mailing-list ban
+ *   or `not intended for use in mapping products for resale`. The quoted limit is the obligation.
+ * - `notice_pass_through` requires a text, such as a disclaimer, to travel with the data or
+ *   with an application built on it. The text is printed verbatim wherever the data is passed on.
+ * - `indemnity` requires the user to indemnify, defend or hold harmless the publisher.
+ *   It is a contract term, so a reading that the data has no copyright doesn't clear it.
  */
 export const LicenseObligation = {
 	Attribution: "attribution",
 	ShareAlike: "share_alike",
 	SourceOffer: "source_offer",
+	UseRestriction: "use_restriction",
+	NoticePassThrough: "notice_pass_through",
+	Indemnity: "indemnity",
 } as const
 
 /**
@@ -117,7 +131,7 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// `LicenseRef-US-Mixed`, the US address layer, is deliberately absent.
 	// Its read sources owe attribution at most.
 	// The publishers of 30% of its records have terms no reader recorded.
-	// The register refuses the terms of 13 publishers whose files it holds.
+	// The register refuses the terms of some publishers whose files it holds.
 	// docs/engineering/reference/layer-interface.mdx names them.
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],

@@ -17,6 +17,7 @@
  */
 
 import { stringifyJSON } from "#json"
+import { LicenseObligation } from "#license/obligations"
 
 /**
  * The review state of a source's terms.
@@ -160,6 +161,64 @@ export interface TermsReading {
 }
 
 /**
+ * Whether a publisher's terms make an obligation a condition or ask for it.
+ */
+export const ObligationStrength = {
+	/**
+	 * The terms impose it: `must`, `shall`, `agrees to`, or a grant void without it.
+	 */
+	Required: "required",
+	/**
+	 * The terms ask for it without making it a condition: `is requested`, `is appreciated`, `should`.
+	 */
+	Requested: "requested",
+} as const
+
+/**
+ * One of the {@link ObligationStrength} values.
+ */
+export type ObligationStrength = (typeof ObligationStrength)[keyof typeof ObligationStrength]
+
+/**
+ * One obligation a publisher's terms place on a user of the data, in the publisher's words.
+ *
+ * The data bill of materials, `mailwoman doctor` and a mixed layer's attribution
+ * notice read these, so a condition the terms impose reaches them as a record
+ * rather than as a clause of a decision's prose.
+ */
+export interface TermsObligation {
+	obligation: LicenseObligation
+	strength: ObligationStrength
+	/**
+	 * The publisher's clause, verbatim.
+	 */
+	quote: string
+	/**
+	 * The text a notice prints verbatim, when the clause states a requirement around it: the
+	 * credit an attribution requires, or the disclaimer a notice-pass-through requires to travel.
+	 *
+	 * It is the publisher's words taken from the quote, or the publisher's own template
+	 * filled with the values the template asks for, as OGDL-Taiwan-1.0's annex prescribes.
+	 * `because` then states which values filled it.
+	 *
+	 * A notice prints the quote where a notice-pass-through records no text,
+	 * and an attribution without one credits the publisher by name.
+	 */
+	text?: string
+	/**
+	 * Why the reviewer classed the clause this way, where the quote leaves it open.
+	 */
+	because?: string
+}
+
+/**
+ * The text a notice prints for an obligation: its `text`, else the whole clause.
+ */
+export function obligationNoticeText(obligation: TermsObligation): string {
+	return obligation.text ?? obligation.quote
+}
+
+/**
  * A license decision whose terms a reviewer read and under which one grant was elected.
  */
 export interface ElectedLicense<Operation extends string = string> {
@@ -201,6 +260,16 @@ export interface ElectedLicense<Operation extends string = string> {
 	 */
 	electedBecause: string
 	reading?: TermsReading
+	/**
+	 * Every obligation the elected terms impose beyond what the SPDX identifier's own table records.
+	 *
+	 * An absent field adds no obligation.
+	 * An elected open license still owes what its identifier owes.
+	 *
+	 * A decision with an `indemnity` it requires refuses `redistribute-data`,
+	 * because redistributing the rows extends that undertaking to every downstream use.
+	 */
+	obligations?: readonly TermsObligation[]
 	/**
 	 * The permission for each reviewed operation.
 	 *
@@ -394,6 +463,61 @@ function auditElected<Operation extends string>(
 		if (!known.has(operation)) {
 			problems.push(
 				`license ${named} names ${stringifyJSON(operation)}, which is not an operation this repository performs`
+			)
+		}
+	}
+
+	problems.push(...auditObligations(decision, named, known))
+
+	return problems
+}
+
+const LICENSE_OBLIGATIONS = new Set<string>(Object.values(LicenseObligation))
+const OBLIGATION_STRENGTHS = new Set<string>(Object.values(ObligationStrength))
+
+/**
+ * The operation that redistributes a publisher's rows, in a register that performs one.
+ */
+const REDISTRIBUTE_DATA = "redistribute-data"
+
+function auditObligations<Operation extends string>(
+	decision: ElectedLicense<Operation>,
+	named: string,
+	known: ReadonlySet<string>
+): string[] {
+	const problems: string[] = []
+
+	for (const entry of decision.obligations ?? []) {
+		if (!LICENSE_OBLIGATIONS.has(entry.obligation)) {
+			problems.push(`license ${named} records an unknown obligation ${stringifyJSON(entry.obligation)}`)
+		}
+
+		if (!OBLIGATION_STRENGTHS.has(entry.strength)) {
+			problems.push(
+				`license ${named} records ${entry.obligation} with an unknown strength ${stringifyJSON(entry.strength)}`
+			)
+		}
+
+		if (!entry.quote) {
+			problems.push(`license ${named} records ${entry.obligation} without the publisher's words`)
+		}
+
+		if (entry.text != null && !entry.text) {
+			problems.push(`license ${named} records ${entry.obligation} with an empty notice text`)
+		}
+	}
+
+	const indemnity = decision.obligations?.some(
+		(entry) => entry.obligation === LicenseObligation.Indemnity && entry.strength === ObligationStrength.Required
+	)
+
+	if (indemnity && known.has(REDISTRIBUTE_DATA)) {
+		const reading = decision.operations?.[REDISTRIBUTE_DATA as Operation]
+
+		if (reading?.permission !== OperationPermission.Refused) {
+			problems.push(
+				`license ${named} records an indemnity and does not refuse ${REDISTRIBUTE_DATA}. Redistributing the rows ` +
+					"extends the undertaking to every downstream use, so the decision refuses it."
 			)
 		}
 	}
