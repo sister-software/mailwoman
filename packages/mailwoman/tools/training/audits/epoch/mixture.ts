@@ -29,7 +29,7 @@
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
-import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
+import type { MTFNode, SourceCount } from "@mailwoman/mtf/tools/sampler/native"
 
 import { samplerConfigJSON } from "../../sampler.ts"
 import { auditAugment, drawnRows, emittedRows } from "../census.ts"
@@ -127,15 +127,22 @@ export function requestedShares(weights: ReadonlyArray<[string, number]> | null)
 /**
  * The train mixture's weights with each `source_reps` target derived from the corpus,
  * in the merged order, and the launch-log lines that record each derivation.
+ *
+ * `rows` replaces the corpus's train rows per source, for a corpus not yet built.
  */
-export function resolveSourceWeights(mtf: MTFNode, config: TrainingConfig, corpusDir: string) {
+export function resolveSourceWeights(
+	mtf: MTFNode,
+	config: TrainingConfig,
+	corpusDir: string,
+	rowsBySource?: readonly SourceCount[]
+) {
 	const { data, train } = config
 	const fixed = data.source_weights ? Object.entries(data.source_weights) : null
 	const reps = Object.entries(data.source_reps ?? {})
 
 	if (!reps.length) return { weights: fixed, derivation: "" }
 
-	const rows = mtf.sourceRowCounts(samplerConfigJSON(config, { corpusDir }), "train")
+	const rows = rowsBySource ? [...rowsBySource] : mtf.sourceRowCounts(samplerConfigJSON(config, { corpusDir }), "train")
 	const samples = train.max_steps * train.batch_size * train.grad_accum_steps
 
 	const { merged, derived } = mtf.deriveSourceWeights(

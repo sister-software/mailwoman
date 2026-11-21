@@ -10,7 +10,8 @@
 #      bare `dependent_locality` 18,098, `dependent_locality|country` 15,484). The fixed adapter writes none of them.
 #    - `rendered-prominent-places` (recipe `prominent-places`) writes each country's prominent places in their short
 #      query shapes at the row counts the prominent-places census sets against the v0.8.22 base build
-#      (`tools/dev-tools/corpus/prominent/places.run.ts places`, `scan --manifest <v0.8.22 base MANIFEST.json>`, `tuples`).
+#      (`tools/dev-tools/corpus/prominent/places.run.ts places`, `scan --manifest <v0.8.22 base MANIFEST.json>`,
+#      `tuples --config <this file>`). The counts are set in this config's expected epoch draws (point 2).
 #    - `rendered-former-divisions` (recipe `former-divisions`, #3200) writes a former administrative division beside a
 #      current WOF locality its containment evidence links it to, before the locality (Google's order,
 #      `Redland, Avon, Bristol`) or after it, tagged `subregion` at county level and `region` at the first level. Its
@@ -18,13 +19,22 @@
 #      and 300 a division. On the 2026-11-21 table the tuples hold 1,888 rows in 15 countries, GB 300 (Avon only).
 #      GeoNames lists 49,122 historical divisions in 112 countries. Containment evidence links 63 of them, and 42 of
 #      those take a tag. The census in #3200 gives the per-country counts.
-# 2. `source_weights` gives `rendered-prominent-places` 15.0, `wof-admin`'s weight. The recipe's counts fill the
-#    demand-share gap measured on rows, and `wof-admin` writes three quarters of the short admin train rows
-#    (2,660,580 of 3,538,087 on v0.8.21), so at the same weight a drawn epoch keeps the share the rows reach. The
-#    draws form of the demand rule, read from the epoch-mixture audit, is unmeasured.
+# 2. `source_weights` gives `rendered-prominent-places` 15.0, `wof-admin`'s weight: 4.75% of the epoch, 47,485 of
+#    the 1,000,000 draws. The receipt's demand rule is measured in this config's expected epoch draws, and the
+#    census's `tuples` step sets the recipe's rows so those 47,485 draws, spread over its rows alike, close each cell.
+#    The rows therefore follow from this weight: a lower weight takes more rows, and a weight whose draws fall at or
+#    below the cells' deficits takes no row count. Simulated from v0.8.21, the deficits come to 5,533 draws, and the
+#    recipe writes 19,115 rows (17,287 presence rows, 1,828 demand rows), each drawn 2.48 times an epoch. A `wof-admin`
+#    row is drawn 0.019 times, because its weight spreads over 2.5 M rows, so a prominent place's row takes about 130
+#    times a `wof-admin` row's draws, and the recipe draws about as much as all short admin base rows (about 90,000).
+#    A lower weight would spread the same deficits over more rows, at the exposure this weight sets per place.
 # 3. `data.prominent_place_coverage` names the census's places table for candidate-global-2026-11-19, so the launch
 #    preflight runs the `prominent_place_coverage` receipt (#3156 rule (a)) and binds its `PLACES.json` into the
-#    receipt key. `prominent-places-exposure` floors the recipe's draws at 0.9 of expected.
+#    receipt key. The receipt measures the demand share in this config's expected epoch draws: each row at its
+#    source's requested share over the source's admitted rows, times its country's admission chance. A place in a
+#    country `country_weights` leaves out isn't required: 518 selected places in 35 countries on the 2026-11-19
+#    table, YE (124) and BO (101) the largest. `prominent-places-exposure` floors the recipe's draws at 0.9 of
+#    expected.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
 # 5. `source_reps` gives `rendered-former-divisions` 2.0, two passes over its rows an epoch, about 3,800 of the
 #    1,000,000 drawn rows. The rows hold 42 division names, so more passes would repeat each name more than they
@@ -37,8 +47,12 @@
 # - not done: `required_validation_label_support` is re-derived from the v0.8.22 val draw, and
 #   `audits/validation/coverage.run.ts` finds every `required_validation_coverage` floor met;
 # - not done: the epoch-mixture audit meets every receipt;
-# - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. On v0.8.21 it fails, as
-#   #3156 records.
+# - not done: `places.run.ts tuples --config <this file>` against the v0.8.22 base scan, after this config's weights are
+#   final, since the row counts follow from them.
+# - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. Under its draws measure on
+#   v0.8.21 it fails: 2,526 of 19,813 required forms, 165 of 721 demand cells. With the recipe simulated from v0.8.21 it
+#   covers 19,813 of 19,813 forms and passes 719 of 721 cells. The two failing cells (GD locality region, ID
+#   sub-locality parent) have no decile-1 place the recipe can write.
 # - done: the places table `data.prominent_place_coverage` names is frozen on the host at
 #   /mnt/mw/audits/prominent-places/candidate-global-2026-11-19/ (`places.parquet` sha256 707f9ba7a0961cf4…). Only the
 #   host reads it: the preflight re-roots /data at MAILWOMAN_DATA_ROOT before the receipt and the receipt key read it,
