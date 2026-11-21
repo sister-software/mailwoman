@@ -3,7 +3,8 @@
 
 /**
  *   Builds the US address layer, one file set per state, from NAD release 24,
- *   Overture's non-NAD rows and the OpenAddresses source runs the plan admits.
+ *   Overture's non-NAD rows and the OpenAddresses source runs of the plan.
+ *   Each source is admitted by its register decisions.
  */
 
 import { isUSStateAbbreviation, US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
@@ -43,7 +44,6 @@ import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/addre
 import { dirname, resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
-import { isAdmittedSource } from "#address-records/admission"
 import {
 	openAddressesSourceCacheName,
 	readOpenAddressesGeoJSONRunRecords,
@@ -53,18 +53,31 @@ import { readOvertureAddressRecords } from "#address-records/overture"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { recordPathFor } from "#parquet/record"
 import { readNADAddressRecords } from "#us/address-records/nad"
+import {
+	admitUSStateSources,
+	EXCLUDE_UNREAD_SOURCES,
+	type LayerSourceExclusion,
+	readUSAddressSourceAdmission,
+} from "#us/address-records/rights"
 import { US_ADDRESS_LAYER_SOURCE } from "#us/address-records/sources"
 
 /**
  * The run counts a parallel build's worker reports for its state.
  */
 export interface USStateWorkerResult {
+	/**
+	 * Runs the register excludes.
+	 */
 	refusedRuns: number
 	missingRuns: number
 }
 
 /**
  * One OpenAddresses run as a plan lists it, with the license its source definition records.
+ *
+ * The recorded license is OpenAddresses' summary of the publisher's terms.
+ * The build admits a run by its register decision.
+ * It copies this field into the region's `ATTRIBUTION.json`.
  */
 export interface OpenAddressesPlanEntry {
 	member: string
@@ -118,6 +131,13 @@ export interface BuildUSAddressLayerOptions {
 	 * Their files are still built.
 	 */
 	omitFromManifest?: readonly string[]
+	/**
+	 * Whether to exclude a source whose register terms are unread or that maps to no register row.
+	 * A refused source is excluded either way.
+	 *
+	 * @defaultValue {@linkcode EXCLUDE_UNREAD_SOURCES}
+	 */
+	excludeUnreadSources?: boolean
 	/**
 	 * The commit the build ran from, for each file's `layer_manifest`.
 	 */
@@ -185,6 +205,14 @@ export interface USStateBuild {
 	 * Records left out of the state, per source id and reason.
 	 */
 	refused: Record<string, Record<string, number>>
+	/**
+	 * Sources whose rows the build never read, because the register doesn't admit them.
+	 */
+	excluded: LayerSourceExclusion[]
+	/**
+	 * Sources read with unread terms or no register row, because the build was told to admit them.
+	 */
+	admittedUnread: LayerSourceExclusion[]
 }
 
 export interface USAddressLayerBuild {
@@ -252,23 +280,30 @@ export async function cachedRun(
 async function* stateRecords(
 	options: BuildUSAddressLayerOptions,
 	state: string,
-	hasNAD: boolean,
-	runs: readonly string[],
+	sources: StateRecordSources,
 	scratch: PathBuilder,
 	units: UnitSplitter
 ): AsyncGenerator<AddressRecord> {
 	if (!isUSStateAbbreviation(state)) throw new Error(`${state} is not a US state or territory abbreviation`)
 
-	for await (const record of sourceRecords(options, state, hasNAD, runs, scratch, units)) {
+	for await (const record of sourceRecords(options, state, sources, scratch, units)) {
 		yield { ...record, postcode: normalizeZIPCode(record.postcode, state) }
 	}
+}
+
+/**
+ * The admitted sources a state's records are read from.
+ */
+interface StateRecordSources {
+	hasNAD: boolean
+	datasets: readonly string[]
+	runs: readonly string[]
 }
 
 async function* sourceRecords(
 	options: BuildUSAddressLayerOptions,
 	state: string,
-	hasNAD: boolean,
-	runs: readonly string[],
+	{ hasNAD, datasets, runs }: StateRecordSources,
 	scratch: PathBuilder,
 	units: UnitSplitter
 ): AsyncGenerator<AddressRecord> {
@@ -276,11 +311,15 @@ async function* sourceRecords(
 		yield* readNADAddressRecords(options.nadParquet, { where: `"State" = '${escapeSQLString(state)}'` })
 	}
 
-	yield* readOvertureAddressRecords(options.overtureParquet, {
-		where: `country = 'US' AND address_levels[1].value = '${escapeSQLString(state)}' AND sources[1].dataset <> 'NAD'`,
-		streetLocale: "en",
-		units,
-	})
+	if (datasets.length) {
+		const admitted = datasets.map((dataset) => `'${escapeSQLString(dataset)}'`).join(", ")
+
+		yield* readOvertureAddressRecords(options.overtureParquet, {
+			where: `country = 'US' AND address_levels[1].value = '${escapeSQLString(state)}' AND sources[1].dataset IN (${admitted})`,
+			streetLocale: "en",
+			units,
+		})
+	}
 
 	for (const member of runs) {
 		const cached = await cachedRun(options.openAddresses.cache, member)
@@ -397,8 +436,12 @@ function recordedRunTerms(plan: readonly OpenAddressesPlanEntry[]): Map<string, 
  * Builds every requested state's `lookup.db` and `detail.db` under `addresses/us-<state>/<version>/`,
  * one state at a time, and writes the US manifest once every state is built.
  *
- * A state takes NAD's rows when release 24 has any, Overture's rows from every dataset other than NAD,
- * and the plan's runs for the state that `isAdmittedSource` admits and the cache holds.
+ * A state takes NAD's rows when release 24 has any, Overture's rows from the datasets
+ * other than NAD, and the plan's runs for the state that the cache holds.
+ * Each is read only when {@linkcode admitUSStateSources} admits it by its register decisions.
+ *
+ * The state's `build.json` lists every source the register excluded, and each
+ * admitted source whose terms are unread, with the reason.
  * A record that a higher-ranked source repeats, by {@linkcode usAddressSourceRanks}, is dropped.
  *
  * Territories are their own ISO 3166-1 countries and are not built here.
@@ -473,6 +516,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		options.sortThreads ?? Math.min(8, Math.max(1, Math.floor(availableParallelism() / (options.jobs ?? 1))))
 
 	const recorded = recordedRunTerms(options.openAddresses.plan)
+	const admission = await readUSAddressSourceAdmission()
 	const units = await createUnitSplitter()
 
 	using bounds = openSubdivisionBoundsCheck(options.adminDatabase)
@@ -494,18 +538,25 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	const buildState = async (state: string): Promise<void> => {
 		const region = `us-${state.toLowerCase()}`
 		const files = addressLayerFiles(options.root, region, options.version)
-		const hasNAD = (rowsByState[state] ?? 0) > 0
-		const datasets = await overtureDatasets(options.overtureParquet, state)
+
+		const { hasNAD, datasets, ...candidates } = admitUSStateSources(
+			state,
+			{
+				hasNAD: (rowsByState[state] ?? 0) > 0,
+				datasets: await overtureDatasets(options.overtureParquet, state),
+				plan: options.openAddresses.plan,
+			},
+			admission,
+			options.excludeUnreadSources ?? EXCLUDE_UNREAD_SOURCES
+		)
+
+		const { excluded, admittedUnread } = candidates
 		const admitted: OpenAddressesPlanEntry[] = []
 
-		for (const entry of options.openAddresses.plan) {
-			const { member, license, skip } = entry
+		refusedRuns += excluded.filter(({ source }) => source.startsWith("openaddresses:")).length
 
-			if (member.split("/")[0] !== "us" || member.split("/")[1] !== state.toLowerCase() || skip) continue
-
-			if (!isAdmittedSource(member, license)) {
-				refusedRuns++
-			} else if (await cachedRun(options.openAddresses.cache, member)) {
+		for (const entry of candidates.runs) {
+			if (await cachedRun(options.openAddresses.cache, entry.member)) {
 				admitted.push(entry)
 			} else {
 				missingRuns++
@@ -543,7 +594,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		const started = Date.now()
 
 		const summary = await buildAddressLayer({
-			records: stateRecords(options, state, hasNAD, runs, scratch.path, units),
+			records: stateRecords(options, state, { hasNAD, datasets, runs }, scratch.path, units),
 			sources,
 			manifest,
 			lookupPath: files.lookup,
@@ -576,6 +627,8 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			runs: runs.length,
 			seconds: Math.round((Date.now() - started) / 1000),
 			refused: summary.refused,
+			excluded,
+			admittedUnread,
 		}
 
 		await writeAddressLayerAttribution(options.root, region, options.version, recorded)
@@ -711,6 +764,9 @@ async function buildStatesInWorkers(
 		states: [state],
 		buildSHA: options.buildSHA,
 		adminDatabase: options.adminDatabase.toString(),
+		...(typeof options.excludeUnreadSources === "boolean"
+			? { excludeUnreadSources: options.excludeUnreadSources }
+			: {}),
 		...(typeof options.sortThreads === "number" ? { sortThreads: options.sortThreads } : {}),
 	})
 

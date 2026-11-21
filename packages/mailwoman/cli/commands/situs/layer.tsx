@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Builds the US address layer from NAD, Overture and the admitted OpenAddresses runs.
+ * Builds the US address layer from the NAD, Overture and OpenAddresses sources the register admits.
  */
 
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
 
 import {
 	type CommandSpec,
@@ -26,6 +27,11 @@ export const spec = {
 	description: "Build the US address layer, one lookup.db and detail.db per state",
 	options: {
 		"layer-version": { type: "string", description: "The layer version, an ISO date such as 2026-11-08" },
+		root: {
+			type: "string",
+			description:
+				"The directory to build addresses/ under (default: the data root's db). Readers serve the newest version under the data root's db, so a candidate built for verification goes elsewhere",
+		},
 		"base-version": {
 			type: "string",
 			description:
@@ -42,6 +48,12 @@ export const spec = {
 			description: "Overture release whose addresses-us.parquet supplies the non-NAD rows",
 		},
 		plan: { type: "string", description: "OpenAddresses plan JSON listing each run's member and recorded license" },
+		"exclude-unread-sources": {
+			type: "boolean",
+			default: EXCLUDE_UNREAD_SOURCES,
+			description:
+				"Exclude sources whose register terms are unread or that have no register row. Refused sources are always excluded",
+		},
 		jobs: {
 			type: "number",
 			default: 1,
@@ -57,7 +69,9 @@ export const spec = {
 
 /**
  * Builds every requested state's address layer under `db/addresses/us-<state>/<version>/`
- * and writes the US manifest, printing each state's record counts by source.
+ * and writes the US manifest.
+ *
+ * It prints each state's record counts by source and each source the register excludes.
  */
 const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -90,7 +104,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 		const lines: string[] = []
 
 		const result = await buildUSAddressLayer({
-			root: dataRootPath("db"),
+			root: options.root ?? dataRootPath("db"),
 			version,
 			...(options.baseVersion ? { baseVersion: options.baseVersion } : {}),
 			nadParquet: await nadReleaseParquetPath(),
@@ -102,6 +116,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			adminDatabase: wofDatabasePath("admin-global-priority.db"),
 			jobs: options.jobs,
 			resume: options.resume,
+			excludeUnreadSources: options.excludeUnreadSources,
 			onState: (build) => {
 				const refused: Record<string, number> = {}
 
@@ -124,11 +139,25 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 				lines.push(line)
 
 				console.error(line)
+
+				const gaps = [
+					...build.excluded.map((gap) => ["excluded", gap] as const),
+					...build.admittedUnread.map((gap) => ["admitted", gap] as const),
+				]
+
+				for (const [verdict, { source, reason, registerSources, because }] of gaps) {
+					const rows = registerSources.length ? ` (register ${registerSources.join(", ")})` : ""
+					const gapLine = `  ${verdict} ${source}: ${reason}${rows}: ${because}`
+
+					lines.push(gapLine)
+
+					console.error(gapLine)
+				}
 			},
 		})
 
 		lines.push(
-			`runs refused by license: ${result.refusedRuns}; runs absent from the cache: ${result.missingRuns}`,
+			`runs the register excludes: ${result.refusedRuns}; runs absent from the cache: ${result.missingRuns}`,
 			`manifest: ${result.manifest}`
 		)
 
