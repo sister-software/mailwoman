@@ -23,27 +23,37 @@
  */
 
 import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import { isPresent } from "@mailwoman/core/objects"
 import { allKeyed } from "@mailwoman/core/promises"
 import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { createToken, type ServiceGraphNode, ServiceRegistry, type ServiceToken } from "async-init"
-import { resolvePath } from "path-ts"
+import {
+	createToken,
+	optional,
+	type OptionalNeed,
+	type ServiceGraphNode,
+	ServiceRegistry,
+	type ServiceToken,
+} from "async-init"
 
 import type { LayerCatalog } from "#data/catalog"
 import { holdActiveSelection } from "#data/retention"
 import { loadBundledCoarsePlacer } from "#default/placer"
 import { $public } from "#env"
-import { openBANRegionDatabases } from "#geocode/ban-layers"
+import {
+	firstCoveringSource,
+	type LayerContribution,
+	type NationalDatabaseSource,
+	type UnavailableLayer,
+} from "#geocode/contributions"
 import type { GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
-import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import { USStateDatabaseProvider } from "#geocode/regions"
-import { unattachedLayerLines } from "#geocode/serving-layers"
+import type { openOSMRegionDatabases } from "#geocode/osm-layers"
+import type { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
-import { type ForkEntityProbe, type LayerRoutes, loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
+import type { ForkEntityProbe, LayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
 import {
 	capitalIndexFor,
@@ -61,8 +71,6 @@ type ResolverModule = typeof import("@mailwoman/resolver-wof-sqlite")
 type ActiveSelection = Awaited<ReturnType<typeof holdActiveSelection>>
 
 type ResolverBackend = Awaited<ReturnType<typeof createResolverBackend>>
-
-type BANRegionDatabases = Awaited<ReturnType<typeof openBANRegionDatabases>>
 
 type OSMRegionDatabases = Awaited<ReturnType<typeof openOSMRegionDatabases>>
 
@@ -105,8 +113,7 @@ export const GenerationServices = {
 	explicitInterpolation: createToken<InstanceType<ResolverModule["StreetInterpolator"]> | null>(
 		"explicit-interpolation"
 	),
-	ban: createToken<BANRegionDatabases>("ban"),
-	overture: createToken<OvertureNationalDatabaseProvider>("overture"),
+	nationalDatabases: createToken<(country: string) => RegionDatabases>("national-databases"),
 	osm: createToken<OSMRegionDatabases>("osm"),
 	classifyKind: createToken<NonNullable<GeocodeDeps["classifyKind"]>>("kind-classifier"),
 	placer: createToken<CoarsePlacer | null>("coarse-placer"),
@@ -162,11 +169,15 @@ async function resolveWOFPath(
 /**
  * Registers the generation-scope services on `registry`, which reads the process-scope
  * services from itself or from a parent scope.
+ *
+ * Each of `contributions` registers one data layer.
+ * The national sources they add are consulted in the order of the list.
  */
 export function registerGenerationServices(
 	registry: ServiceRegistry,
 	options: GeocodeSessionOptions,
-	settings: GeocodeSessionSettings
+	settings: GeocodeSessionSettings,
+	contributions: readonly LayerContribution[]
 ): void {
 	const S = GenerationServices
 
@@ -225,12 +236,6 @@ export function registerGenerationServices(
 		build: ({ candidateDB }) => capitalIndexFor(settings.capitalTier, candidateDB),
 	})
 
-	defineUnlessProvided(registry, S.regionDatabases, {
-		needs: { mod: ResolverModuleService, selection: S.selection },
-		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
-		release: disposeHandle,
-	})
-
 	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
 
 	defineUnlessProvided(registry, S.explicitAddressPoints, {
@@ -246,35 +251,6 @@ export function registerGenerationServices(
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null,
-		release: disposeHandle,
-	})
-
-	defineUnlessProvided(registry, S.ban, {
-		needs: { selection: S.selection },
-		build: ({ selection }) => openBANRegionDatabases(options.dataRoot, selection.catalog),
-		release: disposeHandle,
-	})
-
-	defineUnlessProvided(registry, S.overture, {
-		needs: { selection: S.selection },
-		build: ({ selection }) => OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), selection.catalog),
-		release: disposeHandle,
-	})
-
-	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
-	// Each extract the provider left unattached prints its path and reason to stderr,
-	// as the servers print it at startup.
-	defineUnlessProvided(registry, S.osm, {
-		needs: { selection: S.selection },
-		build: async ({ selection }) => {
-			const osm = await openOSMRegionDatabases(options.dataRoot, selection.catalog)
-
-			for (const line of unattachedLayerLines({ osm })) {
-				console.error(line)
-			}
-
-			return osm
-		},
 		release: disposeHandle,
 	})
 
@@ -303,20 +279,20 @@ export function registerGenerationServices(
 				: null,
 	})
 
-	defineUnlessProvided(registry, S.forkEntity, {
-		needs: { selection: S.selection },
-		build: ({ selection }) => loadForkEntityDeps(options, selection.catalog),
-		release: (probe) => disposeHandle(probe.handle),
-	})
+	const nationalSources: ServiceToken<NationalDatabaseSource>[] = []
 
-	defineUnlessProvided(registry, S.layerRoutes, {
-		needs: { selection: S.selection },
-		build: ({ selection }) => loadLayerRoutes(options, selection.catalog),
-		release: (routes) => {
-			for (const route of Object.values(routes)) {
-				disposeHandle(route)
-			}
-		},
+	for (const contribute of contributions) {
+		contribute({ registry, options, settings, nationalSource: (token) => void nationalSources.push(token) })
+	}
+
+	// Each source is an optional need, so a source that fails to open is left out and the others still answer.
+	const sourceNeeds: Record<string, OptionalNeed<NationalDatabaseSource>> = Object.fromEntries(
+		nationalSources.map((token) => [token.description, optional(token)])
+	)
+
+	defineUnlessProvided(registry, S.nationalDatabases, {
+		needs: sourceNeeds,
+		build: (sources) => firstCoveringSource(Object.values(sources).filter(isPresent)),
 	})
 }
 
@@ -328,12 +304,13 @@ export function registerGenerationServices(
  */
 export async function describeGeocodeServices(
 	options: GeocodeSessionOptions,
-	settings: GeocodeSessionSettings
+	settings: GeocodeSessionSettings,
+	contributions: readonly LayerContribution[]
 ): Promise<ServiceGraphNode[]> {
 	await using registry = new ServiceRegistry()
 
 	registerProcessServices(registry, options)
-	registerGenerationServices(registry, options, settings)
+	registerGenerationServices(registry, options, settings, contributions)
 
 	return registry.graph()
 }
@@ -358,8 +335,7 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 		regionDatabases: registry.resolve(S.regionDatabases),
 		explicitAddressPoints: registry.resolve(S.explicitAddressPoints),
 		explicitInterpolation: registry.resolve(S.explicitInterpolation),
-		ban: registry.resolve(S.ban),
-		overture: registry.resolve(S.overture),
+		nationalDatabases: registry.resolve(S.nationalDatabases),
 		osm: registry.resolve(S.osm),
 		classifyKind: registry.resolve(S.classifyKind),
 		placer: registry.resolve(S.placer),
@@ -369,16 +345,18 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 }
 
 /**
- * The national databases for a country: the BAN extract when it holds address points
- * or street centroids, else the Overture provider's.
+ * The layers whose service failed to build, among the services another service declares an optional need on.
+ *
+ * Read it after the scope's services have resolved.
  */
-export function nationalDatabasesOf(
-	ban: Awaited<ReturnType<typeof openBANRegionDatabases>>,
-	overture: OvertureNationalDatabaseProvider
-): (country: string) => RegionDatabases {
-	return (country) => {
-		const fromBAN = ban.for(country)
+export function unavailableLayers(registry: ServiceRegistry): UnavailableLayer[] {
+	const graph = registry.graph()
 
-		return fromBAN.addressPoints || fromBAN.streetCentroids ? fromBAN : overture.for(country)
-	}
+	const optionalTokens = new Set(
+		graph.flatMap((service) => service.needs.filter((need) => need.optional).map((need) => need.token))
+	)
+
+	return graph
+		.filter((service) => service.state === "failed" && optionalTokens.has(service.token))
+		.map((service) => ({ layer: service.token.description, error: service.error }))
 }
