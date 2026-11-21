@@ -2477,7 +2477,7 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
 - `runs a statement at module scope`, 6 times
-- `awaits at module scope`, 2 times
+- `awaits at module scope`, 3 times
 
 | Kind  | Interface            | Target                  | Calls |
 | ----- | -------------------- | ----------------------- | ----- |
@@ -2491,28 +2491,28 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 
 The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
 
-- `runs a statement at module scope`, 5 times
-- `awaits at module scope`, 2 times
+- `runs a statement at module scope`, 7 times
+- `awaits at module scope`, 3 times
 
-| Kind    | Interface                  | Target                        | Calls |
-| ------- | -------------------------- | ----------------------------- | ----- |
-| read    | `CSVSpliterator.fromAsync` | `scratch:*`                   | 1     |
-| read    | `DatabaseClient`           | `data-root:db/address-points` | 1     |
-| read    | `DatabaseClient`           | `data-root:db/interpolation`  | 1     |
-| read    | `pathExists`               | `data-root:db/address-points` | 1     |
-| read    | `pathExists`               | `unresolved (call)`           | 1     |
-| read    | `readLocalJSONFile`        | `unresolved (property)`       | 1     |
-| write   | `DatabaseClient`           | `unresolved (template)`       | 1     |
-| write   | `makeDirectories`          | `unresolved (call)`           | 1     |
-| write   | `movePath`                 | `unresolved (call)`           | 1     |
-| write   | `movePath`                 | `unresolved (template)`       | 1     |
-| write   | `openWriteStream`          | `unresolved (template)`       | 1     |
-| write   | `removePathIfPresent`      | `scratch:*`                   | 1     |
-| write   | `removePathIfPresent`      | `unresolved (template)`       | 2     |
-| write   | `sealDatabase`             | `data-root:db/address-points` | 1     |
-| write   | `swapDatabaseIntoPlace`    | `data-root:db/address-points` | 1     |
-| write   | `swapDatabaseIntoPlace`    | `unresolved (template)`       | 1     |
-| network | `fetch`                    | `unresolved (template)`       | 1     |
+| Kind    | Interface                  | Target                       | Calls |
+| ------- | -------------------------- | ---------------------------- | ----- |
+| read    | `CSVSpliterator.fromAsync` | `scratch:*`                  | 1     |
+| read    | `DatabaseClient`           | `data-root:db/interpolation` | 1     |
+| read    | `DatabaseClient`           | `unresolved (other)`         | 1     |
+| read    | `pathExists`               | `unresolved (call)`          | 1     |
+| read    | `pathExists`               | `unresolved (other)`         | 2     |
+| read    | `readLocalJSONFile`        | `unresolved (property)`      | 1     |
+| write   | `DatabaseClient`           | `unresolved (template)`      | 1     |
+| write   | `makeDirectories`          | `unresolved (call)`          | 2     |
+| write   | `movePath`                 | `unresolved (call)`          | 1     |
+| write   | `movePath`                 | `unresolved (template)`      | 1     |
+| write   | `openWriteStream`          | `unresolved (template)`      | 1     |
+| write   | `removePathIfPresent`      | `scratch:*`                  | 1     |
+| write   | `removePathIfPresent`      | `unresolved (template)`      | 2     |
+| write   | `sealDatabase`             | `unresolved (other)`         | 1     |
+| write   | `swapDatabaseIntoPlace`    | `unresolved (other)`         | 1     |
+| write   | `swapDatabaseIntoPlace`    | `unresolved (template)`      | 1     |
+| network | `fetch`                    | `unresolved (template)`      | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/us/address-coverage/plan.run.ts`
 
