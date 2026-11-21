@@ -11,6 +11,9 @@
  *   entry and the overlap audit compares against training rows, so a base row, its augmentations and the
  *   other rendered rows of its record stay out of train together.
  *
+ *   A source listed in {@linkcode GROUP_ADDRESS_KEY_SOURCES} also joins groups by address: the list records the
+ *   address key of each frozen row of that source, and a row with one of those keys is frozen with it (#3125).
+ *
  *   The list is committed beside the corpus data, derived from the frozen manifests by
  *   `heldout/dataset/evaluation-groups.run.ts`. Its sha256 joins the split policy hash.
  */
@@ -20,11 +23,96 @@ import { sha256File } from "@mailwoman/core/hash"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 
 import { recordIDOf } from "#adapters/record-id"
+import { USGOV_NAD_ADAPTER_ID } from "#us/adapters/usgov/nad/adapter"
+import {
+	type AddressKeyRow,
+	nadAddressBlock,
+	nadAddressBlockSQL,
+	nadAddressKey,
+} from "#us/adapters/usgov/nad/address-key"
 
 /**
  * The attribute name an evaluation-group file declares.
  */
 export const EVALUATION_GROUPS_ATTRIBUTE = "evaluation-groups"
+
+/**
+ * A source whose records join a group by address as well as by record id.
+ *
+ * A source that issues an address a new record id on a re-ingest writes one address
+ * under two groups, so a frozen address would train under its new id.
+ * The key joins them (#3125).
+ */
+export interface GroupAddressKeySource {
+	/**
+	 * The row's address key, or null when the row lacks a part of the key.
+	 */
+	key(row: AddressKeyRow): string | null
+	/**
+	 * A coarser key every row of one address shares.
+	 * A column scan can compute it.
+	 */
+	block(row: AddressKeyRow): string | null
+	/**
+	 * {@linkcode GroupAddressKeySource.block} as a DuckDB expression over a corpus file aliased `alias`.
+	 */
+	blockSQL(alias: string): string
+}
+
+/**
+ * The sources whose group identity includes an address key, by corpus `source`.
+ *
+ * Every other source groups by record id only.
+ */
+export const GROUP_ADDRESS_KEY_SOURCES: Readonly<Record<string, GroupAddressKeySource>> = {
+	[USGOV_NAD_ADAPTER_ID]: { key: nadAddressKey, block: nadAddressBlock, blockSQL: nadAddressBlockSQL },
+}
+
+/**
+ * A row as {@linkcode groupAddressKeyOf} reads it.
+ */
+export type AddressKeyedRow = AddressKeyRow & { source: string }
+
+/**
+ * The address key of a row whose source {@linkcode GROUP_ADDRESS_KEY_SOURCES} lists,
+ * prefixed by the source, or null for any other row and for a row that lacks a part of the key.
+ */
+export function groupAddressKeyOf(row: AddressKeyedRow): string | null {
+	const keyed = GROUP_ADDRESS_KEY_SOURCES[row.source]
+	const key = keyed?.key(row)
+
+	return key ? `${row.source}:${key}` : null
+}
+
+/**
+ * Whether a row's address key is one a frozen set holds, so the row joins that frozen group.
+ *
+ * A caller that holds no address row matches by record id only.
+ */
+export function frozenByAddress(
+	row: AddressKeyedRow | null | undefined,
+	frozen: { addressKeys?: ReadonlySet<string> }
+): boolean {
+	if (!row || !frozen.addressKeys?.size) return false
+
+	const key = groupAddressKeyOf(row)
+
+	return key != null && frozen.addressKeys.has(key)
+}
+
+/**
+ * The frozen side of the evaluation-group policy as a split reads it: the groups,
+ * and the address keys when the list holds any.
+ */
+export type FrozenGroups = Pick<EvaluationGroups, "groups"> & { addressKeys?: ReadonlySet<string> }
+
+/**
+ * Whether a row belongs to a frozen group: by its group, or by its address
+ * key ({@linkcode frozenByAddress}).
+ */
+export function isFrozenRow(group: string, address: AddressKeyedRow | null | undefined, frozen: FrozenGroups): boolean {
+	return frozen.groups.has(group) || frozenByAddress(address, frozen)
+}
 
 /**
  * One frozen set the group list was derived from.
@@ -66,6 +154,12 @@ export interface EvaluationGroupsFile {
 	attribute: typeof EVALUATION_GROUPS_ATTRIBUTE
 	datasets: EvaluationGroupDataset[]
 	groups: string[]
+	/**
+	 * The {@linkcode groupAddressKeyOf} key of every frozen row whose source has one, sorted.
+	 *
+	 * A list written before #3125 has none.
+	 */
+	addressKeys?: string[]
 }
 
 /**
@@ -76,6 +170,7 @@ export interface EvaluationGroups {
 	sha256: string
 	datasets: readonly EvaluationGroupDataset[]
 	groups: ReadonlySet<string>
+	addressKeys: ReadonlySet<string>
 }
 
 /**
@@ -85,18 +180,24 @@ export interface EvaluationGroupsIdentity {
 	sha256: string
 	datasets: Array<Pick<EvaluationGroupDataset, "datasetID" | "version">>
 	groups: number
+	/**
+	 * Recorded only when the list holds address keys, so the identity of a list without them is unchanged.
+	 */
+	addressKeys?: number
 }
 
 /**
- * The identity of a group list: its file's sha256, the frozen sets it names and its group count.
+ * The identity of a group list: its file's sha256, the frozen sets it names,
+ * its group count and its address-key count.
  */
 export function evaluationGroupsIdentity(
-	groups: Pick<EvaluationGroups, "sha256" | "datasets" | "groups">
+	groups: Pick<EvaluationGroups, "sha256" | "datasets" | "groups"> & { addressKeys?: ReadonlySet<string> }
 ): EvaluationGroupsIdentity {
 	return {
 		sha256: groups.sha256,
 		datasets: groups.datasets.map(({ datasetID, version }) => ({ datasetID, version })),
 		groups: groups.groups.size,
+		...(groups.addressKeys?.size ? { addressKeys: groups.addressKeys.size } : {}),
 	}
 }
 
@@ -116,6 +217,10 @@ export function evaluationGroupOf(row: { source_id: string; base_source_id?: str
  */
 export function buildEvaluationGroupsFile(input: {
 	datasets: ReadonlyArray<Omit<EvaluationGroupDataset, "groups"> & { groups: Iterable<string> }>
+	/**
+	 * The frozen rows whose address keys the list records, read with {@linkcode groupAddressKeyOf}.
+	 */
+	keyedRows?: Iterable<AddressKeyedRow>
 }): EvaluationGroupsFile {
 	const all = new Set<string>()
 	const datasets: EvaluationGroupDataset[] = []
@@ -130,10 +235,21 @@ export function buildEvaluationGroupsFile(input: {
 		datasets.push({ ...dataset, groups: unique.size })
 	}
 
+	const addressKeys = new Set<string>()
+
+	for (const row of input.keyedRows ?? []) {
+		const key = groupAddressKeyOf(row)
+
+		if (key) {
+			addressKeys.add(key)
+		}
+	}
+
 	return {
 		attribute: EVALUATION_GROUPS_ATTRIBUTE,
 		datasets,
 		groups: [...all].toSorted(),
+		...(addressKeys.size ? { addressKeys: [...addressKeys].toSorted() } : {}),
 	}
 }
 
@@ -153,7 +269,17 @@ export async function readEvaluationGroups(path: string): Promise<EvaluationGrou
 
 	if (!file.groups.length) throw new Error(`${path} lists no group`)
 
-	return { path, sha256: await sha256File(path), datasets: file.datasets, groups: new Set(file.groups) }
+	if (file.addressKeys != null && !Array.isArray(file.addressKeys)) {
+		throw new Error(`${path} records addressKeys that are not a list`)
+	}
+
+	return {
+		path,
+		sha256: await sha256File(path),
+		datasets: file.datasets,
+		groups: new Set(file.groups),
+		addressKeys: new Set(file.addressKeys),
+	}
 }
 
 /**

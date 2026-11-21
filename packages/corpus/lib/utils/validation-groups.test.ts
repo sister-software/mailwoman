@@ -75,7 +75,13 @@ describe("selectValidationGroups", () => {
 })
 
 describe("evaluationGroupPolicy", () => {
-	const frozen = { path: "frozen.json", sha256: "f".repeat(64), datasets: [], groups: new Set(["a"]) }
+	const frozen = {
+		path: "frozen.json",
+		sha256: "f".repeat(64),
+		datasets: [],
+		groups: new Set(["a"]),
+		addressKeys: new Set<string>(),
+	}
 
 	const validation = (groups: string[], against = frozen.sha256) => ({
 		path: "validation.json",

@@ -61,6 +61,12 @@ import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { readTrainingConfig, trainingCorpusVersion, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
+import {
+	type AddressKeyedRow,
+	type EvaluationGroups,
+	GROUP_ADDRESS_KEY_SOURCES,
+	groupAddressKeyOf,
+} from "@mailwoman/corpus/utils/evaluation-groups"
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
 import type { HeldoutProvenance, ProvenanceRecord } from "#tools/eval-harness/heldout/per/country"
@@ -98,6 +104,11 @@ export interface OverlapFileRecord {
 	 * Rows the split attribute assigned to `test` and the audit therefore didn't count as training data.
 	 */
 	excludedTestRows?: number
+	/**
+	 * Rows the previewed evaluation-group list sends to `test` by group or address key,
+	 * and which the audit therefore didn't count as training data.
+	 */
+	excludedPreviewRows?: number
 	/**
 	 * The file has no `base_source_id` column, so its rows were grouped by their own `source_id`.
 	 */
@@ -149,6 +160,18 @@ export interface OverlapAudit {
 	 * Whether training rows were also compared by folded text, beside identity and group.
 	 */
 	textCompared: boolean
+	/**
+	 * Present when training rows of a keyed source were also compared by address key.
+	 */
+	addressCompared?: true
+	/**
+	 * Present when the audit previewed a re-split.
+	 *
+	 * The audit left out every training row the listed evaluation-group list sends
+	 * to `test`, by group or by address key.
+	 * It describes the corpora as that re-split would write them.
+	 */
+	preview?: { evaluationGroups: string; sha256: string }
 	reasons: string[]
 	counts: Record<HeldoutProvenance, number>
 	/**
@@ -175,6 +198,11 @@ export const OverlapKind = {
 	 * The same folded text under another record.
 	 */
 	Text: "text",
+	/**
+	 * The same address key under another record of a keyed source (`GROUP_ADDRESS_KEY_SOURCES`),
+	 * such as a NAD address re-ingested under a new UUID.
+	 */
+	Address: "address",
 } as const
 
 export type OverlapKind = (typeof OverlapKind)[keyof typeof OverlapKind]
@@ -183,7 +211,7 @@ export type OverlapKind = (typeof OverlapKind)[keyof typeof OverlapKind]
  * Rows per kind of match, from each overlapping row's kinds.
  */
 function countOverlapKinds(rows: Iterable<ReadonlySet<OverlapKind>>): Record<OverlapKind, number> {
-	const counts: Record<OverlapKind, number> = { identity: 0, group: 0, text: 0 }
+	const counts: Record<OverlapKind, number> = { identity: 0, group: 0, text: 0, address: 0 }
 
 	for (const kinds of rows) {
 		for (const kind of kinds) {
@@ -225,6 +253,153 @@ interface FileDescriptor {
 }
 
 const INSERT_CHUNK = 1000
+
+/**
+ * The span triple the address key reads beside `raw`.
+ */
+const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
+
+/**
+ * A DuckDB list value's items, or the array itself.
+ */
+function listItems(value: unknown): unknown[] {
+	if (Array.isArray(value)) return value
+
+	const items = (value as { items?: unknown } | null)?.items
+
+	if (!Array.isArray(items)) throw new TypeError(`expected a list, read ${String(value)}`)
+
+	return items
+}
+
+/**
+ * The address-key input of one training row read with its span triple.
+ */
+function addressKeyedRowOf(row: Record<string, unknown>): AddressKeyedRow | null {
+	if (row.raw == null || row.source == null || row.span_tags == null) return null
+
+	return {
+		source: String(row.source),
+		raw: String(row.raw),
+		span_starts: listItems(row.span_starts).map(Number),
+		span_ends: listItems(row.span_ends).map(Number),
+		span_tags: listItems(row.span_tags).map((tag) => String(tag)),
+	}
+}
+
+/**
+ * The dataset's row identities under each address key, and the source-prefixed
+ * blocks the column scan filters by.
+ *
+ * @throws When a dataset row has no entry in `addressRows`.
+ */
+function indexAddressRows(
+	dataset: HeldoutDatasetManifest,
+	addressRows: ReadonlyMap<string, AddressKeyedRow> | undefined
+): { byAddress: Map<string, string[]>; addressBlocks: Set<string> } {
+	const byAddress = new Map<string, string[]>()
+	const addressBlocks = new Set<string>()
+
+	for (const entry of addressRows ? dataset.rows : []) {
+		const row = addressRows!.get(entry.rowID)
+
+		if (!row) throw new Error(`row ${entry.rowID} has no spans for the address-key comparison`)
+
+		const key = groupAddressKeyOf(row)
+		const block = GROUP_ADDRESS_KEY_SOURCES[row.source]?.block(row)
+
+		if (!key || !block) continue
+
+		byAddress.set(key, [...(byAddress.get(key) ?? []), entry.rowID])
+		addressBlocks.add(`${row.source}|${block}`)
+	}
+
+	return { byAddress, addressBlocks }
+}
+
+/**
+ * The keyed sources' block filter over a training file aliased `t`, matched against `eval_address_blocks`.
+ */
+function addressBlockFilterSQL(): string {
+	return Object.entries(GROUP_ADDRESS_KEY_SOURCES)
+		.map(
+			([source, keyed]) =>
+				`(t.source = '${escapeSQLString(source)}' AND ('${escapeSQLString(source)}|' || ${keyed.blockSQL("t")}) ` +
+				`IN (SELECT k FROM eval_address_blocks))`
+		)
+		.join(" OR ")
+}
+
+/**
+ * The columns a training file must hold: the identity columns, `raw` for the text comparison,
+ * and the span triple for the address key and the preview.
+ */
+function requiredColumns(matchText: boolean, readSpans: boolean): string[] {
+	return [
+		...new Set([
+			...OVERLAP_ID_COLUMNS.filter((column) => column !== "base_source_id"),
+			...(matchText ? ["raw"] : []),
+			...(readSpans ? ["raw", ...SPAN_COLUMNS] : []),
+		]),
+	]
+}
+
+/**
+ * The `test` row ids of a file's split attribute, after its sha256 is checked against the manifest.
+ */
+async function readAttributeTestIDs(
+	descriptor: FileDescriptor,
+	manifestPath: string,
+	pathRoot: string
+): Promise<ReadonlySet<string>> {
+	const reference = descriptor.split_attribute!
+
+	if (typeof reference.path !== "string" || typeof reference.sha256 !== "string") {
+		throw new TypeError(`${manifestPath} file ${String(descriptor.path)} names an incomplete split attribute`)
+	}
+
+	const attributePath = reference.path.replace(/^\/data/u, pathRoot)
+	const digest = await sha256File(attributePath)
+
+	if (digest !== reference.sha256) {
+		throw new Error(`${attributePath} has sha256 ${digest}; ${manifestPath} records ${reference.sha256}`)
+	}
+
+	return new Set((await readSplitAttribute(attributePath)).test)
+}
+
+/**
+ * One training row's group and, when its spans were read, its address key.
+ */
+function trainingRowKeys(
+	row: Record<string, unknown>,
+	sourceID: string | null,
+	readSpans: boolean
+): { group: string | null; addressKey: string | null } {
+	const groupID = row.base_source_id == null ? sourceID : String(row.base_source_id)
+	const keyedRow = readSpans ? addressKeyedRowOf(row) : null
+
+	return {
+		group: groupID == null ? null : recordIDOf(groupID),
+		addressKey: keyedRow ? groupAddressKeyOf(keyedRow) : null,
+	}
+}
+
+/**
+ * Whether a previewed list sends a training row to `test`, by its group or its address key.
+ */
+function previewHolds(preview: EvaluationGroups, group: string | null, addressKey: string | null): boolean {
+	return (group != null && preview.groups.has(group)) || (addressKey != null && preview.addressKeys.has(addressKey))
+}
+
+/**
+ * The comparisons an audit made, as its evidence states them.
+ */
+function comparedPhrase(matchText: boolean, matchAddress: boolean): string {
+	const kinds = ["identity", "group", ...(matchText ? ["folded text"] : []), ...(matchAddress ? ["address key"] : [])]
+
+	return `by ${kinds.slice(0, -1).join(", ")} and ${kinds.at(-1)!}`
+}
 
 async function loadKeys(db: Awaited<ReturnType<typeof openDuckDB>>, table: string, keys: Iterable<string>) {
 	await db.run(`CREATE TEMP TABLE ${table} (k VARCHAR PRIMARY KEY)`)
@@ -448,6 +623,19 @@ export async function auditHeldoutOverlap(input: {
 	 */
 	rowTexts?: ReadonlyMap<string, string>
 	/**
+	 * Each row's source, text and spans, keyed by row identity, for the address-key comparison.
+	 *
+	 * Rows of a source `GROUP_ADDRESS_KEY_SOURCES` lists are compared with that
+	 * source's training rows by address key.
+	 * Without it the audit compares no address.
+	 */
+	addressRows?: ReadonlyMap<string, AddressKeyedRow>
+	/**
+	 * An evaluation-group list to preview: a training row whose group or address key it
+	 * holds is left out, as a re-split under it would send the row to `test`.
+	 */
+	previewEvaluationGroups?: EvaluationGroups
+	/**
 	 * The DuckDB connection's memory and thread limits; `openDuckDB`'s shares of the host when omitted.
 	 */
 	duckDBLimits?: DuckDBLimits
@@ -469,15 +657,7 @@ export async function auditHeldoutOverlap(input: {
 	}
 
 	const byID = new Set(dataset.rows.map((entry) => entry.rowID))
-	const byGroup = new Map<string, string[]>()
-
-	for (const entry of dataset.rows) {
-		const members = byGroup.get(entry.group) ?? []
-
-		members.push(entry.rowID)
-		byGroup.set(entry.group, members)
-	}
-
+	const byGroup = Map.groupBy(dataset.rows, (entry) => entry.group)
 	const evidence = new Map<string, string>()
 	/**
 	 * The corpora (by `corpus_version`, else manifest path) each overlapping row was found in.
@@ -510,6 +690,14 @@ export async function auditHeldoutOverlap(input: {
 
 	const matchText = input.rowTexts != null
 	const byText = input.rowTexts ? await loadTextKeys(db, dataset, input.rowTexts) : new Map<string, string[]>()
+	const matchAddress = input.addressRows != null
+	const preview = input.previewEvaluationGroups
+	const { byAddress, addressBlocks } = indexAddressRows(dataset, input.addressRows)
+
+	await loadKeys(db, "eval_address_blocks", addressBlocks)
+
+	const readSpans = matchAddress || preview != null
+	const addressFilter = matchAddress && addressBlocks.size ? ` OR ${addressBlockFilterSQL()}` : ""
 
 	for (const manifestPath of input.corpora) {
 		const manifest = await readLocalJSONFile<{
@@ -568,12 +756,7 @@ export async function auditHeldoutOverlap(input: {
 			// The identity columns stay required.
 			const baseSourceIDAbsent = !columns.includes("base_source_id")
 
-			const missing: string[] = [
-				...OVERLAP_ID_COLUMNS.filter((column) => column !== "base_source_id" && !columns.includes(column)),
-				// The folded-text comparison reads the text column.
-				...(matchText && !columns.includes("raw") ? ["raw"] : []),
-			]
-
+			const missing = requiredColumns(matchText, readSpans).filter((column) => !columns.includes(column))
 			const baseColumn = baseSourceIDAbsent ? "CAST(NULL AS VARCHAR)" : "t.base_source_id"
 
 			if (missing.length) throw new Error(`${file} lacks ${missing.join(", ")}; refusing a partial read`)
@@ -598,43 +781,38 @@ export async function auditHeldoutOverlap(input: {
 				sha256Verified = true
 			}
 
-			let testIDs: ReadonlySet<string> = new Set()
-
-			if (split === "attribute") {
-				const reference = descriptor.split_attribute!
-
-				if (typeof reference.path !== "string" || typeof reference.sha256 !== "string") {
-					throw new TypeError(`${manifestPath} file ${descriptor.path} names an incomplete split attribute`)
-				}
-
-				const attributePath = reference.path.replace(/^\/data/u, input.pathRoot)
-				const digest = await sha256File(attributePath)
-
-				if (digest !== reference.sha256) {
-					throw new Error(`${attributePath} has sha256 ${digest}; ${manifestPath} records ${reference.sha256}`)
-				}
-
-				testIDs = new Set((await readSplitAttribute(attributePath)).test)
-			}
+			const testIDs: ReadonlySet<string> =
+				split === "attribute" ? await readAttributeTestIDs(descriptor, manifestPath, input.pathRoot) : new Set()
 
 			const textColumn = matchText ? overlapTextFoldSQL("t.raw") : "CAST(NULL AS VARCHAR)"
+			const spanSelect = readSpans ? `, t.raw AS raw, ${SPAN_COLUMNS.map((c) => `t.${c} AS ${c}`).join(", ")}` : ""
 
 			const reader = await db.runAndReadAll(
 				`SELECT t.source AS source, t.source_id AS source_id, ${baseColumn} AS base_source_id, ` +
-					`${textColumn} AS folded FROM ${quoted} t ` +
+					`${textColumn} AS folded${spanSelect} FROM ${quoted} t ` +
 					`WHERE (t.source || ':' || t.source_id) IN (SELECT k FROM eval_ids) ` +
 					`OR ${recordIDSQL(`coalesce(${baseColumn}, t.source_id)`)} IN (SELECT k FROM eval_groups)` +
-					(matchText ? ` OR ${textColumn} IN (SELECT k FROM eval_texts)` : "")
+					(matchText ? ` OR ${textColumn} IN (SELECT k FROM eval_texts)` : "") +
+					addressFilter
 			)
 
 			let matches = 0
 			let excludedTestRows = 0
+			let excludedPreviewRows = 0
 
 			for (const row of reader.getRowObjects()) {
 				const sourceID = row.source_id == null ? null : String(row.source_id)
 
 				if (sourceID != null && testIDs.has(sourceID)) {
 					excludedTestRows++
+
+					continue
+				}
+
+				const { group, addressKey } = trainingRowKeys(row, sourceID, readSpans)
+
+				if (preview && previewHolds(preview, group, addressKey)) {
+					excludedPreviewRows++
 
 					continue
 				}
@@ -648,11 +826,17 @@ export async function auditHeldoutOverlap(input: {
 					recordOverlap(trainingID, label, OverlapKind.Identity, `identity ${trainingID} ${where}`)
 				}
 
-				const groupID = row.base_source_id == null ? sourceID : String(row.base_source_id)
-				const group = groupID == null ? null : recordIDOf(groupID)
+				for (const member of (matchAddress && addressKey != null && byAddress.get(addressKey)) || []) {
+					recordOverlap(
+						member,
+						label,
+						OverlapKind.Address,
+						`address key "${addressKey}" (training row ${trainingID}) ${where}`
+					)
+				}
 
 				for (const member of (group != null && byGroup.get(group)) || []) {
-					recordOverlap(member, label, OverlapKind.Group, `group ${group} (training row ${trainingID}) ${where}`)
+					recordOverlap(member.rowID, label, OverlapKind.Group, `group ${group} (training row ${trainingID}) ${where}`)
 				}
 
 				const folded = row.folded == null ? null : String(row.folded)
@@ -675,6 +859,7 @@ export async function auditHeldoutOverlap(input: {
 				sha256: recordedSHA,
 				sha256Verified,
 				...(split === "attribute" ? { excludedTestRows } : {}),
+				...(preview ? { excludedPreviewRows } : {}),
 				...(baseSourceIDAbsent ? { baseSourceIDAbsent } : {}),
 				matches,
 			})
@@ -736,6 +921,8 @@ export async function auditHeldoutOverlap(input: {
 		modelCards,
 		verifiedUnseenAdmitted,
 		textCompared: matchText,
+		...(matchAddress ? { addressCompared: true as const } : {}),
+		...(preview ? { preview: { evaluationGroups: preview.path, sha256: preview.sha256 } } : {}),
 		reasons,
 		counts,
 		overlapRows: countOverlapKinds(overlapKinds.values()),
@@ -743,8 +930,12 @@ export async function auditHeldoutOverlap(input: {
 
 	const auditSHA256 = sha256Hex(canonicalJSON(audit))
 	const cite = `overlap audit ${auditSHA256.slice(0, 16)} of ${dataset.datasetID}@${dataset.version}`
-	const compared = matchText ? "by identity, group and folded text" : "by identity and group"
-	const unseenEvidence = `${cite}: absent ${compared} from ${[...corporaRead].toSorted().join(", ")}, every train and val file read`
+
+	const unseenEvidence =
+		`${cite}: absent ${comparedPhrase(matchText, matchAddress)} from ${[...corporaRead].toSorted().join(", ")}` +
+		`${preview ? `, as a re-split under ${preview.path} (${preview.sha256.slice(0, 16)}) would write them` : ""}` +
+		", every train and val file read"
+
 	const rows: Record<string, ProvenanceRecord> = {}
 	const unknown: string[] = []
 

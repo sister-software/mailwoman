@@ -11,8 +11,18 @@
  *     --model-cards <published model-card.json>,<candidate model-card.json> \
  *     [--training-configs <config .yaml>,…] \
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
- *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text] [--refuse-overlap identity,group]
+ *     [--path-root /mnt/mw] [--verify-file-sha256] [--match-text] [--match-address]
+ *     [--preview-evaluation-groups <evaluation-groups.json>] [--refuse-overlap identity,group]
  *     [--duckdb-memory-gib 4] [--duckdb-threads 4]
+ *
+ *   `--match-address` compares the rows of a source whose group identity holds an address
+ *   key (`GROUP_ADDRESS_KEY_SOURCES`, NAD) with that source's training rows by address key,
+ *   so an address a re-ingest wrote under a new record id overlaps as `address`.
+ *
+ *   `--preview-evaluation-groups` leaves out every training row whose group or address
+ *   key the list holds, as a re-split under that list would send it to `test`.
+ *   The audit then describes the next corpus of the same rows rather than the corpus
+ *   a model trained on, and records the list it previewed.
  *
  *   `--refuse-overlap` exits 1, after writing the provenance file, when a row overlaps
  *   training by one of the listed kinds, so a build step stops on a registered row in train.
@@ -34,6 +44,7 @@
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { readEvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
 
 import { readHeldoutDatasetManifest, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { auditHeldoutOverlap, OverlapKind, refusedOverlaps } from "#tools/eval-harness/heldout/dataset/overlap"
@@ -71,6 +82,16 @@ const { values } = parseArguments({
 			type: "boolean",
 			description: "Also compare training rows by folded text, reading the dataset's rows file",
 		},
+		"match-address": {
+			type: "boolean",
+			description: "Also compare a keyed source's training rows by address key, reading the dataset's rows file",
+		},
+		"preview-evaluation-groups": {
+			type: "string",
+			description:
+				"An evaluation-group list: leave out every training row whose group or address key it holds, " +
+				"as a re-split under it would",
+		},
 		"refuse-overlap": {
 			type: "string",
 			description: "Exit 1 when a row overlaps training by these kinds, comma-separated: identity, group, text",
@@ -101,14 +122,26 @@ for (const kind of refuse) {
 	if (!kinds.has(kind)) throw new Error(`--refuse-overlap ${kind} isn't one of ${[...kinds].join(", ")}`)
 }
 
-const rowTexts =
-	values["match-text"] === true
-		? new Map((await readHeldoutDatasetRows(values.dataset)).rows.map((row) => [heldoutRowID(row), row.raw] as const))
+const datasetRows =
+	values["match-text"] === true || values["match-address"] === true
+		? (await readHeldoutDatasetRows(values.dataset)).rows
 		: undefined
+
+const rowTexts =
+	values["match-text"] === true ? new Map(datasetRows!.map((row) => [heldoutRowID(row), row.raw] as const)) : undefined
+
+const addressRows =
+	values["match-address"] === true ? new Map(datasetRows!.map((row) => [heldoutRowID(row), row] as const)) : undefined
+
+const previewEvaluationGroups = values["preview-evaluation-groups"]
+	? await readEvaluationGroups(values["preview-evaluation-groups"])
+	: undefined
 
 const result = await auditHeldoutOverlap({
 	dataset: await readHeldoutDatasetManifest(values.dataset),
 	...(rowTexts ? { rowTexts } : {}),
+	...(addressRows ? { addressRows } : {}),
+	...(previewEvaluationGroups ? { previewEvaluationGroups } : {}),
 	corpora: split(values.corpora),
 	modelCards: split(values["model-cards"]),
 	trainingConfigs: split(values["training-configs"]),

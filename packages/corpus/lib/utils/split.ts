@@ -28,7 +28,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
-import { type EvaluationGroups, evaluationGroupOf } from "#utils/evaluation-groups"
+import { type AddressKeyedRow, evaluationGroupOf, type FrozenGroups, isFrozenRow } from "#utils/evaluation-groups"
 import { shapeKeyOf, type SplitRetention } from "#utils/retention"
 import type { ValidationGroups } from "#utils/validation-groups"
 
@@ -846,6 +846,10 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
 	 * The evaluation-group policy keys on it, as the overlap audit does.
 	 */
 	base_source_id?: string | null
+	/**
+	 * The source, text and spans a keyed source's address key reads (`GROUP_ADDRESS_KEY_SOURCES`).
+	 */
+	address?: AddressKeyedRow | null
 }
 
 /**
@@ -864,20 +868,23 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> 
  * The holdout, the trained places and the retention table are then not consulted,
  * so no retained shape returns a frozen group's variant to train.
  *
+ * A row of a keyed source whose address key a frozen row holds is frozen too,
+ * so a re-ingested address under a new record id stays out of train (#3125).
+ *
  * The overlap audit reads `val` as training data, so `evaluationGroupPolicy`
  * refuses a validation list that holds a frozen group.
  */
 export function splitForRow(
-	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags" | "base_source_id">,
+	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags" | "base_source_id" | "address">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
 	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces(),
 	retention?: SplitRetention,
-	evaluationGroups?: { frozen: Pick<EvaluationGroups, "groups">; validation: Pick<ValidationGroups, "groups"> }
+	evaluationGroups?: { frozen: FrozenGroups; validation: Pick<ValidationGroups, "groups"> }
 ): SplitName {
 	if (evaluationGroups) {
 		const group = evaluationGroupOf(row)
 
-		if (evaluationGroups.frozen.groups.has(group)) return "test"
+		if (isFrozenRow(group, row.address, evaluationGroups.frozen)) return "test"
 
 		return evaluationGroups.validation.groups.has(group) ? "val" : "train"
 	}
