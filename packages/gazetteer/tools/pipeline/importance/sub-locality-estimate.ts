@@ -31,6 +31,7 @@
  *   The build measures that percentile on each run rather than storing a constant.
  */
 
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { percentile } from "@mailwoman/core/stats"
 import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -292,12 +293,24 @@ export function estimateSubLocalityPopulations<DB>(db: DatabaseClient<DB>): SubL
 		...placetypes
 	)
 
-	return estimateFromHierarchy(
-		rows.map((row) => ({
-			id: Number(row.id),
-			placetype: String(row.placetype),
-			parentID: Number(row.parent_id),
-			population: typeof row.population === "number" ? row.population : null,
-		}))
-	)
+	const places = rows.map((row) => ({
+		id: Number(row.id),
+		placetype: String(row.placetype),
+		parentID: Number(row.parent_id),
+		population: typeof row.population === "number" ? row.population : null,
+	}))
+
+	// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
+	// A division counted as a sibling, or in the calibration, would change a WOF
+	// place's estimate, so the places outside that part are estimated without it,
+	// and only the divisions' own estimates come from the whole set.
+	// The calibration and counts returned are the part outside Overture's.
+	const restPlaces = places.filter((place) => !isOvertureFoldID(place.id))
+	const rest = estimateFromHierarchy(restPlaces)
+
+	if (restPlaces.length === places.length) return rest
+
+	const overture = estimateFromHierarchy(places).estimates.filter((estimate) => isOvertureFoldID(estimate.id))
+
+	return { ...rest, estimates: [...rest.estimates, ...overture] }
 }

@@ -12,9 +12,12 @@
 import { describe, expect, test } from "vitest"
 
 import {
+	GEONAMES_ID_BASE,
+	isOvertureFoldID,
 	MAILWOMAN_WOF_ID_BASE,
 	MAILWOMAN_WOF_ID_END,
 	nextMailwomanWOFID,
+	OVERTURE_ID_BASE,
 	SYNTHETIC_ID_RANGE_MIN_WIDTH,
 	SYNTHETIC_ID_RANGES,
 } from "#resolver/synthetic-id-ranges"
@@ -56,6 +59,15 @@ describe("SYNTHETIC_ID_RANGES", () => {
 		for (const { name, base } of SYNTHETIC_ID_RANGES) {
 			expect(MAILWOMAN_WOF_ID_END, name).toBeLessThanOrEqual(base)
 		}
+	})
+})
+
+describe("isOvertureFoldID", () => {
+	test("admits the whole Overture range and nothing either side of it", () => {
+		expect(isOvertureFoldID(OVERTURE_ID_BASE)).toBe(true)
+		expect(isOvertureFoldID(GEONAMES_ID_BASE - 1)).toBe(true)
+		expect(isOvertureFoldID(OVERTURE_ID_BASE - 1)).toBe(false)
+		expect(isOvertureFoldID(GEONAMES_ID_BASE)).toBe(false)
 	})
 })
 

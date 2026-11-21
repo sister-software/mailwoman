@@ -5,7 +5,16 @@
  *   Matches a place another source folds into the admin gazetteer against the WOF records already ingested.
  *
  *   WOF is the gazetteer's record of every place it holds.
- *   A folded place that matches a WOF record adds its names to that record and no row of its own.
+ *   What a match does depends on the source's terms:
+ *
+ *   - A GeoNames place that matches a WOF record adds its names to that record and no row of its own.
+ *     GeoNames is CC BY 4.0.
+ *     It asks for attribution and sets no condition on the database it joins.
+ *   - An Overture division that matches a WOF record keeps its own row,
+ *     and the match is recorded in `overture_wof_match`.
+ *     Overture Divisions are ODbL, and a WOF record that took their names or Wikidata
+ *     ids would make the WOF rows a Derivative Database under ODbL 4.4.
+ *     Kept apart, the Overture rows are one independent part of a Collective Database.
  *
  *   A place that matches no WOF record is folded as its own row and listed as a gap.
  *   A gap's source decides whether it may enter the `mailwoman` WOF forks:
@@ -138,12 +147,6 @@ export interface WOFPlaceIndex {
 	 */
 	claimName(match: Pick<WOFMatch, "id" | "placetype">, country: string, name: string): boolean
 	/**
-	 * Answers whether a matched WOF record has no Wikidata id, recording the folded one as its id.
-	 *
-	 * A record that already has one answers false, so the fold writes at most one id per record.
-	 */
-	claimWikidata(match: Pick<WOFMatch, "id">): boolean
-	/**
 	 * Drops the name-key table from the staging database.
 	 */
 	dispose(): void
@@ -190,11 +193,6 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 	}
 
 	const byWikidata = concordance("wd:id")
-
-	/**
-	 * The WOF records with a Wikidata id, from WOF or claimed from a fold.
-	 */
-	const withWikidata = new Set([...byWikidata.values()].flatMap((records) => records.map((record) => record.id)))
 	const byGeonames = concordance("gn:id")
 
 	const countryRecords = new Map(
@@ -331,13 +329,6 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 			if (claimed.has(claim) || hasName.get(country.toUpperCase(), key, match.id)) return false
 
 			claimed.add(claim)
-
-			return true
-		},
-		claimWikidata(match) {
-			if (withWikidata.has(match.id)) return false
-
-			withWikidata.add(match.id)
 
 			return true
 		},

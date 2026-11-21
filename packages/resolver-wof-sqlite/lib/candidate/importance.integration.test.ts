@@ -7,6 +7,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -141,5 +142,34 @@ describe("ImportanceIndex.find", () => {
 		expect(index.find("Whitby", "US", "locality", 54.4796, -0.6251)).toBeNull()
 		expect(index.find("Nowhereton", "US", "locality", 0, 0)).toBeNull()
 		expect(index.find("  ", "US", "locality", 0, 0)).toBeNull()
+	})
+})
+
+describe("ImportanceIndex.find across the Overture part", () => {
+	test("a row outside the Overture part never reads an Overture division's score", async () => {
+		await using local = await temporaryDirectory("mailwoman-candidate-importance-overture-")
+		const path = local.path("importance.db")
+
+		{
+			using db = new DatabaseClient<WOFDatabase>(path)
+
+			db.exec(`
+				CREATE TABLE spr (
+					id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+					latitude REAL, longitude REAL, is_current INTEGER, is_deprecated INTEGER
+				);
+				CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL NOT NULL);
+				INSERT INTO spr VALUES (${OVERTURE_ID_BASE + 7}, 'Harare', 'locality', 'ZW', -17.83, 31.05, -1, 0);
+				INSERT INTO place_importance VALUES (${OVERTURE_ID_BASE + 7}, 0.81);
+			`)
+		}
+
+		const index = loadImportanceIndex(path)
+
+		// The WOF Harare sits beside the scored division and still reads no score,
+		// and the miss is no refusal, because outside the Overture part the group doesn't exist.
+		expect(index.find("Harare", "ZW", "locality", -17.83, 31.05)).toBeNull()
+		expect(index.refused).toBe(0)
+		expect(index.find("Harare", "ZW", "locality", -17.83, 31.05, true)).toBeCloseTo(0.81, 4)
 	})
 })

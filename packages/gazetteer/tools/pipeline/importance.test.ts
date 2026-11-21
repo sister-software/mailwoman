@@ -13,6 +13,7 @@ import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, copyFileTo, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import {
 	importanceDatabasePath,
 	readImportanceSource,
@@ -77,6 +78,36 @@ describe("buildImportance", () => {
 		await expect(isSealed(built.out)).resolves.toBe(true)
 		await expect(readImportanceSource(built.out)).resolves.toMatchObject({ path: adminA.toString(), md5 })
 		expect(built.total).toBe(2)
+	})
+
+	test("an Overture division sharing a WOF record's Wikidata id leaves the record its score", async () => {
+		// Andorra la Vella as WOF holds it, with no population, and a division 600
+		// km away claiming the same id with one.
+		// One fan-out group over both keeps only the division, by population.
+		// Each part resolves its own group, so the record keeps its score.
+		const admin = root.path("admin-overture.db")
+		const division = OVERTURE_ID_BASE + 1
+
+		writeAdmin(admin, 0)
+
+		{
+			using db = new DatabaseClient<Record<string, never>>(admin)
+
+			db.prepare("INSERT INTO spr VALUES (?, 'locality', 47.9, 1.9, 1)").run(division)
+			db.prepare("INSERT INTO concordances VALUES (?, 'wd:id', 'Q1863')").run(division)
+			db.prepare("INSERT INTO place_population VALUES (?, 22000)").run(division)
+		}
+
+		const result = await buildImportance({ adminDB: admin, tsv: root.path("wikimedia-importance.csv.gz") })
+
+		using db = new DatabaseClient<Record<string, never>>(result.out, { readOnly: true })
+
+		expect(
+			db.prepare("SELECT id, encyclopedic FROM place_importance WHERE id IN (1, ?) ORDER BY id").all(division)
+		).toEqual([
+			{ id: 1, encyclopedic: 0.56 },
+			{ id: division, encyclopedic: 0.56 },
+		])
 	})
 })
 

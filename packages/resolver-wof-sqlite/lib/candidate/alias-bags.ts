@@ -5,6 +5,7 @@
  * @file Pass 2 of the candidate build: explode `place_search.alt_names` into distinct alias rows.
  */
 
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
@@ -22,14 +23,19 @@ import { type NameKey, normalizeLocalityForKey, withoutApostropheLikeMarks } fro
  *
  * The positive evidence behind the alias refusal below: a name is refused from a region's
  * bag only when another region of the same country holds it as its official name.
+ *
+ * `rest` leaves out the regions of the Overture Divisions part and `all` holds every region.
+ * The gazetteer is a Collective Database whose Overture part is ODbL, so a region outside that part
+ * reads `rest`, and an Overture division's official name never refuses a WOF or GeoNames region's alias.
  */
 function officialNameHoldersByRegion(
 	src: DatabaseClient<WOFDatabase>,
 	ccID: (code: string | null) => number
-): Map<string, number> {
-	const keys = new Map<string, number>()
+): { rest: Map<string, number>; all: Map<string, number> } {
+	const rest = new Map<string, number>()
+	const all = new Map<string, number>()
 
-	if (!tableExists(src, "names")) return keys
+	if (!tableExists(src, "names")) return { rest, all }
 
 	for (const r of src
 		.prepare(
@@ -41,11 +47,18 @@ function officialNameHoldersByRegion(
 		const k = normalizeLocalityForKey(String(r.name ?? ""))
 
 		if (k) {
-			keys.set(`${ccID(r.country as string | null)}\0${k}`, Number(r.id))
+			const key = `${ccID(r.country as string | null)}\0${k}`
+			const id = Number(r.id)
+
+			all.set(key, id)
+
+			if (!isOvertureFoldID(id)) {
+				rest.set(key, id)
+			}
 		}
 	}
 
-	return keys
+	return { rest, all }
 }
 
 /**
@@ -95,7 +108,7 @@ export function explodeAliasBags(
 	const official =
 		typeof opts.regionPlacetypeID === "number" && opts.ccID
 			? officialNameHoldersByRegion(src, opts.ccID)
-			: new Map<string, number>()
+			: { rest: new Map<string, number>(), all: new Map<string, number>() }
 
 	out.exec("BEGIN")
 
@@ -108,10 +121,11 @@ export function explodeAliasBags(
 		const seen = new Set<string>([a.pkey])
 		const markFree = new Set<string>()
 		const isRegion = a.ptid === opts.regionPlacetypeID
+		const holders = isOvertureFoldID(id) ? official.all : official.rest
 
 		const refused = (k: string): boolean => {
 			if (!isRegion) return false
-			const holder = official.get(`${a.cid}\0${k}`)
+			const holder = holders.get(`${a.cid}\0${k}`)
 
 			return typeof holder === "number" && holder !== id
 		}

@@ -73,6 +73,16 @@ export const OVERTURE_ID_BASE = 8_000_000_000_000
 export const GEONAMES_ID_BASE = 9_000_000_000_000
 
 /**
+ * Reports whether an id belongs to the Overture Divisions part of an admin or candidate gazetteer.
+ *
+ * The part is ODbL-1.0 and the rest of the file isn't, so a pass that reads one part's rows to
+ * change the other's needs this test, and the Overture part's offer selects its rows with it.
+ */
+export function isOvertureFoldID(id: number): boolean {
+	return id >= OVERTURE_ID_BASE && id < GEONAMES_ID_BASE
+}
+
+/**
  * GeoNames postal rows (`@mailwoman/resolver-wof-sqlite/geonames`).
  */
 export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000

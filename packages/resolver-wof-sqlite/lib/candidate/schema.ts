@@ -5,6 +5,7 @@ import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "#candidate/ancestors/schema"
 import type { CapitalTable } from "#capital-schema"
+import type { OvertureWOFMatchTable } from "#overture-match-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
@@ -102,6 +103,11 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	 * See capital-schema.ts.
 	 */
 	capital: CapitalTable
+	/**
+	 * Which WOF record each matched Overture division is, a table of the Overture Divisions part.
+	 * See overture-match-schema.ts.
+	 */
+	overture_wof_match: OvertureWOFMatchTable
 }
 
 /**

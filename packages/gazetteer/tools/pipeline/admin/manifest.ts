@@ -16,6 +16,8 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { GazetteerSourceName } from "@mailwoman/resolver-wof-sqlite/sources"
 
+import { OVERTURE_PART_NOTICE } from "#tools/pipeline/overture-part"
+
 /**
  * The number of rows each source contributed to a build.
  *
@@ -98,7 +100,10 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		// terms for 102 sources without per-source review, either one enough to keep the artifact local.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),
-		attribution: contributing.map((key) => SOURCE_TERMS[key].name).join(", "),
+		// With Overture rows the file is a Collective Database, and the attribution states which part the ODbL governs.
+		attribution:
+			contributing.map((key) => SOURCE_TERMS[key].name).join(", ") +
+			(input.counts.overture > 0 ? `. ${OVERTURE_PART_NOTICE}` : ""),
 		source: contributing.map((key) => SOURCE_TERMS[key].name).join("+"),
 		sourceVintage: contributing
 			.map((key) => `${SOURCE_TERMS[key].name}=${input.vintages?.[key] ?? "unknown"}`)

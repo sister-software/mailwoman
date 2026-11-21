@@ -282,6 +282,42 @@ ship only the builder.
   same schema, loaded from `$MAILWOMAN_DATA_ROOT`, and never leaving their machine. This tier lets
   internal geographic data use the same query surface as public layers.
 
+### Collective databases: the gazetteer's ODbL parts
+
+`admin-global-priority.db` and `candidate.db` are Collective Databases under ODbL 1.0 section 4.5(a). Their
+Overture Divisions part is `ODbL-1.0`, and the rest of each file keeps its sources' own terms. Overture's
+[attribution page](https://docs.overturemaps.org/attribution/) gives the Divisions theme `License for theme:
+ODbL`. The Northern Ireland postcode fold is a second ODbL part of `candidate.db`, kept apart the same way.
+
+The Overture part is:
+
+- every row whose place id falls in the Overture range, `8000000000000` to `8999999999999`
+  (`isOvertureFoldID`), in `spr`, `names`, `concordances` and `place_population`, and in `candidate.db` its
+  `candidate`, `candidate_ancestor` and `candidate_interval` rows;
+- the `overture_wof_match` table, which records the WOF record each matched division was matched to.
+
+The part stays independent because no row outside it depends on it:
+
+- `fold-overture` writes every division as its own row and adds no name, Wikidata id or population to a WOF
+  record. A matched division's pair goes into `overture_wof_match`.
+- A division's `parent_id` may be a WOF record. That's a reference stored on the Overture row, and it leaves
+  the WOF row as a build without the fold writes it.
+- The candidate build's cross-row passes read an Overture row only to change another Overture row: an
+  Overture place is never a nickname's namesake, an Overture region's official name never refuses another
+  region's alias, a WOF row never takes an Overture place's importance score, and the interval tree links a
+  place only to a parent of its own part. A matched division drops its rows on keys its WOF record holds,
+  so one place isn't returned twice.
+- `gazetteer importance` resolves a Wikidata id's fan-out within each part.
+
+`candidate.integration.test.ts` builds the candidate with and without an Overture part and requires every
+other row, closure row and interval label to match. A published gazetteer offers its Overture part by itself
+under ODbL 1.0 section 4.6. `mailwoman gazetteer build overture-part` copies the part out of a built
+candidate into a sealed database stamped `ODbL-1.0`, and both manifests' `attribution` states the part and
+the offer's address. An admin database without `overture_wof_match` predates the collective fold. From
+2026-11-12 such a build wrote a matched division's names and Wikidata id onto the WOF record, and before
+that its Overture rows shared the candidate build's cross-row passes with the other rows. Either file is a
+Derivative Database of Overture Divisions as a whole.
+
 ### Freshness policy
 
 - **`sealed`**: immutable, and updated only by full rebuilds (the gazetteer convention). This is

@@ -17,6 +17,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { probeManifest } from "mailwoman/data/inventory"
 import { basename, type PathBuilderLike } from "path-ts"
 
+import { OVERTURE_PART_NOTICE } from "#tools/pipeline/overture-part"
+
 /**
  * The ancestor's identity as this manifest records it, where `unknown` is a
  * measured absence rather than a recorded version.
@@ -78,6 +80,13 @@ export interface CandidateManifestInput {
 	 * later reader cannot tell a fold that contributed zero rows from a census that the build skipped.
 	 */
 	foldCensus?: readonly FoldCensusRow[]
+	/**
+	 * Whether the build kept the Overture Divisions rows an independent part.
+	 *
+	 * It did when the admin ancestor recorded its matches in `overture_wof_match`
+	 * instead of writing them onto WOF records.
+	 */
+	overturePart?: boolean
 }
 
 /**
@@ -297,7 +306,13 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		// The postcode folds add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
-		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",
+		// A file whose Overture rows are an independent part is a Collective Database,
+		// and the attribution states which part the ODbL governs.
+		attribution:
+			"derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest" +
+			(input.overturePart && input.foldCensus?.some((fold) => fold.fold === "overture" && fold.rows > 0)
+				? `. ${OVERTURE_PART_NOTICE}`
+				: ""),
 		source: ancestor,
 		// `build-local-folds` is the count a publish decision reads without re-opening the inputs:
 		// a fold whose own tier permits no publication was folded in.
