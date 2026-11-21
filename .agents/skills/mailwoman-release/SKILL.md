@@ -278,6 +278,11 @@ the effective manifest (`effective-manifest.run.ts`, which needs the config's `a
 under the data root's `corpus/epoch-mixture/`). Then set the card's `training.corpus_version` to the
 record's key and run `write-rights-files`.
 
+The audit also fails when a register row behind the model's training corpus doesn't permit
+`redistribute-model`, and `commercial-sublicense` for a package sold under `LicenseRef-Commercial`. Read its
+"Register rows behind a published model" section before the prepare dispatch. Each row there needs a decision
+permitting both, or a corpus without it.
+
 ## Step 4a — the npm validation hold and the dist-tag repoint (needs the operator's OTP)
 
 npm scans every publish before it lists the version. A held version shows `validating` on the

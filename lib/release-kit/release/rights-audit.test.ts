@@ -20,6 +20,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 import {
 	auditRights,
 	auditTrainingRights,
+	modelReleaseRefusals,
 	packagesMissingOpenStreetMapAttribution,
 	packagesWithoutFrozenManifest,
 	readKnownTrainingRightsViolations,
@@ -177,6 +178,30 @@ describe("auditRights", () => {
 		expect(audit.trainingRights.stale).toEqual([])
 		expect(trainingRightsRefusals(audit)).toEqual([])
 		await expect(readKnownTrainingRightsViolations(repoRootPath())).resolves.toEqual([])
+	})
+
+	it("checks each published model's register rows for the operations its release performs", () => {
+		// en-us is offered under `AGPL-3.0-only OR LicenseRef-Commercial`, so its release sells the weights.
+		expect(audit.modelRelease.operations).toContainEqual({
+			package: "@mailwoman/neural-weights-en-us",
+			operations: ["redistribute-model", "commercial-sublicense"],
+		})
+
+		const licenses = new Map(register.licenses.map((decision) => [decision.licenseID, decision]))
+
+		for (const gap of audit.modelRelease.gaps) {
+			const performed = audit.modelRelease.operations.find((entry) => entry.package === gap.package)!.operations
+
+			expect(gap.missing.every((operation) => performed.includes(operation))).toBe(true)
+
+			// A row under a license family read once for the release
+			// (CC BY 4.0, OGL v3.0, Licence Ouverte 2.0) never blocks it.
+			expect(["CC-BY-4.0", "OGL-UK-3.0", "etalab-2.0"]).not.toContain(
+				(licenses.get(gap.licenseID ?? "") as { spdx?: string } | undefined)?.spdx
+			)
+		}
+
+		expect(modelReleaseRefusals(audit)).toHaveLength(audit.modelRelease.gaps.length)
 	})
 
 	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {

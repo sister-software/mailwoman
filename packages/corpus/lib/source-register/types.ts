@@ -243,7 +243,12 @@ export const SourceOperation = {
 	 */
 	RedistributeModel: "redistribute-model",
 	/**
-	 * Commercial sublicensing of the result.
+	 * A paying customer receives a license, under `LicenseRef-Commercial`, to a result
+	 * built from the rows: trained weights or a served data layer.
+	 *
+	 * It passes on no license to the rows themselves.
+	 * `soldUnderCommercialTerms` in `@mailwoman/core/license/obligations` states
+	 * the definition and the grants that permit it.
 	 */
 	CommercialSublicense: "commercial-sublicense",
 } as const

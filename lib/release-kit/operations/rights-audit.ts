@@ -8,6 +8,7 @@ import { defineOperation } from "#release-kit/operation"
 import {
 	auditRights,
 	KNOWN_TRAINING_RIGHTS_VIOLATIONS,
+	modelReleaseRefusals,
 	packagesMissingOpenStreetMapAttribution,
 	packagesWithoutFrozenManifest,
 	renderRightsAudit,
@@ -28,6 +29,25 @@ const trainingRightsAudit = z.object({
 	unread: z.array(z.string()),
 })
 
+const modelReleaseOperations = z.object({ package: z.string(), operations: z.array(z.string()) })
+
+const modelReleaseGap = z.object({
+	package: z.string(),
+	corpusVersion: z.string(),
+	registerSource: z.string().nullable(),
+	licenseID: z.string().nullable(),
+	state: z.string().nullable(),
+	missing: z.array(z.string()),
+	because: z.string(),
+	sources: z.array(z.string()),
+})
+
+const modelReleaseAudit = z.object({
+	operations: z.array(modelReleaseOperations),
+	gaps: z.array(modelReleaseGap),
+	unread: z.array(z.string()),
+})
+
 const registerAudit = z.object({
 	sources: z.number(),
 	eligible: z.number(),
@@ -37,6 +57,7 @@ const registerAudit = z.object({
 const packageAudit = z.object({
 	package: z.string(),
 	version: z.string(),
+	license: z.string(),
 	versionSeries: z.string(),
 	modelCardVersion: z.string().nullable(),
 	artifacts: z.number(),
@@ -93,13 +114,14 @@ const openStreetMapAncestry = z.object({
 export const rightsAudit = defineOperation({
 	id: "release.rights-audit",
 	description:
-		"Read the source register, every published weights package's provenance record, and any frozen training manifest, and report what the chain from a source's terms to a published tarball establishes and what it leaves open. Fails when a model card records a corpus that has no frozen training manifest, or when a package with OpenStreetMap ancestry lacks the OpenStreetMap notice in its card or README, or when a graph package's effective training manifest holds a source lacking a transform and train permission that known-training-rights-violations.json does not record, or that file records a violation no longer measured.",
+		"Read the source register, every published weights package's provenance record, and any frozen training manifest, and report what the chain from a source's terms to a published tarball establishes and what it leaves open. Fails when a model card records a corpus that has no frozen training manifest, or when a package with OpenStreetMap ancestry lacks the OpenStreetMap notice in its card or README, or when a graph package's effective training manifest holds a source lacking a transform and train permission that known-training-rights-violations.json does not record, or that file records a violation no longer measured, or when a register row behind a published model's training corpus does not permit redistribute-model, and commercial-sublicense for a commercially sold package.",
 	effect: OperationEffect.Read,
 	options: {},
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({
 		register: registerAudit,
 		trainingRights: trainingRightsAudit,
+		modelRelease: modelReleaseAudit,
 		packages: z.array(packageAudit),
 		training: z.array(trainingAudit),
 		openStreetMap: z.array(openStreetMapAncestry),
@@ -132,6 +154,16 @@ export const rightsAudit = defineOperation({
 				`${rights.length} training-rights finding(s) differ from ${KNOWN_TRAINING_RIGHTS_VIOLATIONS}. A published ` +
 					"model may train on a source lacking a transform and train permission only while the list records it " +
 					`with its reason and issue:\n  ${rights.join("\n  ")}`
+			)
+		}
+
+		const modelRelease = modelReleaseRefusals(audit)
+
+		if (modelRelease.length) {
+			failures.push(
+				`${modelRelease.length} register row(s) behind a published model do not permit what releasing it performs: ` +
+					"redistribute-model, and commercial-sublicense for a package its license offers under LicenseRef-Commercial. " +
+					`Record a decision permitting each, or retrain without the row:\n  ${modelRelease.join("\n  ")}`
 			)
 		}
 

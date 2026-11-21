@@ -110,6 +110,13 @@ stating why a release accepts it. A new corpus source joins the input table and 
 reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped source in a model trained after
 this rule.
 
+The operation reads the same register rows for what releasing the model performs. It fails on a row whose decision
+doesn't permit `redistribute-model`, and `commercial-sublicense` when the package's license expression offers
+`LicenseRef-Commercial` (`soldUnderCommercialTerms` in `packages/core/lib/license/obligations.ts` defines the act). No
+accepted-violations list applies: a row that blocks a release gets a decision permitting both, or leaves the corpus.
+CC BY 4.0, CC BY 3.0 AU, OGL v3.0 and Licence Ouverte 2.0 each carry one family reading applied to every row under
+them, and a row whose own terms add a use restriction keeps its own reading (#3277).
+
 The per-check invariants stay where they're. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
 naming the licensor. This operation composes their inputs into one report. It doesn't replace them, and a release

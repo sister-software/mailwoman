@@ -25,10 +25,12 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { soldUnderCommercialTerms } from "@mailwoman/core/license/obligations"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,
+	MODEL_RELEASE_OPERATIONS,
 	provenanceRefusals,
 	readAddressSourceRegister,
 	type EffectiveTrainingManifest,
@@ -40,6 +42,7 @@ import {
 	sourceRightsGaps,
 	type SourceRightsGap,
 } from "@mailwoman/corpus/source-register/corpus-inputs"
+import { SourceOperation } from "@mailwoman/corpus/source-register/types"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -90,6 +93,12 @@ function refusalShape(message: string): string {
 interface PackageRightsAudit {
 	package: string
 	version: string
+	/**
+	 * The package's SPDX expression.
+	 *
+	 * It decides whether a release sells the package under the commercial terms.
+	 */
+	license: string
 	versionSeries: string
 	modelCardVersion: string | null
 	artifacts: number
@@ -327,6 +336,7 @@ export interface TrainingRightsAudit {
 export interface RightsAudit {
 	register: SourceRegisterAudit
 	trainingRights: TrainingRightsAudit
+	modelRelease: ModelReleaseRightsAudit
 	packages: PackageRightsAudit[]
 	training: TrainingRecordAudit[]
 	data: DataBOMAudit
@@ -426,6 +436,7 @@ async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsReco
 	return {
 		package: record.packageName,
 		version: record.packageVersion,
+		license: record.license,
 		versionSeries: record.versionSeries,
 		modelCardVersion: record.modelCardVersion,
 		artifacts: record.artifacts.length,
@@ -701,6 +712,136 @@ export function trainingRightsRefusals(audit: RightsAudit): string[] {
 }
 
 /**
+ * One register row behind a published model whose decision doesn't permit what releasing the model performs.
+ */
+interface ModelReleaseRightsGap {
+	package: string
+	corpusVersion: string
+	/**
+	 * The register row, or `null` for a corpus source the input table doesn't map.
+	 */
+	registerSource: string | null
+	licenseID: string | null
+	state: string | null
+	/**
+	 * The operations the row's decision doesn't permit.
+	 */
+	missing: SourceOperation[]
+	because: string
+	/**
+	 * The corpus sources that read the row, sorted.
+	 */
+	sources: string[]
+}
+
+/**
+ * What releasing each published model performs on its sources that their decisions don't permit.
+ */
+interface ModelReleaseRightsAudit {
+	/**
+	 * For each graph package, the operations a release of it performs: `redistribute-model`,
+	 * and `commercial-sublicense` when its license expression offers the commercial terms.
+	 */
+	operations: Array<{ package: string; operations: SourceOperation[] }>
+	gaps: ModelReleaseRightsGap[]
+	/**
+	 * Graph packages whose training sources couldn't be read, so no gap was measured for them.
+	 */
+	unread: string[]
+}
+
+/**
+ * Reads every register row behind each published model's training corpus, through the corpus's
+ * effective training manifest and the corpus-source table, and returns each row whose decision
+ * doesn't permit `redistribute-model` and, for a commercially sold model, `commercial-sublicense`.
+ *
+ * A row that several corpus sources read is reported once, with those sources.
+ */
+async function auditModelReleaseRights(
+	repoRoot: PathBuilderLike,
+	packages: readonly PackageRightsAudit[],
+	training: readonly TrainingRecordAudit[]
+): Promise<ModelReleaseRightsAudit> {
+	const register = await readAddressSourceRegister()
+	const inputs = await readCorpusSourceInputs(register)
+
+	const graphPackages = new Map(
+		packages.filter((entry) => entry.versionSeries === VersionSeries.Model).map((entry) => [entry.package, entry])
+	)
+
+	const operations: ModelReleaseRightsAudit["operations"] = []
+	const gaps = new Map<string, ModelReleaseRightsGap>()
+	const unread: string[] = []
+
+	for (const row of training) {
+		const pkg = graphPackages.get(row.package)
+
+		if (!pkg || !row.corpusNamed) continue
+
+		const effective = await readEffectiveManifest(repoRoot, row.corpusNamed)
+
+		if (!effective) {
+			unread.push(row.package)
+
+			continue
+		}
+
+		const performed = MODEL_RELEASE_OPERATIONS.filter(
+			(operation) => operation !== SourceOperation.CommercialSublicense || soldUnderCommercialTerms(pkg.license)
+		)
+
+		operations.push({ package: row.package, operations: [...performed] })
+
+		for (const source of effective.trainingSources) {
+			for (const gap of sourceRightsGaps(source, inputs, register, row.corpusNamed, performed)) {
+				const key = [row.package, row.corpusNamed, gap.registerSource ?? `unmapped:${source}`].join("|")
+				const seen = gaps.get(key)
+
+				if (seen) {
+					seen.sources = [...new Set([...seen.sources, source])].toSorted()
+
+					continue
+				}
+
+				gaps.set(key, {
+					package: row.package,
+					corpusVersion: row.corpusNamed,
+					registerSource: gap.registerSource,
+					licenseID: gap.licenseID,
+					state: gap.state,
+					missing: gap.missing,
+					because: gap.because,
+					sources: [source],
+				})
+			}
+		}
+	}
+
+	return {
+		operations,
+		gaps: [...gaps.values()].toSorted(
+			(left, right) =>
+				left.package.localeCompare(right.package) ||
+				(left.licenseID ?? "").localeCompare(right.licenseID ?? "") ||
+				(left.registerSource ?? "").localeCompare(right.registerSource ?? "")
+		),
+		unread,
+	}
+}
+
+/**
+ * One sentence per register row that stops a model release.
+ */
+export function modelReleaseRefusals(audit: Pick<RightsAudit, "modelRelease">): string[] {
+	return audit.modelRelease.gaps.map(
+		(gap) =>
+			`${gap.package} trained under ${gap.corpusVersion} reads ${gap.registerSource ?? "an unmapped source"} ` +
+			`(license ${gap.licenseID ?? "none"}, ${gap.state ?? "no decision"}) through ${gap.sources.join(", ")}, ` +
+			`which does not permit ${gap.missing.join(" and ")}: ${gap.because}`
+	)
+}
+
+/**
  * The graph packages whose model card records a corpus that has no frozen
  * training manifest in the repository.
  *
@@ -760,6 +901,8 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		training,
 		await readKnownTrainingRightsViolations(repoRoot)
 	)
+
+	const modelRelease = await auditModelReleaseRights(repoRoot, packages, training)
 
 	const data = await auditDataBOM(repoRoot)
 	const openStreetMap = await readOpenStreetMapAncestry(repoRoot, records)
@@ -903,7 +1046,12 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		)
 	}
 
-	return { register, trainingRights, packages, training, data, openStreetMap, established, unresolved }
+	established.push(
+		`${modelRelease.gaps.length} register rows behind published graph packages do not permit what releasing the ` +
+			`model performs (${modelRelease.operations.map((entry) => `${entry.package}: ${entry.operations.join(", ")}`).join("; ")}).`
+	)
+
+	return { register, trainingRights, modelRelease, packages, training, data, openStreetMap, established, unresolved }
 }
 
 /**
@@ -1049,6 +1197,23 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 
 	for (const entry of audit.trainingRights.stale) {
 		lines.push(`  STALE      ${entry.package} ${entry.corpusVersion} ${entry.source}: remove the recorded entry`)
+	}
+
+	lines.push("", "Register rows behind a published model that do not permit releasing it:")
+
+	if (!audit.modelRelease.gaps.length) {
+		lines.push("  none measured")
+	}
+
+	for (const gap of audit.modelRelease.gaps) {
+		lines.push(
+			`  ${gap.package} ${gap.corpusVersion} ${gap.registerSource ?? "unmapped"} (${gap.licenseID ?? "no license"}, ` +
+				`${gap.state ?? "no decision"}): lacks ${gap.missing.join(", ")}; read by ${gap.sources.join(", ")}`
+		)
+	}
+
+	for (const pkg of audit.modelRelease.unread) {
+		lines.push(`  ${pkg}: no effective training manifest, so its sources were not read`)
 	}
 
 	lines.push("", "OpenStreetMap ancestry:")
