@@ -42,12 +42,19 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 164 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 1,661 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
-OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, and the 118 county and
-state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`). Each reads
-`CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision. They sit in this repository because
-`corpus-source-inputs.json`, the table that names them, sits here (#2643).
+OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, the 118 county and
+state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`), and one row per
+publisher of the 1,993 US OpenAddresses runs whose terms were read on 2026-11-21 (origin
+`2026-11-21_rights_review`). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
+until `license-decisions.json` records one. They sit in this repository because `corpus-source-inputs.json`,
+the table that names them, sits here (#2643).
+
+An elected US decision from the 2026-11-21 reading opens its `electedBecause` with its acceptance basis:
+`terms-read` (a page with terms text), `open-license` (an SPDX identifier) or `no-statement-found` (the
+publisher's metadata answered with empty license, access and copyright fields). A `no-statement-found` decision's `electedTerms` begins
+`US factual data published with no statement of terms`, so a stricter policy can refuse those rows by label.
 
 ## `us-situs-sources.json` — which register rows each US situs `source` value comes from (#2650)
 
