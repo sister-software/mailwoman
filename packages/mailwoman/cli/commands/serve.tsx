@@ -17,7 +17,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
-import { primaryExitAfterWorkerExit } from "#cli/kit/cluster/exit"
+import { primaryActionAfterWorkerExit, WORKER_RESPAWN_LIMIT, WORKER_RESPAWN_WINDOW_MS } from "#cli/kit/cluster/exit"
 import { clusterReload, relayClusterReloads } from "#cli/kit/cluster/reload"
 import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
@@ -62,8 +62,12 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		let anyListened = false
 		let liveWorkerCount = cpus
 		let shuttingDown = false
+		// The ids of the workers that have bound the port, so an exit can tell a serving worker from a boot failure.
+		const listened = new Set<number>()
+		// When each replacement inside the respawn window was forked, in epoch milliseconds.
+		let respawns: number[] = []
 
-		cluster.on("listening", () => {
+		cluster.on("listening", (worker) => {
 			// One notice per server, from the primary, the first time a worker binds.
 			// The launcher prints its own notice at exit.
 			// A daemon needs the notice when a worker binds.
@@ -72,6 +76,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 			}
 
 			anyListened = true
+			listened.add(worker.id)
 		})
 
 		cluster.on("exit", (worker, code, signal) => {
@@ -79,13 +84,45 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 
 			liveWorkerCount--
 
-			const exit = primaryExitAfterWorkerExit({ liveWorkers: liveWorkerCount, anyListened, shuttingDown })
+			const now = Date.now()
 
-			if (exit) {
-				console.error(`serve: ${exit.reason}`)
+			respawns = respawns.filter((at) => now - at < WORKER_RESPAWN_WINDOW_MS)
 
-				process.exit(exit.code)
+			const workerListened = listened.delete(worker.id)
+
+			const action = primaryActionAfterWorkerExit({
+				liveWorkers: liveWorkerCount,
+				anyListened,
+				shuttingDown,
+				workerListened,
+				recentRespawns: respawns.length,
+			})
+
+			// A serving worker that isn't replaced has reached the bound, and the operator needs the reason.
+			if (workerListened && !shuttingDown && !action?.respawn) {
+				console.error(
+					`serve: worker ${worker.process.pid} isn't replaced, after ${WORKER_RESPAWN_LIMIT} replacements ` +
+						`in ${WORKER_RESPAWN_WINDOW_MS / 1000} seconds`
+				)
 			}
+
+			if (!action) return
+
+			if (!action.respawn) {
+				console.error(`serve: ${action.reason}`)
+
+				process.exit(action.code)
+			}
+
+			const replacement = cluster.fork()
+
+			respawns.push(now)
+
+			liveWorkerCount++
+
+			console.error(`serve: forked worker ${replacement.process.pid} to replace worker ${worker.process.pid}`)
+
+			setWorkers((current) => [...(current ?? []).filter((known) => known !== worker), replacement])
 		})
 
 		// Graceful shutdown: a term/INT delivered to the primary pid (docker stop, systemctl stop)

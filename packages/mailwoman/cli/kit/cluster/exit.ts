@@ -6,6 +6,18 @@
  */
 
 /**
+ * The most workers the primary forks as replacements inside {@link WORKER_RESPAWN_WINDOW_MS}.
+ *
+ * It is a starting value with no measurement behind it.
+ */
+export const WORKER_RESPAWN_LIMIT = 3
+
+/**
+ * The span over which {@link WORKER_RESPAWN_LIMIT} counts replacements.
+ */
+export const WORKER_RESPAWN_WINDOW_MS = 60_000
+
+/**
  * What the primary knows when a worker exits.
  */
 export interface ClusterExitState {
@@ -23,19 +35,50 @@ export interface ClusterExitState {
 	 * The forwarding path exits on its own once the workers drain.
 	 */
 	shuttingDown: boolean
+	/**
+	 * Whether the worker that exited had bound the port.
+	 *
+	 * A worker that exits before it listens failed its preflight or its boot,
+	 * and a replacement would fail the same way.
+	 */
+	workerListened: boolean
+	/**
+	 * The replacements the primary has forked inside the window, this exit's not included.
+	 */
+	recentRespawns: number
 }
 
 /**
- * The primary's exit after a worker exits, or `null` while it keeps running.
- *
- * The primary forks no replacement worker.
- * A cluster with no workers left therefore exits nonzero, so a supervisor sees
- * the failure and restarts the service.
+ * What the primary does after a worker exits.
  */
-export function primaryExitAfterWorkerExit(state: ClusterExitState): { code: number; reason: string } | null {
-	if (state.liveWorkers > 0 || state.shuttingDown) return null
+export type ClusterExitAction =
+	/**
+	 * Fork a replacement worker.
+	 */
+	| { respawn: true }
+	/**
+	 * Exit the primary with `code`.
+	 */
+	| { respawn: false; code: number; reason: string }
+
+/**
+ * The primary's action after a worker exits, or `null` while it keeps running as it is.
+ *
+ * A worker that had been serving is replaced, so one failed worker costs its
+ * in-flight requests and leaves the cluster at the same size.
+ *
+ * Past {@link WORKER_RESPAWN_LIMIT} replacements inside the window the primary stops replacing.
+ * A cluster with zero workers left then exits nonzero, so an outside supervisor
+ * sees the failure and restarts the service.
+ */
+export function primaryActionAfterWorkerExit(state: ClusterExitState): ClusterExitAction | null {
+	if (state.shuttingDown) return null
+
+	if (state.workerListened && state.recentRespawns < WORKER_RESPAWN_LIMIT) return { respawn: true }
+
+	if (state.liveWorkers > 0) return null
 
 	return state.anyListened
-		? { code: 1, reason: "every worker exited after the cluster listened" }
-		: { code: 1, reason: "every worker exited before any listened" }
+		? { respawn: false, code: 1, reason: "every worker exited after the cluster listened" }
+		: { respawn: false, code: 1, reason: "every worker exited before any listened" }
 }
