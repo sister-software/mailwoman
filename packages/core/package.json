@@ -277,11 +277,6 @@
 			"node": "./lib/state-machine.ts",
 			"default": "./out/state-machine.js"
 		},
-		"./scripting/ingest-chunk-script": {
-			"types": "./out/scripting/ingest-chunk-script.d.ts",
-			"node": "./lib/scripting/ingest-chunk-script.ts",
-			"default": "./out/scripting/ingest-chunk-script.js"
-		},
 		"./scripting/arguments": {
 			"types": "./out/scripting/arguments.d.ts",
 			"node": "./lib/scripting/arguments.ts",

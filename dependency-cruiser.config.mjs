@@ -157,6 +157,36 @@ const config = {
 			to: { path: "^packages/mailwoman/" },
 		},
 		{
+			name: "no-core-library-to-sqlite",
+			comment:
+				"`@mailwoman/sqlite` builds on `@mailwoman/core/fs`, so core's library must not import it back at runtime: " +
+				"the two libraries would then form a cycle no module-level check reports, because no single module closes it. " +
+				"A helper that needs both a database connection and a core utility lives in `@mailwoman/sqlite`, as " +
+				"`ingest-chunk-script` does. A type-only import stays allowed: `utils/sqlite-rows.ts` types its parameters " +
+				"with `StatementSync` and emits no import. Core's tests and its `tools/` root may open a database.",
+			severity: "error",
+			from: { path: "^packages/core/lib/", pathNot: "[.]test[.]tsx?$" },
+			to: { path: "^packages/sqlite/", dependencyTypesNot: ["type-only", "type-import"] },
+		},
+		{
+			name: "no-core-utility-to-core-service",
+			comment:
+				"Core holds two roles in one package. Its utility subpaths (`fs`, `module`, `utils`, `strings`, `json`) are " +
+				"what every workspace imports for files, paths, text and JSON. Its service subpaths (`decoder`, `layers`, " +
+				"`geocode`, `resolver`, `pipeline`, `coarse-placer`, `tokenization`) define the geocoding interfaces. " +
+				"A utility that imports a service makes every consumer of a file helper load the geocoding graph, " +
+				"and it closes a cycle inside the package as soon as a service uses that utility.",
+			severity: "error",
+			from: {
+				path: "^packages/core/lib/(?:fs|module|utils|strings)(?:/|[.]ts$)|^packages/core/lib/json[.]ts$",
+				pathNot: "[.]test[.]tsx?$",
+			},
+			to: {
+				path: "^packages/core/lib/(?:decoder|layers|geocode|resolver|pipeline|coarse-placer|tokenization)(?:/|[.]ts$)",
+				dependencyTypesNot: ["type-only", "type-import"],
+			},
+		},
+		{
 			name: "no-circular",
 			comment:
 				"Keep the workspace dependency graph acyclic. A cycle that closes only through a dynamic `import()` or a " +

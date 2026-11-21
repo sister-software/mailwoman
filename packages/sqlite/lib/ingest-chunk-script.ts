@@ -12,10 +12,10 @@
  *   Progress goes to standard error.
  */
 
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { parseArguments, requiredArgument, type ParseArgsConfig } from "@mailwoman/core/scripting/arguments"
 
-import { stringifyJSON } from "#json"
-import { parseArguments, requiredArgument, type ParseArgsConfig } from "#scripting/arguments"
+import { DatabaseClient } from "#client"
 
 /**
  * Flags shared by all ingest-chunk scripts.
