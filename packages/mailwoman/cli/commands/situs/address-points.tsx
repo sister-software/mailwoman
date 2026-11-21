@@ -285,9 +285,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 							NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
 							NULLIF(trim(POSTCODE), '') AS postcode,
 							NULLIF(trim(CITY), '') AS locality,
-							'openaddresses' AS dataset,
+							filename AS dataset,
 							LAT AS lat, LON AS lon
-						FROM read_csv([${oaCSVList}], header = true, all_varchar = true)
+						FROM read_csv([${oaCSVList}], header = true, all_varchar = true, filename = true)
 						WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
 			: COUNTRY
 				? `SELECT
@@ -327,7 +327,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 			for (const r of rows) {
 				totalReturned++
-				const dataset = String(r.dataset ?? "unknown")
+				// An OpenAddresses row is counted and stored under its run, `us/hi/honolulu`, read from its file's path.
+				const dataset = OA_MODE ? openAddressesMemberOf(String(r.dataset)) : String(r.dataset ?? "unknown")
 
 				// An OpenAddresses CSV was admitted as a file before the scan, and a national build admits every dataset.
 				if (!OA_MODE && !COUNTRY && !admitter.admits(`overture:${dataset}`)) {
@@ -371,7 +372,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					streetRaw,
 					lat,
 					lon,
-					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
+					OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`,
 					OA_MODE ? "openaddresses-latest" : options.release,
 					// Only a national build has an admin code: the third admin level, such as the Taiwanese 村里.
 					r.admin_code ? String(r.admin_code) : null,
@@ -406,7 +407,9 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
 		for (const [dataset, count] of sortedDatasets) {
-			lines.push(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
+			lines.push(
+				`  ${(OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`
+			)
 		}
 
 		for (const exclusion of admitter.excluded) {
