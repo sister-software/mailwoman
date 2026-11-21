@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 404 of the group's 793 library and tool modules.
+This page lists 405 of the group's 794 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -2330,6 +2330,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | --------------------------- | ----------------------- | ----- |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
+
+## `packages/mailwoman/tools/dev-tools/services-graph.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`
 
 ## `packages/mailwoman/tools/dev-tools/sg/register-board.run.ts`
 
