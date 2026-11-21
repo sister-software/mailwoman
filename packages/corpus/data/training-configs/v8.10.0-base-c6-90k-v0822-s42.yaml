@@ -16,9 +16,15 @@
 #      current WOF locality its containment evidence links it to, before the locality (Google's order,
 #      `Redland, Avon, Bristol`) or after it, tagged `subregion` at county level and `region` at the first level. Its
 #      tuples come from `packages/gazetteer/tools/former-divisions.run.ts --tuples`, capped at 1,500 rows a country
-#      and 300 a division. On the 2026-11-21 table the tuples hold 1,888 rows in 15 countries, GB 300 (Avon only).
-#      GeoNames lists 49,122 historical divisions in 112 countries. Containment evidence links 63 of them, and 42 of
-#      those take a tag. The census in #3200 gives the per-country counts.
+#      and 300 a division. The table was rebuilt on 2026-11-21 after the forks restored the 628 ceased divisions the
+#      superseded rule keeps (#3205). GeoNames lists 49,122 historical divisions in 112 countries, and WOF 27,141
+#      ceased admin records. Containment evidence makes 685 links (GeoNames hierarchy 9, retired admin codes 53, WOF
+#      supersession 623), and 663 divisions in 37 countries are linked, every one with a tag: locality 523,
+#      region 105, subregion 34, country 1. The recipe writes the 139 tagged `region` or `subregion`, and 127 of them
+#      cover a current settlement. The tuples hold 16,024 rows in 31 countries: AT, DE, FR, GB, MA and NO 1,500
+#      each, IE 908, IT 900, CH 836, CI 600, PH 560, SI 328, BH 324, AM, AO, IQ, NA, PK and ZA 300 each, KE 260,
+#      IR 220, SD 100, GL 80, TD 64, LY 12, BS and UA 8, LA, MO, MR and PL 4. GB's 1,500 rows cover 15 divisions,
+#      Avon 100 of them. The census in #3200 gives the per-country counts.
 # 2. `source_weights` gives `rendered-prominent-places` 15.0, `wof-admin`'s weight: 4.75% of the epoch, 47,485 of
 #    the 1,000,000 draws. The receipt's demand rule is measured in this config's expected epoch draws, and the
 #    census's `tuples` step sets the recipe's rows so those 47,485 draws, spread over its rows alike, close each cell.
@@ -36,10 +42,12 @@
 #    table, YE (124) and BO (101) the largest. `prominent-places-exposure` floors the recipe's draws at 0.9 of
 #    expected.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
-# 5. `source_reps` gives `rendered-former-divisions` 2.0, two passes over its rows an epoch, about 3,800 of the
-#    1,000,000 drawn rows. The rows hold 42 division names, so more passes would repeat each name more than they
-#    widen what the model sees. `augment_exclude_sources` lists the source for the reason `rendered-prominent-places`
-#    is listed, and `former-divisions-exposure` floors its draws at 0.9 of expected.
+# 5. `source_reps` gives `rendered-former-divisions` 1.0, one pass over its rows an epoch, 16,024 of the 1,000,000
+#    drawn rows. The rows hold 127 division names, about 126 rows each (median 100, from 4 to 300). On the table
+#    before the restore, two passes over 1,888 rows and 27 names drew about 140 rows a name. One pass now reaches that
+#    exposure, so a second would repeat each row without widening what the model sees.
+#    `augment_exclude_sources` lists the source for the reason `rendered-prominent-places` is listed, and
+#    `former-divisions-exposure` floors its draws at 0.9 of expected.
 #
 # Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
 # section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
@@ -200,7 +208,7 @@ data:
     rendered-us-city-county: 0.55
     rendered-us-city-state: 1.0
     # This config's header, point 5.
-    rendered-former-divisions: 2.0
+    rendered-former-divisions: 1.0
     # The country-gap sources each take one pass over their rows.
     adressur-fo: 1.0
     ads: 1.0
