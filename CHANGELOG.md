@@ -19,6 +19,25 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed (breaking) — `@mailwoman/recognizer` names its types for the package
+
+The exported types take the package's name. PR #3219 had already renamed the crates, the wasm file and the format
+identifiers. Repoint imports and `instanceof` checks:
+
+| Before                         | After                           |
+| ------------------------------ | ------------------------------- |
+| `RecognizeError`               | `RecognizerError`               |
+| `RecognizeInitializationError` | `RecognizerInitializationError` |
+| `RecognizeRuntimeError`        | `RecognizerRuntimeError`        |
+| `RecognizeCompositionError`    | `RecognizerCompositionError`    |
+| `RecognizeArtifactError`       | `RecognizerArtifactError`       |
+| `RecognizeResult`              | `RecognizerResult`              |
+| `TracedRecognizeResult`        | `TracedRecognizerResult`        |
+| `RecognizeOptions`             | `RecognizerOptions`             |
+
+Each error's `name` property changes with its class, so a caller that matched `error.name === "RecognizeError"`
+must match the new string. The old names have no aliases. The `recognize()` method keeps its name.
+
 ### Changed — H3 indexing moves from `h3-js` to `@sister.software/h3`
 
 Every workspace that indexed with `h3-js` 4.5.0 now depends on `@sister.software/h3` 1.0.0, a Rust port of

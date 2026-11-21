@@ -13,7 +13,7 @@
  *   the order of the pipeline's legacy detector, with UTF-16 offsets.
  *
  *   The family reports no recognitions of its own, and a recognizer that composes it
- *   without `structure` throws a `RecognizeCompositionError` at construction.
+ *   without `structure` throws a `RecognizerCompositionError` at construction.
  *
  *   ```ts
  *   import { createRecognizer } from "@mailwoman/recognizer"

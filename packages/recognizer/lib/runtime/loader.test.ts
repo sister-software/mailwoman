@@ -161,7 +161,7 @@ describe("the loader", () => {
 		const pending = entry.init({ bytes })
 
 		expect(() => entry.createRecognizer([coordinates]).recognize("1, 2")).toThrow(/await it before recognizing/u)
-		await expect(entry.init({ bytes: new Uint8Array(bytes) })).rejects.toThrow(entry.RecognizeInitializationError)
+		await expect(entry.init({ bytes: new Uint8Array(bytes) })).rejects.toThrow(entry.RecognizerInitializationError)
 		await pending
 	})
 
@@ -184,7 +184,7 @@ describe("the loader", () => {
 
 		const call = () => entry.createRecognizer([coordinates]).recognize("1, 2")
 
-		expect(call).toThrow(entry.RecognizeInitializationError)
+		expect(call).toThrow(entry.RecognizerInitializationError)
 		expect(call).toThrow(/await init\(\{ module \}\) or init\(\{ bytes \}\)/u)
 	})
 
@@ -210,7 +210,7 @@ describe("the loader", () => {
 
 		const call = () => entry.createRecognizer([stale]).recognize("1, 2")
 
-		expect(call).toThrow(entry.RecognizeArtifactError)
+		expect(call).toThrow(entry.RecognizerArtifactError)
 		expect(call).toThrow(/not built from the declarations it is loaded beside.*declarations hash/su)
 	})
 
@@ -252,10 +252,10 @@ describe("the loader", () => {
 			trap = state.trapped(error)
 		}
 
-		expect(trap).toBeInstanceOf(entry.RecognizeRuntimeError)
+		expect(trap).toBeInstanceOf(entry.RecognizerRuntimeError)
 		expect(state.stateKind()).toBe("poisoned")
 		expect(() => recognizer.recognize("1, 2")).toThrow(/trapped and cannot be reused/u)
-		await expect(entry.init()).rejects.toThrow(entry.RecognizeRuntimeError)
+		await expect(entry.init()).rejects.toThrow(entry.RecognizerRuntimeError)
 	})
 
 	it("serves recognizers over different families from one engine", async () => {

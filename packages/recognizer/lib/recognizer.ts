@@ -13,7 +13,7 @@
 
 import type { AnyFamily, FieldsOf, KindsOf, RecognitionsOf } from "#family"
 import { loadFamily, type PrefixStatus, prefixStatuses, recognizeText, traceText } from "#runtime/engine"
-import { RecognizeCompositionError } from "#runtime/errors"
+import { RecognizerCompositionError } from "#runtime/errors"
 import { type Instance, ready } from "#runtime/state"
 import { type KnownFormatsBinding, structureFields } from "#runtime/structure"
 import type { Trace, TraceOptions } from "#trace"
@@ -35,7 +35,7 @@ function knownFormatsBinding(family: AnyFamily, handle: number, shapeIDs: readon
 	const poBox = metadata?.family?.poBox
 
 	if (typeof poBox?.format !== "string" || typeof poBox.confidence !== "number") {
-		throw new RecognizeCompositionError(
+		throw new RecognizerCompositionError(
 			`family ${family.id} fills knownFormats and declares no poBox name and confidence`
 		)
 	}
@@ -48,7 +48,7 @@ function knownFormatsBinding(family: AnyFamily, handle: number, shapeIDs: readon
 		const tokens = entry.tokens === 1 ? 1 : entry.tokens === 2 ? 2 : null
 
 		if (tokens === null || typeof entry.confidence !== "number") {
-			throw new RecognizeCompositionError(`family ${family.id}: shape ${id} declares no token count and confidence`)
+			throw new RecognizerCompositionError(`family ${family.id}: shape ${id} declares no token count and confidence`)
 		}
 
 		return { format: entry.format, tokens, confidence: entry.confidence }
@@ -72,7 +72,7 @@ function trusted<T>(value: unknown): T {
 /**
  * The result of one recognition call.
  */
-export interface RecognizeResult<F extends readonly AnyFamily[]> {
+export interface RecognizerResult<F extends readonly AnyFamily[]> {
 	/**
 	 * Every candidate span of every composed family, sorted by start, end, family and shape.
 	 * Offsets are UTF-16 code units.
@@ -87,7 +87,7 @@ export interface RecognizeResult<F extends readonly AnyFamily[]> {
 /**
  * The result of a call that asked for traces: the same recognitions and fields, and the traces.
  */
-export interface TracedRecognizeResult<F extends readonly AnyFamily[]> extends RecognizeResult<F> {
+export interface TracedRecognizerResult<F extends readonly AnyFamily[]> extends RecognizerResult<F> {
 	/**
 	 * One trace per recognition, in the order of `recognitions`, then one per shape
 	 * listed in `trace.explain` that a composed family declares.
@@ -98,7 +98,7 @@ export interface TracedRecognizeResult<F extends readonly AnyFamily[]> extends R
 /**
  * The options of a call.
  */
-export interface RecognizeOptions {
+export interface RecognizerOptions {
 	/**
 	 * Asks for traces.
 	 *
@@ -121,9 +121,9 @@ export interface Recognizer<F extends readonly AnyFamily[]> {
 	 * The result type of a call without the `trace` option is the same as it was before traces existed.
 	 * A call with `trace: true` or a `TraceOptions` object returns the traces as well.
 	 */
-	recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
-	recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
-	recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
+	recognize(text: string, options?: { readonly trace?: false }): RecognizerResult<F>
+	recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizerResult<F>
+	recognize(text: string, options?: RecognizerOptions): RecognizerResult<F> | TracedRecognizerResult<F>
 	/**
 	 * Reads `text` as the beginning of a whole-input match of each shape, for every shape of
 	 * every composed family that a search reports, in the engine's order of family and shape.
@@ -165,13 +165,13 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 	const known = readers.filter((family) => family.fields === "knownFormats")
 
 	if (known.length > 1) {
-		throw new RecognizeCompositionError(
+		throw new RecognizerCompositionError(
 			`createRecognizer: ${known.map((family) => family.id).join(" and ")} both fill knownFormats; compose one`
 		)
 	}
 
 	if (known.length && !readers.some((family) => family.fields === "structure")) {
-		throw new RecognizeCompositionError(
+		throw new RecognizerCompositionError(
 			`createRecognizer: family ${known[0]!.id} fills knownFormats from the tokens of the structure family, ` +
 				"and the composition has no structure family"
 		)
@@ -217,18 +217,18 @@ export function createRecognizer<const F extends readonly AnyFamily[]>(families:
 		return trusted<ReadonlyArray<ShapePrefixStatus<F>>>(prefixStatuses(instance, text, mask))
 	}
 
-	function recognize(text: string, options?: { readonly trace?: false }): RecognizeResult<F>
-	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizeResult<F>
-	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F>
+	function recognize(text: string, options?: { readonly trace?: false }): RecognizerResult<F>
+	function recognize(text: string, options: { readonly trace: true | TraceOptions }): TracedRecognizerResult<F>
+	function recognize(text: string, options?: RecognizerOptions): RecognizerResult<F> | TracedRecognizerResult<F>
 
-	function recognize(text: string, options?: RecognizeOptions): RecognizeResult<F> | TracedRecognizeResult<F> {
+	function recognize(text: string, options?: RecognizerOptions): RecognizerResult<F> | TracedRecognizerResult<F> {
 		const binding = bind()
 		const { instance } = binding
 
 		// The recognitions are read out of linear memory before the structure call overwrites the records.
 		const recognitions = recognizeText(instance, text, binding.mask)
 
-		const result: RecognizeResult<F> = {
+		const result: RecognizerResult<F> = {
 			recognitions: trusted<ReadonlyArray<RecognitionsOf<F>>>(recognitions),
 			fields: trusted<FieldsOf<F>>(
 				binding.structure < 0 ? {} : structureFields(instance, text, binding.structure, binding.formats)

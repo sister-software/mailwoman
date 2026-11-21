@@ -12,7 +12,7 @@
  *   and its summary is `data/reports/known-formats-differential.json`.
  */
 
-import { RecognizeCompositionError, createRecognizer } from "@mailwoman/recognizer"
+import { RecognizerCompositionError, createRecognizer } from "@mailwoman/recognizer"
 import { structure } from "@mailwoman/recognizer/structure"
 import { plainFields, readFrozenFixture } from "@mailwoman/recognizer/tools/frozen"
 import type { StructureFields } from "@mailwoman/recognizer/types"
@@ -66,7 +66,7 @@ describe("the postcode_legacy family's hits", () => {
 
 describe("createRecognizer with the postcode_legacy family", () => {
 	it("refuses a composition without the structure family, with a typed error at construction", () => {
-		expect(() => createRecognizer([postcodeLegacy])).toThrow(RecognizeCompositionError)
+		expect(() => createRecognizer([postcodeLegacy])).toThrow(RecognizerCompositionError)
 		expect(() => createRecognizer([structure, postcodeLegacy])).not.toThrow()
 	})
 

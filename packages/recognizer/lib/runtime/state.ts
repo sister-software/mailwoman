@@ -14,7 +14,7 @@
  */
 
 import { ABI_VERSION, type Exports } from "#runtime/abi"
-import { RecognizeInitializationError, RecognizeRuntimeError } from "#runtime/errors"
+import { RecognizerInitializationError, RecognizerRuntimeError } from "#runtime/errors"
 import { type CompiledModule, type ModuleBytes, wasm } from "#runtime/webassembly"
 
 /**
@@ -176,7 +176,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 	switch (state.kind) {
 		case "poisoned":
 			return Promise.reject(
-				new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
+				new RecognizerRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 					cause: state.cause,
 				})
 			)
@@ -187,7 +187,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 			if (state.source === source) return state.promise
 
 			return Promise.reject(
-				new RecognizeInitializationError("init: initialization from a different source is already pending")
+				new RecognizerInitializationError("init: initialization from a different source is already pending")
 			)
 		case "uninitialized":
 			break
@@ -200,7 +200,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 			return Promise.resolve()
 		} catch (error) {
 			return Promise.reject(
-				new RecognizeInitializationError(`init: failed to initialize the engine: ${String(error)}`, { cause: error })
+				new RecognizerInitializationError(`init: failed to initialize the engine: ${String(error)}`, { cause: error })
 			)
 		}
 	}
@@ -213,7 +213,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 			return Promise.resolve()
 		} catch (error) {
 			return Promise.reject(
-				new RecognizeInitializationError(`init: failed to initialize the engine: ${String(error)}`, { cause: error })
+				new RecognizerInitializationError(`init: failed to initialize the engine: ${String(error)}`, { cause: error })
 			)
 		}
 	}
@@ -227,7 +227,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 		state = { kind: "uninitialized" }
 		live = null
 
-		throw new RecognizeInitializationError(`init: failed to initialize the engine: ${String(error)}`, {
+		throw new RecognizerInitializationError(`init: failed to initialize the engine: ${String(error)}`, {
 			cause: error,
 		})
 	})
@@ -247,13 +247,13 @@ export function ready(): Instance {
 	if (live !== null) return live
 
 	if (state.kind === "poisoned") {
-		throw new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
+		throw new RecognizerRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 			cause: state.cause,
 		})
 	}
 
 	if (state.kind === "initializing") {
-		throw new RecognizeInitializationError(
+		throw new RecognizerInitializationError(
 			"the engine is still initializing from the source passed to init(); await it before recognizing"
 		)
 	}
@@ -261,7 +261,7 @@ export function ready(): Instance {
 	try {
 		return activateDefault()
 	} catch (error) {
-		throw new RecognizeInitializationError(
+		throw new RecognizerInitializationError(
 			`the engine could not instantiate its WebAssembly binary synchronously (${String(error)}). ` +
 				"Where synchronous compilation is not allowed, call and await init({ module }) or init({ bytes }) first.",
 			{ cause: error }
@@ -280,7 +280,7 @@ export function trapped(error: unknown): unknown {
 		state = { kind: "poisoned", cause: error }
 		live = null
 
-		return new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
+		return new RecognizerRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 			cause: error,
 		})
 	}

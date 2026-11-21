@@ -133,9 +133,9 @@ export interface FamilyDeclaration<
 	 * Names the engine's field reader that fills this family's result fields, when the family adds any.
 	 *
 	 * `structure` reads the tokens and the segments.
-	 * `knownFormats` reads each token and each adjacent pair of tokens against the family's
-	 * shapes, so a recognizer that composes it holds the `structure` family too, and
-	 * `createRecognizer` throws a `RecognizeCompositionError` at construction when it has none.
+	 * `knownFormats` reads each token and each adjacent pair of tokens against the family's shapes,
+	 * so a recognizer that composes it holds the `structure` family too, and `createRecognizer`
+	 * throws a `RecognizerCompositionError` at construction when it has none.
 	 * A family with a reader reports no recognitions of its own.
 	 */
 	readonly fields?: FieldReader
