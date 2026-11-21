@@ -18,10 +18,13 @@
  *     Such a box holds enough places that the walk ends early, and it never reads more than the table once.
  *
  *   The R*Tree indexes each place's extent rather than its point.
- *   A place without a recorded extent has no R*Tree row, and some places record
- *   a point outside their own extent.
+ *   The admin build widens every located place's extent to hold its point,
+ *   and `gazetteer verify`'s `point-in-extent` check holds the database to that.
  *
- *   The R*Tree plan would miss both, so the browser reads those places once,
+ *   An extent that meets no part of the box therefore holds no point inside it.
+ *
+ *   A place without a recorded extent has no R*Tree row.
+ *   The R*Tree plan would miss it, so the browser reads those places once,
  *   on first use, and adds the ones inside the box.
  */
 
@@ -281,11 +284,8 @@ export class WOFPlaceBrowser extends SQLiteLookup<PlaceBrowseDatabase> {
 	}
 
 	/**
-	 * The current places the R*Tree plan can't reach through `place_bbox`, read once.
-	 *
-	 * The first group is the places the R*Tree build skipped: a null extent,
+	 * The current places the R*Tree build skipped, read once: a null extent,
 	 * or the all-zero extent it treats as none.
-	 * The second is the places whose point lies outside their own extent.
 	 */
 	#irregularPlaces(): Promise<IrregularPlace[]> {
 		this.#irregular ??= this.database
@@ -295,9 +295,7 @@ export class WOFPlaceBrowser extends SQLiteLookup<PlaceBrowseDatabase> {
 			.where("spr.is_deprecated", "=", 0)
 			.where(
 				sql<boolean>`(spr.min_latitude IS NULL OR spr.max_latitude IS NULL OR spr.min_longitude IS NULL OR spr.max_longitude IS NULL
-					OR (spr.min_latitude = 0 AND spr.max_latitude = 0 AND spr.min_longitude = 0 AND spr.max_longitude = 0)
-					OR spr.longitude < spr.min_longitude OR spr.longitude > spr.max_longitude
-					OR spr.latitude < spr.min_latitude OR spr.latitude > spr.max_latitude)`
+					OR (spr.min_latitude = 0 AND spr.max_latitude = 0 AND spr.min_longitude = 0 AND spr.max_longitude = 0))`
 			)
 			.execute()
 
