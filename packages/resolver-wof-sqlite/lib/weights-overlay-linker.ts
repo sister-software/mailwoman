@@ -653,13 +653,6 @@ export interface DevOverlayManifest {
 	streetMorphologyFST?: boolean
 
 	/**
-	 * Whether to copy the workspace's `model-card.json` into the overlay.
-	 *
-	 * @defaultValue true
-	 */
-	writeCard?: boolean
-
-	/**
 	 * Overlay entries the calling script writes itself after this call,
 	 * such as en-gb's card-conditional `postcode-gb.bin`.
 	 * The prune keeps them.
@@ -976,7 +969,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 		}
 	}
 
-	if (manifest.writeCard !== false && (await writeOverlayCard(destDir, manifest.locale))) {
+	if (await writeOverlayCard(destDir, manifest.locale)) {
 		managed.add("model-card.json")
 	}
 
@@ -1028,9 +1021,7 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 
 	await pruneUnmanagedEntries(destDir, managed)
 
-	const undelivered = (await declaredArtifacts(manifest.locale)).filter(
-		(name) => !managed.has(name) && !(name === "model-card.json" && manifest.writeCard === false)
-	)
+	const undelivered = (await declaredArtifacts(manifest.locale)).filter((name) => !managed.has(name))
 
 	if (undelivered.length) {
 		console.error(
