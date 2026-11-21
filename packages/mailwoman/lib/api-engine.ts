@@ -233,7 +233,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	let slot: GeocodeSessionSlot
 
 	try {
-		slot = new GeocodeSessionSlot(await createGeocodeSession(options, { process: processScope }))
+		slot = new GeocodeSessionSlot(await createGeocodeSession(options, { parent: processScope }))
 	} catch (error) {
 		// A missing gazetteer or resolver package is a preflight failure the operator fixes.
 		// Any other construction failure is a fault, and boot stops on it.
@@ -306,7 +306,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		})
 
 	const reload: MailwomanAPIEngine["reload"] = async () => {
-		await slot.replace(() => createGeocodeSession(options, { process: processScope }))
+		await slot.replace(() => createGeocodeSession(options, { parent: processScope }))
 
 		return { reloaded: true, versions: await readReleaseManifest(DATA_ROOT) }
 	}

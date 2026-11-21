@@ -11,6 +11,8 @@ import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createToken, type ServiceRegistry, type ServiceToken } from "async-init"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { defineUnlessProvided } from "#services/define"
+
 /**
  * The token of the script-routed neural classifier.
  */
@@ -49,7 +51,7 @@ export interface ClassifierServiceOptions {
  * The weights load when a caller first needs the service.
  */
 export function registerClassifierService(registry: ServiceRegistry, options: ClassifierServiceOptions): void {
-	registry.define(ClassifierService, {
+	defineUnlessProvided(registry, ClassifierService, {
 		build: async () => {
 			try {
 				return await NeuralAddressClassifier.loadRoutedFromWeights({

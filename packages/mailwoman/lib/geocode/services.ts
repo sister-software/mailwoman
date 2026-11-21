@@ -53,6 +53,7 @@ import {
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
 import { ClassifierService, registerClassifierService } from "#services/classifier"
+import { defineUnlessProvided } from "#services/define"
 import { ParsePriorArtifactsService, ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
 
 type ResolverModule = typeof import("@mailwoman/resolver-wof-sqlite")
@@ -125,7 +126,7 @@ export function registerProcessServices(
 ): void {
 	registerClassifierService(registry, options)
 
-	registry.define(ResolverModuleService, {
+	defineUnlessProvided(registry, ResolverModuleService, {
 		build: async () => {
 			try {
 				return await import("@mailwoman/resolver-wof-sqlite")
@@ -173,23 +174,23 @@ export function registerGenerationServices(
 	// so a prune keeps those artifacts until the session is disposed.
 	// A data root with no selection takes no lease and receives no write.
 	// Every service below reads this one snapshot, so the session reads one generation throughout.
-	registry.define(S.selection, {
+	defineUnlessProvided(registry, S.selection, {
 		build: () => holdActiveSelection(options.dataRoot),
 		release: (selection) => disposeHandle(selection.lease),
 	})
 
-	registry.define(S.candidateDB, {
+	defineUnlessProvided(registry, S.candidateDB, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => resolveCandidateDBPath(options.candidateDB, options.dataRoot, selection.catalog),
 	})
 
-	registry.define(S.wofPaths, {
+	defineUnlessProvided(registry, S.wofPaths, {
 		needs: { candidateDB: S.candidateDB, selection: S.selection },
 		build: ({ candidateDB, selection }) => (candidateDB ? [] : resolveWOFPath(options, selection.catalog)),
 	})
 
 	// The FSTs the active selection lists, else the files beside the weights.
-	registry.define(ParsePriorArtifactsService, {
+	defineUnlessProvided(registry, ParsePriorArtifactsService, {
 		needs: { routed: ClassifierService, selection: S.selection },
 		build: ({ routed, selection }) =>
 			selectedParsePriorArtifacts(routed.primary, options.locale, options.dataRoot, selection.catalog),
@@ -201,7 +202,7 @@ export function registerGenerationServices(
 		label: `locale ${options.locale}`,
 	})
 
-	registry.define(S.lookup, {
+	defineUnlessProvided(registry, S.lookup, {
 		needs: {
 			mod: ResolverModuleService,
 			candidateDB: S.candidateDB,
@@ -219,12 +220,12 @@ export function registerGenerationServices(
 		release: disposeHandle,
 	})
 
-	registry.define(S.capitals, {
+	defineUnlessProvided(registry, S.capitals, {
 		needs: { candidateDB: S.candidateDB },
 		build: ({ candidateDB }) => capitalIndexFor(settings.capitalTier, candidateDB),
 	})
 
-	registry.define(S.regionDatabases, {
+	defineUnlessProvided(registry, S.regionDatabases, {
 		needs: { mod: ResolverModuleService, selection: S.selection },
 		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
 		release: disposeHandle,
@@ -232,7 +233,7 @@ export function registerGenerationServices(
 
 	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
 
-	registry.define(S.explicitAddressPoints, {
+	defineUnlessProvided(registry, S.explicitAddressPoints, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.addressPointsDB
@@ -241,20 +242,20 @@ export function registerGenerationServices(
 		release: disposeHandle,
 	})
 
-	registry.define(S.explicitInterpolation, {
+	defineUnlessProvided(registry, S.explicitInterpolation, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null,
 		release: disposeHandle,
 	})
 
-	registry.define(S.ban, {
+	defineUnlessProvided(registry, S.ban, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => openBANRegionDatabases(options.dataRoot, selection.catalog),
 		release: disposeHandle,
 	})
 
-	registry.define(S.overture, {
+	defineUnlessProvided(registry, S.overture, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), selection.catalog),
 		release: disposeHandle,
@@ -263,7 +264,7 @@ export function registerGenerationServices(
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
 	// Each extract the provider left unattached prints its path and reason to stderr,
 	// as the servers print it at startup.
-	registry.define(S.osm, {
+	defineUnlessProvided(registry, S.osm, {
 		needs: { selection: S.selection },
 		build: async ({ selection }) => {
 			const osm = await openOSMRegionDatabases(options.dataRoot, selection.catalog)
@@ -277,7 +278,7 @@ export function registerGenerationServices(
 		release: disposeHandle,
 	})
 
-	registry.define(S.classifyKind, {
+	defineUnlessProvided(registry, S.classifyKind, {
 		build: async () => {
 			const locale = options.locale ?? "en-US"
 			const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
@@ -295,20 +296,20 @@ export function registerGenerationServices(
 		},
 	})
 
-	registry.define(S.placer, {
+	defineUnlessProvided(registry, S.placer, {
 		build: () =>
 			options.placeCountry
 				? loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
 				: null,
 	})
 
-	registry.define(S.forkEntity, {
+	defineUnlessProvided(registry, S.forkEntity, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => loadForkEntityDeps(options, selection.catalog),
 		release: (probe) => disposeHandle(probe.handle),
 	})
 
-	registry.define(S.layerRoutes, {
+	defineUnlessProvided(registry, S.layerRoutes, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => loadLayerRoutes(options, selection.catalog),
 		release: (routes) => {

@@ -122,13 +122,12 @@ export async function createParser(options: ParserOptions = {}): Promise<Parser>
 	const locale = options.locale ?? "en-US"
 	const scope = options.scope ? options.scope.createChild() : new ServiceRegistry()
 
-	if (!options.scope) {
-		registerClassifierService(scope, {
-			locale,
-			...(options.dataRoot ? { dataRoot: options.dataRoot } : {}),
-			...(options.weightsCacheRoot ? { weightsCacheRoot: options.weightsCacheRoot } : {}),
-		})
-	}
+	// Each registration skips a service `options.scope` provides.
+	registerClassifierService(scope, {
+		locale,
+		...(options.dataRoot ? { dataRoot: options.dataRoot } : {}),
+		...(options.weightsCacheRoot ? { weightsCacheRoot: options.weightsCacheRoot } : {}),
+	})
 
 	registerShippedParsePriorArtifacts(scope)
 	registerParsePriorsService(scope, { venueHeadPrior: false, label: `locale ${locale}` })
