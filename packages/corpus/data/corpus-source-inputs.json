@@ -3033,6 +3033,21 @@
 				}
 			]
 		},
+		"rendered-former-divisions": {
+			"aliases": ["synth-former-divisions"],
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the historical divisions (ADM1H to ADM5H, PCLH) of the country dumps, hierarchy.txt, and the postal code export"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-2",
+					"license": "unchecked-corpus-input-us-who-s-on-first",
+					"reads": "ceased admin records and their wof:superseded_by, and locality and sub-locality names and ancestors of the WOF admin database"
+				}
+			]
+		},
 		"rendered-fr": {
 			"aliases": ["synth-fr"],
 			"inputs": [

@@ -243,6 +243,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		admin_containment_rerank: SwitchPinSchema.optional(),
 		dependent_locality_containment: SwitchPinSchema.optional(),
 		county_designator_fallback: SwitchPinSchema.optional(),
+		former_divisions: SwitchPinSchema.optional(),
 		scope_country_retrieval: SwitchPinSchema.optional(),
 		sibling_locality_containment: SwitchPinSchema.optional(),
 		pair_prior_word_pieces: SwitchPinSchema.optional(),

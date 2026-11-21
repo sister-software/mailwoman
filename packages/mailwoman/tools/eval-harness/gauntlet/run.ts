@@ -111,6 +111,11 @@ export interface GauntletRunOptions {
 	 */
 	countyDesignatorFallback?: SwitchPin
 	/**
+	 * Pin the former-division acceptance for every layer.
+	 * @defaultValue `"production"`
+	 */
+	formerDivisions?: SwitchPin
+	/**
 	 * Pin scope-country retrieval for every layer.
 	 * @defaultValue `"production"`
 	 */
@@ -216,6 +221,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
 		dependentLocalityContainment: options.dependentLocalityContainment ?? "production",
 		countyDesignatorFallback: options.countyDesignatorFallback ?? "production",
+		formerDivisions: options.formerDivisions ?? "production",
 		scopeCountryRetrieval: options.scopeCountryRetrieval ?? "production",
 		siblingLocalityContainment: options.siblingLocalityContainment ?? "production",
 		pairPriorWordPieces: options.pairPriorWordPieces ?? "production",

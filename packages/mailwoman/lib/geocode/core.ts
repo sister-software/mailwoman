@@ -135,6 +135,12 @@ export interface GeocodeSwitches {
 	 */
 	countyDesignatorFallback: boolean
 	/**
+	 * Accepts a `subregion` or `region` value that no current division answers
+	 * when the value is the name of a former division linked to the resolved locality.
+	 * It needs {@link GeocodeDeps.formerDivisionLookup}.
+	 */
+	formerDivisions: boolean
+	/**
 	 * Lets a soft country scope act inside retrieval, and stands the locale head's
 	 * country in as a soft scope when it contradicts the inferred scope.
 	 */
@@ -188,6 +194,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
 	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
 	countyDesignatorFallback: RESOLVE_SWITCH_DEFAULTS.countyDesignatorFallback,
+	formerDivisions: RESOLVE_SWITCH_DEFAULTS.formerDivisions,
 	scopeCountryRetrieval: RESOLVE_SWITCH_DEFAULTS.scopeCountryRetrieval,
 	siblingLocalityContainment: RESOLVE_SWITCH_DEFAULTS.siblingLocalityContainment,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
@@ -237,6 +244,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * The OpenStreetMap place layer, read after span rescore.
 	 */
 	osmPlaces?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
+	 * The former divisions table, read under {@link GeocodeSwitches.formerDivisions}.
+	 */
+	formerDivisionLookup?: import("@mailwoman/core/resolver").FormerDivisionLookup
 	/**
 	 * Gazetteer FST prior.
 	 */
@@ -668,6 +679,7 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"adminContainmentRerank",
 	"dependentLocalityContainment",
 	"countyDesignatorFallback",
+	"formerDivisions",
 	"scopeCountryRetrieval",
 	"siblingLocalityContainment",
 	"postcodePrefixPrior",
@@ -900,9 +912,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.isVenueCategoryWord = deps.isVenueCategoryWord
 	}
 
-	if (deps.osmPlaces) {
-		opts.osmPlaces = deps.osmPlaces
-	}
+	// The lookups the resolver reads under the same name, each passed only when the caller supplied it.
+	Object.assign(opts, {
+		...(deps.osmPlaces ? { osmPlaces: deps.osmPlaces } : {}),
+		...(deps.formerDivisionLookup ? { formerDivisionLookup: deps.formerDivisionLookup } : {}),
+	})
 
 	if (deps.landmarks) {
 		opts.landmarks = deps.landmarks

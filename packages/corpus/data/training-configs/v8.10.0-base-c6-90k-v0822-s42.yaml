@@ -11,6 +11,13 @@
 #    - `rendered-prominent-places` (recipe `prominent-places`) writes each country's prominent places in their short
 #      query shapes at the row counts the prominent-places census sets against the v0.8.22 base build
 #      (`tools/dev-tools/corpus/prominent/places.run.ts places`, `scan --manifest <v0.8.22 base MANIFEST.json>`, `tuples`).
+#    - `rendered-former-divisions` (recipe `former-divisions`, #3200) writes a former administrative division beside a
+#      current WOF locality its containment evidence links it to, before the locality (Google's order,
+#      `Redland, Avon, Bristol`) or after it, tagged `subregion` at county level and `region` at the first level. Its
+#      tuples come from `packages/gazetteer/tools/former-divisions.run.ts --tuples`, capped at 1,500 rows a country
+#      and 300 a division. On the 2026-11-21 table the tuples hold 1,888 rows in 15 countries, GB 300 (Avon only).
+#      GeoNames lists 49,122 historical divisions in 112 countries. Containment evidence links 63 of them, and 42 of
+#      those take a tag. The census in #3200 gives the per-country counts.
 # 2. `source_weights` gives `rendered-prominent-places` 15.0, `wof-admin`'s weight. The recipe's counts fill the
 #    demand-share gap measured on rows, and `wof-admin` writes three quarters of the short admin train rows
 #    (2,660,580 of 3,538,087 on v0.8.21), so at the same weight a drawn epoch keeps the share the rows reach. The
@@ -19,6 +26,10 @@
 #    preflight runs the `prominent_place_coverage` receipt (#3156 rule (a)) and binds its `PLACES.json` into the
 #    receipt key. `prominent-places-exposure` floors the recipe's draws at 0.9 of expected.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
+# 5. `source_reps` gives `rendered-former-divisions` 2.0, two passes over its rows an epoch, about 3,800 of the
+#    1,000,000 drawn rows. The rows hold 42 division names, so more passes would repeat each name more than they
+#    widen what the model sees. `augment_exclude_sources` lists the source for the reason `rendered-prominent-places`
+#    is listed, and `former-divisions-exposure` floors its draws at 0.9 of expected.
 #
 # Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
 # section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
@@ -167,6 +178,8 @@ data:
     rendered-us-county: 5.0
     rendered-us-city-county: 0.55
     rendered-us-city-state: 1.0
+    # This config's header, point 5.
+    rendered-former-divisions: 2.0
     # The country-gap sources each take one pass over their rows.
     adressur-fo: 1.0
     ads: 1.0
@@ -543,6 +556,10 @@ data:
     - name: prominent-places-exposure
       min_fraction_of_expected: 0.9
       source: rendered-prominent-places
+    # This config's header, point 5.
+    - name: former-divisions-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-former-divisions
     # v8.8.0's header, point 4: the re-rendered recipe outputs.
     - name: us-pmb-street-split
       min_fraction_of_expected: 0.8
@@ -701,6 +718,8 @@ data:
     - wof-postalcode
     # The recipe writes WOF names in the same short shapes, so the same rewrites would expand them.
     - rendered-prominent-places
+    # This config's header, point 5.
+    - rendered-former-divisions
     # The same rewrites would expand a word inside a landmark's name under the `venue` label.
     - wikidata-vital-places
   train_rows_per_epoch: 1000000

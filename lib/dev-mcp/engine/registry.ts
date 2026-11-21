@@ -78,6 +78,13 @@ export interface EngineConfig {
 	 */
 	county_designator_fallback?: SwitchPin
 	/**
+	 * Whether a `subregion` or `region` value naming a former division linked to
+	 * the resolved locality is accepted.
+	 *
+	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.formerDivisions`
+	 */
+	former_divisions?: SwitchPin
+	/**
 	 * Whether a soft country scope acts inside retrieval and a hard scope reports the places it excluded.
 	 *
 	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval`
@@ -173,6 +180,7 @@ export const EFFECTIVE_KEY_FOR = {
 	admin_containment_rerank: "adminContainmentRerank",
 	dependent_locality_containment: "dependentLocalityContainment",
 	county_designator_fallback: "countyDesignatorFallback",
+	former_divisions: "formerDivisions",
 	scope_country_retrieval: "scopeCountryRetrieval",
 	sibling_locality_containment: "siblingLocalityContainment",
 	pair_prior_word_pieces: "pairPriorWordPieces",
@@ -248,6 +256,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 			config.county_designator_fallback ?? "production",
 			production.countyDesignatorFallback
 		),
+		formerDivisions: pinnedSwitch(config.former_divisions ?? "production", production.formerDivisions),
 		scopeCountryRetrieval: pinnedSwitch(
 			config.scope_country_retrieval ?? "production",
 			production.scopeCountryRetrieval

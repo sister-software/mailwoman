@@ -70,6 +70,8 @@ export type {
 	LandmarkHit,
 	LandmarkKind,
 	LandmarkLookup,
+	FormerDivisionLookup,
+	FormerDivisionMatch,
 } from "#resolver/types"
 
 export type {

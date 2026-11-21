@@ -302,6 +302,46 @@ export interface LandmarkLookup {
 }
 
 /**
+ * A former administrative division whose name an input wrote, with the current
+ * places its containment evidence ties it to.
+ */
+export interface FormerDivisionMatch {
+	name: string
+	/**
+	 * Upper-case ISO 3166-1 alpha-2 code.
+	 */
+	country: string
+	/**
+	 * The GeoNames feature code (`ADM1H`) or the WOF placetype of a ceased record.
+	 */
+	kind: string
+	/**
+	 * The `ComponentTag` the division takes in an address.
+	 */
+	tag: string
+	geonamesID: number | null
+	wofID: number | null
+	/**
+	 * WOF ids of the current places the division covered.
+	 */
+	linkedIDs: ReadonlySet<number>
+	/**
+	 * The kinds of evidence the links rest on.
+	 */
+	evidence: readonly string[]
+}
+
+/**
+ * Finds the former divisions a written name belongs to.
+ */
+export interface FormerDivisionLookup {
+	/**
+	 * The former divisions whose name keys the same as `value`, in `country` when one is given.
+	 */
+	divisionsNamed(value: string, country: string | null): readonly FormerDivisionMatch[]
+}
+
+/**
  * Who chose a default country scope.
  *
  * - `"caller"`: the caller asked for the country.
@@ -389,6 +429,7 @@ export interface ResolveSwitches {
 	adminContainmentRerank: boolean
 	dependentLocalityContainment: boolean
 	countyDesignatorFallback: boolean
+	formerDivisions: boolean
 	scopeCountryRetrieval: boolean
 	siblingLocalityContainment: boolean
 	diagnoseUnreachable: boolean
@@ -412,6 +453,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	adminContainmentRerank: true,
 	dependentLocalityContainment: true,
 	countyDesignatorFallback: false,
+	formerDivisions: false,
 	scopeCountryRetrieval: false,
 	siblingLocalityContainment: false,
 	diagnoseUnreachable: false,
@@ -652,6 +694,21 @@ export interface ResolveOpts {
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	countyDesignatorFallback?: boolean
+	/**
+	 * Accepts a `subregion` or `region` value that no current division answers when the value is the name
+	 * of a former division of {@link ResolveOpts.formerDivisionLookup} linked to the resolved locality.
+	 *
+	 * The accepted node keeps no place and scopes no lookup, and its metadata records the division.
+	 *
+	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
+	 */
+	formerDivisions?: boolean
+	/**
+	 * The former divisions {@link ResolveOpts.formerDivisions} reads.
+	 *
+	 * Without it the switch leaves every node as the walk resolved it.
+	 */
+	formerDivisionLookup?: FormerDivisionLookup
 	/**
 	 * Lets a soft country scope act inside retrieval.
 	 *

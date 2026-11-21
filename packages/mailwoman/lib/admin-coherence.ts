@@ -18,6 +18,7 @@ import { walkNodes } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport, AdminCoherenceVerdict } from "@mailwoman/core/geocode"
 import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { FORMER_DIVISION } from "@mailwoman/resolver/admin/former-division"
 
 /**
  * Parsed `region` and `country` qualifiers.
@@ -188,9 +189,11 @@ export function adminCoherenceField(
 
 	if (!picked) return null
 
+	const regionNode = nodes.find((n) => n.tag === "region")
+
 	const report = assessAdminCoherence(
 		{
-			region: nodes.find((n) => n.tag === "region")?.value?.trim() || null,
+			region: regionNode?.value?.trim() || null,
 			country: nodes.find((n) => n.tag === "country")?.value?.trim() || null,
 		},
 		{
@@ -199,6 +202,11 @@ export function adminCoherenceField(
 			ancestry: (picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined) ?? null,
 		}
 	)
+
+	// A former division the resolver linked to the winner's lineage confirms the region by containment.
+	if (regionNode?.metadata?.[FORMER_DIVISION] != null && report.region !== "unstated") {
+		return { ...report, region: "confirmed" }
+	}
 
 	return report
 }

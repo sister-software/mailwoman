@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 69 of the group's 108 library and tool modules.
+This page lists 70 of the group's 110 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -48,6 +48,23 @@ The others hold neither an effect edge nor an import-time effect.
 | read  | `statLink`          | `unresolved (call)`      | 1     |
 | write | `DatabaseClient`    | `unresolved (parameter)` | 1     |
 | write | `makeDirectories`   | `unresolved (call)`      | 1     |
+
+## `packages/gazetteer/tools/former-divisions.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 18 times
+- `awaits at module scope`, 3 times
+- `calls the effect interface DatabaseClient at module scope`
+
+| Kind  | Interface            | Target                      | Calls |
+| ----- | -------------------- | --------------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (call)`         | 2     |
+| read  | `pathExists`         | `data-root:geonames-postal` | 1     |
+| read  | `sortedGlob`         | `unresolved (call)`         | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`         | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`     | 1     |
+| write | `writeLocalTextFile` | `unresolved (property)`     | 1     |
 
 ## `packages/gazetteer/tools/pipeline.ts`
 

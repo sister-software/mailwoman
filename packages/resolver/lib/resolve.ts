@@ -33,6 +33,7 @@ import {
 } from "#admin/coherence-passes"
 import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
 import { COUNTY_DESIGNATOR_FALLBACK, countyFromDesignatedLocality } from "#admin/county-designator"
+import { acceptFormerDivisions, FORMER_DIVISION_TAGS } from "#admin/former-division"
 import { resolveCompoundMunicipality } from "#admin/jp-municipality"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
@@ -214,6 +215,9 @@ class WOFResolver implements Resolver {
 			adminContainmentRerank: opts.adminContainmentRerank,
 			dependentLocalityContainment: opts.dependentLocalityContainment,
 			countyDesignatorFallback: opts.countyDesignatorFallback,
+			...(opts.formerDivisions && opts.formerDivisionLookup
+				? { formerDivisionLookup: opts.formerDivisionLookup, pendingFormerDivisions: new Map() }
+				: {}),
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 		}
@@ -373,6 +377,11 @@ class WOFResolver implements Resolver {
 			applyStreetCentroid(newRoots, tree.raw, opts.streetCentroids, opts.streetCountryHints ?? [])
 		}
 
+		// A value no current division answered is accepted when a former division of that name covered the settlement.
+		if (state.pendingFormerDivisions?.size && this.#backend.ancestors) {
+			acceptFormerDivisions(newRoots, state.pendingFormerDivisions, this.#backend.ancestors.bind(this.#backend))
+		}
+
 		// The walk's ancestors are read again for the place that replaced its pick.
 		if (this.#backend.ancestors) {
 			for (const node of walkedWithAncestors) {
@@ -443,6 +452,14 @@ class WOFResolver implements Resolver {
 				// Optional lineage attachment.
 				if (state.includeAncestors && this.#backend.ancestors) {
 					decorated.metadata = { ...decorated.metadata, ancestors: this.#backend.ancestors(picked.top.id) }
+				}
+			} else if (state.formerDivisionLookup && FORMER_DIVISION_TAGS.has(node.tag)) {
+				// No current division answered, so the value may name a former one, checked after the walk.
+				const country = parentResolved?.country ?? state.defaultCountry?.country ?? null
+				const matches = state.formerDivisionLookup.divisionsNamed(node.value, country)
+
+				if (matches.length) {
+					state.pendingFormerDivisions!.set(decorated, matches)
 				}
 			}
 		}

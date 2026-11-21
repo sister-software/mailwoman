@@ -181,6 +181,12 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 			"Each country's prominent WOF localities and sub-localities in their short query shapes (#3156). " +
 				"The retired spelling never reached a corpus.",
 		],
+		[
+			"former-divisions",
+			"recipes/former-divisions.ts",
+			"A former administrative division from the former divisions table, written beside a WOF locality it " +
+				"covered, before or after the locality. The retired spelling never reached a corpus.",
+		],
 	]),
 	// Germany is the one locale the retired names spelled as a language word
 	// where every other reads as an ISO code, so its tail becomes `de`.

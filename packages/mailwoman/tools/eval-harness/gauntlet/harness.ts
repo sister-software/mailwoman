@@ -23,11 +23,18 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { readFormerDivisionLookup } from "@mailwoman/resolver-wof-sqlite/former-divisions"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
-import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import {
+	type DecoderSettings,
+	GEOCODE_SWITCH_DEFAULTS,
+	geocodeAddress,
+	geocodeParseInputs,
+	type GeocodeDeps,
+} from "#geocode/core"
 import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/fst-layers"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import {
@@ -180,6 +187,11 @@ export interface GauntletResolverPins {
 	 */
 	countyDesignatorFallback: SwitchPin
 	/**
+	 * A `subregion` or `region` value naming a former division linked to the resolved locality is accepted.
+	 * The `on` pin reads the former divisions table.
+	 */
+	formerDivisions: SwitchPin
+	/**
 	 * A soft country scope acts inside retrieval, and a hard scope reports the places it excluded.
 	 */
 	scopeCountryRetrieval: SwitchPin
@@ -258,6 +270,7 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	adminContainmentRerank: "production",
 	dependentLocalityContainment: "production",
 	countyDesignatorFallback: "production",
+	formerDivisions: "production",
 	scopeCountryRetrieval: "production",
 	siblingLocalityContainment: "production",
 	pairPriorWordPieces: "production",
@@ -284,6 +297,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	adminContainmentRerank?: boolean
 	dependentLocalityContainment?: boolean
 	countyDesignatorFallback?: boolean
+	formerDivisions?: boolean
 	scopeCountryRetrieval?: boolean
 	siblingLocalityContainment?: boolean
 	pairPriorWordPieces?: boolean
@@ -302,6 +316,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
 		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
 		...switchPinEntry("countyDesignatorFallback", pins.countyDesignatorFallback),
+		...switchPinEntry("formerDivisions", pins.formerDivisions),
 		...switchPinEntry("scopeCountryRetrieval", pins.scopeCountryRetrieval),
 		...switchPinEntry("siblingLocalityContainment", pins.siblingLocalityContainment),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
@@ -645,7 +660,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// gauntlet would grade an OSM-first cascade production never runs.
 	const banProvider = await openBANRegionDatabases(dataRootPath(), catalog)
 
-	const pinDeps = resolverPinDeps(pins)
+	const pinDeps = {
+		...resolverPinDeps(pins),
+		...(pinnedSwitch(pins.formerDivisions, GEOCODE_SWITCH_DEFAULTS.formerDivisions)
+			? { formerDivisionLookup: await readFormerDivisionLookup() }
+			: {}),
+	}
 
 	// This pin selects an artifact rather than a boolean value.
 	// The artifact is PER classifier.

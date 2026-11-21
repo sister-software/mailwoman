@@ -79,6 +79,12 @@ export const spec = {
 			default: "production",
 			description: "Pin the county-designator fallback",
 		},
+		"former-divisions": {
+			type: "string",
+			choices: SWITCH_PIN_CHOICES,
+			default: "production",
+			description: "Pin the former-division acceptance",
+		},
 		"scope-country-retrieval": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

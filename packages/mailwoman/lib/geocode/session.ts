@@ -199,6 +199,23 @@ export interface GeocodeSessionOptions {
 	countyDesignatorFallback?: boolean
 
 	/**
+	 * Whether a `subregion` or `region` value that no current division answers is accepted without scoping
+	 * the result, when the value is the name of a former division linked to the resolved locality.
+	 *
+	 * The session reads the former divisions table when it's on, and fails when the table is absent.
+	 *
+	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
+	 */
+	formerDivisions?: boolean
+
+	/**
+	 * The former divisions table {@link GeocodeSessionOptions.formerDivisions} reads.
+	 *
+	 * @defaultValue `formerDivisionsTablePath()`, `$MAILWOMAN_DATA_ROOT/gazetteer/former-divisions-v1.json`
+	 */
+	formerDivisionsTable?: PathBuilderLike
+
+	/**
 	 * Whether a soft country scope acts inside retrieval, the locale head's contradicting
 	 * country stands in as a soft scope, and a hard scope reports the places it excluded.
 	 *
@@ -536,6 +553,14 @@ export async function createGeocodeSession(
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
+	const formerDivisions = options.formerDivisions ?? GEOCODE_SWITCH_DEFAULTS.formerDivisions
+
+	const formerDivisionLookup = formerDivisions
+		? await import("@mailwoman/resolver-wof-sqlite/former-divisions").then((module) =>
+				module.readFormerDivisionLookup(options.formerDivisionsTable)
+			)
+		: null
+
 	const databases: RegionDatabaseResolver =
 		explicitAddressPoints || explicitInterpolation
 			? (slug) => {
@@ -678,6 +703,8 @@ export async function createGeocodeSession(
 			dependentLocalityContainment:
 				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
 			countyDesignatorFallback: options.countyDesignatorFallback ?? GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
+			formerDivisions,
+			...(formerDivisionLookup ? { formerDivisionLookup } : {}),
 			scopeCountryRetrieval,
 			siblingLocalityContainment:
 				options.siblingLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
