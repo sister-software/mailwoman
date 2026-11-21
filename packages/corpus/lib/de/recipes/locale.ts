@@ -18,6 +18,10 @@
  * rows also lack a district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
+ *
+ * A Saxon tuple whose street is an Ortsteil of its locality is a streetless hamlet (`Loga 13, 02699
+ * Neschwitz`). A row the renderer writes without the number tags the hamlet `dependent_locality`
+ * ({@link ortsteilStreetComponents}).
  */
 
 import { currentSourcePath } from "@mailwoman/core/data-root"
@@ -34,6 +38,7 @@ import { stableSourceID } from "#adapters/source-id"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { regionDrawRandom, renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
+import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
 /**
@@ -122,6 +127,30 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
 	return german.toLowerCase().startsWith(prefix.toLowerCase()) && german.length > prefix.length
 		? german.slice(prefix.length)
 		: german
+}
+
+/**
+ * Whether a tuple's street is one of its locality's Ortsteile.
+ *
+ * An Upper Lusatian hamlet has no streets, and its addresses are `Loga 13, 02699 Neschwitz`.
+ */
+export function isOrtsteilStreet(street: string, ortsteile: readonly string[] | undefined): boolean {
+	return Boolean(ortsteile?.some((ortsteil) => sameGermanLabel(ortsteil, street)))
+}
+
+/**
+ * The components of a rendered row whose street is an Ortsteil of its locality.
+ *
+ * With a house number, the hamlet is the street line (`Loga 13`).
+ * Without one, it is a place inside the municipality, so it is the `dependent_locality`
+ * beside the municipality as `locality` (`Loga, 02699 Neschwitz`).
+ */
+export function ortsteilStreetComponents(components: CanonicalRow["components"]): CanonicalRow["components"] {
+	const { street, ...rest } = components
+
+	if (!street || components.house_number) return components
+
+	return { ...rest, dependent_locality: street }
 }
 
 /**
@@ -286,6 +315,7 @@ export const germanRecipe: CorpusRecipe = {
 		let skipped = 0
 		let guard = 0
 		let withOrtsteil = 0
+		let hamletPlaces = 0
 		let commaFree = 0
 		const N = pool.length
 		const rowIDs = new RenderedRowIDs()
@@ -296,22 +326,28 @@ export const germanRecipe: CorpusRecipe = {
 			// Each is drawn independently, so every combination occurs.
 			// One is an Ortsteil borrowed from the tuple's own locality, the other a line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
+			const hamlet = isOrtsteilStreet(drawn.street, localOrtsteile)
 
-			const ortsteil =
+			const borrowed =
 				localOrtsteile && random() < ortsteilFraction
 					? localOrtsteile[Math.floor(random() * localOrtsteile.length)]
 					: null
 
+			// A tuple whose street is itself an Ortsteil borrows no second Ortsteil.
+			// The draws above still run, so every other row of a seeded run renders as it did.
+			const ortsteil = hamlet ? null : borrowed
 			const base: LocaleBaseTuple = ortsteil ? { ...drawn, dependent_locality: ortsteil } : drawn
 			const separator = random() < commaFreeFraction ? " " : ", "
 			const withRegion = regionRandom() < regionFraction
-			const synth = renderGermanRow(base, { random, separator, withRegion })
+			const rendered = renderGermanRow(base, { random, separator, withRegion })
 
-			if (!synth) {
+			if (!rendered) {
 				skipped++
 
 				continue
 			}
+
+			const synth = hamlet ? { ...rendered, components: ortsteilStreetComponents(rendered.components) } : rendered
 
 			// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO.
 			if (opts.golden) {
@@ -323,12 +359,13 @@ export const germanRecipe: CorpusRecipe = {
 			}
 
 			// The record is the tuple, and the text tells its renderings apart (#2765).
+			// A hamlet keeps the tuple's id whichever tag its rendering gives it.
 			const sourceID = rowIDs.claim(
 				stableSourceID(source, {
-					street: synth.components.street,
-					house_number: synth.components.house_number,
-					locality: synth.components.locality,
-					postcode: synth.components.postcode,
+					street: rendered.components.street,
+					house_number: rendered.components.house_number,
+					locality: rendered.components.locality,
+					postcode: rendered.components.postcode,
 				}),
 				synth.raw
 			)
@@ -373,12 +410,18 @@ export const germanRecipe: CorpusRecipe = {
 				withOrtsteil++
 			}
 
+			if (synth.components.dependent_locality && !ortsteil) {
+				hamletPlaces++
+			}
+
 			if (separator === " ") {
 				commaFree++
 			}
 		}
 
-		console.error(`  emitted ${emitted}: ${withOrtsteil} with an Ortsteil, ${commaFree} comma-free`)
+		console.error(
+			`  emitted ${emitted}: ${withOrtsteil} with an Ortsteil, ${hamletPlaces} with a streetless hamlet, ${commaFree} comma-free`
+		)
 
 		return { emitted, skipped }
 	},
