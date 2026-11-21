@@ -8,6 +8,7 @@
  *   Japanese address into one municipality span.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -109,6 +110,37 @@ describe("resolveWeights on a char package", () => {
 				modelCardPath: dir("model-card.json"),
 			})
 		).rejects.toThrow(/charVocabPath/)
+	})
+
+	it("reads an inherited graph's encoder from the base card when the overlay's card declares none", async () => {
+		const cacheRoot = fixtures.use(await temporaryDirectory("char-overlay-cache-")).path
+		const base = await charPackage()
+		const baseDir = weightsCachePackageDir(cacheRoot, "cjk")
+		const overlayDir = weightsCachePackageDir(cacheRoot, "ja-jp")
+
+		for (const name of ["model.onnx", "char-vocab.json", "model-card.json"]) {
+			await writeLocalTextFile(await readLocalTextFile(base(name)), baseDir(name))
+		}
+
+		await writeLocalTextFile(stringifyJSON({ name: "@mailwoman/neural-weights-cjk" }), baseDir("package.json"))
+
+		await writeLocalTextFile(
+			stringifyJSON({
+				name: "@mailwoman/neural-weights-ja-jp",
+				mailwoman: { baseWeights: "@mailwoman/neural-weights-cjk" },
+			}),
+			overlayDir("package.json")
+		)
+
+		await writeLocalTextFile(stringifyJSON({ locale: "ja-JP" }), overlayDir("model-card.json"))
+		await writeLocalTextFile("fst", overlayDir("fst-ja-jp.bin"))
+
+		const resolved = await resolveWeights({ locale: "ja-jp", cacheRoot })
+
+		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-ja-jp+base")
+		expect(resolved.encoder.kind).toBe("char")
+		expect(resolved.charVocabPath).toBe(baseDir("char-vocab.json").toString())
+		expect(resolved.fstPath).toBe(overlayDir("fst-ja-jp.bin").toString())
 	})
 })
 

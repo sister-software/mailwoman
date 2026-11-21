@@ -438,12 +438,14 @@ async function resolveFromPackageDir(
 	let tokenizerPath = opts.tokenizerPath ?? resolvePath(packageDir, "tokenizer.model")
 
 	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot != null)
+	let inheritsGraph = false
 
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolvePath(baseDir, "model.onnx") : null
 
 		if (baseDir && baseModel && (await pathExists(baseModel))) {
 			modelPath = baseModel
+			inheritsGraph = true
 
 			if (!opts.tokenizerPath) {
 				tokenizerPath = resolvePath(baseDir, "tokenizer.model")
@@ -456,8 +458,9 @@ async function resolveFromPackageDir(
 	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : null
 
+	// The encoder describes the graph, so an inherited graph's encoder is the one its base card declares.
 	const encoder = await readEncoderFromModelCard(
-		(await pathExists(modelCardCandidate)) ? modelCardCandidate : (baseModelCardCandidate ?? null)
+		!inheritsGraph && (await pathExists(modelCardCandidate)) ? modelCardCandidate : (baseModelCardCandidate ?? null)
 	)
 
 	const charVocabPath = encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir, encoder.charVocab) : null
