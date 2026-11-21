@@ -20,7 +20,7 @@ export interface Closable {
 /**
  * Closes the handle a pending open resolves to, and ignores an open that failed.
  */
-export function closeWhenOpen(opening: Promise<Closable> | null | undefined): void {
+function closeWhenOpen(opening: Promise<Closable> | null | undefined): void {
 	opening?.then(
 		(handle) => handle.close(),
 		() => {}

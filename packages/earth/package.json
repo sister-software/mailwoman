@@ -74,6 +74,7 @@
 		"@math.gl/core": "^4.1.0",
 		"@math.gl/geospatial": "^4.1.0",
 		"@sister.software/h3": "^1.1.0",
+		"async-init": "^2.0.0",
 		"mailwoman": "workspace:*",
 		"maplibre-gl": "^6.16.0",
 		"onnxruntime-web": "1.31.1",

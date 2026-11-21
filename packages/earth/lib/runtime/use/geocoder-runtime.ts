@@ -30,6 +30,7 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
+import { AbortKind, AbortReason } from "@mailwoman/core/abort"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import type {
@@ -62,6 +63,7 @@ import {
 } from "@mailwoman/resolver-wof-wasm/remote/street"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
+import type { ServiceRegistry } from "async-init"
 import { parseStageLabelsFor, projectCascadeHits, runClassifyStage } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
@@ -69,12 +71,7 @@ import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-runtime/postcode-fallback"
-import {
-	HOSTED_STREET_SLUGS,
-	NATIONAL_STREET_SLUGS,
-	regionToStateSlug,
-	wofPolygonsURL,
-} from "mailwoman/browser-runtime/resources"
+import { HOSTED_STREET_SLUGS, NATIONAL_STREET_SLUGS, regionToStateSlug } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 // The binary that `onnxruntime-web/wasm` instantiates.
 // Vite emits one file for this import and for the bundle's own reference.
@@ -83,10 +80,10 @@ import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
-import { type Gazetteer, openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam, pageTilesetParam } from "#routes"
-import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
-import { ClosingLRU, closeWhenOpen } from "#runtime/closing-lru"
+import type { PolygonDB } from "#runtime/basemap"
+import { ClosingLRU } from "#runtime/closing-lru"
+import { createPageScope, GazetteerService, PolygonDatabaseService, retireFailedHandle } from "#runtime/page-services"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { loadPointReader } from "#runtime/point/point-reader"
 import { OPEN_STREET_EXTRACT_LIMIT, openStreetLookups, type StreetLookups } from "#runtime/street-lookups"
@@ -457,32 +454,45 @@ export function useGeocoderRuntime({
 	// The cache is state rather than a ref so a landed polygon rebuilds `resolveMapPlace`
 	// through `useGeocode`'s mapPlace memo.
 	// Value `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
-	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
-	// The gazetteer handle a `wof:` query reads the containment chain through, opened on the first such query.
-	const gazetteerRef = useRef<Promise<Gazetteer> | null>(null)
+	// The page's range-read handles for this runtime base: the polygon file and the gazetteer a `wof:` query reads.
+	const pageScopeRef = useRef<ServiceRegistry | null>(null)
+
+	/**
+	 * The scope of the page's range-read handles, created on the first read after a mount or a base change.
+	 */
+	const pageScope = useCallback(
+		(): ServiceRegistry => (pageScopeRef.current ??= createPageScope(sqliteRuntimeBaseURL)),
+		[sqliteRuntimeBaseURL]
+	)
 
 	// URLs are version-scoped, so reset polygon state on version change.
-	// The cleanup also runs on unmount, ending the polygon file's range worker.
+	// The cleanup closes the polygon file's range worker, and the next read opens it again.
 	useEffect(() => {
-		polygonDBRef.current = null
 		polygonInflightRef.current = new Set()
 		// oxlint-disable-next-line react/set-state-in-effect -- Polygon IDs and cached geometry are scoped to the selected release.
 		setPolygonCache(new Map())
 
-		return () => closeWhenOpen(polygonDBRef.current)
+		return () => {
+			// The scope may already be disposed, as on unmount, and its disposal closes the file too.
+			void pageScopeRef.current
+				?.invalidate(PolygonDatabaseService, new AbortReason(AbortKind.Superseded))
+				.catch(() => {})
+		}
 	}, [rt.selectedVersion])
 
 	// Each range-read handle opened from this runtime base is closed when the base changes or the map unmounts.
-	useEffect(() => {
-		gazetteerRef.current = null
+	useEffect(
+		() => () => {
+			const scope = pageScopeRef.current
 
-		return () => {
+			pageScopeRef.current = null
 			streetLookups.clear()
-			closeWhenOpen(gazetteerRef.current?.then(({ database }) => ({ close: () => database.close?.() })))
-		}
-	}, [sqliteRuntimeBaseURL, streetLookups])
+			void scope?.dispose()
+		},
+		[sqliteRuntimeBaseURL, streetLookups]
+	)
 
 	/**
 	 * The boundary file, opened once.
@@ -491,21 +501,10 @@ export function useGeocoderRuntime({
 	 *
 	 * A failed open is forgotten so the next read tries again.
 	 */
-	const ensurePolygonDB = useCallback((): Promise<PolygonDB> => {
-		if (!polygonDBRef.current) {
-			const loading = loadPolygonDB(wofPolygonsURL(), sqliteRuntimeBaseURL)
-
-			polygonDBRef.current = loading
-
-			loading.catch(() => {
-				if (polygonDBRef.current === loading) {
-					polygonDBRef.current = null
-				}
-			})
-		}
-
-		return polygonDBRef.current
-	}, [sqliteRuntimeBaseURL])
+	const ensurePolygonDB = useCallback(
+		(): Promise<PolygonDB> => pageScope().resolve(PolygonDatabaseService),
+		[pageScope]
+	)
 
 	/**
 	 * A `wof:` query's place, from the containment chain and the release's polygon.
@@ -514,24 +513,14 @@ export function useGeocoderRuntime({
 	 */
 	const readWOF = useCallback(
 		async (id: number): Promise<ResolvedPlaceView> => {
-			gazetteerRef.current ??= openGazetteer(sqliteRuntimeBaseURL)
-
-			const opening = gazetteerRef.current
-
-			opening.catch(() => {
-				if (gazetteerRef.current === opening) {
-					gazetteerRef.current = null
-				}
-			})
-
-			const [gazetteer, polygons] = await Promise.all([opening, ensurePolygonDB()])
+			const [gazetteer, polygons] = await Promise.all([pageScope().resolve(GazetteerService), ensurePolygonDB()])
 			const { place, geometry } = await readWOFPlace(gazetteer, id, polygons)
 
 			setPolygonCache((prev) => new Map(prev).set(id, geometry))
 
 			return place
 		},
-		[ensurePolygonDB, sqliteRuntimeBaseURL]
+		[ensurePolygonDB, pageScope]
 	)
 
 	const ensureStreetLookups = useCallback(
@@ -937,14 +926,23 @@ export function useGeocoderRuntime({
 					const placeID = candidate.id
 
 					void (async () => {
+						let database: PolygonDB | null = null
+
 						try {
-							const geom = await (await polygons).get(placeID)
+							database = await polygons
+
+							const geom = await database.get(placeID)
+
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
 						} catch (error) {
 							console.error("Crisp polygon unavailable; falling back to bbox", error)
 
 							setPolygonCache((prev) => new Map(prev).set(placeID, null))
-							polygonDBRef.current = null
+
+							// A failed open has no handle, and the registry already forgot it.
+							if (database) {
+								retireFailedHandle(pageScope(), PolygonDatabaseService, database, error)
+							}
 						} finally {
 							polygonInflightRef.current.delete(placeID)
 						}
@@ -954,7 +952,7 @@ export function useGeocoderRuntime({
 
 			return place
 		},
-		[ensurePolygonDB, polygonCache]
+		[ensurePolygonDB, pageScope, polygonCache]
 	)
 
 	const traceParse = useCallback(
