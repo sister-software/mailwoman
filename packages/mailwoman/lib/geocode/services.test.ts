@@ -57,6 +57,8 @@ test("a generation scope reads the process services from its parent, and shadows
 
 	const generation = process.createChild()
 
+	// A session registers both sets on its own scope, and the parent's process services win.
+	registerProcessServices(generation, options)
 	registerGenerationServices(generation, options, settings)
 
 	const inherited = generation
@@ -65,6 +67,36 @@ test("a generation scope reads the process services from its parent, and shadows
 		.map((service) => service.token)
 
 	expect(new Set(inherited)).toEqual(new Set([ClassifierService, ResolverModuleService]))
+})
+
+test("a service the parent scope substitutes is read by the services that need it, and its own chain never builds", async () => {
+	await using parent = new ServiceRegistry()
+
+	// The session's `candidate-db` needs the selection.
+	// The selection takes a lease on the data root.
+	parent.define(GenerationServices.candidateDB, { build: () => null })
+
+	const generation = parent.createChild()
+	const built: string[] = []
+
+	generation.subscribe((event) => {
+		if (event.type === "resolve-start") {
+			built.push(event.token.description)
+		}
+	})
+
+	registerProcessServices(generation, options)
+	registerGenerationServices(generation, options, geocodeSessionSettings({ ...options, capitalTier: "off" }))
+
+	// `capitals` declares a need on `candidate-db` and on no other service.
+	await expect(generation.resolve(GenerationServices.capitals)).resolves.toBeNull()
+
+	expect(built).toEqual(["capitals"])
+
+	const states = new Map(generation.graph().map((service) => [service.token, service]))
+
+	expect(states.get(GenerationServices.candidateDB)).toMatchObject({ inherited: true, state: "ready" })
+	expect(states.get(GenerationServices.selection)).toMatchObject({ inherited: false, state: "idle" })
 })
 
 test("recordServiceTimings writes each built service's duration under its token's description", async () => {

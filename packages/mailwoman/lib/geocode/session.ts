@@ -367,18 +367,24 @@ export interface GeocodeRequestOptions {
 }
 
 /**
- * The scopes a session builds from.
+ * The scope a session builds from.
  */
 export interface GeocodeSessionScope {
 	/**
-	 * A process scope from {@link createGeocodeProcessScope}, which the session
-	 * reads its classifier and resolver module from.
+	 * A scope whose services the session reads in place of building its own.
 	 *
-	 * The session then disposes only its own generation services and leaves the scope's services loaded.
+	 * The session registers its services in a child of this scope, and skips each
+	 * service the scope already provides.
+	 * A process scope from {@link createGeocodeProcessScope} provides the classifier and the resolver module.
 	 *
-	 * Absent, the session builds its own process services and disposes them with itself.
+	 * A scope may provide any other service too, such as a resolver backend a test substitutes,
+	 * by defining it under its token in `GenerationServices`.
+	 *
+	 * The session disposes only the services it built and leaves the parent's services loaded.
+	 *
+	 * Absent, the session builds every service and disposes them with itself.
 	 */
-	process?: ServiceRegistry
+	parent?: ServiceRegistry
 }
 
 /**
@@ -476,15 +482,12 @@ export async function createGeocodeSession(
 	const settings = geocodeSessionSettings(options)
 	const timings: ServiceTimings = {}
 
-	// A session without a process scope owns its classifier, so its one registry holds both scopes.
-	const registry = scope.process ? scope.process.createChild() : new ServiceRegistry()
+	// Each registration skips a service the parent scope provides.
+	// A session without a parent therefore owns its classifier, and its one registry holds both scopes.
+	const registry = scope.parent ? scope.parent.createChild() : new ServiceRegistry()
 
 	recordServiceTimings(registry, timings)
-
-	if (!scope.process) {
-		registerProcessServices(registry, options)
-	}
-
+	registerProcessServices(registry, options)
 	registerGenerationServices(registry, options, settings)
 
 	progress("Loading the gazetteer, neural model and data layers…")

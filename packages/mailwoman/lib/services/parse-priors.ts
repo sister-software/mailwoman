@@ -12,6 +12,7 @@ import { createToken, type ServiceRegistry, type ServiceToken } from "async-init
 
 import type { LoadParsePriorsOptions, ParsePriorArtifacts, ParsePriors } from "#geocode/parse-priors"
 import { ClassifierService } from "#services/classifier"
+import { defineUnlessProvided } from "#services/define"
 
 /**
  * The parse priors and the artifact paths they were read from.
@@ -42,7 +43,7 @@ export const ParsePriorsService: ServiceToken<LoadedParsePriors> = createToken("
  * The routed classifier's primary model exposes those paths.
  */
 export function registerShippedParsePriorArtifacts(registry: ServiceRegistry): void {
-	registry.define(ParsePriorArtifactsService, {
+	defineUnlessProvided(registry, ParsePriorArtifactsService, {
 		needs: { routed: ClassifierService },
 		build: ({ routed }): ParsePriorArtifacts => routed.primary,
 	})
@@ -54,7 +55,7 @@ export function registerShippedParsePriorArtifacts(registry: ServiceRegistry): v
  * @param load Which priors to load and how to report a missing artifact.
  */
 export function registerParsePriorsService(registry: ServiceRegistry, load: LoadParsePriorsOptions): void {
-	registry.define(ParsePriorsService, {
+	defineUnlessProvided(registry, ParsePriorsService, {
 		needs: { artifacts: ParsePriorArtifactsService },
 		build: async ({ artifacts }) => {
 			const { loadParsePriors } = await import("#geocode/parse-priors")
