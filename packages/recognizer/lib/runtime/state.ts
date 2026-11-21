@@ -147,7 +147,7 @@ function activateDefault(): Instance {
  * The call is never required: the first recognition instantiates the package's binary synchronously.
  *
  * Use it to preload during startup or to supply the binary where synchronous compilation is refused:
- * pass a compiled `module`, or `bytes`, the contents of `@mailwoman/recognizer/wasm/recognize.wasm`.
+ * pass a compiled `module`, or `bytes`, the contents of `@mailwoman/recognizer/wasm/recognizer.wasm`.
  * With no source it initializes from the package's own binary.
  *
  * When the engine is already live, any source resolves immediately.
@@ -176,7 +176,7 @@ export function init(options: InitOptions = {}): Promise<void> {
 	switch (state.kind) {
 		case "poisoned":
 			return Promise.reject(
-				new RecognizeRuntimeError("the recognize WebAssembly instance trapped and cannot be reused", {
+				new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 					cause: state.cause,
 				})
 			)
@@ -247,7 +247,7 @@ export function ready(): Instance {
 	if (live !== null) return live
 
 	if (state.kind === "poisoned") {
-		throw new RecognizeRuntimeError("the recognize WebAssembly instance trapped and cannot be reused", {
+		throw new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 			cause: state.cause,
 		})
 	}
@@ -280,7 +280,7 @@ export function trapped(error: unknown): unknown {
 		state = { kind: "poisoned", cause: error }
 		live = null
 
-		return new RecognizeRuntimeError("the recognize WebAssembly instance trapped and cannot be reused", {
+		return new RecognizeRuntimeError("the recognizer WebAssembly instance trapped and cannot be reused", {
 			cause: error,
 		})
 	}

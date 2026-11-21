@@ -143,7 +143,7 @@ export default defineConfig({
 			// The license and gazetteer Workers' tests require the Workers pool and run separately in CI.
 			"**/license-worker/**/*.test.ts",
 			"**/gazetteer-worker/**/*.test.ts",
-			// The recognize engine's first-call tests run in Chromium and under the Workers pool, each from its own config.
+			// The recognizer engine's first-call tests run in Chromium and under the Workers pool, each from its own config.
 			"**/recognizer/**/*.browser.test.ts",
 			"**/recognizer/**/*.workers.test.ts",
 			// The same holds for the recognizer the parse pipeline reads.

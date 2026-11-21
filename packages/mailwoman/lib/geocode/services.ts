@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The services a geocode session composes, registered on an `async-init` `ServiceRegistry`.
+ *   The services a geocode session composes, defined on an `async-init` `ServiceRegistry`.
  *
  *   The services sit in two scopes.
  *   The process scope holds the neural classifier and the resolver module.
@@ -15,9 +15,11 @@
  *   A server keeps one process scope and builds a child generation scope per data generation,
  *   so a reload neither reloads the model nor holds two copies of it.
  *
- *   Each service's factory awaits the services it reads, so independent services resolve in parallel.
- *   The registry disposes its services in the reverse of their registration order.
- *   The selection lease, registered first, is released last.
+ *   Each service declares the services it needs, and the registry resolves those first.
+ *   Independent services therefore build in parallel.
+ *
+ *   The registry disposes a service after every service built from it.
+ *   Every service that reads the selection needs it, so the selection lease is released last.
  */
 
 import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
@@ -26,7 +28,7 @@ import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import type { ServiceRegistry } from "async-init"
+import { createToken, type ServiceGraphNode, ServiceRegistry, type ServiceToken } from "async-init"
 import { resolvePath } from "path-ts"
 
 import type { LayerCatalog } from "#data/catalog"
@@ -51,10 +53,17 @@ import {
 	resolveWOFDatabasePaths,
 } from "#resolver-backend"
 import { ClassifierService, registerClassifierService } from "#services/classifier"
-import { ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
-import { need, noInputs, provide, type ServiceKey, serviceKey, type ServiceTimings } from "#services/registry"
+import { ParsePriorArtifactsService, ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
 
 type ResolverModule = typeof import("@mailwoman/resolver-wof-sqlite")
+
+type ActiveSelection = Awaited<ReturnType<typeof holdActiveSelection>>
+
+type ResolverBackend = Awaited<ReturnType<typeof createResolverBackend>>
+
+type BANRegionDatabases = Awaited<ReturnType<typeof openBANRegionDatabases>>
+
+type OSMRegionDatabases = Awaited<ReturnType<typeof openOSMRegionDatabases>>
 
 /**
  * Releases a value that's a disposable handle or `null`.
@@ -67,32 +76,41 @@ function disposeHandle(handle: Disposable | null | undefined): void {
  * The token of the resolver module.
  *
  * The process scope holds it beside {@link ClassifierService}.
+ *
+ * A caller that builds its own scope registers a service under this token.
+ *
+ * @public
  */
-export const ResolverModuleService = serviceKey<ResolverModule>("resolver-module")
+export const ResolverModuleService: ServiceToken<ResolverModule> = createToken("resolver-module")
 
 /**
- * The tokens of the generation scope, besides {@link ParsePriorsService}.
+ * The tokens of the generation scope, besides {@link ParsePriorArtifactsService}
+ * and {@link ParsePriorsService}.
+ *
+ * A caller reads a session's service, or substitutes one in a child scope, by its token here.
+ *
+ * @public
  */
 export const GenerationServices = {
-	selection: serviceKey<Awaited<ReturnType<typeof holdActiveSelection>>>("selection"),
-	candidateDB: serviceKey<string | null>("candidate-db"),
-	wofPaths: serviceKey<string[]>("wof-paths"),
-	lookup: serviceKey<Awaited<ReturnType<typeof createResolverBackend>>>("resolver-backend"),
-	capitals: serviceKey<Awaited<ReturnType<typeof capitalIndexFor>>>("capitals"),
-	regionDatabases: serviceKey<USStateDatabaseProvider>("region-databases"),
-	explicitAddressPoints: serviceKey<InstanceType<ResolverModule["AddressPointSqliteLookup"]> | null>(
+	selection: createToken<ActiveSelection>("selection"),
+	candidateDB: createToken<string | null>("candidate-db"),
+	wofPaths: createToken<string[]>("wof-paths"),
+	lookup: createToken<ResolverBackend>("resolver-backend"),
+	capitals: createToken<Awaited<ReturnType<typeof capitalIndexFor>>>("capitals"),
+	regionDatabases: createToken<USStateDatabaseProvider>("region-databases"),
+	explicitAddressPoints: createToken<InstanceType<ResolverModule["AddressPointSqliteLookup"]> | null>(
 		"explicit-address-points"
 	),
-	explicitInterpolation: serviceKey<InstanceType<ResolverModule["StreetInterpolator"]> | null>(
+	explicitInterpolation: createToken<InstanceType<ResolverModule["StreetInterpolator"]> | null>(
 		"explicit-interpolation"
 	),
-	ban: serviceKey<Awaited<ReturnType<typeof openBANRegionDatabases>>>("ban"),
-	overture: serviceKey<OvertureNationalDatabaseProvider>("overture"),
-	osm: serviceKey<Awaited<ReturnType<typeof openOSMRegionDatabases>>>("osm"),
-	classifyKind: serviceKey<NonNullable<GeocodeDeps["classifyKind"]>>("kind-classifier"),
-	placer: serviceKey<CoarsePlacer | null>("coarse-placer"),
-	forkEntity: serviceKey<ForkEntityProbe>("fork-entity"),
-	layerRoutes: serviceKey<LayerRoutes>("layer-routes"),
+	ban: createToken<BANRegionDatabases>("ban"),
+	overture: createToken<OvertureNationalDatabaseProvider>("overture"),
+	osm: createToken<OSMRegionDatabases>("osm"),
+	classifyKind: createToken<NonNullable<GeocodeDeps["classifyKind"]>>("kind-classifier"),
+	placer: createToken<CoarsePlacer | null>("coarse-placer"),
+	forkEntity: createToken<ForkEntityProbe>("fork-entity"),
+	layerRoutes: createToken<LayerRoutes>("layer-routes"),
 } as const
 
 /**
@@ -103,20 +121,21 @@ export const GenerationServices = {
  */
 export function registerProcessServices(
 	registry: ServiceRegistry,
-	options: Pick<GeocodeSessionOptions, "locale" | "dataRoot" | "weightsCacheRoot">,
-	timings: ServiceTimings = {}
+	options: Pick<GeocodeSessionOptions, "locale" | "dataRoot" | "weightsCacheRoot">
 ): void {
-	registerClassifierService(registry, options, timings)
+	registerClassifierService(registry, options)
 
-	provide(registry, timings, ResolverModuleService, noInputs, async () => {
-		try {
-			return await import("@mailwoman/resolver-wof-sqlite")
-		} catch {
-			throw new CommandError(
-				"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
-					"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
-			)
-		}
+	registry.define(ResolverModuleService, {
+		build: async () => {
+			try {
+				return await import("@mailwoman/resolver-wof-sqlite")
+			} catch {
+				throw new CommandError(
+					"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
+						"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
+				)
+			}
+		},
 	})
 }
 
@@ -146,143 +165,108 @@ async function resolveWOFPath(
 export function registerGenerationServices(
 	registry: ServiceRegistry,
 	options: GeocodeSessionOptions,
-	settings: GeocodeSessionSettings,
-	timings: ServiceTimings = {}
+	settings: GeocodeSessionSettings
 ): void {
 	const S = GenerationServices
-	const get = <T>(key: ServiceKey<T>) => need(registry, key)
-	const catalog = async () => (await get(S.selection)).catalog
 
 	// A session reading an active selection holds a lease on its generation,
 	// so a prune keeps those artifacts until the session is disposed.
 	// A data root with no selection takes no lease and receives no write.
 	// Every service below reads this one snapshot, so the session reads one generation throughout.
-	provide(
-		registry,
-		timings,
-		S.selection,
-		noInputs,
-		() => holdActiveSelection(options.dataRoot),
-		(selection) => disposeHandle(selection.lease)
-	)
+	registry.define(S.selection, {
+		build: () => holdActiveSelection(options.dataRoot),
+		release: (selection) => disposeHandle(selection.lease),
+	})
 
-	provide(registry, timings, S.candidateDB, catalog, (snapshot) =>
-		resolveCandidateDBPath(options.candidateDB, options.dataRoot, snapshot)
-	)
+	registry.define(S.candidateDB, {
+		needs: { selection: S.selection },
+		build: ({ selection }) => resolveCandidateDBPath(options.candidateDB, options.dataRoot, selection.catalog),
+	})
 
-	provide(
-		registry,
-		timings,
-		S.wofPaths,
-		() => allKeyed({ candidateDB: get(S.candidateDB), catalog: catalog() }),
-		({ candidateDB, catalog: snapshot }) => (candidateDB ? [] : resolveWOFPath(options, snapshot))
-	)
+	registry.define(S.wofPaths, {
+		needs: { candidateDB: S.candidateDB, selection: S.selection },
+		build: ({ candidateDB, selection }) => (candidateDB ? [] : resolveWOFPath(options, selection.catalog)),
+	})
 
-	registerParsePriorsService(
-		registry,
-		{
-			// The FSTs the active selection lists, else the files beside the weights.
-			select: async (primary) =>
-				selectedParsePriorArtifacts(primary, options.locale, options.dataRoot, await catalog()),
-			load: {
-				gazetteerPrior: settings.gazetteerPrior,
-				venueHeadPrior: settings.venueHeadPrior,
-				label: `locale ${options.locale}`,
-			},
+	// The FSTs the active selection lists, else the files beside the weights.
+	registry.define(ParsePriorArtifactsService, {
+		needs: { routed: ClassifierService, selection: S.selection },
+		build: ({ routed, selection }) =>
+			selectedParsePriorArtifacts(routed.primary, options.locale, options.dataRoot, selection.catalog),
+	})
+
+	registerParsePriorsService(registry, {
+		gazetteerPrior: settings.gazetteerPrior,
+		venueHeadPrior: settings.venueHeadPrior,
+		label: `locale ${options.locale}`,
+	})
+
+	registry.define(S.lookup, {
+		needs: {
+			mod: ResolverModuleService,
+			candidateDB: S.candidateDB,
+			wofPaths: S.wofPaths,
+			selection: S.selection,
 		},
-		timings
-	)
-
-	provide(
-		registry,
-		timings,
-		S.lookup,
-		() =>
-			allKeyed({
-				mod: get(ResolverModuleService),
-				candidateDB: get(S.candidateDB),
-				wofPaths: get(S.wofPaths),
-				catalog: catalog(),
-			}),
-		({ mod, candidateDB, wofPaths, catalog: snapshot }) =>
+		build: ({ mod, candidateDB, wofPaths, selection }) =>
 			createResolverBackend(mod, {
 				candidateDB,
-				catalog: snapshot,
+				catalog: selection.catalog,
 				dataRoot: options.dataRoot,
 				wofPaths,
 				variantAliasExemption: settings.variantAliasExemption,
 			}),
-		disposeHandle
-	)
+		release: disposeHandle,
+	})
 
-	provide(
-		registry,
-		timings,
-		S.capitals,
-		() => get(S.candidateDB),
-		(candidateDB) => capitalIndexFor(settings.capitalTier, candidateDB)
-	)
+	registry.define(S.capitals, {
+		needs: { candidateDB: S.candidateDB },
+		build: ({ candidateDB }) => capitalIndexFor(settings.capitalTier, candidateDB),
+	})
 
-	provide(
-		registry,
-		timings,
-		S.regionDatabases,
-		() => allKeyed({ mod: get(ResolverModuleService), catalog: catalog() }),
-		({ mod, catalog: snapshot }) => USStateDatabaseProvider.create(mod, options.dataRoot, snapshot),
-		disposeHandle
-	)
+	registry.define(S.regionDatabases, {
+		needs: { mod: ResolverModuleService, selection: S.selection },
+		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
+		release: disposeHandle,
+	})
 
 	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
 
-	provide(
-		registry,
-		timings,
-		S.explicitAddressPoints,
-		() => get(ResolverModuleService),
-		(mod) =>
+	registry.define(S.explicitAddressPoints, {
+		needs: { mod: ResolverModuleService },
+		build: ({ mod }) =>
 			options.addressPointsDB
 				? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAddressPointLocale })
 				: null,
-		disposeHandle
-	)
+		release: disposeHandle,
+	})
 
-	provide(
-		registry,
-		timings,
-		S.explicitInterpolation,
-		() => get(ResolverModuleService),
-		(mod) => (options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null),
-		disposeHandle
-	)
+	registry.define(S.explicitInterpolation, {
+		needs: { mod: ResolverModuleService },
+		build: ({ mod }) =>
+			options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null,
+		release: disposeHandle,
+	})
 
-	provide(
-		registry,
-		timings,
-		S.ban,
-		catalog,
-		(snapshot) => openBANRegionDatabases(options.dataRoot, snapshot),
-		disposeHandle
-	)
+	registry.define(S.ban, {
+		needs: { selection: S.selection },
+		build: ({ selection }) => openBANRegionDatabases(options.dataRoot, selection.catalog),
+		release: disposeHandle,
+	})
 
-	provide(
-		registry,
-		timings,
-		S.overture,
-		catalog,
-		(snapshot) => OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), snapshot),
-		disposeHandle
-	)
+	registry.define(S.overture, {
+		needs: { selection: S.selection },
+		build: ({ selection }) => OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), selection.catalog),
+		release: disposeHandle,
+	})
 
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
 	// Each extract the provider left unattached prints its path and reason to stderr,
 	// as the servers print it at startup.
-	provide(
-		registry,
-		timings,
-		S.osm,
-		catalog,
-		async (snapshot) => {
-			const osm = await openOSMRegionDatabases(options.dataRoot, snapshot)
+	registry.define(S.osm, {
+		needs: { selection: S.selection },
+		build: async ({ selection }) => {
+			const osm = await openOSMRegionDatabases(options.dataRoot, selection.catalog)
 
 			for (const line of unattachedLayerLines({ osm })) {
 				console.error(line)
@@ -290,45 +274,67 @@ export function registerGenerationServices(
 
 			return osm
 		},
-		disposeHandle
-	)
-
-	provide(registry, timings, S.classifyKind, noInputs, async () => {
-		const locale = options.locale ?? "en-US"
-		const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
-		const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
-
-		return (input, shape) =>
-			classify(input, shape, { locale, confidence: 1, alternatives: [], script: [], evidence: null, source: "caller" })
+		release: disposeHandle,
 	})
 
-	provide(registry, timings, S.placer, noInputs, () =>
-		options.placeCountry
-			? loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
-			: null
-	)
+	registry.define(S.classifyKind, {
+		build: async () => {
+			const locale = options.locale ?? "en-US"
+			const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
+			const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
 
-	provide(
-		registry,
-		timings,
-		S.forkEntity,
-		catalog,
-		(snapshot) => loadForkEntityDeps(options, snapshot),
-		(probe) => disposeHandle(probe.handle)
-	)
+			return (input, shape) =>
+				classify(input, shape, {
+					locale,
+					confidence: 1,
+					alternatives: [],
+					script: [],
+					evidence: null,
+					source: "caller",
+				})
+		},
+	})
 
-	provide(
-		registry,
-		timings,
-		S.layerRoutes,
-		catalog,
-		(snapshot) => loadLayerRoutes(options, snapshot),
-		(routes) => {
+	registry.define(S.placer, {
+		build: () =>
+			options.placeCountry
+				? loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
+				: null,
+	})
+
+	registry.define(S.forkEntity, {
+		needs: { selection: S.selection },
+		build: ({ selection }) => loadForkEntityDeps(options, selection.catalog),
+		release: (probe) => disposeHandle(probe.handle),
+	})
+
+	registry.define(S.layerRoutes, {
+		needs: { selection: S.selection },
+		build: ({ selection }) => loadLayerRoutes(options, selection.catalog),
+		release: (routes) => {
 			for (const route of Object.values(routes)) {
 				disposeHandle(route)
 			}
-		}
-	)
+		},
+	})
+}
+
+/**
+ * The services a session with these options would compose, each with the services it declares a need on.
+ *
+ * It registers the process and generation services on a registry of its own and reads the graph.
+ * It builds no service, so it opens no database and loads no weights.
+ */
+export async function describeGeocodeServices(
+	options: GeocodeSessionOptions,
+	settings: GeocodeSessionSettings
+): Promise<ServiceGraphNode[]> {
+	await using registry = new ServiceRegistry()
+
+	registerProcessServices(registry, options)
+	registerGenerationServices(registry, options, settings)
+
+	return registry.graph()
 }
 
 /**
@@ -340,25 +346,24 @@ export function registerGenerationServices(
  */
 export async function resolveGenerationServices(registry: ServiceRegistry) {
 	const S = GenerationServices
-	const get = <T>(key: ServiceKey<T>) => need(registry, key)
 
 	return allKeyed({
-		routed: get(ClassifierService),
-		selection: get(S.selection),
-		candidateDB: get(S.candidateDB),
-		parsePriors: get(ParsePriorsService),
-		lookup: get(S.lookup),
-		capitals: get(S.capitals),
-		regionDatabases: get(S.regionDatabases),
-		explicitAddressPoints: get(S.explicitAddressPoints),
-		explicitInterpolation: get(S.explicitInterpolation),
-		ban: get(S.ban),
-		overture: get(S.overture),
-		osm: get(S.osm),
-		classifyKind: get(S.classifyKind),
-		placer: get(S.placer),
-		forkEntity: get(S.forkEntity),
-		layerRoutes: get(S.layerRoutes),
+		routed: registry.resolve(ClassifierService),
+		selection: registry.resolve(S.selection),
+		candidateDB: registry.resolve(S.candidateDB),
+		parsePriors: registry.resolve(ParsePriorsService),
+		lookup: registry.resolve(S.lookup),
+		capitals: registry.resolve(S.capitals),
+		regionDatabases: registry.resolve(S.regionDatabases),
+		explicitAddressPoints: registry.resolve(S.explicitAddressPoints),
+		explicitInterpolation: registry.resolve(S.explicitInterpolation),
+		ban: registry.resolve(S.ban),
+		overture: registry.resolve(S.overture),
+		osm: registry.resolve(S.osm),
+		classifyKind: registry.resolve(S.classifyKind),
+		placer: registry.resolve(S.placer),
+		forkEntity: registry.resolve(S.forkEntity),
+		layerRoutes: registry.resolve(S.layerRoutes),
 	})
 }
 

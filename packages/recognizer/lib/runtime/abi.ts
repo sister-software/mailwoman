@@ -2,40 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The C ABI `crates/recognize-wasm` exports.
+ *   The C ABI `crates/recognizer-wasm` exports.
  */
 
 /**
  * The ABI version this loader implements.
- * It equals `ABI_VERSION` in `crates/recognize-wasm`.
+ * It equals `ABI_VERSION` in `crates/recognizer-wasm`.
  */
 export const ABI_VERSION = 6
 
 /**
- * The words of one prefix record, equal to `PREFIX_WORDS` in `crates/recognize-wasm`:
+ * The words of one prefix record, equal to `PREFIX_WORDS` in `crates/recognizer-wasm`:
  * the family's handle, the shape's position in the family's shape table and the status word.
  */
 export const PREFIX_WORDS = 3
 
 /**
- * The prefix status words, in the order of `PrefixStatus` in `crates/recognize-core/src/prefix.rs`.
+ * The prefix status words, in the order of `PrefixStatus` in `crates/recognizer-core/src/prefix.rs`.
  */
 export const PREFIX_STATUSES = ["dead", "viable", "accepted", "accepted_and_extendable", "unknown"] as const
 
 /**
  * The `rcg_structure` argument that asks for no known formats, equal to
- * `NO_FAMILY` in `crates/recognize-wasm`.
+ * `NO_FAMILY` in `crates/recognizer-wasm`.
  */
 export const NO_FAMILY = 0xff_ff_ff_ff
 
 /**
  * The words of one known-format hit in a structure result, equal to `KNOWN_FORMAT_WORDS`
- * in `crates/recognize-wasm`: the kind, the shape's position, the start and the end.
+ * in `crates/recognizer-wasm`: the kind, the shape's position, the start and the end.
  */
 export const KNOWN_FORMAT_WORDS = 4
 
 /**
- * The kind of a known-format hit, equal to `HitKind` in `crates/recognize-core/src/known_formats.rs`.
+ * The kind of a known-format hit, equal to `HitKind` in `crates/recognizer-core/src/known_formats.rs`.
  */
 export const HitKind = {
 	Token: 0,
@@ -45,8 +45,8 @@ export const HitKind = {
 
 /**
  * The words before the first token of a structure result, equal to `STRUCTURE_HEADER_WORDS`
- * in `crates/recognize-wasm`: the token, segment and region counts, then the
- * codepoint count of each of the ten scripts.
+ * in `crates/recognizer-wasm`: the token, segment and region counts,
+ * then the codepoint count of each of the ten scripts.
  */
 export const STRUCTURE_HEADER_WORDS = 13
 
@@ -62,7 +62,7 @@ export const TOKEN_WORDS = 3
 export const SEGMENT_WORDS = 3
 
 /**
- * The words of one result record, equal to `RECORD_WORDS` in `crates/recognize-wasm`.
+ * The words of one result record, equal to `RECORD_WORDS` in `crates/recognizer-wasm`.
  *
  * In order: the family's handle, the shape's position in the family's shape table, the start
  * and the end as UTF-8 byte offsets, the status, and the offset and the length of the record's JSON.
@@ -70,7 +70,7 @@ export const SEGMENT_WORDS = 3
 export const RECORD_WORDS = 7
 
 /**
- * The status words of a result record, equal to `recognize_wasm::status`.
+ * The status words of a result record, equal to `recognizer_wasm::status`.
  */
 export const Status = {
 	Unvalidated: 0,
@@ -124,7 +124,7 @@ export interface Exports {
 }
 
 /**
- * The error codes `rcg_error_code` answers, equal to `recognize_wasm::code`.
+ * The error codes `rcg_error_code` answers, equal to `recognizer_wasm::code`.
  */
 export const ErrorCode = {
 	Artifact: 1,
@@ -136,6 +136,6 @@ export const ErrorCode = {
 } as const
 
 /**
- * The most families one instance loads, equal to `MAX_FAMILIES` in `crates/recognize-wasm`.
+ * The most families one instance loads, equal to `MAX_FAMILIES` in `crates/recognizer-wasm`.
  */
 export const MAX_FAMILIES = 32

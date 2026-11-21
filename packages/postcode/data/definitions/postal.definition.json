@@ -1,5 +1,5 @@
 {
-	"format": "mailwoman.recognize.family-definition",
+	"format": "mailwoman.recognizer.family-definition",
 	"version": 1,
 	"family": "postal",
 	"generator": "node packages/postcode/tools/generate.run.ts",

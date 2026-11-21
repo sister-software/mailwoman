@@ -26,7 +26,7 @@
  *     with the byte-to-UTF-16 conversion.
  *   - `structure`: the `rcg_structure` call and the objects built from its binary result.
  *
- *   The native split of `call` is `crates/recognize-wasm/examples/stages.rs`.
+ *   The native split of `call` is `crates/recognizer-wasm/examples/stages.rs`.
  *   The first version of this tool timed a serialized JSON document, and so also had stages `read`
  *   (the copy out of linear memory) and `decode` (`JSON.parse`), which the binary records removed.
  *

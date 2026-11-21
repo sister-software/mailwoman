@@ -1,0 +1,15 @@
+[package]
+name = "recognizer-wasm"
+description = "The C-ABI WebAssembly adapter over recognizer-core that @mailwoman/recognizer's TypeScript loader calls."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[lib]
+# `cdylib` is the WebAssembly module. `rlib` lets `cargo test` link the exports natively.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+recognizer-core = { path = "../recognizer-core" }
+serde_json = "1"
