@@ -300,6 +300,9 @@ function mixedSourceComponent(description: MixedLayerDescription, source: MixedL
 			...property("mailwoman:attributionText", source.attributionText),
 			...property("mailwoman:shareAlike", source.shareAlike),
 			...property("mailwoman:obligationClass", source.obligationClass),
+			...source.obligations.flatMap((entry) =>
+				property(`mailwoman:obligation:${entry.obligation}`, `${entry.strength}: ${entry.quote}`)
+			),
 			...property("mailwoman:layerRecordedLicense", source.recordedLicense),
 			...property(
 				"mailwoman:openAddressesAttribution",

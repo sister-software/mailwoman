@@ -159,10 +159,11 @@ describe("readUSAddressSourceAdmission", () => {
 		})
 	})
 
-	it("admits NAD and excludes a run no register row names", async () => {
+	it("excludes NAD, whose disclaimer requires an indemnity, and a run no register row names", async () => {
 		const admission = await readUSAddressSourceAdmission()
 
-		expect(admission("usgov-nad")).toBeNull()
+		// USDOT's NAD Disclaimer requires users to indemnify USDOT, so its decision refuses redistribute-data (#3274).
+		expect(admission("usgov-nad")?.reason).toBe("refused")
 		expect(admission("openaddresses:us/xx/nowhere")?.reason).toBe("no-register-row")
 	})
 })
