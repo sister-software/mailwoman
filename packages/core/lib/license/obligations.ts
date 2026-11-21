@@ -102,6 +102,15 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// The election rests on that publication without a written grant, and a request for one has gone to GEBCO.
 	// The citation is the obligation it records.
 	["LicenseRef-GEBCO-Operator-Election", [LicenseObligation.Attribution]],
+	// The Who's On First records (#3163).
+	// Each repository's `LICENSE.md` requires a link back to that license.
+	// The attribution notice holds the link.
+	// Its sources' grants require their credits.
+	// Wikipedia supplies geometry and populations under CC BY-SA 3.0, hence share-alike.
+	// No record the admin build reads takes geometry or a stored property from
+	// a source the WOF source list types as restricted or non-commercial.
+	// docs/engineering/reference/layer-interface.mdx records the count.
+	["LicenseRef-WhosOnFirst-Mixed", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])
