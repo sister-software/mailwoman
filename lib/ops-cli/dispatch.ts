@@ -62,9 +62,16 @@ import {
 import { writeCIScope } from "#repo-health/actions-output"
 import { type CIReplay, compareCIReplays, replayCIScope } from "#repo-health/ci/replay"
 import { isCITestSuite, runCITests } from "#repo-health/ci/test"
+import { collectRepoContext } from "#repo-health/context"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { importSizesPath, writeImportSizes } from "#repo-health/effects/import-sizes"
-import { writeEffectsRegister } from "#repo-health/effects/register"
+import {
+	diffEffects,
+	effectsOf,
+	effectsSnapshot,
+	formatEffectDifferences,
+	writeEffectsPages,
+} from "#repo-health/effects/register"
 import { lintCodeBlocks } from "#repo-health/markdown/code/block-lint"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
@@ -157,8 +164,11 @@ function usage(io: DispatchIO): number {
 			"  mwops ci-replay --ref <sha> --out <file> [--commits N] [--runs N]   (replay test selection over history)",
 			"  mwops ci-replay --compare <before> <after>                          (pair two replays row by row)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
-			"  mwops effects                    (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
-			"  mwops effects-register           (write docs/engineering/reference/effects-register.mdx and its per-workspace pages)",
+			"  mwops effects [<workspace dir>|<module path>]",
+			"                                   (print what a workspace's or a module's code reads, writes, fetches and launches)",
+			"  mwops effects --out <dir>        (write every workspace's page to a directory)",
+			"  mwops effects --diff <checkout>  (list the effects this checkout adds to and removes from another)",
+			"  mwops effects --census           (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
 			"  mwops side-effects               (write the bytes a bare import of each compiled module keeps to out/repo-health/effects/import-sizes.json)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
@@ -933,35 +943,74 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 		case "ci-replay":
 			return runCIReplay(rest, io)
 		case "effects": {
+			const { options, rest: targets } = parseFlags(rest, {
+				out: { type: "string" },
+				diff: { type: "string" },
+				census: { type: "boolean" },
+			})
+
 			const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
-			const census = await writeEffectCensus(context)
-			const resolved = census.edges.filter((edge) => edge.target).length
-			const byKind = Object.groupBy(census.rows, (row) => row.kind)
 
-			// The written file holds the per-workspace rows.
-			// The terminal shows the totals by kind.
-			io.stdout(
-				prettyJSON({
-					written: effectCensusPath(io.repoRoot),
-					sources: census.sources,
-					edges: census.edges.length,
-					resolved,
-					unresolved: census.edges.length - resolved,
-					kinds: Object.entries(byKind).map(([kind, rows = []]) => ({
-						kind,
-						resolved: rows.reduce((sum, row) => sum + row.resolved, 0),
-						unresolved: rows.reduce((sum, row) => sum + row.unresolved, 0),
-					})),
-				})
-			)
+			const modes =
+				Number(targets.length > 0) +
+				Number(options["out"] != null) +
+				Number(options["diff"] != null) +
+				Number(options["census"] === true)
 
-			return 0
-		}
-		case "effects-register": {
-			const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
-			const result = await writeEffectsRegister(context)
+			if (targets.length > 1 || modes > 1) {
+				io.stderr("mwops effects takes one of: a workspace directory or module path, --out, --diff, --census\n")
 
-			io.stdout(prettyJSON({ pages: result.pages, written: result.stale, removed: result.extra }))
+				return 2
+			}
+
+			if (options["census"]) {
+				const census = await writeEffectCensus(context)
+				const resolved = census.edges.filter((edge) => edge.target).length
+				const byKind = Object.groupBy(census.rows, (row) => row.kind)
+
+				// The written file holds the per-workspace rows.
+				// The terminal shows the totals by kind.
+				io.stdout(
+					prettyJSON({
+						written: effectCensusPath(io.repoRoot),
+						sources: census.sources,
+						edges: census.edges.length,
+						resolved,
+						unresolved: census.edges.length - resolved,
+						kinds: Object.entries(byKind).map(([kind, rows = []]) => ({
+							kind,
+							resolved: rows.reduce((sum, row) => sum + row.resolved, 0),
+							unresolved: rows.reduce((sum, row) => sum + row.unresolved, 0),
+						})),
+					})
+				)
+
+				return 0
+			}
+
+			if (typeof options["diff"] === "string") {
+				const base = await effectsSnapshot(await collectRepoContext(options["diff"]))
+
+				io.stdout(formatEffectDifferences(diffEffects(base, await effectsSnapshot(context))))
+
+				return 0
+			}
+
+			if (typeof options["out"] === "string") {
+				io.stdout(prettyJSON({ pages: await writeEffectsPages(context, options["out"]), directory: options["out"] }))
+
+				return 0
+			}
+
+			const report = await effectsOf(context, targets[0] ?? null)
+
+			if (report == null) {
+				io.stderr(`mwops effects: ${targets[0]} is no workspace group, and no module there holds an effect\n`)
+
+				return 1
+			}
+
+			io.stdout(report)
 
 			return 0
 		}

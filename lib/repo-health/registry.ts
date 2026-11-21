@@ -20,7 +20,6 @@ import { dataProvenanceCheck } from "#repo-health/checks/data-provenance"
 import { debtCheck } from "#repo-health/checks/debt"
 import { docLinkTargetsCheck } from "#repo-health/checks/doc-link-targets"
 import { duplicateExportedShapeCheck } from "#repo-health/checks/duplicate-exported-shape"
-import { effectsRegisterCheck } from "#repo-health/checks/effects-register"
 import { exportNameAffixCheck } from "#repo-health/checks/export-name-affix"
 import { exportsCheck } from "#repo-health/checks/exports"
 import { testOnlyExportsCheck } from "#repo-health/checks/exports/test-only"
@@ -107,7 +106,6 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	debtCheck,
 	bundleGraphCheck,
 	sideEffectsCheck,
-	effectsRegisterCheck,
 	stateColumnWritesCheck,
 	vocabCensusCheck,
 	exportsCheck,

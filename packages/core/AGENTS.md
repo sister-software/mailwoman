@@ -174,9 +174,10 @@ effect-interface call.
 `mwops side-effects` reports the bytes a bare import of each module keeps when every module counts as
 effectful. Those bytes show where an annotation would shrink a bundle.
 
-`docs/engineering/reference/effects-register.mdx` lists each module's import-time effects and runtime
-effect edges, one page per workspace. Regenerate it with `yarn mwops effects-register` after a change
-that adds, removes or moves an effect. The `effects-register` check fails while a page is stale.
+`yarn mwops effects <workspace directory or module path>` prints each module's import-time effects and
+runtime effect edges, read from the source at the moment it runs. The repository keeps no copy of that
+report. `yarn mwops effects --out <directory>` writes every page, and `yarn mwops effects --diff <other
+checkout>` lists the effects this checkout adds to and removes from another.
 
 ## State machines
 
@@ -185,7 +186,7 @@ A lifecycle whose state is stored, such as a ledger column, is declared with `de
 the next state, the columns written with it, and the effects to run after the write. `applyStep`
 writes the step through a carrier's compare-and-set, so a step decided from a state another writer has
 since left fails as a conflict. A machine's `events` table holds one event per case its transition
-distinguishes, and the effects register prints the machine's transition table from it.
+distinguishes, and `yarn mwops effects` prints the machine's transition table from it.
 `packages/license-worker/lib/ledger/machines.ts` holds the first three machines.
 
 ## Core tests and Vite

@@ -86,6 +86,17 @@ jobs:
           CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: yarn mwops ci-scope
 
+      # A pull request's checkout is its merge commit, so the first parent is the base branch.
+      # The step reads both trees' sources and writes what the change adds and removes.
+      # The repository keeps no copy of the effects report, so this summary is where a reviewer reads it.
+      # A failure here leaves the summary without that section and fails no job.
+      - name: Report the effects this change adds and removes
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/effects-base" HEAD^1
+          yarn mwops effects --diff "$RUNNER_TEMP/effects-base" >> "$GITHUB_STEP_SUMMARY"
+
   # This job reports whether a `mailwoman-data` runner is online. A job that targets an offline
   # runner queues for up to 24 hours, so the data legs skip when the fleet is down. They cannot fall
   # back to a hosted runner because their databases exceed its disk.

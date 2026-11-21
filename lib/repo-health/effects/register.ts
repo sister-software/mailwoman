@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The effects register: one generated reference page per workspace, plus an index, listing each
- *   module's import-time effects, its runtime effect edges and the state machines it declares.
+ *   The effects report: one page per workspace, plus an index, listing each module's
+ *   import-time effects, its runtime effect edges and the state machines it declares.
+ *
+ *   The report is computed from the tree on request, by `yarn mwops effects`.
+ *   The repository keeps no copy of it.
+ *
+ *   A committed copy conflicted between branches and went stale on the default branch.
+ *   A pull request's effect changes come from {@linkcode diffEffects} over two checkouts.
  *
  *   The edges come from {@linkcode extractEffectEdges} and the import-time
  *   effects from {@linkcode importTimeEffects}.
@@ -18,15 +24,11 @@
  *   Test selection reads their edges from the census itself.
  */
 
-import { readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { removeFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { MachineEffect, StateMachine } from "@mailwoman/core/state-machine"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { type FormatConfig, format } from "oxfmt"
-import { relative, resolvePath } from "path-ts"
+import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
 
 import type { RepoContext } from "#repo-health/check"
@@ -39,14 +41,9 @@ import { EffectKind } from "#repo-health/effects/interfaces"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
 /**
- * The index page, relative to the repository root.
+ * The index page's file name in a written report.
  */
-const EFFECTS_REGISTER_INDEX = "docs/engineering/reference/effects-register.mdx"
-
-/**
- * The directory that holds one page per workspace, relative to the repository root.
- */
-const EFFECTS_REGISTER_DIRECTORY = "docs/engineering/reference/effects-register"
+const INDEX_PAGE = "index.md"
 
 /**
  * The module that defines the machine helper.
@@ -70,9 +67,16 @@ const KIND_ORDER: readonly EffectKind[] = [
 /**
  * One generated page: its path relative to the repository root and its MDX source.
  */
-export interface RegisterPage {
+interface RegisterPage {
+	/**
+	 * The page's file name in a written report.
+	 */
 	path: string
-	mdx: string
+	/**
+	 * The workspace group the page covers, or `null` for the index.
+	 */
+	group: string | null
+	markdown: string
 }
 
 interface ModuleEntry {
@@ -95,8 +99,11 @@ function code(value: string): string {
 	return `\`${value.replaceAll("`", "'").replaceAll("\n", " ")}\``
 }
 
-function slugOf(group: string): string {
-	return group.replaceAll("/", "-")
+/**
+ * A group's page file name in a written report.
+ */
+function pageOf(group: string): string {
+	return `${group.replaceAll("/", "-")}.md`
 }
 
 function targetOf(edge: EffectEdge): string {
@@ -130,9 +137,12 @@ async function machinesOf(context: RepoContext, file: string): Promise<MachineEn
  * The tracked library and tool modules, each with its edges, import-time effects
  * and whether it calls the helper.
  */
-async function collectModules(context: RepoContext): Promise<ModuleEntry[]> {
+async function collectModules(context: RepoContext, onlyGroup: string | null = null): Promise<ModuleEntry[]> {
 	const paths = (await trackedSourcePaths(context, { existingOnly: true })).filter((path) => {
 		const file = relative(context.repoRoot, path).toString()
+
+		// A lookup of one group parses that group's modules and no others.
+		if (onlyGroup != null && groupOf(file) !== onlyGroup) return false
 
 		return !isTestSource(file) && !/(?:^|\/)test\//u.test(file)
 	})
@@ -193,28 +203,52 @@ function declarationText(declared: boolean | readonly string[] | undefined): str
 }
 
 /**
- * The sentences that give the number of a group's modules the page lists, out of the group's total.
+ * The sentences that say which of a group's modules the page lists.
+ *
+ * They state no count of modules.
+ * A count changes whenever a module is added to the workspace, with or without an effect,
+ * and two branches that each add one would then change the same line.
  */
-function coverageText(shown: number, total: number): string[] {
-	if (!shown) {
-		return [`None of the group's ${total} library and tool modules holds an effect edge or an import-time effect.`]
+function coverageText(listsAny: boolean): string[] {
+	if (!listsAny) {
+		return ["None of the group's library and tool modules holds an effect edge or an import-time effect."]
 	}
 
-	const count =
-		shown < total
-			? [
-					`This page lists ${shown} of the group's ${total} library and tool modules.`,
-					"The others hold neither an effect edge nor an import-time effect.",
-				]
-			: total === 1
-				? ["This page lists the group's one library or tool module."]
-				: [`This page lists all ${total} of the group's library and tool modules.`]
-
-	return [...count, "[The index](../effects-register.mdx) explains the columns."]
+	return [
+		"This page lists the group's library and tool modules that hold an effect edge or an import-time effect.",
+		`[The index](./${INDEX_PAGE}) explains the columns.`,
+	]
 }
 
-function edgeRows(edges: readonly EffectEdge[]): string[] {
-	const counts = new Map<string, { kind: EffectKind; name: string; target: string; count: number }>()
+/**
+ * One module's effects as plain lines, one per import-time effect category
+ * and one per edge row, each with the count of its occurrences.
+ *
+ * {@linkcode diffEffects} compares two readings of a module line by line.
+ */
+function effectLines(module: ModuleEntry): string[] {
+	const importTime = Map.groupBy(module.importTime, (what) => what)
+		.entries()
+		.map(([what, found]) => `import-time: ${what}${found.length > 1 ? ` ×${found.length}` : ""}`)
+
+	return [
+		...importTime,
+		...edgeRowsOf(module.edges).map((row) => `${row.kind}: ${row.name} → ${row.target} ×${row.count}`),
+	]
+}
+
+interface EdgeRow {
+	kind: EffectKind
+	name: string
+	target: string
+	count: number
+}
+
+/**
+ * A module's edges grouped by kind, interface and target, each with the count of its calls.
+ */
+function edgeRowsOf(edges: readonly EffectEdge[]): EdgeRow[] {
+	const counts = new Map<string, EdgeRow>()
 
 	for (const edge of edges) {
 		const target = targetOf(edge)
@@ -228,27 +262,17 @@ function edgeRows(edges: readonly EffectEdge[]): string[] {
 		}
 	}
 
-	return [...counts.values()]
-		.toSorted(
-			(a, b) =>
-				KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) ||
-				a.name.localeCompare(b.name) ||
-				a.target.localeCompare(b.target)
-		)
-		.map((row) => `| ${row.kind} | ${code(row.name)} | ${code(row.target)} | ${row.count} |`)
+	return [...counts.values()].toSorted(
+		(a, b) =>
+			KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) ||
+			a.name.localeCompare(b.name) ||
+			a.target.localeCompare(b.target)
+	)
 }
 
-const FRONTMATTER = (title: string, description: string) => [
-	"---",
-	`title: ${stringifyJSON(title)}`,
-	`description: ${stringifyJSON(description)}`,
-	"role: reference",
-	"audience: maintainer",
-	"owner: engineering",
-	"---",
-]
-
-const GENERATED = "{/* Generated by `yarn mwops effects-register`. Edit lib/repo-health/effects/register.ts. */}"
+function edgeRows(edges: readonly EffectEdge[]): string[] {
+	return edgeRowsOf(edges).map((row) => `| ${row.kind} | ${code(row.name)} | ${code(row.target)} | ${row.count} |`)
+}
 
 function workspacePage(
 	group: string,
@@ -261,17 +285,10 @@ function workspacePage(
 	const shown = modules.filter((module) => module.edges.length || module.importTime.length)
 
 	const lines = [
-		...FRONTMATTER(
-			`Effects register: ${group}`,
-			`The import-time effects and runtime effect edges of each module in ${group}.`
-		),
-		"",
-		GENERATED,
-		"",
-		`# Effects register: ${code(group)}`,
+		`# Effects of ${code(group)}`,
 		"",
 		`The manifest at ${code(`${workspaceRoot}package.json`)} ${declarationText(listing.declared)}.`,
-		...coverageText(shown.length, modules.length),
+		...coverageText(shown.length > 0),
 	]
 
 	for (const module of shown) {
@@ -301,7 +318,7 @@ function workspacePage(
 		}
 	}
 
-	return { path: `${EFFECTS_REGISTER_DIRECTORY}/${slugOf(group)}.mdx`, mdx: `${lines.join("\n")}\n` }
+	return { path: pageOf(group), group, markdown: `${lines.join("\n")}\n` }
 }
 
 function machineSection(entry: MachineEntry): string[] {
@@ -355,17 +372,10 @@ function machineSection(entry: MachineEntry): string[] {
 
 function indexPage(groups: ReadonlyMap<string, ModuleEntry[]>, machines: readonly MachineEntry[]): RegisterPage {
 	const lines = [
-		...FRONTMATTER(
-			"Effects register",
-			"What each workspace's modules do when imported and when run: their reads, writes, network calls, processes and environment reads, and the state machines they declare."
-		),
-		"",
-		GENERATED,
-		"",
-		"# Effects register",
+		"# Effects",
 		"",
 		"Each workspace has a page listing its library and tool modules. A module appears when it holds an effect edge or an import-time effect.",
-		"Regenerate every page with `yarn mwops effects-register`. The `effects-register` repository check compares the committed pages with the generator's output.",
+		"`yarn mwops effects <workspace directory or module path>` prints one page or one module, read from the source as it is now.",
 		"",
 		"An import-time effect is work a module does when it is evaluated, as `packages/core/AGENTS.md` defines it.",
 		"The `side-effects` check reports one that a workspace's `sideEffects` declaration leaves out.",
@@ -377,21 +387,10 @@ function indexPage(groups: ReadonlyMap<string, ModuleEntry[]>, machines: readonl
 		"",
 		"## Workspaces",
 		"",
-		"| Workspace | Modules listed | Import-time effects | Read | Write | Network | Process | Environment | Unresolved |",
-		"| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
 	]
 
-	for (const [group, modules] of groups) {
-		const edges = modules.flatMap((module) => module.edges)
-		const byKind = (kind: EffectKind) => edges.filter((edge) => edge.kind === kind).length
-		const listed = modules.filter((module) => module.edges.length || module.importTime.length).length
-		const importTime = modules.reduce((sum, module) => sum + module.importTime.length, 0)
-		const unresolved = edges.filter((edge) => !edge.target).length
-
-		lines.push(
-			`| [${code(group)}](./effects-register/${slugOf(group)}.mdx) | ${listed} of ${modules.length} | ${importTime} | ` +
-				`${KIND_ORDER.map(byKind).join(" | ")} | ${unresolved} |`
-		)
+	for (const group of groups.keys()) {
+		lines.push(`- [${code(group)}](./${pageOf(group)})`)
 	}
 
 	lines.push(
@@ -399,89 +398,145 @@ function indexPage(groups: ReadonlyMap<string, ModuleEntry[]>, machines: readonl
 		"## State machines",
 		"",
 		"A state machine is declared with `defineStateMachine` from `@mailwoman/core/state-machine`.",
-		`The register lists ${machines.length} machines.`,
 		"In each transition table, a cell holds the state the transition moves to from the row's state on the column's example event.",
 		"The `state-column-writes` check reports an update of a `_state` column that skips comparing the state it moves from.",
 		...machines.flatMap(machineSection)
 	)
 
-	return { path: EFFECTS_REGISTER_INDEX, mdx: `${lines.join("\n")}\n` }
+	return { path: INDEX_PAGE, group: null, markdown: `${lines.join("\n")}\n` }
 }
 
 /**
- * The register's pages on disk: the index and every `.mdx` page in the workspace directory.
+ * The group a module's page belongs to.
+ *
+ * The configuration files at the repository root share one group.
  */
-async function committedPages(repoRoot: string): Promise<string[]> {
-	const directory = resolvePath(repoRoot, EFFECTS_REGISTER_DIRECTORY)
-	const pages = (await pathExists(directory)) ? await sortedGlob(directory, "*.mdx") : []
-
-	return pages.map((path) => relative(repoRoot, path).toString())
+function groupOf(file: string): string {
+	return file.includes("/") ? censusGroupOf(file) : "root"
 }
 
 /**
- * How the register on disk differs from the generator's output.
+ * Writes every page under `directory`, and returns the count written.
+ *
+ * The pages are a report of the tree as it is now.
+ * The repository keeps no copy of them, because a copy conflicts between branches and goes stale.
  */
-export interface RegisterDrift {
-	/**
-	 * Generated pages whose file is absent or holds other text.
-	 */
-	stale: string[]
-	/**
-	 * Workspace pages on disk that the generator no longer writes.
-	 */
-	extra: string[]
-}
-
-/**
- * Compares the register on disk with `pages`.
- */
-export async function registerDrift(repoRoot: string, pages: readonly RegisterPage[]): Promise<RegisterDrift> {
-	const generated = new Set(pages.map((page) => page.path))
-	const stale: string[] = []
+export async function writeEffectsPages(context: RepoContext, directory: PathBuilderLike): Promise<number> {
+	const pages = await renderEffectsPages(context)
 
 	for (const page of pages) {
-		const path = resolvePath(repoRoot, page.path)
-
-		if (!(await pathExists(path)) || (await readLocalTextFile(path)) !== page.mdx) {
-			stale.push(page.path)
-		}
+		await writeLocalTextFile(page.markdown, resolvePath(directory, page.path))
 	}
 
-	const extra = (await committedPages(repoRoot)).filter((path) => !generated.has(path))
-
-	return { stale, extra }
+	return pages.length
 }
 
 /**
- * Writes every generated page and removes each workspace page the generator no longer writes.
+ * The page or the module section that `target` selects, or `null` when it selects neither.
+ *
+ * A workspace directory such as `packages/earth` selects that group's page.
+ * A module path selects that module's section of its group's page.
+ * An absent target selects the index.
  */
-export async function writeEffectsRegister(context: RepoContext): Promise<RegisterDrift & { pages: number }> {
-	const pages = await renderEffectsRegister(context)
-	const drift = await registerDrift(context.repoRoot, pages)
-
-	for (const page of pages) {
-		if (drift.stale.includes(page.path)) {
-			await writeLocalTextFile(page.mdx, resolvePath(context.repoRoot, page.path))
-		}
+export async function effectsOf(context: RepoContext, target: string | null): Promise<string | null> {
+	if (target == null) {
+		return (await renderEffectsPages(context)).find((page) => page.group === null)!.markdown
 	}
 
-	for (const path of drift.extra) {
-		await removeFile(resolvePath(context.repoRoot, path))
-	}
+	const normalized = target.replace(/\/+$/u, "")
+	// A target with a source extension is a module, and any other target is a group's directory.
+	const group = /\.[cm]?[jt]sx?$/u.test(normalized) ? groupOf(normalized) : normalized
+	const pages = await renderEffectsPages(context, group)
+	const page = pages.find((entry) => entry.group === normalized)
 
-	return { ...drift, pages: pages.length }
+	if (page) return page.markdown
+
+	const heading = `## ${code(normalized)}\n`
+	const owner = pages.find((entry) => entry.group === groupOf(normalized))
+	const start = owner?.markdown.indexOf(heading) ?? -1
+
+	if (!owner || start < 0) return null
+
+	const end = owner.markdown.indexOf("\n## ", start + heading.length)
+
+	return `${owner.markdown.slice(start, end === -1 ? undefined : end).trimEnd()}\n`
 }
 
 /**
- * Every page of the register, the index first, as the generator writes them.
+ * Each module's effects as plain lines, keyed by the module's path, for the modules that hold any.
+ *
+ * It reads sources and manifests only and imports no module, so it can read a
+ * second checkout that has no install of its own.
  */
-export async function renderEffectsRegister(context: RepoContext): Promise<RegisterPage[]> {
+export async function effectsSnapshot(context: RepoContext): Promise<Map<string, string[]>> {
 	const modules = await collectModules(context)
+
+	return new Map(
+		modules
+			.map((module): [string, string[]] => [module.file, effectLines(module)])
+			.filter(([, lines]) => lines.length > 0)
+	)
+}
+
+/**
+ * One module whose effects differ between two snapshots.
+ */
+export interface EffectDifference {
+	file: string
+	added: string[]
+	removed: string[]
+}
+
+/**
+ * The modules whose effect lines differ between `base` and `head`, by path.
+ *
+ * A module that moved reads as its lines removed at the old path and added at the new one.
+ */
+export function diffEffects(
+	base: ReadonlyMap<string, readonly string[]>,
+	head: ReadonlyMap<string, readonly string[]>
+): EffectDifference[] {
+	const files = [...new Set([...base.keys(), ...head.keys()])].toSorted()
+
+	return files
+		.map((file) => {
+			const before = new Set(base.get(file))
+			const after = new Set(head.get(file))
+
+			return {
+				file,
+				added: [...after].filter((line) => !before.has(line)),
+				removed: [...before].filter((line) => !after.has(line)),
+			}
+		})
+		.filter((difference) => difference.added.length + difference.removed.length > 0)
+}
+
+/**
+ * A difference as Markdown for a pull request's job summary.
+ */
+export function formatEffectDifferences(differences: readonly EffectDifference[]): string {
+	if (!differences.length) return "## Effect changes\n\nThis change adds and removes zero effects.\n"
+
+	const lines = ["## Effect changes", ""]
+
+	for (const { file, added, removed } of differences) {
+		lines.push(`### ${code(file)}`, "", ...added.map((line) => `- added: ${code(line)}`))
+		lines.push(...removed.map((line) => `- removed: ${code(line)}`), "")
+	}
+
+	return `${lines.join("\n")}\n`
+}
+
+/**
+ * Every page, the index first.
+ */
+async function renderEffectsPages(context: RepoContext, onlyGroup: string | null = null): Promise<RegisterPage[]> {
+	const modules = await collectModules(context, onlyGroup)
 	const groups = new Map<string, ModuleEntry[]>()
 
 	for (const module of modules) {
-		// The configuration files at the repository root share one group.
-		const group = module.file.includes("/") ? censusGroupOf(module.file) : "root"
+		const group = groupOf(module.file)
 
 		groups.set(group, [...(groups.get(group) ?? []), module])
 	}
@@ -498,38 +553,11 @@ export async function renderEffectsRegister(context: RepoContext): Promise<Regis
 	}
 
 	// A module namespace lists exports in code-point order under Node and in declaration order under Vitest.
-	// The register sorts the machines itself, so both runs write the same index.
+	// The index sorts the machines itself, so both runs print the same order.
 	machines.sort((a, b) => a.machine.name.localeCompare(b.machine.name) || a.file.localeCompare(b.file))
 
-	const pages = [
+	return [
 		indexPage(sorted, machines),
 		...[...sorted].map(([group, entries]) => workspacePage(group, entries, listings.get(group)!)),
 	]
-
-	return formatPages(context.repoRoot, pages)
-}
-
-/**
- * The pages as the repository's formatter writes them, so `yarn lint`
- * and this register agree on every page's text.
- */
-async function formatPages(repoRoot: string, pages: readonly RegisterPage[]): Promise<RegisterPage[]> {
-	// effect-loads: oxfmt.config.ts
-	const { default: config } = (await import(resolvePath(repoRoot, "oxfmt.config.ts").toString())) as {
-		default: FormatConfig
-	}
-
-	return Promise.all(
-		pages.map(async (page) => {
-			const result = await format(page.path, page.mdx, config)
-
-			if (result.errors.length) {
-				throw new Error(
-					`oxfmt could not format ${page.path}: ${result.errors.map((error) => error.message).join("; ")}`
-				)
-			}
-
-			return { path: page.path, mdx: result.code }
-		})
-	)
 }
