@@ -176,11 +176,11 @@ describe("selectCIScope", () => {
 	})
 
 	it.each([
-		"packages/recognizer/crates/recognize-core/src/engine.rs",
-		"packages/recognizer/crates/recognize-build/src/main.rs",
+		"packages/recognizer/crates/recognizer-core/src/engine.rs",
+		"packages/recognizer/crates/recognizer-build/src/main.rs",
 		"packages/recognizer/lib/primitives.generated.ts",
 		"packages/recognizer/data/artifacts/primitives.rca1",
-	])("selects the rust job for %s, a recognize crate input or generated file", (file) => {
+	])("selects the rust job for %s, a recognizer crate input or generated file", (file) => {
 		const withRecognize = [
 			...workspaces,
 			{ name: "@mailwoman/recognizer", directory: "packages/recognizer", dependencies: [] },

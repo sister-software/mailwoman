@@ -44,12 +44,12 @@ import type {
 
 /**
  * The token class of each class code, in the order of `TokenClass`
- * in `crates/recognize-core/src/structure.rs`.
+ * in `crates/recognizer-core/src/structure.rs`.
  */
 const TOKEN_CLASSES: readonly TokenCharacterClass[] = ["digit", "alpha", "mixed", "punct", "cjk", "cyrillic", "arabic"]
 
 /**
- * The script of each script code, in the order of `Script` in `crates/recognize-core/src/charset.rs`.
+ * The script of each script code, in the order of `Script` in `crates/recognizer-core/src/charset.rs`.
  * The values are the ten the legacy classifier produces.
  */
 const SCRIPT_CODES: readonly BCP47.ScriptCode[] = [
@@ -67,7 +67,7 @@ const SCRIPT_CODES: readonly BCP47.ScriptCode[] = [
 
 /**
  * The separator of each separator code, in the order of `Separator`
- * in `crates/recognize-core/src/structure.rs`.
+ * in `crates/recognizer-core/src/structure.rs`.
  */
 const SEPARATORS: readonly SegmentSeparator[] = [null, "comma", "newline", "tab"]
 

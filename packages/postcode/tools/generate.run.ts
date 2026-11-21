@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compiles this package's two families with `recognize-build --definition` and writes their files:
+ *   Compiles this package's two families with `recognizer-build --definition` and writes their files:
  *
  *   - `postcode_legacy`, from the legacy-formats table.
  *   - `postal`, from every country's postcode syntax.
@@ -65,9 +65,9 @@ import {
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 const postcode = (...segments: string[]): string => workspacePath("postcode", ...segments).toString()
-const BINARY = repoRootPath("target", "release", "recognize-build").toString()
+const BINARY = repoRootPath("target", "release", "recognizer-build").toString()
 
-await runFile("cargo", ["build", "--release", "--locked", "-p", "recognize-build"], {
+await runFile("cargo", ["build", "--release", "--locked", "-p", "recognizer-build"], {
 	cwd: workspacePath("recognizer"),
 })
 
@@ -118,13 +118,13 @@ async function settleFormatted(target: string, text: string): Promise<void> {
 }
 
 /**
- * Runs `recognize-build` and rethrows a refusal with the diagnostics it printed.
+ * Runs `recognizer-build` and rethrows a refusal with the diagnostics it printed.
  */
 async function build(args: string[]): Promise<string> {
 	const printed = await runFile(BINARY, args).catch((error: { stderr?: string }) => {
 		console.error(error.stderr ?? String(error))
 
-		throw new Error("recognize-build refused the family definition", { cause: error })
+		throw new Error("recognizer-build refused the family definition", { cause: error })
 	})
 
 	return printed.stdout
@@ -168,7 +168,7 @@ async function generate(
 	)
 
 	if (written?.family !== family) {
-		throw new Error(`recognize-build wrote ${written?.family ?? "no family"} and not ${family}`)
+		throw new Error(`recognizer-build wrote ${written?.family ?? "no family"} and not ${family}`)
 	}
 
 	const artifact = await readLocalBuffer(`${out}/${family}.rca1`)

@@ -290,10 +290,10 @@ jobs:
         run: |
           cargo test -p deflate64-wasm --locked
 
-      - name: Test the recognize grammar, compiler and WebAssembly adapter crates
+      - name: Test the recognizer grammar, compiler and WebAssembly adapter crates
         run: |
-          cargo clippy -p recognize-core -p recognize-build -p recognize-wasm --all-targets --locked -- -D warnings
-          cargo test -p recognize-core -p recognize-build -p recognize-wasm --locked
+          cargo clippy -p recognizer-core -p recognizer-build -p recognizer-wasm --all-targets --locked -- -D warnings
+          cargo test -p recognizer-core -p recognizer-build -p recognizer-wasm --locked
 
       # A generated family file that differs from its generator's output is a hand edit or a linter rewrite.
       # Each tool rebuilds the family and exits non-zero when a committed file differs.
@@ -693,18 +693,18 @@ jobs:
         if: needs.scope.outputs.worker == 'true'
         run: yarn test:gazetteer-worker
 
-      # The recognize engine instantiates synchronously on its first call. Two suites hold that: one on a Chromium
+      # The recognizer engine instantiates synchronously on its first call. Two suites hold that: one on a Chromium
       # page's main thread and one under the Workers runtime. That runtime refuses to compile WebAssembly from bytes.
-      - name: Test recognize first-call instantiation (Chromium)
+      - name: Test recognizer first-call instantiation (Chromium)
         if: needs.scope.outputs.worker == 'true'
         run: yarn workspace @mailwoman/recognizer test:browser
 
-      - name: Test recognize first-call instantiation (Workers pool)
+      - name: Test recognizer first-call instantiation (Workers pool)
         if: needs.scope.outputs.worker == 'true'
         run: yarn workspace @mailwoman/recognizer test:workers
 
       # The parse pipeline reads its structural evidence from `computeQueryShape` of `@mailwoman/postcode`, which
-      # composes the recognize engine. The same two runtimes hold that composition.
+      # composes the recognizer engine. The same two runtimes hold that composition.
       - name: Test the pipeline's structural recognizer (Chromium)
         if: needs.scope.outputs.worker == 'true'
         run: yarn workspace @mailwoman/postcode test:browser

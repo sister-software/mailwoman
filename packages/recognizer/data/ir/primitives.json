@@ -1,7 +1,7 @@
 {
-	"format": "mailwoman.recognize.ir",
+	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "2da6a835e564ec8480df442ff1036e10e158217e58215e55b0badc8620429208",
+	"hash": "8f2175a2ff0692f947a5fc33ade87b8ad9c32397a8f25c73214e26a16793cce6",
 	"family": "primitives",
 	"terms": [
 		{
@@ -15,7 +15,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 37
 			}
 		},
@@ -30,7 +30,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 38
 			}
 		},
@@ -42,7 +42,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 39
 			}
 		},
@@ -57,7 +57,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 40
 			}
 		}
@@ -83,7 +83,7 @@
 				"with": ["number.signed_decimal"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 48
 			}
 		},
@@ -168,7 +168,7 @@
 				"with": ["number.digit_run"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 42
 			}
 		},
@@ -191,7 +191,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 54
 			}
 		},
@@ -214,7 +214,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/primitives.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/primitives.rs",
 				"line": 59
 			}
 		}

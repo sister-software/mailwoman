@@ -1,7 +1,7 @@
 {
-	"format": "mailwoman.recognize.ir",
+	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "799f6e7481f9b35fbf50121b66493e5909782c9923cbf66d684d51e74753e19b",
+	"hash": "2938c1b4253f2ee588fb5d51220e59e5c711ef8becd647ab5651a63fd79118d8",
 	"family": "coordinates",
 	"terms": [
 		{
@@ -12,7 +12,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 141
 			}
 		},
@@ -28,7 +28,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 142
 			}
 		},
@@ -45,7 +45,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 144
 			}
 		},
@@ -68,7 +68,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 149
 			}
 		},
@@ -83,7 +83,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 167
 			}
 		},
@@ -106,7 +106,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 140
 			}
 		}
@@ -310,7 +310,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 169
 			}
 		},
@@ -621,7 +621,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 183
 			}
 		},
@@ -1925,7 +1925,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 200
 			}
 		},
@@ -3547,7 +3547,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 207
 			}
 		},
@@ -3992,7 +3992,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 249
 			}
 		},
@@ -4654,7 +4654,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 213
 			}
 		},
@@ -4826,7 +4826,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/coordinates.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/coordinates.rs",
 				"line": 230
 			}
 		}

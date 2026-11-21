@@ -1,7 +1,7 @@
 {
-	"format": "mailwoman.recognize.ir",
+	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "c7e354ae9e65cff4d4f4ea04c7c7aff8afbf19d5605f2c37b756203cab2509a7",
+	"hash": "db029986231222e5b5a6b669e1f311671cb280a327ebd67ed7e9afca06b4e569",
 	"family": "spatial",
 	"terms": [
 		{
@@ -24,7 +24,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 77
 			}
 		},
@@ -40,7 +40,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 94
 			}
 		},
@@ -66,7 +66,7 @@
 				"negated": false
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 58
 			}
 		}
@@ -92,7 +92,7 @@
 				"with": ["number.digit_run", "number.signed_decimal", "word.ascii"]
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 110
 			}
 		},
@@ -147,7 +147,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 118
 			}
 		},
@@ -287,7 +287,7 @@
 				"policy": "exclusive"
 			},
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 131
 			}
 		},
@@ -329,7 +329,7 @@
 			},
 			"boundary": "token",
 			"source": {
-				"file": "packages/recognizer/crates/recognize-core/src/grammars/spatial.rs",
+				"file": "packages/recognizer/crates/recognizer-core/src/grammars/spatial.rs",
 				"line": 99
 			}
 		}

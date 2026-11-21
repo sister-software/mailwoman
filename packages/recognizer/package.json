@@ -57,7 +57,7 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
-		"./wasm/recognize.wasm": "./wasm/recognize.wasm",
+		"./wasm/recognizer.wasm": "./wasm/recognizer.wasm",
 		".": {
 			"types": "./out/index.d.ts",
 			"workerd": "./out/workerd.js",

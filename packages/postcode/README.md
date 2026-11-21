@@ -55,7 +55,7 @@ export:
 
   The table is `lib/legacy-formats/table.ts`: each legacy format with its country, pattern, token count and
   confidence, and the PO box leaders of each language. `node packages/postcode/tools/generate.run.ts` compiles it
-  with `recognize-build --definition`, and `--check` fails when a committed file differs. The patterns are the
+  with `recognizer-build --definition`, and `--check` fails when a committed file differs. The patterns are the
   thirteen legacy patterns, so wider recognition from every country's syntax is a separate change.
   `isPostcodeFormat` from `@mailwoman/core/pipeline/types` is the predicate for these names.
 

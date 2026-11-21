@@ -7,7 +7,7 @@
  *   This is the one finder of postcode-shaped spans.
  *   The serving side reads it here.
  *
- *   The training encoder reads the same artifact through `recognize-core` in
+ *   The training encoder reads the same artifact through `recognizer-core` in
  *   `packages/mtf/crates/mtf-channels/src/finders.rs`, with the same order and the same reduction.
  *
  *   A span is the code the anchor table looks up, so a printed prefix is outside it.

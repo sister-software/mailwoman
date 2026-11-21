@@ -3,8 +3,8 @@
 
 /**
  *   Writes the reference documentation of every recognition shape: one index page,
- *   `docs/engineering/reference/recognize-shapes.mdx`, and one page for each family
- *   under `docs/engineering/reference/recognize-shapes/`.
+ *   `docs/engineering/reference/recognizer-shapes.mdx`, and one page for each family
+ *   under `docs/engineering/reference/recognizer-shapes/`.
  *
  *   A shape's section lists its ID, scope, grammar in a readable form, captures,
  *   validator, payload fields, rejection codes, declared overlaps with their witnesses,
@@ -364,7 +364,7 @@ for (const { id, owner } of FAMILIES) {
 		"",
 		description,
 		"",
-		`The family has ${shapes.length} shapes. Its IR hash is \`${document.hash}\`. It is built from \`${owner === "recognizer" ? "packages/recognizer" : "packages/postcode"}/data/ir/${id}.json\`. [The index](../recognize-shapes.mdx) explains each field.`,
+		`The family has ${shapes.length} shapes. Its IR hash is \`${document.hash}\`. It is built from \`${owner === "recognizer" ? "packages/recognizer" : "packages/postcode"}/data/ir/${id}.json\`. [The index](../recognizer-shapes.mdx) explains each field.`,
 		"",
 	]
 
@@ -372,12 +372,12 @@ for (const { id, owner } of FAMILIES) {
 		lines.push(section(id, shape, declarations.get(shape.id)))
 	}
 
-	pages.set(`recognize-shapes/${id}.mdx`, lines.join("\n"))
-	summary.push(`| [\`${id}\`](./recognize-shapes/${id}.mdx) | \`${owner}\` | ${shapes.length} | ${description} |`)
+	pages.set(`recognizer-shapes/${id}.mdx`, lines.join("\n"))
+	summary.push(`| [\`${id}\`](./recognizer-shapes/${id}.mdx) | \`${owner}\` | ${shapes.length} | ${description} |`)
 }
 
 pages.set(
-	"recognize-shapes.mdx",
+	"recognizer-shapes.mdx",
 	[
 		pageHeader(
 			"Recognition shapes",

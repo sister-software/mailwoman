@@ -8,14 +8,14 @@ repository.workspace = true
 
 [features]
 # The postcode finders (the spans of a line and the acceptance count of a code unit), which read the `postal` family's
-# artifact through `recognize-core`, and the reading of an encoder's files (`resources`). Only the training side needs
+# artifact through `recognizer-core`, and the reading of an encoder's files (`resources`). Only the training side needs
 # them; the painters and the label projection build without the search engine or a file system.
-finders = ["dep:recognize-core", "dep:mtf-core"]
+finders = ["dep:recognizer-core", "dep:mtf-core"]
 
 [dependencies]
 serde = "1"
 # `float_roundtrip` parses every decimal to the nearest double, as Python's `json` does; the default parser can be
 # one unit in the last place away, which would move an anchor centroid's bytes.
 serde_json = { version = "1", features = ["float_roundtrip"] }
-recognize-core = { workspace = true, optional = true }
+recognizer-core = { workspace = true, optional = true }
 mtf-core = { workspace = true, optional = true }

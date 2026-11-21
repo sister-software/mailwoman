@@ -4,7 +4,7 @@
 //! The postcode finders of the training encoder: the postcode spans of a line and the number of countries whose syntax
 //! accepts a code unit.
 //!
-//! Both read the `postal` family of `@mailwoman/postcode` through `recognize-core`: its compiled artifact
+//! Both read the `postal` family of `@mailwoman/postcode` through `recognizer-core`: its compiled artifact
 //! (`packages/postcode/data/artifacts/postal.rca1`) and the family definition that states each shape's countries,
 //! form and printed prefix (`packages/postcode/data/definitions/postal.definition.json`). Serving reads the same
 //! family in `packages/postcode/lib/postal-spans.ts` and reduces its candidates by the same rule, so the two sides
@@ -21,8 +21,8 @@
 
 use crate::anchor::PostcodeCandidate;
 use crate::error::Error;
-use recognize_core::artifact::ARTIFACT_SCHEMA_VERSION;
-use recognize_core::{Engine, Expected};
+use recognizer_core::artifact::ARTIFACT_SCHEMA_VERSION;
+use recognizer_core::{Engine, Expected};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
