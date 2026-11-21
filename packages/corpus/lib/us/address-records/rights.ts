@@ -5,10 +5,12 @@
  *   Which sources the US address layer may serve, by each source's register decisions.
  *
  *   The layer copies a source's rows and redistributes them.
- *   A source is admitted only when every register row its data comes from holds an elected
+ *   A source is fully admitted when every register row its data comes from holds an elected
  *   decision permitting each operation in {@linkcode ADDRESS_LAYER_OPERATIONS}.
  *
  *   The corpus build applies the same rule to `transform` and `train`.
+ *   A refused source is always excluded, and {@linkcode EXCLUDE_UNREAD_SOURCES}
+ *   decides an unread or unmapped one.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -197,6 +199,15 @@ export async function readUSAddressSourceAdmission(
 }
 
 /**
+ * Whether a US address layer build excludes a source whose register terms are unread
+ * or that maps to no register row.
+ *
+ * A source the register refuses is excluded whatever this constant holds.
+ * The build reads it as the default of its `excludeUnreadSources` option.
+ */
+export const EXCLUDE_UNREAD_SOURCES = true
+
+/**
  * The sources one state's build reads, and those the register excludes.
  */
 export interface USStateSources<Entry> {
@@ -210,6 +221,10 @@ export interface USStateSources<Entry> {
 	 */
 	runs: Entry[]
 	excluded: LayerSourceExclusion[]
+	/**
+	 * Sources admitted with unread terms or no register row, because the build doesn't exclude them.
+	 */
+	admittedUnread: LayerSourceExclusion[]
 }
 
 /**
@@ -218,22 +233,34 @@ export interface USStateSources<Entry> {
  * NAD is read as `usgov-nad`, each Overture dataset as `overture:<dataset>`
  * and each plan run for the state as `openaddresses:<member>`.
  * A run the plan marks `skip` is dropped without an exclusion.
+ *
+ * A refused source is always excluded.
+ * A source with unread terms or no register row is excluded when `excludeUnread` holds,
+ * and admitted and listed in `admittedUnread` otherwise.
  */
 export function admitUSStateSources<Entry extends { member: string; skip?: boolean }>(
 	state: string,
 	candidates: { hasNAD: boolean; datasets: readonly string[]; plan: readonly Entry[] },
-	admission: USAddressSourceAdmission
+	admission: USAddressSourceAdmission,
+	excludeUnread: boolean = EXCLUDE_UNREAD_SOURCES
 ): USStateSources<Entry> {
 	const excluded: LayerSourceExclusion[] = []
+	const admittedUnread: LayerSourceExclusion[] = []
 
 	const admits = (source: string): boolean => {
 		const exclusion = admission(source)
 
-		if (exclusion) {
+		if (!exclusion) return true
+
+		if (exclusion.reason === LayerExclusionReason.Refused || excludeUnread) {
 			excluded.push(exclusion)
+
+			return false
 		}
 
-		return !exclusion
+		admittedUnread.push(exclusion)
+
+		return true
 	}
 
 	const prefix = `us/${state.toLowerCase()}/`
@@ -245,5 +272,6 @@ export function admitUSStateSources<Entry extends { member: string; skip?: boole
 			(entry) => entry.member.startsWith(prefix) && !entry.skip && admits(`openaddresses:${entry.member}`)
 		),
 		excluded,
+		admittedUnread,
 	}
 }

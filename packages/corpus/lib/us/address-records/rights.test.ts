@@ -54,7 +54,7 @@ const TABLE = {
 }
 
 describe("admitUSStateSources", () => {
-	const admitTexas = async () =>
+	const admitTexas = async (excludeUnread?: boolean) =>
 		admitUSStateSources(
 			"TX",
 			{
@@ -68,7 +68,8 @@ describe("admitUSStateSources", () => {
 					{ member: "us/ok/open" },
 				],
 			},
-			await readUSAddressSourceAdmission(REGISTER, TABLE)
+			await readUSAddressSourceAdmission(REGISTER, TABLE),
+			excludeUnread
 		)
 
 	it("reads only the sources whose every register row permits serving the rows", async () => {
@@ -90,6 +91,25 @@ describe("admitUSStateSources", () => {
 		])
 
 		expect(sources.excluded[0]?.because).toBe("Withholds redistribution.")
+		expect(sources.admittedUnread).toEqual([])
+	})
+
+	it("still excludes a refused source when told to admit unread and unmapped ones, and lists those it admits", async () => {
+		const sources = await admitTexas(false)
+
+		expect(sources.datasets).toEqual(["OpenAddresses/TX/Open"])
+
+		expect(sources.runs.map(({ member }) => member)).toEqual(["us/tx/open", "us/tx/training_only", "us/tx/unmapped"])
+
+		expect(sources.excluded.map(({ source }) => source)).toEqual([
+			"overture:OpenAddresses/TX/Closed",
+			"openaddresses:us/tx/closed",
+		])
+
+		expect(sources.admittedUnread.map(({ source, reason }) => [source, reason])).toEqual([
+			["openaddresses:us/tx/training_only", "unread"],
+			["openaddresses:us/tx/unmapped", "no-register-row"],
+		])
 	})
 })
 

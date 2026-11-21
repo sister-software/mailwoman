@@ -9,6 +9,7 @@ import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
 
 import {
 	type CommandSpec,
@@ -47,6 +48,12 @@ export const spec = {
 			description: "Overture release whose addresses-us.parquet supplies the non-NAD rows",
 		},
 		plan: { type: "string", description: "OpenAddresses plan JSON listing each run's member and recorded license" },
+		"exclude-unread-sources": {
+			type: "boolean",
+			default: EXCLUDE_UNREAD_SOURCES,
+			description:
+				"Exclude sources whose register terms are unread or that have no register row. Refused sources are always excluded",
+		},
 		jobs: {
 			type: "number",
 			default: 1,
@@ -109,6 +116,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			adminDatabase: wofDatabasePath("admin-global-priority.db"),
 			jobs: options.jobs,
 			resume: options.resume,
+			excludeUnreadSources: options.excludeUnreadSources,
 			onState: (build) => {
 				const refused: Record<string, number> = {}
 
@@ -132,13 +140,18 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 
 				console.error(line)
 
-				for (const { source, reason, registerSources, because } of build.excluded) {
+				const gaps = [
+					...build.excluded.map((gap) => ["excluded", gap] as const),
+					...build.admittedUnread.map((gap) => ["admitted", gap] as const),
+				]
+
+				for (const [verdict, { source, reason, registerSources, because }] of gaps) {
 					const rows = registerSources.length ? ` (register ${registerSources.join(", ")})` : ""
-					const exclusion = `  excluded ${source}: ${reason}${rows}: ${because}`
+					const gapLine = `  ${verdict} ${source}: ${reason}${rows}: ${because}`
 
-					lines.push(exclusion)
+					lines.push(gapLine)
 
-					console.error(exclusion)
+					console.error(gapLine)
 				}
 			},
 		})

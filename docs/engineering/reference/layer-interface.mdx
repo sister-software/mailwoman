@@ -537,11 +537,13 @@ license over address rows, so the publishing body's row decides unless the aggre
 The US layer build (`packages/corpus/lib/us/address-records/layer.ts`) combines three sources per state:
 NAD release 24, the Overture addresses rows from the datasets other than NAD, and the OpenAddresses runs of
 the plan. Since #3241 the build admits each source by its register decisions. `packages/corpus/data/us-situs-sources.json`
-maps each source id to the register rows its data comes from. `admitUSStateSources` keeps a source only when
+maps each source id to the register rows its data comes from. `admitUSStateSources` fully admits a source when
 every row holds an elected decision permitting `fetch`, `extract` and `redistribute-data`, the rule the corpus
-build applies to `transform` and `train`. A refused decision, an unread one and a source with no row are each
-excluded. Each region's `build.json` lists the excluded sources with their reasons, and `mailwoman situs layer`
-prints them. Before #3241 the build read only the terms an OpenAddresses source definition records, and the
+build applies to `transform` and `train`. A refused source is always excluded. A source with unread terms or no
+row is excluded while `EXCLUDE_UNREAD_SOURCES` in `packages/corpus/lib/us/address-records/rights.ts` holds, its
+default, or the build runs with `--exclude-unread-sources`; `--no-exclude-unread-sources` admits it. Each region's
+`build.json` lists the excluded sources and the admitted unread ones with their reasons, and
+`mailwoman situs layer` prints both. Before #3241 the build read only the terms an OpenAddresses source definition records, and the
 measurement below describes a layer built that way.
 
 The source texts, retrieved 2026-11-21:

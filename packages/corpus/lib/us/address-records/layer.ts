@@ -55,6 +55,7 @@ import { recordPathFor } from "#parquet/record"
 import { readNADAddressRecords } from "#us/address-records/nad"
 import {
 	admitUSStateSources,
+	EXCLUDE_UNREAD_SOURCES,
 	type LayerSourceExclusion,
 	readUSAddressSourceAdmission,
 } from "#us/address-records/rights"
@@ -131,6 +132,13 @@ export interface BuildUSAddressLayerOptions {
 	 */
 	omitFromManifest?: readonly string[]
 	/**
+	 * Whether to exclude a source whose register terms are unread or that maps to no register row.
+	 * A refused source is excluded either way.
+	 *
+	 * @defaultValue {@linkcode EXCLUDE_UNREAD_SOURCES}
+	 */
+	excludeUnreadSources?: boolean
+	/**
 	 * The commit the build ran from, for each file's `layer_manifest`.
 	 */
 	buildSHA: string
@@ -201,6 +209,10 @@ export interface USStateBuild {
 	 * Sources whose rows the build never read, because the register doesn't admit them.
 	 */
 	excluded: LayerSourceExclusion[]
+	/**
+	 * Sources read with unread terms or no register row, because the build was told to admit them.
+	 */
+	admittedUnread: LayerSourceExclusion[]
 }
 
 export interface USAddressLayerBuild {
@@ -428,7 +440,8 @@ function recordedRunTerms(plan: readonly OpenAddressesPlanEntry[]): Map<string, 
  * other than NAD, and the plan's runs for the state that the cache holds.
  * Each is read only when {@linkcode admitUSStateSources} admits it by its register decisions.
  *
- * The state's `build.json` lists every source the register excluded, with the reason.
+ * The state's `build.json` lists every source the register excluded, and each
+ * admitted source whose terms are unread, with the reason.
  * A record that a higher-ranked source repeats, by {@linkcode usAddressSourceRanks}, is dropped.
  *
  * Territories are their own ISO 3166-1 countries and are not built here.
@@ -533,10 +546,11 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 				datasets: await overtureDatasets(options.overtureParquet, state),
 				plan: options.openAddresses.plan,
 			},
-			admission
+			admission,
+			options.excludeUnreadSources ?? EXCLUDE_UNREAD_SOURCES
 		)
 
-		const excluded = candidates.excluded
+		const { excluded, admittedUnread } = candidates
 		const admitted: OpenAddressesPlanEntry[] = []
 
 		refusedRuns += excluded.filter(({ source }) => source.startsWith("openaddresses:")).length
@@ -614,6 +628,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			seconds: Math.round((Date.now() - started) / 1000),
 			refused: summary.refused,
 			excluded,
+			admittedUnread,
 		}
 
 		await writeAddressLayerAttribution(options.root, region, options.version, recorded)
@@ -749,6 +764,9 @@ async function buildStatesInWorkers(
 		states: [state],
 		buildSHA: options.buildSHA,
 		adminDatabase: options.adminDatabase.toString(),
+		...(typeof options.excludeUnreadSources === "boolean"
+			? { excludeUnreadSources: options.excludeUnreadSources }
+			: {}),
 		...(typeof options.sortThreads === "number" ? { sortThreads: options.sortThreads } : {}),
 	})
 
