@@ -16,6 +16,45 @@ Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regressi
 
 ## Batches
 
+### Operator places, 2026-11-21
+
+42 rows · `cases/us/operator-places-2026-11-21.jsonl` (24), `cases/gb/operator-places-2026-11-21.jsonl` (18) ·
+`source`: each row's Google Maps share link, or `operator:2026-11-21` for the one entry without a link
+
+> The operator's list of 23 entries: Indiana, Wisconsin, California and Texas, and Bristol, Cardiff, the Isles of
+> Scilly and Highland. Each row's input is the address as the operator wrote it. For the 19 entries that also
+> carry a place-name line, a second row prepends that name with `, `, the form the 2026-11-06 operator rows use.
+> The Future Space address keeps its two lines, so its input holds a newline.
+>
+> Every truth point is the place pin (`!3d…!4d…`) of the entry's share link, read from the final URL that
+> `mwdev_http_get`'s implementation reached on 2026-11-21. The University of the West of England entry has no
+> link, so its two rows assert components only. Tolerances follow what the pin marks: 150 m for a building,
+> 300 m for a hotel, school, hospital or campus, 1 km for a golf course, 2 km for a village.
+>
+> Labels follow the operator's #3156 decision: a sub-locality beside its post town is `dependent_locality`
+> (`Clifton, Bristol`, `Redland, Bristol`, `Stoke Gifford, Bristol`, `St Mary's, Isles of Scilly`). `Avon` in
+> `34 Coldharbour Rd, Redland, Avon, Bristol` is the former county and takes `subregion`, the schema's
+> county-level slot. `Avon` before the house number in `Avon, 52 Upper Belgrave Rd` is the premise name.
+> When the prepended name and a premise name in the address would both be venues (`Spire Bristol Hospital,
+> The Glen`), the row asserts no venue, because the schema has one venue slot.
+>
+> Each row was graded one at a time through `buildGauntletDeps` and `runOne` under its routed overlay, then
+> `checkCase`, on 11.2.0 (model md5 75b1e6f6). The status is that grade: 25 pass, 17 enter as
+> `improvement_target`. The failures, by the first stage that diverges:
+>
+> - Address retrieval. `10631 Bluffside Rd, Sister Bay` lands at the admin tier, 372 m off, because the
+>   address-point table holds 10631 only as `Bluffside Lane` (NAD). `11160 IN-56, French Lick` has no address
+>   point and interpolates 1.71 km from the golf course's pin.
+> - Parse. `#9151` is read as unit `9151`. `Avon` is read as `region` or `locality`, never `subregion`, and no GB
+>   gazetteer record carries the name. `Castle Bryher` is read as a street. In `Coldharbour Ln, Stoke Gifford,
+>   Bristol` the sub-locality is read as the locality and Bristol as the region. `The Glen, Redland Hill` folds
+>   into one street, or into `The Glen` with Redland as the locality. `St Mary's` joins the venue or the street.
+>   The newline is not read as a separator: `Stoke Gifford\nBristol` becomes one locality. With a comma in its
+>   place the row fails as the `Coldharbour Ln` row does.
+>
+> `Isles of Scilly` is held in GB's gazetteer only under the placetypes `county`, `region` and `neighbourhood`. Its locality expectation
+> is therefore unreachable in the locality band, and those rows resolve at the postcode tier, within tolerance.
+
 ### `family-board:2026-09-09`
 
 67 rows · `cases/{gb,de,fr,us,es,it}/family-district-city.jsonl`, `cases/{nz,za,ve}/family-locality-postcode.jsonl`,
