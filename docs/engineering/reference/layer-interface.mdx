@@ -532,8 +532,9 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
 
 - The data bill of materials (`mailwoman data bom`) nests one component per source under the layer's component.
   Each states the publisher, the register decision, the basis (`open-license`, `publisher-grant`,
-  `no-restricting-terms`, `refused`, `unread` or `unregistered`), whether the terms page stated terms or held an
-  empty statement (`terms` or `no-statement`), the terms URL, the attribution and share-alike states and the record count. A source with no register
+  `no-restricting-terms`, `refused`, `unread` or `unregistered`), what the terms page held (`terms`, an empty
+  statement as `no-statement`, or site-wide terms the decision didn't read as the dataset's as
+  `site-terms-not-applied`), the terms URL, the attribution and share-alike states and the record count. A source with no register
   row reads `unregistered` with unknown obligations.
 - `mailwoman doctor` prints the count of sources in each obligation class for the attached layer and points to
   the other two.
