@@ -18,6 +18,8 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { ColumnMapping, SourceRecord } from "@mailwoman/entity-resolution"
 import { parallelMapWorkers } from "spliterator"
 
+import type { SessionOptionSource } from "#geocode/options"
+
 export interface GeocodeStreamConfig {
 	/**
 	 * Path to the WOF admin SQLite DB, opened read-only per worker (shared OS page cache).
@@ -29,9 +31,16 @@ export interface GeocodeStreamConfig {
 	 */
 	dataRoot: string
 	/**
-	 * Classifier weights locale, e.g. `"en-US"`.
+	 * Classifier weights locale, such as `"fr-FR"`, or the session's default locale when omitted.
 	 */
-	locale: string
+	locale?: string
+	/**
+	 * Where {@linkcode locale} came from, as the caller that built this config knows it.
+	 *
+	 * Each worker's session records it unchanged.
+	 * Omitted, a stated locale is recorded as the caller's and an omitted one as the default.
+	 */
+	localeSource?: SessionOptionSource
 	/**
 	 * Default country for resolution, e.g. `"US"`.
 	 */

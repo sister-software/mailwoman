@@ -72,7 +72,14 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-type Options = OptionsOf<typeof spec>
+type Flags = OptionsOf<typeof spec>
+
+/**
+ * The command's flags, and whether the user typed `--locale`.
+ *
+ * A locale left at the flag's default is recorded by the session as the default.
+ */
+type Options = Flags & { localeTyped: boolean }
 
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs.
@@ -135,6 +142,9 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const session = await sessionModule.createGeocodeSession(
 		sessionOptions.createGeocodeSessionOptions({
 			locale: options.locale,
+			localeSource: options.localeTyped
+				? sessionOptions.SessionOptionSource.Flag
+				: sessionOptions.SessionOptionSource.Default,
 			dataRoot: options.dataRoot,
 			placeCountry: options.placeCountry,
 			...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
@@ -469,7 +479,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	return written ? `${summary}\n${written}` : prettyJSON(geojson)
 }
 
-const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
+const RegistryCommand: ParsedCommandComponent<Flags> = ({ args, options: flags, typed }) => {
+	const options: Options = { ...flags, localeTyped: typed.has("locale") }
+
 	const state = useCommandTask(async () => {
 		// `loadSources` can throw on a malformed config.
 		// The hook routes its error to the same handler.

@@ -13,7 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { createGeocodeSessionOptions } from "#geocode/options"
+import { createGeocodeSessionOptions, SessionOptionSource } from "#geocode/options"
 import { describeGeocodeServices } from "#geocode/services"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 
@@ -25,7 +25,10 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const options = createGeocodeSessionOptions(cli.locale ? { locale: cli.locale } : {})
+	const options = createGeocodeSessionOptions(
+		cli.locale ? { locale: cli.locale, localeSource: SessionOptionSource.Flag } : {}
+	)
+
 	const services = await describeGeocodeServices(options, NODE_LAYER_CONTRIBUTIONS)
 
 	if (cli.json) {

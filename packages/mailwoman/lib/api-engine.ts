@@ -169,16 +169,22 @@ function collectStreetTier(
  */
 export interface ServeEngine extends AsyncDisposable {
 	engine: MailwomanAPIEngine
+
+	/**
+	 * The options every session of this engine builds from, a failed preflight included.
+	 */
+	sessionOptions: GeocodeSessionOptions
 	preflight: { ok: true } | { ok: false; message: string }
 }
 
 /**
- * The options the server's sessions build from: the library defaults at `en-US` over the process data root.
+ * The options the server's sessions build from: the library defaults over the process data root.
  *
+ * The server states no locale, so each session records its locale as the default.
  * `$MAILWOMAN_WOF_DB` and `$MAILWOMAN_CANDIDATE_DB` pin the gazetteer as they do for `mailwoman geocode`.
  */
 function serveSessionOptions(): GeocodeSessionOptions {
-	return createGeocodeSessionOptions({ locale: "en-US", dataRoot: DATA_ROOT })
+	return createGeocodeSessionOptions({ dataRoot: DATA_ROOT })
 }
 
 /**
@@ -225,6 +231,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 		return {
 			engine: { health },
+			sessionOptions: options,
 			preflight: { ok: false, message: buildPreflightMessage() },
 			[Symbol.asyncDispose]: disposeProcessScope,
 		}
@@ -243,6 +250,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 		return {
 			engine: { parse, health },
+			sessionOptions: options,
 			preflight: { ok: false, message: buildPreflightMessage() },
 			[Symbol.asyncDispose]: disposeProcessScope,
 		}
@@ -313,6 +321,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	return {
 		engine: { parse, geocode, batch, resolveTree, reload, health },
+		sessionOptions: options,
 		preflight: { ok: true },
 		[Symbol.asyncDispose]: async () => {
 			await slot[Symbol.asyncDispose]()

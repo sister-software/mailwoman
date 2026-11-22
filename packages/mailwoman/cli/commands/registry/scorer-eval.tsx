@@ -164,7 +164,6 @@ const EVALUATORS = {
 					geocode: {
 						wofDBPath: options.wof || wofPaths.wofDatabasePath("admin-global-priority.db").toString(),
 						dataRoot: options.dataRoot || dataRoot.dataRootPath().toString(),
-						locale: "en-US",
 						country: "US",
 					},
 					concurrency: opts.concurrency,
