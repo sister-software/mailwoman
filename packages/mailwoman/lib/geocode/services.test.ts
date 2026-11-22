@@ -12,12 +12,12 @@ import {
 	GenerationServices,
 	registerGenerationServices,
 	registerProcessServices,
-	ResolverModuleService,
 	unavailableLayers,
 } from "#geocode/services"
 import { ClassifierService } from "#services/classifier"
 import { BANLayerService, NODE_LAYER_CONTRIBUTIONS, OvertureLayerService } from "#services/entry/node"
 import { ParsePriorArtifactsService, ParsePriorsService } from "#services/parse-priors"
+import { ResolverModuleService } from "#services/resolver-module"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
 
 const options = createGeocodeSessionOptions()

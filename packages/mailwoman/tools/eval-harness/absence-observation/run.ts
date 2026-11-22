@@ -97,7 +97,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : null
 	const absenceRoute = await createAbsenceObservationRoute({ coverageDatabasePath })
 
-	using pipelineHandle = await createPOIBoardPipeline({
+	await using pipelineHandle = await createPOIBoardPipeline({
 		...options,
 		// After the spread, never before: an explicit `db: null` in `...options` would overwrite the default.
 		db: options.db ?? coverageDatabasePath,

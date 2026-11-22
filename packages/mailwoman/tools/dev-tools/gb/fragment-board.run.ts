@@ -61,7 +61,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier })
+await using pipeline = createRuntimePipeline({ classifier })
 
 const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
 	values.fixtures!

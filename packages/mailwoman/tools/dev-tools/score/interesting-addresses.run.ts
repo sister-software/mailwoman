@@ -50,7 +50,7 @@ for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)
 		...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 	})
 
-	const pipeline = createRuntimePipeline({ classifier })
+	await using pipeline = createRuntimePipeline({ classifier })
 
 	for (const row of fixtures.filter((fixture) => localeForCountry(fixture.country) === locale)) {
 		const result = await pipeline(row.input, { locale })

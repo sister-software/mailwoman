@@ -5,18 +5,14 @@
  * @file Builds the runtime pipeline that the POI board and its probes grade against.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/core/resolver"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
-import { TextSpliterator } from "spliterator"
 
-import { createResolverBackend } from "#resolver-backend"
+import { openPOIAnchorResolver, type POIAnchorBackend, type POIAnchorResolver } from "#poi/anchor-resolver"
 import { createRuntimePipeline } from "#runtime-pipeline"
 
 /**
@@ -66,26 +62,18 @@ export interface POIBoardOptions {
 }
 
 /**
- * Builds the anchor resolver the same way as `tryLoadResolver` in `commands/poi.tsx`:
- * It prefers the candidate-table backend, then the WOF FTS databases.
+ * Opens the anchor resolver `mailwoman poi` opens, through the builder the command calls.
  *
- * With neither available, it returns `undefined` so anchored cases abstain with `anchor_required`.
- * The caller must dispose the returned handle.
+ * With zero gazetteer available it returns `null`, so anchored cases abstain with `anchor_required`.
+ * The caller disposes the returned resolver.
  */
-async function loadResolver(
-	options: POIBoardOptions
-): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | null> {
-	const wofCandidates = options.candidateDB
-		? []
-		: options.resolveDB
-			? TextSpliterator.from(options.resolveDB, { delimiter: "," }).toArray()
-			: wofExtractPaths()
+async function loadResolver(options: POIBoardOptions): Promise<POIAnchorResolver | null> {
+	const opened = await openPOIAnchorResolver({
+		...(options.candidateDB ? { candidateDB: options.candidateDB } : {}),
+		...(options.resolveDB ? { resolveDB: options.resolveDB } : {}),
+	})
 
-	const wofPaths = (await Promise.all(wofCandidates.map(async (path) => ({ path, exists: await pathExists(path) }))))
-		.filter((entry) => entry.exists)
-		.map((entry) => entry.path)
-
-	if (!options.candidateDB && !wofPaths.length) {
+	if (opened === "unconfigured") {
 		console.error(
 			"note: no WOF resolver configured — anchor localities will not resolve to coordinates, so anchored " +
 				"category/brand cases will abstain anchor_required. Set --resolve-db/--candidate-db to fix."
@@ -94,36 +82,26 @@ async function loadResolver(
 		return null
 	}
 
-	try {
-		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		// The board grades the engine `mailwoman poi` builds.
-		// That engine resolves an anchor and never geocodes, so it is the gazetteer backend with zero session.
-		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
-
-		return {
-			resolver: createWOFResolver(lookup),
-			[Symbol.dispose]: () => lookup[Symbol.dispose](),
-			backend: lookup instanceof mod.WOFCandidateTableLookup ? "candidate" : "wof-fts",
-		}
-	} catch {
+	if (opened === "unavailable") {
 		console.error("note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve.")
 
 		return null
 	}
+
+	return opened
 }
 
 /**
- * Backend that answered anchor resolution.
- *
- * `createResolverBackend` can fall back to the default candidate path,
- * so the caller's options do not determine it by themselves.
+ * Backend that answered anchor resolution, or `none` when zero resolver opened.
  */
-export type POIBoardResolverBackend = "candidate" | "wof-fts" | "none"
+export type POIBoardResolverBackend = POIAnchorBackend | "none"
 
 /**
  * Board pipeline with the artifacts it opened.
+ *
+ * Its async disposal closes the pipeline's scope and the anchor resolver.
  */
-export interface POIBoardPipelineHandle extends Disposable {
+export interface POIBoardPipelineHandle extends AsyncDisposable {
 	pipeline: (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
 	/**
 	 * Path of the `poi.db` that the pipeline opened.
@@ -165,7 +143,10 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 		pipeline,
 		db,
 		backend: resolverHandle?.backend ?? "none",
-		[Symbol.dispose]: () => resolverHandle?.[Symbol.dispose](),
+		[Symbol.asyncDispose]: async () => {
+			await pipeline[Symbol.asyncDispose]()
+			resolverHandle?.[Symbol.dispose]()
+		},
 	}
 }
 

@@ -139,16 +139,20 @@ export async function createParser(options: ParserOptions = {}): Promise<Parser>
 			scope.resolve(ParsePriorsService),
 		])
 
-		const pipeline = createRuntimePipeline({
-			classifier,
-			fst: priors.fst ?? "none",
-			streetMorphology: priors.streetMorphology ?? "none",
-			anchorRegions: priors.anchorRegions ?? "none",
-			...(options.machinePreferences ? { machinePreferences: options.machinePreferences } : {}),
-			...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
-			...(options.placerCountryUse ? { placerCountryUse: options.placerCountryUse } : {}),
-			...(options.poiQueryKind ? { poiQueryKind: options.poiQueryKind } : {}),
-		})
+		// The pipeline's own scope is a child of the parser's, so disposing the parser's scope closes it too.
+		const pipeline = createRuntimePipeline(
+			{
+				classifier,
+				fst: priors.fst ?? "none",
+				streetMorphology: priors.streetMorphology ?? "none",
+				anchorRegions: priors.anchorRegions ?? "none",
+				...(options.machinePreferences ? { machinePreferences: options.machinePreferences } : {}),
+				...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
+				...(options.placerCountryUse ? { placerCountryUse: options.placerCountryUse } : {}),
+				...(options.poiQueryKind ? { poiQueryKind: options.poiQueryKind } : {}),
+			},
+			{ parent: scope }
+		)
 
 		return {
 			parse: pipeline,

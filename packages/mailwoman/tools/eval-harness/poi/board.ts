@@ -573,7 +573,7 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 		)
 	}
 
-	using pipelineHandle = await createPOIBoardPipeline(options)
+	await using pipelineHandle = await createPOIBoardPipeline(options)
 	const { pipeline, db } = pipelineHandle
 
 	const cases: CaseGrade[] = []

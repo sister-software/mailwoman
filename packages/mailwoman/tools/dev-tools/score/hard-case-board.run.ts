@@ -17,11 +17,12 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { ServiceRegistry } from "async-init"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { createResolverBackend, existingWOFDatabasePaths } from "#resolver-backend"
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline, registerRuntimePipelineServices } from "#runtime-pipeline"
 import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#tools/eval-harness/oa/resolver/tree-hits"
 
@@ -70,6 +71,11 @@ for (const locale of locales) {
 	classifiers.set(locale, await NeuralAddressClassifier.loadFromWeights({ locale }))
 }
 
+// One scope for every arm's pipelines, so the run loads the bundled placer once.
+await using pipelineScope = new ServiceRegistry()
+
+registerRuntimePipelineServices(pipelineScope)
+
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
 for (const arm of arms) {
@@ -86,11 +92,14 @@ for (const arm of arms) {
 
 		byLocale.set(
 			locale,
-			createRuntimePipeline({
-				classifier: classifiers.get(locale)!,
-				resolver,
-				fst: fst || "none",
-			})
+			createRuntimePipeline(
+				{
+					classifier: classifiers.get(locale)!,
+					resolver,
+					fst: fst || "none",
+				},
+				{ parent: pipelineScope }
+			)
 		)
 	}
 

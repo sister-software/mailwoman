@@ -11,6 +11,7 @@ import { createServer } from "node:http"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { loadBundledPlaceCountry } from "mailwoman/default/placer"
 import { geocodeAddress } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
@@ -22,6 +23,10 @@ import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 const PORT = Number(process.env.PORT ?? 3000)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+// The coarse country prior is loaded once, like the model, and handed to every geocode.
+// `geocodeAddress` loads nothing by itself: a caller passes this function, or "none" for no prior.
+const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
 
 // Geocoding is opt-in on a gazetteer being there, not on anything being configured.
 // `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit
@@ -63,7 +68,7 @@ createServer(async (req, res) => {
 			if (!resolver)
 				return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/db/wof/candidate.db" })
 
-			return send(res, 200, await geocodeAddress(address, { classifier, resolver, defaultCountry: "US" }))
+			return send(res, 200, await geocodeAddress(address, { classifier, resolver, placeCountry, defaultCountry: "US" }))
 		}
 
 		send(res, 404, { error: "not found" })

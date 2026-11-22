@@ -16,9 +16,10 @@ import type { LayerContribution, NationalDatabaseSource } from "#geocode/contrib
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import { GenerationServices, ResolverModuleService } from "#geocode/services"
+import { GenerationServices } from "#geocode/services"
 import { loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
 import { defineUnlessProvided } from "#services/define"
+import { ResolverModuleService } from "#services/resolver-module"
 
 const S = GenerationServices
 

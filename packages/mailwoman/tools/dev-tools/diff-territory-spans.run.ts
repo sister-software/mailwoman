@@ -62,7 +62,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier })
+await using pipeline = createRuntimePipeline({ classifier })
 
 for (const row of rows) {
 	for (const reg of REGISTERS) {

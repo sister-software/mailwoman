@@ -140,7 +140,7 @@ describe("what reaches the parse surface", () => {
 	// These tests catch a projection that would drop the script fields on the way out.
 	it("carries the ranked scripts and the per-token script through the whole pipeline", async () => {
 		const { createRuntimePipeline } = await import("#runtime-pipeline")
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("金龍酒家, 12 Gerrard Street, London WC2H 7JS", {})
 
 		expect(result.queryShape?.scripts?.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
@@ -156,7 +156,7 @@ describe("what reaches the parse surface", () => {
 
 	it("reports Hangul on a Korean address while the locale stays ja-JP", async () => {
 		const { createRuntimePipeline } = await import("#runtime-pipeline")
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("서울특별시 종로구 청운동 52-1", {})
 
 		expect(result.locale?.locale).toBe("ja-JP")

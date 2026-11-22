@@ -607,7 +607,7 @@ async function measureMarker(
 ): Promise<{ observed: number; detail: string }> {
 	const probe = definition.markerProbe
 	const route = await createSemanticObservationRoute()
-	using pipelineHandle = await createPOIBoardPipeline({ ...options, poiSemanticLookup: route.lookup })
+	await using pipelineHandle = await createPOIBoardPipeline({ ...options, poiSemanticLookup: route.lookup })
 	const { pipeline } = pipelineHandle
 
 	try {

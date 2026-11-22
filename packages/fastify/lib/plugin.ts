@@ -72,7 +72,10 @@ const loadResolverModules = () =>
 /**
  * Build the pipeline on first use when no pipeline was provided.
  */
-async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Promise<RuntimePipeline> {
+async function buildPipeline(
+	opts: MailwomanFastifyOptions,
+	locale: string
+): Promise<RuntimePipeline & AsyncDisposable> {
 	const [{ createRuntimePipeline }, { NeuralAddressClassifier }] = await loadPipelineModules()
 
 	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale })
@@ -127,7 +130,21 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 	// The pipeline loads model weights, so it is built on the first request rather than at registration.
 	// A failed build is retried by the next request, so installing the data needs no restart.
-	const loadPipeline = memoizeResettable(() => buildPipeline(opts, locale))
+	// The plugin owns a pipeline it built, and closes that pipeline's scope when the server closes.
+	// A pipeline the caller passed in stays the caller's.
+	let ownedPipeline: AsyncDisposable | null = null
+
+	const loadPipeline = memoizeResettable(async () => {
+		const built = await buildPipeline(opts, locale)
+
+		ownedPipeline = built
+
+		return built
+	})
+
+	fastify.addHook("onClose", async () => {
+		await ownedPipeline?.[Symbol.asyncDispose]()
+	})
 
 	const getPipeline = (): Promise<RuntimePipeline> => {
 		if (opts.pipeline) return Promise.resolve(opts.pipeline)

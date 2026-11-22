@@ -173,7 +173,7 @@ async function main() {
 	const wofDBArg = PathBuilder.from(args["wof-db"] || wofDatabasePath("admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
-	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
+	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadBundledPlaceCountry }] =
 		await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite"),
 			import("@mailwoman/neural/scorer"),
@@ -237,7 +237,7 @@ async function main() {
 	// so the hard filter only bites the unscoped `--default-country none` legs,
 	// exactly matching geocode-core's precedence.
 	const hardCountryPin = args["hard-country"] === true
-	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
+	const placeCountry = hardCountryPin ? await loadBundledPlaceCountry() : null
 	const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 	// keep in sync with geocode-core.ts: default safelist + any `--hard-country-safelist`

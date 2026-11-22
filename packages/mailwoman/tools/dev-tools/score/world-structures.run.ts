@@ -27,7 +27,7 @@ const fixtures = (await loadRegressionCases()).filter((row) => row.source === SO
 if (!fixtures.length) throw new Error(`No fixtures found for source ${SOURCE}.`)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const pipeline = createRuntimePipeline({ classifier })
+await using pipeline = createRuntimePipeline({ classifier })
 
 const perTag = new Map<string, { hit: number; total: number }>()
 const perCountry = new Map<string, { hit: number; total: number }>()

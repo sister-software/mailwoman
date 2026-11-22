@@ -420,9 +420,12 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 
 async function structuralResult(input: string, options: ParseOptions) {
 	const { createRuntimePipeline } = await import("#runtime-pipeline")
-	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
+	await using pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 
-	return pipeline(input, options.localeHint)
+	// The result is awaited here, because the pipeline's scope closes when this function returns.
+	const result = await pipeline(input, options.localeHint)
+
+	return result
 }
 
 async function serializeStructural(
@@ -515,7 +518,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
 
-			const pipeline = createRuntimePipeline({
+			await using pipeline = createRuntimePipeline({
 				classifier: classifier ?? undefined,
 				resolver,
 				fst: fst ?? "auto",
@@ -528,13 +531,13 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 			return options.debug
 				? prettyJSON(await serializeResult(result, options.format))
-				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+				: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 		})
 	}
 
 	const fst = await tryBuildFST(options)
 
-	const pipeline = createRuntimePipeline({
+	await using pipeline = createRuntimePipeline({
 		classifier: classifier ?? undefined,
 		fst: fst ?? "auto",
 		streetEvidence,
@@ -546,7 +549,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	return options.debug
 		? prettyJSON(await serializeResult(result, options.format))
-		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+		: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 }
 
 const BENCHMARK_WARMUP_ITERATIONS = 5
@@ -626,19 +629,19 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 
 	const { createRuntimePipeline } = await import("#runtime-pipeline")
 
-	const collected = options.resolve
-		? await withResolver(options, (resolver) =>
-				collect(
-					createRuntimePipeline({
-						classifier: classifier ?? undefined,
-						resolver,
-						poiQueryKind: options.poi ? "extract" : "none",
-					})
-				)
-			)
-		: await collect(
-				createRuntimePipeline({ classifier: classifier ?? undefined, poiQueryKind: options.poi ? "extract" : "none" })
-			)
+	const benchmark = async (resolver?: Resolver): ReturnType<typeof collect> => {
+		await using pipeline = createRuntimePipeline({
+			classifier: classifier ?? undefined,
+			...(resolver ? { resolver } : {}),
+			poiQueryKind: options.poi ? "extract" : "none",
+		})
+
+		const runs = await collect(pipeline)
+
+		return runs
+	}
+
+	const collected = options.resolve ? await withResolver(options, benchmark) : await benchmark()
 
 	const lines: string[] = [
 		`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`,

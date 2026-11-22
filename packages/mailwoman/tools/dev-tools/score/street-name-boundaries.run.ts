@@ -16,28 +16,37 @@ import { groupTuplesByTag } from "@mailwoman/core"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
+import { ServiceRegistry } from "async-init"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline, registerRuntimePipelineServices } from "#runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { overlayLocale, routeCountry } from "#tools/eval-harness/gauntlet/routing"
 
 const SOURCE = "operator:street-name-audit-2026-08-09"
 
 const fixtures = (await loadRegressionCases()).filter((row) => row.source === SOURCE)
-const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()
+const pipelines = new Map<string, ReturnType<typeof createRuntimePipeline>>()
+
+// One scope for every locale's pipeline, so the run loads the bundled placer once.
+await using pipelineScope = new ServiceRegistry()
+
+registerRuntimePipelineServices(pipelineScope)
+
 const scores = new Map<string, { hit: number; total: number }>()
 const failures: string[] = []
 
 for (const row of fixtures) {
 	const locale = overlayLocale(routeCountry(row))
-	let classifier = classifiers.get(locale)
+	let pipeline = pipelines.get(locale)
 
-	if (!classifier) {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
-		classifiers.set(locale, classifier)
+	if (!pipeline) {
+		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
+
+		pipeline = createRuntimePipeline({ classifier }, { parent: pipelineScope })
+		pipelines.set(locale, pipeline)
 	}
 
-	const result = await createRuntimePipeline({ classifier })(row.input, { locale })
+	const result = await pipeline(row.input, { locale })
 	const emitted = groupTuplesByTag(result.tree)
 
 	const parts = STREET_FAMILY_TAGS.flatMap((tag) => emitted.get(tag) ?? [])
