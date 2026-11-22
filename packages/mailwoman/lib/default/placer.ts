@@ -113,6 +113,6 @@ export const PlaceCountryService: ServiceToken<PlaceCountryFn | null> = createTo
  * The placer loads when a caller first needs the service, once for the scope.
  * It holds its weights in memory and opens no handle, so the scope has no release to run for it.
  */
-export function registerPlaceCountryService(registry: ServiceRegistry, options: PlaceCountryOptions = {}): void {
-	defineUnlessProvided(registry, PlaceCountryService, { build: () => loadBundledPlaceCountry(options) })
+export function registerPlaceCountryService(registry: ServiceRegistry): void {
+	defineUnlessProvided(registry, PlaceCountryService, { build: () => loadBundledPlaceCountry() })
 }

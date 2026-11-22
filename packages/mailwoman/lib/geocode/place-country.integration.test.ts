@@ -6,7 +6,7 @@ import { EMPTY_PLACE_FIELDS, type ResolveOpts, type Resolver } from "@mailwoman/
 import { describe, expect, test, vi } from "vitest"
 
 import { loadBundledPlaceCountry } from "#default/placer"
-import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
+import { geocodeAddress, type GeocodeClassifier } from "#geocode"
 
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }
@@ -45,8 +45,9 @@ describe("GeocodeAddress — coarse-placer soft prior", () => {
 
 	test("a caller that states neither a placer nor none is refused, so the prior never turns off unstated", async () => {
 		const { resolver } = captureResolver()
-		const unstated = { classifier: fakeClassifier(emptyTree), resolver } as unknown as GeocodeDeps
+		const unstated = { classifier: fakeClassifier(emptyTree), resolver }
 
+		// @ts-expect-error -- A JavaScript caller can leave the router unstated, and the type refuses it here.
 		await expect(geocodeAddress("12 rue de la Paix, Paris", unstated)).rejects.toThrow(/placeCountry/)
 	})
 
