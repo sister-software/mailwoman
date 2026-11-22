@@ -12,6 +12,7 @@ import {
 	runPipeline,
 	ZEROED_MORPHOLOGY_OPTS,
 } from "#pipeline/runtime-pipeline"
+import { createRequestContext } from "#pipeline/stage"
 import { EMPTY_QUERY_SHAPE_VIEW, WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 import type {
 	AddressClassifier,
@@ -615,6 +616,22 @@ describe("runPipeline — abort signal", () => {
 		const controller = new AbortController()
 		const result = await runPipeline("hello", {}, { signal: controller.signal })
 		expect(result.tree).toBeDefined()
+	})
+
+	it("runs on a caller's context: its signal cancels the run, and its timing and faults are the result's", async () => {
+		const context = createRequestContext()
+		const result = await runPipeline("hello", {}, {}, context)
+
+		expect(result.timing).toBe(context.timing)
+		expect(result.faults).toBe(context.faults)
+		expect(Object.keys(context.timing)).toContain("normalize")
+
+		const controller = new AbortController()
+		const reason = new Error("the caller left")
+
+		controller.abort(reason)
+
+		await expect(runPipeline("hello", {}, {}, createRequestContext({ signal: controller.signal }))).rejects.toBe(reason)
 	})
 })
 

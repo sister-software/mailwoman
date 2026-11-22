@@ -18,6 +18,7 @@ import {
 	explanationRows,
 	localeHeadRow,
 	rewriteRows,
+	rooftopRows,
 	systemRow,
 	tokensRow,
 } from "#cli/debug-view/trace-rows"
@@ -241,6 +242,40 @@ describe("decodeRow", () => {
 		})
 
 		expect(decodeRow(trace)).toContain("repairs wordConsistency")
+	})
+
+	it("adds the passes that rewrote the tree, and only when one did", () => {
+		const trace = traceOf()
+
+		trace.stages = [
+			{ kind: "country-scope", stage: "country-scope", resolver: null, withheld: null },
+			{ kind: "tree-rewrite", stage: "region-recognition", removed: ['region [9, 11): "KS"'], added: [] },
+		]
+
+		expect(decodeRow(trace)).toBe(
+			`viterbi  conf 0.90  house_number street_prefix street  rewrites region-recognition  priors queryShape  repairs ${ABSENT}`
+		)
+	})
+})
+
+describe("rooftopRows", () => {
+	it("states the source of each resolve and what the second one changed", () => {
+		const trace = traceOf()
+
+		trace.stages = [
+			{
+				kind: "rooftop-selection",
+				stage: "rooftop-selection",
+				first: { country: "gb", source: "national" },
+				second: { country: "IE", source: "osm", changed: ["address-points", "placetype-map"] },
+			},
+			{ kind: "rooftop-selection", stage: "rooftop-selection", first: { country: null, source: null }, second: null },
+		]
+
+		expect(rooftopRows(trace.stages)).toEqual([
+			"national for gb  second resolve for IE: osm, changed address-points,placetype-map",
+			`${ABSENT} for ${ABSENT}`,
+		])
 	})
 })
 

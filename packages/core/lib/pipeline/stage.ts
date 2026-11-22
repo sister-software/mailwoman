@@ -17,11 +17,11 @@ import { errorMessage } from "#errors/schema"
 import type { PipelineTiming } from "#pipeline/types"
 
 /**
- * The identifier of each stage.
- * A timing record keys the stage's duration by it.
+ * The identifier of each stage of the parse pipeline, spelled as its timing keys were first published.
+ * A timing record keys a stage's duration by its identifier.
  *
- * The first ten are the parse pipeline's, spelled as its timing keys were first published.
- * The last four are the tree rewrites the geocode path runs after its decode.
+ * A package that runs stages of its own declares their identifiers beside them,
+ * as `GeocodeStageID` in `mailwoman` does, so a new stage there changes zero lines here.
  */
 export const StageID = {
 	Normalize: "normalize",
@@ -34,10 +34,6 @@ export const StageID = {
 	TokenClassify: "token-classify",
 	GrouperAudit: "grouper-audit",
 	Resolve: "resolve",
-	RegionRecognition: "region-recognition",
-	BarePostcode: "bare-postcode",
-	PostcodeContradiction: "postcode-contradiction",
-	StrandedAffix: "stranded-affix",
 } as const
 
 /**
@@ -48,33 +44,36 @@ export type StageID = (typeof StageID)[keyof typeof StageID]
 /**
  * The two stages a fault spells differently from the stage's identifier.
  *
- * `mailwoman parse --json` prints a fault's `stage`, so each spelling stays as it was first published.
+ * `mailwoman parse` prints a fault's `stage`, so each spelling stays as it was first published.
  */
-const FAULT_STAGE_SPELLINGS: Partial<Record<StageID, "classifier" | "resolver">> = {
+const FAULT_STAGE_SPELLINGS: Readonly<Record<string, string>> = {
 	[StageID.TokenClassify]: "classifier",
 	[StageID.Resolve]: "resolver",
 }
 
 /**
- * A stage as a fault spells it: `classifier`, `resolver`, or the identifier of any other stage.
+ * A stage of the parse pipeline as a fault spells it: `classifier` for the decode,
+ * `resolver` for the resolve, and the stage's identifier for every other stage.
  */
 export type PipelineFaultStage =
 	| Exclude<StageID, typeof StageID.TokenClassify | typeof StageID.Resolve>
 	| "classifier"
 	| "resolver"
 
-function faultStageOf(id: StageID): PipelineFaultStage {
-	return FAULT_STAGE_SPELLINGS[id] ?? (id as PipelineFaultStage)
-}
-
 /**
- * One stage crash that the runner caught and degraded past.
+ * One failure that a request caught and degraded past.
  *
  * `runPipeline` still resolves.
  * `tree` contains whatever the remaining stages could prove.
+ *
+ * @typeParam Stage The spellings of the stages that can fault.
+ * The parse pipeline's result states {@link PipelineFaultStage}, and a context with stages of another package states `string`.
  */
-export interface PipelineFault {
-	stage: PipelineFaultStage
+export interface PipelineFault<Stage extends string = string> {
+	/**
+	 * The stage that threw, as a fault spells it.
+	 */
+	stage: Stage
 	/**
 	 * The thrown value's `name`, or `"Error"` when something that isn't an `Error` was thrown.
 	 *
@@ -97,7 +96,10 @@ export interface PipelineFault {
  */
 export interface TreeRewriteRecord {
 	kind: "tree-rewrite"
-	stage: StageID
+	/**
+	 * The identifier of the stage that rewrote the tree.
+	 */
+	stage: string
 	/**
 	 * The lines the tree had before the stage and lacks after it.
 	 */
@@ -117,8 +119,9 @@ export type StageRecord = TreeRewriteRecord
  * What every stage of one request reads and writes.
  *
  * @typeParam Trace The records the request's stages write.
+ * @typeParam FaultStage The spellings of the stages whose failures the request records.
  */
-export interface RequestContext<Trace = StageRecord> {
+export interface RequestContext<Trace = StageRecord, FaultStage extends string = string> {
 	/**
 	 * The signal that cancels the request, or null for a request that can't be cancelled.
 	 */
@@ -132,23 +135,51 @@ export interface RequestContext<Trace = StageRecord> {
 	readonly trace: ((record: Trace) => void) | null
 
 	/**
+	 * Whether a stage also writes the records that cost work to build, such as the
+	 * outlines of a tree rewrite or the decoder's trace.
+	 *
+	 * A stage writes a record it already holds, such as a decision it made, whenever {@link trace} is set.
+	 */
+	readonly detail: boolean
+
+	/**
 	 * The milliseconds each stage has taken, summed when a stage runs more than once.
 	 */
 	readonly timing: PipelineTiming
 
 	/**
-	 * Every stage crash the runner caught and degraded past, in order.
+	 * Every failure the request caught and degraded past, in order.
 	 */
-	readonly faults: PipelineFault[]
+	readonly faults: PipelineFault<FaultStage>[]
 }
 
 /**
  * Builds the context of one request.
+ *
+ * `detail` defaults to whether the request has a trace, so a caller states it only to
+ * receive the records a stage already holds without the costly ones.
  */
-export function createRequestContext<Trace = StageRecord>(
-	init: { signal?: AbortSignal | null; trace?: ((record: Trace) => void) | null } = {}
-): RequestContext<Trace> {
-	return { signal: init.signal ?? null, trace: init.trace ?? null, timing: {}, faults: [] }
+export function createRequestContext<Trace = StageRecord, FaultStage extends string = string>(
+	init: { signal?: AbortSignal | null; trace?: ((record: Trace) => void) | null; detail?: boolean } = {}
+): RequestContext<Trace, FaultStage> {
+	const trace = init.trace ?? null
+
+	return { signal: init.signal ?? null, trace, detail: init.detail ?? trace != null, timing: {}, faults: [] }
+}
+
+/**
+ * Records a failure the request degrades past, under `stage`.
+ *
+ * The runner calls it for a stage that declares `recover`.
+ * A stage calls it for a failure of work the answer doesn't depend on, such as building a trace.
+ */
+export function recordFault(context: Pick<RequestContext<never>, "faults">, stage: string, cause: unknown): void {
+	context.faults.push({
+		stage,
+		name: cause instanceof Error ? cause.name : "Error",
+		message: errorMessage(cause),
+		cause,
+	})
 }
 
 /**
@@ -157,9 +188,14 @@ export function createRequestContext<Trace = StageRecord>(
  * @typeParam Input What the stage reads.
  * @typeParam Output What the stage returns.
  * @typeParam Trace The records the stage writes.
+ * @typeParam ID The stage identifiers of the pipeline the stage belongs to.
  */
-export interface PipelineStage<Input, Output, Trace = StageRecord> {
-	readonly id: StageID
+export interface PipelineStage<Input, Output, Trace = StageRecord, ID extends string = string> {
+	/**
+	 * The stage's identifier.
+	 * The context's timing keys the stage's duration by it.
+	 */
+	readonly id: ID
 	run(input: Input, context: RequestContext<Trace>): Output | Promise<Output>
 
 	/**
@@ -197,12 +233,7 @@ export async function runStage<Input, Output, Trace>(
 	} catch (error) {
 		if (!stage.recover) throw error
 
-		context.faults.push({
-			stage: faultStageOf(stage.id),
-			name: error instanceof Error ? error.name : "Error",
-			message: errorMessage(error),
-			cause: error,
-		})
+		recordFault(context, FAULT_STAGE_SPELLINGS[stage.id] ?? stage.id, error)
 
 		return stage.recover(input)
 	} finally {
@@ -230,18 +261,18 @@ export async function runStages<Value, Trace>(
 /**
  * A stage that rewrites the parse tree and writes what it changed to the trace.
  *
- * It writes a {@linkcode TreeRewriteRecord} only when the request has a trace
+ * It writes a {@linkcode TreeRewriteRecord} only when the request traces in detail
  * and the tree's outline changed.
  * The rewrite may change the tree in place, so the stage reads the outline before the rewrite runs.
  */
-export function treeRewriteStage(
-	id: StageID,
+export function treeRewriteStage<ID extends string>(
+	id: ID,
 	rewrite: (tree: AddressTree) => AddressTree
-): PipelineStage<AddressTree, AddressTree, TreeRewriteRecord> {
+): PipelineStage<AddressTree, AddressTree, TreeRewriteRecord, ID> {
 	return {
 		id,
 		run(tree, context) {
-			if (!context.trace) return rewrite(tree)
+			if (!context.trace || !context.detail) return rewrite(tree)
 
 			const before = decodeAsOutlineLines(tree, { metadata: true })
 			const rewritten = rewrite(tree)

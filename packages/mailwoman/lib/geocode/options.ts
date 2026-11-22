@@ -60,7 +60,7 @@ function switchOption(name: keyof typeof GEOCODE_SWITCH_DEFAULTS) {
  *
  * A config file may set each key except three. {@linkcode GeocodeFileOptionsSchema} leaves those out:
  *
- * - `trace` costs one extra decode per input and changes what a run returns.
+ * - `trace` makes each decode record its trace and changes what a run returns.
  *   The debug view and the diagnostic tools turn it on for themselves.
  * - `diagnoseUnreachable` acts only under `trace`, so it belongs to the same callers.
  * - `parentPlace.source` records who chose the parent, and a file's parent is always the caller's.
@@ -284,7 +284,9 @@ export const GeocodeSessionOptionsSchema = z.strictObject({
 
 	/**
 	 * Whether to record a `GeocodeTrace` per input.
-	 * This setting costs one extra decode per input.
+	 *
+	 * The trace comes from the decode that builds the answer.
+	 * That decode then also records its intermediates.
 	 */
 	trace: z.boolean().default(false),
 

@@ -15,6 +15,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { CaseNormalization, ClassifierOpts, InputMode } from "@mailwoman/core/pipeline"
+import type { NeuralParseTrace } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
@@ -61,6 +62,12 @@ export interface GeocodeClassifier {
 			 */
 			venueHead?: ClassifierOpts["venueHead"]
 			venueHeadOpts?: ClassifierOpts["venueHeadOpts"]
+			/**
+			 * Receives a function that builds the trace of the decode behind the returned tree.
+			 *
+			 * A classifier that can't trace never calls it, and the geocode then has no decode record.
+			 */
+			onTrace?: (buildTrace: () => NeuralParseTrace) => void
 		}
 	): Promise<AddressTree>
 }

@@ -85,6 +85,40 @@ export interface TraceRepair {
 }
 
 /**
+ * What one decode of the classifier returns to the parse method that ran it.
+ */
+export interface DecodeOutput {
+	tokens: DecoderToken[]
+	logits: number[][]
+	pieces: TokenizedPiece[]
+
+	localeCountry: { country: string; confidence: number } | null
+	/**
+	 * The intermediates that a trace needs, present only when the decode ran with `trace` set.
+	 */
+	trace?: {
+		anchor: SoftFeatureChannel | null
+		gazetteer: SoftFeatureChannel | null
+		country: SoftFeatureChannel | null
+		streetType: SoftFeatureChannel | null
+		localitySurface: SoftFeatureChannel | null
+		inputMode: InputMode
+		channelPins: ChannelPins
+		localeLogits: number[] | null
+		spanScores: number[][][] | null
+		detectedSystem: SystemCode | null
+		systemSource: "off" | "auto" | "pinned"
+		priors: TracePrior[]
+		emissions: number[][]
+		path: number[]
+		margins: number[]
+		explanation: DecodeExplanation
+		repairs: TraceRepair[]
+		cardinalityFilter: { rank: number; fellBack: boolean } | null
+	}
+}
+
+/**
  * The full trace of one `traceParse` call, from tokenizer pieces through emissions, decoding and repairs.
  */
 export interface NeuralParseTrace {

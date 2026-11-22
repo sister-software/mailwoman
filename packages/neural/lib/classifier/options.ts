@@ -36,6 +36,7 @@ import type { SemiCRFTransitions } from "#semi-markov-decode"
 import type { SpanProposalPriorOpts } from "#span/proposal-prior"
 import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
+import type { NeuralParseTrace } from "#trace"
 import type { UnfedChannelReport } from "#weights/channels"
 
 /**
@@ -460,6 +461,17 @@ export interface ParseOpts {
 	 * Other models ignore it.
 	 */
 	localeHint?: string
+
+	/**
+	 * Receives a function that builds the trace of the decode behind the tree `parse` returns.
+	 * `parse` calls the receiver once, before it resolves.
+	 *
+	 * The trace is the one `traceParse` returns for the same text and options, without a second decode.
+	 * The receiver calls the function inside the call it was handed to, and catches what
+	 * the function throws, so a trace that can't be built leaves the parse as it is.
+	 * Only `parse` reads this option.
+	 */
+	onTrace?: (buildTrace: () => NeuralParseTrace) => void
 
 	/**
 	 * Decodes the 20 best label paths and takes the first that opens at most one span

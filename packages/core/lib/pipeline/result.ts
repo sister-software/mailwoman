@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "#decoder/types"
-import type { PipelineFault } from "#pipeline/stage"
+import type { PipelineFault, PipelineFaultStage } from "#pipeline/stage"
 import type {
 	LocaleHint,
 	NormalizedInputLite,
@@ -17,7 +17,7 @@ import type {
 /**
  * Result of one `runPipeline` call.
  */
-export interface PipelineResult {
+export interface PipelineResult<FaultStage extends string = PipelineFaultStage> {
 	input: string
 	normalized: NormalizedInputLite
 	queryShape: QueryShapeLite
@@ -42,8 +42,11 @@ export interface PipelineResult {
 	 * The array is always present.
 	 * An empty array states that no stage faulted.
 	 * A missing field would make a different claim.
+	 *
+	 * A fault's `stage` is one of the parse pipeline's spellings, unless the caller
+	 * ran the parse on a context with stages of its own.
 	 */
-	faults: PipelineFault[]
+	faults: PipelineFault<FaultStage>[]
 	/**
 	 * Query-intent advisories lifted from the kind classifier's verdict, always present
 	 * so an empty array states that the vocabulary examined this query and made no

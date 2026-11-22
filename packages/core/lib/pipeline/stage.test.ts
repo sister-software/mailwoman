@@ -107,7 +107,7 @@ describe("treeRewriteStage", () => {
 		const records: StageRecord[] = []
 		const context = createRequestContext({ trace: (record) => void records.push(record) })
 
-		await runStage(treeRewriteStage(StageID.RegionRecognition, nestUnderRegion), cityState(), context)
+		await runStage(treeRewriteStage("region-recognition", nestUnderRegion), cityState(), context)
 
 		expect(records).toEqual([
 			{
@@ -130,7 +130,7 @@ describe("treeRewriteStage", () => {
 		}
 
 		await runStage(
-			treeRewriteStage(StageID.BarePostcode, annotate),
+			treeRewriteStage("bare-postcode", annotate),
 			{ raw: "SW1A 1AA", roots: [node("postcode", "SW1A 1AA", 0)] },
 			context
 		)
@@ -149,7 +149,7 @@ describe("treeRewriteStage", () => {
 		const trace = vi.fn()
 
 		await runStage(
-			treeRewriteStage(StageID.StrandedAffix, (tree) => tree),
+			treeRewriteStage("stranded-affix", (tree) => tree),
 			cityState(),
 			createRequestContext({ trace })
 		)
@@ -157,13 +157,16 @@ describe("treeRewriteStage", () => {
 		expect(trace).not.toHaveBeenCalled()
 	})
 
-	it("applies the rewrite for a request without a trace", async () => {
+	it("applies the rewrite and writes no record for a request that traces without detail", async () => {
+		const trace = vi.fn()
+
 		const tree = await runStage(
-			treeRewriteStage(StageID.RegionRecognition, nestUnderRegion),
+			treeRewriteStage("region-recognition", nestUnderRegion),
 			cityState(),
-			createRequestContext()
+			createRequestContext({ trace, detail: false })
 		)
 
 		expect(tree.roots.map((root) => root.tag)).toEqual(["region"])
+		expect(trace).not.toHaveBeenCalled()
 	})
 })

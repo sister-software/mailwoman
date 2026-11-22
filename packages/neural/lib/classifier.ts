@@ -5,7 +5,7 @@
  *   Defines `NeuralAddressClassifier`, which combines the tokenizer, the ONNX runner and the core decoder.
  */
 
-import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
+import { conventionsForSystem } from "@mailwoman/codex"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import {
 	buildAddressTree,
@@ -19,7 +19,6 @@ import {
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import {
-	type ChannelPins,
 	DEFAULT_CASE_NORMALIZATION,
 	type InputMode,
 	proposeSpans,
@@ -47,12 +46,7 @@ import { DEFAULT_TOGGLE } from "#classifier/options"
 import { containmentCountry, fstForParse, parsePairPrior } from "#classifier/parse-country"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { codeUnitChannel } from "#code-unit-features"
-import {
-	explainDecode,
-	type DecodeExplanation,
-	type DecodeObjective,
-	type EmissionPriorTerm,
-} from "#decode-explanation"
+import { explainDecode, type DecodeObjective, type EmissionPriorTerm } from "#decode-explanation"
 import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
 import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
@@ -62,14 +56,14 @@ import { repairPostcodeLabels } from "#postcode/repair"
 import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
 import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#register-boundary-repair"
 import type { SemiCRFTransitions } from "#semi-markov-decode"
-import { applyChannelPins, buildSoftFeatures, type SoftFeatureChannel, type SoftFeatures } from "#soft-features"
+import { applyChannelPins, buildSoftFeatures, type SoftFeatures } from "#soft-features"
 import { bridgePunctuationGaps } from "#span/bridge"
 import { buildSpanProposalPriors } from "#span/proposal-prior"
 import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
-import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
+import type { TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
-import type { NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
+import type { DecodeOutput, NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
 import { buildVenueHeadEmissionPriors } from "#venue/head-prior"
 import {
@@ -323,14 +317,24 @@ export class NeuralAddressClassifier {
 	}
 
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
-		if (!text) return { raw: text, roots: [] }
+		if (!text) {
+			opts?.onTrace?.(() => this.#emptyTrace(text, opts))
+
+			return { raw: text, roots: [] }
+		}
 
 		// The model trained on mixed case, so this converts all-caps ASCII input to title case.
 		// The conversion preserves length and keeps offsets valid.
 		const modelText =
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
-		const { tokens, localeCountry } = await this.#decode(modelText, opts)
+		const decoded = await this.#decode(modelText, opts, opts?.onTrace != null)
+		const { tokens, localeCountry } = decoded
+
+		// The trace is of the decode that builds the returned tree, so the two can't disagree.
+		// The receiver builds it, so a failure to build one is the receiver's to catch
+		// and the tree still returns.
+		opts?.onTrace?.(() => this.#traceOf(text, modelText, decoded, opts))
 
 		return treeWithLocaleCountry(
 			modelText,
@@ -376,44 +380,56 @@ export class NeuralAddressClassifier {
 	 * The trace omits `opts.calibrate`.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
-		const labels = [...this.labels] as string[]
-
-		if (!text) {
-			// Empty input still reports the resolved conventions mode and a record for every prior kind.
-			return {
-				text,
-				caseNormalized: false,
-				pieces: [],
-				containmentCountry: null,
-				anchor: null,
-				gazetteer: null,
-				country: null,
-				streetType: null,
-				localitySurface: null,
-				inputMode: opts?.inputMode ?? "fragmented",
-				channelPins: opts?.channels ?? {},
-				logits: [],
-				localeLogits: null,
-				spanScores: null,
-				localeCountries: null,
-				detectedSystem: null,
-				systemSource: resolveSystemVerdict(this.conventionsFor(opts), null).systemSource,
-				priors: TRACE_PRIOR_KINDS.map((kind) => untracedPrior(kind, false)),
-				emissions: [],
-				labels,
-				path: [],
-				margins: [],
-				decode: this.decodeMode,
-				explanation: null,
-				repairs: [],
-				tokens: [],
-			}
-		}
+		if (!text) return this.#emptyTrace(text, opts)
 
 		const modelText =
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
-		const { tokens, logits, pieces, localeCountry, trace } = await this.#decode(modelText, opts, true)
+		return this.#traceOf(text, modelText, await this.#decode(modelText, opts, true), opts)
+	}
+
+	/**
+	 * The trace of an empty input.
+	 *
+	 * It still reports the resolved conventions mode and a record for every prior kind.
+	 */
+	#emptyTrace(text: string, opts: ParseOpts | undefined): NeuralParseTrace {
+		return {
+			text,
+			caseNormalized: false,
+			pieces: [],
+			containmentCountry: null,
+			anchor: null,
+			gazetteer: null,
+			country: null,
+			streetType: null,
+			localitySurface: null,
+			inputMode: opts?.inputMode ?? "fragmented",
+			channelPins: opts?.channels ?? {},
+			logits: [],
+			localeLogits: null,
+			spanScores: null,
+			localeCountries: null,
+			detectedSystem: null,
+			systemSource: resolveSystemVerdict(this.conventionsFor(opts), null).systemSource,
+			priors: TRACE_PRIOR_KINDS.map((kind) => untracedPrior(kind, false)),
+			emissions: [],
+			labels: [...this.labels] as string[],
+			path: [],
+			margins: [],
+			decode: this.decodeMode,
+			explanation: null,
+			repairs: [],
+			tokens: [],
+		}
+	}
+
+	/**
+	 * The serializable trace of one traced decode of `modelText`, the case-normalized form of `text`.
+	 */
+	#traceOf(text: string, modelText: string, decoded: DecodeOutput, opts: ParseOpts | undefined): NeuralParseTrace {
+		const { tokens, logits, pieces, localeCountry, trace } = decoded
+		const labels = [...this.labels] as string[]
 
 		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
 
@@ -456,40 +472,7 @@ export class NeuralAddressClassifier {
 	 * runs Viterbi or argmax and applies repairs.
 	 */
 	// oxlint-disable-next-line complexity -- Complexity is 104. The previous split implementation drifted from this method.
-	async #decode(
-		text: string,
-		opts?: ParseOpts,
-		trace = false
-	): Promise<{
-		tokens: DecoderToken[]
-		logits: number[][]
-		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
-
-		localeCountry: { country: string; confidence: number } | null
-		/**
-		 * The intermediates that `traceParse` needs, present only when `trace` is true.
-		 */
-		trace?: {
-			anchor: SoftFeatureChannel | null
-			gazetteer: SoftFeatureChannel | null
-			country: SoftFeatureChannel | null
-			streetType: SoftFeatureChannel | null
-			localitySurface: SoftFeatureChannel | null
-			inputMode: InputMode
-			channelPins: ChannelPins
-			localeLogits: number[] | null
-			spanScores: number[][][] | null
-			detectedSystem: SystemCode | null
-			systemSource: "off" | "auto" | "pinned"
-			priors: TracePrior[]
-			emissions: number[][]
-			path: number[]
-			margins: number[]
-			explanation: DecodeExplanation
-			repairs: TraceRepair[]
-			cardinalityFilter: { rank: number; fellBack: boolean } | null
-		}
-	}> {
+	async #decode(text: string, opts?: ParseOpts, trace = false): Promise<DecodeOutput> {
 		const encoded = this.encode(text)
 		// The pieces are truncated after inference to match the runner's sequence length.
 		let pieces = encoded.pieces
