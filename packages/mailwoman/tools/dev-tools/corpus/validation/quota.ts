@@ -20,9 +20,15 @@ import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { weightedCountries } from "@mailwoman/corpus/training/config/load"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
-import type { EvaluationGroups } from "@mailwoman/corpus/utils/evaluation-groups"
+import type { EvaluationGroups, RequiredGroupSkip } from "@mailwoman/corpus/utils/evaluation-groups"
 import type { ValidationCandidate, ValidationFloor } from "@mailwoman/corpus/utils/validation-groups"
 
+import {
+	createRequiredGroupsTable,
+	requiredGroupSkip,
+	requiredGroupSQL,
+	type RequiredTrainingGroups,
+} from "#tools/training/audits/required-groups"
 import { expandRequirements, STREET_TAGS } from "#tools/training/audits/validation/coverage"
 
 /**
@@ -75,8 +81,21 @@ export async function readValidationPool(input: {
 	manifest: string
 	frozen: Pick<EvaluationGroups, "groups">
 	capRows: number
+	/**
+	 * The groups the training config's receipts require.
+	 * The pool leaves them out.
+	 */
+	required?: RequiredTrainingGroups | null
 	onProgress?: (filesRead: number, files: number) => void
-}): Promise<{ candidates: ValidationCandidate[]; totals: Map<string, ValidationPoolTotal>; files: number }> {
+}): Promise<{
+	candidates: ValidationCandidate[]
+	totals: Map<string, ValidationPoolTotal>
+	files: number
+	/**
+	 * The required groups the pool held and left out, `null` when no required groups were given.
+	 */
+	skipped: RequiredGroupSkip | null
+}> {
 	const manifest = await readLocalJSONFile<{ files?: CensusManifestFile[] }>(input.manifest)
 	const files = manifest.files ?? []
 
@@ -97,6 +116,7 @@ export async function readValidationPool(input: {
 		await db.run(`INSERT INTO frozen VALUES ${values}`)
 	}
 
+	await createRequiredGroupsTable(db, input.required ?? { records: new Map() })
 	await db.run(`CREATE TEMP TABLE pool (country VARCHAR, g VARCHAR, n BIGINT, st BIGINT)`)
 
 	const streetTags = [...STREET_TAGS].map((tag) => `'${escapeSQLString(tag)}'`).join(", ")
@@ -138,10 +158,27 @@ export async function readValidationPool(input: {
 		input.onProgress?.(index + 1, files.length)
 	}
 
+	const skipped = input.required
+		? requiredGroupSkip(
+				input.required,
+				new Map(
+					(
+						await db.runAndReadAll(
+							`SELECT country, count(DISTINCT g) AS n FROM pool WHERE ${requiredGroupSQL("g")} GROUP BY country`
+						)
+					)
+						.getRowObjects()
+						.map((row) => [String(row.country), Number(row.n)] as const)
+				)
+			)
+		: null
+
 	// The hash is `hashUint32`'s: the first four bytes of the group's sha256 as a big-endian uint32.
+	// A group a training receipt requires stays in train.
 	await db.run(
 		`CREATE TEMP TABLE groups AS SELECT country, g, sum(n) AS n, sum(st) AS st, ` +
-			`CAST(('0x' || substr(sha256(g), 1, 8)) AS UBIGINT) AS h FROM pool GROUP BY country, g`
+			`CAST(('0x' || substr(sha256(g), 1, 8)) AS UBIGINT) AS h FROM pool WHERE NOT ${requiredGroupSQL("g")} ` +
+			"GROUP BY country, g"
 	)
 
 	const totals = new Map<string, ValidationPoolTotal>()
@@ -167,5 +204,5 @@ export async function readValidationPool(input: {
 		streetRows: Number(row.st),
 	}))
 
-	return { candidates, totals, files: files.length }
+	return { candidates, totals, files: files.length, skipped }
 }

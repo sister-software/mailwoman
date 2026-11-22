@@ -67,8 +67,35 @@ export interface HeldoutDatasetEntry {
 	annotation: string
 }
 
+/**
+ * What a frozen collection is for.
+ *
+ * An evaluation collection is scored.
+ * A reserve (`heldout/dataset/reserve`) holds groups taken from a training pool for a later cycle:
+ * an evaluation-group list sends them to test, and a later collection is frozen from those rows.
+ * It is never scored itself.
+ */
+export const HeldoutCollectionKind = {
+	Evaluation: "evaluation",
+	Reserve: "reserve",
+} as const
+
+export type HeldoutCollectionKind = (typeof HeldoutCollectionKind)[keyof typeof HeldoutCollectionKind]
+
+/**
+ * The sampling method a reserve is drawn by, and only a reserve.
+ */
+export const RESERVE_SAMPLING_METHOD = "per-group-train-pool-hash-order"
+
 export interface HeldoutDatasetManifest {
 	schemaVersion: typeof HELDOUT_DATASET_SCHEMA_VERSION
+	/**
+	 * The collection's kind, read from its sampling method.
+	 *
+	 * The method enters the version.
+	 * A manifest without it is an evaluation collection.
+	 */
+	collectionKind?: HeldoutCollectionKind
 	/**
 	 * The collection's name, such as `heldout-v0.8.0-test`.
 	 */
@@ -285,6 +312,7 @@ export function buildHeldoutDatasetManifest(input: {
 
 	return {
 		schemaVersion: HELDOUT_DATASET_SCHEMA_VERSION,
+		...(input.sampling.method === RESERVE_SAMPLING_METHOD ? { collectionKind: HeldoutCollectionKind.Reserve } : {}),
 		datasetID: input.datasetID,
 		version: heldoutDatasetVersion({
 			rowsSHA256,
@@ -366,6 +394,16 @@ export async function readHeldoutDatasetManifest(path: PathBuilderLike): Promise
 	}
 
 	assertManifestFields(path, manifest)
+
+	if (
+		(manifest.sampling.method === RESERVE_SAMPLING_METHOD) !==
+		(manifest.collectionKind === HeldoutCollectionKind.Reserve)
+	) {
+		throw new Error(
+			`${path.toString()} records collection kind ${manifest.collectionKind ?? HeldoutCollectionKind.Evaluation} ` +
+				`under sampling method ${manifest.sampling.method}; only ${RESERVE_SAMPLING_METHOD} draws a reserve`
+		)
+	}
 
 	const derived = recomputeHeldoutDatasetVersion(manifest)
 

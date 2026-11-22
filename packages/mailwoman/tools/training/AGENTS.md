@@ -116,7 +116,10 @@ holds less than half its population share of a shape's expected epoch draws, or 
 dependent locality without a locality. A cell short of its target whose decile-1 places none can be written in the
 shape (no WOF region for the shape, or a GeoNames-fallback score that failed its checks) is `unwritable`: it
 doesn't fail the receipt, and the report lists it with its reasons. A cell with a writable decile-1 place that
-misses its target fails. A sub-locality's pair with its parent is required as `locality` and `region` when the
+misses its target fails. The report lists every failing form, and lists under each failing cell the writable
+decile-1 places that have no expected draws, required or not, because a place outside the selection counts toward the share but never
+toward presence. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
+held-out freeze and the validation quota skip. A sub-locality's pair with its parent is required as `locality` and `region` when the
 places table marks it `postal_pair` (`isPostalLocalityPair` in `@mailwoman/gazetteer/tools/pipeline/pair/postal-children`),
 and as `dependent_locality` and `locality` otherwise. The draws are what the config's sampler reads in one epoch. A row's
 expected draws are its source's requested share of `train_rows_per_epoch` over the source's admitted rows, times

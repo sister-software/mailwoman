@@ -13,7 +13,7 @@
  *   A verdict reads one evaluation role: the report must score exactly the collections that role pins.
  */
 
-import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
+import { HeldoutCollectionKind, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import {
 	EVALUATION_ROLES,
 	type EvaluationRole,
@@ -132,6 +132,12 @@ export async function verifyReportedCollection(
 ): Promise<VerifiedCollection> {
 	const { manifest } = await readHeldoutDatasetRows(reported.path)
 	const onDisk = `${manifest.datasetID}@${manifest.version}`
+
+	if (manifest.collectionKind === HeldoutCollectionKind.Reserve) {
+		throw new Error(
+			`${reported.path} is a reserve, which is never scored; freeze an evaluation collection from its groups`
+		)
+	}
 
 	if (manifest.datasetID !== reported.datasetID || manifest.version !== reported.version) {
 		throw new Error(`the report records ${reported.datasetID}@${reported.version}; ${reported.path} holds ${onDisk}`)

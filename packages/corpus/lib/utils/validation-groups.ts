@@ -23,6 +23,7 @@ import {
 	type EvaluationGroupsIdentity,
 	evaluationGroupsIdentity,
 	readEvaluationGroups,
+	type RequiredGroupSkip,
 } from "#utils/evaluation-groups"
 import { hashUint32 } from "#utils/split"
 
@@ -183,6 +184,11 @@ export interface ValidationGroupsFile {
 	 * The frozen group list the pool excluded.
 	 */
 	evaluationGroups: EvaluationGroupsIdentity
+	/**
+	 * The groups the config's training receipts require and the pool left out, by country.
+	 * A file written before the skip records none.
+	 */
+	requiredTrainingGroups?: RequiredGroupSkip
 	quota: ValidationQuota
 	countries: Record<string, ValidationCountrySelection>
 	groups: string[]
