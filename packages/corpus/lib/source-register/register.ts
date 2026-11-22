@@ -10,8 +10,10 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { AssertedProposition } from "@mailwoman/evidence/status"
-import { auditLicenseDecision, operationProblems, type LicenseDecision } from "@mailwoman/license/decision"
-import { INGEST_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
+import { LicenseAction } from "@mailwoman/license/actions"
+import { auditLicenseDecision, type LicenseDecision } from "@mailwoman/license/decision"
+import { SourceOperation } from "@mailwoman/license/operations"
+import { evaluateLicense, type LicenseRequest } from "@mailwoman/license/tree"
 import type { PathBuilderLike } from "path-ts"
 
 import {
@@ -75,15 +77,23 @@ export function applyLicenseDecisions(
 /**
  * Returns every reason that a source may not enter a training corpus, or an empty array when it may.
  *
+ * `request` names the action and its offering.
+ * The decision tree reads the source's license decision for it, and this function adds the register
+ * row's own blockers: its status, its address roles, its coverage and its personal-data review.
+ *
  * The function returns reasons so that callers can tell the different blockers apart.
  */
 export function ingestEligibilityProblems(
 	source: AddressSourceRecord,
 	register: AddressSourceRegister,
-	operations: readonly SourceOperation[] = INGEST_OPERATIONS
+	request: Pick<LicenseRequest, "action" | "offering"> = { action: LicenseAction.Ingest, offering: null }
 ): readonly string[] {
-	const decision = register.licenses.find((entry) => entry.licenseID === source.license)
-	const problems = operationProblems(source.license, decision, operations)
+	const [answer] = evaluateLicense(
+		{ ...request, sources: [{ source: source.sourceID, licenseID: source.license }] },
+		register
+	).sources
+
+	const problems = [...answer!.problems]
 
 	if (source.status === SourceStatus.RetainedOriginal) {
 		problems.push("the source was carried from the earlier memo and has not been re-resolved")

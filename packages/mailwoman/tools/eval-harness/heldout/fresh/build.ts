@@ -29,8 +29,9 @@ import { canonicalJSON } from "@mailwoman/core/json"
 import type { EvaluationSource } from "@mailwoman/corpus/evaluation/source"
 import { allocate } from "@mailwoman/corpus/recipes/sub/venue"
 import type { AddressSourceRegister } from "@mailwoman/corpus/source-register/types"
-import { type LicenseDecision, operationProblems } from "@mailwoman/license/decision"
-import { EVALUATION_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
+import { LicenseAction } from "@mailwoman/license/actions"
+import type { LicenseDecision } from "@mailwoman/license/decision"
+import { evaluateLicense } from "@mailwoman/license/tree"
 import { type PathBuilder, resolvePath } from "path-ts"
 
 import { type HeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -117,17 +118,16 @@ export function evaluationSourceProblems(
 
 	if (!row) return [`${source.id}: register source ${source.registerSource} is not declared`]
 
-	const decision = register.licenses.find((entry) => entry.licenseID === row.license)
+	const [answer] = evaluateLicense(
+		{
+			action: LicenseAction.EvaluateOnly,
+			offering: null,
+			sources: [{ source: row.sourceID, licenseID: row.license }],
+		},
+		register
+	).sources
 
-	const problems = operationProblems(row.license, decision, EVALUATION_OPERATIONS).map(
-		(problem) => `${source.id}: ${problem}`
-	)
-
-	if (!operationProblems(row.license, decision, [SourceOperation.Train]).length) {
-		problems.push(`${source.id}: ${row.sourceID}'s decision permits train, so its rows can reach a training corpus`)
-	}
-
-	return problems
+	return answer!.problems.map((problem) => `${source.id}: ${problem}`)
 }
 
 /**

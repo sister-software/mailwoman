@@ -40,7 +40,8 @@ import {
 	sourceRightsGaps,
 	type SourceRightsGap,
 } from "@mailwoman/corpus/source-register/corpus-inputs"
-import { MODEL_RELEASE_OPERATIONS, soldUnderCommercialTerms, SourceOperation } from "@mailwoman/license/operations"
+import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
+import type { SourceOperation } from "@mailwoman/license/operations"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -388,7 +389,7 @@ async function auditRegister(): Promise<SourceRegisterAudit> {
 	let eligible = 0
 
 	for (const source of register.sources) {
-		const problems = ingestEligibilityProblems(source, register)
+		const problems = ingestEligibilityProblems(source, register, { action: LicenseAction.Ingest, offering: null })
 
 		if (!problems.length) {
 			eligible += 1
@@ -784,9 +785,7 @@ async function auditModelReleaseRights(
 			continue
 		}
 
-		const performed = MODEL_RELEASE_OPERATIONS.filter(
-			(operation) => operation !== SourceOperation.CommercialSublicense || soldUnderCommercialTerms(pkg.license)
-		)
+		const performed = actionOperations(LicenseAction.ReleaseModel, pkg.license)
 
 		operations.push({ package: row.package, operations: [...performed] })
 

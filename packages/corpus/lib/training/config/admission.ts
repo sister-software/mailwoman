@@ -6,7 +6,7 @@
  *   register, as `load_training_config` did.
  */
 
-import { TRAINING_OPERATIONS } from "@mailwoman/license/operations"
+import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
 
 import {
 	createSourceRightsAdmission,
@@ -86,7 +86,7 @@ export async function admitTrainingConfig(
 					registerSource: null,
 					licenseID: null,
 					state: null,
-					missing: [...TRAINING_OPERATIONS],
+					missing: actionOperations(LicenseAction.Train, null),
 					because:
 						"the config sets no source_weights, so it admits every source its corpus holds and names none to check",
 				},

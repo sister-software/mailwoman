@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The acts this repository performs on an address source, and the acts each build or release performs.
+ * @file The acts this repository performs on an address source.
  *
- *   A license decision in the address-source register records a permission per operation,
- *   and a build reads the decision against the list of operations it performs.
+ *   A license decision in the address-source register records a permission per operation.
+ *   The action table in `#actions` states which operations each build or release performs.
  */
 
 import { licenseWithoutException } from "#expression"
@@ -87,55 +87,3 @@ export const SourceOperation = {
  * One of the {@link SourceOperation} values.
  */
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
-
-/**
- * The operations that ingesting a source into the corpus performs.
- *
- * Redistribution and commercial sublicensing happen at release, so this list omits them.
- */
-export const INGEST_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.Fetch,
-	SourceOperation.Extract,
-	SourceOperation.Transform,
-	SourceOperation.Train,
-]
-
-/**
- * The operations that releasing a model trained on a source adds to {@link INGEST_OPERATIONS}.
- */
-export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.RedistributeModel,
-	SourceOperation.CommercialSublicense,
-]
-
-/**
- * The operations a register decision must permit before a source's rows may
- * be built into a corpus or trained on.
- *
- * Both need adaptation: normalizing an address into labeled components is a derived work,
- * and fitting a model on it is another.
- */
-export const TRAINING_OPERATIONS: readonly SourceOperation[] = [SourceOperation.Transform, SourceOperation.Train]
-
-/**
- * The operations building and serving the address layer performs on a source.
- *
- * They copy the publisher's file, read its address fields and redistribute the rows as a database.
- */
-export const ADDRESS_LAYER_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.Fetch,
-	SourceOperation.Extract,
-	SourceOperation.RedistributeData,
-]
-
-/**
- * The operations rendering an evaluation-only source's records performs.
- *
- * An evaluation-only source's decision must also leave `train` unpermitted,
- * so its rows can't reach a training corpus.
- */
-export const EVALUATION_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.Fetch,
-	SourceOperation.Extract,
-	SourceOperation.Transform,
-]

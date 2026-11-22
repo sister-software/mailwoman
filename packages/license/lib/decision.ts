@@ -320,10 +320,7 @@ export function permissionFor<Operation extends string>(
 	operation: Operation
 ): OperationDecision {
 	if (decision.state !== LicenseReviewState.Elected) {
-		return {
-			permission: OperationPermission.Unreviewed,
-			because: `the decision reads ${decision.state}, so no operation has been read against terms`,
-		}
+		return { permission: OperationPermission.Unreviewed, because: unelectedReadingReason(decision.state) }
 	}
 
 	return (
@@ -335,36 +332,56 @@ export function permissionFor<Operation extends string>(
 }
 
 /**
+ * Why a decision in a review state other than `elected` reads no operation as reviewed.
+ */
+export function unelectedReadingReason(state: string): string {
+	return `the decision reads ${state}, so no operation has been read against terms`
+}
+
+/**
+ * The problem a source reads when the register declares no decision under its license id.
+ */
+export function undeclaredLicenseProblem(licenseID: string): string {
+	return `license ${JSON.stringify(licenseID)} is not declared in the register`
+}
+
+/**
+ * The problem a source reads when its decision is in a review state other than `elected`.
+ */
+export function unelectedLicenseProblem(licenseID: string, state: string): string {
+	return `license ${JSON.stringify(licenseID)} is ${state}, and only elected terms admit a source`
+}
+
+/**
+ * The problem one operation's reading poses when it isn't `permitted`.
+ */
+export function operationReadingProblem(operation: string, reading: OperationDecision): string {
+	return `the elected terms read ${reading.permission} for ${operation}: ${reading.because}`
+}
+
+/**
  * Returns a reason for every operation the decision doesn't permit,
  * or an empty array when it permits them all.
  *
  * `licenseID` is the id the source row points at.
  * A decision that's absent, unchecked or refused yields one reason naming that state.
+ *
+ * A register whose operations the action table in `#actions` covers asks
+ * `evaluateLicense` in `#tree` instead.
  */
 export function operationProblems<Operation extends string>(
 	licenseID: string,
 	decision: LicenseDecision<Operation> | undefined,
 	operations: readonly Operation[]
 ): string[] {
-	const named = JSON.stringify(licenseID)
+	if (!decision) return [undeclaredLicenseProblem(licenseID)]
 
-	if (!decision) return [`license ${named} is not declared in the register`]
+	if (decision.state !== LicenseReviewState.Elected) return [unelectedLicenseProblem(licenseID, decision.state)]
 
-	if (decision.state !== LicenseReviewState.Elected) {
-		return [`license ${named} is ${decision.state}, and only elected terms admit a source`]
-	}
-
-	const problems: string[] = []
-
-	for (const operation of operations) {
-		const reading = permissionFor(decision, operation)
-
-		if (reading.permission === OperationPermission.Permitted) continue
-
-		problems.push(`the elected terms read ${reading.permission} for ${operation}: ${reading.because}`)
-	}
-
-	return problems
+	return operations
+		.map((operation) => ({ operation, reading: permissionFor(decision, operation) }))
+		.filter(({ reading }) => reading.permission !== OperationPermission.Permitted)
+		.map(({ operation, reading }) => operationReadingProblem(operation, reading))
 }
 
 /**

@@ -11,6 +11,7 @@
  *   license, its key and its stamp, are `@mailwoman/core/license`.
  */
 
+export * from "#actions"
 export * from "#admission"
 export * from "#decision"
 export * from "#expression"
@@ -20,3 +21,4 @@ export * from "#operations"
 export * from "#policy"
 export * from "#record"
 export * from "#refusals"
+export * from "#tree"
