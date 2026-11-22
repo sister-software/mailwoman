@@ -57,7 +57,7 @@ export const GB_POSTAL_DESIGNATORS: PostalDesignatorTable = {
 			concept: "tower",
 			source: UPU_UNITED_KINGDOM,
 		},
-		// The numbered parts of a transport premise, as in `Terminal 2, Manchester Airport`
+		// The numbered parts of a transport premise, as in `Gate 12, Terminal 2, Manchester Airport`
 		// and `Platform 9¾, King's Cross`.
 		{
 			...EN,
