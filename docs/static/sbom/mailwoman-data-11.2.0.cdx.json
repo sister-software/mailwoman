@@ -3,7 +3,7 @@
 	"specVersion": "1.5",
 	"version": 1,
 	"metadata": {
-		"timestamp": "2026-10-31T01:52:57Z",
+		"timestamp": "2026-11-22T02:40:46Z",
 		"component": {
 			"type": "data",
 			"name": "mailwoman-data",
@@ -21,7 +21,7 @@
 			},
 			{
 				"name": "mailwoman:snapshotMeasuredAt",
-				"value": "2026-10-31T01:52:57Z"
+				"value": "2026-11-22T02:40:46Z"
 			},
 			{
 				"name": "mailwoman:mixedLayer",
@@ -70,7 +70,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/wof/candidate.db is 3050020864 bytes and the published artifact is 2880921600 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/wof/candidate.db is 4107837440 bytes and the published artifact is 2880921600 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -78,19 +78,87 @@
 				},
 				{
 					"name": "mailwoman:publishers",
-					"value": "Who's On First | GeoNames | Overture Maps Foundation, for its Divisions theme | OpenStreetMap contributors, for the Northern Ireland postcode fold"
+					"value": "Who's On First | GeoNames | Overture Maps Foundation, for its Divisions theme | OpenStreetMap contributors, for the Northern Ireland postcode rows"
 				},
 				{
 					"name": "mailwoman:terms",
-					"value": "Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md. | GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md. | Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name folds Overture Divisions. On the lab host's 2026-09-15 chain, where each fold's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places. | OpenStreetMap, for the Northern Ireland postcode fold: the Open Database License, with the credit `© OpenStreetMap contributors` and https://www.openstreetmap.org/copyright. The fold is an independent part of a collective database, so the license governs the fold and the rest of the file keeps its own terms. Read-only queries against the published artifact on 2026-10-17 found 9,514 fold rows for 4,757 places, ids 9800000000000 to 9800000004756, whose names, coordinates and bounding boxes equal the rows of postalcode-ni-osm-2026-08-05.db. They carry region 0, population 0 and no importance or name role. No row outside the fold shares a name key or a coordinate with them, and the fold has no row in candidate_ancestor or candidate_interval. The fold step runs after every pass over the admin rows and reads no other row. The fold is published by itself under the Open Database License, as the section 4.6 offer, at https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold. The 22 Prague district rows from GeoNames share the ids 9800000000000 to 9800000000021 with the fold because both builders used one id base at the build revision 2b9894111, and they are excluded from that dataset by country and placetype."
+					"value": "Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md. | GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md. | Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name adds Overture Divisions places. On the lab host's 2026-09-15 chain, where each source's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places. | OpenStreetMap, for the Northern Ireland postcode rows: the Open Database License, with the credit `© OpenStreetMap contributors` and https://www.openstreetmap.org/copyright. Those rows are an independent part of a collective database, so the license governs them and the rest of the file keeps its own terms. Read-only queries against the published artifact on 2026-10-17 found 9,514 Northern Ireland rows for 4,757 places, ids 9800000000000 to 9800000004756, whose names, coordinates and bounding boxes equal the rows of postalcode-ni-osm-2026-08-05.db. They carry region 0, population 0 and no importance or name role. No other row shares a name key or a coordinate with them, and they have no row in candidate_ancestor or candidate_interval. The step that adds them runs after every pass over the admin rows and reads no other row. They are published by themselves under the Open Database License, as the section 4.6 offer, at https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold. The 22 Prague district rows from GeoNames share the ids 9800000000000 to 9800000000021 with them because both builders used one id base at the build revision 2b9894111, and they are excluded from that dataset by country and placetype."
 				},
 				{
 					"name": "mailwoman:conditions",
-					"value": "Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ. | Attribute GeoNames. | Credit OpenStreetMap contributors for the Northern Ireland postcode fold, and keep the Open Database License on that fold and on any database derived from it. | This file is a Derivative Database of Overture Divisions under the Open Database License 1.0, as a whole. The Overture rows share its tables, ids, ancestry and importance passes with the other sources' rows, so they form one database with them and are not an independent part of a collective database. Credit `© OpenStreetMap contributors, Overture Maps Foundation`, and keep the Open Database License on this file and on any database derived from it."
+					"value": "Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ. | Attribute GeoNames. | Credit OpenStreetMap contributors for the Northern Ireland postcode rows, and keep the Open Database License on those rows and on any database derived from them. | Credit `© OpenStreetMap contributors, Overture Maps Foundation` for the Overture Divisions part, and keep the Open Database License on that part and on any database derived from it. A candidate gazetteer that carries the `overture_wof_match` table is a Collective Database: its Overture Divisions part, the rows with ids 8000000000000 to 8999999999999 and that table, is independent, and the rest of the file keeps its sources' own terms. A candidate gazetteer without that table, the file served at 2026-08-25b among them, is a Derivative Database of Overture Divisions under the Open Database License 1.0 as a whole, because its Overture rows share its ancestry and importance passes with the other sources' rows."
 				},
 				{
 					"name": "mailwoman:unresolved",
-					"value": "Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download. | Which Overture record each of those places came from. `fold-overture` writes a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible. | Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx. | Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere. | Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date."
+					"value": "Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download. | Which Overture record each of those places came from. The admin build's Overture step wrote a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible. | Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx. | Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere. | Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date."
+				}
+			],
+			"components": [
+				{
+					"type": "data",
+					"bom-ref": "bundle/candidate/gazetteer/2026-08-25b/candidate.db/part/overture-divisions",
+					"publisher": "Overture Maps Foundation",
+					"name": "overture-divisions",
+					"version": "2026-08-25b",
+					"description": "An independent part of gazetteer/2026-08-25b/candidate.db, a Collective Database: the rows whose spr_id is 8000000000000 to 8999999999999 in candidate, candidate_ancestor and candidate_interval, and the overture_wof_match table, in a file that carries that table.",
+					"licenses": [
+						{
+							"expression": "ODbL-1.0"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "distribution",
+							"url": "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:selects",
+							"value": "the rows whose spr_id is 8000000000000 to 8999999999999 in candidate, candidate_ancestor and candidate_interval, and the overture_wof_match table, in a file that carries that table"
+						},
+						{
+							"name": "mailwoman:attributionText",
+							"value": "© OpenStreetMap contributors, Overture Maps Foundation"
+						},
+						{
+							"name": "mailwoman:offer",
+							"value": "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions"
+						}
+					]
+				},
+				{
+					"type": "data",
+					"bom-ref": "bundle/candidate/gazetteer/2026-08-25b/candidate.db/part/osm-ni-postcode",
+					"publisher": "OpenStreetMap contributors",
+					"name": "osm-ni-postcode",
+					"version": "2026-08-25b",
+					"description": "An independent part of gazetteer/2026-08-25b/candidate.db, a Collective Database: the Northern Ireland postalcode rows whose spr_id is 9800000000000 to 9849999999999, less the 22 Prague district rows that share the range in the build at revision 2b9894111.",
+					"licenses": [
+						{
+							"expression": "ODbL-1.0"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "distribution",
+							"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:selects",
+							"value": "the Northern Ireland postalcode rows whose spr_id is 9800000000000 to 9849999999999, less the 22 Prague district rows that share the range in the build at revision 2b9894111"
+						},
+						{
+							"name": "mailwoman:attributionText",
+							"value": "© OpenStreetMap contributors"
+						},
+						{
+							"name": "mailwoman:offer",
+							"value": "https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold"
+						}
+					]
 				}
 			]
 		},
@@ -262,7 +330,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ak.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ak.db is 88252416 bytes and the published artifact is 78602240 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -330,7 +398,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ak.db is 26771456 bytes and the published artifact is 27258880 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ak.db is 27267072 bytes and the published artifact is 27258880 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -398,7 +466,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-al.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-al.db is 758677504 bytes and the published artifact is 660025344 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -466,7 +534,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-al.db is 256548864 bytes and the published artifact is 260829184 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-al.db is 260845568 bytes and the published artifact is 260829184 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -534,7 +602,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ar.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ar.db is 446590976 bytes and the published artifact is 396853248 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -602,7 +670,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ar.db is 201338880 bytes and the published artifact is 204488704 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ar.db is 204509184 bytes and the published artifact is 204488704 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -738,7 +806,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-az.db is 207245312 bytes and the published artifact is 211460096 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-az.db is 211464192 bytes and the published artifact is 211460096 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -798,7 +866,7 @@
 				},
 				{
 					"name": "mailwoman:servedBytes",
-					"value": "3471339520"
+					"value": "3791847424"
 				},
 				{
 					"name": "mailwoman:registryBytes",
@@ -806,7 +874,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ca.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ca.db is 4057350144 bytes and the published artifact is 3791847424 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -874,7 +942,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ca.db is 779272192 bytes and the published artifact is 794341376 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ca.db is 794361856 bytes and the published artifact is 794341376 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -942,7 +1010,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-co.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-co.db is 874721280 bytes and the published artifact is 716697600 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1010,7 +1078,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-co.db is 216334336 bytes and the published artifact is 220385280 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-co.db is 220377088 bytes and the published artifact is 220385280 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1078,7 +1146,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ct.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ct.db is 290050048 bytes and the published artifact is 256991232 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1146,7 +1214,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ct.db is 94732288 bytes and the published artifact is 96006144 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ct.db is 96002048 bytes and the published artifact is 96006144 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1282,7 +1350,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-dc.db is 7426048 bytes and the published artifact is 7565312 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-dc.db is 7577600 bytes and the published artifact is 7565312 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1418,7 +1486,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-de.db is 29114368 bytes and the published artifact is 29622272 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-de.db is 29634560 bytes and the published artifact is 29622272 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1478,7 +1546,7 @@
 				},
 				{
 					"name": "mailwoman:servedBytes",
-					"value": "3226046464"
+					"value": "3461505024"
 				},
 				{
 					"name": "mailwoman:registryBytes",
@@ -1486,7 +1554,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-fl.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-fl.db is 3508711424 bytes and the published artifact is 3461505024 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1554,7 +1622,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-fl.db is 511512576 bytes and the published artifact is 522002432 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-fl.db is 522010624 bytes and the published artifact is 522002432 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1622,7 +1690,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ga.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ga.db is 593686528 bytes and the published artifact is 173764608 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1690,7 +1758,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ga.db is 365641728 bytes and the published artifact is 371814400 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ga.db is 371802112 bytes and the published artifact is 371814400 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1726,7 +1794,7 @@
 			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
-					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
+					"expression": "CDLA-Permissive-2.0"
 				}
 			],
 			"externalReferences": [
@@ -1746,19 +1814,19 @@
 				},
 				{
 					"name": "mailwoman:licenseBasis",
-					"value": "bundle-registry"
+					"value": "artifact-layer-manifest"
+				},
+				{
+					"name": "mailwoman:tier",
+					"value": "build-local"
 				},
 				{
 					"name": "mailwoman:servedBytes",
-					"value": "77320192"
+					"value": "93069312"
 				},
 				{
 					"name": "mailwoman:registryBytes",
 					"value": "93069312"
-				},
-				{
-					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-hi.db holds no layer_manifest table"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1826,7 +1894,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-hi.db is 13205504 bytes and the published artifact is 13447168 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-hi.db is 13459456 bytes and the published artifact is 13447168 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1894,7 +1962,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ia.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ia.db is 420737024 bytes and the published artifact is 358260736 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -1962,7 +2030,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ia.db is 193032192 bytes and the published artifact is 197267456 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ia.db is 197279744 bytes and the published artifact is 197267456 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2022,7 +2090,7 @@
 				},
 				{
 					"name": "mailwoman:servedBytes",
-					"value": "93683712"
+					"value": "22142976"
 				},
 				{
 					"name": "mailwoman:registryBytes",
@@ -2030,7 +2098,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-id.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-id.db is 76144640 bytes and the published artifact is 22142976 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2098,7 +2166,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-id.db is 82628608 bytes and the published artifact is 84283392 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-id.db is 84307968 bytes and the published artifact is 84283392 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2166,7 +2234,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-il.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-il.db is 1310879744 bytes and the published artifact is 1134772224 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2234,7 +2302,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-il.db is 373002240 bytes and the published artifact is 380829696 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-il.db is 380854272 bytes and the published artifact is 380829696 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2302,7 +2370,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-in.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-in.db is 865480704 bytes and the published artifact is 767078400 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2370,7 +2438,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-in.db is 301297664 bytes and the published artifact is 307281920 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-in.db is 307310592 bytes and the published artifact is 307281920 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2438,7 +2506,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ks.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ks.db is 335429632 bytes and the published artifact is 240205824 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2494,7 +2562,11 @@
 				},
 				{
 					"name": "mailwoman:licenseBasis",
-					"value": "bundle-registry"
+					"value": "artifact-layer-manifest"
+				},
+				{
+					"name": "mailwoman:tier",
+					"value": "build-local"
 				},
 				{
 					"name": "mailwoman:servedBytes",
@@ -2503,10 +2575,6 @@
 				{
 					"name": "mailwoman:registryBytes",
 					"value": "151560192"
-				},
-				{
-					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ks.db is 147968000 bytes and the published artifact is 151560192 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2574,7 +2642,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ky.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ky.db is 618930176 bytes and the published artifact is 545275904 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2642,7 +2710,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ky.db is 292974592 bytes and the published artifact is 296521728 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ky.db is 296525824 bytes and the published artifact is 296521728 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2710,7 +2778,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-la.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-la.db is 219152384 bytes and the published artifact is 63488000 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2778,7 +2846,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-la.db is 165015552 bytes and the published artifact is 168333312 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-la.db is 168337408 bytes and the published artifact is 168333312 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2914,7 +2982,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ma.db is 163999744 bytes and the published artifact is 166559744 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ma.db is 166572032 bytes and the published artifact is 166559744 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -2982,7 +3050,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-md.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-md.db is 701812736 bytes and the published artifact is 594812928 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3050,7 +3118,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-md.db is 147357696 bytes and the published artifact is 150126592 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-md.db is 150142976 bytes and the published artifact is 150126592 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3186,7 +3254,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-me.db is 86224896 bytes and the published artifact is 87293952 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-me.db is 87302144 bytes and the published artifact is 87293952 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3246,7 +3314,7 @@
 				},
 				{
 					"name": "mailwoman:servedBytes",
-					"value": "229376000"
+					"value": "141836288"
 				},
 				{
 					"name": "mailwoman:registryBytes",
@@ -3254,7 +3322,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-mi.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-mi.db is 512004096 bytes and the published artifact is 141836288 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3310,7 +3378,11 @@
 				},
 				{
 					"name": "mailwoman:licenseBasis",
-					"value": "bundle-registry"
+					"value": "artifact-layer-manifest"
+				},
+				{
+					"name": "mailwoman:tier",
+					"value": "build-local"
 				},
 				{
 					"name": "mailwoman:servedBytes",
@@ -3319,10 +3391,6 @@
 				{
 					"name": "mailwoman:registryBytes",
 					"value": "312545280"
-				},
-				{
-					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mi.db is 305459200 bytes and the published artifact is 312545280 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3390,7 +3458,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-mn.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-mn.db is 738877440 bytes and the published artifact is 646877184 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3458,7 +3526,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mn.db is 269025280 bytes and the published artifact is 274706432 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mn.db is 274714624 bytes and the published artifact is 274706432 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3526,7 +3594,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-mo.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-mo.db is 525733888 bytes and the published artifact is 399859712 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3594,7 +3662,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mo.db is 305311744 bytes and the published artifact is 311136256 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mo.db is 311140352 bytes and the published artifact is 311136256 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3662,7 +3730,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ms.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ms.db is 318287872 bytes and the published artifact is 271257600 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3730,7 +3798,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ms.db is 175767552 bytes and the published artifact is 178659328 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ms.db is 178651136 bytes and the published artifact is 178659328 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3866,7 +3934,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mt.db is 88612864 bytes and the published artifact is 89899008 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-mt.db is 89919488 bytes and the published artifact is 89899008 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -3934,7 +4002,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-nc.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-nc.db is 1555435520 bytes and the published artifact is 1380876288 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4002,7 +4070,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nc.db is 512188416 bytes and the published artifact is 520089600 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nc.db is 520097792 bytes and the published artifact is 520089600 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4138,7 +4206,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nd.db is 76918784 bytes and the published artifact is 78532608 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nd.db is 78548992 bytes and the published artifact is 78532608 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4206,7 +4274,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ne.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ne.db is 212852736 bytes and the published artifact is 187617280 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4274,7 +4342,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ne.db is 103297024 bytes and the published artifact is 105988096 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ne.db is 105996288 bytes and the published artifact is 105988096 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4342,7 +4410,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-nh.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-nh.db is 6393856 bytes and the published artifact is 20480 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4410,7 +4478,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nh.db is 57618432 bytes and the published artifact is 58322944 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nh.db is 58331136 bytes and the published artifact is 58322944 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4546,7 +4614,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nj.db is 166936576 bytes and the published artifact is 169963520 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nj.db is 169975808 bytes and the published artifact is 169963520 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4614,7 +4682,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-nm.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-nm.db is 306339840 bytes and the published artifact is 249671680 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4682,7 +4750,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nm.db is 83804160 bytes and the published artifact is 85282816 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nm.db is 85295104 bytes and the published artifact is 85282816 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4750,7 +4818,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-nv.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-nv.db is 72839168 bytes and the published artifact is 6553600 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4818,7 +4886,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nv.db is 69890048 bytes and the published artifact is 71282688 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-nv.db is 71290880 bytes and the published artifact is 71282688 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4886,7 +4954,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ny.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ny.db is 1654005760 bytes and the published artifact is 1440923648 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -4954,7 +5022,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ny.db is 317833216 bytes and the published artifact is 323432448 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ny.db is 323448832 bytes and the published artifact is 323432448 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5090,7 +5158,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-oh.db is 404860928 bytes and the published artifact is 412696576 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-oh.db is 412692480 bytes and the published artifact is 412696576 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5158,7 +5226,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-ok.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-ok.db is 451334144 bytes and the published artifact is 354828288 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5214,7 +5282,11 @@
 				},
 				{
 					"name": "mailwoman:licenseBasis",
-					"value": "bundle-registry"
+					"value": "artifact-layer-manifest"
+				},
+				{
+					"name": "mailwoman:tier",
+					"value": "build-local"
 				},
 				{
 					"name": "mailwoman:servedBytes",
@@ -5223,10 +5295,6 @@
 				{
 					"name": "mailwoman:registryBytes",
 					"value": "166379520"
-				},
-				{
-					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ok.db is 162582528 bytes and the published artifact is 166379520 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5294,7 +5362,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-or.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-or.db is 1164677120 bytes and the published artifact is 1034625024 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5362,7 +5430,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-or.db is 173268992 bytes and the published artifact is 176451584 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-or.db is 176472064 bytes and the published artifact is 176451584 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5430,7 +5498,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-pa.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-pa.db is 778170368 bytes and the published artifact is 269873152 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5498,7 +5566,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-pa.db is 482373632 bytes and the published artifact is 490303488 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-pa.db is 490307584 bytes and the published artifact is 490303488 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5634,7 +5702,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ri.db is 28938240 bytes and the published artifact is 29446144 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ri.db is 29458432 bytes and the published artifact is 29446144 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5702,7 +5770,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-sc.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-sc.db is 325001216 bytes and the published artifact is 47661056 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5770,7 +5838,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-sc.db is 255586304 bytes and the published artifact is 259309568 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-sc.db is 259325952 bytes and the published artifact is 259309568 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5838,7 +5906,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-sd.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-sd.db is 91684864 bytes and the published artifact is 21811200 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5906,7 +5974,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-sd.db is 71929856 bytes and the published artifact is 73175040 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-sd.db is 73191424 bytes and the published artifact is 73175040 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -5974,7 +6042,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-tn.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-tn.db is 1080725504 bytes and the published artifact is 887808000 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6042,7 +6110,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-tn.db is 365576192 bytes and the published artifact is 370663424 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-tn.db is 370688000 bytes and the published artifact is 370663424 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6110,7 +6178,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-tx.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-tx.db is 2993823744 bytes and the published artifact is 2568024064 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6178,7 +6246,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-tx.db is 721600512 bytes and the published artifact is 736587776 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-tx.db is 736595968 bytes and the published artifact is 736587776 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6314,7 +6382,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ut.db is 86228992 bytes and the published artifact is 87908352 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-ut.db is 87920640 bytes and the published artifact is 87908352 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6382,7 +6450,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-va.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-va.db is 1046224896 bytes and the published artifact is 933728256 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6450,7 +6518,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-va.db is 371740672 bytes and the published artifact is 377995264 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-va.db is 377991168 bytes and the published artifact is 377995264 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6654,7 +6722,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-vt.db is 58507264 bytes and the published artifact is 59269120 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-vt.db is 59285504 bytes and the published artifact is 59269120 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6722,7 +6790,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-wa.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-wa.db is 836390912 bytes and the published artifact is 735141888 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6790,7 +6858,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wa.db is 267419648 bytes and the published artifact is 272322560 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wa.db is 272297984 bytes and the published artifact is 272322560 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6858,7 +6926,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-wi.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-wi.db is 699408384 bytes and the published artifact is 340619264 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -6926,7 +6994,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wi.db is 184680448 bytes and the published artifact is 188428288 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wi.db is 188440576 bytes and the published artifact is 188428288 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -7062,7 +7130,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wv.db is 120385536 bytes and the published artifact is 121982976 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wv.db is 121995264 bytes and the published artifact is 121982976 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -7130,7 +7198,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "/mnt/mw/db/address-points/address-points-us-wy.db holds no layer_manifest table"
+					"value": "local copy at /mnt/mw/db/address-points/address-points-us-wy.db is 80101376 bytes and the published artifact is 51003392 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -7198,7 +7266,7 @@
 				},
 				{
 					"name": "mailwoman:manifestUnread",
-					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wy.db is 37691392 bytes and the published artifact is 38330368 bytes, so its manifest describes a different build"
+					"value": "local copy at /mnt/mw/db/interpolation/interpolation-us-wy.db is 38346752 bytes and the published artifact is 38330368 bytes, so its manifest describes a different build"
 				},
 				{
 					"name": "mailwoman:md5Sidecar",
@@ -7231,7 +7299,7 @@
 			"bom-ref": "layer/addresses-us/2026-11-21",
 			"name": "addresses/us/2026-11-21/manifest.json",
 			"version": "2026-11-21",
-			"description": "The US address layer: 51 regions whose rows come from 1451 sources under their publishers' own terms, each listed as a nested component.",
+			"description": "The US address layer: 51 regions whose rows come from 1456 sources under their publishers' own terms, each listed as a nested component.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-US-Mixed"
@@ -7258,11 +7326,11 @@
 				},
 				{
 					"name": "mailwoman:records",
-					"value": "155386995"
+					"value": "155423405"
 				},
 				{
 					"name": "mailwoman:sources",
-					"value": "1451"
+					"value": "1456"
 				},
 				{
 					"name": "mailwoman:obligationClassCount",
@@ -7274,7 +7342,7 @@
 				},
 				{
 					"name": "mailwoman:obligationClassCount",
-					"value": "indemnity: 46 sources, 105725288 records"
+					"value": "indemnity: 48 sources, 105755550 records"
 				},
 				{
 					"name": "mailwoman:obligationClassCount",
@@ -7298,7 +7366,7 @@
 				},
 				{
 					"name": "mailwoman:obligationClassCount",
-					"value": "none: 1159 sources, 42702326 records"
+					"value": "none: 1162 sources, 42708474 records"
 				},
 				{
 					"name": "mailwoman:attributionNotice",
@@ -7306,6 +7374,94 @@
 				}
 			],
 			"components": [
+				{
+					"type": "data",
+					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/anchorage",
+					"publisher": "Municipality of Anchorage, Alaska",
+					"name": "openaddresses:us/ak/anchorage",
+					"version": "2026-11-21",
+					"licenses": [
+						{
+							"expression": "NOASSERTION"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "license",
+							"url": "https://cdn.ancgis.com/documents/legal/GIS_Data_Terms_and_Conditions.pdf"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:records",
+							"value": "28271"
+						},
+						{
+							"name": "mailwoman:regions",
+							"value": "us-ak"
+						},
+						{
+							"name": "mailwoman:registerSources",
+							"value": "us-property-building-1616"
+						},
+						{
+							"name": "mailwoman:registerDecision",
+							"value": "elected"
+						},
+						{
+							"name": "mailwoman:termsBasis",
+							"value": "publisher-grant"
+						},
+						{
+							"name": "mailwoman:termsStatement",
+							"value": "terms"
+						},
+						{
+							"name": "mailwoman:electedTerms",
+							"value": "Municipality of Anchorage Terms of Use and Disclaimer for its GIS data (December 3, 2014)"
+						},
+						{
+							"name": "mailwoman:termsURL",
+							"value": "https://cdn.ancgis.com/documents/legal/GIS_Data_Terms_and_Conditions.pdf"
+						},
+						{
+							"name": "mailwoman:termsRetrievedCopy",
+							"value": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/"
+						},
+						{
+							"name": "mailwoman:decisionBecause",
+							"value": "The grant permits the user to `distribute` the Data `and make such Data available to end users`, with the legend clause 6 requires."
+						},
+						{
+							"name": "mailwoman:attribution",
+							"value": "required"
+						},
+						{
+							"name": "mailwoman:attributionText",
+							"value": "Data provided courtesy of MOA"
+						},
+						{
+							"name": "mailwoman:shareAlike",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:obligationClass",
+							"value": "indemnity"
+						},
+						{
+							"name": "mailwoman:obligation:attribution",
+							"value": "required: Should you use the Data for any purposes, you agree to provide the following legend, prominently displayed: \"Data provided courtesy of MOA\" unless otherwise agreed in advance by MOA in writing."
+						},
+						{
+							"name": "mailwoman:obligation:indemnity",
+							"value": "required: You agree to indemnify, defend and hold harmless MOA and its officers, directors, and employees from and against all fines, suits, proceedings, claims, causes of action, demands, or liabilities of any kind or of any nature arising out of or in connection with your use of the data"
+						},
+						{
+							"name": "mailwoman:registerRow",
+							"value": "us-property-building-1616: elected, publisher-grant"
+						}
+					]
+				},
 				{
 					"type": "data",
 					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/bristol_bay_borough",
@@ -7692,6 +7848,162 @@
 				},
 				{
 					"type": "data",
+					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/kenai_peninsula_borough",
+					"publisher": "Kenai Peninsula Borough, Alaska",
+					"name": "openaddresses:us/ak/kenai_peninsula_borough",
+					"version": "2026-11-21",
+					"licenses": [
+						{
+							"expression": "NOASSERTION"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "license",
+							"url": "https://www.arcgis.com/sharing/rest/content/items/03f1d7cbe70244c7bf3cba92a4cee5e1?f=json"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:records",
+							"value": "1991"
+						},
+						{
+							"name": "mailwoman:regions",
+							"value": "us-ak"
+						},
+						{
+							"name": "mailwoman:registerSources",
+							"value": "us-property-building-1618"
+						},
+						{
+							"name": "mailwoman:registerDecision",
+							"value": "elected"
+						},
+						{
+							"name": "mailwoman:termsBasis",
+							"value": "no-restricting-terms"
+						},
+						{
+							"name": "mailwoman:termsStatement",
+							"value": "terms"
+						},
+						{
+							"name": "mailwoman:electedTerms",
+							"value": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))"
+						},
+						{
+							"name": "mailwoman:termsURL",
+							"value": "https://www.arcgis.com/sharing/rest/content/items/03f1d7cbe70244c7bf3cba92a4cee5e1?f=json"
+						},
+						{
+							"name": "mailwoman:termsRetrievedCopy",
+							"value": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/"
+						},
+						{
+							"name": "mailwoman:decisionBecause",
+							"value": "US factual-data reading (Feist)."
+						},
+						{
+							"name": "mailwoman:attribution",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:shareAlike",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:obligationClass",
+							"value": "indemnity"
+						},
+						{
+							"name": "mailwoman:obligation:indemnity",
+							"value": "required: In using these data, you further agree to indemnify, defend, and hold harmless Kenai Peninsula Borough for any and all liability of any nature arising from the lack of accuracy or correctness of the data, or use of the data."
+						},
+						{
+							"name": "mailwoman:registerRow",
+							"value": "us-property-building-1618: elected, no-restricting-terms"
+						}
+					]
+				},
+				{
+					"type": "data",
+					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/ketchikan",
+					"publisher": "Ketchikan Gateway Borough, Alaska",
+					"name": "openaddresses:us/ak/ketchikan",
+					"version": "2026-11-21",
+					"licenses": [
+						{
+							"expression": "NOASSERTION"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "license",
+							"url": "https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0?f=json"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:records",
+							"value": "6061"
+						},
+						{
+							"name": "mailwoman:regions",
+							"value": "us-ak"
+						},
+						{
+							"name": "mailwoman:registerSources",
+							"value": "us-property-building-1619"
+						},
+						{
+							"name": "mailwoman:registerDecision",
+							"value": "elected"
+						},
+						{
+							"name": "mailwoman:termsBasis",
+							"value": "no-restricting-terms"
+						},
+						{
+							"name": "mailwoman:termsStatement",
+							"value": "no-statement"
+						},
+						{
+							"name": "mailwoman:electedTerms",
+							"value": "US factual data published with no statement of terms (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))"
+						},
+						{
+							"name": "mailwoman:termsURL",
+							"value": "https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0?f=json"
+						},
+						{
+							"name": "mailwoman:termsRetrievedCopy",
+							"value": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/"
+						},
+						{
+							"name": "mailwoman:decisionBecause",
+							"value": "US factual-data reading (Feist)."
+						},
+						{
+							"name": "mailwoman:attribution",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:shareAlike",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:obligationClass",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:registerRow",
+							"value": "us-property-building-1619: elected, no-restricting-terms"
+						}
+					]
+				},
+				{
+					"type": "data",
 					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/kodiak_island_borough",
 					"publisher": "Kodiak Island Borough, Alaska",
 					"name": "openaddresses:us/ak/kodiak_island_borough",
@@ -8003,6 +8315,158 @@
 						{
 							"name": "mailwoman:registerRow",
 							"value": "us-property-building-138: elected, no-restricting-terms"
+						}
+					]
+				},
+				{
+					"type": "data",
+					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/wrangell",
+					"publisher": "City and Borough of Wrangell, Alaska",
+					"name": "openaddresses:us/ak/wrangell",
+					"version": "2026-11-21",
+					"licenses": [
+						{
+							"expression": "NOASSERTION"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "license",
+							"url": "https://www.arcgis.com/sharing/rest/content/items/1ab11d9f6c2b4ee186743e3da3bd7fab?f=json"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:records",
+							"value": "70"
+						},
+						{
+							"name": "mailwoman:regions",
+							"value": "us-ak"
+						},
+						{
+							"name": "mailwoman:registerSources",
+							"value": "us-property-building-1620"
+						},
+						{
+							"name": "mailwoman:registerDecision",
+							"value": "elected"
+						},
+						{
+							"name": "mailwoman:termsBasis",
+							"value": "no-restricting-terms"
+						},
+						{
+							"name": "mailwoman:termsStatement",
+							"value": "terms"
+						},
+						{
+							"name": "mailwoman:electedTerms",
+							"value": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))"
+						},
+						{
+							"name": "mailwoman:termsURL",
+							"value": "https://www.arcgis.com/sharing/rest/content/items/1ab11d9f6c2b4ee186743e3da3bd7fab?f=json"
+						},
+						{
+							"name": "mailwoman:termsRetrievedCopy",
+							"value": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/"
+						},
+						{
+							"name": "mailwoman:decisionBecause",
+							"value": "US factual-data reading (Feist)."
+						},
+						{
+							"name": "mailwoman:attribution",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:shareAlike",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:obligationClass",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:registerRow",
+							"value": "us-property-building-1620: elected, no-restricting-terms"
+						}
+					]
+				},
+				{
+					"type": "data",
+					"bom-ref": "layer/addresses-us/2026-11-21/source/openaddresses:us/ak/yakutat_borough",
+					"publisher": "City and Borough of Yakutat, Alaska",
+					"name": "openaddresses:us/ak/yakutat_borough",
+					"version": "2026-11-21",
+					"licenses": [
+						{
+							"expression": "NOASSERTION"
+						}
+					],
+					"externalReferences": [
+						{
+							"type": "license",
+							"url": "https://www.arcgis.com/sharing/rest/content/items/b15201fa8c624ae799ffedcad00d9530?f=json"
+						}
+					],
+					"properties": [
+						{
+							"name": "mailwoman:records",
+							"value": "17"
+						},
+						{
+							"name": "mailwoman:regions",
+							"value": "us-ak"
+						},
+						{
+							"name": "mailwoman:registerSources",
+							"value": "us-property-building-1621"
+						},
+						{
+							"name": "mailwoman:registerDecision",
+							"value": "elected"
+						},
+						{
+							"name": "mailwoman:termsBasis",
+							"value": "no-restricting-terms"
+						},
+						{
+							"name": "mailwoman:termsStatement",
+							"value": "terms"
+						},
+						{
+							"name": "mailwoman:electedTerms",
+							"value": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))"
+						},
+						{
+							"name": "mailwoman:termsURL",
+							"value": "https://www.arcgis.com/sharing/rest/content/items/b15201fa8c624ae799ffedcad00d9530?f=json"
+						},
+						{
+							"name": "mailwoman:termsRetrievedCopy",
+							"value": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/"
+						},
+						{
+							"name": "mailwoman:decisionBecause",
+							"value": "US factual-data reading (Feist)."
+						},
+						{
+							"name": "mailwoman:attribution",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:shareAlike",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:obligationClass",
+							"value": "none"
+						},
+						{
+							"name": "mailwoman:registerRow",
+							"value": "us-property-building-1621: elected, no-restricting-terms"
 						}
 					]
 				},
