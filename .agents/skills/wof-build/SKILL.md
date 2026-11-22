@@ -16,6 +16,24 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 - WOF admin SQLite at `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
 - Compiled workspace: `yarn compile`
 
+## Audit the postcode clones before a rebuild
+
+Run the postcode audit before any rebuild that reads the postcode clones, and keep its report with the build's record:
+
+```sh
+node --env-file=.env packages/mailwoman/out/cli/main.js gazetteer doctor --postcodes \
+  --out "$MAILWOMAN_DATA_ROOT/audits/$(date -u +%F)-wof-postcode-audit.json"
+```
+
+The command reads every current record of each `whosonfirst-data-postalcode-<cc>` clone and prints four counts per
+clone: a name the postcode package refuses for that country, a geometry at 0, 0, a GeoPlanet record that the GeoNames
+export doesn't hold, and a postcode current in more than one country. It exits 0 and refuses zero builds. On
+2026-11-22 it took 8 to 15 minutes over 8 clones, most of it in the Great Britain clone.
+
+Compare the counts with the previous report. A count that rose since then is a change in the clones to read before the
+build. A record with a geometry at 0, 0 still reaches the gazetteer: `fillPostcodeCentroids` in
+`packages/gazetteer/tools/pipeline/postcode/centroid-fills.ts` gives it its parent locality's point.
+
 ## The canonical gazetteer
 
 The canonical gazetteer is the WOF SQLite database that `mailwoman gazetteer build admin` assembles
