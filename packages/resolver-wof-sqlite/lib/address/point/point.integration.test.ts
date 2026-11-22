@@ -16,7 +16,14 @@ import {
 	normalizeLocalityForKeyLocale,
 	normalizeStreetForKey,
 	normalizeStreetForKeyLocale,
+	streetLocaleForCountry,
 } from "#street"
+
+/**
+ * The street locales of the two registers the fixtures stand for.
+ */
+const US = streetLocaleForCountry("US")
+const TW = streetLocaleForCountry("TW")
 
 const fixtures = new AsyncDisposableStack()
 
@@ -236,9 +243,9 @@ beforeAll(async () => {
 		null
 	)
 
-	lookup = new AddressPointSqliteLookup(path)
-	fullKeys = new AddressPointSqliteLookup(path, { localityKeys: "full" })
-	finestKeys = new AddressPointSqliteLookup(path, { localityKeys: "full", localityLevel: "finest" })
+	lookup = new AddressPointSqliteLookup(path, { streetLocale: US })
+	fullKeys = new AddressPointSqliteLookup(path, { streetLocale: US, localityKeys: "full" })
+	finestKeys = new AddressPointSqliteLookup(path, { streetLocale: US, localityKeys: "full", localityLevel: "finest" })
 })
 
 describe("AddressPointSqliteLookup", () => {
@@ -270,7 +277,7 @@ describe("AddressPointSqliteLookup", () => {
 		}
 
 		{
-			using unindexed = new AddressPointSqliteLookup(path)
+			using unindexed = new AddressPointSqliteLookup(path, { streetLocale: US })
 
 			expect(unindexed.find(query)).toBeNull()
 		}
@@ -281,7 +288,7 @@ describe("AddressPointSqliteLookup", () => {
 			db.exec("CREATE INDEX idx_ap_street ON address_point (street_norm, number)")
 		}
 
-		using indexed = new AddressPointSqliteLookup(path)
+		using indexed = new AddressPointSqliteLookup(path, { streetLocale: US })
 
 		expect(indexed.find(query)?.lat).toBe(36.1501484)
 	})
@@ -528,15 +535,15 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 		]
 
 		for (const [scope, street, number, unit, village] of rows) {
-			const streetNorm = normalizeStreetForKeyLocale(street, "zh")
+			const streetNorm = normalizeStreetForKeyLocale(street, TW)
 
 			insert.run(
 				streetNorm,
 				streetNorm,
-				normalizeHouseNumberForKey(number, "zh"),
+				normalizeHouseNumberForKey(number, TW),
 				unit,
 				null,
-				normalizeLocalityForKeyLocale(scope, "zh"),
+				normalizeLocalityForKeyLocale(scope, TW),
 				street,
 				scope.startsWith("臺北") ? 25.0399658 : scope.startsWith("基隆") ? 25.1283 : 22.6133451,
 				scope.startsWith("臺北") ? 121.5124584 : scope.startsWith("基隆") ? 121.7419 : 120.2650804,
@@ -547,7 +554,7 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 			)
 		}
 
-		zh = fixtures.use(new AddressPointSqliteLookup(path, { streetLocale: "zh" }))
+		zh = fixtures.use(new AddressPointSqliteLookup(path, { streetLocale: TW }))
 	})
 
 	it("answers the parse's region + subregion as the scope, with the common 台 for the register's 臺", () => {

@@ -3,7 +3,7 @@
 
 import { isJoinedHouseNumber } from "@mailwoman/match/address-point"
 
-import type { StreetLocale } from "#street/normalize"
+import { streetKeyRulesOf, type StreetLocale } from "#street/normalize"
 
 /**
  * The forms a normalized house number is probed under, the written form first,
@@ -51,14 +51,9 @@ export function* houseNumberForms(number: string, locale: StreetLocale): Generat
 		yield spaced[1]!
 	}
 
-	// country-branch: 之 and 附 join a sub-number to a base number in the Taiwanese
-	// register, the one `zh` extract.
-	// A house-number grammar for each address system in the codex would replace the branch.
-	if (locale === "zh") {
-		const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
+	const base = streetKeyRulesOf(locale).houseNumberBase?.exec(number)?.[1]
 
-		if (base) {
-			yield base
-		}
+	if (base) {
+		yield base
 	}
 }

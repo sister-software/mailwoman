@@ -16,10 +16,10 @@ import type { AddressPointDatabase, AddressPointTable } from "#address/point/sch
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
 	normalizeHouseNumberForKey,
-	normalizeLocalityForKey,
-	normalizeLocalityForKeyLocale,
 	type NameKey,
 	type StreetKey,
+	type StreetKeyRules,
+	streetKeyRulesOf,
 	streetKeyVariants,
 	streetLocaleForSurface,
 	stripArrondissement,
@@ -54,6 +54,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 {
 	readonly #db: DatabaseClient<DB>
 	readonly #locale: StreetLocale
+	readonly #rules: StreetKeyRules
 	readonly #localityKeys: "full" | "abbreviated"
 	readonly #localityLevel: "place" | "finest"
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey, number: string], AddressPointRow> | undefined
@@ -101,25 +102,21 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * The OSM builder stores `addr:suburb` before `addr:city`, so
 	 * `Teschener Weg 5, 14163 Berlin` is stored under `zehlendorf`.
 	 *
-	 * @defaultValue `"us"`
-	 * @defaultValue `"abbreviated"` for `"us"` and `"full"` for every other locale.
+	 * @defaultValue The locale's own `localityKeys` rule.
 	 * @defaultValue `"place"`
 	 */
 	constructor(
 		dbPath: PathBuilderLike,
 		opts: {
-			streetLocale?: StreetLocale
+			streetLocale: StreetLocale
 			localityKeys?: "full" | "abbreviated"
 			localityLevel?: "place" | "finest"
-		} = {}
+		}
 	) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
-		// country-branch: the first address-point extracts were the US state databases, keyed by the `us` fold.
-		// The street locale recorded in the extract's manifest would replace the default.
-		this.#locale = opts.streetLocale ?? "us"
-		// country-branch: the US builder abbreviates locality keys and every other builder stores them in full.
-		// The same manifest field would replace the branch.
-		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
+		this.#locale = opts.streetLocale
+		this.#rules = streetKeyRulesOf(opts.streetLocale)
+		this.#localityKeys = opts.localityKeys ?? this.#rules.localityKeys
 		this.#localityLevel = opts.localityLevel ?? "place"
 
 		// An extract without an `address_point` table, such as an interrupted build, makes every lookup miss.
@@ -181,14 +178,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// A `zh` extract keys locality as 縣市 + 鄉鎮市區.
 		// The parser tags 縣市 as `region` and 鄉鎮市區 as `subregion`.
 		// The Taiwanese register has no postcode, so this pair becomes the locality key.
-		// A query with only the 鄉鎮市區 matches the stored key by its suffix. country-branch:
-		// the Taiwanese register is the one `zh` extract, and its locality key is this pair.
-		// A locality-key rule recorded in the extract's manifest would replace the branch.
+		// A query with only the 鄉鎮市區 matches the stored key by its suffix.
 		const scoped =
-			this.#locale === "zh" && !query.locality && query.subregion
+			this.#rules.localityFromRegionAndSubregion && !query.locality && query.subregion
 				? query.region
 					? { ...query, locality: `${query.region}${query.subregion}` }
-					: { ...query, localityTail: normalizeLocalityForKeyLocale(query.subregion, "zh") }
+					: { ...query, localityTail: this.#rules.localityKey(query.subregion) }
 				: query
 
 		// `streetKeyVariants` yields the literal key first.
@@ -307,12 +302,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * and "Paris" produce the same key.
 	 */
 	#localityKey(locality: string): NameKey {
-		// country-branch: the BAN builder keys an arrondissement at its base city,
-		// a rule of the French register.
-		// A locality-key rule recorded in the extract's manifest would replace the branch.
-		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))
+		const key = this.#rules.localityKey(locality)
 
-		return normalizeLocalityForKeyLocale(locality, this.#locale)
+		return this.#rules.arrondissementAtBaseCity ? stripArrondissement(key) : key
 	}
 
 	/**

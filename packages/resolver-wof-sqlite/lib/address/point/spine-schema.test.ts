@@ -8,6 +8,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	streetLocaleForCountry,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
@@ -26,7 +27,7 @@ describe("address-point spine schema", () => {
 		await createSpineAddressPointTables(db)
 
 		const street = "Dollis Park"
-		const streetNorm = normalizeStreetForKeyLocale(street, "en")
+		const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForCountry("GB"))
 
 		await db
 			.insertInto("address_point")
@@ -82,7 +83,7 @@ describe("address-point spine schema", () => {
 			using db = new DatabaseClient<SpineAddressPointDatabase>(path)
 			await createSpineAddressPointTables(db)
 			const street = "Rue de Rivoli"
-			const streetNorm = normalizeStreetForKeyLocale(street, "fr")
+			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForCountry("FR"))
 
 			await db
 				.insertInto("address_point")
@@ -102,7 +103,7 @@ describe("address-point spine schema", () => {
 				})
 				.execute()
 
-			using lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
+			using lookup = new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry("FR") })
 
 			expect(lookup.find({ street, number: "2", postcode: "75001", bbox: null })).toMatchObject({
 				lat: 48.8566,

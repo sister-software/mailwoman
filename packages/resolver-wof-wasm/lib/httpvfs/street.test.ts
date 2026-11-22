@@ -12,6 +12,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
@@ -65,23 +66,25 @@ function interpDB(): DatabaseClient<AddressPointDatabase> {
 	})
 }
 
+const US = { streetLocale: streetLocaleForCountry("US") }
+
 describe("HTTPVFSAddressPointLookup", () => {
 	test("finds an exact point by postcode + street + number", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()), US)
 		const hit = await lk.find({ street: "Main St", number: "100", postcode: "10001" })
 		expect(hit).toMatchObject({ lat: 40.75, lon: -73.99, source: "overture:test" })
 	})
 
 	test("falls back to locality scope when no postcode hit", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()), US)
 		const hit = await lk.find({ street: "Main St", number: "100", locality: "New York" })
 		expect(hit?.lat).toBe(40.75)
 	})
 
 	test("returns null on a miss and on a tableless extract", async () => {
-		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
+		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()), US)
 		await expect(lk.find({ street: "Main St", number: "999", postcode: "10001" })).resolves.toBeNull()
-		const empty = new HTTPVFSAddressPointLookup(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))))
+		const empty = new HTTPVFSAddressPointLookup(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))), US)
 		await expect(empty.find({ street: "Main St", number: "100", postcode: "10001" })).resolves.toBeNull()
 	})
 })

@@ -5,7 +5,13 @@ import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { describe, expect, it } from "vitest"
 
 import { streetLocaleForCountry } from "#street/locale"
-import { normalizeStreetForKeyLocale, STREET_LOCALES, streetLocaleForSurface } from "#street/normalize"
+import {
+	normalizeStreetForKeyLocale,
+	parseStreetLocale,
+	STREET_LOCALES,
+	streetKeyRulesOf,
+	streetLocaleForSurface,
+} from "#street/normalize"
 
 describe("streetLocaleForCountry", () => {
 	it("folds a single-language country under that language's locale", () => {
@@ -30,8 +36,20 @@ describe("streetLocaleForCountry", () => {
 		expect(streetLocaleForSurface("Promenade Blvd", locale)).toBe("us")
 
 		expect(normalizeStreetForKeyLocale("Promenade Blvd", locale)).toBe(
-			normalizeStreetForKeyLocale("Promenade Blvd", "en")
+			normalizeStreetForKeyLocale("Promenade Blvd", parseStreetLocale("en"))
 		)
+	})
+
+	it("refuses a spelling that is no street locale, and routes each surface to a locale that exists", () => {
+		expect(() => parseStreetLocale("gb")).toThrow(/"gb" is no street locale/)
+
+		for (const locale of STREET_LOCALES) {
+			const route = streetKeyRulesOf(locale).surfaceRoute
+
+			if (route) {
+				expect(STREET_LOCALES).toContain(route.locale)
+			}
+		}
 	})
 
 	it("answers every ISO 3166-1 country with a locale the normalizer keys under", () => {
@@ -45,7 +63,9 @@ describe("streetLocaleForCountry", () => {
 	})
 
 	it("folds an und street with the shared fold alone", () => {
-		expect(normalizeStreetForKeyLocale("Rue de la Loi", "und")).toBe("rue de la loi")
-		expect(normalizeStreetForKeyLocale("Bahnhofstraße", "und")).toBe("bahnhofstrasse")
+		const und = streetLocaleForCountry("BE")
+
+		expect(normalizeStreetForKeyLocale("Rue de la Loi", und)).toBe("rue de la loi")
+		expect(normalizeStreetForKeyLocale("Bahnhofstraße", und)).toBe("bahnhofstrasse")
 	})
 })

@@ -10,6 +10,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { allKeyed } from "@mailwoman/core/promises"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { TextSpliterator } from "spliterator"
 
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
@@ -55,7 +56,8 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	if (addressPointsDB) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		addressPoints = new AddressPointSqliteLookup(addressPointsDB)
+		// The OpenAddresses harness reads a United States state's address points.
+		addressPoints = new AddressPointSqliteLookup(addressPointsDB, { streetLocale: streetLocaleForCountry("US") })
 	}
 
 	// `--interpolation <segments-db>`: the house-number interpolation tier (StreetInterpolator, tiger-range).

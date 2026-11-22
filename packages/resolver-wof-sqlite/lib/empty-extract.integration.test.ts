@@ -13,7 +13,7 @@ import { afterAll, describe, expect, it } from "vitest"
 import { AddressPointSqliteLookup, AddressPointInterpolator } from "#address"
 import type { AddressPointDatabase } from "#address"
 import { StreetInterpolator } from "#interpolation"
-import type { StreetSegmentDatabase } from "#street"
+import { streetLocaleForCountry, type StreetSegmentDatabase } from "#street"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -35,7 +35,10 @@ describe("empty/tableless extract degrades gracefully (#568)", () => {
 		const dbFile = await tablelessDBFile()
 		let lookup: AddressPointSqliteLookup | null = null
 
-		expect(() => (lookup = new AddressPointSqliteLookup(dbFile))).not.toThrow()
+		expect(
+			() => (lookup = new AddressPointSqliteLookup(dbFile, { streetLocale: streetLocaleForCountry("US") }))
+		).not.toThrow()
+
 		expect(lookup!.find(query)).toBeNull()
 		lookup![Symbol.dispose]()
 	})

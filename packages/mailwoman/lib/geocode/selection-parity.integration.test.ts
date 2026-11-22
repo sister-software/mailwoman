@@ -39,11 +39,8 @@ import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import {
-	normalizeLocalityForKey,
-	normalizeStreetForKeyLocale,
-	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { normalizeLocalityForKey, normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ServiceRegistry } from "async-init"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -64,14 +61,16 @@ import { installFixtureArtifact } from "#test-kit/fixture-registry"
 import { buildFixtureFST, FIXTURE_FST_PLACES } from "#test-kit/fst-fixture"
 
 /**
- * Write an address-point database with one point per row, keyed under `locale`.
+ * Write an address-point database with one point per row, keyed under the street locale of `country`.
  */
 async function writePoints(
 	path: PathBuilder,
-	locale: StreetLocale,
+	country: string,
 	source: string,
 	rows: ReadonlyArray<{ street: string; number: string; postcode: string; locality: string; lat: number; lon: number }>
 ): Promise<void> {
+	const locale = streetLocaleForCountry(country)
+
 	using db = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(db)
@@ -280,7 +279,7 @@ describe("a multi-country source", () => {
 			)
 		}
 
-		using lookup = new AddressPointSqliteLookup(installed.path, { streetLocale: "de" })
+		using lookup = new AddressPointSqliteLookup(installed.path, { streetLocale: streetLocaleForCountry("de") })
 
 		expect(lookup.find({ street: "Unter den Linden", number: "77", postcode: "10117", bbox: null })).toMatchObject({
 			lat: 52.5163,
