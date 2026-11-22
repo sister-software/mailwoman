@@ -9,16 +9,13 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { firstNodeWhere } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import {
-	type InputModeSelection,
-	isBareLocalityTree,
-	isBarePostcodeTree,
-	type InputMode,
-	type PipelineTiming,
-	type QueryKindResult,
-	type SoftChannelName,
+import type {
+	InputModeSelection,
+	InputMode,
+	PipelineTiming,
+	QueryKindResult,
+	SoftChannelName,
 } from "@mailwoman/core/pipeline"
 import {
 	type DefaultCountry,
@@ -29,7 +26,6 @@ import {
 } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralParseTrace } from "@mailwoman/neural"
-import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { ServiceRegistry } from "async-init"
@@ -55,6 +51,7 @@ import {
 	resolveGenerationServices,
 	unavailableLayers,
 } from "#geocode/services"
+import type { CountryScopeDecision } from "#inferred-scope"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
@@ -87,23 +84,6 @@ export interface GeocodeTrace {
 }
 
 /**
- * Why a session kept a locale-inferred country scope from the resolver as a filter.
- *
- * - `"bare_locality"`: the whole input is one place name.
- * - `"bare_postcode_format_conflict"`: the whole input is one postcode,
- *   in a format the country doesn't use.
- * - `"contradicting_evidence"`: the locale head reads the address as another country's,
- *   or the postcode's format excludes the country.
- */
-export const ScopeWithheldReason = {
-	BareLocality: "bare_locality",
-	BarePostcodeFormatConflict: "bare_postcode_format_conflict",
-	ContradictingEvidence: "contradicting_evidence",
-} as const
-
-export type ScopeWithheldReason = (typeof ScopeWithheldReason)[keyof typeof ScopeWithheldReason]
-
-/**
  * The locale and the country scope one geocode ran under, and where each came from.
  *
  * The session records each value where it decides it, so the record states the decision
@@ -131,11 +111,11 @@ export interface GeocodeApplied {
 		resolver: Required<DefaultCountry> | null
 
 		/**
-		 * The locale's country, when the session or the address's own evidence kept it from filtering.
+		 * The locale's country, when the address's own evidence kept it from filtering.
 		 *
 		 * {@linkcode resolver} is then a soft scope standing in for it, or null.
 		 */
-		withheld: { country: string; reason: ScopeWithheldReason } | null
+		withheld: CountryScopeDecision["withheld"]
 	} | null
 }
 
@@ -517,55 +497,19 @@ export async function createGeocodeSession(
 		const countryScope = routedAway && !scopeOptions.defaultCountry ? null : resolverDefaultCountry(scopeOptions)
 		const localeCountry = countryScope?.country ?? null
 
-		const barePostcodeFormatConflict = (): boolean => {
-			if (!isBarePostcodeTree(parsedTree)) return false
-			const inferred = localeCountry
-
-			if (!inferred) return false
-			const postcodeValue = firstNodeWhere(parsedTree.roots, (node) => node.tag === "postcode")?.value ?? null
-
-			const implied = countriesFromPostcodeFormat(postcodeValue)
-
-			return implied.length > 0 && !implied.includes(inferred)
-		}
-
-		// Only an inferred scope is ever withheld, and the reason found here is the one the run states.
-		const withheldReason =
-			countryScope?.source !== "inferred"
-				? null
-				: isBareLocalityTree(parsedTree)
-					? ScopeWithheldReason.BareLocality
-					: barePostcodeFormatConflict()
-						? ScopeWithheldReason.BarePostcodeFormatConflict
-						: null
-
-		const withheldBySession =
-			countryScope && withheldReason ? { country: countryScope.country, reason: withheldReason } : null
-
-		const inferredScopeOK = withheldReason == null
-		const withheldCountry = inferredScopeOK ? null : localeCountry
-
-		// A withheld locale country stays a soft scope under either prior.
-		const softScope: DefaultCountry | null =
-			withheldCountry && (options.localeCountryPrior || options.scopeCountryRetrieval)
-				? { country: withheldCountry, source: "inferred", strength: ScopeStrength.Soft }
-				: null
-
-		const resolverScope = inferredScopeOK && countryScope ? countryScope : softScope
 		const parentPlace = request.parentPlace ?? options.parentPlace
 
-		// The resolver's scope is recorded as `geocodeAddress` reports it, since that function may still drop it.
+		// `geocodeAddress` decides whether the scope filters, ranks or is withheld, and the run states its decision.
 		let appliedScope: GeocodeApplied["countryScope"] = null
 
 		const result = await geocodeAddress(input, {
-			countryScopeSink: ({ resolver: given, dropped }) => {
+			countryScopeSink: ({ resolver: given, withheld }) => {
 				appliedScope = {
 					resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
-					withheld:
-						withheldBySession ??
-						(dropped ? { country: dropped.country, reason: ScopeWithheldReason.ContradictingEvidence } : null),
+					withheld,
 				}
 			},
+			localeCountryPrior: options.localeCountryPrior,
 			...decoderSettings,
 			classifier: routed,
 			...(request.inputMode ? { inputMode: request.inputMode } : {}),
@@ -578,7 +522,7 @@ export async function createGeocodeSession(
 			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(requestBias.length ? { bias: requestBias } : {}),
-			...(resolverScope ? { defaultCountry: resolverScope } : {}),
+			...(countryScope ? { defaultCountry: countryScope } : {}),
 			...(parentPlace ? { parentPlace } : {}),
 
 			...(capitalLevel ? { capitalLevel } : {}),

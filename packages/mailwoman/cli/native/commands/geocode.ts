@@ -68,7 +68,8 @@ export const spec = {
 			type: "string",
 			default: defaults.countryScope,
 			choices: ["auto", "locale", "none"],
-			description: "Apply the locale-inferred resolver scope automatically, always, or never.",
+			description:
+				"Scope the resolver to the locale's country: auto yields to evidence of another country in the address, locale always scopes, none never does.",
 		},
 		"resolve-db": { type: "string", hint: "path", description: "WOF admin SQLite distribution." },
 		"candidate-db": { type: "string", hint: "path", description: "Demo-parity byte-range candidate database." },

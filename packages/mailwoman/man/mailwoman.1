@@ -113,8 +113,9 @@ Options:
   \-\-bias <points>                             Soft proximity\-bias points: lat,lon[:weight];lat,lon.
   \-\-default\-country <country>                 ISO\-3166 resolver country scope. Pass none to disable
                                               it.
-  \-\-country\-scope <string>                    Apply the locale\-inferred resolver scope
-                                              automatically, always, or never. (default: auto)
+  \-\-country\-scope <string>                    Scope the resolver to the locale's country: auto
+                                              yields to evidence of another country in the address,
+                                              locale always scopes, none never does. (default: auto)
   \-\-resolve\-db <path>                         WOF admin SQLite distribution.
   \-\-candidate\-db <path>                       Demo\-parity byte\-range candidate database.
   \-\-data\-root <path>                          Root containing the address\-point, interpolation, WOF,

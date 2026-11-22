@@ -93,7 +93,13 @@ export const GeocodeSessionOptionsSchema = z.strictObject({
 	defaultCountry: z.string().optional(),
 
 	/**
-	 * Whether the locale's country scopes the resolver: when the input allows it, always, or never.
+	 * Whether the locale's country scopes the resolver.
+	 *
+	 * - `auto`: it filters unless the address shows evidence of another country.
+	 *   `decideCountryScope` in `#inferred-scope` states that evidence, and each run's
+	 *   `applied.countryScope.withheld` gives the reason when the scope yielded.
+	 * - `locale`: it always filters, as `defaultCountry` set to the locale's country does.
+	 * - `none`: it never scopes.
 	 */
 	countryScope: z.enum(["auto", "locale", "none"]).default("auto"),
 
@@ -123,7 +129,7 @@ export const GeocodeSessionOptionsSchema = z.strictObject({
 	interpCalibration: z.number().optional(),
 
 	/**
-	 * Whether a locale country the session withheld still ranks the resolver's candidates.
+	 * Whether a locale country the address's evidence withheld still ranks the resolver's candidates.
 	 */
 	localeCountryPrior: z.boolean().default(false),
 
