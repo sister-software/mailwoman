@@ -7,8 +7,7 @@
  *   Group unit postcodes by prefix.
  *   Measure each group's dispersion and attach the admin ancestry the prefix asserts.
  *
- *   A GB outward code is the compact form minus its last three characters, never a greedy
- *   `^([A-Z]{1,2}\d{1,2})`; {@link outwardOf} is the one place the rule lives.
+ *   A prefix is derived by the codex's {@link postcodePrefixAt}, the rule the resolver's probe also reads.
  *
  *   A database that publishes a `coverage_meaning_of_zero` meta key declares itself partial
  *   and gets the ancestry-only tier, because a centroid over a partial enumeration
@@ -20,6 +19,7 @@
  */
 
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
+import { postcodePrefixAt, type PostcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
 import { isZipCode } from "@mailwoman/codex/us"
 import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { percentile } from "@mailwoman/core/stats"
@@ -29,15 +29,6 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { AdminLocator } from "#tools/pipeline/admin/locator"
-
-/**
- * Prefix granularity a build extracts.
- *
- * `"outward"` is the GB/NI outward code (area + district); the digit levels are for
- * the fixed-width numeric systems (US 3-digit sectional center).
- * Written to the header's `levels`.
- */
-export type PostcodePrefixLevel = "outward" | "3"
 
 /**
  * Coordinate tier of a build.
@@ -129,33 +120,6 @@ interface AdminSurfaceRow {
 }
 
 /**
- * Shortest compact UK postcode, `M11AE` — the same floor `codex/gb/postcode.ts`'s
- * `MIN_POSTCODE_LENGTH` enforces.
- *
- * Anything shorter has no three-character inward code to cleave off.
- */
-const MIN_COMPACT_POSTCODE_LENGTH = 5
-
-/**
- * The outward code of a compact unit postcode: everything but the last three characters.
- *
- * See the module docstring for why this isn't a regex.
- */
-export function outwardOf(compact: string): string | null {
-	if (compact.length < MIN_COMPACT_POSTCODE_LENGTH) return null
-
-	return compact.slice(0, -3)
-}
-
-function prefixOf(compact: string, level: PostcodePrefixLevel): string | null {
-	if (level === "outward") return outwardOf(compact)
-
-	const width = Number.parseInt(level, 10)
-
-	return compact.length >= width ? compact.slice(0, width) : null
-}
-
-/**
  * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`.
  *
  * WOF records them as `macroregion`s.
@@ -238,13 +202,13 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildPostcodePrefixResult {
 	const { sourcePath, adminPath, country, level } = options
 
-	// country-branch: a US prefix is the first three digits of a ZIP code,
-	// and the US build reads its own sources.
-	// A codex rule for each country's postcode prefix would replace the branch.
+	// country-branch: the US arm asserts a region by point-in-polygon and reads its own sources.
+	// An ancestry builder under each country's directory would replace the branch.
 	if (country === "us") return buildUSPostcodePrefixIndex(options)
 
-	// country-branch: the rest of this function groups GB units by outward code, the one other rule written.
-	// A codex rule for each country's postcode prefix would replace the guard.
+	// country-branch: the rest of this function attaches GB ancestry from the postcode
+	// area table, the one other ancestry rule written.
+	// An ancestry builder under each country's directory would replace the guard.
 	if (country !== "gb") {
 		throw new Error(
 			`postcode-prefix: no ancestry rule for country "${country}". GB and US are implemented; a new one needs a ` +
@@ -283,7 +247,7 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 
 	for (const row of rows) {
 		const compact = row.name.replaceAll(/[^A-Za-z0-9]/g, "").toUpperCase()
-		const prefix = prefixOf(compact, level)
+		const prefix = postcodePrefixAt(compact, level)
 
 		if (!prefix) {
 			skippedShort++
@@ -484,7 +448,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 			continue
 		}
 
-		const prefix = prefixOf(row.name.replaceAll(/[^A-Za-z0-9]/g, "").toUpperCase(), level)
+		const prefix = postcodePrefixAt(row.name.replaceAll(/[^A-Za-z0-9]/g, "").toUpperCase(), level)
 
 		if (!prefix) {
 			skippedShort++

@@ -23,6 +23,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/entity-resolution"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
@@ -258,9 +259,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const dataRoot = flags.dataRoot || dataRootPath()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
-			// country-branch: en-US is the weights locale a caller gets when it chooses none.
-			// A default read from the installed weights packages would replace the literal.
-			locale: flags.locale || "en-US",
+			locale: flags.locale || DEFAULT_WEIGHTS_LOCALE,
 			...(flags.modelPath ? { modelPath: flags.modelPath } : {}),
 			...(flags.tokenizerPath ? { tokenizerPath: flags.tokenizerPath } : {}),
 			...(flags.modelCardPath ? { modelCardPath: flags.modelCardPath } : {}),

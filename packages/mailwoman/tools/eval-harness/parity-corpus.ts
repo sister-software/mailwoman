@@ -11,6 +11,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -137,9 +138,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-		// A default read from the installed weights packages would replace the literal.
-		locale: options.locale ?? "en-US",
+		locale: options.locale ?? DEFAULT_WEIGHTS_LOCALE,
 		modelPath: options.modelPath,
 		tokenizerPath: options.tokenizerPath,
 		modelCardPath: options.modelCardPath,

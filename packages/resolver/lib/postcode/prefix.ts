@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { postcodePrefixAt, postcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
@@ -13,32 +14,20 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
-const MIN_GB_OUTWARD_CODE_LENGTH = 5
-
-const MIN_US_SECTION_CODE_LENGTH = 3
-
 /**
- * Derives the key a postcode prefix index uses for `code`: the GB outward code
- * or the US three-digit prefix.
+ * Derives the key a postcode prefix index uses for `code`, at the prefix level
+ * the codex states for `country`.
+ *
+ * White space in the code is dropped first.
  *
  * @returns `null` for a country with no rule or a code too short to contain a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null
 
-	const compact = code.replaceAll(/\s+/g, "")
+	const level = postcodePrefixLevel(country)
 
-	// country-branch: the GB outward code and the US three-digit prefix are the two prefix rules written.
-	// A codex rule for each country's postcode prefix would replace the switch.
-	switch (country.toUpperCase()) {
-		case "GB":
-			return compact.length >= MIN_GB_OUTWARD_CODE_LENGTH ? compact.slice(0, -3) : null
-
-		case "US":
-			return compact.length >= MIN_US_SECTION_CODE_LENGTH ? compact.slice(0, 3) : null
-		default:
-			return null
-	}
+	return level ? postcodePrefixAt(code.replaceAll(/\s+/g, ""), level) : null
 }
 
 /**

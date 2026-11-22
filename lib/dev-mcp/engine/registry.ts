@@ -9,6 +9,7 @@ import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type ChannelPins, SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import {
 	type CapitalTier,
 	createGeocodeSession,
@@ -294,9 +295,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  */
 export async function assertWeightsCacheStaged(
 	cacheRoot: PathBuilderLike,
-	// country-branch: en-us is the weights package a candidate is staged under when the caller states no locale.
-	// A locale read from the staged bundle's model card would replace the literal.
-	locale = "en-us"
+	locale = DEFAULT_WEIGHTS_LOCALE.toLowerCase()
 ): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
 

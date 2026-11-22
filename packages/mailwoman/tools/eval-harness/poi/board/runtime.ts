@@ -10,6 +10,7 @@ import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
@@ -143,9 +144,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 	const db = resolvePath(options.db ?? poiDatabasePath("poi.db"))
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-		// A default read from the installed weights packages would replace the literal.
-		locale: options.locale ?? "en-US",
+		locale: options.locale ?? DEFAULT_WEIGHTS_LOCALE,
 		cacheRoot: options.weightsCacheRoot,
 	})
 

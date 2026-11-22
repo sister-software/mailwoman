@@ -14,6 +14,7 @@ import { scriptFamilyBase } from "#char-encoder"
 import type { EncoderDescriptor } from "#char-encoder"
 import { PlacetypeCensusLookup } from "#placetype/census"
 import { packageHasBinaries, readEncoderFromModelCard, resolveCharVocab } from "#weights/channels"
+import { DEFAULT_WEIGHTS_LOCALE } from "#weights/families"
 import { resolveEvidenceLexicon } from "#weights/lexicon"
 
 /**
@@ -32,10 +33,7 @@ export function weightsOverlayDir(locale: Intl.UnicodeBCP47LocaleIdentifier): Pa
  * Returns the weights package name for a locale tag, lowercased to match the package naming convention.
  */
 export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): string {
-	// country-branch: en-us is the weights package a caller gets when it chooses no locale.
-	// The commit that added the default recorded no reason, and a default declared
-	// in `release.config.json` would replace it.
-	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
+	return `@mailwoman/neural-weights-${(locale ?? DEFAULT_WEIGHTS_LOCALE).toLowerCase()}`
 }
 
 /**
@@ -357,9 +355,7 @@ export async function resolveWeights(input: ResolveWeightsOpts): Promise<Resolve
 		}
 	}
 
-	// country-branch: en-us is the weights package a caller gets when it chooses no locale.
-	// `weightsPackageName` holds the same default and would replace the literal.
-	const locale = (opts.locale ?? "en-us").toLowerCase()
+	const locale = (opts.locale ?? DEFAULT_WEIGHTS_LOCALE).toLowerCase()
 	const packageName = weightsPackageName(locale)
 
 	const cacheDir = weightsCachePackageDir(opts.cacheRoot ?? weightsCacheDir(), locale)
