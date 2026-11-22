@@ -1,0 +1,16 @@
+# The context is the repository source. Installs, build output and local data stay out.
+.git
+.claude
+.env
+.env.*
+**/node_modules
+**/out
+target
+packages/*/target
+data
+internal
+scratchpad
+.yarn/cache
+.yarn/install-state.gz
+docs/build
+docs/.docusaurus
