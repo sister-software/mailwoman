@@ -3,7 +3,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { findReachArounds } from "#repo-health/checks/node-modules-reacharound"
+import { findReachArounds, nodeModulesReacharoundCheck } from "#repo-health/checks/node-modules-reacharound"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 describe("findReachArounds", () => {
 	it.each([
@@ -33,5 +34,24 @@ describe("findReachArounds", () => {
 		const source = "\nresolvePath(root, `${root}/node_modules/example/data.json`)"
 
 		expect(findReachArounds(source, "example.ts")).toEqual([{ line: 2, text: source.trim() }])
+	})
+})
+
+describe("nodeModulesReacharoundCheck", () => {
+	it("reports a tracked source that spells an install path, and leaves a module that resolves one alone", async () => {
+		const reaching = ["export const name = 'tsc'", "export const compiler = `./node_modules/.bin/${name}`", ""]
+
+		await using context = await plantFixtureRepository({
+			"packages/a/lib/launch.ts": reaching.join("\n"),
+			"packages/a/lib/resolve.ts": 'export const compiler = import.meta.resolve("typescript/bin/tsc")\n',
+		})
+
+		const diagnostics = await nodeModulesReacharoundCheck.run(context)
+
+		// The check also reports each entry of its reviewed list whose file the fixture lacks.
+		// Those diagnostics state no line, so the planted site is the one that does.
+		const sites = diagnostics.filter((diagnostic) => typeof diagnostic.line === "number")
+
+		expect(sites.map((diagnostic) => [diagnostic.file, diagnostic.line])).toEqual([["packages/a/lib/launch.ts", 2]])
 	})
 })

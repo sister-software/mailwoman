@@ -7,7 +7,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { compareShippingScope } from "#repo-health/checks/locale/scope"
+import { compareShippingScope, localeScopeCheck } from "#repo-health/checks/locale/scope"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 const messages = (scope: Parameters<typeof compareShippingScope>[0]): string[] =>
 	compareShippingScope(scope).map((diagnostic) => diagnostic.message)
@@ -39,5 +40,31 @@ describe("compareShippingScope", () => {
 		expect(messages({ shipping: new Set(), promised: new Set(), unpromised: { NZ: "stale" } })).toEqual([
 			"unpromisedShippingLocales lists NZ, which no longer ships a weights package; remove the entry",
 		])
+	})
+})
+
+describe("localeScopeCheck", () => {
+	/**
+	 * A tree that ships one locale in `ZZ`, a code no support promise can hold,
+	 * with `unpromised` as the reasons its scope config states.
+	 */
+	const scopeTree = (unpromised: Record<string, string>) => ({
+		"release.config.json": { version: "1.0.0", locales: ["en-zz"] },
+		"scope.config.json": { unpromisedShippingLocales: unpromised },
+	})
+
+	it("reports a shipping country the scope config gives no reason for", async () => {
+		await using context = await plantFixtureRepository(scopeTree({}))
+
+		const diagnostics = await localeScopeCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual(["scope.config.json"])
+		expect(diagnostics[0]!.message).toMatch(/^ZZ /u)
+	})
+
+	it("accepts the country once the scope config states a reason", async () => {
+		await using context = await plantFixtureRepository(scopeTree({ ZZ: "a fixture country with no evidence" }))
+
+		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
 	})
 })

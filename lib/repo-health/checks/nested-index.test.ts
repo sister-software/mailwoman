@@ -3,7 +3,12 @@
 
 import { describe, expect, test } from "vitest"
 
-import { findMisplacedGroupModules, findNestedIndexes, planNestedIndexMoves } from "#repo-health/checks/nested-index"
+import {
+	findMisplacedGroupModules,
+	findNestedIndexes,
+	nestedIndexCheck,
+	planNestedIndexMoves,
+} from "#repo-health/checks/nested-index"
 
 describe("nested-index", () => {
 	test("renames a nested index and the tests named for it", () => {
@@ -71,5 +76,39 @@ describe("nested-index", () => {
 
 		expect(indexes.map((entry) => entry.collision)).toEqual(["packages/x/lib/map.tsx"])
 		expect(planNestedIndexMoves(indexes)).toEqual([])
+	})
+
+	// The check reads only the list of tracked paths, so its context needs no directory behind it.
+	const contextOf = (trackedFiles: string[]) => ({ repoRoot: "/checkout", trackedFiles })
+
+	test("the check reports a nested index module and a routed group command outside its directory", async () => {
+		const diagnostics = await nestedIndexCheck.run(
+			contextOf([
+				"packages/x/lib/index.ts",
+				"packages/x/lib/geocode/index.ts",
+				"packages/x/lib/geocode/index.test.ts",
+				"packages/mailwoman/cli/commands/eval.tsx",
+				"packages/mailwoman/cli/commands/eval/gauntlet.tsx",
+			])
+		)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual([
+			"packages/x/lib/geocode/index.ts",
+			"packages/mailwoman/cli/commands/eval.tsx",
+		])
+	})
+
+	test("the check accepts a module named for its directory and a routed group command inside it", async () => {
+		const diagnostics = await nestedIndexCheck.run(
+			contextOf([
+				"packages/x/lib/index.ts",
+				"packages/x/lib/geocode.ts",
+				"packages/x/lib/geocode/session.ts",
+				"packages/mailwoman/cli/commands/eval/index.tsx",
+				"packages/mailwoman/cli/commands/eval/gauntlet.tsx",
+			])
+		)
+
+		expect(diagnostics).toEqual([])
 	})
 })

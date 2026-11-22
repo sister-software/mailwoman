@@ -7,6 +7,8 @@
  *   the registry no longer names.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { DataBundle, PublishedBundlesSnapshot } from "mailwoman/data"
 import { describe, expect, it } from "vitest"
 
@@ -16,6 +18,7 @@ import {
 	publishedBundlesCheck,
 } from "#repo-health/checks/published-bundles"
 import { collectRepoContext } from "#repo-health/index"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 const FILE = "packages/mailwoman/data/published-bundles.json"
 
@@ -117,5 +120,24 @@ describe("publishedBundlesCheck", () => {
 
 		expect(diagnostics).toHaveLength(1)
 		expect(diagnostics[0]?.message).toMatch(/`gone\/0\.db` is in the snapshot and no bundle in BUNDLES names it/u)
+	})
+
+	it("reports a committed snapshot whose measured size was edited away from the registry's", async () => {
+		const committed = await readLocalJSONFile<PublishedBundlesSnapshot>(repoRootPath(FILE))
+
+		const edited = committed.bundles
+			.flatMap((bundle) => bundle.artifacts)
+			.find((artifact) => artifact.size.status === "measured")!
+
+		if (edited.size.status === "measured") {
+			edited.size.contentLength += APPROX_BYTES_TOLERANCE + 1
+		}
+
+		await using context = await plantFixtureRepository({ [FILE]: committed })
+
+		const diagnostics = await publishedBundlesCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual([FILE])
+		expect(diagnostics[0]?.message).toContain(`\`${edited.remotePath}\``)
 	})
 })
