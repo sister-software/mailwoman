@@ -73,12 +73,16 @@ These functions read the tree a parse returns:
 ## Runtime pipeline
 
 ```ts fragment
-function createRuntimePipeline(
-	opts?: CreateRuntimePipelineOpts
-): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
+interface RuntimePipeline extends AsyncDisposable {
+	(raw: string, runOpts?: PipelineOpts): Promise<PipelineResult>
+}
+
+function createRuntimePipeline(opts?: CreateRuntimePipelineOpts, scope?: { parent?: ServiceRegistry }): RuntimePipeline
 ```
 
-`mailwoman/runtime-pipeline` exports the factory that `createParser` builds on. Use it to supply your own classifier, a resolver, or a POI database. The factory returns a parse function synchronously. The returned function runs the async pipeline. An omitted classifier leaves the structural stages available, but a neural classifier is required for a labeled parse. The pipeline can add resolved places to the tree when `resolver` is supplied.
+`mailwoman/runtime-pipeline` exports the factory that `createParser` builds on. Use it to supply your own classifier, a resolver, or a POI database. The factory returns a parse function synchronously. The returned function runs the async pipeline.
+
+The pipeline owns what it loads for an `auto` stage: the bundled coarse placer, the street index and the POI database. It loads each on the first call and closes it when the pipeline is disposed, so hold a pipeline with `await using` or call its `Symbol.asyncDispose` after the last parse. A process holds no shared copy of these. A caller that builds several pipelines calls `registerRuntimePipelineServices(registry)` on one `ServiceRegistry` from `async-init` and passes `{ parent: registry }` to each, so the registry loads each default once and closes it at its own disposal. An omitted classifier leaves the structural stages available, but a neural classifier is required for a labeled parse. The pipeline can add resolved places to the tree when `resolver` is supplied.
 
 The following factory options are the settings a caller uses to choose the stages and their defaults. `CreateRuntimePipelineOpts` also exposes stage-replacement callbacks and prior controls for custom pipelines. Read the exported TypeScript declaration for those advanced fields.
 
@@ -163,9 +167,9 @@ function geocodeStream(
 ): AsyncIterableIterator<SourceRecord>
 ```
 
-Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `classifier` and `resolver`. A geocode also requires geographic data behind the resolver. The optional `databases`, `nationalDatabases`, and `osmDatabases` fields select additional region and address-point layers. `parseForGeocode` accepts the parse-related subset of `GeocodeDeps` and returns a tree without running the full coordinate cascade. `USStateDatabaseProvider.create(factory, dataRoot, catalog?)` reads the release manifest and warms <Country code="US" /> state database paths before it returns a disposable provider. It uses the supplied `catalog` snapshot when present and reads the active selection otherwise. Its factory supplies the SQLite lookup classes.
+Import these functions from `mailwoman/geocode`. `GeocodeDeps` requires a `classifier`, a `resolver` and a `placeCountry`. `placeCountry` is the coarse country router behind the soft country prior, or `"none"` for no prior. `geocodeAddress` loads no router by itself: `loadBundledPlaceCountry()` from `mailwoman/default/placer` loads the bundled one, and a caller loads it once and passes the same function to every call. A call that states neither throws a `TypeError`. A geocode also requires geographic data behind the resolver. The optional `databases`, `nationalDatabases`, and `osmDatabases` fields select additional region and address-point layers. `parseForGeocode` accepts the parse-related subset of `GeocodeDeps` and returns a tree without running the full coordinate cascade. `USStateDatabaseProvider.create(factory, dataRoot, catalog?)` reads the release manifest and warms <Country code="US" /> state database paths before it returns a disposable provider. It uses the supplied `catalog` snapshot when present and reads the active selection otherwise. Its factory supplies the SQLite lookup classes.
 
-`geocodeStream` starts workers with these `GeocodeStreamOptions` fields. The workers rebuild their classifier, resolver, and database handles from the serializable `geocode` configuration. When `geocode.country` is absent, the worker uses `"US"` as the resolver's default country. A record with `raw` input and a mapped address receives the geocode result in its `address` field, or `null` when the geocoder returns no address. A record without `raw` input or a mapped address passes through unchanged. The stream yields records in worker completion order. A caller that needs input order must retain each record's input position and reorder the results by its `SourceRecord.id`.
+`geocodeStream` starts workers with these `GeocodeStreamOptions` fields. Each worker builds one geocode session from the serializable `geocode` configuration, the session `mailwoman geocode` builds. When `geocode.country` is absent, the worker uses `"US"` as the resolver's default country. A record with `raw` input and a mapped address receives the geocode result in its `address` field, or `null` when the geocoder returns no address. A record without `raw` input or a mapped address passes through unchanged. The stream yields records in worker completion order. A caller that needs input order must retain each record's input position and reorder the results by its `SourceRecord.id`.
 
 | Stream option | Type and default                                | Effect                                                                                       |
 | ------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |

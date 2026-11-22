@@ -371,7 +371,7 @@ export async function createGeocodeSession(
 		zoning: zoningRoute,
 	} = services.layerRoutes
 
-	const { placer, osm: osmProvider, classifyKind: poiKindClassifier } = services
+	const { placeCountry, osm: osmProvider, classifyKind: poiKindClassifier } = services
 	const forkEntityDeps = services.forkEntity.deps
 	const classifier = routed.primary
 	const { priors, artifacts: priorArtifacts } = parsePriors
@@ -598,7 +598,7 @@ export async function createGeocodeSession(
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
-			placeCountry: placer ? (t: string) => placer.predict(t) : "none",
+			placeCountry: placeCountry ?? "none",
 
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,

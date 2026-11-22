@@ -22,7 +22,6 @@
  *   Every service that reads the selection needs it, so the selection lease is released last.
  */
 
-import type { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { isPresent } from "@mailwoman/core/objects"
 import { allKeyed } from "@mailwoman/core/promises"
 import type { RegionDatabases } from "@mailwoman/core/resolver"
@@ -40,7 +39,7 @@ import {
 
 import type { LayerCatalog } from "#data/catalog"
 import { holdActiveSelection } from "#data/retention"
-import { loadBundledCoarsePlacer } from "#default/placer"
+import { loadBundledPlaceCountry, PlaceCountryService } from "#default/placer"
 import { $public } from "#env"
 import {
 	firstCoveringSource,
@@ -76,8 +75,8 @@ type ResolverBackend = Awaited<ReturnType<typeof createResolverBackend>>
 type OSMRegionDatabases = Awaited<ReturnType<typeof openOSMRegionDatabases>>
 
 /**
- * The tokens of the generation scope, besides {@link ParsePriorArtifactsService}
- * and {@link ParsePriorsService}.
+ * The tokens of the generation scope, besides {@link ParsePriorArtifactsService},
+ * {@link ParsePriorsService} and `PlaceCountryService` in `#default/placer`.
  *
  * A caller reads a session's service, or substitutes one in a child scope, by its token here.
  *
@@ -100,7 +99,6 @@ export const GenerationServices = {
 	nationalDatabases: createToken<(country: string) => RegionDatabases>("national-databases"),
 	osm: createToken<OSMRegionDatabases>("osm"),
 	classifyKind: createToken<NonNullable<GeocodeDeps["classifyKind"]>>("kind-classifier"),
-	placer: createToken<CoarsePlacer | null>("coarse-placer"),
 	forkEntity: createToken<ForkEntityProbe>("fork-entity"),
 	layerRoutes: createToken<LayerRoutes>("layer-routes"),
 } as const
@@ -243,11 +241,22 @@ export function registerGenerationServices(
 		},
 	})
 
-	defineUnlessProvided(registry, S.placer, {
-		build: () =>
-			options.placeCountry
-				? loadBundledCoarsePlacer({ abstainBelow: options.placeCountryThreshold, openSet: true })
-				: null,
+	// The session reads the place-country function every runtime pipeline reads, at the session's threshold.
+	// A session asked for the prior fails to start when the bundled placer can't be loaded.
+	defineUnlessProvided(registry, PlaceCountryService, {
+		build: async () => {
+			if (!options.placeCountry) return null
+
+			const placeCountry = await loadBundledPlaceCountry({ abstainBelow: options.placeCountryThreshold })
+
+			if (!placeCountry) {
+				throw new CommandError(
+					"geocode could not load the bundled coarse placer. Reinstall `mailwoman`, or turn the `placeCountry` option off."
+				)
+			}
+
+			return placeCountry
+		},
 	})
 
 	const nationalSources: ServiceToken<NationalDatabaseSource>[] = []
@@ -315,7 +324,7 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 		nationalDatabases: registry.resolve(S.nationalDatabases),
 		osm: registry.resolve(S.osm),
 		classifyKind: registry.resolve(S.classifyKind),
-		placer: registry.resolve(S.placer),
+		placeCountry: registry.resolve(PlaceCountryService),
 		forkEntity: registry.resolve(S.forkEntity),
 		layerRoutes: registry.resolve(S.layerRoutes),
 	})

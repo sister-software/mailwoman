@@ -5,6 +5,8 @@
  *   A request's `defaultCountry` scopes that request's resolver and leaves the session's scope as it was.
  *
  *   Each run states the locale and country scope it answered under.
+ *
+ *   A session's coarse placer is the place-country service every runtime pipeline reads.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -83,5 +85,25 @@ describe.skipIf(!haveGazetteer)("the record of what a geocode ran under", () => 
 			locale: { locale: GEOCODE_DEFAULT_LOCALE, source: "caller" },
 			countryScope: { resolver: null, withheld: null },
 		})
+	}, 120_000)
+})
+
+describe.skipIf(!haveGazetteer)("a session's coarse placer", () => {
+	it("is the place-country service on its scope, with the full in-map distribution", async () => {
+		await using session = await createGeocodeSession(createGeocodeSessionOptions({ countryScope: "none" }))
+
+		// The session hands `geocodeAddress` this function as it is, so the resolver's anchor is its posterior.
+		const placed = session.services.placeCountry?.("350 5th Ave, New York, NY 10118")
+
+		expect(placed?.country).toBe("US")
+		expect(Object.keys(placed?.posterior ?? {}).length).toBeGreaterThan(1)
+	}, 120_000)
+
+	it("is absent when the session's `placeCountry` option is off", async () => {
+		await using session = await createGeocodeSession(
+			createGeocodeSessionOptions({ countryScope: "none", placeCountry: false })
+		)
+
+		expect(session.services.placeCountry).toBeNull()
 	}, 120_000)
 })
