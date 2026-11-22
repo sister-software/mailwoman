@@ -31,7 +31,6 @@ export {
 	deriveInputMode,
 	InputModeSchema,
 	InputModeSelectionSchema,
-	PipelineFaultStage,
 	POIIntentSchema,
 	POIQueryResultSchema,
 	POIResultSchema,
@@ -86,4 +85,15 @@ export type {
 } from "#pipeline/types"
 
 export type { MachinePreferences } from "#pipeline/preferences"
-export type { PipelineFault, PipelineResult } from "#pipeline/result"
+export type { PipelineResult } from "#pipeline/result"
+
+export { createRequestContext, runStage, runStages, StageID, treeRewriteStage } from "#pipeline/stage"
+
+export type {
+	PipelineFault,
+	PipelineFaultStage,
+	PipelineStage,
+	RequestContext,
+	StageRecord,
+	TreeRewriteRecord,
+} from "#pipeline/stage"

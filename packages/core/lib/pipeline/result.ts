@@ -2,39 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "#decoder/types"
+import type { PipelineFault } from "#pipeline/stage"
 import type {
 	LocaleHint,
 	NormalizedInputLite,
 	PhraseProposal,
 	PipelineTiming,
-	PipelineFaultStage,
 	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
 	POIQueryResult,
 } from "#pipeline/types"
-
-/**
- * One stage crash that the coordinator caught and degraded past.
- *
- * `runPipeline` still resolves.
- * `tree` contains whatever the remaining stages could prove.
- */
-export interface PipelineFault {
-	stage: PipelineFaultStage
-	/**
-	 * The thrown value's `name`, or `"Error"` when something that isn't an `Error` was thrown.
-	 *
-	 * It is machine-stable enough to branch on, with the `cause` carrying the rest.
-	 */
-	name: string
-	message: string
-	/**
-	 * The value the stage threw, verbatim: not JSON-serializable in the useful sense,
-	 * so serialize `stage`/`name`/`message` when you need this on a wire.
-	 */
-	cause: unknown
-}
 
 /**
  * Result of one `runPipeline` call.

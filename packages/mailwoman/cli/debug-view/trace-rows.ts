@@ -174,6 +174,22 @@ export function decodeRow(trace: GeocodeTrace | null): string {
 	])
 }
 
+/**
+ * One entry per pass that rewrote the tree after the decode: the pass,
+ * the nodes it removed and the nodes it added.
+ *
+ * A node reads as it does in the tree outline, `tag [start, end): "value"`, with its metadata after it.
+ * An empty list means every pass left the decoded tree as it was.
+ */
+export function rewriteRows(stages: GeocodeTrace["stages"]): Array<{ pass: string; change: string }> {
+	const side = (lines: readonly string[]): string =>
+		lines.length ? lines.map((line) => line.trim()).join(" / ") : ABSENT
+
+	return stages
+		.filter((record) => record.kind === "tree-rewrite")
+		.map((record) => ({ pass: record.stage, change: `${side(record.removed)} → ${side(record.added)}` }))
+}
+
 function signed(value: number): string {
 	return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`
 }

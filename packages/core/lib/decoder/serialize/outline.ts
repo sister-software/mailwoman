@@ -8,11 +8,14 @@
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { stringifyJSON } from "#json"
 
-function outlineLines(node: AddressNode, depth: number, lines: string[]): void {
-	lines.push(`${"  ".repeat(depth)}${node.tag} [${node.start}, ${node.end}): ${stringifyJSON(node.value)}`)
+function outlineLines(node: AddressNode, depth: number, lines: string[], metadata: boolean): void {
+	const stated =
+		metadata && node.metadata && Object.keys(node.metadata).length ? ` ${stringifyJSON(node.metadata)}` : ""
+
+	lines.push(`${"  ".repeat(depth)}${node.tag} [${node.start}, ${node.end}): ${stringifyJSON(node.value)}${stated}`)
 
 	for (const child of node.children) {
-		outlineLines(child, depth + 1, lines)
+		outlineLines(child, depth + 1, lines, metadata)
 	}
 }
 
@@ -25,13 +28,23 @@ function outlineLines(node: AddressNode, depth: number, lines: string[]): void {
  * region [28, 30): "NY"
  *   locality [19, 27): "New York"
  * ```
+ *
  */
 export function decodeAsOutline(tree: AddressTree): string {
+	return decodeAsOutlineLines(tree).join("\n")
+}
+
+/**
+ * Returns the lines of {@linkcode decodeAsOutline}, one per node.
+ *
+ * With `metadata`, a node that has metadata prints it as JSON after its value.
+ */
+export function decodeAsOutlineLines(tree: AddressTree, options: { metadata?: boolean } = {}): string[] {
 	const lines: string[] = []
 
 	for (const root of tree.roots) {
-		outlineLines(root, 0, lines)
+		outlineLines(root, 0, lines, options.metadata ?? false)
 	}
 
-	return lines.join("\n")
+	return lines
 }

@@ -113,6 +113,37 @@ describe("outputLines", () => {
 		expect(labels(lines)).toEqual(["components", "kind", "timing", "resolved", "hierarchy", "candidates"])
 	})
 
+	it("adds a rewrites section only when a pass after the decode changed the tree", () => {
+		const unchanged = outputLines({ result: RESULT, tree: TREE, trace: { ...TRACE, stages: [] } })
+
+		expect(unchanged).toEqual(outputLines({ result: RESULT, tree: TREE, trace: TRACE }))
+
+		const rewritten = outputLines({
+			result: RESULT,
+			tree: TREE,
+			trace: {
+				...TRACE,
+				stages: [
+					{
+						kind: "tree-rewrite",
+						stage: "bare-postcode",
+						removed: ['street [0, 8): "SW1A 1AA"'],
+						added: ['postcode [0, 8): "SW1A 1AA" {"bare_postcode_retag":true}'],
+					},
+				],
+			},
+		})
+
+		expect(labels(rewritten)).toEqual(["components", "kind", "resolved", "hierarchy", "candidates", "rewrites"])
+
+		// Every line above the section is the line an input with zero rewrites has.
+		expect(rewritten.slice(0, unchanged.length)).toEqual(unchanged)
+
+		expect(rewritten.find((line) => line.label === "  bare-postcode")?.value).toBe(
+			'street [0, 8): "SW1A 1AA" → postcode [0, 8): "SW1A 1AA" {"bare_postcode_retag":true}'
+		)
+	})
+
 	it("indents nested components and carries each node's own confidence", () => {
 		const lines = outputLines({ result: RESULT, tree: TREE })
 		const components = lines.slice(1, 3)

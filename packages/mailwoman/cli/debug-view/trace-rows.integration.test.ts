@@ -17,6 +17,7 @@ import {
 	decodeRow,
 	explanationRows,
 	localeHeadRow,
+	rewriteRows,
 	systemRow,
 	tokensRow,
 } from "#cli/debug-view/trace-rows"
@@ -73,6 +74,8 @@ function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 		kind: null,
 		inputMode: "formatted",
 		resolver: [],
+		stages: [],
+		stageTiming: {},
 	}
 }
 
@@ -85,6 +88,35 @@ describe("evidence rows without a trace", () => {
 		for (const row of [systemRow, localeHeadRow, tokensRow, channelsRow, decodeRow]) {
 			expect(row(null)).toBe(ABSENT)
 		}
+	})
+})
+
+describe("rewriteRows", () => {
+	it("states each pass that changed the tree with the nodes it removed and added", () => {
+		const trace = traceOf()
+
+		trace.stages = [
+			{
+				kind: "tree-rewrite",
+				stage: "region-recognition",
+				removed: ['locality [0, 10): "Dublin, TX"'],
+				added: ['region [8, 10): "TX" {"region_recognition":"us-state"}', '  locality [0, 6): "Dublin"'],
+			},
+			{ kind: "tree-rewrite", stage: "stranded-affix", removed: ['street_suffix [7, 11): "Park"'], added: [] },
+		]
+
+		expect(rewriteRows(trace.stages)).toEqual([
+			{
+				pass: "region-recognition",
+				change:
+					'locality [0, 10): "Dublin, TX" → region [8, 10): "TX" {"region_recognition":"us-state"} / locality [0, 6): "Dublin"',
+			},
+			{ pass: "stranded-affix", change: `street_suffix [7, 11): "Park" → ${ABSENT}` },
+		])
+	})
+
+	it("is empty when every pass left the decoded tree as it was", () => {
+		expect(rewriteRows(traceOf().stages)).toEqual([])
 	})
 })
 

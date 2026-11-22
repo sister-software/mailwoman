@@ -277,6 +277,7 @@ export async function createServeEngine(stated: ServeSessionOptionsInput = {}): 
 				inputMode: init.inputMode,
 				bias: init.bias.map((point) => ({ ...point })),
 				...(init.parent ? { parentPlace: { id: init.parent.id, source: "caller", strength: init.parent.scope } } : {}),
+				...(init.signal ? { signal: init.signal } : {}),
 			})
 
 			return { ...result, tree: init.includeTree ? tree : null }
