@@ -4,66 +4,48 @@
 /**
  * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`).
  *
- * Top-level code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver
- * and geometry databases from the serializable `workerData.userData` config (paths + locale),
- * then assemble the same geocode interface the CLI builds.
+ * Top-level code is per-worker init: it builds one geocode session from the serializable
+ * `workerData.userData` config (paths + locale), the session `mailwoman geocode` builds.
  * Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
 
 import { workerData } from "node:worker_threads"
 
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/entity-resolution"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
+import { type ColumnMapping, makeGeocodeHandler } from "@mailwoman/entity-resolution"
 
-import { geocodeAddress, parseForGeocode } from "#geocode/core"
-import { USStateDatabaseProvider } from "#geocode/regions"
+import { ingestGeocoderOf } from "#geocode/ingest"
+import { createGeocodeSessionOptions } from "#geocode/options"
+import { createGeocodeSession } from "#geocode/session"
 import type { GeocodeStreamConfig } from "#geocode/stream"
-import { createResolverBackend } from "#resolver-backend"
+import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 	mapping: ColumnMapping
 	geocode: GeocodeStreamConfig
 }
 
-const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: cfg.locale })
-const wof = await import("@mailwoman/resolver-wof-sqlite")
-// Through the selector rather than a direct FTS construction: a batch worker must
-// resolve the same way the CLI and the drop-in servers do, or a row geocoded in
-// bulk answers differently from the same row geocoded singly.
-const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
-const resolver = createWOFResolver(lookup)
-const databases = await USStateDatabaseProvider.create(wof, cfg.dataRoot)
+// country-branch: a batch run that states no country resolves every row as a US address.
+// The commit that added the fallback recorded no reason, and the region of `cfg.locale` would replace it.
+const country = cfg.country ?? "US"
 
-const geoDeps = {
-	classifier,
-	resolver,
-	databases: databases.for,
-	// country-branch: a batch run that states no country resolves every row as a US address.
-	// The commit that added the fallback recorded no reason, and the region of `cfg.locale` would replace it.
-	defaultCountry: { country: cfg.country ?? "US", source: "caller" },
-	placeCountry: "none",
-} as const
-
-// Parse once per address (the ~3 ms/row inference is the dominant cost): share the tree
-// between the PostalAddress (decodeAsJSON) and the geocode (parsedTree).
-// Coordinates are byte-identical to the two-parse path — geocodeAddress would
-// have produced this exact tree internally.
-// Only the PostalAddress now reflects the normalized parse.
-const geocodeForIngest = geocodeAddressVia({
-	parseAndGeocode: async (raw) => {
-		const tree = await parseForGeocode(raw, geoDeps)
-		const geo = await geocodeAddress(raw, { ...geoDeps, parsedTree: tree })
-
-		return { components: decodeAsJSON(tree), geo }
-	},
-	country: cfg.country,
-})
+// A row geocoded in bulk answers as the same row does through `mailwoman geocode`,
+// so the worker composes every layer that command composes.
+// The country is the caller's scope, and the coarse placer stays off beside it.
+// The session lives as long as the worker thread, and the pool terminates the thread.
+const session = await createGeocodeSession(
+	createGeocodeSessionOptions({
+		locale: cfg.locale,
+		dataRoot: cfg.dataRoot,
+		resolveDB: cfg.wofDBPath,
+		defaultCountry: country,
+		placeCountry: false,
+	}),
+	{ layers: NODE_LAYER_CONTRIBUTIONS }
+)
 
 /**
  * Per-item handler the worker pool invokes.
  *
  * Bound to this worker's geocoder and mapping at module load, so each item costs only the geocode itself.
  */
-export const handleItem = makeGeocodeHandler(geocodeForIngest, mapping)
+export const handleItem = makeGeocodeHandler(ingestGeocoderOf(session, cfg.country), mapping)

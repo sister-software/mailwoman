@@ -4,8 +4,8 @@
 /**
  *   `mailwoman registry <csv>`: the geocode-first record matcher, end to end.
  *
- *   Constructs the heavy geocoder with a neural parser, WOF resolver and per-state situs/interp databases.
- *   It injects the geocoder into the matcher's `GeocodeAddress` interface,
+ *   Builds one geocode session, the engine `mailwoman geocode` answers from.
+ *   It injects the session into the matcher's `GeocodeAddress` interface,
  *   so `@mailwoman/entity-resolution` never imports the runtime.
  *
  *   Geographic blocking puts textual variants of the same place in one block.
@@ -22,7 +22,6 @@ import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/entity-resolution"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/entity-resolution/tools/eval-geocoder"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
@@ -34,11 +33,9 @@ import {
 	isLocaleTag,
 	type OptionsOf,
 	type ParsedCommandComponent,
-	requireCommandWOFPath,
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
-import type { RegionDatabaseResolver } from "#geocode/regions"
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
  */
@@ -116,85 +113,39 @@ export async function loadMapping(
 }
 
 /**
- * Construct the heavy geocoder once with a neural parser, WOF resolver and per-state
- * databases. and wire it into the matcher's {@link GeocodeAddress} interface.
+ * Builds one geocode session and wires it into the matcher's {@link GeocodeAddress} interface.
  *
- * @returns it plus a disposal hook for the database handles.
+ * @returns The geocoder, with a disposal that closes the session.
  */
-async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
+async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & AsyncDisposable> {
 	const {
-		decoder: { decodeAsJSON },
-		neural: { NeuralAddressClassifier },
-		entityResolution: { geocodeAddressVia },
-		resolver: { createWOFResolver },
+		options: sessionOptions,
+		session: sessionModule,
+		ingest,
+		layers,
 	} = await allKeyed({
-		decoder: import("@mailwoman/core/decoder"),
-		neural: import("@mailwoman/neural"),
-		entityResolution: import("@mailwoman/entity-resolution"),
-		resolver: import("@mailwoman/resolver"),
+		options: import("#geocode/options"),
+		session: import("#geocode/session"),
+		ingest: import("#geocode/ingest"),
+		layers: import("#services/entry/node"),
 	})
 
-	const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
-		import("#geocode/core"),
-		import("#geocode/regions"),
-	])
-
-	const {
-		interpCalibration: { INTERP_RADIUS_CALIBRATION },
-		resolverBackend: { createResolverBackend },
-	} = await allKeyed({
-		interpCalibration: import("#interp-calibration"),
-		resolverBackend: import("#resolver-backend"),
-	})
-
-	const wofPath = await requireCommandWOFPath(options)
-
-	let classifier: NeuralAddressClassifier
-
-	try {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
-	} catch {
-		throw new CommandError(
-			"registry requires the neural weights. Install @mailwoman/neural-weights-en-us (or a --locale match)."
-		)
-	}
-
-	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
-
-	try {
-		mod = await import("@mailwoman/resolver-wof-sqlite")
-	} catch {
-		throw new CommandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
-	}
-
-	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend.
-	// Else FTS over wofPath.
-	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
-	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
-	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
-	const defaultCountry = resolverDefaultCountry(options)
-	const resolver = createWOFResolver(lookup)
-
-	const geocodeForIngest = geocodeAddressVia({
-		parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
-		geocode: (raw) =>
-			geocodeAddress(raw, {
-				classifier,
-				resolver,
-				databases,
-				...(defaultCountry ? { defaultCountry } : {}),
-				interpCalibration: INTERP_RADIUS_CALIBRATION,
-				...(options.placeCountry ? {} : { placeCountry: "none" }),
-			}),
-		country: defaultCountry?.country,
-	})
+	// The matcher's rows answer as they do through `mailwoman geocode`,
+	// so the session composes every layer that command composes.
+	const session = await sessionModule.createGeocodeSession(
+		sessionOptions.createGeocodeSessionOptions({
+			locale: options.locale,
+			dataRoot: options.dataRoot,
+			placeCountry: options.placeCountry,
+			...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
+			...(options.resolveDB ? { resolveDB: options.resolveDB } : {}),
+		}),
+		{ layers: layers.NODE_LAYER_CONTRIBUTIONS }
+	)
 
 	return {
-		geocodeAddress: geocodeForIngest,
-		[Symbol.dispose]: () => {
-			regionDatabaseProvider[Symbol.dispose]()
-			lookup[Symbol.dispose]()
-		},
+		geocodeAddress: ingest.ingestGeocoderOf(session, resolverDefaultCountry(options)?.country),
+		[Symbol.asyncDispose]: () => session[Symbol.asyncDispose](),
 	}
 }
 
@@ -385,7 +336,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		toGeoJSON,
 	} = await import("@mailwoman/entity-resolution")
 
-	using geocoder = await buildGeocoder(options)
+	await using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
 
 	const records: SourceRecord[] = []
@@ -493,7 +444,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const rows = await Array.fromAsync(streamRows(csvPath))
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping ?? null, options.source ?? null, base)
-	using geocoder = await buildGeocoder(options)
+	await using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
 
 	const records = await ingestRows(rows, mapping, { geocodeAddress: geocodeForIngest })

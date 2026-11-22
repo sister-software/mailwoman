@@ -5,8 +5,7 @@
  * This module geocodes normalized records across worker threads using `spliterator.parallelMapWorkers`.
  *
  * The pipeline composes it after `@mailwoman/entity-resolution`'s `normalizeCSV`.
- * Each worker rebuilds the classifier, WOF lookup, resolver and databases from
- * {@link GeocodeStreamConfig} at startup.
+ * Each worker builds one geocode session from {@link GeocodeStreamConfig} at startup.
  * Workers
  * return records in completion order. The work is latency- and memory-bound, so concurrency stays low.
  * A measured NPPES sweep peaked at 2 workers (~1.4x) and degraded at higher counts
@@ -75,10 +74,10 @@ export interface GeocodeStreamOptions {
 }
 
 /**
- * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests):
- * `lib/` and `out/` are siblings, so `../` is the package root either way.
+ * The worker entry, resolved through the package's `#` imports: the source module
+ * under Node's type stripping and the compiled one elsewhere.
  */
-const GEOCODE_WORKER_URL = new URL("../out/geocode-worker.js", import.meta.url)
+const GEOCODE_WORKER_URL = new URL(import.meta.resolve("#geocode/worker"))
 
 /**
  * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s

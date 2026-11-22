@@ -96,6 +96,8 @@ async function loadResolver(
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		// The board grades the engine `mailwoman poi` builds.
+		// That engine resolves an anchor and never geocodes, so it is the gazetteer backend with zero session.
 		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return {

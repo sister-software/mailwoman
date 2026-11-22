@@ -82,23 +82,18 @@ The `mailwoman` CLI exposes `registry` as a command:
 
 ```sh
 # Multi-source entity resolution
-mailwoman registry --sources config.json --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out entities.geojson
+mailwoman registry run --sources config.json --out entities.geojson
 
 # Cross-dataset reconciliation
-mailwoman registry --sources tx-nppes.json --reconcile tx-fcc.json --resolve-db "$MAILWOMAN_CANDIDATE_DB"
+mailwoman registry run --sources tx-nppes.json --reconcile tx-fcc.json
 ```
 
-`--resolve-db` (or `$MAILWOMAN_WOF_DB`) is required to BOOT, and is then ignored whenever
-`$MAILWOMAN_CANDIDATE_DB` is set. `requireCommandWOFPath` throws before anything opens; `createResolverBackend`
-then prefers the candidate backend and never touches the WOF path (the inline comment in `run.tsx` states
-this correctly: `$MAILWOMAN_CANDIDATE_DB` selects the demo-parity candidate backend, and FTS over `wofPath` is the fallback).
-A nonexistent path satisfies that requirement.
-
-So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pass `candidate.db` to
-`--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
-backend queries `place_search`/`spr`, which a candidate gazetteer doesn't have.
-
-An argument required only to discard it is a defect in this command. Documented rather than fixed.
+The command geocodes through the session `mailwoman geocode` builds, so it finds its gazetteer the same
+way: the candidate gazetteer at `$MAILWOMAN_CANDIDATE_DB`, then the one the data root's active selection
+lists, then `<data-root>/db/wof/candidate.db`. When no candidate gazetteer resolves, it reads the WOF admin
+databases from `--resolve-db`, then `$MAILWOMAN_WOF_DB`, then the data root. `--resolve-db` takes a WOF
+admin database. The command queries a candidate gazetteer passed to that flag for `place_search` and
+`spr`, and a candidate gazetteer has neither table.
 
 Two CLI defaults differ from the library defaults: `--threshold` defaults to `0`, which is the
 Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `--train-em` is on.

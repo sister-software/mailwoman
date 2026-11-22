@@ -114,6 +114,9 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 			resolver: import("@mailwoman/resolver"),
 		})
 
+		// The probe resolves an anchor's parsed tree and never geocodes, so it builds
+		// the gazetteer backend with zero session.
+		// `withResolver` in `parse.tsx` states what a geocode session would cost in its place.
 		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }
