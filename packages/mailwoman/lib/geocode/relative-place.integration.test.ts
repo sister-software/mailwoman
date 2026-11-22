@@ -18,7 +18,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
+import { createGeocodeSessionOptions, createGeocodeSession } from "#geocode"
 
 const CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts = await pathExists(CANDIDATE_DB)
@@ -28,7 +28,7 @@ const STATION_KY = "wof:1343272895"
 
 describe.skipIf(!haveArtifacts)("geocode — a relative-place description (#3022)", () => {
 	const sessionPromise = haveArtifacts
-		? createGeocodeSession(createGeocodeCommandOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
+		? createGeocodeSession(createGeocodeSessionOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
 		: null
 
 	afterAll(async () => {

@@ -5,8 +5,8 @@ import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { createToken, ServiceRegistry } from "async-init"
 import { expect, test } from "vitest"
 
-import { createGeocodeCommandOptions } from "#geocode/command-options"
 import type { LayerContribution, NationalDatabaseSource } from "#geocode/contributions"
+import { createGeocodeSessionOptions } from "#geocode/options"
 import {
 	describeGeocodeServices,
 	GenerationServices,
@@ -15,17 +15,15 @@ import {
 	ResolverModuleService,
 	unavailableLayers,
 } from "#geocode/services"
-import { geocodeSessionSettings } from "#geocode/session"
 import { ClassifierService } from "#services/classifier"
 import { BANLayerService, NODE_LAYER_CONTRIBUTIONS, OvertureLayerService } from "#services/entry/node"
 import { ParsePriorArtifactsService, ParsePriorsService } from "#services/parse-priors"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
 
-const options = createGeocodeCommandOptions()
-const settings = geocodeSessionSettings(options)
+const options = createGeocodeSessionOptions()
 
 test("every service a session composes declares its needs, and each need is registered", async () => {
-	const services = await describeGeocodeServices(options, settings, NODE_LAYER_CONTRIBUTIONS)
+	const services = await describeGeocodeServices(options, NODE_LAYER_CONTRIBUTIONS)
 
 	expect(services.filter((service) => !service.declared).map((service) => service.token.description)).toEqual([])
 
@@ -39,7 +37,7 @@ test("every service a session composes declares its needs, and each need is regi
 })
 
 test("the graph holds every session token, and reading it builds no service", async () => {
-	const services = await describeGeocodeServices(options, settings, NODE_LAYER_CONTRIBUTIONS)
+	const services = await describeGeocodeServices(options, NODE_LAYER_CONTRIBUTIONS)
 	const described = new Set(services.map((service) => service.token))
 
 	const expected = [
@@ -65,7 +63,7 @@ test("a generation scope reads the process services from its parent, and shadows
 
 	// A session registers both sets on its own scope, and the parent's process services win.
 	registerProcessServices(generation, options)
-	registerGenerationServices(generation, options, settings, NODE_LAYER_CONTRIBUTIONS)
+	registerGenerationServices(generation, options, NODE_LAYER_CONTRIBUTIONS)
 
 	const inherited = generation
 		.graph()
@@ -93,12 +91,7 @@ test("a service the parent scope substitutes is read by the services that need i
 
 	registerProcessServices(generation, options)
 
-	registerGenerationServices(
-		generation,
-		options,
-		geocodeSessionSettings({ ...options, capitalTier: "off" }),
-		NODE_LAYER_CONTRIBUTIONS
-	)
+	registerGenerationServices(generation, { ...options, capitalTier: "off" }, NODE_LAYER_CONTRIBUTIONS)
 
 	// `capitals` declares a need on `candidate-db` and on no other service.
 	await expect(generation.resolve(GenerationServices.capitals)).resolves.toBeNull()
@@ -146,7 +139,7 @@ test("the national databases read the first contributed source that covers a cou
 	const register = nationalLayer("register", ["fr"], log)
 	const openData = nationalLayer("open-data", ["fr", "nl"], log)
 
-	registerGenerationServices(registry, options, settings, [register.contribute, openData.contribute])
+	registerGenerationServices(registry, options, [register.contribute, openData.contribute])
 
 	const databases = await registry.resolve(GenerationServices.nationalDatabases)
 
@@ -167,7 +160,7 @@ test("a national source whose open throws is left out, and the next source still
 
 	const openData = nationalLayer("open-data", ["fr", "nl"], [])
 
-	registerGenerationServices(registry, options, settings, [
+	registerGenerationServices(registry, options, [
 		nationalLayer("register", ["fr"], [], failure).contribute,
 		openData.contribute,
 	])

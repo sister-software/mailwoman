@@ -32,9 +32,9 @@ import { Globerator } from "spliterator/node/fs"
 
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
-import { createGeocodeCommandOptions } from "#geocode/command-options"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { createGeocodeProcessScope, createGeocodeSession, type GeocodeSessionOptions } from "#geocode/session"
+import { createGeocodeSessionOptions, type GeocodeSessionOptions } from "#geocode/options"
+import { createGeocodeProcessScope, createGeocodeSession } from "#geocode/session"
 import { GeocodeSessionSlot } from "#geocode/session/slot"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
 import { ClassifierService } from "#services/classifier"
@@ -178,7 +178,7 @@ export interface ServeEngine extends AsyncDisposable {
  * `$MAILWOMAN_WOF_DB` and `$MAILWOMAN_CANDIDATE_DB` pin the gazetteer as they do for `mailwoman geocode`.
  */
 function serveSessionOptions(): GeocodeSessionOptions {
-	return createGeocodeCommandOptions({ locale: "en-US", dataRoot: DATA_ROOT })
+	return createGeocodeSessionOptions({ locale: "en-US", dataRoot: DATA_ROOT })
 }
 
 /**

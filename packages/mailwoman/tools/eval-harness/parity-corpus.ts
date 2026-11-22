@@ -17,7 +17,7 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 import { pinnedSwitch, type SwitchPin } from "#tools/eval-harness/switch-pin"
 
 /**

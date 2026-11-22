@@ -14,7 +14,7 @@
 import type { RegionDatabases } from "@mailwoman/core/resolver"
 import type { ServiceRegistry, ServiceToken } from "async-init"
 
-import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
+import type { GeocodeSessionOptions } from "#geocode/options"
 
 /**
  * A rooftop source that answers for one country at a time, such as the national open registers.
@@ -44,7 +44,6 @@ export interface LayerRegistrar {
 	 */
 	readonly registry: ServiceRegistry
 	readonly options: GeocodeSessionOptions
-	readonly settings: GeocodeSessionSettings
 
 	/**
 	 * Adds a national rooftop source the layer defined on the scope.
