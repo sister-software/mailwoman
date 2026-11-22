@@ -13,6 +13,7 @@
 
 import Fastify from "fastify"
 import { existingWOFDatabasePaths } from "mailwoman/resolver-backend"
+import { NODE_LAYER_CONTRIBUTIONS } from "mailwoman/services/entry/node"
 import { serverParityDataPresent, serverParityDifferences } from "mailwoman/tools/eval-harness/test-kit/server-parity"
 import { describe, expect, it } from "vitest"
 
@@ -72,7 +73,11 @@ describe.skipIf(!(await serverParityDataPresent()))("The Fastify plugin's geocod
 			await app.register(mailwomanFastify, { resolveDatabasePath })
 			await app.ready()
 
-			const { differences } = await serverParityDifferences({ server: (input) => app.mailwoman.geocode(input) })
+			// The plugin states no layer list, so it is compared with every layer `mailwoman geocode` composes.
+			const { differences } = await serverParityDifferences({
+				server: (input) => app.mailwoman.geocode(input),
+				layers: NODE_LAYER_CONTRIBUTIONS,
+			})
 
 			await app.close()
 

@@ -106,6 +106,7 @@ export const GenerationServices = {
 	explicitInterpolation: createToken<InstanceType<ResolverModule["StreetInterpolator"]> | null>(
 		"explicit-interpolation"
 	),
+	nationalSources: createToken<NationalDatabaseSource[]>("national-sources"),
 	nationalDatabases: createToken<(country: string) => RegionDatabases>("national-databases"),
 	osm: createToken<OSMRegionDatabases>("osm"),
 	classifyKind: createToken<NonNullable<GeocodeDeps["classifyKind"]>>("kind-classifier"),
@@ -282,9 +283,15 @@ export function registerGenerationServices(
 		nationalSources.map((token) => [token.description, optional(token)])
 	)
 
-	defineUnlessProvided(registry, S.nationalDatabases, {
+	// The sources that opened, in the order the contributions added them.
+	defineUnlessProvided(registry, S.nationalSources, {
 		needs: sourceNeeds,
-		build: (sources) => firstCoveringSource(Object.values(sources).filter(isPresent)),
+		build: (sources) => Object.values(sources).filter(isPresent),
+	})
+
+	defineUnlessProvided(registry, S.nationalDatabases, {
+		needs: { sources: S.nationalSources },
+		build: ({ sources }) => firstCoveringSource(sources),
 	})
 }
 
@@ -326,6 +333,7 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 		regionDatabases: registry.resolve(S.regionDatabases),
 		explicitAddressPoints: registry.resolve(S.explicitAddressPoints),
 		explicitInterpolation: registry.resolve(S.explicitInterpolation),
+		nationalSources: registry.resolve(S.nationalSources),
 		nationalDatabases: registry.resolve(S.nationalDatabases),
 		osm: registry.resolve(S.osm),
 		classifyKind: registry.resolve(S.classifyKind),

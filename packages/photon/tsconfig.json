@@ -14,7 +14,6 @@
 		{ "path": "../api-kit" },
 		{ "path": "../codex" },
 		{ "path": "../neural" },
-		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../mailwoman" }
 	]

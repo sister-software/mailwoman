@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The classifier, resolver and state databases behind the MCP server's core-backed tools,
- *   and the geocode of one address over them.
+ *   The geocode session behind the MCP server's core-backed tools, with the classifier
+ *   and resolver its parse tools read, and the geocode of one address through it.
  *
  *   The module is separate from `main.ts` because that file connects the server when it loads.
  */
@@ -13,11 +13,14 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { Resolver } from "@mailwoman/core/resolver"
-import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import type { LayerContribution } from "mailwoman/geocode/contributions"
+import type { GeocodeSession } from "mailwoman/geocode/session"
+import { createDropInGeocodeSession } from "mailwoman/geocode/session/drop-in"
+import { buildNoGazetteerMessage, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { NODE_LAYER_CONTRIBUTIONS } from "mailwoman/services/entry/node"
 
 import type { MCPGeocodeParent } from "#tools"
 
@@ -27,21 +30,29 @@ const CORE_FREE_TOOLS =
 	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
 
 /**
- * The classifier, resolver and state databases the core-backed tools share.
+ * The data layers the MCP server composes: every layer `mailwoman geocode` composes, in the same order.
  *
+ * The `mailwoman_geocode` tool therefore answers as that command does with its country scope off.
+ */
+const MCP_LAYERS: readonly LayerContribution[] = NODE_LAYER_CONTRIBUTIONS
+
+/**
+ * The geocode session the core-backed tools share, with the classifier and resolver it geocodes through.
+ *
+ * The session owns both, so a tool reads them and never disposes one.
  * A failed load, such as a missing gazetteer, is retried by the next tool call,
  * so installing the data needs no server restart.
  */
 export const loadCore = memoizeResettable(
 	async (): Promise<{
+		session: GeocodeSession
+		/**
+		 * The data layers the session composes.
+		 */
+		layers: readonly LayerContribution[]
 		classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
 		resolver: Resolver
-		/**
-		 * The concrete US provider, because `GeocodeDeps.databases` accepts a null state slug.
-		 */
-		databases: USStateDatabaseProvider
 	}> => {
-		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths: string[] = []
 
 		for (const extractPath of wofExtractPaths()) {
@@ -61,13 +72,10 @@ export const loadCore = memoizeResettable(
 			)
 		}
 
-		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
-		const resolver = createWOFResolver(backend)
-
-		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
+		let session: GeocodeSession
 
 		try {
-			classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: "en-US" })
+			session = await createDropInGeocodeSession(MCP_LAYERS, candidateDB)
 		} catch (error) {
 			throw new Error(
 				`✗ ${error instanceof Error ? error.message : String(error)}\n\n` +
@@ -75,25 +83,25 @@ export const loadCore = memoizeResettable(
 			)
 		}
 
-		const databases = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
+		const { routed, lookup } = session.services
 
-		return { classifier, resolver, databases }
+		return { session, layers: MCP_LAYERS, classifier: routed, resolver: createWOFResolver(lookup) }
 	}
 )
 
 /**
- * Geocodes one address over the shared core, inside `parent` when the caller gives one.
+ * Geocodes one address through the shared session, inside `parent` when the caller gives one.
  */
 export async function geocodeThroughCore(
 	address: string,
 	parent: MCPGeocodeParent | null = null
 ): Promise<GeocodeResult> {
-	const { classifier, resolver, databases } = await loadCore()
+	const { session } = await loadCore()
 
-	return geocodeAddress(address, {
-		classifier,
-		resolver,
-		databases: databases.for,
-		...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
-	})
+	const { result } = await session.geocode(
+		address,
+		parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}
+	)
+
+	return result
 }

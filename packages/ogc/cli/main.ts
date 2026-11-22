@@ -35,7 +35,6 @@ import { parseObligationRefusals } from "mailwoman/data/obligations"
 import { readSourceLocations, type SourceLocations } from "mailwoman/data/source-locations"
 import { $public } from "mailwoman/env"
 import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
-import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 
 import { openOGCGeocoder } from "#cli/geocoder"
 import {
@@ -292,19 +291,22 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 	const baseURL = values["base-url"]
 
-	const { gazetteer, ancestorsOf, extracts, rooftops, geocode } = await openOGCGeocoder(values["candidate-db"] ?? null)
+	const { gazetteer, session, geocode } = await openOGCGeocoder(values["candidate-db"] ?? null)
+	// The session owns the gazetteer backend and every provider read below, and closes them with itself.
+	const { lookup, regionDatabases, nationalSources, osm } = session.services
+	// The gazetteer's own ancestry reader labels each place match with its region and county.
+	const ancestorsOf = lookup.ancestors?.bind(lookup)
 	const countries = worldCountries()
+	const countryCodeOf = (code: string): string => code.toUpperCase()
 
 	const probes: RegionLayerProbe[] = [
 		{
-			provider: extracts,
+			provider: regionDatabases,
 			keys: Object.keys(US_STATE_BY_ABBREVIATION).map((abbreviation) => abbreviation.toLowerCase()),
 			regionOf: (slug) => `US-${slug.toUpperCase()}`,
 		},
-		{ provider: rooftops.national, keys: countries, regionOf: (code) => code.toUpperCase() },
-		...(rooftops.osm
-			? [{ provider: rooftops.osm, keys: countries, regionOf: (code: string) => code.toUpperCase() }]
-			: []),
+		...nationalSources.map((provider) => ({ provider, keys: countries, regionOf: countryCodeOf })),
+		...(osm ? [{ provider: osm, keys: countries, regionOf: countryCodeOf }] : []),
 	]
 
 	// The manifests of the gazetteer databases this process opened: the ones `/search` reads,
@@ -381,7 +383,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				)
 			}
 
-			for (const line of [...placeItems.bannerLines, ...postcodeItems.bannerLines, ...unattachedLayerLines(rooftops)]) {
+			for (const line of [...placeItems.bannerLines, ...postcodeItems.bannerLines]) {
 				console.error(line)
 			}
 

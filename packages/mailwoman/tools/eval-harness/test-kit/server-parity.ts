@@ -15,8 +15,8 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
-import { createGeocodeSessionOptions } from "#geocode/options"
-import { createGeocodeSession } from "#geocode/session"
+import type { LayerContribution } from "#geocode/contributions"
+import { createDropInGeocodeSession } from "#geocode/session/drop-in"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "#tools/eval-harness/gauntlet/cases/seed-case"
 
@@ -65,6 +65,11 @@ export interface ServerParityOptions {
 	 * Geocodes one input through the engine the server builds.
 	 */
 	server: (input: string) => Promise<GeocodeResult>
+	/**
+	 * The data layers the server composes.
+	 * The session it is compared with composes the same ones.
+	 */
+	layers: readonly LayerContribution[]
 	/**
 	 * The input mode the server gives every request, absent when the server gives none.
 	 */
@@ -124,17 +129,20 @@ function sameAnswer(a: ParityAnswer, b: ParityAnswer): boolean {
  * Geocodes the parity sample through a server and through a geocode session,
  * and returns the cases whose latitude, longitude, resolution tier or country differ.
  *
- * The session parses under `en-US` and applies no country scope, as every drop-in
- * server does, and takes the server's input mode.
+ * The session is the one a drop-in server builds over the server's own layers:
+ * it parses under `en-US` and applies no country scope.
+ * It takes the server's input mode.
  *
  * @throws When either engine throws on an input.
  */
-export async function serverParityDifferences({ server, inputMode }: ServerParityOptions): Promise<ServerParityReport> {
+export async function serverParityDifferences({
+	server,
+	layers,
+	inputMode,
+}: ServerParityOptions): Promise<ServerParityReport> {
 	const sample = await readServerParitySample()
 
-	await using session = await createGeocodeSession(
-		createGeocodeSessionOptions({ locale: "en-US", countryScope: "none" })
-	)
+	await using session = await createDropInGeocodeSession(layers)
 
 	const differences: ParityDifference[] = []
 
