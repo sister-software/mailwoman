@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { AbortKind, AbortReason } from "@mailwoman/core/abort"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { createRequestContext, type StageRecord } from "@mailwoman/core/pipeline"
 import {
 	EMPTY_PLACE_FIELDS,
 	type ResolvedPlace,
@@ -616,6 +618,81 @@ describe("ParseForGeocode — query-shape emission prior", () => {
 
 		expect(calls[0]!.text).toBe("Damrak 1, 1012 LG Amsterdam")
 		expect(calls[0]!.opts!.queryShape).toEqual(computeQueryShape("Damrak 1, 1012 LG Amsterdam"))
+	})
+})
+
+describe("The request context of a geocode", () => {
+	const cityState = (text: string): AddressTree => ({
+		raw: text,
+		roots: [
+			node({ tag: "locality", value: "Dublin", start: 0, end: 6 }),
+			node({ tag: "locality", value: "TX", start: 8, end: 10 }),
+		],
+	})
+
+	function depsOver(resolveTree: Resolver["resolveTree"], onParse: () => void = () => {}): GeocodeDeps {
+		const classifier: GeocodeClassifier = {
+			parse: async (text) => {
+				onParse()
+
+				return cityState(text)
+			},
+		}
+
+		return { classifier, resolver: { resolveTree, artifactCoverage: null }, placeCountry: "none" }
+	}
+
+	it("records what a pass after the decode changed, and times each stage it ran", async () => {
+		const records: StageRecord[] = []
+		const context = createRequestContext({ trace: (record) => void records.push(record) })
+
+		await geocodeAddress(
+			"Dublin, TX",
+			depsOver(async (tree) => tree),
+			context
+		)
+
+		expect(records).toEqual([
+			{
+				kind: "tree-rewrite",
+				stage: "region-recognition",
+				removed: ['locality [0, 6): "Dublin"', 'locality [8, 10): "TX"'],
+				added: [
+					'region [8, 10): "TX" {"region_recognition":"us-state","country_hint":"US"}',
+					'  locality [0, 6): "Dublin"',
+				],
+			},
+		])
+
+		expect(Object.keys(context.timing)).toEqual([
+			"token-classify",
+			"region-recognition",
+			"bare-postcode",
+			"postcode-contradiction",
+			"stranded-affix",
+			"resolve",
+		])
+	})
+
+	it("rejects with the signal's reason before the resolve when the request aborts during the decode", async () => {
+		const controller = new AbortController()
+		const reason = new AbortReason(AbortKind.Caller)
+		let resolves = 0
+
+		const deps = depsOver(
+			async (tree) => {
+				resolves++
+
+				return tree
+			},
+			() => controller.abort(reason)
+		)
+
+		await expect(geocodeAddress("Dublin, TX", deps, createRequestContext({ signal: controller.signal }))).rejects.toBe(
+			reason
+		)
+
+		expect(resolves).toBe(0)
 	})
 })
 

@@ -10,12 +10,11 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
-import { errorMessage } from "#errors/schema"
-import type { PipelineFault, PipelineResult } from "#pipeline/result"
+import type { PipelineResult } from "#pipeline/result"
+import { createRequestContext, type PipelineStage, runStage, StageID } from "#pipeline/stage"
 import {
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
-	PipelineFaultStage,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	deriveInputMode,
 	isPostcodeFormat,
@@ -263,35 +262,43 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
 /**
  * Runs the configured stages in order and returns the decoded tree with per-stage timings and faults.
  *
+ * Each stage runs through {@linkcode runStage}, which times it and checks the abort signal before it.
  * A failing classifier, grouper or resolver records a fault and the run continues.
- * An aborted signal throws between stages.
  */
 export async function runPipeline(
 	raw: string,
 	stages: RuntimePipelineStages,
 	opts?: PipelineOpts
 ): Promise<PipelineResult> {
-	const timing: Record<string, number> = {}
-	const faults: PipelineFault[] = []
-	const t0 = performance.now()
+	const context = createRequestContext({ signal: opts?.signal })
+	const { timing, faults } = context
 
 	const normalize = stages.normalize ?? identityNormalize
 	const computeQueryShape = stages.computeQueryShape ?? emptyQueryShape
 	const detectLocale = stages.detectLocale ?? defaultDetectLocale
 	const classifyKind = stages.classifyKind ?? defaultClassifyKind
 
-	throwIfAborted(opts)
-	const normalized = rewriteLineBreaks(normalize(raw, { locale: opts?.locale }), opts?.lineBreaks ?? "keep")
-	timing["normalize"] = performance.now() - t0
+	const normalized = await runStage(
+		{
+			id: StageID.Normalize,
+			run: (text: string) => rewriteLineBreaks(normalize(text, { locale: opts?.locale }), opts?.lineBreaks ?? "keep"),
+		},
+		raw,
+		context
+	)
 
 	// The coarse placer adds a country prior unless the caller already supplied one.
 	let effectiveOpts = opts
 	let placerAnchorApplied = false
 
 	if (stages.placeCountry) {
-		const tPlace = performance.now()
-		const placed = stages.placeCountry(normalized.normalized)
-		timing["place-country"] = performance.now() - tPlace
+		const placeCountry = stages.placeCountry
+
+		const placed = await runStage(
+			{ id: StageID.PlaceCountry, run: (text: string) => placeCountry(text) },
+			normalized.normalized,
+			context
+		)
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			const hardCountry = hardCountryFor(
@@ -319,30 +326,39 @@ export async function runPipeline(
 		}
 	}
 
-	throwIfAborted(opts)
-	const tQs = performance.now()
-	const queryShape = computeQueryShape(normalized)
-	timing["query-shape"] = performance.now() - tQs
+	const queryShape = await runStage(
+		{ id: StageID.QueryShape, run: (input: NormalizedInputLite) => computeQueryShape(input) },
+		normalized,
+		context
+	)
 
-	throwIfAborted(opts)
-	const tLocale = performance.now()
-	const locale = await detectLocale(normalized, queryShape, { hint: opts?.locale })
-	timing["locale-hint"] = performance.now() - tLocale
+	const locale = await runStage(
+		{
+			id: StageID.LocaleHint,
+			run: (input: NormalizedInputLite) => detectLocale(input, queryShape, { hint: opts?.locale }),
+		},
+		normalized,
+		context
+	)
 
-	throwIfAborted(opts)
-	const tKind = performance.now()
-	const kind = await classifyKind(normalized, queryShape, locale)
-	timing["kind-classifier"] = performance.now() - tKind
+	const kind = await runStage(
+		{ id: StageID.KindClassifier, run: (input: NormalizedInputLite) => classifyKind(input, queryShape, locale) },
+		normalized,
+		context
+	)
 
 	const intentMarkers: QueryIntentMarker[] = [...(kind.intentMarkers ?? [])]
 
 	// A POI-shaped query goes to the intent stage first.
 	// A null result falls through to parsing.
 	if ((kind.kind === "poi_query" || kind.kind === "poi_category") && stages.poiIntent) {
-		throwIfAborted(opts)
-		const tPoi = performance.now()
-		const poiOutcome = await stages.poiIntent(normalized, locale, effectiveOpts)
-		timing["poi-intent"] = performance.now() - tPoi
+		const poiIntent = stages.poiIntent
+
+		const poiOutcome = await runStage(
+			{ id: StageID.POIIntent, run: (input: NormalizedInputLite) => poiIntent(input, locale, effectiveOpts) },
+			normalized,
+			context
+		)
 
 		if (poiOutcome) {
 			const emptyTree: AddressTree = { raw: normalized.normalized, roots: [] }
@@ -369,10 +385,7 @@ export async function runPipeline(
 		let tree = buildFastPathTree(normalized.normalized, kind, queryShape)
 
 		if (stages.resolver) {
-			throwIfAborted(opts)
-			const tResolve = performance.now()
-			tree = await safeResolve(faults, stages.resolver, tree, effectiveOpts)
-			timing["resolve"] = performance.now() - tResolve
+			tree = await runStage(resolveStage(stages.resolver, effectiveOpts), tree, context)
 		}
 
 		return {
@@ -394,50 +407,57 @@ export async function runPipeline(
 	let phraseProposals: PhraseProposal[] = []
 
 	if (stages.groupPhrases) {
-		throwIfAborted(opts)
-		const tGroup = performance.now()
-		phraseProposals = await safeGroupPhrases(faults, stages.groupPhrases, normalized, queryShape, locale)
-		timing["phrase-grouper"] = performance.now() - tGroup
+		const groupPhrases = stages.groupPhrases
+
+		phraseProposals = await runStage(
+			{
+				id: StageID.PhraseGrouper,
+				run: (input: NormalizedInputLite) => groupPhrases(input, queryShape, locale),
+				recover: (): PhraseProposal[] => [],
+			},
+			normalized,
+			context
+		)
 	}
 
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
 
 	if (stages.classifier) {
-		throwIfAborted(opts)
-		const tClassify = performance.now()
-
-		tree = await safeClassify(faults, stages.classifier, normalized.normalized, queryShape, {
-			fst: stages.fst ?? null,
-			caseNormalization: opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
-			placetypePair: opts?.placetypePair ?? "inherit",
-			streetMorphology: stages.streetMorphology ?? null,
-			streetMorphologyPrior: stages.streetMorphologyPrior ?? false,
-			anchorRegions: stages.anchorRegions ?? null,
-			venueHead: stages.venueHead?.(locale) ?? null,
-			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
-			localeHint: opts?.localeHint ?? null,
-		})
-
-		timing["token-classify"] = performance.now() - tClassify
+		tree = await runStage(
+			classifyStage(stages.classifier, queryShape, {
+				fst: stages.fst ?? null,
+				caseNormalization: opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
+				placetypePair: opts?.placetypePair ?? "inherit",
+				streetMorphology: stages.streetMorphology ?? null,
+				streetMorphologyPrior: stages.streetMorphologyPrior ?? false,
+				anchorRegions: stages.anchorRegions ?? null,
+				venueHead: stages.venueHead?.(locale) ?? null,
+				inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
+				localeHint: opts?.localeHint ?? null,
+			}),
+			normalized.normalized,
+			context
+		)
 	}
 
 	if (phraseProposals.length && tree.roots.length >= 0) {
-		const tAudit = performance.now()
-		tree = grouperAudit(tree, phraseProposals, normalized.normalized)
-		timing["grouper-audit"] = performance.now() - tAudit
+		tree = await runStage(
+			{
+				id: StageID.GrouperAudit,
+				run: (decoded: AddressTree) => grouperAudit(decoded, phraseProposals, normalized.normalized),
+			},
+			tree,
+			context
+		)
 	}
 
 	if (stages.resolver) {
-		throwIfAborted(opts)
-		const tResolve = performance.now()
-
 		// A bare locality or postcode query resolves without the placer's prior.
 		if (placerAnchorApplied && (isBareLocalityTree(tree) || isBarePostcodeTree(tree))) {
 			effectiveOpts = opts
 		}
 
-		tree = await safeResolve(faults, stages.resolver, tree, effectiveOpts)
-		timing["resolve"] = performance.now() - tResolve
+		tree = await runStage(resolveStage(stages.resolver, effectiveOpts), tree, context)
 	}
 
 	return {
@@ -457,36 +477,12 @@ export async function runPipeline(
 }
 
 /**
- * Throws the signal's abort reason.
+ * The stage that runs the classifier over the normalized text.
  *
- * The pipeline checks between stages, so a running stage finishes first.
+ * When the classifier throws, the run continues with an empty tree.
  */
-function throwIfAborted(opts?: PipelineOpts): void {
-	if (opts?.signal?.aborted) {
-		throw opts.signal.reason ?? new DOMException("Pipeline aborted", "AbortError")
-	}
-}
-
-/**
- * Records a stage failure so callers can tell degraded output from a clean result.
- */
-function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: unknown): void {
-	faults.push({
-		stage,
-		name: cause instanceof Error ? cause.name : "Error",
-		message: errorMessage(cause),
-		cause,
-	})
-}
-
-/**
- * Runs the classifier.
- * On failure it records a fault and returns an empty tree.
- */
-async function safeClassify(
-	faults: PipelineFault[],
+function classifyStage(
 	classifier: AddressClassifier,
-	text: string,
 	queryShape: QueryShapeLite,
 	knobs: {
 		fst: FSTMatcherLike | null
@@ -499,7 +495,7 @@ async function safeClassify(
 		inputMode: InputMode
 		localeHint: string | null
 	}
-): Promise<AddressTree> {
+): PipelineStage<string, AddressTree> {
 	const {
 		fst,
 		caseNormalization,
@@ -512,25 +508,24 @@ async function safeClassify(
 		localeHint,
 	} = knobs
 
-	try {
-		return await classifier.parse(text, {
-			queryShape,
-			inputMode,
-			...(localeHint ? { localeHint } : {}),
-			fst,
-			postcodeRepair: true,
-			caseNormalization,
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			placetypePair,
-			...streetContextRequirementFor({ fst, streetMorphology }, { streetMorphologyPrior }),
-			...(fst && anchorRegions ? { anchorRegions } : {}),
-			...(venueHead ? { venueHead: venueHead.venueHead } : {}),
-			...(venueHead?.venueHeadOpts ? { venueHeadOpts: venueHead.venueHeadOpts } : {}),
-		})
-	} catch (error) {
-		recordFault(faults, PipelineFaultStage.Classifier, error)
-
-		return { raw: text, roots: [] }
+	return {
+		id: StageID.TokenClassify,
+		run: (text) =>
+			classifier.parse(text, {
+				queryShape,
+				inputMode,
+				...(localeHint ? { localeHint } : {}),
+				fst,
+				postcodeRepair: true,
+				caseNormalization,
+				enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+				placetypePair,
+				...streetContextRequirementFor({ fst, streetMorphology }, { streetMorphologyPrior }),
+				...(fst && anchorRegions ? { anchorRegions } : {}),
+				...(venueHead ? { venueHead: venueHead.venueHead } : {}),
+				...(venueHead?.venueHeadOpts ? { venueHeadOpts: venueHead.venueHeadOpts } : {}),
+			}),
+		recover: (text) => ({ raw: text, roots: [] }),
 	}
 }
 
@@ -583,26 +578,6 @@ export function streetContextRequirementFor(
 				fstStreetContextPositiveScale: STREET_CONTEXT_POSITIVE_SCALE,
 			}
 		: {}
-}
-
-/**
- * Runs the phrase grouper.
- * On failure it records a fault and returns no proposals.
- */
-async function safeGroupPhrases(
-	faults: PipelineFault[],
-	groupPhrases: NonNullable<RuntimePipelineStages["groupPhrases"]>,
-	normalized: NormalizedInputLite,
-	shape: QueryShapeLite,
-	locale: LocaleHint
-): Promise<PhraseProposal[]> {
-	try {
-		return await groupPhrases(normalized, shape, locale)
-	} catch (error) {
-		recordFault(faults, PipelineFaultStage.PhraseGrouper, error)
-
-		return []
-	}
 }
 
 // MARK: Grouper-audit pass
@@ -681,21 +656,17 @@ export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], tex
 }
 
 /**
- * Runs the resolver.
+ * The stage that resolves the decoded tree.
  *
- * On failure it records a fault and returns the unresolved tree.
+ * When the resolver throws, the run continues with the unresolved tree.
  */
-async function safeResolve(
-	faults: PipelineFault[],
+function resolveStage(
 	resolver: NonNullable<RuntimePipelineStages["resolver"]>,
-	tree: AddressTree,
 	opts?: PipelineOpts
-): Promise<AddressTree> {
-	try {
-		return await resolver.resolveTree(tree, opts?.resolveOpts)
-	} catch (error) {
-		recordFault(faults, PipelineFaultStage.Resolver, error)
-
-		return tree
+): PipelineStage<AddressTree, AddressTree> {
+	return {
+		id: StageID.Resolve,
+		run: (tree) => resolver.resolveTree(tree, opts?.resolveOpts),
+		recover: (tree) => tree,
 	}
 }

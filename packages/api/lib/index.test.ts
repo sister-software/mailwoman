@@ -278,8 +278,9 @@ test("POST /v1/geocode: the bias points and the tree option reach the engine, an
 			],
 			parent: { id: 85_688_697, scope: "hard" },
 			includeTree: true,
+			signal: expect.any(AbortSignal),
 		},
-		{ inputMode: "auto", bias: [], parent: null, includeTree: false },
+		{ inputMode: "auto", bias: [], parent: null, includeTree: false, signal: expect.any(AbortSignal) },
 	])
 
 	expect((await post({ address: "Springfield", bias: [{ lat: 91, lon: 0 }] })).status).toBe(400)

@@ -133,6 +133,8 @@ const TRACE = {
 	kind: { kind: "structured_address", confidence: 0.9, alternatives: [], intentMarkers: null },
 	inputMode: "formatted",
 	resolver: [],
+	stages: [],
+	stageTiming: {},
 } as GeocodeTrace
 
 const APPLIED: GeocodeApplied = {

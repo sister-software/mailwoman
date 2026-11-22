@@ -1018,17 +1018,3 @@ export interface RuntimePipelineStages {
  * Stage durations in milliseconds, keyed by stage name.
  */
 export type PipelineTiming = Record<string, number>
-
-/**
- * The stages whose failures the pipeline records before it continues.
- */
-export const PipelineFaultStage = {
-	Classifier: "classifier",
-	PhraseGrouper: "phrase-grouper",
-	Resolver: "resolver",
-} as const
-
-/**
- * One of the {@link PipelineFaultStage} values.
- */
-export type PipelineFaultStage = (typeof PipelineFaultStage)[keyof typeof PipelineFaultStage]

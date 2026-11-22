@@ -25,7 +25,7 @@ import { flattenNodes } from "#tools/eval-harness/flatten-nodes"
 /**
  * Production parse configuration.
  *
- * The query-shape prior runs on every production parse path, including `safeClassify` and `geocode-core`.
+ * The query-shape prior runs on every production parse path, including `classifyStage` and `geocode-core`.
  *
  * See baselines.json $config.
  */

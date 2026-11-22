@@ -4,7 +4,7 @@
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 
-import { ABSENT } from "#cli/debug-view/trace-rows"
+import { ABSENT, rewriteRows } from "#cli/debug-view/trace-rows"
 import type { GeocodeTrace } from "#geocode/session"
 
 /**
@@ -104,10 +104,10 @@ export interface OutputLinesInput {
 	result: GeocodeResult
 	tree: AddressTree
 	/**
-	 * Only `kind` is read.
-	 * `Pick` lets a test hand in exactly that field.
+	 * Only `kind` and `stages` are read.
+	 * `Pick` lets a test hand in exactly the fields it states.
 	 */
-	trace?: Pick<GeocodeTrace, "kind">
+	trace?: Pick<GeocodeTrace, "kind"> & Partial<Pick<GeocodeTrace, "stages">>
 	/**
 	 * Per-phase wall clock from the session.
 	 *
@@ -249,6 +249,18 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 					.filter((part) => part != null && part.length)
 					.join(" "),
 			})
+		}
+	}
+
+	// The section is last and appears only when a pass after the decode changed the tree,
+	// so every line above it stays where it is for every input.
+	const rewrites = rewriteRows(trace?.stages ?? [])
+
+	if (rewrites.length) {
+		lines.push({ kind: "heading", label: "rewrites" })
+
+		for (const rewrite of rewrites) {
+			lines.push({ kind: "field", label: `  ${rewrite.pass}`, value: rewrite.change })
 		}
 	}
 

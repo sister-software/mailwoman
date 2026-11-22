@@ -361,7 +361,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKR
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
 		// Match production config: every path production parses also feeds the query-shape
-		// emission prior (`safeClassify` in the runtime pipeline and `geocode-core`).
+		// emission prior (`classifyStage` in the runtime pipeline and `geocode-core`).
 		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 

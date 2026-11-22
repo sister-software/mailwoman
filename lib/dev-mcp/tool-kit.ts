@@ -10,6 +10,7 @@ import {
 	decodeRow,
 	explanationRows,
 	localeHeadRow,
+	rewriteRows,
 	systemRow,
 	tokensRow,
 } from "mailwoman/cli/debug-view/trace-rows"
@@ -458,6 +459,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
+			...rewriteRows(run.trace.stages).map((row) => `rewrite ${row.pass}: ${row.change}`),
 			...explanationRows(run.trace),
 			...intentAdvisoryRow(run),
 			...droppedRow(run),

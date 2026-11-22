@@ -21,6 +21,7 @@ import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	type CaseNormalization,
 	type ClassifierOpts,
+	createRequestContext,
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
 	deriveInputMode,
@@ -29,8 +30,13 @@ import {
 	hardCountryFor,
 	isBareLocalityTree,
 	isBarePostcodeTree,
+	type PipelineStage,
 	type PlacerCountryUse,
 	type QueryKindResult,
+	type RequestContext,
+	runStage,
+	runStages,
+	StageID,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
 import type {
@@ -58,13 +64,9 @@ import { traceCollector } from "#geocode/derivation"
 import { parsePriorOptions } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
+import { postDecodeRepairStages } from "#geocode/stages"
 import { type GeocodeSwitches, geocodeSwitches } from "#geocode/switches"
-import {
-	postcodeCountryScopeOf,
-	recognizeBarePostcode,
-	resolvedCountryOf,
-	treePostcodeValue,
-} from "#geocode/tree-reads"
+import { postcodeCountryScopeOf, resolvedCountryOf, treePostcodeValue } from "#geocode/tree-reads"
 import {
 	type CountryScopeDecision,
 	decideCountryScope,
@@ -77,10 +79,7 @@ import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp
 import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations"
 import { applyPlusCodeOverride } from "#plus-code-override"
 import type { POIExecutorLookup } from "#poi/executor"
-import { repairPostcodeContradiction } from "#postcode-repair"
 import { coarserAnswerMarker, declaredAmbiguityMarker } from "#query-intent"
-import { recognizeUSRegions } from "#region-recognition"
-import { repairStrandedAffix } from "#stranded-affix-repair"
 import { applyStreetMissFallback } from "#street/miss-fallback"
 
 // Spatial layers are passed as one route bundle.
@@ -423,8 +422,11 @@ export function geocodeParseInputs(
 }
 
 /**
- * The parse path `geocodeAddress` runs.
+ * The parse path `geocodeAddress` runs: the decode, then the tree rewrites of `postDecodeRepairStages`.
  * It is exported so a caller can reuse the parse.
+ *
+ * Each step is a stage of `context`, so the request's signal is checked before it
+ * and a rewrite that changes the tree writes a record to the request's trace.
  */
 export async function parseForGeocode(
 	input: string,
@@ -441,21 +443,19 @@ export async function parseForGeocode(
 		| "venueHead"
 		| "venueHeadOpts"
 	> &
-		GeocodeDecoderSettingDeps
+		GeocodeDecoderSettingDeps,
+	context: RequestContext = createRequestContext()
 ): Promise<AddressTree> {
 	const classifier = await classifierForInput(deps.classifier, input)
 	const { parseInput, opts, queryShape } = geocodeParseInputs(input, { ...deps, classifier })
 
-	// Retag bare unambiguous postcodes before resolve.
-	const tree = recognizeBarePostcode(recognizeUSRegions(await classifier.parse(parseInput, opts)))
+	const decoded = await runStage(
+		{ id: StageID.TokenClassify, run: (text: string) => classifier.parse(text, opts) },
+		parseInput,
+		context
+	)
 
-	// Repair split postcode contradictions from query shape.
-	repairPostcodeContradiction(tree, queryShape)
-
-	// Repair stranded street affixes.
-	repairStrandedAffix(tree)
-
-	return tree
+	return runStages(postDecodeRepairStages(queryShape), decoded, context)
 }
 
 /**
@@ -465,10 +465,17 @@ export async function parseForGeocode(
  * A locale-inferred scope that leaves the address with zero coordinates is
  * then withdrawn for a second pass, under {@linkcode inferredScopeYieldsOnMiss}.
  *
+ * The decode, the tree rewrites after it and each resolve are stages of `context`.
+ * A request whose signal aborted rejects with the signal's reason before the next of them starts.
+ *
  * Returns a result.
- * It throws only on a fatal parse or resolve error.
+ * It throws only on a fatal parse or resolve error, or on an aborted request.
  */
-export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+export async function geocodeAddress(
+	input: string,
+	deps: GeocodeDeps,
+	context: RequestContext = createRequestContext()
+): Promise<GeocodeResult> {
 	// Optional first-refusal check for thing queries.
 	if (deps.classifyKind && (deps.inputMode ?? "auto") === "auto") {
 		const parseInput = geocodeSwitches(deps).normalizeInput
@@ -483,7 +490,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 		if (refusal) {
 			// Return abstain with parsed components but no resolved coordinates.
-			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps, context))
 			const abstained = extractGeocodeResult(input, tree)
 
 			abstained.intent_markers = refusal
@@ -492,7 +499,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps, context))
 	const { defaultCountry: given, resolveTraceSink, ...unscoped } = deps
 	const switches = geocodeSwitches(deps)
 
@@ -508,12 +515,16 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// The first pass's resolver records reach the caller only when its answer is the one returned.
 	const firstPassTrace: Parameters<NonNullable<typeof resolveTraceSink>>[0][] = []
 
-	const result = await geocodeAddressOnce(input, {
-		...unscoped,
-		parsedTree: tree,
-		...(scope.resolver ? { defaultCountry: scope.resolver } : {}),
-		...(resolveTraceSink ? { resolveTraceSink: (record) => void firstPassTrace.push(record) } : {}),
-	})
+	const result = await geocodeAddressOnce(
+		input,
+		{
+			...unscoped,
+			parsedTree: tree,
+			...(scope.resolver ? { defaultCountry: scope.resolver } : {}),
+			...(resolveTraceSink ? { resolveTraceSink: (record) => void firstPassTrace.push(record) } : {}),
+		},
+		context
+	)
 
 	if (result.lat != null || !scope.resolver || !inferredScopeYieldsOnMiss(tree, scope)) {
 		deps.countryScopeSink?.(scope)
@@ -531,7 +542,11 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		withheld: { country: scope.resolver.country, reason: ScopeWithheldReason.NoMatchInCountry },
 	})
 
-	return geocodeAddressOnce(input, { ...unscoped, parsedTree: tree, ...(resolveTraceSink ? { resolveTraceSink } : {}) })
+	return geocodeAddressOnce(
+		input,
+		{ ...unscoped, parsedTree: tree, ...(resolveTraceSink ? { resolveTraceSink } : {}) },
+		context
+	)
 }
 
 /**
@@ -641,7 +656,7 @@ function extractWithoutNameDroppingRescore(
 	return extractGeocodeResult(input, resolved)
 }
 
-async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps, context: RequestContext): Promise<GeocodeResult> {
 	// Normalize input for parse/placer while keeping raw input for output.
 	const switches = geocodeSwitches(deps)
 
@@ -649,7 +664,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		? normalizeGeocodeInput(input, await classifierForInput(deps.classifier, input)).normalized
 		: input
 
-	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps, context))
 	const queryShape = computeQueryShape(parseInput, queryShapeGenerationOf(deps.classifier))
 	const stateSlug = regionSlugFromTree(tree)
 	const usDatabases = deps.databases?.(stateSlug) ?? {}
@@ -854,7 +869,13 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.postcodePrefixIndex = deps.postcodePrefixIndex
 	}
 
-	let resolved = await deps.resolver.resolveTree(tree, opts)
+	// Each resolve reads `opts` as it stands when the stage runs, and the stage's duration is their sum.
+	const resolveStage: PipelineStage<AddressTree, AddressTree> = {
+		id: StageID.Resolve,
+		run: (parsed) => deps.resolver.resolveTree(parsed, opts),
+	}
+
+	let resolved = await runStage(resolveStage, tree, context)
 
 	// Re-resolve once if resolved country differs from pre-selected database country.
 	const scopeCountry = resolvedCountryOf(resolved) ?? postcodeCountryScopeOf(resolved)
@@ -883,7 +904,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 
 		if (changed) {
-			resolved = await deps.resolver.resolveTree(tree, opts)
+			resolved = await runStage(resolveStage, tree, context)
 		}
 	}
 

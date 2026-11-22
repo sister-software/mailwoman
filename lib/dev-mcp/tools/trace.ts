@@ -68,6 +68,10 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				kind: run.trace?.kind ?? null,
 				input_mode: run.trace?.inputMode ?? null,
 				applied: run.applied,
+				// What each pass after the decode changed in the tree, so `parse_trace`
+				// and the resolved tree can be told apart.
+				stages: run.trace?.stages ?? null,
+				stage_timing_ms: run.trace?.stageTiming ?? null,
 				parse_trace: run.trace?.parse ? (fullParseTrace ? run.trace.parse : slimParseTrace(run.trace.parse)) : null,
 				rendered,
 				...(absent_reason ? { trace_absent_reason: absent_reason } : {}),

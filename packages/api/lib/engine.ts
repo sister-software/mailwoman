@@ -58,6 +58,14 @@ export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
 	 * When false, `tree` is null.
 	 */
 	includeTree: boolean
+	/**
+	 * The request's signal.
+	 * The server aborts it when it gives up on the request.
+	 *
+	 * An engine that reads it stops the geocode before its next stage and rejects with the signal's reason.
+	 * The `/v1/geocode` route passes the signal of its `Request`.
+	 */
+	signal?: AbortSignal
 }
 
 /**

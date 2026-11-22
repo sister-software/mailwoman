@@ -10,12 +10,14 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import type {
-	InputModeSelection,
-	InputMode,
-	PipelineTiming,
-	QueryKindResult,
-	SoftChannelName,
+import {
+	createRequestContext,
+	type InputModeSelection,
+	type InputMode,
+	type PipelineTiming,
+	type QueryKindResult,
+	type SoftChannelName,
+	type StageRecord,
 } from "@mailwoman/core/pipeline"
 import {
 	type DefaultCountry,
@@ -81,6 +83,19 @@ export interface GeocodeTrace {
 	 * One record per backend lookup that the resolver performed.
 	 */
 	resolver: ResolveNodeTrace[]
+
+	/**
+	 * The records the request's stages wrote, in the order they ran.
+	 *
+	 * A `tree-rewrite` record states what a pass after the decode changed in the tree,
+	 * so {@link parse} and the resolved tree can be told apart.
+	 */
+	stages: StageRecord[]
+
+	/**
+	 * The milliseconds of each stage the request ran, keyed by stage identifier.
+	 */
+	stageTiming: PipelineTiming
 }
 
 /**
@@ -172,6 +187,14 @@ export interface GeocodeRequestOptions {
 	 * The next request without one reads the session's `defaultCountry` again.
 	 */
 	defaultCountry?: string
+
+	/**
+	 * Cancels the request.
+	 *
+	 * The geocode rejects with the signal's reason before its next stage starts,
+	 * and a running stage finishes first.
+	 */
+	signal?: AbortSignal
 }
 
 /**
@@ -461,7 +484,7 @@ export async function createGeocodeSession(
 	const traceOf = async (
 		input: string,
 		requestParseDeps: typeof parseDeps
-	): Promise<Omit<GeocodeTrace, "resolver"> | null> => {
+	): Promise<Pick<GeocodeTrace, "parse" | "queryShape" | "kind" | "inputMode"> | null> => {
 		if (!options.trace) return null
 
 		const inputs = geocodeParseInputs(input, requestParseDeps)
@@ -482,8 +505,14 @@ export async function createGeocodeSession(
 		const startedAt = performance.now()
 		const requestParseDeps = request.inputMode ? { ...parseDeps, inputMode: request.inputMode } : parseDeps
 		const requestBias = request.bias?.length ? request.bias : bias
+		const stageRecords: StageRecord[] = []
 
-		const parsedTree = await parseForGeocode(input, requestParseDeps)
+		const context = createRequestContext({
+			signal: request.signal ?? null,
+			trace: options.trace ? (record: StageRecord) => void stageRecords.push(record) : null,
+		})
+
+		const parsedTree = await parseForGeocode(input, requestParseDeps, context)
 		const parsedAt = performance.now()
 		const trace = await traceOf(input, requestParseDeps)
 		const tracedAt = performance.now()
@@ -502,63 +531,67 @@ export async function createGeocodeSession(
 		// `geocodeAddress` decides whether the scope filters, ranks or is withheld, and the run states its decision.
 		let appliedScope: GeocodeApplied["countryScope"] = null
 
-		const result = await geocodeAddress(input, {
-			countryScopeSink: ({ resolver: given, withheld }) => {
-				appliedScope = {
-					resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
-					withheld,
-				}
+		const result = await geocodeAddress(
+			input,
+			{
+				countryScopeSink: ({ resolver: given, withheld }) => {
+					appliedScope = {
+						resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
+						withheld,
+					}
+				},
+				localeCountryPrior: options.localeCountryPrior,
+				...decoderSettings,
+				classifier: routed,
+				...(request.inputMode ? { inputMode: request.inputMode } : {}),
+				...(fst ? { fst } : {}),
+				...(streetMorphology ? { streetMorphology } : {}),
+				...(anchorRegions ? { anchorRegions } : {}),
+				resolver,
+				databases,
+				nationalDatabases,
+				...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
+				parsedTree,
+				...(requestBias.length ? { bias: requestBias } : {}),
+				...(countryScope ? { defaultCountry: countryScope } : {}),
+				...(parentPlace ? { parentPlace } : {}),
+
+				...(capitalLevel ? { capitalLevel } : {}),
+
+				...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
+
+				postcodeCountryCoherence: options.postcodeCountryCoherence,
+				postcodeShapeCoherence: options.postcodeShapeCoherence,
+				postcodeContainmentCoherence: options.postcodeContainmentCoherence,
+				adminContainmentRerank: options.adminContainmentRerank,
+				dependentLocalityContainment: options.dependentLocalityContainment,
+				countyDesignatorFallback: options.countyDesignatorFallback,
+				formerDivisions: options.formerDivisions,
+				...(formerDivisionLookup ? { formerDivisionLookup } : {}),
+				scopeCountryRetrieval: options.scopeCountryRetrieval,
+				siblingLocalityContainment: options.siblingLocalityContainment,
+
+				interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
+
+				placeCountry: placeCountry ?? "none",
+
+				classifyKind: poiKindClassifier,
+				...forkEntityDeps,
+
+				poiVenueTier: options.poiVenueTier,
+
+				...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
+
+				...(soilRoute ? { soilCapabilityRoute: soilRoute } : {}),
+
+				...(coastalRoute ? { coastalErosionRoute: coastalRoute } : {}),
+
+				...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
+				...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
+				diagnoseUnreachable: !!trace && options.diagnoseUnreachable,
 			},
-			localeCountryPrior: options.localeCountryPrior,
-			...decoderSettings,
-			classifier: routed,
-			...(request.inputMode ? { inputMode: request.inputMode } : {}),
-			...(fst ? { fst } : {}),
-			...(streetMorphology ? { streetMorphology } : {}),
-			...(anchorRegions ? { anchorRegions } : {}),
-			resolver,
-			databases,
-			nationalDatabases,
-			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
-			parsedTree,
-			...(requestBias.length ? { bias: requestBias } : {}),
-			...(countryScope ? { defaultCountry: countryScope } : {}),
-			...(parentPlace ? { parentPlace } : {}),
-
-			...(capitalLevel ? { capitalLevel } : {}),
-
-			...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
-
-			postcodeCountryCoherence: options.postcodeCountryCoherence,
-			postcodeShapeCoherence: options.postcodeShapeCoherence,
-			postcodeContainmentCoherence: options.postcodeContainmentCoherence,
-			adminContainmentRerank: options.adminContainmentRerank,
-			dependentLocalityContainment: options.dependentLocalityContainment,
-			countyDesignatorFallback: options.countyDesignatorFallback,
-			formerDivisions: options.formerDivisions,
-			...(formerDivisionLookup ? { formerDivisionLookup } : {}),
-			scopeCountryRetrieval: options.scopeCountryRetrieval,
-			siblingLocalityContainment: options.siblingLocalityContainment,
-
-			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
-
-			placeCountry: placeCountry ?? "none",
-
-			classifyKind: poiKindClassifier,
-			...forkEntityDeps,
-
-			poiVenueTier: options.poiVenueTier,
-
-			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
-
-			...(soilRoute ? { soilCapabilityRoute: soilRoute } : {}),
-
-			...(coastalRoute ? { coastalErosionRoute: coastalRoute } : {}),
-
-			...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
-			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
-			diagnoseUnreachable: !!trace && options.diagnoseUnreachable,
-		})
+			context
+		)
 
 		const finishedAt = performance.now()
 
@@ -573,7 +606,9 @@ export async function createGeocodeSession(
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,
 			},
-			...(trace ? { trace: { ...trace, resolver: resolverTrace } } : {}),
+			...(trace
+				? { trace: { ...trace, resolver: resolverTrace, stages: stageRecords, stageTiming: context.timing } }
+				: {}),
 		}
 	}
 

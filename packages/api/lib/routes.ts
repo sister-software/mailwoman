@@ -132,7 +132,13 @@ export function registerMailwomanAPIRoutes(
 			const t0 = performance.now()
 
 			return engine
-				.geocode(trimmed, { inputMode: input_mode, bias, parent, includeTree: include_tree })
+				.geocode(trimmed, {
+					inputMode: input_mode,
+					bias,
+					parent,
+					includeTree: include_tree,
+					signal: c.req.raw.signal,
+				})
 				.then((result) => {
 					recordTimed(performance.now() - t0, result.resolution_tier)
 
