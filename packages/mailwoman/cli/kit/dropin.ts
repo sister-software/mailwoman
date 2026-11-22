@@ -164,7 +164,12 @@ export async function openDropInGeocoder(
 		// The session's modules load here so the `openapi` command and the parse-only drop-in start without them.
 		const { createDropInGeocodeSession } = await import("#geocode/session/drop-in")
 
-		return { gazetteer, layers, session: await createDropInGeocodeSession(layers, gazetteer.candidateDB) }
+		const session = await createDropInGeocodeSession(
+			layers,
+			gazetteer.candidateDB ? { candidateDB: gazetteer.candidateDB } : {}
+		)
+
+		return { gazetteer, layers, session }
 	} catch (error) {
 		return fail(`✗ ${error instanceof Error ? error.message : String(error)}`)
 	}

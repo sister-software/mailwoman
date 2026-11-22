@@ -29,7 +29,7 @@ The seven labels in the script below are illustrative application decisions stat
 Save the following file as `review-parses.ts`:
 
 ```ts
-import { decodeAsJSON, flattenTreeNodes, parse } from "mailwoman"
+import { createParser, decodeAsJSON, flattenTreeNodes } from "mailwoman"
 
 type Route = "ready" | "review"
 
@@ -48,8 +48,10 @@ const rows = []
 let readyCorrect = 0
 let reviewCorrect = 0
 
+await using parser = await createParser()
+
 for (const [id, expected, input] of examples) {
-	const result = await parse(input)
+	const result = await parser.parse(input)
 	const components = decodeAsJSON(result.tree)
 	const missing = required.filter((tag) => !components[tag])
 

@@ -14,7 +14,7 @@ import Fastify, { type FastifyInstance } from "fastify"
 import { describe, expect, it } from "vitest"
 
 import { mailwomanFastify } from "#plugin"
-import type { MailwomanFastifyOptions, RuntimePipeline } from "#shared"
+import type { MailwomanFastifyOptions, InjectedPipeline } from "#shared"
 
 /**
  * A minimal resolved locality node — includes a coordinate so `extractGeocodeResult`
@@ -37,7 +37,7 @@ function localityNode(value: string, lat: number, lon: number): AddressNode {
 /**
  * Build a fake pipeline whose result is fixed except for the echoed input.
  */
-function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline {
+function fakePipeline(overrides: Partial<PipelineResult> = {}): InjectedPipeline {
 	return async (raw: string, _opts?: PipelineOpts): Promise<PipelineResult> => {
 		const tree: AddressTree = { raw, roots: [localityNode("New York", 40.7128, -74.006)] }
 
@@ -70,7 +70,7 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
  * Register the plugin against a fresh Fastify instance with an injected fake pipeline.
  */
 async function buildApp(
-	opts: Omit<MailwomanFastifyOptions, "pipeline"> & { pipeline?: RuntimePipeline }
+	opts: Omit<MailwomanFastifyOptions, "pipeline"> & { pipeline?: InjectedPipeline }
 ): Promise<FastifyInstance> {
 	const app = Fastify()
 	await app.register(mailwomanFastify, { pipeline: fakePipeline(), ...opts })
@@ -202,6 +202,61 @@ describe("@mailwoman/fastify", () => {
 		expect(parsed.components).toContainEqual({ tag: "locality", value: "New York" })
 		expect(geo.lat).toBeCloseTo(40.7128)
 		expect(poi).toEqual({ type: "not_poi_query" })
+	})
+
+	it("the decorator's geocode hands a request's options to the pipeline as resolve options", async () => {
+		const calls: Array<PipelineOpts | undefined> = []
+		const inner = fakePipeline()
+
+		const recording: InjectedPipeline = (raw, opts) => {
+			calls.push(opts)
+
+			return inner(raw, opts)
+		}
+
+		await using app = await buildApp({ pipeline: recording })
+
+		await app.mailwoman.geocode("New York", {
+			inputMode: "fragmented",
+			bias: [{ lat: 40.7, lon: -74 }],
+			parentPlace: { id: 85_977_539, source: "caller", strength: "hard" },
+			defaultCountry: "US",
+		})
+
+		expect(calls).toEqual([
+			{
+				inputMode: "fragmented",
+				resolveOpts: {
+					bias: [{ lat: 40.7, lon: -74 }],
+					parentPlace: { id: 85_977_539, source: "caller", strength: "hard" },
+					defaultCountry: { country: "US", source: "caller" },
+				},
+			},
+		])
+	})
+
+	it("passes the registration's locale to every pipeline call, and none when the registration states none", async () => {
+		const seen: Array<string | undefined> = []
+		const inner = fakePipeline()
+
+		const recording: InjectedPipeline = (raw, opts) => {
+			seen.push(opts?.locale)
+
+			return inner(raw, opts)
+		}
+
+		await using stated = await buildApp({ pipeline: recording, locale: "fr-FR", poiDatabasePath: "/tmp/poi.db" })
+
+		await stated.mailwoman.parse("10 rue de la Paix")
+		await stated.mailwoman.geocode("10 rue de la Paix")
+		await stated.mailwoman.poi("café")
+
+		await using unstated = await buildApp({ pipeline: recording })
+
+		await unstated.mailwoman.parse("10 rue de la Paix")
+		await unstated.mailwoman.geocode("10 rue de la Paix")
+
+		expect(seen).toEqual(["fr-FR", "fr-FR", "fr-FR", undefined, undefined])
 	})
 
 	it("the decorator's poi throws when POI is not configured", async () => {

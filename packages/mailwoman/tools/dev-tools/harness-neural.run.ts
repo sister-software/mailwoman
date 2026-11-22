@@ -793,6 +793,7 @@ async function main(): Promise<void> {
 	// The assembled runtime pipeline (reuses the neural classifier + admin FST).
 	// No resolver is attached, so the arena grades component parses
 	// (Stage 3 / grouper / reconcile) rather than coordinates.
+	// The script's process owns the pipeline and its scope, and exits when the run is done.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: null

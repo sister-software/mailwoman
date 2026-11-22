@@ -37,6 +37,11 @@ const CORE_FREE_TOOLS =
 const MCP_LAYERS: readonly LayerContribution[] = NODE_LAYER_CONTRIBUTIONS
 
 /**
+ * The session {@linkcode loadCore} built, kept so the server can close it at shutdown without building one.
+ */
+let openSession: GeocodeSession | null = null
+
+/**
  * The geocode session the core-backed tools share, with the classifier and resolver it geocodes through.
  *
  * The session owns both, so a tool reads them and never disposes one.
@@ -75,7 +80,7 @@ export const loadCore = memoizeResettable(
 		let session: GeocodeSession
 
 		try {
-			session = await createDropInGeocodeSession(MCP_LAYERS, candidateDB)
+			session = await createDropInGeocodeSession(MCP_LAYERS, candidateDB ? { candidateDB } : {})
 		} catch (error) {
 			throw new Error(
 				`✗ ${error instanceof Error ? error.message : String(error)}\n\n` +
@@ -83,11 +88,27 @@ export const loadCore = memoizeResettable(
 			)
 		}
 
+		openSession = session
+
 		const { routed, lookup } = session.services
 
 		return { session, layers: MCP_LAYERS, classifier: routed, resolver: createWOFResolver(lookup) }
 	}
 )
+
+/**
+ * Closes the shared session when one was built: its databases, its layers
+ * and its lease on the data generation.
+ *
+ * The server calls it once, at shutdown, after the pipelines that read the session's resolver are closed.
+ */
+export async function closeCore(): Promise<void> {
+	const session = openSession
+
+	openSession = null
+
+	await session?.[Symbol.asyncDispose]()
+}
 
 /**
  * Geocodes one address through the shared session, inside `parent` when the caller gives one.

@@ -9,28 +9,31 @@
  */
 
 import type { LayerContribution } from "#geocode/contributions"
-import { createGeocodeSessionOptions } from "#geocode/options"
+import { createGeocodeSessionOptions, type GeocodeSessionOptionsInput } from "#geocode/options"
 import { createGeocodeSession, type GeocodeSession } from "#geocode/session"
+
+/**
+ * What a drop-in server states about its session: where its gazetteer is, and its locale.
+ *
+ * A server that states no locale leaves it out, and the session records its locale as the default.
+ */
+export type DropInSessionOptions = Pick<GeocodeSessionOptionsInput, "candidateDB" | "resolveDB" | "locale">
 
 /**
  * Builds a drop-in server's geocode session over `layers`.
  *
- * The session parses under the default locale and applies no country scope.
+ * The session applies no country scope.
  * A server answers queries from every country, and a scope read from the locale would
  * resolve each query outside the United States to its namesake there.
  *
  * @param layers The data layers the server composes, in the order it consults their national sources.
- * @param candidateDB The path of a candidate gazetteer, in place of the one the data root resolves.
+ * @param stated The gazetteer paths and the locale the server states,
+ * in place of the ones the data root and the defaults give.
  * @throws When the gazetteer, the weights or a required layer can't be opened.
  */
 export function createDropInGeocodeSession(
 	layers: readonly LayerContribution[],
-	candidateDB?: string | null
+	stated: DropInSessionOptions = {}
 ): Promise<GeocodeSession> {
-	const options = createGeocodeSessionOptions({
-		countryScope: "none",
-		...(candidateDB ? { candidateDB } : {}),
-	})
-
-	return createGeocodeSession(options, { layers })
+	return createGeocodeSession(createGeocodeSessionOptions({ ...stated, countryScope: "none" }), { layers })
 }

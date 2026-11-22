@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Times the three ways to parse with `mailwoman` over the regression cases and compares their trees.
+ * Times the two ways to parse with `mailwoman` over the regression cases and compares their trees.
  *
- * The arms are a single-model `createRuntimePipeline`, a `createParser` parser, and the default `parse`.
+ * The arms are a single-model `createRuntimePipeline` and a `createParser` parser.
  * Each arm reports its cold start (loading and the first call), its warm
  * per-call latency, the per-call time outside the pipeline's own stage timings,
  * and its throughput sequentially and in concurrent chunks.
  *
  * The tool then lists every row whose tree differs between the single-model arm
- * and either parser arm, with the row's script family.
+ * and the parser arm, with the row's script family.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -19,7 +19,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
 
-import { createParser, parse } from "#parser"
+import { createParser } from "#parser"
 import { createRuntimePipeline } from "#runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 
@@ -62,6 +62,7 @@ async function coldArm(name: string, build: () => Promise<ParseFn>): Promise<Arm
 	return { name, coldMs: performance.now() - startedAt, parse: fn }
 }
 
+// The script's process owns both arms' pipelines and scopes, and exits when the report is printed.
 const arms = [
 	await coldArm("runtime-pipeline", async () =>
 		createRuntimePipeline({ classifier: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" }) })
@@ -71,7 +72,6 @@ const arms = [
 
 		return (raw, runOpts) => parser.parse(raw, runOpts)
 	}),
-	await coldArm("parse", async () => parse),
 ]
 
 function stageMilliseconds(result: PipelineResult): number {

@@ -7007,7 +7007,6 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     fastify: "npm:^5.12.7"
     fastify-plugin: "npm:^6.0.1"
     fastify-type-provider-zod: "npm:^7.0.0"

@@ -1,6 +1,8 @@
-import { decodeAsOutline, parse } from "mailwoman"
+import { createParser, decodeAsOutline } from "mailwoman"
 
-const result = await parse("apt 4b 350 5th ave new york ny 10118")
+await using parser = await createParser()
+
+const result = await parser.parse("apt 4b 350 5th ave new york ny 10118")
 
 console.log("normalized:", result.tree.raw)
 console.log(decodeAsOutline(result.tree))

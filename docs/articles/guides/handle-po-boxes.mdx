@@ -27,12 +27,14 @@ The example uses the English model and reads no geographic database. Save the fo
 ## Parse and apply a mailing intake rule
 
 ```ts
-import { decodeAsJSON, flattenTreeNodes, parse } from "mailwoman"
+import { createParser, decodeAsJSON, flattenTreeNodes } from "mailwoman"
 
 const required = ["po_box", "locality", "region", "postcode"] as const
 
+await using parser = await createParser()
+
 for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
-	const result = await parse(input)
+	const result = await parser.parse(input)
 	const components = decodeAsJSON(result.tree)
 	const missing = required.filter((tag) => !components[tag])
 	const mailingCandidate = result.kind.kind === "po_box" && !result.faults.length && !missing.length

@@ -9,11 +9,10 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
-import { Text } from "ink"
 import { createElement as h } from "react"
 import type * as React from "react"
 
-import { type CommandComponent, CommandTaskResult, useCommandTask } from "#cli/kit/shared"
+import { type CommandComponent, CommandTaskResult, useCommandTask, writeRawStdout } from "#cli/kit/shared"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 
 /**
@@ -52,6 +51,8 @@ export function harnessCommand<Spec extends CommandSpec, T>(
 
 		const payload = options.json?.(state.result, parsed)
 
-		return !payload ? null : h(Text, null, prettyJSON(payload))
+		// The JSON is written to stdout as it is: Ink's `<Text>` wraps a long line at
+		// the terminal width, and a wrapped string value isn't JSON.
+		return !payload ? null : writeRawStdout(prettyJSON(payload, false))
 	}
 }

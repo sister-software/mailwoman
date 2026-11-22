@@ -54,6 +54,7 @@ export async function buildAssembledArm(
 		reportError("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
 
+	// The evaluation's process owns this pipeline and its scope: the run grades every row with it and then exits.
 	const assembledPipeline = runAssembled
 		? createRuntimePipeline({
 				classifier: {

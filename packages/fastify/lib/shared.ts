@@ -9,11 +9,15 @@ import type { ParseResponse } from "@mailwoman/api/operations/parse/address"
 import type { POISearchResponse } from "@mailwoman/api/operations/search-poi"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { GeocodeRequestOptions } from "mailwoman/geocode/session"
 
 /**
- * Describes the pipeline function and lets callers inject test doubles.
+ * A parse function a caller injects in place of the pipeline the plugin builds, such as a test double.
+ *
+ * It is the call signature of `RuntimePipeline` in `mailwoman/runtime-pipeline` without that
+ * type's disposal: the caller owns an injected pipeline, and the plugin never closes it.
  */
-export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<PipelineResult>
+export type InjectedPipeline = (raw: string, opts?: PipelineOpts) => Promise<PipelineResult>
 
 /**
  * Options for the Mailwoman Fastify plugin.
@@ -21,22 +25,32 @@ export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<Pipe
 export interface MailwomanFastifyOptions {
 	/**
 	 * Supply a pre-built pipeline to skip model and gazetteer loading.
+	 *
+	 * Parse, geocode and POI then all read this pipeline, and the gazetteer paths below are ignored.
 	 */
-	pipeline?: RuntimePipeline
+	pipeline?: InjectedPipeline
 	/**
 	 * Path to `poi.db`; enables POI search and configures it on a lazy-built pipeline.
 	 */
 	poiDatabasePath?: string
 	/**
-	 * Optional WOF database path for the lazy-built resolver.
+	 * Path of a candidate gazetteer, such as `candidate.db`.
 	 *
-	 * Without it, parsing works but geocoding has no coordinates.
-	 * Ignored with an injected pipeline.
+	 * With this path or `resolveDatabasePath`, the plugin geocodes through a geocode session.
+	 */
+	candidateDatabasePath?: string
+	/**
+	 * Path of a WOF admin database, read when no candidate gazetteer resolves.
+	 *
+	 * With this path or `candidateDatabasePath`, the plugin geocodes through a geocode session.
+	 * With neither, parsing works from the weights and a geocode answers the parse without a coordinate.
 	 */
 	resolveDatabasePath?: string
 	/**
-	 * Locale for model weights and default per-call options.
-	 * @defaultValue `"en-US"`
+	 * The locale whose weights the plugin loads, and the locale every parse and geocode runs under.
+	 *
+	 * Absent, the plugin loads the default weights, the pipeline detects each input's locale,
+	 * and the session records its locale as the default.
 	 */
 	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	/**
@@ -51,22 +65,32 @@ export interface MailwomanFastifyOptions {
 export type FastifyParseResult = ParseResponse & { path: PipelineResult["path"] }
 
 /**
- * Methods exposed on `fastify.mailwoman`; all use the same pipeline.
+ * The settings one parse or POI call may state.
+ *
+ * The locale is the plugin's registration option, so a call states none.
+ */
+export type FastifyPipelineOptions = Omit<PipelineOpts, "locale">
+
+/**
+ * Methods exposed on `fastify.mailwoman`.
  */
 export interface MailwomanDecorator {
 	/**
 	 * Parse text into ordered components and a decoded tree.
 	 */
-	parse(text: string, opts?: PipelineOpts): Promise<FastifyParseResult>
+	parse(text: string, opts?: FastifyPipelineOptions): Promise<FastifyParseResult>
 	/**
 	 * Geocode text and return its `GeocodeResult`.
+	 *
+	 * The options are a geocode session's request options: the input mode, bias points,
+	 * a parent place and a country that scopes this one request.
 	 */
-	geocode(text: string, opts?: PipelineOpts): Promise<GeocodeResult>
+	geocode(text: string, opts?: GeocodeRequestOptions): Promise<GeocodeResult>
 	/**
 	 * Run a POI query and return its intent and results, an abstention, or `not_poi_query`.
 	 * The method throws when POI isn't configured.
 	 */
-	poi(text: string, opts?: PipelineOpts): Promise<POISearchResponse>
+	poi(text: string, opts?: FastifyPipelineOptions): Promise<POISearchResponse>
 }
 
 declare module "fastify" {

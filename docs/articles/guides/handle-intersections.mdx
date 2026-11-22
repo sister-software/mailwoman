@@ -27,10 +27,12 @@ This exercise parses text and reads no geographic database. Save the following f
 ## Check the two street components
 
 ```ts
-import { decodeAsJSON, flattenTreeNodes, parse } from "mailwoman"
+import { createParser, decodeAsJSON, flattenTreeNodes } from "mailwoman"
+
+await using parser = await createParser()
 
 for (const input of ["5th Avenue and Main Street, Springfield, IL", "5th and Main"]) {
-	const result = await parse(input)
+	const result = await parser.parse(input)
 	const { intersection_a: first, intersection_b: second } = decodeAsJSON(result.tree)
 
 	const route = result.faults.length

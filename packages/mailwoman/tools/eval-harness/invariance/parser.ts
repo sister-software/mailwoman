@@ -110,6 +110,7 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)
 
+	// The invariance command's process owns this pipeline and its scope: it parses every probe and then exits.
 	const pipeline = createRuntimePipeline({ classifier })
 
 	return async (raw: string, callOpts?: ParseCallOpts) => {
