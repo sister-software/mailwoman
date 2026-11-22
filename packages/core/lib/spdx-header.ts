@@ -77,12 +77,20 @@ export const SPDX_HEADER_EXEMPT_PATHS: readonly string[] = [
 ]
 
 /**
+ * Matches a `*.snippet.*` file under `docs/`, which a page includes as a reader's script.
+ */
+const DOCS_SNIPPET_PATH = /^docs\/.+\.snippet\.(?:ts|mts|tsx)$/
+
+/**
  * The header syntax for a repository-relative path, or null when the path takes no header.
  */
 export function sourceHeaderSyntax(path: string): SourceHeaderSyntax | null {
 	if (SPDX_HEADER_EXEMPT_PATHS.some((exempt) => (exempt.endsWith("/") ? path.startsWith(exempt) : path === exempt))) {
 		return null
 	}
+
+	// A docs page prints the whole text of a snippet file to its reader.
+	if (DOCS_SNIPPET_PATH.test(path)) return null
 
 	if (path.endsWith(".d.ts")) return SourceHeaderSyntax.Slash
 

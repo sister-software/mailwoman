@@ -16,7 +16,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { renderLicenseFile, renderProvenance } from "#release-kit/weights/rights/files"
+import { provenanceMatches, renderLicenseFile, renderProvenance } from "#release-kit/weights/rights/files"
 import {
 	readWeightsRightsRecords,
 	roleForArtifact,
@@ -635,5 +635,32 @@ describe("the records this repository holds today", () => {
 		)
 
 		expect(foreign).toEqual([])
+	})
+})
+
+describe("provenanceMatches", () => {
+	it("compares the model graph only when the record and the committed file both read one", async () => {
+		const record = (await weightsRightsRecords(repoRootPath())).find((entry) => entry.modelGraph)!
+		const output = { name: "logits", type: "float32", shape: [1, "sequence", 33] }
+
+		const read = {
+			...record,
+			modelGraph: { format: "ONNX" as const, outputs: [output], textEmittingOutput: false, unreadable: null },
+		}
+
+		const readOther = { ...read, modelGraph: { ...read.modelGraph, outputs: [{ ...output, name: "other" }] } }
+		const unread = { ...read, modelGraph: { ...read.modelGraph, outputs: [], unreadable: "no file" } }
+
+		expect(provenanceMatches(renderProvenance(read), read)).toBe(true)
+		expect(provenanceMatches(renderProvenance(readOther), read)).toBe(false)
+
+		// A machine without the model file leaves the committed graph uncompared.
+		expect(provenanceMatches(renderProvenance(read), unread)).toBe(true)
+
+		// A committed record that states its graph went unread is left as written.
+		expect(provenanceMatches(renderProvenance(unread), read)).toBe(true)
+
+		// Every other field is still compared.
+		expect(provenanceMatches({ ...renderProvenance(read), package_version: "0.0.0" }, unread)).toBe(false)
 	})
 })

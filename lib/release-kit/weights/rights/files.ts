@@ -533,9 +533,33 @@ function renderDataAccessSection(record: WeightsRightsRecord): string {
 /**
  * Whether a committed provenance document equals the one this record renders, compared as
  * parsed JSON rather than text so the repository formatter may lay the file out as it likes.
+ *
+ * The model graph is read from `model.onnx`, which a checkout holds only after the weights are copied in.
+ * The two graphs are compared only when both sides read one.
+ *
+ * A record whose graph this machine couldn't read leaves `model_graph` out of the
+ * comparison, and {@link modelGraphUncompared} states that it did.
+ * A committed record that states its own graph went unread is left as written,
+ * because a record for a published version is never rewritten.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
-	return isIdentical(committed, renderProvenance(record))
+	const rendered = renderProvenance(record)
+
+	if (committed == null || typeof committed !== "object") return false
+
+	const committedGraph = (committed as { model_graph?: { unreadable?: string | null } | null }).model_graph
+
+	if (!modelGraphUncompared(record) && !committedGraph?.unreadable) return isIdentical(committed, rendered)
+
+	return isIdentical({ ...committed, model_graph: null }, { ...rendered, model_graph: null })
+}
+
+/**
+ * The reason this machine couldn't read a record's model graph, or null
+ * when it read the graph or the package ships none.
+ */
+export function modelGraphUncompared(record: WeightsRightsRecord): string | null {
+	return record.modelGraph?.unreadable ?? null
 }
 
 /**

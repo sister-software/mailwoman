@@ -8,6 +8,8 @@
  *   the `"."` entry, a module that's not `.ts`, a non-code file, or an entry with
  *   conditions other than `types`, `node` and `default`.
  *
+ *   A pattern entry may add a platform condition such as `workerd` that resolves to the source file.
+ *
  *   An importer writes the module's path under `lib/`, so `@mailwoman/zoning/sdk/cells`
  *   names `lib/sdk/cells.ts`.
  *   A subpath key that renames its file, such as `./address-layout` for `lib/address/layout.ts`,
@@ -90,6 +92,26 @@ export function patternExpresses(value: ExportValue, roots: readonly string[] = 
 }
 
 /**
+ * Returns whether `value` is the pattern `entry`, with or without platform conditions added.
+ *
+ * A platform condition such as `workerd` or `browser` is accepted when it resolves
+ * to the source file that `node` resolves to.
+ * A subpath that runs in workerd declares that condition beside `node`.
+ */
+function isPatternEntry(value: ExportValue | undefined, entry: Readonly<Record<string, string>>): boolean {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return false
+
+	const conditions = Object.entries(value)
+	const standard = conditions.filter(([condition]) => condition in entry)
+	const added = conditions.filter(([condition]) => !(condition in entry))
+
+	return (
+		prettyJSON(Object.fromEntries(standard)) === prettyJSON(entry) &&
+		added.every(([, target]) => target === entry["node"])
+	)
+}
+
+/**
  * The pattern keys a workspace declares: one per extra source root, then `"./*"` for `lib/`.
  */
 function patternKeys(roots: readonly string[]): Map<string, Record<string, string>> {
@@ -118,7 +140,10 @@ export function patternExports(
 	}
 
 	for (const [key, entry] of patterns) {
-		result[key] = entry
+		const declared = exports[key]
+
+		// A pattern entry that adds a platform condition is kept as the workspace wrote it.
+		result[key] = declared && isPatternEntry(declared, entry) ? declared : entry
 	}
 
 	return result
@@ -160,7 +185,7 @@ function exportDrift(
 		.filter(([key, value]) => key !== "." && !patterns.has(key) && patternExpresses(value, roots))
 		.map(([key]) => key)
 
-	const patternDiffers = [...patterns].some(([key, entry]) => prettyJSON(exports[key] ?? null) !== prettyJSON(entry))
+	const patternDiffers = [...patterns].some(([key, entry]) => !isPatternEntry(exports[key], entry))
 
 	return { removable, patternDiffers }
 }

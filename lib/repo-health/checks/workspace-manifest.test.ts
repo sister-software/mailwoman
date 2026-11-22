@@ -56,6 +56,23 @@ describe("patternExports", () => {
 		expect(Object.keys(exports)).toEqual(["./package.json", ".", "./styles.css", "./map/Frame", "./*"])
 		expect(exports["./*"]).toEqual(standard("*"))
 	})
+
+	test("keeps a pattern entry whose added platform condition resolves to the source", () => {
+		const workerPattern = {
+			types: "./out/*.d.ts",
+			workerd: "./lib/*.ts",
+			node: "./lib/*.ts",
+			default: "./out/*.js",
+		}
+
+		expect(patternExports({ "./*": workerPattern })["./*"]).toEqual(workerPattern)
+	})
+
+	test("replaces a pattern entry whose added condition resolves elsewhere", () => {
+		const exports = patternExports({ "./*": { ...standard("*"), workerd: "./worker/*.ts" } })
+
+		expect(exports["./*"]).toEqual(standard("*"))
+	})
 })
 
 describe("extra source roots", () => {

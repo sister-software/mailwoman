@@ -24,6 +24,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import {
 	LICENSE_FILE,
 	PROVENANCE_FILE,
+	modelGraphUncompared,
 	provenanceMatches,
 	renderLicenseFile,
 	renderProvenance,
@@ -106,6 +107,16 @@ export async function writeWeightsRightsFiles(
 		}
 
 		const provenanceChanged = await provenanceDiffers(repoRoot, record)
+
+		const unreadGraph = modelGraphUncompared(record)
+
+		// A file written here would replace the committed graph with the statement that it went unread.
+		if (provenanceChanged && unreadGraph) {
+			throw new Error(
+				`${record.workspace}/${PROVENANCE_FILE} needs rewriting, and this machine can't read its model graph (${unreadGraph}). ` +
+					"Run `yarn mwops release copy-weights` first, or write the file on a machine that holds the model."
+			)
+		}
 
 		if (provenanceChanged) {
 			await writeLocalJSONFile(renderProvenance(record), resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))

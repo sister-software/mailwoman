@@ -1,12 +1,12 @@
 error: shape `Thing` declares captures and no validator, so it has no payload variant
-  --> tests/ui/captures_without_payload.rs:4:2
+  --> tests/ui/captures_without_payload.rs:7:2
    |
- 4 | /     recognizer_core::declare_family! {
- 5 | |         family: "unpaid",
- 6 | |         declarations_hash: "0000000000000000000000000000000000000000000000000000000000000000",
- 7 | |         shapes: {
+ 7 | /     recognizer_core::declare_family! {
+ 8 | |         family: "unpaid",
+ 9 | |         declarations_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+10 | |         shapes: {
 ...  |
-12 | |     }
+15 | |     }
    | |_____^
    |
    = note: this error originates in the macro `$crate::__declared_payload` which comes from the expansion of the macro `recognizer_core::declare_family` (in Nightly builds, run with -Z macro-backtrace for more info)
