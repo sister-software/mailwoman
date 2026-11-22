@@ -6,13 +6,21 @@
  *   id never starts naming a different place across artifacts without an error.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/overture-match-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
-import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "#tools/pipeline/admin/fold/overture"
+import {
+	assignSyntheticIDs,
+	foldedPlacetype,
+	prepareInserts,
+	writeOvertureDivisions,
+} from "#tools/pipeline/admin/fold/overture"
+import { buildWOFPlaceIndex, type FoldGap } from "#tools/pipeline/admin/fold/wof-match"
 
 /**
  * Real GERS ids are opaque 32-char hex strings.
@@ -129,6 +137,91 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 		expect(db.prepare("SELECT COUNT(*) AS n FROM spr WHERE id = ?").get(id)).toEqual({ n: 1 })
 		expect(db.prepare("SELECT name FROM spr WHERE id = ?").get(id)).toEqual({ name: "After" })
+	})
+})
+
+describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows", () => {
+	/**
+	 * Harare as WOF holds it, with one name and no Wikidata id, then two divisions:
+	 * Harare itself, with its Overture aliases and a Wikidata id, and a suburb under it.
+	 */
+	async function fold(): Promise<{ db: DatabaseClient<WOFDatabase & OvertureWOFMatchDatabase>; gaps: FoldGap[] }> {
+		const db = DatabaseClient.temp<WOFDatabase & OvertureWOFMatchDatabase>()
+
+		await createUnifiedSchema(db)
+
+		db.prepare(
+			`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current) VALUES (?, ?, ?, ?, 'ZW', ?, ?, 1)`
+		).run(421_168_573, -1, "Harare", "locality", -17.8292, 31.0522)
+
+		db.prepare(
+			`INSERT INTO names (id, name, placetype, country, language, source) VALUES (?, ?, 'locality', 'ZW', 'eng', 'wof')`
+		).run(421_168_573, "Harare")
+
+		const division = (id: string, name: string, parent: string | null, wikidata: string | null) => ({
+			id,
+			name,
+			commonJSON: stringifyJSON({ sn: `${name} (sn)`, en: `${name} City` }),
+			subtype: "locality",
+			country: "ZW",
+			latitude: -17.83,
+			longitude: 31.05,
+			minLatitude: -17.9,
+			minLongitude: 31,
+			maxLatitude: -17.7,
+			maxLongitude: 31.1,
+			parentDivisionID: parent,
+			population: 1_500_000,
+			wikidata,
+		})
+
+		const gaps: FoldGap[] = []
+		const index = buildWOFPlaceIndex(db)
+
+		await writeOvertureDivisions(
+			db,
+			[division(GERS[0]!, "Harare", null, "Q3921"), division(GERS[1]!, "Mabelreign", GERS[0]!, null)],
+			OVERTURE_ID_BASE,
+			{ index, onGap: (gap) => void gaps.push(gap) }
+		)
+
+		index.dispose()
+
+		return { db, gaps }
+	}
+
+	test("a matched division writes its own row and its match, and adds nothing to the WOF record", async () => {
+		const { db } = await fold()
+		using _ = db
+		const ids = assignSyntheticIDs(GERS.slice(0, 2))
+		const harare = ids.get(GERS[0]!)!
+
+		expect(db.prepare("SELECT name, source FROM names WHERE id = 421168573").all()).toEqual([
+			{ name: "Harare", source: "wof" },
+		])
+
+		expect(db.prepare("SELECT count(*) AS n FROM concordances WHERE id = 421168573").get()).toEqual({ n: 0 })
+		expect(db.prepare("SELECT count(*) AS n FROM place_population WHERE id = 421168573").get()).toEqual({ n: 0 })
+
+		expect(db.prepare("SELECT name FROM spr WHERE id = ?").get(harare)).toEqual({ name: "Harare" })
+
+		expect(db.prepare("SELECT other_id, source FROM concordances WHERE id = ?").get(harare)).toEqual({
+			other_id: "Q3921",
+			source: "overture",
+		})
+
+		expect(db.prepare("SELECT overture_id, wof_id, match_by FROM overture_wof_match").all()).toEqual([
+			{ overture_id: harare, wof_id: 421_168_573, match_by: "name" },
+		])
+	})
+
+	test("a child of a matched division takes the WOF record as parent, and only unmatched divisions are gaps", async () => {
+		const { db, gaps } = await fold()
+		using _ = db
+		const suburb = assignSyntheticIDs(GERS.slice(0, 2)).get(GERS[1]!)!
+
+		expect(db.prepare("SELECT parent_id FROM spr WHERE id = ?").get(suburb)).toEqual({ parent_id: 421_168_573 })
+		expect(gaps.map((gap) => gap.id)).toEqual([suburb])
 	})
 })
 

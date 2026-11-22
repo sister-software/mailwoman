@@ -36,6 +36,7 @@ import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import { type FSTSourceIdentity, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
@@ -175,30 +176,39 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 		)
 
 		const rows = allRows<FanoutCandidate & { other_id: string }>(stmt)
-		const grouped = new Map<string, FanoutCandidate[]>()
+
+		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
+		// A Wikidata id an Overture division shares with a WOF record would otherwise join
+		// one fan-out group, where the division could take the record's score away.
+		// Each part resolves its own group, so the WOF and GeoNames places get the
+		// scores a build without the fold gives them.
+		const grouped = new Map<string, { wikidataID: string; candidates: FanoutCandidate[] }>()
 
 		for (const row of rows) {
-			const existing = grouped.get(row.other_id)
+			const key = `${row.other_id}\u0000${isOvertureFoldID(row.id) ? "overture" : "rest"}`
+			const existing = grouped.get(key)
 
 			if (existing) {
-				existing.push(row)
+				existing.candidates.push(row)
 			} else {
-				grouped.set(row.other_id, [row])
+				grouped.set(key, { wikidataID: row.other_id, candidates: [row] })
 			}
 		}
 
 		concordances = new Map<string, number[]>()
 
-		for (const [wikidataID, candidates] of grouped) {
+		for (const { wikidataID, candidates } of grouped.values()) {
 			const resolution = resolveConcordanceFanout(candidates)
 			recordFanout(fanout, candidates, resolution)
 
 			if (resolution.keep.length) {
-				concordances.set(wikidataID, resolution.keep)
+				concordances.set(wikidataID, [...(concordances.get(wikidataID) ?? []), ...resolution.keep])
 			}
 		}
 
-		progress(`${grouped.size} unique Wikidata IDs from ${rows.length} concordance rows`)
+		progress(
+			`${new Set(rows.map((row) => row.other_id)).size} unique Wikidata IDs from ${rows.length} concordance rows`
+		)
 
 		progress(
 			`fan-out: ${fanout.fannedGroups} ids name >1 place — ` +

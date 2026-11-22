@@ -349,6 +349,7 @@ export async function buildCandidate(
 				version: isoDate(),
 				createdAt: new Date().toISOString(),
 				foldCensus,
+				overturePart: result.overtureMatches != null,
 			})
 		)
 

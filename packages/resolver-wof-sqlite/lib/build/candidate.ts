@@ -6,6 +6,7 @@ import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -20,6 +21,7 @@ import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/impor
 import { applyCandidateKeyFold, type CandidateKeyFold } from "#candidate/key-fold"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
 import { refuseNicknamesOfNamesakes } from "#candidate/nickname-namesakes"
+import { stageOvertureTwins } from "#candidate/overture-twins"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
 	CANDIDATE_COLUMNS,
@@ -220,6 +222,18 @@ export interface BuildCandidateResult {
 	 * The count of places in `keyTailPlaces` with at least one stamped role row.
 	 */
 	keyTailWithRole: number
+
+	/**
+	 * The Overture divisions the admin database matched to a WOF record, copied into
+	 * `overture_wof_match`, or null when the admin database predates that table.
+	 */
+	overtureMatches: number | null
+
+	/**
+	 * The matched divisions' staged rows dropped on keys their WOF record holds,
+	 * or null with `overtureMatches`.
+	 */
+	overtureTwinRowsDropped: number | null
 }
 
 /**
@@ -244,6 +258,42 @@ function loadRegionAncestry(src: DatabaseClient<WOFDatabase>): { regionOf: Map<n
 	}
 
 	return { regionOf, multiRegion }
+}
+
+/**
+ * The two staging passes that delete rows by another place's rows, in order:
+ * the nickname refusal, then the Overture twins.
+ *
+ * The twins pass compares with the WOF rows the refusal keeps.
+ */
+async function refuseNicknamesAndTwins(
+	src: DatabaseClient<WOFDatabase>,
+	kdb: DatabaseClient<CandidateDatabase>,
+	attrs: Map<number, PlaceAttrs>,
+	progress: (phase: string, message: string) => void
+): Promise<{
+	nicknames: ReturnType<typeof refuseNicknamesOfNamesakes>
+	twins: Awaited<ReturnType<typeof stageOvertureTwins>>
+}> {
+	const nicknames = refuseNicknamesOfNamesakes(src, kdb, attrs)
+
+	progress(
+		"nicknames",
+		`${nicknames.rows.toLocaleString()} colloquial or unclassified alias rows refused on ` +
+			`${nicknames.keys.toLocaleString()} keys a populated place holds by a real name`
+	)
+
+	const twins = await stageOvertureTwins(src, kdb)
+
+	if (twins) {
+		progress(
+			"overture-twins",
+			`${twins.matches.toLocaleString()} Overture divisions matched to a WOF record. ` +
+				`${twins.rowsDropped.toLocaleString()} of their rows dropped on keys the WOF record holds`
+		)
+	}
+
+	return { nicknames, twins }
 }
 
 /**
@@ -370,7 +420,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			pop,
 			neg,
 			pkey,
-			imp: importance?.find(name, r.country as string | null, r.placetype as string | null, lat, lon) ?? null,
+			imp:
+				importance?.find(
+					name,
+					r.country as string | null,
+					r.placetype as string | null,
+					lat,
+					lon,
+					isOvertureFoldID(sid)
+				) ?? null,
 		}
 
 		attrs.set(sid, a)
@@ -491,13 +549,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	kdb.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
-	const nicknames = refuseNicknamesOfNamesakes(src, kdb, attrs)
-
-	progress(
-		"nicknames",
-		`${nicknames.rows.toLocaleString()} colloquial or unclassified alias rows refused on ` +
-			`${nicknames.keys.toLocaleString()} keys a populated place holds by a real name`
-	)
+	const { nicknames, twins } = await refuseNicknamesAndTwins(src, kdb, attrs, progress)
 
 	const roles = stampNameRoles({
 		src,
@@ -649,5 +701,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		importanceScored: importance ? importance.matched : null,
 		importanceFiltered: importance ? importance.refused : null,
 		populationEstimated: typeof importance?.stats.estimates === "number" ? importance.estimated : null,
+		overtureMatches: twins ? twins.matches : null,
+		overtureTwinRowsDropped: twins ? twins.rowsDropped : null,
 	}
 }

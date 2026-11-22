@@ -6,6 +6,7 @@
  *   alias row when a populated place holds the same key by a real name.
  */
 
+import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
@@ -112,10 +113,15 @@ export function refuseNicknamesOfNamesakes(
 	out.exec("CREATE INDEX temp.nickname_key_by_key ON nickname_key (name_key)")
 	out.exec("CREATE TEMP TABLE namesake_key (name_key TEXT PRIMARY KEY) WITHOUT ROWID")
 
+	// An Overture division is never a namesake.
+	// The gazetteer is a Collective Database whose Overture Divisions part is ODbL, and a WOF
+	// or GeoNames alias refused because of a division's row would be that part altering the rest.
+	// The fold writes no nickname kind on a division, so no Overture row holds a nickname to refuse either.
 	out.exec(
 		`INSERT OR IGNORE INTO namesake_key
 		 SELECT cs.name_key FROM cand_stage cs
 		 WHERE cs.population > 0
+			AND NOT (cs.spr_id >= ${OVERTURE_ID_BASE} AND cs.spr_id < ${GEONAMES_ID_BASE})
 			AND cs.name_key IN (SELECT name_key FROM nickname_key)
 			AND NOT EXISTS (SELECT 1 FROM nickname_key nk WHERE nk.spr_id = cs.spr_id AND nk.name_key = cs.name_key)`
 	)

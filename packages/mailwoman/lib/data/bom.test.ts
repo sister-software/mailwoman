@@ -91,6 +91,28 @@ describe("buildDataBOM over a bundle whose artifacts have different sources", ()
 	})
 })
 
+describe("buildDataBOM over the candidate gazetteer", () => {
+	it("nests the Overture Divisions part as its own ODbL component with its offer", () => {
+		const document = buildDataBOM({
+			mailwomanVersion: "11.3.0",
+			snapshot: { measuredAt: "2026-11-21T00:00:00.000Z", bucket: "https://example.org/", bundles: [] },
+		})
+
+		const candidate = document.components.find((entry) => entry["bom-ref"].startsWith("bundle/candidate/"))
+		const overture = candidate?.components?.find((part) => part.name === "overture-divisions")
+
+		expect(overture?.licenses).toEqual([{ expression: "ODbL-1.0" }])
+		expect(overture?.publisher).toBe("Overture Maps Foundation")
+
+		expect(overture?.externalReferences).toEqual([
+			{
+				type: "distribution",
+				url: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions-fold",
+			},
+		])
+	})
+})
+
 const SOURCE_BASE: Omit<MixedLayerSource, "source" | "deciding" | "basis" | "statement" | "obligationClass"> = {
 	records: 10,
 	regions: ["us-fl"],

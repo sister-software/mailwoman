@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -123,6 +124,82 @@ function buildFixtureAdminWithVariantRegion(path: PathBuilderLike): void {
 		INSERT INTO names VALUES (103, 'Indiana', 'region', 'US', 'eng', '', 1, 0);
 		INSERT INTO names VALUES (103, 'Illinois', 'region', 'US', 'eng', '', 0, 0);
 	`)
+}
+
+/**
+ * A `names` table for the admin fixture: Illinois's official name, Chicago's colloquial
+ * `Windy City`, and Illinois's alias bag `Land of Lincoln`.
+ */
+function addFixtureNames(path: PathBuilderLike): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE names (
+			id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+			country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+			privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+			lastmodified INTEGER NOT NULL DEFAULT 0
+		);
+		INSERT INTO names VALUES (101, 'Illinois', 'region', 'US', 'eng', '', 1, 0);
+		INSERT INTO names VALUES (200, 'Windy City', 'locality', 'US', 'eng', 'colloquial', 0, 0);
+		INSERT INTO place_search VALUES (101, 'Land of Lincoln');
+	`)
+}
+
+/**
+ * The rows an Overture Divisions part adds to the admin fixture, each placed
+ * where an unguarded cross-row pass would let it change a WOF row.
+ */
+function addFixtureOverturePart(path: PathBuilderLike): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+	const twin = OVERTURE_ID_BASE + 1
+	const region = OVERTURE_ID_BASE + 2
+	const namesake = OVERTURE_ID_BASE + 3
+	const child = OVERTURE_ID_BASE + 4
+
+	db.exec(`
+		-- Chicago's twin: the fold matched it to WOF 200 and kept its own row.
+		INSERT INTO spr VALUES (${twin}, 'Chicago', 'locality', 'US', 41.881, -87.631, 41.6, -87.9, 42.0, -87.5, -1, 0);
+		INSERT INTO place_population VALUES (${twin}, 2800000);
+		INSERT INTO place_search VALUES (${twin}, 'Chicagoland');
+		INSERT INTO ancestors VALUES (${twin}, 101, 'region');
+		CREATE TABLE overture_wof_match (overture_id INTEGER PRIMARY KEY, wof_id INTEGER NOT NULL, match_by TEXT NOT NULL);
+		INSERT INTO overture_wof_match VALUES (${twin}, 200, 'wikidata');
+
+		-- A region whose official name is Illinois's alias.
+		INSERT INTO spr VALUES (${region}, 'Land of Lincoln', 'region', 'US', 40.0, -89.0, 37.0, -91.5, 42.5, -87.0, -1, 0);
+		INSERT INTO names VALUES (${region}, 'Land of Lincoln', 'region', 'US', 'eng', '', 1, 0);
+
+		-- A populated place spelled like Chicago's nickname.
+		INSERT INTO spr VALUES (${namesake}, 'Windy City', 'locality', 'US', 41.0, -88.0, 41.0, -88.0, 41.0, -88.0, -1, 0);
+		INSERT INTO place_population VALUES (${namesake}, 1000);
+
+		-- A division whose parent is the WOF region.
+		INSERT INTO spr VALUES (${child}, 'Oak Park', 'locality', 'US', 41.885, -87.78, 41.86, -87.81, 41.91, -87.76, -1, 0);
+		INSERT INTO ancestors VALUES (${child}, 101, 'region');
+	`)
+}
+
+/**
+ * An importance source for the fixture, holding the Overture twin's score when `withOverture` is set.
+ */
+function buildFixtureOvertureImportance(path: PathBuilderLike, withOverture: boolean): void {
+	using db = new DatabaseClient<WOFDatabase>(path)
+
+	db.exec(`
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+			latitude REAL, longitude REAL, is_current INTEGER, is_deprecated INTEGER
+		);
+		CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL NOT NULL);
+	`)
+
+	if (withOverture) {
+		db.exec(`
+			INSERT INTO spr VALUES (${OVERTURE_ID_BASE + 1}, 'Chicago', 'locality', 'US', 41.881, -87.631, -1, 0);
+			INSERT INTO place_importance VALUES (${OVERTURE_ID_BASE + 1}, 0.9);
+		`)
+	}
 }
 
 function buildFixtureLocalities(path: PathBuilderLike): void {
@@ -422,6 +499,98 @@ describe("buildCandidateTable", () => {
 		for (const row of folded) {
 			expect(row).toMatchObject({ region_id: 0, neg_rank: 0, population: 0, importance: null, name_role: null })
 		}
+	})
+
+	// The Collective Database reading of the Overture Divisions part rests on this invariant:
+	// every cross-row pass reads an Overture row only to change another Overture row.
+	test("an Overture part leaves every other row, closure row and interval label as a build without it", async () => {
+		const baselineAdmin = scratch.path("baseline-admin.db")
+		const baselineImportance = scratch.path("baseline-importance.db")
+		const baselinePath = scratch.path("baseline.db")
+		const input = scratch.path("admin.db")
+		const importance = scratch.path("importance.db")
+		const output = scratch.path("candidate.db")
+
+		for (const path of [baselineAdmin, input]) {
+			buildFixtureAdmin(path)
+			addFixtureNames(path)
+		}
+
+		addFixtureOverturePart(input)
+		buildFixtureOvertureImportance(baselineImportance, false)
+		buildFixtureOvertureImportance(importance, true)
+
+		const baselineBuild = await buildCandidateTable({
+			input: baselineAdmin,
+			output: baselinePath,
+			importance: baselineImportance,
+		})
+
+		const result = await buildCandidateTable({ input, output, importance })
+
+		expect(baselineBuild.overtureMatches).toBeNull()
+		expect(result.overtureMatches).toBe(1)
+
+		using baseline = new DatabaseClient<WOFDatabase>(baselinePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+
+		const outsidePart = `NOT (spr_id >= ${OVERTURE_ID_BASE} AND spr_id < ${GEONAMES_ID_BASE})`
+
+		const otherRows = (handle: DatabaseClient<WOFDatabase>) =>
+			allRows<Record<string, unknown>>(
+				handle.prepare(
+					`SELECT c.*, cc.code, pt.placetype FROM candidate c
+					 JOIN country_codes cc ON cc.id = c.country_id JOIN placetype_codes pt ON pt.id = c.placetype_id
+					 WHERE NOT (c.spr_id >= ${OVERTURE_ID_BASE} AND c.spr_id < ${GEONAMES_ID_BASE}) ORDER BY c.spr_id, c.name_key`
+				)
+			).map(({ country_id: _country, placetype_id: _placetype, ...row }) => row)
+
+		expect(otherRows(db)).toEqual(otherRows(baseline))
+
+		// Each guarded pass would have changed a WOF row.
+		// A populated division whose primary name is Windy City would refuse Chicago's `windy city` alias.
+		// A division region's official name would refuse Illinois's `land of lincoln`.
+		// Chicago would read the score of the division beside it.
+		// A division under Illinois would widen Illinois's interval.
+		const holders = (name: string) =>
+			allRows<{ spr_id: number }>(
+				db.prepare("SELECT spr_id FROM candidate WHERE name_key = ?"),
+				normalizeLocalityForKey(name)
+			).map((row) => row.spr_id)
+
+		expect(holders("Windy City")).toContain(200)
+		expect(holders("Land of Lincoln")).toContain(101)
+
+		const chicago = getRow<{ importance: number | null }>(
+			db.prepare("SELECT importance FROM candidate WHERE spr_id = 200 AND is_primary = 1")
+		)
+
+		expect(chicago?.importance).toBeNull()
+
+		for (const table of ["candidate_ancestor", "candidate_interval"]) {
+			const rows = `SELECT * FROM ${table} WHERE ${outsidePart} ORDER BY 1, 2`
+			expect(allRows(db.prepare(rows))).toEqual(allRows(baseline.prepare(`SELECT * FROM ${table} ORDER BY 1, 2`)))
+		}
+
+		// The twin answers only on the name WOF's Chicago lacks, and the pair travels in the artifact.
+		const twinKeys = allRows<{ name_key: string }>(
+			db.prepare("SELECT name_key FROM candidate WHERE spr_id = ? ORDER BY name_key"),
+			OVERTURE_ID_BASE + 1
+		).map((row) => row.name_key)
+
+		expect(twinKeys).toEqual([normalizeLocalityForKey("Chicagoland")])
+		expect(result.overtureTwinRowsDropped).toBe(1)
+
+		expect(allRows(db.prepare("SELECT overture_id, wof_id, match_by FROM overture_wof_match"))).toEqual([
+			{ overture_id: OVERTURE_ID_BASE + 1, wof_id: 200, match_by: "wikidata" },
+		])
+
+		// A division under a WOF record is contained through its closure rows rather than an interval label.
+		expect(
+			allRows(db.prepare("SELECT parent_spr_id FROM candidate_ancestor WHERE spr_id = ?"), OVERTURE_ID_BASE + 4)
+		).toEqual([{ parent_spr_id: 101 }])
+
+		expect(getRow(db.prepare("SELECT 1 FROM candidate_interval WHERE spr_id = ?"), OVERTURE_ID_BASE + 4)).toBeNull()
 	})
 
 	test("a region's alias that is another same-country region's official name is refused, not staged", async () => {

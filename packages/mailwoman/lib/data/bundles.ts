@@ -134,6 +134,42 @@ export interface BundleRights {
 	 * They print as `unresolved:` lines.
 	 */
 	unresolved: readonly string[]
+
+	/**
+	 * The independent parts of a Collective Database, each under its own terms.
+	 *
+	 * Absent when the artifact holds no part with terms of its own.
+	 * The data BOM lists each part as a nested component of the artifact.
+	 */
+	parts?: readonly BundlePart[]
+}
+
+/**
+ * One independent part of a Collective Database: rows a reader can select,
+ * under one license, that no other row of the file depends on.
+ */
+export interface BundlePart {
+	/**
+	 * A short name for the part, unique within its bundle.
+	 */
+	name: string
+	publisher: string
+	/**
+	 * The SPDX expression governing the part.
+	 */
+	expression: string
+	/**
+	 * Which rows and tables make up the part.
+	 */
+	selects: string
+	/**
+	 * The credit the part's publisher asks for.
+	 */
+	attribution: string
+	/**
+	 * Where the part is offered by itself, such as an ODbL section 4.6 offer, when it is.
+	 */
+	offerURL?: string
 }
 
 /**
@@ -334,7 +370,27 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
 				"Credit OpenStreetMap contributors for the Northern Ireland postcode fold, and keep the Open Database License on that fold and on any database derived from it.",
-				"This file is a Derivative Database of Overture Divisions under the Open Database License 1.0, as a whole. The Overture rows share its tables, ids, ancestry and importance passes with the other sources' rows, so they form one database with them and are not an independent part of a collective database. Credit `© OpenStreetMap contributors, Overture Maps Foundation`, and keep the Open Database License on this file and on any database derived from it.",
+				"Credit `© OpenStreetMap contributors, Overture Maps Foundation` for the Overture Divisions part, and keep the Open Database License on that part and on any database derived from it. A candidate gazetteer that carries the `overture_wof_match` table is a Collective Database: its Overture Divisions part, the rows with ids 8000000000000 to 8999999999999 and that table, is independent, and the rest of the file keeps its sources' own terms. A candidate gazetteer without that table, the file served at 2026-08-25b among them, is a Derivative Database of Overture Divisions under the Open Database License 1.0 as a whole, because its Overture rows share its ancestry and importance passes with the other sources' rows.",
+			],
+			parts: [
+				{
+					name: "overture-divisions",
+					publisher: "Overture Maps Foundation",
+					expression: "ODbL-1.0",
+					selects:
+						"the rows whose spr_id is 8000000000000 to 8999999999999 in candidate, candidate_ancestor and candidate_interval, and the overture_wof_match table, in a file that carries that table",
+					attribution: "© OpenStreetMap contributors, Overture Maps Foundation",
+					offerURL: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions-fold",
+				},
+				{
+					name: "osm-ni-postcode-fold",
+					publisher: "OpenStreetMap contributors",
+					expression: "ODbL-1.0",
+					selects:
+						"the Northern Ireland postalcode rows whose spr_id is 9800000000000 to 9849999999999, less the 22 Prague district rows that share the range in the build at revision 2b9894111",
+					attribution: "© OpenStreetMap contributors",
+					offerURL: "https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold",
+				},
 			],
 			unresolved: [
 				"Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download.",

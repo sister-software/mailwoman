@@ -18,6 +18,7 @@ import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { createPhaseClock, formatPhaseTimings, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
+import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/overture-match-schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -157,7 +158,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const contributed: IngestCounts = { wof: 0, overture: 0, geonames: 0 }
 
 	{
-		using db = new DatabaseClient<WOFDatabase>(ingestPath)
+		using db = new DatabaseClient<WOFDatabase & OvertureWOFMatchDatabase>(ingestPath)
 
 		db.exec(`
 			PRAGMA page_size = 8192;
@@ -196,16 +197,24 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
 		)
 
-		// WOF holds every place it has a record of.
-		// A folded place that matches a WOF record adds its names to that record,
-		// and one that matches none is written and listed as a gap.
+		// WOF holds every place it has a record of, and a folded place that matches none is listed as a gap.
+		// A GeoNames place that matches a WOF record adds its names to that record.
+		// An Overture division keeps its own row either way, with the match recorded in
+		// the Overture part's `overture_wof_match`, because the gazetteer is a Collective
+		// Database whose Overture part is ODbL — see `admin/fold/overture.ts`.
 		phase("match-index", "indexing WOF records for the folds")
 		const index = buildWOFPlaceIndex(db)
 		const wof = { index, onGap: (gap: FoldGap) => void gaps.push(gap) }
 
 		phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
-		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease, undefined, wof)
-		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions written as their own rows`)
+		const overture = await ingestOvertureDivisions(db, overtureCountries, overtureRelease, undefined, wof)
+		overtureIngested = overture.written
+
+		phase(
+			"fold-overture",
+			`${overture.written.toLocaleString()} divisions written as their own rows, ` +
+				`${overture.matched.toLocaleString()} of them matched to a WOF record`
+		)
 
 		// The A-class admin fold for the zero-coverage locales — country + region nodes +
 		// locality ancestry — scoped to the countries in this run's geonames set.
@@ -216,8 +225,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 		index.dispose()
 
-		// A fold that matched every place it read writes no row of its own, only names on WOF
-		// records, so the manifest's sources are the row sources the database holds.
+		// A GeoNames fold that matched every place it read writes no row of its own, only names
+		// on WOF records, so the manifest's sources are the row sources the database holds.
 		for (const { source, rows } of db
 			.prepare(
 				`SELECT source, sum(n) AS rows FROM (

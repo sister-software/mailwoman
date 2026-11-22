@@ -33,7 +33,7 @@
 
 import { prettyJSON } from "@mailwoman/core/json"
 
-import { BUNDLES, PUBLIC_BUCKET_BASE_URL, type DataBundle } from "#data/bundles"
+import { BUNDLES, type BundlePart, PUBLIC_BUCKET_BASE_URL, type DataBundle } from "#data/bundles"
 import { Provenance, type InventoryEntry, type InventoryReport } from "#data/inventory"
 import {
 	isMixedLicenseExpression,
@@ -230,10 +230,36 @@ function bundleComponents(
 				...property("mailwoman:conditions", bundle.rights.conditions.join(" | ")),
 				...property("mailwoman:unresolved", bundle.rights.unresolved.join(" | ")),
 			],
+			...(bundle.rights.parts?.length
+				? {
+						components: bundle.rights.parts.map((part) => bundlePartComponent(bundleName, artifact.remotePath, part)),
+					}
+				: {}),
 		})
 	}
 
 	return components
+}
+
+/**
+ * One independent part of a Collective Database artifact, nested under the artifact's component.
+ */
+function bundlePartComponent(bundleName: string, remotePath: string, part: BundlePart): DataBOMComponent {
+	return {
+		type: "data",
+		"bom-ref": `bundle/${bundleName}/${remotePath}/part/${part.name}`,
+		publisher: part.publisher,
+		name: part.name,
+		version: remotePath.split("/").at(-2) ?? bundleName,
+		description: `An independent part of ${remotePath}, a Collective Database: ${part.selects}.`,
+		licenses: [{ expression: part.expression }],
+		...(part.offerURL ? { externalReferences: [{ type: "distribution", url: part.offerURL }] } : {}),
+		properties: [
+			...property("mailwoman:selects", part.selects),
+			...property("mailwoman:attributionText", part.attribution),
+			...property("mailwoman:offer", part.offerURL),
+		],
+	}
 }
 
 /**

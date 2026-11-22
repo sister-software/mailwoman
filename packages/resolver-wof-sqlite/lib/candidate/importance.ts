@@ -35,6 +35,7 @@
  *   at the position population assigned it.
  */
 
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -65,6 +66,10 @@ interface ScoredPlace {
 	lat: number
 	lon: number
 	importance: number
+	/**
+	 * Whether the scored place is a row of the Overture Divisions part.
+	 */
+	overture: boolean
 }
 
 /**
@@ -168,8 +173,20 @@ export class ImportanceIndex {
 	 *
 	 * The source column already contains a population-derived fallback where one exists.
 	 * A second fallback would make an absence indistinguishable from a measurement.
+	 *
+	 * The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
+	 * A row outside that part (`overtureRow` false) reads only scores of places outside it,
+	 * so an Overture division's Wikidata-joined score never reaches a WOF or GeoNames row.
+	 * An Overture row may read any score.
 	 */
-	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
+	find(
+		name: string,
+		country: string | null,
+		placetype: string | null,
+		lat: number,
+		lon: number,
+		overtureRow = false
+	): number | null {
 		const nameKey = normalizeLocalityForKey(name)
 
 		if (!nameKey) return null
@@ -180,8 +197,13 @@ export class ImportanceIndex {
 
 		let best: ScoredPlace | null = null
 		let bestKm = Infinity
+		let eligible = false
 
 		for (const place of group) {
+			if (place.overture && !overtureRow) continue
+
+			eligible = true
+
 			const km = haversine(lat, lon, place.lat, place.lon)
 
 			if (km < bestKm) {
@@ -189,6 +211,9 @@ export class ImportanceIndex {
 				best = place
 			}
 		}
+
+		// A row outside the Overture part reads a group of only Overture scores as an absent group.
+		if (!eligible) return null
 
 		if (!best || bestKm > IMPORTANCE_JOIN_RADIUS_KM) {
 			this.refused++
@@ -235,7 +260,7 @@ export function loadImportanceIndex(
 
 	for (const row of db
 		.prepare(
-			`SELECT s.name AS name, s.country AS country, s.placetype AS placetype,
+			`SELECT s.id AS id, s.name AS name, s.country AS country, s.placetype AS placetype,
 				s.latitude AS latitude, s.longitude AS longitude, i.importance AS importance
 			 FROM place_importance i JOIN spr s ON s.id = i.id
 			 WHERE s.is_current != 0 AND s.is_deprecated = 0`
@@ -260,7 +285,12 @@ export function loadImportanceIndex(
 			groups.set(key, group)
 		}
 
-		group.push({ lat: Number(row.latitude), lon: Number(row.longitude), importance })
+		group.push({
+			lat: Number(row.latitude),
+			lon: Number(row.longitude),
+			importance,
+			overture: isOvertureFoldID(Number(row.id)),
+		})
 
 		places++
 	}

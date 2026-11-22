@@ -5,6 +5,7 @@
  * @file Pass 3b of the candidate build — the containment sidecar (closure rows + interval labels).
  */
 
+import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { placetypeDepth } from "#ancestry"
@@ -77,7 +78,15 @@ export async function buildAncestorsSidecar(ctx: {
 			ancestorRows++
 		}
 
-		const canonical = edges[0]!.aid
+		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
+		// The interval tree links a place only to a parent of its own part, so an Overture
+		// division under a WOF record leaves that record's labels as they are without the fold.
+		// The closure rows above keep every edge, and containment across the parts
+		// reads them instead of the labels.
+		const childOverture = isOvertureFoldID(childID)
+		const canonical = edges.find((edge) => isOvertureFoldID(edge.aid) === childOverture)?.aid
+
+		if (typeof canonical !== "number") return
 
 		canonicalParentOf.set(childID, canonical)
 
@@ -138,8 +147,10 @@ export async function buildAncestorsSidecar(ctx: {
 
 	const roots = [...forest].filter((id) => !canonicalParentOf.has(id))
 
+	// The Overture part's trees are numbered after every other tree, so the other parts' labels
+	// are the labels a build without the fold gives them.
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass built
-	roots.sort((a, b) => a - b)
+	roots.sort((a, b) => Number(isOvertureFoldID(a)) - Number(isOvertureFoldID(b)) || a - b)
 
 	let counter = 0
 
