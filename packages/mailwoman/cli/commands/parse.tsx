@@ -328,6 +328,10 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 		)
 	}
 
+	// `--resolve` places a parsed tree and never geocodes, so it builds the
+	// gazetteer backend with zero session.
+	// A geocode session would also load the routed classifier and every data layer to hand back this one
+	// lookup: 3.1 s and 472 MB against 0.5 s and 176 MB for the backend, one run each on the lab host.
 	// A configured candidate database needs no WOF admin path.
 	const lookup = await createResolverBackend(mod, {
 		wofPaths: (await resolveCandidateDBPath()) ? "" : await requireCommandWOFPath(options),

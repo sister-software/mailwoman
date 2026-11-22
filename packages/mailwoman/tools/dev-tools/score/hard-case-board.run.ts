@@ -58,6 +58,10 @@ const wofPaths = await existingWOFDatabasePaths()
 if (!wofPaths.length)
 	throw new Error("no WOF databases found — this board grades the RESOLVED place, so it needs the gazetteer")
 
+// An evaluation arm, built by hand on purpose: it isolates the gazetteer FST.
+// One resolver and one classifier per locale serve every arm, and only the FST file differs between arms.
+// A geocode session loads the FST its selection lists and takes no FST as an input,
+// so it can't vary that one file.
 const resolver = createWOFResolver(await createResolverBackend(resolverMod, { wofPaths }))
 
 const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()

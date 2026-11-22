@@ -91,6 +91,11 @@ async function main(): Promise<void> {
 		throw new Error(`--country could not be derived from --locale ${locale}; pass it explicitly`)
 	}
 
+	// An evaluation arm, built by hand on purpose: it isolates one locale's weights
+	// and the candidate gazetteer.
+	// The engine has one classifier with no script routing and no rooftop, register, POI
+	// or observation layer, so every board row is graded on its admin coordinate.
+	// `--normalize false` turns input normalization off, a switch a geocode session doesn't take.
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = await createResolverBackend(mod, { dataRoot: dataRootPath(), wofPaths: [] })
