@@ -254,6 +254,49 @@ the corpus it was drawn from, because it depends on that corpus's rows. `resplit
 corpus manifest's `evaluation_groups` record. A new frozen set needs a new list, a new quota pass and a new
 re-split before any corpus trains on rows outside it.
 
+**Groups a training receipt requires stay in train.** A freeze and the quota each take whole groups out of
+training, and a receipt the next training config declares can need some of those groups in train. A
+`rendered-prominent-places` row's group is its place's WOF record, `wof-admin-<record>`, and that record's
+`wof-admin` rows sit in `wof-admin-<record>-…` groups. On corpus v0.8.22 the v14 confirmation freeze and the quota
+took 139 of the 16,425 prominent places out of training, and the prominent-place receipt (#3156) failed 11 of 813
+demand cells. `readRequiredTrainingGroups` in `tools/training/audits/required-groups.ts` reads the receipt's places
+table through the receipt's own reader and returns the WOF record of every required place in the countries the config
+admits. `freeze.run.ts --training-config <yaml>` and `quota.run.ts --config <yaml>` both skip every group of those
+records, and each records the skip in its output (`sampling.requiredTrainingGroups`, `requiredTrainingGroups`) and
+prints it by country. A row of another source that writes the place keeps its own group, and a draw can still take
+that group. `freeze.run.ts --dry-run` prints the pool's counts and the skip and draws no row.
+
+**A forward reserve.** A collection frozen from a build's held-out places holds only the rows the build adds, so a
+build that adds little leaves the objective countries under their group target (the v14 record, section 7).
+`freeze.run.ts --reserve-groups-per-country <n>` draws `n` groups per country and row kind from the corpus's train
+rows instead (`heldout/dataset/reserve.ts`), never a group with a held-out row, an excluded collection's group or
+a required group. Its manifest records the collection kind `reserve` and the sampling method
+`per-group-train-pool-hash-order`. Listed in the evaluation-group list with the cycle's other collections, its
+groups go to `test` in the re-split, so the candidate trained on it never reads them, and the next cycle freezes its
+confirmation collection from them. A reserve is never scored: `release/collection.ts` refuses one.
+
+**The pass proof runs before any re-split.** A re-split commits a training run to the collections its list names.
+Before it runs, `release/pass/proof.run.ts` asks whether the evaluator can return `pass` on those collections under
+the specification that will grade the run (principle P3):
+
+```sh
+node packages/mailwoman/tools/eval-harness/release/pass/proof.run.ts \
+  --datasets <collection manifest>,<probe manifest> --provenance <audit provenance>,<probe audit provenance> \
+  --spec <spec .json> --role confirmation --out <report .json>
+```
+
+It reads each manifest's row entries (identity, country, source, kind and group) and the overlap audit's provenance
+classes. It reads no rows file, so no label, and it scores no model. Each row's exact flags are drawn from a hash of
+its identity, at 0.85 for the published arm and 0.95 for the candidate, then at 0.85 for both. The first arm must
+read `pass` and the second mustn't, or the command exits 1. An unregistered artifact identity gets a synthetic
+digest. A `withoutTags` selector needs labels. The proof drops it and lists the requirement, and that check's rows
+are an upper bound. A check that's insufficient on the first arm reports its rows and groups before any GPU time is
+spent on a corpus the collections can't grade.
+
+Run on the three v13 development collections with their v8.9.0 audits on 2026-11-22, the proof read `pass` on all 16
+checks at 0.95 against 0.85 (136,823 rows in 109,248 groups, `postal_unit` read without its tag selector), and `fail`
+at 0.85 against 0.85.
+
 Under this policy a corpus's test split holds no probe row outside the frozen groups: v0.8.19's test split holds
 126 of 50,000 `invented-po-box-cedex` rows, 15 of 6,000 `invented-postal-guideline` rows and 70 of 10,000
 `invented-postal-unit-guideline` rows. A larger probe draw therefore comes from a render that no

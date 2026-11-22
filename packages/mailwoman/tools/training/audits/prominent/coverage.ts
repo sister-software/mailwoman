@@ -125,18 +125,26 @@ export interface EpochRates {
  * @throws For a requested source with no train rows, as the sampler refuses one.
  */
 export function epochRates(measure: EpochMeasure): EpochRates {
-	const admit = countryAdmission(measure.countryWeights)
 	const sources = countSourceShapes(measure.trainShapes, measure.countryWeights)
 
 	return {
 		draws: measure.draws,
 		perAdmittedRow: drawsPerAdmittedRow(measure.requested, measure.draws, sources),
-		admission: new Map(
-			Object.keys(measure.countryWeights)
-				.map((country) => [country, admit(country)] as const)
-				.filter(([, chance]) => chance > 0)
-		),
+		admission: admittedCountries(measure.countryWeights),
 	}
+}
+
+/**
+ * Every country a config's weights admit, with its admission chance.
+ */
+export function admittedCountries(countryWeights: Readonly<Record<string, number>>): ReadonlyMap<string, number> {
+	const admit = countryAdmission(countryWeights)
+
+	return new Map(
+		Object.keys(countryWeights)
+			.map((country) => [country, admit(country)] as const)
+			.filter(([, chance]) => chance > 0)
+	)
 }
 
 /**
@@ -198,9 +206,15 @@ export const GEONAMES_AUDIT_BANDS_KM = [0, 2, 5, 10, 15] as const
 const GEONAMES_AUDIT_SAMPLE = 5
 
 /**
- * The failing places and cells the report lists by name, after their counts.
+ * The failing cells the report lists by name, after their count.
+ * Every failing form is listed.
  */
 const LISTED_FAILURES = 200
+
+/**
+ * The decile-1 places without draws a failing cell names.
+ */
+const LISTED_UNDRAWN_PLACES = 10
 
 function quoted(value: string): string {
 	return `'${escapeSQLString(value)}'`
@@ -292,27 +306,24 @@ function placesRecordPath(placesPath: string): string {
  * - `cells`: per country, band and shape, the rows and draws, decile 1's rows
  *   and draws, and decile 1's population share.
  */
-export async function createProminentCoverageTables(
+function valuesSQL(entries: ReadonlyMap<string, number>): string {
+	return [...entries].map(([key, value]) => `(${quoted(key)}, ${value})`).join(", ")
+}
+
+/**
+ * Creates `admission` from the admitted countries and `ranked` from a places table:
+ * every ranked place, with `required` set on the places the rule requires.
+ */
+export async function createRankedPlacesTable(
 	db: DisposableDuckDB,
 	placesPath: string,
-	shortAdminPath: string,
-	rates: EpochRates
+	admission: ReadonlyMap<string, number>
 ): Promise<void> {
-	await db.run("CREATE OR REPLACE TABLE source_rates (source VARCHAR, per_row DOUBLE)")
 	await db.run("CREATE OR REPLACE TABLE admission (country VARCHAR, chance DOUBLE)")
 
-	const values = (entries: ReadonlyMap<string, number>) =>
-		[...entries].map(([key, value]) => `(${quoted(key)}, ${value})`).join(", ")
-
-	if (rates.perAdmittedRow.size) {
-		await db.run(`INSERT INTO source_rates VALUES ${values(rates.perAdmittedRow)}`)
+	if (admission.size) {
+		await db.run(`INSERT INTO admission VALUES ${valuesSQL(admission)}`)
 	}
-
-	if (rates.admission.size) {
-		await db.run(`INSERT INTO admission VALUES ${values(rates.admission)}`)
-	}
-
-	await db.run(`CREATE OR REPLACE TABLE epoch AS SELECT ${rates.draws}::DOUBLE AS draws`)
 
 	await db.run(
 		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, ` +
@@ -320,6 +331,67 @@ export async function createProminentCoverageTables(
 			"(p.score_source <> 'geonames' OR p.geonames_check = 'verified') AS required " +
 			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) WHERE p.rank IS NOT NULL`
 	)
+}
+
+/**
+ * One place the receipt requires: its WOF record and country.
+ */
+export interface RequiredProminentPlace {
+	spr_id: number
+	country: string
+}
+
+/**
+ * Every place the receipt requires for a config's country weights, read from the places table
+ * after {@linkcode readProminentPlacesRecord} checks it.
+ */
+export async function readRequiredProminentPlaces(
+	placesPath: string,
+	countryWeights: Readonly<Record<string, number>>,
+	limits?: DuckDBLimits
+): Promise<{ record: ProminentPlacesRecord; places: RequiredProminentPlace[] }> {
+	const record = await readProminentPlacesRecord(placesPath)
+
+	using db = await openDuckDB(limits)
+
+	await createRankedPlacesTable(db, placesPath, admittedCountries(countryWeights))
+
+	const places = await queryRows(
+		db,
+		"SELECT spr_id, country FROM ranked WHERE required ORDER BY spr_id",
+		(row): RequiredProminentPlace => ({ spr_id: row.number("spr_id"), country: row.text("country") })
+	)
+
+	return { record, places }
+}
+
+/**
+ * The WOF record a corpus row's group belongs to, as a DuckDB `BIGINT` expression
+ * over a group expression, `NULL` for a group of no WOF record.
+ *
+ * A `rendered-prominent-places` row's group is its `base_source_id`, `wof-admin-<record>`.
+ * A `wof-admin` row's is `wof-admin-<record>-<name slot>-<hierarchy variant>`.
+ *
+ * Both read back as `<record>`, so the expression matches every group a place's train rows sit in.
+ */
+export function prominentPlaceRecordSQL(group: string): string {
+	return `TRY_CAST(regexp_extract(${group}, '^wof-admin-([0-9]+)(-|$)', 1) AS BIGINT)`
+}
+
+export async function createProminentCoverageTables(
+	db: DisposableDuckDB,
+	placesPath: string,
+	shortAdminPath: string,
+	rates: EpochRates
+): Promise<void> {
+	await db.run("CREATE OR REPLACE TABLE source_rates (source VARCHAR, per_row DOUBLE)")
+
+	if (rates.perAdmittedRow.size) {
+		await db.run(`INSERT INTO source_rates VALUES ${valuesSQL(rates.perAdmittedRow)}`)
+	}
+
+	await db.run(`CREATE OR REPLACE TABLE epoch AS SELECT ${rates.draws}::DOUBLE AS draws`)
+	await createRankedPlacesTable(db, placesPath, rates.admission)
 
 	// A row's expected draws: its source's draws per admitted row times its country's admission chance.
 	await db.run(
@@ -484,6 +556,15 @@ export interface ProminentCoverageReport {
 			decile1_draw_share: number
 			target: number
 			deficit_draws: number
+			/**
+			 * The cell's writable decile-1 places with a form in the shape
+			 * and no expected draws, required or not.
+			 *
+			 * Presence lists only required places, so a cell short of its target
+			 * because a place outside the selection lost its rows is explained here.
+			 */
+			undrawn_decile1_places: number
+			undrawn_examples: string[]
 		}>
 	}
 	coherence: { rows: number; by_source: Array<{ source: string; shape: string; rows: number }> }
@@ -656,7 +737,7 @@ export async function evaluateProminentCoverage(
 	const failingPlaces = await queryRows(
 		db,
 		"SELECT h.country, h.band, h.query_shape, h.spr_id, r.name FROM place_shapes h JOIN ranked r USING (spr_id) " +
-			`WHERE r.required AND h.rows = 0 ORDER BY r.rank, h.country, h.band, h.query_shape LIMIT ${LISTED_FAILURES}`,
+			"WHERE r.required AND h.rows = 0 ORDER BY r.rank, h.country, h.band, h.query_shape",
 		(row) => ({
 			country: row.text("country"),
 			band: row.text("band"),
@@ -754,6 +835,21 @@ export async function evaluateProminentCoverage(
 
 	const failingCells = judged.filter((cell) => !cell.passed && !cell.unwritable)
 
+	const undrawn = Map.groupBy(
+		await queryRows(
+			db,
+			"SELECT p.country, p.band, p.query_shape, p.spr_id, r.name FROM place_shapes p JOIN ranked r USING (spr_id) " +
+				`WHERE r.decile = 1 AND ${writablePlaceSQL("r")} AND p.draws = 0 ORDER BY r.rank, p.spr_id`,
+			(row) => ({
+				country: row.text("country"),
+				band: row.text("band"),
+				query_shape: row.text("query_shape"),
+				place: `${row.text("name")} (${row.number("spr_id")})`,
+			})
+		),
+		demandCellKey
+	)
+
 	const unwritableCells = judged
 		.filter((cell) => cell.unwritable)
 		.map((cell) => ({
@@ -800,6 +896,10 @@ export async function evaluateProminentCoverage(
 				decile1_draw_share: cell.share,
 				target: cell.target!,
 				deficit_draws: decileOneDeficit(cell.draws, cell.decile1_draws, cell.target!),
+				undrawn_decile1_places: undrawn.get(demandCellKey(cell))?.length ?? 0,
+				undrawn_examples: (undrawn.get(demandCellKey(cell)) ?? [])
+					.slice(0, LISTED_UNDRAWN_PLACES)
+					.map((entry) => entry.place),
 			})),
 		},
 		coherence: {

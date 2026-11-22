@@ -202,6 +202,34 @@ export function evaluationGroupsIdentity(
 }
 
 /**
+ * One training receipt whose required groups a held-out draw skipped.
+ */
+export interface RequiredGroupReceipt {
+	receipt: "prominent_place_coverage"
+	/**
+	 * The places table the receipt reads, as the training config names it.
+	 */
+	places: string
+	places_sha256: string
+	required_places: number
+}
+
+/**
+ * What a held-out draw (a freeze, a reserve or the validation quota) skipped
+ * because a training receipt requires the groups in train: the receipts it read,
+ * and the required groups its pool held, by country.
+ */
+export interface RequiredGroupSkip {
+	receipts: RequiredGroupReceipt[]
+	requiredRecords: number
+	skippedGroups: number
+	/**
+	 * Skipped groups per country of the pool's rows, sorted by country.
+	 */
+	byCountry: Record<string, number>
+}
+
+/**
  * The group of one corpus row: its `base_source_id` when it was derived from a base row,
  * else its own `source_id`, read up to the last `#`.
  *

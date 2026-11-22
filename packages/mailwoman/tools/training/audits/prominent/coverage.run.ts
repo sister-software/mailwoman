@@ -64,6 +64,14 @@ console.log(
 		`${demand.unwritable} are unwritable`
 )
 
+for (const cell of demand.failing) {
+	console.log(
+		`    failing: ${cell.country} ${cell.band} ${cell.query_shape}: decile-1 share ${cell.decile1_draw_share.toFixed(4)} ` +
+			`against ${cell.target.toFixed(4)}; ${cell.undrawn_decile1_places} writable decile-1 places without draws` +
+			(cell.undrawn_examples.length ? ` (${cell.undrawn_examples.join(", ")})` : "")
+	)
+}
+
 for (const cell of demand.unwritable_cells) {
 	console.log(
 		`    unwritable: ${cell.country} ${cell.band} ${cell.query_shape}: ` +

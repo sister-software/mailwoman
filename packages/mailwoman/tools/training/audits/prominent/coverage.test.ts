@@ -238,6 +238,24 @@ describe("prominent_place_coverage", () => {
 		)
 	})
 
+	it("names a failing cell's decile-1 places without draws, including one presence doesn't require", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		// Delta is in decile 1 but outside the selection, so presence never lists it.
+		const withDelta = PLACES_SQL.replace(
+			") AS t(",
+			", (5, 'GB', 'locality', 'Delta', 'delta', 1, 3, false, false, 'importance', NULL, NULL, NULL, 900, NULL, " +
+				"'England', ['ENG'], 'none', false)) AS t("
+		)
+
+		const { presence, demand_share } = await evaluate(directory.path.toString(), COVERED, RATES, withDelta)
+		const bare = demand_share.failing.find((cell) => cell.band === "locality" && cell.query_shape === "bare")!
+
+		expect(presence.failing.map((form) => form.name)).not.toContain("Delta")
+		expect(bare.undrawn_examples).toContain("Delta (5)")
+		expect(bare.undrawn_decile1_places).toBe(bare.undrawn_examples.length)
+	})
+
 	it("weighs decile 1's rows by their expected draws, not their count on disk", async () => {
 		await using directory = await temporaryDirectory("prominent-coverage-")
 

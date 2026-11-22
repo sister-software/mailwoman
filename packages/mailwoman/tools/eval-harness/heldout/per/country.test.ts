@@ -200,6 +200,48 @@ describe("sampleHeldoutRows grouping", () => {
 		expect(unread.rule.excludesRead).toEqual([{ datasetID: "confirm", version: "w" }])
 	})
 
+	it("never draws a group a training receipt requires, and records the skip by country", async () => {
+		const manifest = await writeFixtureCorpus(
+			"required",
+			[
+				`('Bujumbura', ${spans}, 'BI', 'rendered-prominent-places', 'rendered-prominent-places-aa', 'wof-admin-101')`,
+				`('Bujumbura', ${spans}, 'BI', 'wof-admin', 'wof-admin-101-default-self', NULL)`,
+				`('BUJUMBURA', ${spans}, 'BI', 'wof-admin', 'wof-admin-101-default-self+case-upper', 'wof-admin-101-default-self')`,
+				`('Gitega', ${spans}, 'BI', 'rendered-prominent-places', 'rendered-prominent-places-bb', 'wof-admin-202')`,
+				`('Gitega', ${spans}, 'BI', 'wof-admin', 'wof-admin-202-default-self', NULL)`,
+				`('Main', ${spans}, 'BI', 'oa-bi', 'wof-admin-101x', NULL)`,
+			].join(", "),
+			columns
+		)
+
+		const required = {
+			receipts: [
+				{
+					receipt: "prominent_place_coverage" as const,
+					places: "/data/places.parquet",
+					places_sha256: "0".repeat(64),
+					required_places: 1,
+				},
+			],
+			records: new Map([[101, "BI"]]),
+		}
+
+		const { rows, rule } = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7, {}, [], [], required)
+
+		expect(rows.map((row) => row.group).toSorted()).toEqual([
+			"wof-admin-101x",
+			"wof-admin-202",
+			"wof-admin-202-default-self",
+		])
+
+		expect(rule.requiredTrainingGroups).toEqual({
+			receipts: required.receipts,
+			requiredRecords: 1,
+			skippedGroups: 2,
+			byCountry: { BI: 2 },
+		})
+	})
+
 	it("refuses a file that lacks the base_source_id column", async () => {
 		const manifest = await writeFixtureCorpus(
 			"ungrouped",

@@ -11,6 +11,10 @@
  *   Groups are taken lowest `hashUint32` first. A country whose pool is under its target keeps the pool,
  *   and the run lists it.
  *
+ *   A group one of the config's training receipts requires stays in
+ *   train (`tools/training/audits/required-groups`).
+ *   The file records the skip under `requiredTrainingGroups`, and the run prints it by country.
+ *
  *   Usage:
  *     node packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts \
  *       --manifest <overlay>/MANIFEST.json --config <training config .yaml> \
@@ -35,6 +39,7 @@ import {
 } from "@mailwoman/corpus/utils/validation-groups"
 
 import { readValidationPool, validationFloorsFromConfig } from "#tools/dev-tools/corpus/validation/quota"
+import { describeRequiredGroupSkip, readRequiredTrainingGroups } from "#tools/training/audits/required-groups"
 import { loadTrainingConfig } from "#tools/training/config"
 
 const { values } = parseArguments({
@@ -68,12 +73,15 @@ const quota: ValidationQuota = {
 }
 
 const frozen = await readEvaluationGroups(values["evaluation-groups"])
-const floors = validationFloorsFromConfig(await loadTrainingConfig(values.config))
+const config = await loadTrainingConfig(values.config)
+const floors = validationFloorsFromConfig(config)
+const required = await readRequiredTrainingGroups(config)
 
-const { candidates, totals, files } = await readValidationPool({
+const { candidates, totals, files, skipped } = await readValidationPool({
 	manifest: values.manifest,
 	frozen,
 	capRows: quota.capRows,
+	required,
 	onProgress: (read, all) => {
 		if (read % 100 === 0 || read === all) {
 			console.error(`validation quota: ${read}/${all} files`)
@@ -102,6 +110,7 @@ const file: ValidationGroupsFile = {
 	},
 	config: { path: values.config, sha256: await sha256File(values.config) },
 	evaluationGroups: evaluationGroupsIdentity(frozen),
+	...(skipped ? { requiredTrainingGroups: skipped } : {}),
 	quota,
 	countries: selected.countries,
 	groups: selected.groups,
@@ -116,6 +125,12 @@ console.log(
 	`${values.out}: ${selected.groups.length} groups, ${rows} rows in ${Object.keys(selected.countries).length} countries ` +
 		`from ${files} files`
 )
+
+if (skipped) {
+	for (const line of describeRequiredGroupSkip(skipped)) {
+		console.log(line)
+	}
+}
 
 for (const [country, selection] of exhausted) {
 	console.log(

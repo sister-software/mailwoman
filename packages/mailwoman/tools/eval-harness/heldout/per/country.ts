@@ -32,6 +32,7 @@ import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
+import type { RequiredGroupSkip } from "@mailwoman/corpus/utils/evaluation-groups"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
@@ -39,6 +40,12 @@ import type { PathBuilderLike } from "path-ts"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import type { HeldoutGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode/outcome"
 import { scoreExactParseUnderConvention, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
+import {
+	createRequiredGroupsTable,
+	requiredGroupSkip,
+	requiredGroupSQL,
+	type RequiredTrainingGroups,
+} from "#tools/training/audits/required-groups"
 
 /**
  * One held-out row, in the corpus parquet schema.
@@ -237,7 +244,7 @@ export function heldoutRowKind(source: string): HeldoutRowKind {
  * A DuckDB boolean expression, true when `column` names a gazetteer source.
  * It classifies as {@linkcode heldoutRowKind} does.
  */
-function gazetteerSourceSQL(column: string): string {
+export function gazetteerSourceSQL(column: string): string {
 	const { prefixes, sources } = HELDOUT_GAZETTEER_SOURCES
 	const literal = (value: string) => `'${escapeSQLString(value)}'`
 
@@ -353,13 +360,26 @@ export interface HeldoutSamplingRule {
 	 * The evaluation-only sources draw this way, and so do the capability-probe renders
 	 * (`heldout/probes/build.ts`), whose strata are each leg's rendered templates.
 	 *
+	 * `per-group-train-pool-hash-order`: a forward reserve (`heldout/dataset/reserve`):
+	 * `perCountry` groups per country and row kind from the corpus's train rows,
+	 * in the order of a seeded hash of the group, and one row per record of each.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row" | "per-stratum-hash-order"
+	method:
+		| "per-record-id-country-kind-hash-order"
+		| "per-group-text-hash-order"
+		| "every-row"
+		| "per-stratum-hash-order"
+		| "per-group-train-pool-hash-order"
 	/**
-	 * Rows drawn per country and row kind.
+	 * Rows drawn per country and row kind, or groups for `per-group-train-pool-hash-order`.
 	 */
 	perCountry: number
+	/**
+	 * A reserve's groups drawn in each country and row kind.
+	 */
+	reserveGroups?: Array<{ country: string; kind: HeldoutRowKind; groups: number }>
 	/**
 	 * Mixed into the order hash; `null` orders by the raw text hash without a seed.
 	 */
@@ -380,6 +400,11 @@ export interface HeldoutSamplingRule {
 	 * Manifest file paths the sample didn't read, such as a file that lacks a grouping column.
 	 */
 	skippedFiles?: string[]
+	/**
+	 * The training receipts whose required groups the sample skipped, and the count of
+	 * pool groups skipped per country (`tools/training/audits/required-groups`).
+	 */
+	requiredTrainingGroups?: RequiredGroupSkip
 	/**
 	 * The gazetteer source table the per-kind quota read ({@linkcode HELDOUT_GAZETTEER_SOURCES}).
 	 *
@@ -427,7 +452,8 @@ export async function sampleHeldoutRows(
 	seed: number | null = null,
 	limits: DuckDBLimits = {},
 	exclusions: readonly HeldoutSampleExclusion[] = [],
-	skipFiles: readonly string[] = []
+	skipFiles: readonly string[] = [],
+	required: RequiredTrainingGroups | null = null
 ): Promise<{
 	rows: HeldoutRow[]
 	counts: HeldoutCellCount[]
@@ -526,14 +552,38 @@ export async function sampleHeldoutRows(
 	// renderings of one record under its id, or renderings whose ids differ after the `#`.
 	// The sample and the available counts therefore read one row per record, the first in sample order.
 	// Rows without a `source_id` are identified by their text and keep every distinct row.
-	// A row whose group (`heldoutRowGroup`) an excluded dataset holds is never drawn.
-	const source =
-		`(SELECT DISTINCT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id ` +
+	await createRequiredGroupsTable(db, required ?? { records: new Map() })
+
+	// A row whose group (`heldoutRowGroup`) an excluded dataset holds is never drawn,
+	// and neither is a row whose group a training receipt requires (`requiredGroupSQL`).
+	const group = recordIDSQL("coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR))")
+
+	const pool =
 		`FROM read_parquet([${files.map(quote).join(", ")}], union_by_name = true, filename = true) t ` +
 		`WHERE (t.filename NOT IN (SELECT file FROM attribute_files) ` +
 		`OR (t.filename, CAST(t.source_id AS VARCHAR)) IN (SELECT (file, source_id) FROM attribute_test)) ` +
-		`AND ${recordIDSQL("coalesce(CAST(t.base_source_id AS VARCHAR), CAST(t.source_id AS VARCHAR))")} NOT IN (SELECT k FROM excluded_groups) ` +
+		`AND ${group} NOT IN (SELECT k FROM excluded_groups)`
+
+	const source =
+		`(SELECT DISTINCT raw, span_starts, span_ends, span_tags, country, source, source_id, base_source_id ` +
+		`${pool} AND NOT ${requiredGroupSQL(group)} ` +
 		`QUALIFY source_id IS NULL OR row_number() OVER (PARTITION BY source, ${recordIDSQL("source_id")} ORDER BY ${heldoutSampleOrder(seed)}) = 1)`
+
+	const skipped = required
+		? requiredGroupSkip(
+				required,
+				new Map(
+					(
+						await db.runAndReadAll(
+							`SELECT coalesce(t.country, 'ZZ') AS country, count(DISTINCT ${group}) AS n ${pool} ` +
+								`AND ${requiredGroupSQL(group)} GROUP BY ALL`
+						)
+					)
+						.getRowObjects()
+						.map((row) => [String(row.country), Number(row.n)] as const)
+				)
+			)
+		: null
 
 	const gazetteer = gazetteerSourceSQL("source")
 
@@ -592,6 +642,7 @@ export async function sampleHeldoutRows(
 		...(against ? { excludes: against } : {}),
 		...(read.length ? { excludesRead: read } : {}),
 		...(skipFiles.length ? { skippedFiles: [...skipFiles].toSorted() } : {}),
+		...(skipped ? { requiredTrainingGroups: skipped } : {}),
 		gazetteerSources: HELDOUT_GAZETTEER_SOURCES,
 	}
 

@@ -73,7 +73,6 @@ import {
 	heldoutWeightsLocale,
 	readHeldoutLocalePackages,
 	type ProvenanceHistory,
-	type ProvenanceRecord,
 	sampleHeldoutRows,
 	scoreHeldoutArm,
 } from "#tools/eval-harness/heldout/per/country"
@@ -88,12 +87,9 @@ import {
 	splitPairedOutcomes,
 } from "#tools/eval-harness/heldout/per/paired-splits"
 import { type HeldoutParseSource, parseHeldoutRows } from "#tools/eval-harness/heldout/per/parse-cache"
+import { readProvenanceHistory } from "#tools/eval-harness/heldout/per/provenance-history"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
-import {
-	capabilityProbeSources,
-	HELDOUT_PROVENANCE_CLASSES,
-	readReleaseSpec,
-} from "#tools/eval-harness/release/requirements"
+import { capabilityProbeSources, readReleaseSpec } from "#tools/eval-harness/release/requirements"
 
 const { values } = parseArguments({
 	options: {
@@ -277,40 +273,7 @@ async function scoreAndReport(): Promise<void> {
 	const provenancePaths = values.provenance ? splitList(values.provenance) : []
 
 	if (provenancePaths.length) {
-		const merged = new Map<string, ProvenanceRecord>()
-
-		for (const path of provenancePaths) {
-			const file = await readLocalJSONFile<{
-				rows?: Record<string, ProvenanceRecord>
-			}>(path)
-
-			if (!file.rows) throw new Error(`${path} holds no rows object`)
-
-			for (const [rowID, record] of Object.entries(file.rows)) {
-				if (
-					!(HELDOUT_PROVENANCE_CLASSES as readonly string[]).includes(record.provenance) ||
-					(record.provenance as string) === "unknown"
-				) {
-					throw new Error(`${path} row ${rowID} has provenance ${String(record.provenance)}`)
-				}
-
-				if (typeof record.evidence !== "string" || !record.evidence) {
-					throw new Error(`${path} row ${rowID} records no evidence`)
-				}
-
-				const earlier = merged.get(rowID)
-
-				if (earlier && earlier.provenance !== record.provenance) {
-					throw new Error(
-						`${path} classes row ${rowID} ${record.provenance}; an earlier file classes it ${earlier.provenance}`
-					)
-				}
-
-				merged.set(rowID, earlier ?? record)
-			}
-		}
-
-		history = merged
+		history = await readProvenanceHistory(provenancePaths)
 	}
 
 	const { rows, counts, dataset } = values.dataset
