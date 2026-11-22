@@ -627,6 +627,9 @@ export const localeRecipe: CorpusRecipe = {
 		// Each part's sampler gets its own generator below, so this one drives rendering only.
 		const random = makeMulberry32(opts.seed)
 		const regionRandom = regionDrawRandom(opts.seed)
+		// country-branch: a run that states no country renders Germany.
+		// The commit that added the default recorded no reason, and a required
+		// `country` option would replace it.
 		const country = (opts.country ?? "DE").toUpperCase()
 		const countrySource = COUNTRY_SOURCES[country]
 

@@ -40,6 +40,8 @@ const geoDeps = {
 	classifier,
 	resolver,
 	databases: databases.for,
+	// country-branch: a batch run that states no country resolves every row as a US address.
+	// The commit that added the fallback recorded no reason, and the region of `cfg.locale` would replace it.
 	defaultCountry: { country: cfg.country ?? "US", source: "caller" },
 	placeCountry: "none",
 } as const

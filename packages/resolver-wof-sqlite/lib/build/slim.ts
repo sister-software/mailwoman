@@ -103,6 +103,9 @@ interface BuildSchema {
 }
 
 export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<BuildSlimResult> {
+	// country-branch: a slim build that states no countries keeps the places of one country, the US.
+	// The commit that added the default recorded no reason, and a required
+	// `countries` option would replace it.
 	const countries = (opts.countries ?? ["US"]).map((c) => c.toUpperCase())
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})

@@ -51,6 +51,9 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 		: ["Analyzing input shape…", "Running neural classifier…"]
 }
 
+// country-branch: the demo opens on the en-us weights.
+// The commit that added the constant recorded no reason, and the first locale
+// of the releases manifest would replace it.
 /**
  * Locale the demo opens on.
  */

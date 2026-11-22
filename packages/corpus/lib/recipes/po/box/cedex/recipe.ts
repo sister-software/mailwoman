@@ -188,6 +188,9 @@ export const poBoxCedexRecipe: CorpusRecipe = {
 				locale,
 				source,
 				source_id: recipeSourceID(source, components),
+				// country-branch: each of the five countries this recipe renders has its
+				// own skeleton source and license line.
+				// The license of each source in `data/corpus-source-inputs.json` would replace the chain.
 				license:
 					country === "CA"
 						? "GeoNames CA (CC-BY 4.0) locality skeletons + Canada Post box forms (corpus templates); postcodes synthesized to the codex CA pattern"

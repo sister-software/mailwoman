@@ -346,6 +346,8 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 }
 
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
+	// country-branch: en-us is the weights locale a lookup runs under when the caller states none.
+	// A default read from the installed weights packages would replace the literal.
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
 	let resolved: Awaited<ReturnType<typeof resolveWeights>>
 

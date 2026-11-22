@@ -238,8 +238,13 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildPostcodePrefixResult {
 	const { sourcePath, adminPath, country, level } = options
 
+	// country-branch: a US prefix is the first three digits of a ZIP code,
+	// and the US build reads its own sources.
+	// A codex rule for each country's postcode prefix would replace the branch.
 	if (country === "us") return buildUSPostcodePrefixIndex(options)
 
+	// country-branch: the rest of this function groups GB units by outward code, the one other rule written.
+	// A codex rule for each country's postcode prefix would replace the guard.
 	if (country !== "gb") {
 		throw new Error(
 			`postcode-prefix: no ancestry rule for country "${country}". GB and US are implemented; a new one needs a ` +

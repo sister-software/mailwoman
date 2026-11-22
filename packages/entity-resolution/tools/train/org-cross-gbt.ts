@@ -98,6 +98,9 @@ export async function trainOrgCrossSourceGBT(
 	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const CAP = options.cap ?? 6000
 	const OUT = options.out || "packages/entity-resolution/lib/models/org-crosssource-gbt-en-us.ts"
+	// country-branch: the training sources are US organization registers,
+	// so the model is stamped en-US by default.
+	// A locale recorded in the sources' manifest would replace the literal.
 	const LOCALE = options.locale || "en-US"
 	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95

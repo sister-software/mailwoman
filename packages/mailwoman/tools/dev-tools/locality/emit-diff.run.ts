@@ -44,6 +44,9 @@ const WOF = wofDatabasePath("admin-global-priority.db")
 
 async function main() {
 	const n = Number(values["n"] || "30")
+	// country-branch: a run that states no default country resolves under Portugal.
+	// The commit that added the default recorded no reason, and a required
+	// `--default-country` would replace it.
 	const cc = values["default-country"] || "PT"
 
 	const rows = await loadGoldenRows(values["golden"] || "", n)

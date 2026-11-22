@@ -100,6 +100,9 @@ async function main(): Promise<void> {
 				out.push(
 					stringifyJSON({
 						input,
+						// country-branch: a row whose country has no overlay locale is graded
+						// under en-US, the default weights locale.
+						// A default read from the installed weights packages would replace the literal.
 						locale: row.locale ?? OVERLAY_LOCALE_BY_COUNTRY[(row.country ?? "").toUpperCase()] ?? "en-US",
 						expected,
 						perturb_class: p.name,

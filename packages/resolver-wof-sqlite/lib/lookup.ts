@@ -328,6 +328,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem,
 		// restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
+		// country-branch: four digits and two letters with an optional space is the Dutch postcode shape.
+		// A postcode-format field for each country in the codex would replace the branch.
 		if (
 			query.country?.toUpperCase() === "NL" &&
 			(normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) &&

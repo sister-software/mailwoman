@@ -37,6 +37,8 @@ const GazetteerInspectFST: CommandComponent<typeof spec> = ({ args, options }) =
 
 		const { matcher, result } = await buildFSTFromWOF({
 			dbPath,
+			// country-branch: the probe builds its FST over the places of one country, the US.
+			// The commit that added the list recorded no reason, and a `--country` option would replace it.
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],

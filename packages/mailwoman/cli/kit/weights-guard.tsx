@@ -270,6 +270,8 @@ export function WeightsGuard({
 		case "settled":
 			return children(state.result)
 		case "prompt":
+			// country-branch: en-US is the weights locale a caller gets when it chooses none.
+			// A default read from the installed weights packages would replace the literal.
 			return (
 				<Box flexDirection="column">
 					<Text>

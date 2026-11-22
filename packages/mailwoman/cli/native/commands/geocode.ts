@@ -366,6 +366,9 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 				...(result.house_number ? { house_number: result.house_number } : {}),
 				...(result.street ? { street: result.street } : {}),
 			},
+			// country-branch: a result without a country is formatted in the US layout.
+			// The commit that added the fallback recorded no reason, and the codex's
+			// generic layout would replace it.
 			result.countryCode ?? "US",
 			{ separator: " " }
 		)

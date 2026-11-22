@@ -64,6 +64,9 @@ export class HTTPVFSAddressPointLookup {
 	constructor(database: RangeDatabase, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#database = database
 		this.#hasTable = memoizeResettable(() => tableExists(database, "address_point"))
+		// country-branch: the default matches the node class.
+		// That class's first extracts were the US state databases.
+		// The street locale recorded in the extract's manifest would replace the default.
 		this.#locale = opts.streetLocale ?? "us"
 	}
 
@@ -91,7 +94,10 @@ export class HTTPVFSAddressPointLookup {
 
 		if (!rows.length && query.locality) {
 			// FR extracts fold arrondissement communes to the base city on both sides
-			// (the node class and BAN builder discipline), so mirror it here to keep the twins in lockstep.
+			// (the node class and BAN builder discipline), so mirror it here to keep the
+			// twins in lockstep. country-branch: the BAN builder keys an arrondissement
+			// at its base city, a rule of the French register.
+			// A locality-key rule recorded in the extract's manifest would replace the branch.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))

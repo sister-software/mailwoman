@@ -38,6 +38,9 @@ export async function loadScriptRoutedClassifier(
 		loadFamily: (family) =>
 			loadClassifierFromWeights({ ...opts, locale: family, modelPath: undefined, tokenizerPath: undefined }),
 		onFamilyUnavailable: (family, error) => {
+			// country-branch: en-US is the weights locale a caller gets when it chooses none,
+			// and the message states it.
+			// `weightsPackageName` holds the same default and would replace the literal.
 			console.warn(
 				`[neural] the ${family} weights family is not installed ` +
 					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
@@ -152,6 +155,9 @@ export async function loadClassifierFromWeights(
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
 	const weightsPackage = String(resolved.packageDir ?? resolved.source)
+	// country-branch: en-us is the weights locale a caller gets when it chooses none,
+	// and the warning states it.
+	// `weightsPackageName` holds the same default and would replace the literal.
 	const warnUnfed = unfedChannelWarner(`${opts.locale ?? "en-us"} (${weightsPackage})`)
 	const unfedChannels: UnfedChannelReport[] = []
 
@@ -236,6 +242,9 @@ export async function loadClassifierFromWeights(
 		try {
 			const pairIndexBytes = new Uint8Array(await readLocalBuffer(resolved.pairIndexPath))
 			const peekedHeader = peekPairIndexHeader(pairIndexBytes)
+			// country-branch: en-us is the weights locale a caller gets when it chooses none,
+			// so its pair index is the US one.
+			// `weightsPackageName` holds the same default and would replace the literal.
 			const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
 			if (peekedHeader.country === localeCountry) {
@@ -257,6 +266,9 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
+	// country-branch: en-us is the weights locale a caller gets when it chooses none,
+	// so its placetype census is the US one.
+	// `weightsPackageName` holds the same default and would replace the literal.
 	const placetypeCensus = await loadPlacetypeCensus(
 		(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
 		opts.placetypeCensusPath

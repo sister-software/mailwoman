@@ -114,6 +114,8 @@ const { default: packageJSON } = await import("@mailwoman/fastify/package.json",
 })
 
 const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, opts) => {
+	// country-branch: en-US is the weights locale a caller gets when it chooses none.
+	// A default read from the installed weights packages would replace the literal.
 	const locale = opts.locale ?? "en-US"
 	const prefix = opts.prefix ?? ""
 

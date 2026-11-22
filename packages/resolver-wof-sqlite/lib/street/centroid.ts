@@ -70,6 +70,8 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	 */
 	constructor(dbPath: PathBuilderLike, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
+		// country-branch: the first street-centroid extract was built from BAN, the French register.
+		// The street locale recorded in the extract's manifest would replace the default.
 		this.#locale = opts.streetLocale ?? "fr"
 
 		// An extract without a `street_centroid` table makes every lookup miss.

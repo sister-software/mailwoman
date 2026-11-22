@@ -329,6 +329,8 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  */
 export async function missingWeightsCacheArtifacts(
 	cacheRoot: PathBuilderLike,
+	// country-branch: en-us is the weights package a candidate is staged under when the caller states no locale.
+	// A locale read from the staged bundle's model card would replace the literal.
 	locale = "en-us"
 ): Promise<{ kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] }> {
 	const packageDir = weightsCachePackageDir(cacheRoot, locale)

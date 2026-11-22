@@ -51,6 +51,9 @@ export function* houseNumberForms(number: string, locale: StreetLocale): Generat
 		yield spaced[1]!
 	}
 
+	// country-branch: 之 and 附 join a sub-number to a base number in the Taiwanese
+	// register, the one `zh` extract.
+	// A house-number grammar for each address system in the codex would replace the branch.
 	if (locale === "zh") {
 		const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
 

@@ -33,6 +33,8 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"neighbourhood",
 ]
 
+// country-branch: an FST built with no country list holds the places of one country, the US.
+// The commit that added the default recorded no reason, and a required `countries` option would replace it.
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
 /**

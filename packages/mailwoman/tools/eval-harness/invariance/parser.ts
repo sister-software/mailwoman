@@ -78,6 +78,8 @@ export function localeForCountry(country: string): string {
  * or from the installed weights, in that order of precedence.
  */
 async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressClassifier> {
+	// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
+	// A default read from the installed weights packages would replace the literal.
 	const locale = opts.locale ?? "en-US"
 
 	if (opts.weightsCache) {

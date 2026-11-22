@@ -114,7 +114,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		} = {}
 	) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
+		// country-branch: the first address-point extracts were the US state databases, keyed by the `us` fold.
+		// The street locale recorded in the extract's manifest would replace the default.
 		this.#locale = opts.streetLocale ?? "us"
+		// country-branch: the US builder abbreviates locality keys and every other builder stores them in full.
+		// The same manifest field would replace the branch.
 		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
 		this.#localityLevel = opts.localityLevel ?? "place"
 
@@ -177,7 +181,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// A `zh` extract keys locality as 縣市 + 鄉鎮市區.
 		// The parser tags 縣市 as `region` and 鄉鎮市區 as `subregion`.
 		// The Taiwanese register has no postcode, so this pair becomes the locality key.
-		// A query with only the 鄉鎮市區 matches the stored key by its suffix.
+		// A query with only the 鄉鎮市區 matches the stored key by its suffix. country-branch:
+		// the Taiwanese register is the one `zh` extract, and its locality key is this pair.
+		// A locality-key rule recorded in the extract's manifest would replace the branch.
 		const scoped =
 			this.#locale === "zh" && !query.locality && query.subregion
 				? query.region
@@ -301,6 +307,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * and "Paris" produce the same key.
 	 */
 	#localityKey(locality: string): NameKey {
+		// country-branch: the BAN builder keys an arrondissement at its base city,
+		// a rule of the French register.
+		// A locality-key rule recorded in the extract's manifest would replace the branch.
 		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))
 
 		return normalizeLocalityForKeyLocale(locality, this.#locale)

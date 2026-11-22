@@ -80,6 +80,9 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof spec> = ({ options
 				const { buildPostcodeLocalityJP } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/locality/jp")
 
 				await buildPostcodeLocalityJP({
+					// country-branch: the `jp` recipe reads Japan Post's names file,
+					// so its country is Japan unless stated.
+					// A recipe table that states each recipe's country would replace the literal.
 					country: options.country ?? "JP",
 					postalNames: need("postal-names", options.postalNames),
 					geonames: need("geonames", options.geonames),

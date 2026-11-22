@@ -75,6 +75,9 @@ function toCanonicalRow(raw: Record<string, unknown>): CanonicalRow {
 	return {
 		raw: raw["raw"] as string,
 		components: raw["components"] as Record<string, string>,
+		// country-branch: a transliteration row without a country reads as US.
+		// The commit that added the fallback recorded no reason, and a row format
+		// that requires `country` would replace it.
 		country: (raw["country"] as string) ?? "US",
 		locale: (raw["locale"] as string) ?? undefined,
 		source: raw["source"] as string,

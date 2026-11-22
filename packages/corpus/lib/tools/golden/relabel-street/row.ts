@@ -167,6 +167,9 @@ export function relabelGoldenStreetRow(
 		prefixSplit: false,
 	})
 
+	// country-branch: the split reads US street suffixes and directionals,
+	// so a row of another country is kept as it is.
+	// The codex street-affix tables of each country would replace the guard.
 	if ((row.country ?? "").toUpperCase() !== "US") return keep("not-us")
 	const street = row.components.street
 

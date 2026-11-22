@@ -153,6 +153,8 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 	if (!tokenizerPath) {
 		const { resolveWeights } = await import("@mailwoman/neural/weights")
 
+		// country-branch: en-us is the weights locale whose tokenizer is read when the caller states none.
+		// A default read from the installed weights packages would replace the literal.
 		tokenizerPath = (await resolveWeights({ locale: options.locale ?? "en-us" })).tokenizerPath
 	}
 

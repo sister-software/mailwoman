@@ -12,6 +12,8 @@
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
+// country-branch: BAN is France's register, so this package's extract list holds one country.
+// The built extracts' own manifests would replace the list.
 /**
  * The countries with a BAN extract.
  * BAN is the French national register.

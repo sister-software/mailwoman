@@ -101,6 +101,9 @@ export async function trainCrossSourceGBT(
 	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
 	const OUT = options.out || "packages/entity-resolution/lib/models/crosssource-gbt-en-us.ts"
+	// country-branch: the training sources are US provider registers,
+	// so the model is stamped en-US by default.
+	// A locale recorded in the sources' manifest would replace the literal.
 	const LOCALE = options.locale || "en-US"
 	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95

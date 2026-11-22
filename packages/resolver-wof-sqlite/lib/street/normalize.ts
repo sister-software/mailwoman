@@ -266,8 +266,14 @@ const ID_STREET_ABBREV = new Map<string, string>([
  * and `en` to {@link normalizeStreetForKey}; the extract builder and the probe must both call it.
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
+	// country-branch: `us` and `en` extracts are keyed by the US suffix fold.
+	// That fold is older than this function.
+	// A fold table for each street locale in the codex would replace the branch.
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
 
+	// country-branch: a Han street name has no spaces and no type-word abbreviations,
+	// so `zh` takes its own fold.
+	// The same per-locale fold table would replace the branch.
 	if (locale === "zh") return foldHan(street) as StreetKey
 
 	const tokens = fold(street)
@@ -278,6 +284,9 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 
 	if (!tokens.length) return "" as StreetKey
 
+	// country-branch: each case is one street locale's abbreviation and type-word rule,
+	// written beside its first extract.
+	// A fold table for each street locale in the codex would replace the switch.
 	switch (locale) {
 		case "fr":
 			for (let i = 0; i < tokens.length; i++) {
@@ -396,6 +405,9 @@ export function withArabicLetterVariantsFolded(key: NameKey): NameKey {
  * The Han rule stays out of the shared fold so existing columns are not re-keyed.
  */
 export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
+	// country-branch: the Han fold applies under `zh` so that the columns of
+	// every other locale keep their keys.
+	// A fold table for each street locale in the codex would replace the branch.
 	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
 }
 
@@ -404,6 +416,8 @@ export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLo
  * and dropping the trailing 號 for `zh`.
  */
 export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
+	// country-branch: a Taiwanese house number ends in 號 and may be written in full-width digits.
+	// A house-number grammar for each address system in the codex would replace the branch.
 	if (locale === "zh") {
 		return foldHan(number)
 			.replace(/^(\d+)號([之附]\d+)$/u, "$1$2")
@@ -518,10 +532,19 @@ function ordinalOf(n: number): string {
  * Lists the lookup keys to probe for a street span, most literal first, adding doubled-type
  * and Saint/St-swap recovery forms for `us` and `en`.
  */
-export function streetKeyVariants(street: string, locale: StreetLocale = "us"): StreetKey[] {
+export function streetKeyVariants(
+	street: string,
+	// country-branch: the first address-point extracts were the US state databases, keyed by the `us` fold.
+	// The street locale recorded in the extract's manifest would replace the default.
+	locale: StreetLocale = "us"
+): StreetKey[] {
+	// country-branch: `us` is keyed by the US suffix fold directly.
+	// A fold table for each street locale in the codex would replace the branch.
 	const primary = locale === "us" ? normalizeStreetForKey(street) : normalizeStreetForKeyLocale(street, locale)
 	const variants: StreetKey[] = primary ? [primary] : []
 
+	// country-branch: the doubled-type and Saint forms below are English spellings, so two locales take them.
+	// A recovery-form list for each street locale in the codex would replace the guard.
 	if (!primary || (locale !== "us" && locale !== "en")) return variants
 
 	const tokens = primary.split(" ")
