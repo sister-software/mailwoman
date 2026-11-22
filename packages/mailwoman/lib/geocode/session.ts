@@ -14,10 +14,10 @@ import {
 	createRequestContext,
 	type InputModeSelection,
 	type InputMode,
+	type PipelineFault,
 	type PipelineTiming,
 	type QueryKindResult,
 	type SoftChannelName,
-	type StageRecord,
 } from "@mailwoman/core/pipeline"
 import {
 	type DefaultCountry,
@@ -36,13 +36,7 @@ import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
 import type { LayerContribution } from "#geocode/contributions"
-import {
-	geocodeAddress,
-	geocodeParseInputs,
-	parseForGeocode,
-	type GeocodeDecoderSettingDeps,
-	type GeocodeDeps,
-} from "#geocode/core"
+import { geocodeAddress, parseForGeocode, type GeocodeDecoderSettingDeps, type GeocodeDeps } from "#geocode/core"
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
 import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions, type SessionOptionSource } from "#geocode/options"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
@@ -53,6 +47,7 @@ import {
 	resolveGenerationServices,
 	unavailableLayers,
 } from "#geocode/services"
+import type { DecodeRecord, GeocodeStageRecord } from "#geocode/stages"
 import type { CountryScopeDecision } from "#inferred-scope"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
@@ -85,12 +80,17 @@ export interface GeocodeTrace {
 	resolver: ResolveNodeTrace[]
 
 	/**
-	 * The records the request's stages wrote, in the order they ran.
+	 * The records the request's stages wrote, in the order they ran, without the decode's.
 	 *
-	 * A `tree-rewrite` record states what a pass after the decode changed in the tree,
-	 * so {@link parse} and the resolved tree can be told apart.
+	 * The decode's record is {@link parse}, {@link queryShape}, {@link kind} and {@link inputMode}.
+	 *
+	 * - A `tree-rewrite` record states what a pass after the decode changed in the tree,
+	 *   so {@link parse} and the resolved tree can be told apart.
+	 * - A `country-scope` record states the scope a resolve pass ran under.
+	 * - A `rooftop-selection` record states the address-point source of each resolve
+	 *   of a pass, and why a second resolve ran.
 	 */
-	stages: StageRecord[]
+	stages: Exclude<GeocodeStageRecord, DecodeRecord>[]
 
 	/**
 	 * The milliseconds of each stage the request ran, keyed by stage identifier.
@@ -149,13 +149,23 @@ export interface GeocodeRun {
 	applied: GeocodeApplied
 
 	/**
-	 * Wall-clock milliseconds for `parse`, `resolve` and `total`, plus `trace` when the session traces,
-	 * with the `trace` phase recorded even when tracing threw so the phases sum to `total`.
+	 * Wall-clock milliseconds for `parse`, `resolve` and `total`.
+	 *
+	 * A tracing session's `parse` includes the work of building the decode's trace.
 	 */
 	timing: PipelineTiming
 
 	/**
-	 * The debug evidence, present only when the session traces and `traceParse` succeeded.
+	 * Every failure the geocode caught and answered past, in order.
+	 *
+	 * The array is always present, and an empty one states that the run degraded past zero failures.
+	 * A `decode-trace` fault states that the decode's trace couldn't be built:
+	 * the answer is the one an untraced run gives, and {@link trace} is absent.
+	 */
+	faults: PipelineFault[]
+
+	/**
+	 * The debug evidence, present only when the session traces and the classifier traced its decode.
 	 */
 	trace?: GeocodeTrace
 }
@@ -481,41 +491,45 @@ export async function createGeocodeSession(
 			: {}),
 	}
 
-	const traceOf = async (
-		input: string,
-		requestParseDeps: typeof parseDeps
-	): Promise<Pick<GeocodeTrace, "parse" | "queryShape" | "kind" | "inputMode"> | null> => {
-		if (!options.trace) return null
-
-		const inputs = geocodeParseInputs(input, requestParseDeps)
-
-		try {
-			return {
-				parse: await routed.traceParse(inputs.parseInput, inputs.opts),
-				queryShape: inputs.queryShape,
-				kind: inputs.kind,
-				inputMode: inputs.inputMode,
-			}
-		} catch {
-			return null
-		}
-	}
-
 	const geocode = async (input: string, request: GeocodeRequestOptions = {}): Promise<GeocodeRun> => {
 		const startedAt = performance.now()
 		const requestParseDeps = request.inputMode ? { ...parseDeps, inputMode: request.inputMode } : parseDeps
 		const requestBias = request.bias?.length ? request.bias : bias
-		const stageRecords: StageRecord[] = []
+		const stageRecords: GeocodeTrace["stages"] = []
+		let decode: DecodeRecord | null = null
 
-		const context = createRequestContext({
+		// `geocodeAddress` decides whether the scope filters, ranks or is withheld, and the run states its decision.
+		let appliedScope: GeocodeApplied["countryScope"] = null
+
+		// Every request reads the scope decision off the trace, and only a tracing session keeps the other records.
+		const context = createRequestContext<GeocodeStageRecord>({
 			signal: request.signal ?? null,
-			trace: options.trace ? (record: StageRecord) => void stageRecords.push(record) : null,
+			detail: options.trace,
+			trace: (record) => {
+				if (record.kind === "country-scope") {
+					const { resolver: given, withheld } = record
+
+					appliedScope = {
+						resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
+						withheld,
+					}
+				}
+
+				if (!options.trace) return
+
+				if (record.kind === "decode") {
+					decode = record
+				} else {
+					stageRecords.push(record)
+				}
+			},
 		})
 
 		const parsedTree = await parseForGeocode(input, requestParseDeps, context)
 		const parsedAt = performance.now()
-		const trace = await traceOf(input, requestParseDeps)
-		const tracedAt = performance.now()
+
+		// The decode that built `parsedTree` wrote its own trace, so the trace and the tree come from one decode.
+		const trace = decode as DecodeRecord | null
 
 		const resolverTrace: ResolveNodeTrace[] = []
 
@@ -528,18 +542,9 @@ export async function createGeocodeSession(
 
 		const parentPlace = request.parentPlace ?? options.parentPlace
 
-		// `geocodeAddress` decides whether the scope filters, ranks or is withheld, and the run states its decision.
-		let appliedScope: GeocodeApplied["countryScope"] = null
-
 		const result = await geocodeAddress(
 			input,
 			{
-				countryScopeSink: ({ resolver: given, withheld }) => {
-					appliedScope = {
-						resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
-						withheld,
-					}
-				},
 				localeCountryPrior: options.localeCountryPrior,
 				...decoderSettings,
 				classifier: routed,
@@ -601,13 +606,22 @@ export async function createGeocodeSession(
 			applied: { locale: { locale: options.locale, source: options.localeSource }, countryScope: appliedScope },
 			timing: {
 				parse: parsedAt - startedAt,
-
-				...(options.trace ? { trace: tracedAt - parsedAt } : {}),
-				resolve: finishedAt - tracedAt,
+				resolve: finishedAt - parsedAt,
 				total: finishedAt - startedAt,
 			},
+			faults: context.faults,
 			...(trace
-				? { trace: { ...trace, resolver: resolverTrace, stages: stageRecords, stageTiming: context.timing } }
+				? {
+						trace: {
+							parse: trace.parse,
+							queryShape: trace.queryShape,
+							kind: trace.queryKind,
+							inputMode: trace.inputMode,
+							resolver: resolverTrace,
+							stages: stageRecords,
+							stageTiming: context.timing,
+						},
+					}
 				: {}),
 		}
 	}

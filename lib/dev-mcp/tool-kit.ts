@@ -11,10 +11,12 @@ import {
 	explanationRows,
 	localeHeadRow,
 	rewriteRows,
+	rooftopRows,
 	systemRow,
 	tokensRow,
 } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
+import { DECODE_TRACE_FAULT } from "mailwoman/geocode/stages"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
 import { z } from "zod"
 
@@ -443,11 +445,14 @@ function intentAdvisoryRow(run: GeocodeRun): string[] {
  */
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
+		const failed = run.faults.find((fault) => fault.stage === DECODE_TRACE_FAULT)
+
 		return {
 			rendered: [appliedRow(run.applied)],
-			absent_reason:
-				"No trace was recorded. Either the session was opened without `trace`, or the loaded bundle's classifier " +
-				"cannot produce one — a property of the bundle, not a zero.",
+			absent_reason: failed
+				? `The decode's trace could not be built (${failed.name}: ${failed.message}). The answer is the one an untraced run gives.`
+				: "No trace was recorded. Either the session was opened without `trace`, or the loaded bundle's classifier " +
+					"cannot produce one — a property of the bundle, not a zero.",
 		}
 	}
 
@@ -460,6 +465,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
 			...rewriteRows(run.trace.stages).map((row) => `rewrite ${row.pass}: ${row.change}`),
+			...rooftopRows(run.trace.stages).map((row) => `address points: ${row}`),
 			...explanationRows(run.trace),
 			...intentAdvisoryRow(run),
 			...droppedRow(run),

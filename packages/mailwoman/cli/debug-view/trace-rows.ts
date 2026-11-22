@@ -152,6 +152,7 @@ export function decodeRow(trace: GeocodeTrace | null): string {
 
 	const { tokens, decode, priors, repairs } = trace.parse
 	const applied = priors.filter((prior) => prior.applied).map((prior) => prior.kind)
+	const rewrites = rewriteRows(trace.stages)
 
 	const meanConfidence = tokens.length ? tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length : null
 
@@ -169,9 +170,31 @@ export function decodeRow(trace: GeocodeTrace | null): string {
 		decode,
 		meanConfidence == null ? null : `conf ${meanConfidence.toFixed(2)}`,
 		sequence.length ? sequence.join(" ") : null,
+		// The field appears only when a pass after the decode changed the tree,
+		// so every other input keeps its row.
+		// It precedes the priors so a frame of 120 columns shows it whole.
+		rewrites.length ? `rewrites ${rewrites.map((rewrite) => rewrite.pass).join(",")}` : null,
 		`priors ${applied.length ? applied.join(",") : ABSENT}`,
 		`repairs ${repairs.length ? repairs.map((repair) => repair.pass).join(",") : ABSENT}`,
 	])
+}
+
+/**
+ * One row per resolve pass: the address-point source the first resolve read
+ * and the country it was picked for, then the second resolve's country, source
+ * and the inputs that country changed, when one ran.
+ */
+export function rooftopRows(stages: GeocodeTrace["stages"]): string[] {
+	return stages
+		.filter((record) => record.kind === "rooftop-selection")
+		.map(({ first, second }) =>
+			fields([
+				`${first.source ?? ABSENT} for ${first.country ?? ABSENT}`,
+				second
+					? `second resolve for ${second.country}: ${second.source ?? ABSENT}, changed ${second.changed.join(",")}`
+					: null,
+			])
+		)
 }
 
 /**

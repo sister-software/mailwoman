@@ -3,7 +3,7 @@
 
 import { AbortKind, AbortReason } from "@mailwoman/core/abort"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createRequestContext, type StageRecord } from "@mailwoman/core/pipeline"
+import { createRequestContext } from "@mailwoman/core/pipeline"
 import {
 	EMPTY_PLACE_FIELDS,
 	type ResolvedPlace,
@@ -26,6 +26,7 @@ import {
 	extractGeocodeResult,
 	recognizeBarePostcode,
 } from "#geocode"
+import type { GeocodeStageRecord } from "#geocode/stages"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
 	return { start: 0, end: 0, confidence: 1, children: [], ...partial }
@@ -642,9 +643,9 @@ describe("The request context of a geocode", () => {
 		return { classifier, resolver: { resolveTree, artifactCoverage: null }, placeCountry: "none" }
 	}
 
-	it("records what a pass after the decode changed, and times each stage it ran", async () => {
-		const records: StageRecord[] = []
-		const context = createRequestContext({ trace: (record) => void records.push(record) })
+	it("records each stage's decision or change in the order the stages ran, and times each stage", async () => {
+		const records: GeocodeStageRecord[] = []
+		const context = createRequestContext<GeocodeStageRecord>({ trace: (record) => void records.push(record) })
 
 		await geocodeAddress(
 			"Dublin, TX",
@@ -662,6 +663,13 @@ describe("The request context of a geocode", () => {
 					'  locality [0, 6): "Dublin"',
 				],
 			},
+			{ kind: "country-scope", stage: "country-scope", resolver: null, withheld: null },
+			{
+				kind: "rooftop-selection",
+				stage: "rooftop-selection",
+				first: { country: null, source: null },
+				second: null,
+			},
 		])
 
 		expect(Object.keys(context.timing)).toEqual([
@@ -670,8 +678,97 @@ describe("The request context of a geocode", () => {
 			"bare-postcode",
 			"postcode-contradiction",
 			"stranded-affix",
+			"country-scope",
 			"resolve",
+			"rooftop-selection",
 		])
+	})
+
+	it("writes the decisions and skips the costly records for a request that traces without detail", async () => {
+		const records: GeocodeStageRecord[] = []
+
+		await geocodeAddress(
+			"Dublin, TX",
+			depsOver(async (tree) => tree),
+			createRequestContext<GeocodeStageRecord>({ trace: (record) => void records.push(record), detail: false })
+		)
+
+		expect(records.map((record) => record.kind)).toEqual(["country-scope", "rooftop-selection"])
+	})
+
+	it("answers as an untraced request and records a fault when the decode's trace can't be built", async () => {
+		const resolveTree: Resolver["resolveTree"] = async (tree) => ({
+			raw: tree.raw,
+			roots: [node({ tag: "locality", value: "Dublin", lat: 32.08, lon: -98.34, placeID: "wof:1" })],
+		})
+
+		const deps: GeocodeDeps = {
+			...depsOver(resolveTree),
+			classifier: {
+				parse: async (text, opts) => {
+					opts?.onTrace?.(() => {
+						throw new RangeError("the explanation has no spans")
+					})
+
+					return cityState(text)
+				},
+			},
+		}
+
+		const records: GeocodeStageRecord[] = []
+		const traced = createRequestContext<GeocodeStageRecord>({ trace: (record) => void records.push(record) })
+		const untraced = createRequestContext<GeocodeStageRecord>()
+
+		const tracedTree = await parseForGeocode("Dublin, TX", deps, traced)
+		const untracedTree = await parseForGeocode("Dublin, TX", deps, untraced)
+
+		expect(tracedTree).toEqual(untracedTree)
+
+		expect(await geocodeAddress("Dublin, TX", { ...deps, parsedTree: tracedTree }, traced)).toEqual(
+			await geocodeAddress("Dublin, TX", { ...deps, parsedTree: untracedTree }, untraced)
+		)
+
+		expect(records.map((record) => record.kind)).not.toContain("decode")
+
+		expect(traced.faults).toMatchObject([
+			{ stage: "decode-trace", name: "RangeError", message: "the explanation has no spans" },
+		])
+
+		expect(untraced.faults).toEqual([])
+	})
+
+	it("states the source of each resolve and what the resolved country changed for the second", async () => {
+		const records: GeocodeStageRecord[] = []
+		const lookups: Array<unknown> = []
+		const national: NonNullable<ResolveOpts["addressPoints"]> = { find: () => null }
+		const osm: NonNullable<ResolveOpts["addressPoints"]> = { find: () => null }
+
+		const deps: GeocodeDeps = {
+			...depsOver(async (tree, opts) => {
+				lookups.push(opts?.addressPoints ?? null)
+
+				return {
+					raw: tree.raw,
+					roots: [node({ tag: "locality", value: "Dublin", metadata: { resolver_country: "IE" } })],
+				}
+			}),
+			defaultCountry: { country: "GB", source: "caller" },
+			nationalDatabases: (country) => (country === "gb" ? { addressPoints: national } : {}),
+			osmDatabases: (country) => (country === "ie" ? { addressPoints: osm } : {}),
+		}
+
+		await geocodeAddress(
+			"Dublin, TX",
+			deps,
+			createRequestContext<GeocodeStageRecord>({ trace: (record) => void records.push(record) })
+		)
+
+		expect(records.find((record) => record.kind === "rooftop-selection")).toMatchObject({
+			first: { country: "gb", source: "national" },
+			second: { country: "IE", source: "osm", changed: expect.arrayContaining(["address-points"]) },
+		})
+
+		expect(lookups).toEqual([national, osm])
 	})
 
 	it("rejects with the signal's reason before the resolve when the request aborts during the decode", async () => {

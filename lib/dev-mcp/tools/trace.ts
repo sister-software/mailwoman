@@ -72,6 +72,7 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				// and the resolved tree can be told apart.
 				stages: run.trace?.stages ?? null,
 				stage_timing_ms: run.trace?.stageTiming ?? null,
+				faults: run.faults.map(({ stage, name, message }) => ({ stage, name, message })),
 				parse_trace: run.trace?.parse ? (fullParseTrace ? run.trace.parse : slimParseTrace(run.trace.parse)) : null,
 				rendered,
 				...(absent_reason ? { trace_absent_reason: absent_reason } : {}),

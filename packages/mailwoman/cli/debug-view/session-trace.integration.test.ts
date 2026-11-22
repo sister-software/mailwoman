@@ -7,7 +7,7 @@
  *   It checks the recorded data and confirms that tracing leaves the answer unchanged.
  *   The debug view exists for inspection.
  *
- *   If its extra decode moved a coordinate, the view would measure a different pipeline.
+ *   If tracing the decode moved a coordinate, the view would measure a different pipeline.
  *
  *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution),
  *   and skipping for the same reasons, so the two suites run and skip together.
@@ -92,15 +92,30 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 
 				expect(without.applied).toEqual(withTrace.applied)
 
-				// Both paths report timing.
-				// The traced path includes its extra decode.
+				// Both paths report the same timing phases: the trace comes from the answer's
+				// own decode, so a traced run has no phase of its own to time.
 				expect(withTrace.timing.total).toBeGreaterThan(0)
-				expect(withTrace.timing.trace).toBeGreaterThan(0)
+				expect(withTrace.timing.trace).toBeUndefined()
 				expect(without.timing.trace).toBeUndefined()
+				expect(withTrace.faults).toEqual([])
 			} finally {
 				await traced[Symbol.asyncDispose]()
 				await plain[Symbol.asyncDispose]()
 			}
+		},
+		TEST_TIMEOUT_MS
+	)
+
+	test(
+		"traces the text the tree was decoded from when the input opens with a postal mark",
+		async () => {
+			await using traced = await createGeocodeSession({ ...createGeocodeSessionOptions(), trace: true })
+
+			// The character-path classifier keeps the mark the SentencePiece one strips.
+			// The trace is of the answer's own decode, so it reads the text the routed classifier read.
+			const run = await traced.geocode("〒100-0001 東京都千代田区千代田1-1")
+
+			expect(run.trace?.parse.text).toBe(run.tree.raw)
 		},
 		TEST_TIMEOUT_MS
 	)

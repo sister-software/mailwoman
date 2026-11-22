@@ -11,7 +11,15 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { isBareTreeOf } from "#decoder/tree/shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import type { PipelineResult } from "#pipeline/result"
-import { createRequestContext, type PipelineStage, runStage, StageID } from "#pipeline/stage"
+import {
+	createRequestContext,
+	type PipelineFaultStage,
+	type PipelineStage,
+	type RequestContext,
+	runStage,
+	StageID,
+	type StageRecord,
+} from "#pipeline/stage"
 import {
 	DEFAULT_CASE_NORMALIZATION,
 	DEFAULT_PLACER_COUNTRY_USE,
@@ -264,13 +272,19 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  *
  * Each stage runs through {@linkcode runStage}, which times it and checks the abort signal before it.
  * A failing classifier, grouper or resolver records a fault and the run continues.
+ *
+ * A caller that runs stages of its own around the parse passes its request's `context`.
+ * The result's timing and faults are then that context's, and the context's signal cancels the run.
+ * Without one, the run builds a context from `opts.signal`.
  */
-export async function runPipeline(
+export async function runPipeline<FaultStage extends string = PipelineFaultStage>(
 	raw: string,
 	stages: RuntimePipelineStages,
-	opts?: PipelineOpts
-): Promise<PipelineResult> {
-	const context = createRequestContext({ signal: opts?.signal })
+	opts?: PipelineOpts,
+	context: RequestContext<StageRecord, FaultStage | PipelineFaultStage> = createRequestContext({
+		signal: opts?.signal,
+	})
+): Promise<PipelineResult<FaultStage | PipelineFaultStage>> {
 	const { timing, faults } = context
 
 	const normalize = stages.normalize ?? identityNormalize

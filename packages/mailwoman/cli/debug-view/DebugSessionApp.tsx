@@ -140,7 +140,7 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
 	// `trace: true` is the debug view's own opt-in.
-	// It costs one extra decode per input that no other caller of the session should pay for.
+	// Each decode then records its intermediates, work that no other caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = await resolveTilesPath(options.tiles)
 

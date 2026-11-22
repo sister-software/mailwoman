@@ -87,7 +87,7 @@ export type {
 export type { MachinePreferences } from "#pipeline/preferences"
 export type { PipelineResult } from "#pipeline/result"
 
-export { createRequestContext, runStage, runStages, StageID, treeRewriteStage } from "#pipeline/stage"
+export { createRequestContext, recordFault, runStage, runStages, StageID, treeRewriteStage } from "#pipeline/stage"
 
 export type {
 	PipelineFault,

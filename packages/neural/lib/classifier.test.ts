@@ -15,6 +15,7 @@ import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
 import { DECODE_TERMS, type DecodeTermValues } from "#decode-explanation"
 import { STAGE2_BIO_LABELS } from "#labels"
 import { MailwomanTokenizer } from "#tokenizer"
+import type { NeuralParseTrace } from "#trace"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "#viterbi"
 
 const ADDRESSES = [
@@ -67,6 +68,20 @@ describe.each([
 
 		expect(buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })).toEqual(tree)
 		await expect(classifier.parse(address)).resolves.toEqual(tree)
+	})
+
+	it.each(ADDRESSES)("hands %s's trace to `onTrace` from the decode that builds the tree", async (address) => {
+		const traces: NeuralParseTrace[] = []
+		const tree = await classifier.parse(address, { onTrace: (buildTrace) => void traces.push(buildTrace()) })
+
+		expect(traces).toEqual([await classifier.traceParse(address)])
+		expect(tree).toEqual(await classifier.parse(address))
+	})
+
+	it("returns the tree when the receiver of `onTrace` builds no trace", async () => {
+		const tree = await classifier.parse(ADDRESSES[0]!, { onTrace: () => {} })
+
+		expect(tree).toEqual(await classifier.parse(ADDRESSES[0]!))
 	})
 
 	it.each(ADDRESSES)("explains %s with terms that sum to the decoder's score and margins", async (address) => {
