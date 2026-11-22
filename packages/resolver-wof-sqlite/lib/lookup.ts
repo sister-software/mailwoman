@@ -7,6 +7,7 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { postcodeRetryForms } from "@mailwoman/codex/postal/retry-forms"
 import type { Ancestor } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -326,27 +327,14 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		if (found.length) return found
 
-		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem,
-		// restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
-		// country-branch: four digits and two letters with an optional space is the Dutch postcode shape.
-		// A postcode-format field for each country in the codex would replace the branch.
-		if (
-			query.country?.toUpperCase() === "NL" &&
-			(normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) &&
-			/^\d{4}\s?[A-Za-z]{2}$/.test(query.text.trim())
-		) {
-			const trimmed = query.text.trim()
-			const joined = trimmed.replaceAll(/\s+/g, "")
+		// On a postcode-typed miss, retry with the forms the codex states for the query's country.
+		// The rule is keyed by country so the same shape elsewhere cannot coarsen to another system's code.
+		if (normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) {
+			for (const text of postcodeRetryForms(query.text, query.country)) {
+				const retried = await this.findPlace({ ...query, text })
 
-			if (joined !== trimmed) {
-				const full = await this.findPlace({ ...query, text: joined })
-
-				if (full.length) return full
+				if (retried.length) return retried
 			}
-
-			const stem = trimmed.slice(0, 4)
-
-			if (stem !== trimmed) return this.findPlace({ ...query, text: stem })
 		}
 
 		return found

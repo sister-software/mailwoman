@@ -16,6 +16,7 @@
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
 
@@ -50,9 +51,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	const sample = options.limit && options.limit > 0 ? rows.take(options.limit) : rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-		// A default read from the installed weights packages would replace the literal.
-		locale: options.locale ?? "en-US",
+		locale: options.locale ?? DEFAULT_WEIGHTS_LOCALE,
 		cacheRoot: options.weightsCacheRoot,
 	})
 

@@ -7,6 +7,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights/channels"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { resolveImportanceOrRefusal } from "@mailwoman/resolver-wof-sqlite/importance-source"
@@ -346,9 +347,7 @@ async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promis
 }
 
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
-	// country-branch: en-us is the weights locale a lookup runs under when the caller states none.
-	// A default read from the installed weights packages would replace the literal.
-	const locale = args.locale ?? args.config?.locale ?? "en-us"
+	const locale = args.locale ?? args.config?.locale ?? DEFAULT_WEIGHTS_LOCALE.toLowerCase()
 	let resolved: Awaited<ReturnType<typeof resolveWeights>>
 
 	try {

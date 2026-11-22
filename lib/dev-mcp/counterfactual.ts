@@ -11,6 +11,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { GeocodeSessionOptions } from "mailwoman/geocode"
 
@@ -30,11 +31,6 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
  * Any change in abstention is reported regardless of distance.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
-
-/**
- * Base weights locale used as the destination when a row's overlay is removed.
- */
-export const BASE_LOCALE = "en-US"
 
 /**
  * Path to the manifest listing published locale overlays.
@@ -159,7 +155,8 @@ async function localeCounterfactual(
 		}
 	}
 
-	const to = rowLocale.toLowerCase() === current.toLowerCase() ? BASE_LOCALE : rowLocale
+	// A row whose overlay is removed runs under the default weights locale, the base of every Latin overlay.
+	const to = rowLocale.toLowerCase() === current.toLowerCase() ? DEFAULT_WEIGHTS_LOCALE : rowLocale
 
 	if (to.toLowerCase() === current.toLowerCase()) {
 		return {

@@ -13,6 +13,7 @@
 
 import { DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline/types"
 import { totalMemoryBytes } from "@mailwoman/core/utils/system"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { parallelMapWorkers } from "spliterator"
 
 import type {
@@ -108,9 +109,7 @@ export async function parsePipelineRows(
 	}
 
 	const data: PipelineParseWorkerData = {
-		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-		// A default read from the installed weights packages would replace the literal.
-		locale: options.locale ?? "en-US",
+		locale: options.locale ?? DEFAULT_WEIGHTS_LOCALE,
 		cacheRoot: options.cacheRoot ?? null,
 		intraOpNumThreads: options.threads ?? 1,
 		conventions: options.conventions ?? "declared",

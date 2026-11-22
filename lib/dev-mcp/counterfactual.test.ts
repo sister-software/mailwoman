@@ -9,10 +9,10 @@
  *   caller's half-filled config would move the unset settings in the wrong direction.
  */
 
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { describe, expect, it } from "vitest"
 
 import {
-	BASE_LOCALE,
 	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	enumerateFlips,
@@ -50,11 +50,14 @@ describe("enumerateFlips — one setting at a time", () => {
 	})
 
 	it("flips a base-locale row TO its country's overlay", async () => {
-		await expect(flipFor("locale", BASE_LOCALE, "GB")).resolves.toMatchObject({ from: BASE_LOCALE, to: "en-GB" })
+		await expect(flipFor("locale", DEFAULT_WEIGHTS_LOCALE, "GB")).resolves.toMatchObject({
+			from: DEFAULT_WEIGHTS_LOCALE,
+			to: "en-GB",
+		})
 	})
 
 	it("flips a row already under its overlay BACK to the base — the only way to price the overlay", async () => {
-		await expect(flipFor("locale", "de-DE", "DE")).resolves.toMatchObject({ from: "de-DE", to: BASE_LOCALE })
+		await expect(flipFor("locale", "de-DE", "DE")).resolves.toMatchObject({ from: "de-DE", to: DEFAULT_WEIGHTS_LOCALE })
 	})
 
 	it("skips the locale setting with a stated reason rather than omitting it", async () => {

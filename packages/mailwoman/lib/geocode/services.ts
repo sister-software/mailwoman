@@ -51,7 +51,7 @@ import {
 } from "#geocode/contributions"
 import type { GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
-import type { GeocodeSessionOptions } from "#geocode/options"
+import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions } from "#geocode/options"
 import type { openOSMRegionDatabases } from "#geocode/osm-layers"
 import type { ForkEntityProbe, LayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
@@ -248,9 +248,7 @@ export function registerGenerationServices(
 
 	defineUnlessProvided(registry, S.classifyKind, {
 		build: async () => {
-			// country-branch: en-US is the weights locale a caller gets when it chooses none.
-			// `GEOCODE_DEFAULT_LOCALE` holds the same value and would replace the literal.
-			const locale = options.locale ?? "en-US"
+			const locale = options.locale ?? GEOCODE_DEFAULT_LOCALE
 			const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
 			const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
 

@@ -11,10 +11,8 @@
  *   gazetteer row, an anchor-lookup key and a corpus recipe compare against.
  *   A spaced or lower-case value silently matches no row.
  *
- *   The surface forms belong to the other two NL patterns in the repository:
- *   `POSTCODE_SHAPES`' NL row scans a line for either spelling.
- *   `@mailwoman/core/resolver`'s `NL_PC6` accepts either on a bare-postcode tree.
- *   Neither is anchored on the key.
+ *   {@linkcode NL_PC6_SURFACE_PATTERN} is the whole code as a person writes it, with either spelling.
+ *   `POSTCODE_SHAPES`' NL row scans a line for either spelling and isn't anchored on the key.
  */
 
 import type { Tagged } from "type-fest"
@@ -35,6 +33,17 @@ export type NLPostcodeKey = Tagged<string, "NLPostcodeKey">
  * A space and a lower-case letter are both refused, so a caller normalizes the surface first.
  */
 export const NL_PC6_KEY_PATTERN = /^\d{4}[A-Z]{2}$/u
+
+/**
+ * The PC6 shape as a person writes it: four digits, an optional white-space character,
+ * then two letters in either case.
+ */
+export const NL_PC6_SURFACE_PATTERN = /^\d{4}\s?[A-Za-z]{2}$/u
+
+/**
+ * The length of PC4, the four-digit district code a PC6 postcode starts with.
+ */
+export const NL_PC4_LENGTH = 4
 
 /**
  * Type-predicate for a Dutch postcode in its compact, upper-case key form.

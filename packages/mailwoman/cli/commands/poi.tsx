@@ -36,6 +36,7 @@ import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipel
 import { allKeyed } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { Text } from "ink"
 
 import {
@@ -60,7 +61,7 @@ export const spec = {
 	options: {
 		locale: {
 			type: "string",
-			default: "en-US",
+			default: DEFAULT_WEIGHTS_LOCALE,
 			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},

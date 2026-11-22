@@ -10,6 +10,7 @@
  *
  *   Per-country full-agreement table gauges the accent- mangle + fragment campaign's progress.
  */
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
@@ -28,7 +29,7 @@ export const spec = {
 	name: "parity",
 	description,
 	options: {
-		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE, description: "Weights package locale" },
 		model: { type: "string", description: "Candidate model.onnx" },
 		tokenizer: { type: "string", description: "Candidate tokenizer.model" },
 		card: { type: "string", description: "Candidate model-card.json" },

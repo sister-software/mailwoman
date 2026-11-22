@@ -171,6 +171,15 @@ const CJK_FAMILY: WeightsFamily = {
 	routingScripts: new Set(["Hani", "Kana", "Hira", "Hang"] as BCP47.ScriptCode[]),
 }
 
+// country-branch: en-US is the weights locale a caller gets when it chooses none.
+// A default declared in `release.config.json` would replace the literal.
+/**
+ * The locale tag whose weights package a caller gets when it chooses none.
+ *
+ * A package name and a weights directory spell it in lower case.
+ */
+export const DEFAULT_WEIGHTS_LOCALE = "en-US"
+
 /**
  * Every declared family.
  */

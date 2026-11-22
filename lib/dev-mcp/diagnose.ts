@@ -24,6 +24,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import {
 	candidateBandProbe,
@@ -35,7 +36,6 @@ import {
 import { OVERLAY_LOCALE_BY_COUNTRY, routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 
 import {
-	BASE_LOCALE,
 	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	runCounterfactuals,
@@ -892,8 +892,8 @@ export function routingFor(item: ResolvedInput, executionPath: DiagnoseExecution
 
 	if (!country) return null
 
-	const baseRegion = routeCountry({ locale: BASE_LOCALE })
-	const overlay = OVERLAY_LOCALE_BY_COUNTRY[country] ?? (country === baseRegion ? BASE_LOCALE : null)
+	const baseRegion = routeCountry({ locale: DEFAULT_WEIGHTS_LOCALE })
+	const overlay = OVERLAY_LOCALE_BY_COUNTRY[country] ?? (country === baseRegion ? DEFAULT_WEIGHTS_LOCALE : null)
 
 	return {
 		country,

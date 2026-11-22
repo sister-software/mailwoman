@@ -8,6 +8,7 @@
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { TextSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
@@ -26,7 +27,7 @@ const { values } = parseArguments({
 		rows: { type: "string" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "arm" },
-		locale: { type: "string", default: "en-US" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE },
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
 		 * Calls `classifier.parse` directly instead of the normalization pipeline.

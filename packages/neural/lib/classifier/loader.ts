@@ -20,6 +20,7 @@ import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-d
 import { MailwomanTokenizer } from "#tokenizer"
 import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
 import type { UnfedChannel, UnfedChannelReport } from "#weights/channels"
+import { DEFAULT_WEIGHTS_LOCALE } from "#weights/families"
 
 /**
  * Loads the classifier for the caller's locale and routes inputs in another script,
@@ -38,14 +39,11 @@ export async function loadScriptRoutedClassifier(
 		loadFamily: (family) =>
 			loadClassifierFromWeights({ ...opts, locale: family, modelPath: undefined, tokenizerPath: undefined }),
 		onFamilyUnavailable: (family, error) => {
-			// country-branch: en-US is the weights locale a caller gets when it chooses none,
-			// and the message states it.
-			// `weightsPackageName` holds the same default and would replace the literal.
 			console.warn(
 				`[neural] the ${family} weights family is not installed ` +
 					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
 					`(${error instanceof Error ? error.message.split("\n")[0] : String(error)}); ` +
-					`inputs in that script run on the ${opts.locale ?? "en-US"} model. Install @mailwoman/neural-weights-${family}.`
+					`inputs in that script run on the ${opts.locale ?? DEFAULT_WEIGHTS_LOCALE} model. Install @mailwoman/neural-weights-${family}.`
 			)
 		},
 	})
@@ -155,10 +153,7 @@ export async function loadClassifierFromWeights(
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
 	const weightsPackage = String(resolved.packageDir ?? resolved.source)
-	// country-branch: en-us is the weights locale a caller gets when it chooses none,
-	// and the warning states it.
-	// `weightsPackageName` holds the same default and would replace the literal.
-	const warnUnfed = unfedChannelWarner(`${opts.locale ?? "en-us"} (${weightsPackage})`)
+	const warnUnfed = unfedChannelWarner(`${opts.locale ?? DEFAULT_WEIGHTS_LOCALE.toLowerCase()} (${weightsPackage})`)
 	const unfedChannels: UnfedChannelReport[] = []
 
 	const warnUnfedChannel = (channel: UnfedChannel, detail: string) => {
@@ -242,10 +237,7 @@ export async function loadClassifierFromWeights(
 		try {
 			const pairIndexBytes = new Uint8Array(await readLocalBuffer(resolved.pairIndexPath))
 			const peekedHeader = peekPairIndexHeader(pairIndexBytes)
-			// country-branch: en-us is the weights locale a caller gets when it chooses none,
-			// so its pair index is the US one.
-			// `weightsPackageName` holds the same default and would replace the literal.
-			const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
+			const localeCountry = (opts.locale ?? DEFAULT_WEIGHTS_LOCALE).toLowerCase().split("-")[1] ?? ""
 
 			if (peekedHeader.country === localeCountry) {
 				placetypePair = {
@@ -266,11 +258,8 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
-	// country-branch: en-us is the weights locale a caller gets when it chooses none,
-	// so its placetype census is the US one.
-	// `weightsPackageName` holds the same default and would replace the literal.
 	const placetypeCensus = await loadPlacetypeCensus(
-		(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
+		(opts.locale ?? DEFAULT_WEIGHTS_LOCALE).toLowerCase().split("-")[1] ?? "",
 		opts.placetypeCensusPath
 	)
 

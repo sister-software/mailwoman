@@ -9,7 +9,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
+import { overlayLocale } from "#tools/eval-harness/gauntlet/routing"
 
 const { values: rawValues } = parseArguments({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
@@ -100,10 +100,7 @@ async function main(): Promise<void> {
 				out.push(
 					stringifyJSON({
 						input,
-						// country-branch: a row whose country has no overlay locale is graded
-						// under en-US, the default weights locale.
-						// A default read from the installed weights packages would replace the literal.
-						locale: row.locale ?? OVERLAY_LOCALE_BY_COUNTRY[(row.country ?? "").toUpperCase()] ?? "en-US",
+						locale: row.locale ?? overlayLocale((row.country ?? "").toUpperCase()),
 						expected,
 						perturb_class: p.name,
 						source: `perturb/${file}`,

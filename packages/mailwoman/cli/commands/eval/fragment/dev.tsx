@@ -6,6 +6,7 @@
  *   split (span-exact vs tag-accuracy. trailing-number→postcode rate).
  *   See eval-harness/fragment-dev.ts.
  */
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 
@@ -18,7 +19,7 @@ export const spec = {
 	name: "fragment-dev",
 	description,
 	options: {
-		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE, description: "Weights package locale" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate dir (see eval parity --weights-cache)" },
 		fixtures: {
 			type: "string",

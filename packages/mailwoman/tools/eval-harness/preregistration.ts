@@ -11,6 +11,7 @@ import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"
@@ -217,9 +218,7 @@ export interface WeightsIdentityOptions {
  * The locale defaults to `en-US`.
  */
 export async function readWeightsIdentity(options: WeightsIdentityOptions): Promise<WeightsIdentity> {
-	// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-	// A default read from the installed weights packages would replace the literal.
-	const locale = options.locale ?? "en-US"
+	const locale = options.locale ?? DEFAULT_WEIGHTS_LOCALE
 	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
 	const weightsModelMD5 = await md5File(resolved.modelPath)

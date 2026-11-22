@@ -17,6 +17,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { QUERY_SHAPES, type QueryShape } from "@mailwoman/corpus/recipes/prominent/places"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { resolvePath } from "path-ts"
@@ -426,10 +427,10 @@ export async function drawGeocodeInputs(options: {
 	const inputs: ProbeInput[] = []
 
 	for (const place of places) {
-		const locales = ["en-US"]
+		const locales: string[] = [DEFAULT_WEIGHTS_LOCALE]
 		const own = packages.get(place.country)
 
-		if (own && own.toLowerCase() !== "en-us") {
+		if (own && own.toLowerCase() !== DEFAULT_WEIGHTS_LOCALE.toLowerCase()) {
 			const [language, region] = own.split("-")
 
 			locales.push(`${language}-${region!.toUpperCase()}`)
@@ -660,14 +661,15 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 				components: named,
 				coherent,
 				pass: geo && named && coherent,
-				// country-branch: the probe grades each place under en-US, the default locale,
+				// The probe grades each place under the default weights locale
 				// and under its country's own weights.
-				// Under en-US a bare name competes with every country.
+				// Under the default locale a bare name competes with every country.
 				// Under its own locale it competes inside its country.
-				// A default locale read from the installed weights packages would replace the literal.
 				ambiguous:
 					input.shape === "bare" &&
-					(locale === "en-US" ? input.outranked_by.length > 0 : input.outranked_by.includes(input.country)),
+					(locale === DEFAULT_WEIGHTS_LOCALE
+						? input.outranked_by.length > 0
+						: input.outranked_by.includes(input.country)),
 				km: km == null ? null : Math.round(km * 10) / 10,
 				observed: output.components,
 				observed_country: output.countryCode,
@@ -681,16 +683,14 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 		`Engine version(s): ${[...engines].join(", ") || "unstated"}. ${grades.length} graded rows.`,
 	]
 
-	// country-branch: en-US is the default-locale arm of the probe, and every
-	// other locale is a country's own arm.
-	// A default locale read from the installed weights packages would replace the literal.
-	const localeKind = (grade: ProbeGrade) => (grade.locale === "en-US" ? "en-US" : "own")
+	// The default weights locale is one arm of the probe, and every other locale is a country's own arm.
+	const localeKind = (grade: ProbeGrade) => (grade.locale === DEFAULT_WEIGHTS_LOCALE ? DEFAULT_WEIGHTS_LOCALE : "own")
 
 	const shapeRows: Array<Array<string | number>> = []
 
 	for (const band of ["locality", "sublocality"]) {
 		for (const shape of QUERY_SHAPES) {
-			for (const kind of ["en-US", "own"]) {
+			for (const kind of [DEFAULT_WEIGHTS_LOCALE, "own"]) {
 				const all = grades.filter((g) => g.band === band && g.shape === shape && localeKind(g) === kind)
 				const cell = all.filter((g) => !g.ambiguous)
 
@@ -736,12 +736,8 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 	const countryRows = countries
 		.map((country) => {
 			const cell = grades.filter((g) => g.country === country && !g.ambiguous)
-			// country-branch: en-US is the default-locale arm of the probe.
-			// A default locale read from the installed weights packages would replace the literal.
-			const us = cell.filter((g) => g.locale === "en-US")
-			// country-branch: every locale other than the default-locale arm is a country's own arm.
-			// The same default locale would replace the literal.
-			const own = cell.filter((g) => g.locale !== "en-US")
+			const us = cell.filter((g) => g.locale === DEFAULT_WEIGHTS_LOCALE)
+			const own = cell.filter((g) => g.locale !== DEFAULT_WEIGHTS_LOCALE)
 
 			return {
 				country,
@@ -763,7 +759,7 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 	await writeLocalTextFile(
 		"# Geocode failures per country\n\n" +
 			table(
-				["country", "rows", "en-US failed", "own-locale failed", ...QUERY_SHAPES],
+				["country", "rows", `${DEFAULT_WEIGHTS_LOCALE} failed`, "own-locale failed", ...QUERY_SHAPES],
 				countryRows.map((row) => [
 					row.country,
 					row.rows,
@@ -815,7 +811,7 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 	const quantile = (q: number) => rates[Math.min(rates.length - 1, Math.floor(q * rates.length))] ?? 0
 
 	sections.push(
-		`## Per-country en-US failure rate, ambiguous bare rows excluded\n\n${countryRows.length} countries: p25 ${percent(quantile(0.25), 1)}, ` +
+		`## Per-country ${DEFAULT_WEIGHTS_LOCALE} failure rate, ambiguous bare rows excluded\n\n${countryRows.length} countries: p25 ${percent(quantile(0.25), 1)}, ` +
 			`median ${percent(quantile(0.5), 1)}, p75 ${percent(quantile(0.75), 1)}, ` +
 			`${rates.filter((rate) => rate === 0).length} at 0, ${rates.filter((rate) => rate >= 0.5).length} at or above 50%.`
 	)

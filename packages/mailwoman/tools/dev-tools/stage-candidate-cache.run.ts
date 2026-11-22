@@ -68,6 +68,9 @@ if (!(await pathExists(cardPath))) {
 /**
  * The base package every overlay reaches through `mailwoman.baseWeights`,
  * and the only one that contains a model.
+ *
+ * It is the Latin family's graph package, a fact about how the packages inherit,
+ * and it would stay `en-us` if the default weights locale became an overlay.
  */
 const BASE_LOCALE = "en-us"
 

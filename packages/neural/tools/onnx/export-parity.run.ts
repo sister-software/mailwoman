@@ -35,6 +35,7 @@ import * as ort from "onnxruntime-node"
 import { JSONSpliterator } from "spliterator"
 
 import { loadClassifierFromWeights } from "#classifier/loader"
+import { DEFAULT_WEIGHTS_LOCALE } from "#weights/families"
 
 const { values } = parseArguments({
 	options: {
@@ -42,7 +43,7 @@ const { values } = parseArguments({
 		reference: { type: "string" },
 		candidate: { type: "string" },
 		rows: { type: "string" },
-		locale: { type: "string", default: "en-us" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE.toLowerCase() },
 		count: { type: "string", default: "1000" },
 		tolerance: { type: "string", default: "1e-4" },
 		threads: { type: "string", default: "4" },

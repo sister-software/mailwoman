@@ -6,11 +6,7 @@
  */
 
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
-
-/**
- * The weights locale a row grades under when its country ships no overlay: the CLI's default.
- */
-const BASE_LOCALE = "en-US"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 /**
  * Maps a routed country to the weights overlay the release ships for it, in BCP 47 casing.
@@ -32,7 +28,7 @@ export const OVERLAY_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = overl
  * Returns the overlay routes for the shipped Latin-graph locales, keyed by country.
  */
 function overlayRoutes(locales: readonly string[]): Readonly<Record<string, string>> {
-	const baseRegion = routeCountry({ locale: BASE_LOCALE })
+	const baseRegion = routeCountry({ locale: DEFAULT_WEIGHTS_LOCALE })
 
 	const routes = [...weightsPackageByCountry({ locales: [...locales] })]
 		.filter(([country]) => country !== baseRegion)
@@ -56,10 +52,10 @@ export function routeCountry(row: BoardRouteInput): string | null {
 }
 
 /**
- * Return the weights locale for a routed country, or the base en-US locale when no overlay is declared.
+ * Return the weights locale for a routed country, or the default weights locale when no overlay is declared.
  */
 export function overlayLocale(country: string | null): string {
-	return (country && OVERLAY_LOCALE_BY_COUNTRY[country]) || BASE_LOCALE
+	return (country && OVERLAY_LOCALE_BY_COUNTRY[country]) || DEFAULT_WEIGHTS_LOCALE
 }
 
 /**

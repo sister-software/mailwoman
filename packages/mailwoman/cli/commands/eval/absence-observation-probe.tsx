@@ -19,6 +19,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 
@@ -31,7 +32,7 @@ export const spec = {
 	name: "absence-observation-probe",
 	description,
 	options: {
-		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE, description: "Weights package locale" },
 		"weights-cache": { type: "string", description: "Candidate weights dir" },
 		coverage: { type: "string", description: "Sealed coverage layer; default is the definition's own file" },
 		db: { type: "string", description: "Sealed poi.db; default is the coverage layer itself" },

@@ -14,11 +14,11 @@
  *   and the file is sealed read-only afterwards.
  */
 
+import { POSTCODE_PREFIX_LEVELS, type PostcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { allKeyed } from "@mailwoman/core/promises"
-import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix"
 import { PathBuilder } from "path-ts"
 
@@ -65,21 +65,21 @@ const DATABASE_RECIPES = {
 		sourceFile: "postalcode-gb-codepoint.db",
 		country: "gb",
 		scope: "gb-esw",
-		level: "outward",
+		level: POSTCODE_PREFIX_LEVELS.GB,
 		probePrefixes: ["SW1A", "EH1", "CF10", "M1"],
 	},
 	"gb-ni-osm": {
 		sourceFile: "postalcode-ni-osm.db",
 		country: "gb",
 		scope: "gb-ni",
-		level: "outward",
+		level: POSTCODE_PREFIX_LEVELS.GB,
 		probePrefixes: ["BT1", "BT9", "BT48", "BT94"],
 	},
 	"us-wof": {
 		sourceFile: "postalcode-us.db",
 		country: "us",
 		scope: "us",
-		level: "3",
+		level: POSTCODE_PREFIX_LEVELS.US,
 		polygonFile: "wof-polygons-us-full.db",
 		// One prefix per behavior the arm can produce, so a probe line that goes
 		// quiet identifies the failed rule.

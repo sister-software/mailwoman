@@ -13,15 +13,16 @@ import { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import type { LoadedPairIndex } from "#web/loader"
 import { fetchBytes } from "#web/onnx-runner"
+import { DEFAULT_WEIGHTS_LOCALE } from "#weights/families"
 
 /**
  * Reduce a locale or bare country code to the country subtag the pair-index restriction compares.
  *
  * A full locale ("en-gb") yields its subtag ("gb") and a bare code ("gb") passes through unchanged.
- * An omitted country defaults to "en-us" and therefore to "us".
+ * An omitted country defaults to the default weights locale and therefore to "us".
  */
 export function resolvePairIndexCountry(country: string | null): string {
-	const normalized = (country ?? "en-us").toLowerCase()
+	const normalized = (country ?? DEFAULT_WEIGHTS_LOCALE).toLowerCase()
 
 	return normalized.split("-")[1] ?? normalized
 }

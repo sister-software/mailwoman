@@ -21,6 +21,7 @@
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
@@ -31,7 +32,7 @@ const { values } = parseArguments({
 	options: {
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "arm" },
-		locale: { type: "string", default: "en-US" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE },
 		country: { type: "string" },
 		raw: { type: "boolean", default: false },
 		fixtures: { type: "string", default: PARITY_FIXTURES_V1_PATH },

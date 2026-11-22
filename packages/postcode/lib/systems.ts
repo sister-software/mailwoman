@@ -28,6 +28,7 @@ import { normalizeCodePostal } from "@mailwoman/codex/fr"
 import { normalizeUkPostcode, UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { normalizeCAP } from "@mailwoman/codex/it"
 import { normalizeJpPostalCode } from "@mailwoman/codex/jp"
+import { NL_PC6_SURFACE_PATTERN } from "@mailwoman/codex/nl/postcode"
 import { normalizeNZPostcode } from "@mailwoman/codex/nz"
 import { isZipCode } from "@mailwoman/codex/us"
 
@@ -104,7 +105,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * (`mailwoman/geocode-core`) and the demo's pin ranking consume one tier definition.
  */
 export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
-	/^\d{4}\s?[A-Z]{2}$/i,
+	NL_PC6_SURFACE_PATTERN,
 	UK_POSTCODE_PATTERN,
 	// Rural forward sortation areas have a `0` in second position.
 	// `[1-9]` excludes them.

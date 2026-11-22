@@ -27,6 +27,7 @@
 import { Spinner } from "@inkjs/ui"
 import { spawnProcess } from "@mailwoman/core/process"
 import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { Box, Text, useInput, useStdin } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import React, { useEffect, useState } from "react"
@@ -270,12 +271,10 @@ export function WeightsGuard({
 		case "settled":
 			return children(state.result)
 		case "prompt":
-			// country-branch: en-US is the weights locale a caller gets when it chooses none.
-			// A default read from the installed weights packages would replace the literal.
 			return (
 				<Box flexDirection="column">
 					<Text>
-						Neural weights for <Text bold>{locale ?? "en-US"}</Text> aren&apos;t installed.
+						Neural weights for <Text bold>{locale ?? DEFAULT_WEIGHTS_LOCALE}</Text> aren&apos;t installed.
 					</Text>
 					<Text>
 						Download <Text bold>{weightsPackageName(locale)}</Text> to{" "}

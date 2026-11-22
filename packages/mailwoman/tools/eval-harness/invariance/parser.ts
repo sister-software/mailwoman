@@ -8,6 +8,7 @@
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { resolvePath } from "path-ts"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
@@ -70,7 +71,7 @@ export const COUNTRY_TO_LOCALE: Readonly<Record<string, string>> = {
  * Returns the locale tag for a country, or `en-US` when the country is unlisted.
  */
 export function localeForCountry(country: string): string {
-	return COUNTRY_TO_LOCALE[country] ?? "en-US"
+	return COUNTRY_TO_LOCALE[country] ?? DEFAULT_WEIGHTS_LOCALE
 }
 
 /**
@@ -78,9 +79,7 @@ export function localeForCountry(country: string): string {
  * or from the installed weights, in that order of precedence.
  */
 async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressClassifier> {
-	// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
-	// A default read from the installed weights packages would replace the literal.
-	const locale = opts.locale ?? "en-US"
+	const locale = opts.locale ?? DEFAULT_WEIGHTS_LOCALE
 
 	if (opts.weightsCache) {
 		return NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot: opts.weightsCache })

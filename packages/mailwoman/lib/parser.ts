@@ -15,6 +15,7 @@ import type {
 	PlacerCountryUse,
 	StageSource,
 } from "@mailwoman/core/pipeline"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { ServiceRegistry } from "async-init"
 import type { PathBuilderLike } from "path-ts"
 
@@ -119,9 +120,7 @@ export interface Parser extends AsyncDisposable {
  * ```
  */
 export async function createParser(options: ParserOptions = {}): Promise<Parser> {
-	// country-branch: en-US is the weights locale a caller gets when it chooses none.
-	// A default read from the installed weights packages would replace the literal.
-	const locale = options.locale ?? "en-US"
+	const locale = options.locale ?? DEFAULT_WEIGHTS_LOCALE
 	const scope = options.scope ? options.scope.createChild() : new ServiceRegistry()
 
 	// Each registration skips a service `options.scope` provides.
