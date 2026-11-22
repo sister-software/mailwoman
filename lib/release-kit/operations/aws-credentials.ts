@@ -258,6 +258,64 @@ async function writeInstanceRole(
 	}
 }
 
+/**
+ * The most versions IAM keeps of one managed policy.
+ */
+const POLICY_VERSION_LIMIT = 5
+
+/**
+ * Creates the customer-managed policy `name`, or makes `document` its default version, and answers its ARN.
+ *
+ * A user's inline policies may total 2,048 bytes, and the tile-build policy is larger.
+ * A managed policy may hold 6,144 bytes.
+ *
+ * IAM keeps five versions of one policy.
+ * The oldest version that isn't the default is deleted to make room for a sixth.
+ */
+async function writeManagedPolicy(
+	caller: AWSCaller,
+	name: string,
+	document: string,
+	accountID: string
+): Promise<string> {
+	const arn = `arn:aws:iam::${accountID}:policy/${name}`
+
+	if (!(await readEntity(caller, ["iam", "get-policy", "--policy-arn", arn]))) {
+		await aws(caller, ["iam", "create-policy", "--policy-name", name, "--policy-document", document])
+
+		return arn
+	}
+
+	const listed = await aws<{ Versions: Array<{ VersionId: string; IsDefaultVersion: boolean; CreateDate: string }> }>(
+		caller,
+		["iam", "list-policy-versions", "--policy-arn", arn]
+	)
+
+	const versions = listed?.Versions ?? []
+
+	if (versions.length >= POLICY_VERSION_LIMIT) {
+		const oldest = versions
+			.filter((version) => !version.IsDefaultVersion)
+			.toSorted((a, b) => a.CreateDate.localeCompare(b.CreateDate))[0]
+
+		if (oldest) {
+			await aws(caller, ["iam", "delete-policy-version", "--policy-arn", arn, "--version-id", oldest.VersionId])
+		}
+	}
+
+	await aws(caller, [
+		"iam",
+		"create-policy-version",
+		"--policy-arn",
+		arn,
+		"--policy-document",
+		document,
+		"--set-as-default",
+	])
+
+	return arn
+}
+
 const mintedIdentity = z.object({
 	role: z.string(),
 	kind: z.enum(["user", "instance"]),
@@ -370,16 +428,10 @@ export const mintAWSCredentials = defineOperation({
 				context.log(`created user ${role.name}`)
 			}
 
-			await aws(caller, [
-				"iam",
-				"put-user-policy",
-				"--user-name",
-				role.name,
-				"--policy-name",
-				role.name,
-				"--policy-document",
-				stringifyJSON(role.policy(accountID)),
-			])
+			const policyARN = await writeManagedPolicy(caller, role.name, stringifyJSON(role.policy(accountID)), accountID)
+
+			await aws(caller, ["iam", "attach-user-policy", "--user-name", role.name, "--policy-arn", policyARN])
+			context.log(`attached policy ${policyARN} to user ${role.name}`)
 
 			const result = await aws<{ AccessKey: { AccessKeyId: string; SecretAccessKey: string } }>(caller, [
 				"iam",
