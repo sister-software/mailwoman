@@ -8,12 +8,22 @@
  *   and successors listed in `whosonfirst-data-deprecated` that no clone holds.
  *   It reads the clones and changes none of them.
  *   The exit status is non-zero when any check fails.
+ *
+ *   With `--postcodes` it audits the postcode clones instead: each `whosonfirst-data-postalcode-<cc>`
+ *   clone's current records against the postcode package's formats, a geometry at 0,
+ *   0, the GeoNames postal exports, and the other clones' postcodes.
+ *   That mode prints counts and exits 0.
  */
 
-import { wofReposPath } from "@mailwoman/core/data-root"
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { allKeyed } from "@mailwoman/core/promises"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
+import type {
+	PostcodeAuditReport,
+	PostcodeCloneAudit,
+	PostcodeFinding,
+} from "@mailwoman/gazetteer/tools/pipeline/wof/postcode-audit"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -21,8 +31,10 @@ import {
 	CheckList,
 	type CommandComponent,
 	type CommandSpec,
+	CommandSummaryLines,
 	CommandTaskResult,
 	useCommandTask,
+	useStageProgress,
 } from "#cli-kit"
 
 /**
@@ -44,8 +56,55 @@ export const spec = {
 		},
 		out: { type: "string", description: "Write the full report, with examples, to this JSON file" },
 		concurrency: { type: "number", description: "Records read at once. Default 32" },
+		postcodes: {
+			type: "boolean",
+			default: false,
+			description: "Audit the postcode clones' current records instead, print counts and exit 0",
+		},
+		"geonames-postal": {
+			type: "string",
+			description: "GeoNames postal export directory for --postcodes. Default <data-root>/geonames-postal",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * A finding's count, or the state that kept it from being measured.
+ */
+function findingText(finding: PostcodeFinding): string {
+	return typeof finding.count === "number" ? formatQuantity(finding.count) : finding.state
+}
+
+/**
+ * The lines the postcode audit prints: one per clone, then the totals over the clones that were read.
+ */
+function postcodeAuditLines(report: PostcodeAuditReport, out: string | undefined): string[] {
+	const read = report.clones.filter((clone) => clone.read)
+
+	const total = (pick: (clone: PostcodeCloneAudit) => number | null) =>
+		formatQuantity(read.reduce((sum, clone) => sum + (pick(clone) ?? 0), 0))
+
+	return [
+		`Audited ${read.length} of ${report.clones.length} postcode clones against ${report.geonamesDirectory}`,
+		...report.clones.map((clone) =>
+			clone.read
+				? `${clone.country}: ${formatQuantity(clone.records)} records, ${formatQuantity(clone.current)} current, ` +
+					`${formatQuantity(clone.skipped)} skipped, ${formatQuantity(clone.unreadable.count)} unreadable; ` +
+					`format ${findingText(clone.format)}; geometry at 0, 0 ${findingText(clone.geometry)}; ` +
+					`uncorroborated ${findingText(clone.corroboration)}` +
+					(clone.corroboration.territoryUnread.count
+						? ` (and ${formatQuantity(clone.corroboration.territoryUnread.count)} whose territory export is unread)`
+						: "") +
+					`; shared ${findingText(clone.shared)}`
+				: `${clone.country}: unread, ${clone.error}`
+		),
+		`Read clones together: ${total((clone) => clone.records)} records, ${total((clone) => clone.current)} current; ` +
+			`format ${total((clone) => clone.format.count)}; geometry at 0, 0 ${total((clone) => clone.geometry.count)}; ` +
+			`uncorroborated ${total((clone) => clone.corroboration.count)}; ` +
+			`${formatQuantity(report.shared.length)} postcodes shared by two or more countries`,
+		...(out ? [`Wrote the record ids to ${out}`] : []),
+	]
+}
 
 /**
  * The most entries a check's detail lists before it summarizes.
@@ -61,6 +120,8 @@ function topEntries(counts: Record<string, number>): string {
 }
 
 const GazetteerDoctor: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
+	const progress = useStageProgress()
+
 	const state = useCommandTask(
 		async () => {
 			const {
@@ -76,6 +137,39 @@ const GazetteerDoctor: CommandComponent<typeof spec, [string?]> = ({ options, ar
 			})
 
 			const root = args[0] ? PathBuilder.from(args[0]) : wofReposPath()
+
+			if (options.postcodes) {
+				const { auditPostcodeClones } = await import("@mailwoman/gazetteer/tools/pipeline/wof/postcode-audit")
+				const cloned = await auditReposRoot(root)
+
+				const postcodeClones = cloned.repos.flatMap((repo) =>
+					repo.theme === "postalcode" && repo.country
+						? [{ repo: repo.name, directory: root(repo.name), country: repo.country, commit: repo.commit }]
+						: []
+				)
+
+				progress.report("clones", `${postcodeClones.length} postcode clones under ${root.toString()}`)
+
+				const report = await auditPostcodeClones(postcodeClones, {
+					geonamesDirectory: options.geonamesPostal ?? dataRootPath("geonames-postal"),
+					...(options.concurrency ? { concurrency: options.concurrency } : {}),
+					onClone: (clone) =>
+						progress.report(
+							clone.repo,
+							clone.read ? `${formatQuantity(clone.records)} records` : `unread, ${clone.error}`
+						),
+				})
+
+				if (options.out) {
+					await writeLocalJSONFile(
+						{ ...report, commits: Object.fromEntries(postcodeClones.map((clone) => [clone.repo, clone.commit])) },
+						options.out
+					)
+				}
+
+				return { ok: true, checks: [], lines: postcodeAuditLines(report, options.out) }
+			}
+
 			const audit = await auditReposRoot(root, { readCommits: false })
 
 			const clones = audit.repos
@@ -142,12 +236,14 @@ const GazetteerDoctor: CommandComponent<typeof spec, [string?]> = ({ options, ar
 				},
 			]
 
-			return { ok: checks.every((check) => check.ok), checks }
+			return { ok: checks.every((check) => check.ok), checks, lines: null }
 		},
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status !== "done") return <CommandTaskResult state={state} />
+	if (state.status !== "done") return <CommandTaskResult state={state} progress={progress} />
+
+	if (state.result.lines) return <CommandSummaryLines lines={state.result.lines} />
 
 	return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 }
