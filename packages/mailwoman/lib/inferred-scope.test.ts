@@ -26,7 +26,7 @@ describe("shouldDropInferredScope (#1684)", () => {
 		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 0.99 }), INFERRED_US)).toBe(true)
 	})
 
-	it("keeps the scope when the head AGREES — the 75008 protection", () => {
+	it("keeps the scope when the head agrees with it, as for 75001, a postcode in Paris and in Texas", () => {
 		expect(shouldDropInferredScope(tree({ country: "US", confidence: 1 }), INFERRED_US)).toBe(false)
 		expect(shouldDropInferredScope(tree({ country: "us", confidence: 1 }), INFERRED_US)).toBe(false)
 	})
@@ -43,7 +43,7 @@ describe("shouldDropInferredScope (#1684)", () => {
 		expect(shouldDropInferredScope(tree(), INFERRED_US, ["CA"])).toBe(true)
 	})
 
-	it("keeps the scope when the format set INCLUDES the inferred country — the 75008 protection again", () => {
+	it("keeps the scope when the format set includes the inferred country, as a five-digit postcode does", () => {
 		expect(shouldDropInferredScope(tree(), INFERRED_US, ["US", "FR", "DE"])).toBe(false)
 	})
 

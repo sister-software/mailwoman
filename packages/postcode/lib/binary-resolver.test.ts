@@ -13,8 +13,9 @@ import { PostcodeBinaryResolver, serializePostcodeBinary, type PostcodeBinaryEnt
 
 const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "94105", country: "US", lat: 37.789, lon: -122.396 },
-	{ postcode: "75008", country: "FR", lat: 48.873, lon: 2.313 },
-	{ postcode: "75008", country: "US", lat: 33.02, lon: -96.83 }, // 75008 is also Carrollton, TX
+	// 75001 is the 1st arrondissement of Paris and Addison, Texas.
+	{ postcode: "75001", country: "FR", lat: 48.859, lon: 2.342 },
+	{ postcode: "75001", country: "US", lat: 32.96, lon: -96.839 },
 	{ postcode: "1012LM", country: "NL", lat: 52.375, lon: 4.9 },
 	{ postcode: "80144", country: "IT", lat: 0, lon: 0 },
 ]
@@ -37,7 +38,7 @@ describe("PostcodeBinaryResolver", () => {
 	})
 
 	it("returns every country for a postcode shared across borders", () => {
-		const hits = resolver().lookup("75008")
+		const hits = resolver().lookup("75001")
 		expect(hits.map((h) => h.country).toSorted()).toEqual(["FR", "US"])
 	})
 
@@ -67,8 +68,8 @@ describe("PostcodeBinaryResolver", () => {
 	it("groups every place under its postcode, in key order", () => {
 		const groups = [...resolver().groups()]
 
-		expect(groups.map((g) => g.postcode)).toEqual(["1012LM", "75008", "80144", "94105"])
-		expect(groups.find((g) => g.postcode === "75008")!.places.map((p) => p.country)).toEqual(["FR", "US"])
+		expect(groups.map((g) => g.postcode)).toEqual(["1012LM", "75001", "80144", "94105"])
+		expect(groups.find((g) => g.postcode === "75001")!.places.map((p) => p.country)).toEqual(["FR", "US"])
 		expect(groups.find((g) => g.postcode === "80144")!.places).toEqual([{ country: "IT", lat: 0, lon: 0 }])
 	})
 })
