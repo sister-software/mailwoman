@@ -131,10 +131,8 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// docs/engineering/reference/layer-interface.mdx records the count.
 	["LicenseRef-WhosOnFirst-Mixed", [LicenseObligation.Attribution]],
 	// `LicenseRef-US-Mixed`, the US address layer, is deliberately absent.
-	// Its read sources owe attribution at most.
-	// The publishers of 30% of its records have terms no reader recorded.
-	// The register refuses the terms of some publishers whose files it holds.
-	// docs/engineering/reference/layer-interface.mdx names them.
+	// Its sources owe different obligations, and the build admits only those the register lets it
+	// serve. docs/engineering/reference/layer-interface.mdx counts them by basis and obligation class.
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])

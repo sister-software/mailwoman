@@ -36,6 +36,7 @@ import {
 	bundleArtifactPath,
 	BUNDLES,
 	type BundleRightsRecord,
+	dataClientHeaders,
 	headContentLength,
 	MeasurementStatus,
 	probeManifest,
@@ -60,10 +61,13 @@ function isLayerTier(value: string): value is LayerTier {
 	return LAYER_TIERS.has(value)
 }
 
+// The bucket's firewall refuses a HEAD without the CLI's client header, and answers Node's http adapter
+// with a challenge page, so the client sends the header over the fetch adapter as `data bom` does.
 const client = new APIClient({
 	displayName: "mailwoman published-bundles",
 	minRequestIntervalMs: 150,
 	retry: true,
+	axios: { adapter: "fetch", headers: await dataClientHeaders() },
 })
 
 const dataRoot = dataRootPath()

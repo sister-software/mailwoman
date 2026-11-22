@@ -521,9 +521,9 @@ Issue #3163 records the scan's per-country and per-property tables.
 
 ### The US address layer's obligations
 
-`LicenseRef-US-Mixed` records unknown obligations, so it stays out of the obligations table. The sources whose
-terms were read owe attribution at most. The publishers of 30% of the layer's records have terms no reader has
-recorded, and 13 publishers whose terms the register refuses have files in the layer. The OGC server's `license`
+`LicenseRef-US-Mixed` records unknown obligations, so it stays out of the obligations table: its sources owe
+different obligations, and a few of them unknown ones. The build admits only sources whose register decision
+permits serving them, so the layer holds no refused or unread source. The table below counts the rest. The OGC server's `license`
 link for this identifier points to this section. Each region's `ATTRIBUTION.json` lists that region's sources
 with the terms OpenAddresses records for each.
 
@@ -589,39 +589,34 @@ The source texts, retrieved 2026-11-21:
   labels are a third party's claim.
 
 The US position in `packages/corpus/lib/us/AGENTS.md` elects a public body's file published without restricting
-terms. A register decision records that reading of the publisher's page. Measured 2026-11-21 over the 52 regions
-of the served manifest, `addresses/us/2026-11-13/manifest.json`, by reading each region's `ATTRIBUTION.json` and
-joining each source to its row in `address-source-register.json`. An Overture dataset joins through
-`us-situs-sources.json`, and an OpenAddresses run through the row whose `access` names the run.
+terms. A register decision records that reading of the publisher's page. The table below joins each source of
+the served version's regions, read from each region's `ATTRIBUTION.json`, to its rows in
+`address-source-register.json` through `us-situs-sources.json`. It's the join the data BOM, `mailwoman doctor`
+and `NOTICE.txt` read, and the build admits no source the register refuses or leaves unread, so every source it
+lists is elected. Regenerate it with `layer-terms-table.run.ts --layer-version <version>` after a layer or register
+change.
 
-| Sources                                                         | Source ids | Records     | Terms read                    | Obligations |
-| --------------------------------------------------------------- | ---------- | ----------- | ----------------------------- | ----------- |
-| NAD (`usgov-nad`)                                               | 1          | 99,223,239  | yes, elected                  | none        |
-| register-elected OpenAddresses runs and Overture datasets       | 179        | 19,903,690  | yes, elected                  | attribution |
-| register-refused: the publisher's terms spell out a restriction | 22         | 1,346,643   | yes, refused                  | unknown     |
-| register rows no reviewer has read (`unchecked`)                | 7          | 1,367,947   | no                            | unknown     |
-| OpenAddresses runs with no register row                         | 1,988      | 49,310,556  | no, except three in admission | unknown     |
-| All                                                             | 2,197      | 171,152,075 |                               | unknown     |
+{/* layer-terms-table:begin */}
 
-Of the 179 elected, 177 are elected under the US factual-data reading, the City of Berkeley under its portal's
-reuse statement, and `us/dc/statewide` under CC BY 4.0, which brings in the attribution term.
+Generated from `addresses/us/2026-11-21` (51 regions) by
+`packages/mailwoman/tools/dev-tools/us/address-coverage/layer-terms-table.run.ts`.
 
-The 22 refused source ids are 13 publishers' files, 12 OpenAddresses runs with 1,317,791 records and 10 Overture
-datasets with 28,852: the counties of San Luis Obispo, El Dorado, Madera, Tehama, Mono and Mariposa in California, Brevard and
-Hernando in Florida, Kent, Muskegon and Allegan in Michigan, Cook County in Illinois and the City of Boise's Ada
-County file in Idaho. Each decision states the restriction, such as Cook County's clause withholding
-redistribution. The 2026-11-13 build admitted them because their OpenAddresses definitions record no restricting terms.
+| Basis                  | Terms page     | Sources |     Records | Obligation classes                                                                             |
+| ---------------------- | -------------- | ------: | ----------: | ---------------------------------------------------------------------------------------------- |
+| `open-license`         | `terms`        |     258 | 102,455,717 | attribution, indemnity, none, unknown, use-restriction                                         |
+| `no-restricting-terms` | none read      |     236 |  24,818,062 | attribution recorded by OpenAddresses, attribution requested, indemnity, none                  |
+| `no-restricting-terms` | `terms`        |     494 |  14,887,669 | attribution recorded by OpenAddresses, attribution requested, indemnity, none, use-restriction |
+| `no-restricting-terms` | `no-statement` |     455 |  12,678,996 | attribution recorded by OpenAddresses, attribution requested, none                             |
+| `publisher-grant`      | `terms`        |       8 |     546,551 | share-alike, unknown                                                                           |
+| all                    |                |   1,451 | 155,386,995 |                                                                                                |
 
-The 7 unchecked source ids are SanGIS, Placer, Stanislaus and Santa Cruz in California and Lee and Sumter in
-Florida. Of the 1,988 runs without a register row, 1,691 record no terms (39,746,932 records), 210 record an
-attribution grant (4,751,624), 83 record a public-domain statement (4,541,960) and 4 record other text (270,040).
-Every one of those runs now has a register row from the 2026-11-21 terms reading (#3260), and the register
-decides each through `createSourceAdmitter` in `packages/corpus/lib/us/address-records/rights.ts`, which the
-layer build, `situs address-points` and the county address-point builder share.
+{/* layer-terms-table:end */}
 
-The register's own reviews show why a definition that records no terms doesn't settle the reading. The layer
-holds 88 OpenAddresses runs that record no terms and have a register row. Readers elected 76 of them and found
-restricting terms on 11, and one is unread.
+The 2026-11-13 version, built before #3241, held 22 source ids the register refuses (1,346,643 records), 7 whose
+rows were unread and 1,988 OpenAddresses runs with no register row, because that build read only the terms an
+OpenAddresses definition records. The 2026-11-21 terms reading (#3260) gave each of those runs' publishers a row,
+and `createSourceAdmitter` in `packages/corpus/lib/us/address-records/rights.ts`, which the layer build,
+`situs address-points` and the county address-point builder share, decides each run from it.
 
 `LicenseRef-INEGI-Terms` is in the table, because its terms were read. They permit copying, publishing,
 adapting, extracting and commercial use, require the credit `Fuente: INEGI, <product name>`, and state no
