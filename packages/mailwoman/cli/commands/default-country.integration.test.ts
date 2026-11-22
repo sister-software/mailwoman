@@ -62,10 +62,10 @@ describe("--country-scope separates country policy from the resolver backend", (
 		expect(resolverDefaultCountry({ locale: "en-US" })).toEqual({ country: "US", source: "inferred" })
 	})
 
-	test("'locale' scopes by the inferred locale country", () => {
+	test("'locale' scopes by the locale country as the caller's choice, which evidence never withholds", () => {
 		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" })).toEqual({
 			country: "US",
-			source: "inferred",
+			source: "caller",
 		})
 	})
 

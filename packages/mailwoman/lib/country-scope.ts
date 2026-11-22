@@ -8,7 +8,11 @@
 import type { DefaultCountry } from "@mailwoman/core/resolver"
 
 /**
- * Whether the locale-inferred country scopes the resolver.
+ * Whether the locale's country scopes the resolver.
+ *
+ * - `"auto"`: it scopes unless the address shows evidence of another country.
+ * - `"locale"`: it always scopes, as a default country the caller stated does.
+ * - `"none"`: it never scopes.
  */
 export type CountryScope = "auto" | "locale" | "none"
 
@@ -29,7 +33,10 @@ export function localeToCountry(locale: string | null): string | null {
  *
  * An explicit `defaultCountry` outranks locale policy and is a `"caller"` scope;
  * `"none"` disables the scope.
- * A country read off the locale's region subtag is `"inferred"`, so evidence in the address may withhold it.
+ * A country read off the locale's region subtag is `"inferred"` under `"auto"`,
+ * so evidence in the address may withhold it.
+ *
+ * Under `"locale"` the caller chose that country for every input, so it is a `"caller"` scope.
  */
 export function resolverDefaultCountry(options: {
 	defaultCountry?: string
@@ -44,5 +51,5 @@ export function resolverDefaultCountry(options: {
 
 	const inferred = localeToCountry(options.locale ?? null)
 
-	return inferred ? { country: inferred, source: "inferred" } : null
+	return inferred ? { country: inferred, source: options.countryScope === "locale" ? "caller" : "inferred" } : null
 }

@@ -51,8 +51,26 @@ describe.skipIf(!haveGazetteer)("the record of what a geocode ran under", () => 
 
 		const inferred = { country: GEOCODE_DEFAULT_COUNTRY, source: "inferred", strength: "hard" }
 
-		// A full address takes the locale's country as a filter, and the record states it.
-		expect(await scopeOf("1001 Boulevard Saint-Laurent, Montréal")).toEqual({ resolver: inferred, withheld: null })
+		// An address with no evidence of another country takes the locale's country as a filter.
+		expect(await scopeOf("1600 Pennsylvania Avenue NW, Washington, DC 20500")).toEqual({
+			resolver: inferred,
+			withheld: null,
+		})
+
+		// Montréal, Québec outranks Montreal, Wisconsin beyond the soft scope's bonus.
+		expect(await scopeOf("1001 Boulevard Saint-Laurent, Montréal")).toEqual({
+			resolver: null,
+			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "larger_namesake_abroad" },
+		})
+
+		// A Singapore register address has zero match inside the locale's country.
+		expect(await scopeOf("10 Meragi Close S(487972)")).toEqual({
+			resolver: null,
+			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "no_match_in_country" },
+		})
+
+		// The locale head reads a military address as the locale's country, so a miss keeps the scope.
+		expect(await scopeOf("Unit 2050 Box 4190, DPO AP 96278")).toEqual({ resolver: inferred, withheld: null })
 
 		expect(await scopeOf("Paris")).toEqual({
 			resolver: null,
@@ -64,7 +82,7 @@ describe.skipIf(!haveGazetteer)("the record of what a geocode ran under", () => 
 			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "bare_postcode_format_conflict" },
 		})
 
-		// `geocodeAddress` drops the scope the session passed, and the record follows that second decision.
+		// The locale head reads a British address, and the postcode's format excludes the locale's country.
 		expect(await scopeOf("10 Downing Street, London SW1A 2AA")).toEqual({
 			resolver: null,
 			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "contradicting_evidence" },
@@ -74,6 +92,32 @@ describe.skipIf(!haveGazetteer)("the record of what a geocode ran under", () => 
 			resolver: { country: "FR", source: "caller", strength: "hard" },
 			withheld: null,
 		})
+	}, 120_000)
+
+	it("answers abroad when the address shows the evidence, and in the locale's country when it shows none", async () => {
+		await using session = await createGeocodeSession(createGeocodeSessionOptions())
+
+		const countryOf = async (input: string) => (await session.geocode(input)).result.countryCode
+
+		expect({
+			namesake: await countryOf("1001 Boulevard Saint-Laurent, Montréal"),
+			miss: await countryOf("10 Meragi Close S(487972)"),
+			barePostcode: await countryOf("90210"),
+			military: await countryOf("PSC 802 Box 74, APO AE 09499"),
+		}).toEqual({ namesake: "CA", miss: "SG", barePostcode: GEOCODE_DEFAULT_COUNTRY, military: GEOCODE_DEFAULT_COUNTRY })
+	}, 120_000)
+
+	it("keeps the locale's country as a filter for every input under countryScope locale", async () => {
+		await using session = await createGeocodeSession(createGeocodeSessionOptions({ countryScope: "locale" }))
+
+		const run = await session.geocode("1001 Boulevard Saint-Laurent, Montréal")
+
+		expect(run.applied.countryScope).toEqual({
+			resolver: { country: GEOCODE_DEFAULT_COUNTRY, source: "caller", strength: "hard" },
+			withheld: null,
+		})
+
+		expect(run.result.countryCode).toBe(GEOCODE_DEFAULT_COUNTRY)
 	}, 120_000)
 
 	it("states a locale the caller chose as the caller's, and zero scope under countryScope none", async () => {

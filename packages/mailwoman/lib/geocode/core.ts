@@ -44,7 +44,7 @@ import type {
 	Resolver,
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
-import { hardCountryOf, ScopeStrength } from "@mailwoman/core/resolver"
+import { hardCountryOf } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
@@ -65,7 +65,12 @@ import {
 	resolvedCountryOf,
 	treePostcodeValue,
 } from "#geocode/tree-reads"
-import { shouldDropInferredScope, softScopeFromLocaleHead } from "#inferred-scope"
+import {
+	type CountryScopeDecision,
+	decideCountryScope,
+	inferredScopeYieldsOnMiss,
+	ScopeWithheldReason,
+} from "#inferred-scope"
 import { thingQueryRefusalMarkers } from "#intent-refusal"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
 // Observation-layer routes are imported from one barrel.
@@ -189,13 +194,16 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	defaultCountry?: DefaultCountry
 	/**
-	 * Receives the country scope the resolver was given, once per geocode that resolves.
+	 * Receives the country scope the answer was resolved under, once per geocode that resolves.
 	 *
-	 * `dropped` is {@linkcode defaultCountry} when evidence in the address kept
-	 * it from the resolver, else null.
-	 * `resolver` is then the locale head's soft scope standing in for it, or null.
+	 * `withheld` states {@linkcode defaultCountry}'s country and the reason,
+	 * when evidence in the address kept a locale-inferred scope from filtering.
 	 */
-	countryScopeSink?: (decision: { resolver: DefaultCountry | null; dropped: DefaultCountry | null }) => void
+	countryScopeSink?: (decision: CountryScopeDecision) => void
+	/**
+	 * Whether a locale-inferred {@linkcode defaultCountry} that the address withholds stays as a soft scope.
+	 */
+	localeCountryPrior?: boolean
 	/**
 	 * The bonus a soft country scope gives a candidate in its country, in log10-population units.
 	 */
@@ -453,6 +461,10 @@ export async function parseForGeocode(
 /**
  * Run full geocode cascade for one address.
  *
+ * The country scope is decided here, once, by {@linkcode decideCountryScope}.
+ * A locale-inferred scope that leaves the address with zero coordinates is
+ * then withdrawn for a second pass, under {@linkcode inferredScopeYieldsOnMiss}.
+ *
  * Returns a result.
  * It throws only on a fatal parse or resolve error.
  */
@@ -480,8 +492,46 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	// Single-pass geocoding.
-	return geocodeAddressOnce(input, deps)
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+	const { defaultCountry: given, resolveTraceSink, ...unscoped } = deps
+	const switches = geocodeSwitches(deps)
+
+	const scope = await decideCountryScope(tree, given ?? null, {
+		formatCountries: countriesFromPostcodeFormat(treePostcodeValue(tree)),
+		softWhenWithheld: !!deps.localeCountryPrior || switches.scopeCountryRetrieval,
+		scopeCountryRetrieval: switches.scopeCountryRetrieval,
+		...(deps.resolver.findPlace ? { findPlace: deps.resolver.findPlace } : {}),
+		...(deps.softCountryWeight != null ? { softCountryWeight: deps.softCountryWeight } : {}),
+		...(deps.capitalLevel ? { capitalLevel: deps.capitalLevel } : {}),
+	})
+
+	// The first pass's resolver records reach the caller only when its answer is the one returned.
+	const firstPassTrace: Parameters<NonNullable<typeof resolveTraceSink>>[0][] = []
+
+	const result = await geocodeAddressOnce(input, {
+		...unscoped,
+		parsedTree: tree,
+		...(scope.resolver ? { defaultCountry: scope.resolver } : {}),
+		...(resolveTraceSink ? { resolveTraceSink: (record) => void firstPassTrace.push(record) } : {}),
+	})
+
+	if (result.lat != null || !scope.resolver || !inferredScopeYieldsOnMiss(tree, scope)) {
+		deps.countryScopeSink?.(scope)
+
+		for (const record of firstPassTrace) {
+			resolveTraceSink?.(record)
+		}
+
+		return result
+	}
+
+	// The address has zero match inside the locale's country, so it resolves once more without the scope.
+	deps.countryScopeSink?.({
+		resolver: null,
+		withheld: { country: scope.resolver.country, reason: ScopeWithheldReason.NoMatchInCountry },
+	})
+
+	return geocodeAddressOnce(input, { ...unscoped, parsedTree: tree, ...(resolveTraceSink ? { resolveTraceSink } : {}) })
 }
 
 /**
@@ -509,27 +559,10 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	// Countries implied by postcode format.
 	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
 
-	// An inferred scope is dropped when contradictory evidence is stronger.
-	// Under scope retrieval the locale head's contradicting country stands in as a soft scope.
+	// `geocodeAddress` decided the scope, so this pass's default country is the resolver's.
 	if (deps.defaultCountry) {
-		const legacySoft =
-			deps.defaultCountry.strength === ScopeStrength.Soft && !geocodeSwitches(deps).scopeCountryRetrieval
-
-		if (legacySoft || !shouldDropInferredScope(tree, deps.defaultCountry, formatCountries)) {
-			opts.defaultCountry = deps.defaultCountry
-		} else if (geocodeSwitches(deps).scopeCountryRetrieval) {
-			const headScope = softScopeFromLocaleHead(tree, deps.defaultCountry)
-
-			if (headScope) {
-				opts.defaultCountry = headScope
-			}
-		}
+		opts.defaultCountry = deps.defaultCountry
 	}
-
-	deps.countryScopeSink?.({
-		resolver: opts.defaultCountry ?? null,
-		dropped: deps.defaultCountry && opts.defaultCountry !== deps.defaultCountry ? deps.defaultCountry : null,
-	})
 
 	if (deps.softCountryWeight != null) {
 		opts.softCountryWeight = deps.softCountryWeight
