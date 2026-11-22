@@ -696,6 +696,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	// Non-US rooftop selection: national DB first, then OSM fallback.
 	const rooftopFor = (country: string | null): AddressPointLookup | null => {
+		// country-branch: US address points are split into one database per state
+		// and reached through `deps.databases`.
+		// A street-layer partition in the layer manifest would replace the branch.
 		if (!country || country.toLowerCase() === "us") return null
 		const slug = country.toLowerCase()
 

@@ -50,6 +50,8 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	const sample = options.limit && options.limit > 0 ? rows.take(options.limit) : rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
+		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
+		// A default read from the installed weights packages would replace the literal.
 		locale: options.locale ?? "en-US",
 		cacheRoot: options.weightsCacheRoot,
 	})

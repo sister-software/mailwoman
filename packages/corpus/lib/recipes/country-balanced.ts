@@ -459,6 +459,8 @@ export const countryBalancedRecipe: CorpusRecipe = {
 			}
 
 			const { raw, components } = rendered
+			// country-branch: a US row takes the `en-US` tag, and every other row a tag built from its own code.
+			// The codex's language table for each country would replace both halves.
 			const localeTag = rowISO2 === "US" ? "en-US" : `${rowISO2.toLowerCase()}-${rowISO2}`
 
 			if (opts.golden) {

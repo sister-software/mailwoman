@@ -74,6 +74,8 @@ export interface BuildOutlierLatinResult {
 	test: number
 }
 
+// country-branch: BR and MX are the two Latin-script countries chosen as off-map training exposure.
+// A draw from `countriesOfScript("Latn")` minus the trained countries would replace the list.
 /**
  * Off-map (not among the trained countries) and Latin-script.
  *
@@ -85,6 +87,8 @@ export interface BuildOutlierLatinResult {
  * Watch other-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
+// country-branch: CA and LI are held out as the near-twins of the trained US and DE.
+// A nearest-neighbor ranking over the trained countries' features would replace the list.
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
 /**

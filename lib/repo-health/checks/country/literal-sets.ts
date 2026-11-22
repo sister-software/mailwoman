@@ -24,7 +24,14 @@ import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
-import { COUNTRY_BRANCH_MARKER, isCountryHome } from "#repo-health/checks/country/branches"
+import {
+	collectionLiteral,
+	COUNTRY_BRANCH_MARKER,
+	COUNTRY_COLLECTION_NAME,
+	isMarkedCountryBranch,
+	isCountryHome,
+	MIN_COLLECTION_CODES,
+} from "#repo-health/checks/country/branches"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
 /**
@@ -35,13 +42,6 @@ const SETS_MODULE = "packages/codex/lib/country/sets.ts"
 const CODE_LITERAL = /^(?:[A-Z]{2}|[a-z]{2})$/u
 
 /**
- * A binding or property name that reads as a collection of countries.
- */
-const COUNTRY_COLLECTION_NAME = /country|countries|iso2|(?:^|_)ccs?$|^ccs?(?:_|$)/iu
-
-const MIN_CODES = 3
-
-/**
  * One hand-typed country collection or cast and its location.
  */
 export interface CountryLiteralSet {
@@ -49,41 +49,6 @@ export interface CountryLiteralSet {
 	line: number
 	kind: "literal" | "declared" | "cast"
 	text: string
-}
-
-/**
- * Strips the `as const`, `satisfies` and parenthesis wrappers around a literal.
- */
-function unwrap(node: ts.Expression): ts.Expression {
-	let current = node
-
-	while (ts.isAsExpression(current) || ts.isSatisfiesExpression(current) || ts.isParenthesizedExpression(current)) {
-		current = current.expression
-	}
-
-	return current
-}
-
-/**
- * Returns the array literal an expression holds directly or as `new Set([...])`, or `null`.
- */
-function collectionLiteral(node: ts.Expression): ts.ArrayLiteralExpression | null {
-	const inner = unwrap(node)
-
-	if (ts.isArrayLiteralExpression(inner)) return inner
-
-	if (
-		ts.isNewExpression(inner) &&
-		ts.isIdentifier(inner.expression) &&
-		/^(?:Readonly)?Set$/u.test(inner.expression.text) &&
-		inner.arguments?.[0]
-	) {
-		const argument = unwrap(inner.arguments[0])
-
-		return ts.isArrayLiteralExpression(argument) ? argument : null
-	}
-
-	return null
 }
 
 function codeCount(array: ts.ArrayLiteralExpression): number {
@@ -118,42 +83,19 @@ export function findCountryLiteralSets(files: ReadonlyArray<{ file: string; text
 		// A substring search skips a file with neither a quoted two-letter code nor the brand's name before parsing.
 		if (!/"[A-Za-z]{2}"/u.test(text) && !text.includes("CountrySet")) continue
 
-		const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)
-		const lineStarts = source.getLineStarts()
-		const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
-
-		const lineText = (line: number): string =>
-			line < 1 || line > lineStarts.length ? "" : text.slice(lineStarts[line - 1], lineStarts[line] ?? text.length)
-
-		const marked = (node: ts.Node): boolean => {
-			let holder: ts.Node = node
-
-			while (holder.parent && !ts.isStatement(holder) && !ts.isClassElement(holder)) {
-				holder = holder.parent
-			}
-
-			const start = lineOf(holder.getStart(source))
-			const end = lineOf(holder.getEnd())
-
-			for (let line = start; line <= end; line++) {
-				if (lineText(line).includes(COUNTRY_BRANCH_MARKER)) return true
-			}
-
-			for (let line = start - 1; line >= 1; line--) {
-				const trimmed = lineText(line).trim()
-
-				if (trimmed.includes(COUNTRY_BRANCH_MARKER)) return true
-
-				if (!/^(?:\/\/|\/\*|\*)/u.test(trimmed)) return false
-			}
-
-			return false
-		}
+		// A `.ts` module parsed as TSX reads a generic arrow function as an element and loses the rest of the file.
+		const scriptKind = file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+		const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, scriptKind)
 
 		const report = (node: ts.Node, kind: CountryLiteralSet["kind"], label: string): void => {
-			if (marked(node)) return
+			if (isMarkedCountryBranch(source, node)) return
 
-			found.push({ file, line: lineOf(node.getStart(source)), kind, text: label })
+			found.push({
+				file,
+				line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
+				kind,
+				text: label,
+			})
 		}
 
 		const visit = (node: ts.Node): void => {
@@ -163,7 +105,7 @@ export function findCountryLiteralSets(files: ReadonlyArray<{ file: string; text
 			if (name && initializer && COUNTRY_COLLECTION_NAME.test(name)) {
 				const array = collectionLiteral(initializer)
 
-				if (array && codeCount(array) >= MIN_CODES) {
+				if (array && codeCount(array) >= MIN_COLLECTION_CODES) {
 					report(node, "literal", name)
 				}
 			}
@@ -176,7 +118,7 @@ export function findCountryLiteralSets(files: ReadonlyArray<{ file: string; text
 			) {
 				const array = collectionLiteral(node.arguments[1])
 
-				if (array && codeCount(array) >= MIN_CODES) {
+				if (array && codeCount(array) >= MIN_COLLECTION_CODES) {
 					report(node, "declared", node.getText(source).replaceAll(/\s+/gu, " "))
 				}
 			}

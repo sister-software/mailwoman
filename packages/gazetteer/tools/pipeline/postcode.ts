@@ -152,6 +152,8 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. See zcta-centroids.ts).
 
+		// country-branch: the Census ZCTA gazetteer is a US file of US ZIP codes.
+		// A per-country list of centroid sources would replace the branch.
 		if (cc === "us") {
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
 

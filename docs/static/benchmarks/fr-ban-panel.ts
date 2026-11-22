@@ -382,6 +382,8 @@ async function run() {
 		versions: await versionStamp(),
 		config: {
 			locale: LOCALE,
+			// country-branch: this benchmark grades the French BAN panel, so every row is a French address.
+			// A panel that stored each row's country would replace the literal.
 			defaultCountry: "FR",
 			gazetteer: "candidate.db",
 			nationalTier: "BAN FR rooftop extract",

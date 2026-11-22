@@ -119,6 +119,8 @@ export interface Parser extends AsyncDisposable {
  * ```
  */
 export async function createParser(options: ParserOptions = {}): Promise<Parser> {
+	// country-branch: en-US is the weights locale a caller gets when it chooses none.
+	// A default read from the installed weights packages would replace the literal.
 	const locale = options.locale ?? "en-US"
 	const scope = options.scope ? options.scope.createChild() : new ServiceRegistry()
 

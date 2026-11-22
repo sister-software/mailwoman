@@ -365,6 +365,9 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const preHoldoutCount = built.entries.length
 
+		// country-branch: `EXPECTED_US_PAIR_COUNT` is the one registered pair count,
+		// so the cross-check runs for a US build and for no other.
+		// An expected count recorded for each country's source would replace the branch.
 		const checkLine =
 			country === "us"
 				? options.holdoutFraction > 0

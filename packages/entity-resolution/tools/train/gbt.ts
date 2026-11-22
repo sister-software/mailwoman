@@ -118,6 +118,9 @@ export async function trainDedupGBT(
 	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 3000
 	const OUT = options.out || "packages/entity-resolution/lib/models/dedup-gbt-en-us.ts"
+	// country-branch: the training sources are US provider registers,
+	// so the model is stamped en-US by default.
+	// A locale recorded in the sources' manifest would replace the literal.
 	const LOCALE = options.locale || "en-US"
 	const COST = options.cost ?? 1
 	const TRAIN_DATE = options.date || isoDate()

@@ -487,6 +487,8 @@ export async function adminPairsFromCorpus(
 	scan: for (const path of await matchingFiles(parquetGlob)) {
 		for await (const batch of spanRowBatches(path)) {
 			for (const row of batch) {
+				// country-branch: the pairs feed US rows, where a locality is followed by a region.
+				// A country parameter and the codex layout of each country would replace the literal.
 				if (row.country !== "US" || pairs.size >= cap * 3) continue
 
 				const locality = spanTexts(row, "locality").at(-1)

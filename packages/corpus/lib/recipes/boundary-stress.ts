@@ -74,6 +74,9 @@ export const boundaryStressRecipe: CorpusRecipe = {
 
 		for (let i = 0; i < count; i++) {
 			const row = synthesizeBoundaryStressRow(null, { random, forceTemplate: pickTemplate(random) })
+			// country-branch: every boundary-stress template renders a US address,
+			// so a locale without a region reads as US.
+			// A country field on the synthesized row would replace the fallback.
 			const country = row.locale.split("-")[1] ?? "US"
 			// One resolution for both, because `source_id` includes the source as its prefix
 			// and a pair that disagreed would name a source no row of this output declares.

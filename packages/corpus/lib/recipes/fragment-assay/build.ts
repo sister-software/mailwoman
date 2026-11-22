@@ -315,6 +315,9 @@ async function pushCountryCounterweight(
 	surfaces: ReadonlyMap<string, readonly string[]>
 ): Promise<void> {
 	const note = "Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail)"
+	// country-branch: the counterweight rows are built over US streets and localities,
+	// as the function's comment states.
+	// The corpus manifest's country list would replace the literal.
 	const seedCountries = ["US"]
 	const countryCap = Math.min(options.perLocaleCap, COUNTRY_CAP)
 

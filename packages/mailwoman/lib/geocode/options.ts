@@ -19,6 +19,8 @@ import { z } from "zod"
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/switches"
 import type { CapitalTier } from "#resolver-backend"
 
+// country-branch: en-US is the weights locale a caller gets when it chooses none.
+// A default read from the installed weights packages would replace the literal.
 /**
  * The locale a geocode parses under when the caller chooses none.
  *

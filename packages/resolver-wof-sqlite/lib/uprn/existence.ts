@@ -28,6 +28,8 @@ import { UPRN_COVERAGE_H3_RESOLUTION, UPRN_H3_RESOLUTION, uprnH3Cell } from "#up
  */
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 
+// country-branch: OS Open UPRN is Ordnance Survey's product, and its coverage is Great Britain.
+// The countries recorded in the layer's manifest would replace the list.
 /**
  * The countries OS Open uprn covers.
  *

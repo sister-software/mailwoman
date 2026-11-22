@@ -76,6 +76,8 @@ export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow>
 		yield {
 			raw: raw["raw"] as string,
 			components,
+			// country-branch: every kryptonite row is a US address, so a row without a country reads as US.
+			// A country on each generated row would replace the fallback.
 			country: tagged?.country ?? (raw["country"] as string) ?? "US",
 			locale: tagged?.locale ?? (raw["locale"] as string) ?? undefined,
 			source,

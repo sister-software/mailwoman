@@ -292,7 +292,12 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * An incomplete bundle makes the loader fall back to other weights or disable channels.
  * The eval would then report those results as the candidate's score.
  */
-export async function assertWeightsCacheStaged(cacheRoot: PathBuilderLike, locale = "en-us"): Promise<void> {
+export async function assertWeightsCacheStaged(
+	cacheRoot: PathBuilderLike,
+	// country-branch: en-us is the weights package a candidate is staged under when the caller states no locale.
+	// A locale read from the staged bundle's model card would replace the literal.
+	locale = "en-us"
+): Promise<void> {
 	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
 
 	if (kind === "ok") return

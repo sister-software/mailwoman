@@ -28,6 +28,8 @@ export function derivePostcodePrefix(code: string, country?: string): string | n
 
 	const compact = code.replaceAll(/\s+/g, "")
 
+	// country-branch: the GB outward code and the US three-digit prefix are the two prefix rules written.
+	// A codex rule for each country's postcode prefix would replace the switch.
 	switch (country.toUpperCase()) {
 		case "GB":
 			return compact.length >= MIN_GB_OUTWARD_CODE_LENGTH ? compact.slice(0, -3) : null

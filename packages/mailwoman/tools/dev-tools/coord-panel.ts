@@ -66,6 +66,9 @@ export async function readCoordPanel(
 	path: PathBuilderLike,
 	opts: { country?: string; limit?: number } = {}
 ): Promise<CoordPanel> {
+	// country-branch: a panel row without a country reads as US when the caller states no other.
+	// The commit that added the fallback recorded no reason, and a panel format
+	// that requires a country would replace it.
 	const defaultCountry = (opts.country ?? "US").toUpperCase()
 	const byKey = new Map<string, PanelLocality>()
 	let qualifiersStripped = 0

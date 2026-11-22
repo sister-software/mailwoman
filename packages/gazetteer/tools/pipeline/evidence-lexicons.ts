@@ -298,6 +298,9 @@ export interface BuiltLexicon {
  * and one-token surfaces below the prominence floors.
  */
 export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
+	// country-branch: a build that states no countries reads US and FR localities.
+	// The commit that added the default recorded no reason, and the countries of
+	// the shipped weights locales would replace it.
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? wofDatabasePath("admin-global-priority.db")

@@ -48,6 +48,9 @@ const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 
 		const counts = await buildStreetTable({
 			edges: readOpenRoadsEdges(options.input ?? currentSourcePath("gb-os-open", "open-roads", "data")),
+			// country-branch: OS Open Roads is Great Britain's road network,
+			// and it's the one source this command reads.
+			// A country taken from each road source's manifest would replace the literal.
 			countries: ["GB"],
 			boundariesPath: options.boundaries ?? wofDatabasePath("wof-polygons.db"),
 			out,

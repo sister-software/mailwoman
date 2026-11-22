@@ -238,6 +238,9 @@ export async function installFixtureArtifact(
 		format: options.format ?? ArtifactFormat.SQLite,
 		schemaVersion: 1,
 		bytes: Buffer.byteLength(bytes),
+		// country-branch: the fixture databases hold District of Columbia rows,
+		// so the default key fold and scope are US.
+		// A fixture that stated its own scope and locale would replace both literals.
 		normalization: keyed ? { algorithm: "street-key", version: "1", locale: options.locale ?? "us" } : null,
 		scope:
 			options.scope ??

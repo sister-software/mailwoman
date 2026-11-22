@@ -137,6 +137,8 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
+		// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
+		// A default read from the installed weights packages would replace the literal.
 		locale: options.locale ?? "en-US",
 		modelPath: options.modelPath,
 		tokenizerPath: options.tokenizerPath,

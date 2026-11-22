@@ -60,6 +60,9 @@ export const TOKENIZER_TRAINING_DEFAULTS = {
 	splitDigits: false,
 	allowWhitespaceOnlyPieces: false,
 	perCountrySample: 500_000,
+	// country-branch: a tokenizer trained with no country list samples US and FR rows.
+	// The commit that added the default recorded no reason, and the corpus
+	// manifest's country list would replace it.
 	countries: ["US", "FR"],
 	minePostcodeLiterals: 0,
 	seed: 42,

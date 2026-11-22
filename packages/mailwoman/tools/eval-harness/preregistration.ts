@@ -217,6 +217,8 @@ export interface WeightsIdentityOptions {
  * The locale defaults to `en-US`.
  */
 export async function readWeightsIdentity(options: WeightsIdentityOptions): Promise<WeightsIdentity> {
+	// country-branch: en-US is the weights locale an evaluation grades when the caller chooses none.
+	// A default read from the installed weights packages would replace the literal.
 	const locale = options.locale ?? "en-US"
 	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath

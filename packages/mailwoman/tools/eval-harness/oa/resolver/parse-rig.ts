@@ -178,6 +178,9 @@ export async function buildParseRig(
 	// It must match the dataset's locale, since hardcoding "US" silently filters a non-US
 	// eval to US places (a German "Berlin" then loses to a tiny US Berlin).
 	// Settable via `--default-country <ISO|none>`, and `none` disables the filter so ranking decides.
+	// country-branch: a run that states no default country filters admin lookups to US places.
+	// The commit that added the fallback recorded no reason, and the country of
+	// the dataset's manifest would replace it.
 	const dc = options.defaultCountry || "US"
 
 	// The production priors, with the venue-head lexicon of the dataset's country.

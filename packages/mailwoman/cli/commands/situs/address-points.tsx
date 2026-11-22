@@ -358,6 +358,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 						: normalizeLocalityForKey(String(r.locality))
 					: null
 
+				// country-branch: a build without a national locale is a US state build, keyed by the `us` fold.
+				// A street locale recorded for each country's extract would replace the fallback.
 				const number = normalizeHouseNumberForKey(String(r.number), nationalLocale ?? "us")
 
 				if (!number) continue

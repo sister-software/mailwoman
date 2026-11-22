@@ -660,6 +660,11 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 				components: named,
 				coherent,
 				pass: geo && named && coherent,
+				// country-branch: the probe grades each place under en-US, the default locale,
+				// and under its country's own weights.
+				// Under en-US a bare name competes with every country.
+				// Under its own locale it competes inside its country.
+				// A default locale read from the installed weights packages would replace the literal.
 				ambiguous:
 					input.shape === "bare" &&
 					(locale === "en-US" ? input.outranked_by.length > 0 : input.outranked_by.includes(input.country)),
@@ -676,6 +681,9 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 		`Engine version(s): ${[...engines].join(", ") || "unstated"}. ${grades.length} graded rows.`,
 	]
 
+	// country-branch: en-US is the default-locale arm of the probe, and every
+	// other locale is a country's own arm.
+	// A default locale read from the installed weights packages would replace the literal.
 	const localeKind = (grade: ProbeGrade) => (grade.locale === "en-US" ? "en-US" : "own")
 
 	const shapeRows: Array<Array<string | number>> = []
@@ -728,7 +736,11 @@ export async function gradeGeocodes(options: { out: string }): Promise<string> {
 	const countryRows = countries
 		.map((country) => {
 			const cell = grades.filter((g) => g.country === country && !g.ambiguous)
+			// country-branch: en-US is the default-locale arm of the probe.
+			// A default locale read from the installed weights packages would replace the literal.
 			const us = cell.filter((g) => g.locale === "en-US")
+			// country-branch: every locale other than the default-locale arm is a country's own arm.
+			// The same default locale would replace the literal.
 			const own = cell.filter((g) => g.locale !== "en-US")
 
 			return {

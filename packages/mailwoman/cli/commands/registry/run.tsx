@@ -258,6 +258,8 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const dataRoot = flags.dataRoot || dataRootPath()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
+			// country-branch: en-US is the weights locale a caller gets when it chooses none.
+			// A default read from the installed weights packages would replace the literal.
 			locale: flags.locale || "en-US",
 			...(flags.modelPath ? { modelPath: flags.modelPath } : {}),
 			...(flags.tokenizerPath ? { tokenizerPath: flags.tokenizerPath } : {}),

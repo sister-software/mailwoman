@@ -227,6 +227,9 @@ export function registerGenerationServices(
 		build: ({ candidateDB }) => capitalIndexFor(options.capitalTier, candidateDB),
 	})
 
+	// country-branch: an address-point database passed by path is keyed by the `fr`
+	// fold under a French locale and by `us` otherwise.
+	// The street locale recorded in the database's own manifest would replace the branch.
 	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
 
 	defineUnlessProvided(registry, S.explicitAddressPoints, {
@@ -245,6 +248,8 @@ export function registerGenerationServices(
 
 	defineUnlessProvided(registry, S.classifyKind, {
 		build: async () => {
+			// country-branch: en-US is the weights locale a caller gets when it chooses none.
+			// `GEOCODE_DEFAULT_LOCALE` holds the same value and would replace the literal.
 			const locale = options.locale ?? "en-US"
 			const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
 			const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })

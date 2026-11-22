@@ -55,6 +55,8 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 
 	constructor(dbPath: PathBuilderLike, opts: SQLiteStreetNameLookupOpts = {}) {
 		super({ databasePath: dbPath })
+		// country-branch: the default instance is the BAN street-centroid extract, a table of French streets.
+		// The countries recorded in the extract's manifest would replace the default.
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
 		const table = opts.table ?? "street_centroid"
 
