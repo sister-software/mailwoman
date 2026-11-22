@@ -128,7 +128,8 @@ export interface ConsultedExport {
  */
 export interface CorroborationFinding extends PostcodeFinding {
 	/**
-	 * Every export consulted: the clone country's own, then each `iso:country` a GeoPlanet record stated.
+	 * Every export consulted: the clone country's own, then each `iso:country` a
+	 * GeoPlanet record stated, in country-code order.
 	 */
 	exports: ConsultedExport[]
 	/**
@@ -535,7 +536,12 @@ export async function auditPostcodeClones(
 
 		corroboration.territoryUnread.ids.sort(ascending)
 		corroboration.territoryUnread.count = corroboration.territoryUnread.ids.length
-		corroboration.exports = [...consulted.values()].map(({ keys: _keys, ...consultedExport }) => consultedExport)
+		// The order records are read in differs between machines, so the other exports are listed by country code.
+		const [ownExport, ...otherExports] = [...consulted.values()]
+
+		corroboration.exports = [ownExport!, ...otherExports.toSorted((a, b) => a.country.localeCompare(b.country))].map(
+			({ keys: _keys, ...consultedExport }) => consultedExport
+		)
 
 		for (const { key, record } of cloneRecords) {
 			// A record without a name shares no postcode with another.

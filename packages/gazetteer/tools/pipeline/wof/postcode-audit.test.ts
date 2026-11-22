@@ -139,8 +139,8 @@ describe("auditPostcodeClones", () => {
 
 		expect(usAudit.corroboration.exports.map((consulted) => [consulted.country, consulted.rows])).toEqual([
 			["US", 2],
-			["GU", 1],
 			["AS", null],
+			["GU", 1],
 		])
 
 		expect(usAudit.shared).toMatchObject({ count: 1, ids: [7] })
