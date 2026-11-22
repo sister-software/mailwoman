@@ -45,6 +45,7 @@ import {
 	type StreetLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { ServiceRegistry } from "async-init"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -54,9 +55,11 @@ import { openBANRegionDatabases } from "#geocode/ban-layers"
 import { gazetteerFSTScope, selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import { layerDatabasePath, layerDatabases, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { nationalAddressPointsPath, OvertureNationalDatabaseProvider } from "#geocode/national-overture"
+import { createGeocodeSessionOptions } from "#geocode/options"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import { openServingRooftopProviders } from "#geocode/serving-layers"
+import { GenerationServices, registerGenerationServices } from "#geocode/services"
 import { existingWOFDatabasePaths } from "#resolver-backend"
+import { banLayer, BANLayerService, osmLayer } from "#services/entry/node"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 import { buildFixtureFST, FIXTURE_FST_PLACES } from "#test-kit/fst-fixture"
 
@@ -446,6 +449,34 @@ describe("each overlay on its own role", () => {
 /**
  * The difference list of two arms over the same queries: every query whose answers serialize differently.
  */
+/**
+ * Open the BAN and OpenStreetMap layers under `root` as the Photon and Nominatim servers'
+ * sessions open them: through the two layer contributions, on one generation scope,
+ * so both read one snapshot of the selection.
+ *
+ * The scope defines every other service and builds none of them.
+ */
+async function openRooftopLayers(root: PathBuilderLike) {
+	const registry = new ServiceRegistry()
+
+	registerGenerationServices(registry, createGeocodeSessionOptions({ dataRoot: root }), [banLayer, osmLayer])
+
+	try {
+		const selection = await registry.resolve(GenerationServices.selection)
+
+		return {
+			generation: selection.catalog.generation,
+			national: await registry.resolve(BANLayerService),
+			osm: await registry.resolve(GenerationServices.osm),
+			[Symbol.asyncDispose]: () => registry[Symbol.asyncDispose](),
+		}
+	} catch (error) {
+		await registry[Symbol.asyncDispose]()
+
+		throw error
+	}
+}
+
 function differencesOf<Q, A>(queries: readonly Q[], before: (query: Q) => A, after: (query: Q) => A) {
 	return queries.flatMap((query) => {
 		const was = before(query) ?? null
@@ -533,7 +564,7 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 		})
 
 		{
-			using providers = await openServingRooftopProviders(root)
+			await using providers = await openRooftopLayers(root)
 
 			// The national tier reads BAN, and a miss there stays its answer.
 			expect(providers.national.for("fr").addressPoints?.find(FR_QUERIES[0]!)).toMatchObject({ source: "ban:fr" })
@@ -549,12 +580,12 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 
 		// The national tier cannot read a source after the selected BAN artifact is removed.
 		// Its conventional path would return a layer outside the selection,
-		// so opening the providers refuses and names BAN's file.
-		await expect(openServingRooftopProviders(root)).rejects.toThrow(ban.path)
+		// so opening the layers refuses and names BAN's file.
+		await expect(openRooftopLayers(root)).rejects.toThrow(ban.path)
 	})
 })
 
-describe("the Nominatim and Photon rooftop providers on the active selection, against their conventional paths", () => {
+describe("the BAN and OpenStreetMap layers of one generation scope, against their conventional paths", () => {
 	it("answer every BAN and OpenStreetMap query identically on the same bytes", async () => {
 		const legacy = scratch.path("serving-legacy")
 		const selected = scratch.path("serving-selected")
@@ -579,8 +610,8 @@ describe("the Nominatim and Photon rooftop providers on the active selection, ag
 
 		await replaceActiveSelection(selected, { basedOn: null, set: [ban.entry, osm.entry] })
 
-		using before = await openServingRooftopProviders(legacy)
-		using after = await openServingRooftopProviders(selected)
+		await using before = await openRooftopLayers(legacy)
+		await using after = await openRooftopLayers(selected)
 
 		expect(before.generation).toBeNull()
 		expect(after.generation).toBe(1)

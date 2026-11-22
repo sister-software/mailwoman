@@ -17,7 +17,6 @@ import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GenerationServices, ResolverModuleService } from "#geocode/services"
-import { unattachedLayerLines } from "#geocode/serving-layers"
 import { loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
 import { defineUnlessProvided } from "#services/define"
 
@@ -41,7 +40,10 @@ export const BANLayerService: ServiceToken<NationalDatabaseSource> = createToken
  */
 export const OvertureLayerService: ServiceToken<NationalDatabaseSource> = createToken("overture")
 
-const banLayer: LayerContribution = ({ registry, options, nationalSource }) => {
+/**
+ * The national open registers, such as France's BAN, as a national rooftop source.
+ */
+export const banLayer: LayerContribution = ({ registry, options, nationalSource }) => {
 	defineUnlessProvided(registry, BANLayerService, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => openBANRegionDatabases(options.dataRoot, selection.catalog),
@@ -59,17 +61,20 @@ const overtureLayer: LayerContribution = ({ registry, options, nationalSource })
 	nationalSource(OvertureLayerService)
 }
 
-// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
-// Each extract the provider left unattached prints its path and reason to stderr,
-// as the servers print it at startup.
-const osmLayer: LayerContribution = ({ registry, options }) => {
+/**
+ * The OpenStreetMap extracts, consulted after every national source.
+ *
+ * A refusal under `MAILWOMAN_REFUSE_OBLIGATIONS` isn't caught: it stops the session.
+ * Each extract the provider found on disk and left unattached prints its path and reason to stderr.
+ */
+export const osmLayer: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.osm, {
 		needs: { selection: S.selection },
 		build: async ({ selection }) => {
 			const osm = await openOSMRegionDatabases(options.dataRoot, selection.catalog)
 
-			for (const line of unattachedLayerLines({ osm })) {
-				console.error(line)
+			for (const { path, reason } of osm?.unreadExtracts ?? []) {
+				console.error(`  refused: ${path}, because ${reason}`)
 			}
 
 			return osm
@@ -77,14 +82,20 @@ const osmLayer: LayerContribution = ({ registry, options }) => {
 	})
 }
 
-const usStateDatabases: LayerContribution = ({ registry, options }) => {
+/**
+ * The address-point and interpolation databases of each United States state.
+ */
+export const usStateDatabases: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.regionDatabases, {
 		needs: { mod: ResolverModuleService, selection: S.selection },
 		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
 	})
 }
 
-const forkEntityProbe: LayerContribution = ({ registry, options }) => {
+/**
+ * The fork-to-entity probe over `poi.db` and the station, structure and landmark layers beside it.
+ */
+export const forkEntityProbe: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.forkEntity, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => loadForkEntityDeps(options, selection.catalog),
@@ -92,7 +103,10 @@ const forkEntityProbe: LayerContribution = ({ registry, options }) => {
 	})
 }
 
-const observationRoutes: LayerContribution = ({ registry, options }) => {
+/**
+ * The observation routes over the sealed flood, soil, coastal and zoning layers.
+ */
+export const observationRoutes: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.layerRoutes, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => loadLayerRoutes(options, selection.catalog),

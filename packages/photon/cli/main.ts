@@ -19,7 +19,6 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { titleCase } from "spliterator"
 
 import { openPhotonGeocoder } from "#cli/geocoder"
@@ -75,7 +74,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
-	const { gazetteer, rooftops, geocode } = await openPhotonGeocoder(values["candidate-db"] ?? null)
+	const { gazetteer, geocode } = await openPhotonGeocoder(values["candidate-db"] ?? null)
 	const { adminDBPath } = gazetteer
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	const reverseGeo = adminDBPath ? new WOFReverseGeocoder({ adminDBPath }) : null
@@ -194,7 +193,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		onListen: (info) => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${info.port}`)
 
-			for (const line of [...gazetteerBannerLines(gazetteer), ...unattachedLayerLines(rooftops)]) {
+			for (const line of gazetteerBannerLines(gazetteer)) {
 				console.error(line)
 			}
 

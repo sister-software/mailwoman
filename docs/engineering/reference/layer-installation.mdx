@@ -231,16 +231,16 @@ reader whose role has no selection entry reads its conventional path.
 `lib/geocode/selection-parity.integration.test.ts` reads the same bytes from the conventional path and
 from an installed, selected artifact, and every difference list it records is empty.
 
-| Reader                                       | Role and scope                                                                                | Compared on fixed bytes                                         |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| BAN (`ban-layers.ts`)                        | `address-points`, `street-centroids`, per country                                             | 8 queries, 3 answered                                           |
-| National Overture (`national-overture.ts`)   | `address-points`, per country (`it`, `es`, `tw`)                                              | 5 queries                                                       |
-| OpenStreetMap extracts (`osm-layers.ts`)     | `address-points`, per country, built by the OSM recipe                                        | 5 queries, 3 answered                                           |
-| Nominatim and Photon (`serving-layers.ts`)   | BAN, then the OpenStreetMap tier, from one generation                                         | 8 BAN and 5 OpenStreetMap queries                               |
-| WOF extract set (`existingWOFDatabasePaths`) | `wof-extract`, unscoped, every installed source in order                                      | the attached paths and their SHA-256, and 5 lookups, 3 answered |
-| Autocomplete (`resolveFSTPath`)              | `gazetteer-fst`, `US`                                                                         | 6 prefixes, 5 answered                                          |
-| Parse priors (`fst-layers.ts`)               | `gazetteer-fst` per locale country, `street-morphology`                                       | 4 walks of each FST                                             |
-| POI and the four overlays (`layer-paths.ts`) | `poi`, `flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`, `zoning-overlay`, unscoped | the selected file's path and SHA-256                            |
+| Reader                                        | Role and scope                                                                                | Compared on fixed bytes                                         |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| BAN (`ban-layers.ts`)                         | `address-points`, `street-centroids`, per country                                             | 8 queries, 3 answered                                           |
+| National Overture (`national-overture.ts`)    | `address-points`, per country (`it`, `es`, `tw`)                                              | 5 queries                                                       |
+| OpenStreetMap extracts (`osm-layers.ts`)      | `address-points`, per country, built by the OSM recipe                                        | 5 queries, 3 answered                                           |
+| Nominatim and Photon (`banLayer`, `osmLayer`) | BAN, then the OpenStreetMap tier, from one generation                                         | 8 BAN and 5 OpenStreetMap queries                               |
+| WOF extract set (`existingWOFDatabasePaths`)  | `wof-extract`, unscoped, every installed source in order                                      | the attached paths and their SHA-256, and 5 lookups, 3 answered |
+| Autocomplete (`resolveFSTPath`)               | `gazetteer-fst`, `US`                                                                         | 6 prefixes, 5 answered                                          |
+| Parse priors (`fst-layers.ts`)                | `gazetteer-fst` per locale country, `street-morphology`                                       | 4 walks of each FST                                             |
+| POI and the four overlays (`layer-paths.ts`)  | `poi`, `flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`, `zoning-overlay`, unscoped | the selected file's path and SHA-256                            |
 
 Three providers serve the address-point role: BAN, national Overture and the OpenStreetMap tier. One
 selection entry may list sources of more than one of them. A national provider reads the entry's first

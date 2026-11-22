@@ -33,7 +33,6 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { resolvePath } from "path-ts"
 
 import { openNominatimGeocoder } from "#cli/geocoder"
@@ -96,7 +95,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
-	const { gazetteer, rooftops, geocode } = await openNominatimGeocoder(values["candidate-db"] ?? null)
+	const { gazetteer, geocode } = await openNominatimGeocoder(values["candidate-db"] ?? null)
 	const { adminDBPath, candidateDB } = gazetteer
 	// The annotation fallback adds no country constraint to the geocode.
 	// The default-on placer already routes the query's country.
@@ -273,7 +272,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		onListen: (info) => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${info.port}`)
 
-			for (const line of [...gazetteerBannerLines(gazetteer), ...unattachedLayerLines(rooftops)]) {
+			for (const line of gazetteerBannerLines(gazetteer)) {
 				console.error(line)
 			}
 

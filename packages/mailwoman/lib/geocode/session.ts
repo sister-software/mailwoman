@@ -130,7 +130,21 @@ export interface GeocodeRequestOptions {
 	 * A parent place that scopes every lookup of this input, in place of the session's `parentPlace`.
 	 */
 	parentPlace?: ParentPlaceScope
+
+	/**
+	 * An ISO 3166-1 country the caller restricts this input's resolver to,
+	 * in place of the session's `defaultCountry`.
+	 *
+	 * It is a caller scope, so the session never withholds it, even to the point of zero results.
+	 * The next request without one reads the session's `defaultCountry` again.
+	 */
+	defaultCountry?: string
 }
+
+/**
+ * The services a session resolved for its data generation, as `resolveGenerationServices` returns them.
+ */
+export type GeocodeSessionServices = Awaited<ReturnType<typeof resolveGenerationServices>>
 
 /**
  * The scope a session builds from.
@@ -199,6 +213,16 @@ export interface GeocodeSession extends AsyncDisposable {
 		 */
 		lexicons?: Partial<Record<SoftChannelName, string>>
 	}
+
+	/**
+	 * The services the session geocodes with: the classifier, the gazetteer backend, the region,
+	 * national and OpenStreetMap database sources, and the paths they were opened from.
+	 *
+	 * A server reads them for what it answers beside a geocode, such as a place's ancestry.
+	 * The session owns every handle reached through this member and closes each one at its disposal.
+	 * A caller never disposes one.
+	 */
+	readonly services: Readonly<GeocodeSessionServices>
 	geocode(input: string, request?: GeocodeRequestOptions): Promise<GeocodeRun>
 
 	/**
@@ -271,7 +295,7 @@ export async function createGeocodeSession(
 
 	progress("Loading the gazetteer, neural model and data layers…")
 
-	let services: Awaited<ReturnType<typeof resolveGenerationServices>>
+	let services: GeocodeSessionServices
 	let bias: NonNullable<GeocodeDeps["bias"]>
 
 	try {
@@ -436,7 +460,9 @@ export async function createGeocodeSession(
 
 		const routedAway = (await routed.forInput(input)) !== routed.primary
 
-		const countryScope = routedAway && !options.defaultCountry ? null : resolverDefaultCountry(options)
+		// A request's country takes the place of the session's default country for this input.
+		const scopeOptions = request.defaultCountry ? { ...options, defaultCountry: request.defaultCountry } : options
+		const countryScope = routedAway && !scopeOptions.defaultCountry ? null : resolverDefaultCountry(scopeOptions)
 		const localeCountry = countryScope?.country ?? null
 
 		const barePostcodeFormatConflict = (): boolean => {
@@ -556,6 +582,7 @@ export async function createGeocodeSession(
 	return {
 		initTiming,
 		unavailableLayers: unavailable,
+		services,
 
 		artifacts: {
 			...(fst && priorArtifacts.fstPath ? { fstPath: priorArtifacts.fstPath } : {}),

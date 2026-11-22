@@ -23,6 +23,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli/kit/engine-stamp"
 import { type FreshnessReport, readFreshness } from "#freshness"
+import type { LayerContribution } from "#geocode/contributions"
+import type { GeocodeSession } from "#geocode/session"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
  * The documentation page linked by missing-gazetteer messages.
@@ -105,7 +107,7 @@ export interface GazetteerPaths {
 /**
  * Find gazetteer databases, or exit with a clear error if they're unavailable.
  */
-export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
+async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
@@ -123,6 +125,49 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Pr
 	}
 
 	return { adminDBPath: wofPaths[0], candidateDB, wofPaths }
+}
+
+/**
+ * What a geocoding drop-in opens at startup.
+ */
+export interface DropInGeocoder {
+	/**
+	 * The gazetteer databases found on disk.
+	 *
+	 * The server's reverse geocoder and its startup banner read them.
+	 */
+	gazetteer: GazetteerPaths
+	/**
+	 * The session the server geocodes through.
+	 * It lives as long as the process.
+	 */
+	session: GeocodeSession
+	/**
+	 * The data layers the session composes.
+	 */
+	layers: readonly LayerContribution[]
+}
+
+/**
+ * Find the gazetteer and build a drop-in's geocode session over `layers`, or exit with a
+ * clear error when the gazetteer, the weights or a required layer is unavailable.
+ *
+ * @param candidateDBFlag The `--candidate-db` value, or `null` to read the conventional path.
+ */
+export async function openDropInGeocoder(
+	candidateDBFlag: string | null,
+	layers: readonly LayerContribution[]
+): Promise<DropInGeocoder> {
+	const gazetteer = await resolveGazetteerOrExit(candidateDBFlag)
+
+	try {
+		// The session's modules load here so the `openapi` command and the parse-only drop-in start without them.
+		const { createDropInGeocodeSession } = await import("#geocode/session/drop-in")
+
+		return { gazetteer, layers, session: await createDropInGeocodeSession(layers, gazetteer.candidateDB) }
+	} catch (error) {
+		return fail(`✗ ${error instanceof Error ? error.message : String(error)}`)
+	}
 }
 
 /**

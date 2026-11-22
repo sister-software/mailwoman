@@ -11,7 +11,7 @@
  *   An entry file lists the contributions of one environment, in the order the session consults them.
  */
 
-import type { RegionDatabases } from "@mailwoman/core/resolver"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import type { ServiceRegistry, ServiceToken } from "async-init"
 
 import type { GeocodeSessionOptions } from "#geocode/options"
@@ -21,7 +21,7 @@ import type { GeocodeSessionOptions } from "#geocode/options"
  *
  * The scope disposes it with the session.
  */
-export interface NationalDatabaseSource extends Disposable {
+export interface NationalDatabaseSource extends Disposable, Pick<RegionDatabaseProvider, "layerDatabases"> {
 	for(country: string): RegionDatabases
 }
 
@@ -31,7 +31,7 @@ export interface NationalDatabaseSource extends Disposable {
  * A session reads it for an address whose tree states a region, such as a US state.
  * A `null` slug answers an empty bundle.
  */
-export interface RegionDatabaseSource extends Disposable {
+export interface RegionDatabaseSource extends Disposable, Pick<RegionDatabaseProvider, "layerDatabases"> {
 	readonly for: (regionSlug: string | null) => RegionDatabases
 }
 

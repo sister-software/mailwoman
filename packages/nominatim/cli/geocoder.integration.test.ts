@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Nominatim's geocoder answers the parity sample as a geocode session does.
+ *   Nominatim's geocoder answers the parity sample as a geocode session over the same layers does.
  *
  *   The server's other tests compare the shape of a response.
  *   This one compares the answer: latitude, longitude, resolution tier and country.
@@ -16,44 +16,42 @@ import { describe, expect, it } from "vitest"
 import { openNominatimGeocoder } from "#cli/geocoder"
 
 /**
- * The time the two engine builds and the sample's geocodes may take.
+ * The time the two session builds and the sample's geocodes may take.
  */
 const PARITY_TIMEOUT_MS = 600_000
 
-/**
- * The ids of the sampled gauntlet cases the server answers differently from the session today.
- *
- * The server builds its engine by hand and lacks the stages the session gained after it was written.
- * The list empties when the server builds through the session.
- */
-const EXPECTED_DIFFERENCES: readonly string[] = [
-	"am-thin-system-12",
-	"au-street-name-flinders-street",
-	"cn-unit-linian",
-	"cn-unit-mengding-full",
-	"cn-unit-qifenchang",
-	"fr-f3-la-croix-rousse-lyon",
-	"gh-ws-bank-hospital-block-f6-shippi-close",
-	"ni-r7-ballyhackamore-belfast",
-	"sb-cs-guadalcanal",
-	"us-cross-language-brooklyn-ja-hierarchy",
-	"us-landmark-dtw-code-bare",
-	"us-opt-geronimo-springs-museum",
-	"venue-toponym-comer-bare",
-	"vi-op3-red-hook-st-thomas",
-]
-
 describe.skipIf(!(await serverParityDataPresent()))("Nominatim's geocoder against the geocode session", () => {
 	it(
-		"differs from the session on the listed gauntlet cases and on no other",
+		"answers every sampled gauntlet case as the session does",
 		async () => {
 			const geocoder = await openNominatimGeocoder(null)
 
-			using _rooftops = geocoder.rooftops
+			await using _session = geocoder.session
 
-			const { differences } = await serverParityDifferences({ server: (input) => geocoder.geocode(input) })
+			const { differences } = await serverParityDifferences({
+				server: (input) => geocoder.geocode(input),
+				layers: geocoder.layers,
+			})
 
-			expect(differences.map(({ id }) => id).toSorted()).toEqual(EXPECTED_DIFFERENCES.toSorted())
+			expect(differences).toEqual([])
+		},
+		PARITY_TIMEOUT_MS
+	)
+
+	it(
+		"restricts one query to the country the caller states, and leaves the next query unrestricted",
+		async () => {
+			const geocoder = await openNominatimGeocoder(null)
+
+			await using _session = geocoder.session
+
+			const restricted = await geocoder.geocode("Paris", "US")
+			const unrestricted = await geocoder.geocode("Paris")
+
+			expect({ restricted: restricted.countryCode, unrestricted: unrestricted.countryCode }).toEqual({
+				restricted: "US",
+				unrestricted: "FR",
+			})
 		},
 		PARITY_TIMEOUT_MS
 	)
