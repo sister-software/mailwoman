@@ -94,6 +94,15 @@ export const PrivateReleaseEnvSchema = z.object({
 		description:
 			"An account-owned token holding only Account API Tokens: Edit, created from the link `mwops release cloudflare-tokens` prints.",
 	}),
+	AWS_TILE_BUILD_ACCESS_KEY_ID: z.string().optional().meta({
+		title: "AWS tile-build access key ID",
+		description:
+			"The tile-build role's access key ID, which stages inputs and launches build instances. `mwops release mint-aws-credentials` mints it.",
+	}),
+	AWS_TILE_BUILD_SECRET_ACCESS_KEY: z.string().optional().meta({
+		title: "AWS tile-build secret access key",
+		description: "The secret of `AWS_TILE_BUILD_ACCESS_KEY_ID`. `mwops release mint-aws-credentials` mints it.",
+	}),
 	CLOUDFLARE_EMAIL: z.string().optional().meta({
 		title: "Cloudflare account email",
 		description: "The login email that authenticates `CLOUDFLARE_API_KEY`.",

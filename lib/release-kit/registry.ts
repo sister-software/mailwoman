@@ -15,6 +15,7 @@
 import { findOperation as findRegisteredOperation } from "@mailwoman/core/scripting"
 
 import type { ReleaseOperation } from "#release-kit/operation"
+import { awsCredentials, mintAWSCredentials } from "#release-kit/operations/aws-credentials"
 import { blessPackage } from "#release-kit/operations/bless-package"
 import { checkParity } from "#release-kit/operations/check-parity"
 import { cleanOperation } from "#release-kit/operations/clean"
@@ -65,9 +66,11 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	scaffoldWeightsOverlayOperation,
 	deployTargets,
 	cloudflareTokens,
+	awsCredentials,
 	publishWorkspaceOperation,
 	blessPackage,
 	mintCloudflareTokens,
+	mintAWSCredentials,
 	purgeCloudflareCache,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>
 

@@ -20,6 +20,14 @@ dashboard link that pre-fills its permissions. Create the minter from its link a
 `CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_KEY` to the Global API Key. Then `mwops release mint-cloudflare-tokens -o <file>`
 creates the deploy and cache-purge tokens as account-owned tokens and writes them to that new file, mode 0600.
 
+The AWS identities for the remote tile build follow the same two steps. `mwops release aws-credentials` verifies the
+tile-build access key in the environment against AWS STS. `mwops release mint-aws-credentials -o <file>` runs under the
+shell's AWS session, or under `--profile`, and that session needs IAM write access. It creates the
+`mailwoman-tile-build` user with one access key and the `mailwoman-tile-build-instance` role with its instance profile,
+and writes `AWS_TILE_BUILD_ACCESS_KEY_ID` and `AWS_TILE_BUILD_SECRET_ACCESS_KEY` to that new file, mode 0600.
+`--dry-run` prints each policy document before any IAM request. `lib/release-kit/deploy/aws-credentials.ts` holds the
+policies.
+
 `mwops check <name> [paths…]` runs one registered repository check (`lib/check-kit/registry.ts`) in this checkout
 without a shell and exits with the check's status. The output goes to a log under the cache root, or under
 `--log-dir`. The command prints one summary line, the failing tests or checks, and the log path. Use `--json` to print

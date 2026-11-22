@@ -15,7 +15,7 @@
 # docker/overlay-tiles.Dockerfile.dockerignore keeps installs, build output and data out of the context.
 
 # ---- hrt: the tile builder. GEOS builds from source, so the stage needs cmake and a C++ compiler. ----
-FROM rust:1.99.1-bookworm AS hrt
+FROM docker.io/library/rust:1.99.1-bookworm AS hrt
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends cmake clang \
@@ -28,7 +28,7 @@ COPY . .
 RUN cargo build --release -p hrt-cli
 
 # ---- app: the compiled monorepo ----
-FROM node:24.22.3-bookworm AS app
+FROM docker.io/library/node:24.22.3-bookworm AS app
 
 WORKDIR /repo
 
@@ -39,7 +39,7 @@ RUN corepack enable \
 	&& yarn compile
 
 # ---- runtime ----
-FROM node:24.22.3-bookworm-slim AS runtime
+FROM docker.io/library/node:24.22.3-bookworm-slim AS runtime
 
 # git clones the repositories, aws copies the admin database from S3, and rclone uploads to R2.
 RUN apt-get update \

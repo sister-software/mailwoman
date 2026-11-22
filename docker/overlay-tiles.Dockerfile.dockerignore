@@ -5,6 +5,8 @@
 .env.*
 **/node_modules
 **/out
+# A build-info file without its out/ directory makes `tsc -b` skip the project as already built.
+**/*.tsbuildinfo
 target
 packages/*/target
 data
