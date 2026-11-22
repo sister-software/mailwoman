@@ -15,7 +15,7 @@ import { openBANRegionDatabases } from "#geocode/ban-layers"
 import type { LayerContribution, NationalDatabaseSource } from "#geocode/contributions"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import { USStateDatabaseProvider } from "#geocode/regions"
+import { createRegionDatabaseProvider } from "#geocode/regions"
 import { GenerationServices } from "#geocode/services"
 import { loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
 import { defineUnlessProvided } from "#services/define"
@@ -84,12 +84,13 @@ export const osmLayer: LayerContribution = ({ registry, options }) => {
 }
 
 /**
- * The address-point and interpolation databases of each United States state.
+ * The address-point and interpolation databases of each region: the address layer of every
+ * country that has a manifest, then the older per-state files of the United States.
  */
-export const usStateDatabases: LayerContribution = ({ registry, options }) => {
+export const regionDatabases: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.regionDatabases, {
 		needs: { mod: ResolverModuleService, selection: S.selection },
-		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
+		build: ({ mod, selection }) => createRegionDatabaseProvider(mod, options.dataRoot, selection.catalog),
 	})
 }
 
@@ -128,7 +129,7 @@ export const NODE_LAYER_CONTRIBUTIONS: readonly LayerContribution[] = [
 	banLayer,
 	overtureLayer,
 	osmLayer,
-	usStateDatabases,
+	regionDatabases,
 	forkEntityProbe,
 	observationRoutes,
 ]

@@ -87,14 +87,15 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	if (cascadeOn) {
 		const {
-			regions: { USStateDatabaseProvider },
+			regions: { createRegionDatabaseProvider },
 			resolverWofSqlite: { AddressPointSqliteLookup, StreetInterpolator },
 		} = await allKeyed({
 			regions: import("#geocode/regions"),
 			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 		})
 
-		cascadeProvider = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+		// The factory states no address-layer reader, so the arm reads only the older per-state files.
+		cascadeProvider = await createRegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
 
 	// The addrpt + interp arms run when either a single-state database was given or --cascade is on.

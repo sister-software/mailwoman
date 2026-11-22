@@ -13,7 +13,6 @@
 
 import { serveNode } from "@mailwoman/api-kit"
 import { worldCountries } from "@mailwoman/codex/country/sets"
-import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { parseObligationRefusals } from "@mailwoman/license/refusals"
@@ -300,11 +299,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const countryCodeOf = (code: string): string => code.toUpperCase()
 
 	const probes: RegionLayerProbe[] = [
-		{
-			provider: regionDatabases,
-			keys: Object.keys(US_STATE_BY_ABBREVIATION).map((abbreviation) => abbreviation.toLowerCase()),
-			regionOf: (slug) => `US-${slug.toUpperCase()}`,
-		},
+		// The region provider's keys are the ISO 3166-2 codes of the regions it has a file for.
+		{ provider: regionDatabases, keys: regionDatabases.regions(), regionOf: countryCodeOf },
 		...nationalSources.map((provider) => ({ provider, keys: countries, regionOf: countryCodeOf })),
 		...(osm ? [{ provider: osm, keys: countries, regionOf: countryCodeOf }] : []),
 	]

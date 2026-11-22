@@ -127,8 +127,9 @@ export async function oaResolverEval(
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
 
-		// An empty slug yields an empty bundle, the same answer a null slug gave.
-		const rowDatabases = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase()) : null
+		// The rows are United States addresses, so a row's state is the suffix of its ISO 3166-2 code.
+		// An empty code yields an empty bundle.
+		const rowDatabases = cascadeProvider ? cascadeProvider.for(row.state ? `US-${row.state.toUpperCase()}` : "") : null
 		const rowAddrPoints = rowDatabases?.addressPoints ?? addressPoints ?? null
 		const rowInterp = rowDatabases?.interpolation ?? interpolation ?? null
 

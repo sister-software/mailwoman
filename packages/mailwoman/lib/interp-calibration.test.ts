@@ -6,17 +6,20 @@ import { describe, expect, it } from "vitest"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 
 describe("interpCalibrationForRegion (#374/#584 per-region wiring)", () => {
-	it("selects the measured factor by region (slug is lowercase from regionToStateSlug)", () => {
-		const { byRegion } = INTERP_RADIUS_CALIBRATION
-
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "dc")).toBe(byRegion["DC"])
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "az")).toBe(byRegion["AZ"])
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "tx")).toBe(byRegion["TX"])
+	it("selects the measured factor by the region's ISO 3166-2 code, in either case", () => {
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "US-DC")).toBe(1.44)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "us-az")).toBe(3.12)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "US-TX")).toBe(1.7)
 	})
 
 	it("falls back to the conservative default for an unmeasured region", () => {
 		// FL isn't in the 12-state seed table → the deliberately-high default (rural-skewed).
-		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "fl")).toBe(INTERP_RADIUS_CALIBRATION.default)
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "US-FL")).toBe(INTERP_RADIUS_CALIBRATION.default)
+	})
+
+	it("reads the default for a region of another country that shares a state's letters", () => {
+		// Arunachal Pradesh is `IN-AR`, and Arkansas's measured factor is a fact about `US-AR`.
+		expect(interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, "IN-AR")).toBe(INTERP_RADIUS_CALIBRATION.default)
 	})
 
 	it("falls back to the default for an absent region (null/undefined)", () => {

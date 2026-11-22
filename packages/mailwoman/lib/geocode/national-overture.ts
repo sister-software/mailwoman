@@ -178,8 +178,8 @@ export function supportedOvertureCountries(): string[] {
 }
 
 /**
- * Returns the path of a country's national address-point database, in the same
- * directory `selectAddressPointsDB` reads.
+ * Returns the path of a country's national address-point database, in the same directory
+ * the older per-state files of `#geocode/us/state-files` sit in.
  *
  * The provider treats a missing file as no rooftop tier, so a path anywhere
  * else would hide an existing database.

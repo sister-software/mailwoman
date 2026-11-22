@@ -11,7 +11,7 @@
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { type DropInGeocoder, openDropInGeocoder } from "mailwoman/cli/kit/dropin"
 import type { LayerContribution } from "mailwoman/geocode/contributions"
-import { banLayer, forkEntityProbe, observationRoutes, osmLayer, usStateDatabases } from "mailwoman/services/entry/node"
+import { banLayer, forkEntityProbe, observationRoutes, osmLayer, regionDatabases } from "mailwoman/services/entry/node"
 
 /**
  * The data layers the OGC server composes.
@@ -23,7 +23,7 @@ import { banLayer, forkEntityProbe, observationRoutes, osmLayer, usStateDatabase
 const OGC_LAYERS: readonly LayerContribution[] = [
 	banLayer,
 	osmLayer,
-	usStateDatabases,
+	regionDatabases,
 	forkEntityProbe,
 	observationRoutes,
 ]

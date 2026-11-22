@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Tests that `regionSlugFromTree` yields a US state slug only for trees the resolver didn't place outside the US.
+ * @file Tests that `regionSubdivisionOfTree` reads a tree's region against the country the resolver placed it in.
  *
- *   The slug selects an `address-points-us-<slug>.db` database. Some non-US region codes (Italian "MI", Australian
- *   "WA") collide with US state codes.
+ *   The ISO 3166-2 code selects a region's street databases. Some region codes two countries share
+ *   (Italian "MI", Australian "WA") would otherwise select another country's region.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { regionSlugFromTree, regionToStateSlug } from "#geocode"
+import { regionSubdivisionOfTree } from "#geocode"
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
 	start: 0,
@@ -36,15 +36,17 @@ const tree = (region: string, country?: string): AddressTree => ({
 	],
 })
 
-describe("regionSlugFromTree country check", () => {
-	it("still yields a slug for a US tree, in both registers", () => {
-		expect(regionSlugFromTree(tree("MI", "US"))).toBe("mi")
-		expect(regionSlugFromTree(tree("Michigan", "US"))).toBe("mi")
-		expect(regionSlugFromTree(tree("New York", "us"))).toBe("ny")
+describe("regionSubdivisionOfTree country check", () => {
+	it("yields the code of a region in the resolved country, from its code or its name", () => {
+		expect(regionSubdivisionOfTree(tree("MI", "US"))).toBe("US-MI")
+		expect(regionSubdivisionOfTree(tree("Michigan", "US"))).toBe("US-MI")
+		expect(regionSubdivisionOfTree(tree("New York", "us"))).toBe("US-NY")
+		expect(regionSubdivisionOfTree(tree("ON", "CA"))).toBe("CA-ON")
+		expect(regionSubdivisionOfTree(tree("WA", "AU"))).toBe("AU-WA")
 	})
 
-	it("yields NOTHING for a tree the resolver placed outside the US", () => {
-		// Each region code maps to a real US state slug when the country is ignored.
+	it("never yields another country's region for a code two countries share", () => {
+		// Each region code is a United States state's when the country is left out.
 		for (const [region, country] of [
 			["MI", "IT"],
 			["CO", "IT"],
@@ -54,18 +56,18 @@ describe("regionSlugFromTree country check", () => {
 			["WA", "AU"],
 			["SC", "BR"],
 		] as const) {
-			expect(regionToStateSlug(region, null)).not.toBeNull()
-			expect(regionSlugFromTree(tree(region, country))).toBeNull()
+			expect(regionSubdivisionOfTree(tree(region))).toBe(`US-${region}`)
+			expect(regionSubdivisionOfTree(tree(region, country))).not.toBe(`US-${region}`)
 		}
 	})
 
-	it("still yields a slug when the country is UNKNOWN", () => {
-		// A US address whose country never resolved still needs its street-tier database.
-		expect(regionSlugFromTree(tree("MI"))).toBe("mi")
-		expect(regionSlugFromTree(tree("TX"))).toBe("tx")
+	it("still yields a code when the country is unknown", () => {
+		// An address whose country never resolved still needs its street-tier database.
+		expect(regionSubdivisionOfTree(tree("MI"))).toBe("US-MI")
+		expect(regionSubdivisionOfTree(tree("TX"))).toBe("US-TX")
 	})
 
-	it("reads the country off any node, not only the one carrying the region", () => {
+	it("reads the country off any node, and the region's own node need not state it", () => {
 		const t: AddressTree = {
 			raw: "Via Roma 12, 20121 Milano MI",
 			roots: [
@@ -75,11 +77,21 @@ describe("regionSlugFromTree country check", () => {
 			],
 		}
 
-		expect(regionSlugFromTree(t)).toBeNull()
+		expect(regionSubdivisionOfTree(t)).toBeNull()
 	})
 
-	it("returns null for a tree with no region at all, check or no check", () => {
-		expect(regionSlugFromTree({ raw: "", roots: [] })).toBeNull()
-		expect(regionSlugFromTree({ raw: "x", roots: [node({ tag: "locality", value: "x" })] })).toBeNull()
+	it("reads the resolved name only when the region's value isn't a two-letter code", () => {
+		const named = (value: string): AddressTree => ({
+			raw: value,
+			roots: [node({ tag: "region", value, metadata: { resolver_name: "Kentucky" } })],
+		})
+
+		expect(regionSubdivisionOfTree(named("Kentuckey"))).toBe("US-KY")
+		expect(regionSubdivisionOfTree(named("ZZ"))).toBeNull()
+	})
+
+	it("returns null for a tree with no region at all", () => {
+		expect(regionSubdivisionOfTree({ raw: "", roots: [] })).toBeNull()
+		expect(regionSubdivisionOfTree({ raw: "x", roots: [node({ tag: "locality", value: "x" })] })).toBeNull()
 	})
 })

@@ -224,6 +224,11 @@ export interface RooftopResolveInputs {
 	preResolveCountry: string | null
 
 	/**
+	 * The ISO 3166-2 code of the tree's region, such as `US-TX`, or null when the tree states none.
+	 */
+	regionSubdivision: string | null
+
+	/**
 	 * The address points of the tree's region, from the caller's region resolver.
 	 */
 	regionAddressPoints: AddressPointLookup | null
@@ -240,7 +245,13 @@ export interface RooftopResolveInputs {
  * The stage that picks the address-point source, resolves the tree, and resolves it once more
  * when the first resolve placed the address in a country other than the one the sources were picked for.
  *
- * A country's national database outranks its OpenStreetMap one, and either outranks the region's database.
+ * A country's national database outranks its OpenStreetMap one.
+ * The region's database outranks both when the region is in the country the sources are
+ * picked for, as a state's database is for an address in its own country.
+ *
+ * A region of another country ranks below both, so a two-letter code two countries share
+ * never reads the other country's region in place of the country's own source.
+ *
  * Each resolve runs as the `resolve` stage, so this stage's duration includes theirs.
  */
 export function rooftopResolveStage(
@@ -248,11 +259,11 @@ export function rooftopResolveStage(
 ): PipelineStage<AddressTree, AddressTree, RooftopSelectionRecord, GeocodeStageID> {
 	const { resolver, opts, preResolveCountry, regionAddressPoints, streetHints } = inputs
 
+	// An ISO 3166-2 code opens with its country's ISO 3166-1 code.
+	const regionCountry = inputs.regionSubdivision?.slice(0, 2).toLowerCase() ?? null
+
 	const rooftopFor = (country: string | null): { lookup: AddressPointLookup; source: AddressPointSource } | null => {
-		// country-branch: US address points are split into one database per state
-		// and reached through the caller's region resolver.
-		// A street-layer partition in the layer manifest would replace the branch.
-		if (!country || country.toLowerCase() === "us") return null
+		if (!country) return null
 		const slug = country.toLowerCase()
 		const national = inputs.nationalDatabases?.(slug)?.addressPoints
 
@@ -272,7 +283,8 @@ export function rooftopResolveStage(
 	return {
 		id: GeocodeStageID.RooftopSelection,
 		async run(tree, context) {
-			const rooftop = rooftopFor(preResolveCountry)
+			const regionIsHome = regionAddressPoints != null && regionCountry === preResolveCountry
+			const rooftop = regionIsHome ? null : rooftopFor(preResolveCountry)
 			const addressPoints = rooftop?.lookup ?? regionAddressPoints
 			const firstSource: AddressPointSource | null = rooftop?.source ?? (regionAddressPoints ? "region" : null)
 

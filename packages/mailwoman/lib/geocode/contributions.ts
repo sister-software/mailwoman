@@ -26,13 +26,18 @@ export interface NationalDatabaseSource extends Disposable, Pick<RegionDatabaseP
 }
 
 /**
- * The street-tier databases of a region inside a country, keyed by the region's slug.
+ * The street-tier databases of a region inside a country, keyed by the region's ISO 3166-2 code.
  *
- * A session reads it for an address whose tree states a region, such as a US state.
- * A `null` slug answers an empty bundle.
+ * A session reads it for an address whose tree states a region, such as `US-TX`.
+ * A `null` code answers an empty bundle, and so does a region the source has no file for.
  */
 export interface RegionDatabaseSource extends Disposable, Pick<RegionDatabaseProvider, "layerDatabases"> {
-	readonly for: (regionSlug: string | null) => RegionDatabases
+	readonly for: (subdivision: string | null) => RegionDatabases
+
+	/**
+	 * The codes of the regions the source has a file for.
+	 */
+	regions(): readonly string[]
 }
 
 /**

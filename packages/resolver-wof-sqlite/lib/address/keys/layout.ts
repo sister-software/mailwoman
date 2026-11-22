@@ -152,6 +152,32 @@ export async function readLatestAddressLayerManifest(
 }
 
 /**
+ * The newest manifest of every country that has an address layer under `root`, ordered by country.
+ *
+ * A root with no `addresses` directory, or with zero manifests in it, answers an empty list.
+ * A reader therefore learns which countries have a layer by reading the root, and holds no list of them.
+ *
+ * @throws When a manifest exists and can't be read.
+ */
+export async function readLatestAddressLayerManifests(root: PathBuilderLike): Promise<AddressLayerCountryManifest[]> {
+	const layerDir = resolvePathBuilder(root, "addresses")
+
+	if (!(await pathExists(layerDir))) return []
+
+	// A manifest sits at `<country>/<version>/manifest.json`.
+	// Versions are ISO dates, so within one country's directory the last path is the newest.
+	const paths = await sortedGlob(layerDir, "*/*/manifest.json")
+	const manifests = await Promise.all(paths.map((path) => readLocalJSONFile<AddressLayerCountryManifest>(path)))
+	const newest = new Map<string, AddressLayerCountryManifest>()
+
+	for (const manifest of manifests) {
+		newest.set(manifest.country.toUpperCase(), manifest)
+	}
+
+	return [...newest.values()].toSorted((left, right) => left.country.localeCompare(right.country))
+}
+
+/**
  * Writes a country's manifest beside its files, after every region it lists is built.
  */
 export async function writeAddressLayerManifest(

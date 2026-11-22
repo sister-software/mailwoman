@@ -2,10 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Selects and caches the per-state address-point and interpolation databases for a parse.
+ *   The street-tier databases of one first-level subdivision of a country,
+ *   and the provider that opens them.
+ *
+ *   A region is keyed by its ISO 3166-2 code, such as `US-TX`.
+ *   The provider learns which regions have a file from its sources
+ *   and holds no list of countries of its own.
+ *
+ *   The address layer's manifests are the source for every country that has one.
  */
 
-import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
+import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country/subdivision"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -17,56 +24,30 @@ import type {
 	RegionLayerDatabase,
 } from "@mailwoman/core/resolver"
 import type { AddressLayerCountryManifest } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
-import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { LayerCatalog } from "#data/catalog"
-import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
+import type { LayerCatalog } from "#data/catalog"
+import { usStateFileSources } from "#geocode/us/state-files"
 
 /**
- * Returns the databases for a state slug such as `"tx"`.
- * A `null` slug yields no databases.
+ * Returns the databases of one region, by its ISO 3166-2 code such as `US-TX`.
+ * A `null` code yields a bundle with zero members.
  */
-export type RegionDatabaseResolver = (stateSlug: string | null) => RegionDatabases
+export type RegionDatabaseResolver = (subdivision: string | null) => RegionDatabases
 
 /**
- * Maps a lowercased full US state name to its lowercase two-letter slug.
- */
-export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
-	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [
-		name.toLowerCase(),
-		abbreviation.toLowerCase(),
-	])
-)
-
-/**
- * Returns the lowercase two-letter state slug for a parsed region value or resolver name, or null.
+ * Returns the ISO 3166-2 code, such as `US-MI`, of the region a parsed or resolved tree states, or null.
  *
- * Both abbreviations ("MI") and full names ("New York") are accepted.
- * A null result disables the per-state address-point and interpolation tiers for the query.
- */
-export function regionToStateSlug(regionValue: string | null, resolverName: string | null | undefined): string | null {
-	for (const candidate of [regionValue, resolverName]) {
-		if (!candidate) continue
-		const trimmed = candidate.trim()
-
-		if (/^[A-Za-z]{2}$/.test(trimmed)) return trimmed.toLowerCase()
-		const byName = US_STATE_SLUG_BY_NAME.get(trimmed.toLowerCase())
-
-		if (byName) return byName
-	}
-
-	return null
-}
-
-/**
- * Returns the per-state database slug, such as `"tx"`, for the region in a parsed or resolved tree.
+ * The region's value is read first and its resolved name second, as a code (`MI`) or a name (`Michigan`).
+ * A tree the resolver placed in a country is read against only that country's subdivisions,
+ * so Italy's `MI` and Spain's `CA` answer null in place of a United States state.
  *
- * It returns null when the tree has no usable region or resolves to a country other than the US.
+ * A tree with no resolved country is read against every subdivision table the codex holds.
+ *
+ * A null answer leaves the per-region address-point and interpolation tiers out of the query.
  */
-export function regionSlugFromTree(tree: AddressTree): string | null {
+export function regionSubdivisionOfTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
 	let resolvedCountry: string | null = null
@@ -86,229 +67,264 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 		}
 	}
 
-	// `regionToStateSlug` accepts any two-letter region, so a foreign code such as Italy's `MI`
-	// or Spain's `CA` would select a US state's database.
-	// A resolved non-US country therefore gets no slug.
-	// An unresolved country still gets one so that US addresses keep their street tiers.
-	// country-branch: the per-state street databases exist for the US only.
-	// A per-country street layer manifest would replace this.
-	if (resolvedCountry && resolvedCountry !== "US") return null
+	for (const candidate of [regionValue, regionResolverName]) {
+		if (!candidate) continue
 
-	return regionToStateSlug(regionValue, regionResolverName)
+		const token = candidate.trim()
+		const match = resolvedCountry ? matchSubdivisionIn(resolvedCountry, token) : matchSubdivision(token)
+
+		if (match) return `${match.country}-${match.code}`
+
+		// A two-letter value is a code, and a code no table holds is the tree's answer.
+		// The resolved name is read only for a value that isn't a code.
+		if (/^[A-Za-z]{2}$/.test(token)) return null
+	}
+
+	return null
 }
 
 /**
- * Returns the per-state address-point database path under `<dataRoot>/db/address-points/`.
+ * One region's file for one tier, and how to open it.
+ */
+export interface RegionFile<Lookup> {
+	path: string
+
+	/**
+	 * Opens the file.
+	 *
+	 * @throws When the file can't be read.
+	 * A provider never turns that failure into an absent region.
+	 */
+	open(): Lookup & Disposable
+}
+
+/**
+ * Where a provider finds the files of one tier.
  *
- * It returns null when the slug is null or the file doesn't exist.
- */
-export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
-	if (!stateSlug) return null
-	const candidate = addressPointDatabaseRoot(dataRoot)(`address-points-us-${stateSlug}.db`)
-
-	return (await pathExists(candidate)) ? candidate.toString() : null
-}
-
-/**
- * Returns the per-state interpolation database path under `<dataRoot>/db/interpolation/`.
+ * `locate` answers one file for each ISO 3166-2 code the source holds, in upper case.
+ * A whole-country file is keyed by the country's ISO 3166-1 code.
  *
- * It returns null when the slug is null or the file doesn't exist.
+ * A source with zero files for a country answers zero entries for it.
+ * Zero entries state that the source has no data there.
+ * A source that finds a listing it can't read throws.
  */
-export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
-	if (!stateSlug) return null
-	const candidate = interpolationDatabaseRoot(dataRoot)(`interpolation-us-${stateSlug}.db`)
+export type RegionFileSource =
+	| { tier: "addressPoints"; locate(): Promise<ReadonlyMap<string, RegionFile<AddressPointLookup>>> }
+	| { tier: "interpolation"; locate(): Promise<ReadonlyMap<string, RegionFile<InterpolationLookup>>> }
 
-	return (await pathExists(candidate)) ? candidate.toString() : null
+/**
+ * What the address layer's source needs from `@mailwoman/resolver-wof-sqlite`.
+ */
+export interface AddressLayerFactory {
+	/**
+	 * Opens one region's address-layer `lookup.db`.
+	 */
+	openAddressLayerLookup: (lookupPath: string, country: string) => AddressPointLookup & Disposable
+	readLatestAddressLayerManifests: (root: string) => Promise<AddressLayerCountryManifest[]>
 }
 
 /**
- * The lookup classes that a {@link USStateDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ * The lookup classes and readers that {@link createRegionDatabaseProvider} needs
+ * from `@mailwoman/resolver-wof-sqlite`.
+ *
+ * A factory without the two address-layer members reads only the older per-state files.
  */
-export interface RegionDatabaseFactory {
+export interface RegionDatabaseFactory extends Partial<AddressLayerFactory> {
 	AddressPointSqliteLookup: new (
 		dbPath: string,
 		opts: { streetLocale: StreetLocale }
 	) => AddressPointLookup & Disposable
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
-	/**
-	 * Opens one region's address-layer `lookup.db`.
-	 *
-	 * A state the newest US address-layer manifest lists is read through it,
-	 * and every other state through {@link AddressPointSqliteLookup}.
-	 */
-	openAddressLayerLookup?: (lookupPath: string, country: string) => AddressPointLookup & Disposable
-	readLatestAddressLayerManifest?: (root: string, country: string) => Promise<AddressLayerCountryManifest | null>
 }
 
 /**
- * One cached state's open lookups and the paths they were opened from.
+ * The address points of every region that an address-layer manifest under `<dataRoot>/db` lists.
+ *
+ * A country with no manifest contributes zero regions, and so does a data root with no address layer.
+ * A region whose manifest lists a `lookup.db` that isn't on disk is kept, and opening it throws,
+ * so a missing file reads as a failed read and never as a region without data.
+ *
+ * @throws From `locate`, when a manifest exists and can't be read.
  */
-export interface RegionDatabaseCacheEntry extends RegionDatabases {
-	_ap?: Disposable | null
-	_ip?: Disposable | null
+export function addressLayerSource(factory: AddressLayerFactory, dataRoot: PathBuilderLike): RegionFileSource {
+	return {
+		tier: "addressPoints",
+		async locate() {
+			const layerRoot = resolvePath(dataRoot, "db")
+			const files = new Map<string, RegionFile<AddressPointLookup>>()
+
+			for (const manifest of await factory.readLatestAddressLayerManifests(layerRoot)) {
+				for (const region of manifest.regions) {
+					const path = resolvePath(layerRoot, region.lookup.path)
+					const present = await pathExists(path)
+
+					files.set((region.subdivision ?? manifest.country).toUpperCase(), {
+						path,
+						open: () => {
+							if (!present) {
+								throw new Error(
+									`The address layer of ${manifest.country} at version ${manifest.version} lists ${path} for ${region.region}, and the file doesn't exist.`
+								)
+							}
+
+							return factory.openAddressLayerLookup(path, manifest.country)
+						},
+					})
+				}
+			}
+
+			return files
+		},
+	}
+}
+
+interface OpenRegion extends RegionDatabases {
+	handles: Disposable[]
 }
 
 /**
- * Opens and caches per-state address-point and interpolation lookups,
- * so each state's databases open once per batch.
+ * Opens and caches the address-point and interpolation lookups of each region,
+ * so a region's files open once.
  *
- * Paths resolve through the active selection, then the `releases.json` manifest
- * when one exists, read once at construction.
- * A newly published version is read by a new provider.
+ * For each tier the first source that lists a region supplies its file,
+ * so the order of the sources is their precedence.
+ * `for` is synchronous, so {@linkcode warm} asks every source for its files up front.
  *
- * A geocode session builds one for each data generation. {@link close} releases every cached handle.
+ * Construct instances with {@linkcode SubdivisionDatabaseProvider.create}, which warms before it returns.
  *
- * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
- * Construct instances with {@linkcode USStateDatabaseProvider.create}.
- * It warms before returning.
+ * `for` answers a bundle with zero members for a region no source lists, and for a null code.
+ * It throws when a listed file can't be opened.
+ *
+ * A geocode session builds one for each data generation, and disposal closes every cached handle.
  */
-export class USStateDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
-	readonly #factory: RegionDatabaseFactory
-	readonly #dataRoot: string
-	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
-	readonly #manifest: DataReleaseManifest | null
-	/**
-	 * Resolved database paths per slug, filled by {@linkcode warm}.
-	 */
-	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
-	/**
-	 * The address-layer `lookup.db` per slug, for the states the newest US manifest lists,
-	 * filled by {@linkcode warm}.
-	 */
-	readonly #layerPaths = new Map<string, string>()
+export class SubdivisionDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
+	readonly #sources: readonly RegionFileSource[]
+	readonly #addressPoints = new Map<string, RegionFile<AddressPointLookup>>()
+	readonly #interpolation = new Map<string, RegionFile<InterpolationLookup>>()
+	readonly #cache = new Map<string, OpenRegion>()
 
-	private constructor(factory: RegionDatabaseFactory, dataRoot: string, manifest: DataReleaseManifest | null) {
-		this.#factory = factory
-		this.#dataRoot = dataRoot
-		this.#manifest = manifest
+	private constructor(sources: readonly RegionFileSource[]) {
+		this.#sources = sources
 	}
 
 	/**
-	 * Constructs a provider.
-	 * It reads the release manifest and warms the path map.
+	 * Constructs a provider over `sources`, in their order of precedence, and warms it.
 	 */
-	/**
-	 * @param catalog The snapshot a session already read, so the provider resolves
-	 * from the session's generation.
-	 * Absent, the provider reads the active selection itself.
-	 */
-	static async create(
-		factory: RegionDatabaseFactory,
-		dataRoot: PathBuilderLike,
-		catalog?: LayerCatalog
-	): Promise<USStateDatabaseProvider> {
-		const root = resolvePath(dataRoot)
-		const provider = new USStateDatabaseProvider(factory, root, await readReleaseManifest(root))
+	static async create(sources: readonly RegionFileSource[]): Promise<SubdivisionDatabaseProvider> {
+		const provider = new SubdivisionDatabaseProvider(sources)
 
-		await provider.warm(catalog)
+		await provider.warm()
 
 		return provider
 	}
 
 	/**
-	 * Resolves the address-point and interpolation paths for every US state and territory slug.
-	 *
-	 * Each call replaces the path map.
+	 * Asks every source for its files.
+	 * Each call replaces what the earlier one found.
 	 */
-	async warm(snapshot?: LayerCatalog): Promise<void> {
-		this.#paths.clear()
+	async warm(): Promise<void> {
+		this.#addressPoints.clear()
+		this.#interpolation.clear()
 
-		// One reading of the active selection serves every state, so every path comes from one generation.
-		const catalog = snapshot ?? (await LayerCatalog.read(this.#dataRoot))
-
-		for (const abbreviation of Object.keys(US_STATE_BY_ABBREVIATION)) {
-			const slug = abbreviation.toLowerCase()
-
-			const [apPath, ipPath] = await Promise.all([
-				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest, catalog),
-				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest, catalog),
-			])
-
-			this.#paths.set(slug, { apPath, ipPath })
-		}
-
-		this.#layerPaths.clear()
-
-		const layerRoot = resolvePath(this.#dataRoot, "db")
-		const layer = await this.#factory.readLatestAddressLayerManifest?.(layerRoot, "US")
-
-		for (const region of layer?.regions ?? []) {
-			// A region's ISO 3166-2 code, `US-WI`, names the state its file covers.
-			const slug = region.subdivision?.split("-")[1]?.toLowerCase()
-
-			if (slug) {
-				this.#layerPaths.set(slug, resolvePath(layerRoot, region.lookup.path))
+		for (const source of this.#sources) {
+			if (source.tier === "addressPoints") {
+				keepFirst(this.#addressPoints, await source.locate())
+			} else {
+				keepFirst(this.#interpolation, await source.locate())
 			}
 		}
 	}
 
 	/**
-	 * The address layer, address-point and interpolation files a state reads, as `#open` chooses them.
+	 * The ISO 3166-2 codes, and the ISO 3166-1 codes of whole-country files, that a source lists a file for.
 	 */
-	#filesOf(stateSlug: string): { layerPath: string | undefined; apPath: string | null; ipPath: string | null } {
-		const paths = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
-		const layerPath = this.#factory.openAddressLayerLookup ? this.#layerPaths.get(stateSlug.toLowerCase()) : undefined
-
-		return { layerPath, apPath: layerPath ?? paths.apPath, ipPath: paths.ipPath }
+	regions(): string[] {
+		return [...new Set([...this.#addressPoints.keys(), ...this.#interpolation.keys()])].toSorted()
 	}
 
 	/**
-	 * The files `for(stateSlug)` reads.
+	 * The files `for(subdivision)` reads.
 	 *
-	 * The US layers record no source this package can locate, so each file's location table is empty.
+	 * The files record no source this package can locate, so each file's location table is empty.
 	 */
-	readonly layerDatabases = (stateSlug: string): RegionLayerDatabase[] => {
-		const { apPath, ipPath } = this.#filesOf(stateSlug)
+	readonly layerDatabases = (subdivision: string): RegionLayerDatabase[] => {
+		const key = subdivision.toUpperCase()
+		const addressPoints = this.#addressPoints.get(key)
+		const interpolation = this.#interpolation.get(key)
 
 		return [
-			...(apPath ? [{ tier: "addressPoints" as const, path: apPath, sourceLocations: {} }] : []),
-			...(ipPath ? [{ tier: "interpolation" as const, path: ipPath, sourceLocations: {} }] : []),
+			...(addressPoints ? [{ tier: "addressPoints" as const, path: addressPoints.path, sourceLocations: {} }] : []),
+			...(interpolation ? [{ tier: "interpolation" as const, path: interpolation.path, sourceLocations: {} }] : []),
 		]
 	}
 
-	#open(stateSlug: string): RegionDatabaseCacheEntry {
-		const { layerPath, apPath, ipPath } = this.#filesOf(stateSlug)
+	readonly for: RegionDatabaseResolver = (subdivision) => {
+		if (!subdivision) return {}
 
-		const ap = layerPath
-			? this.#factory.openAddressLayerLookup!(layerPath, "US")
-			: apPath
-				? new this.#factory.AddressPointSqliteLookup(apPath, { streetLocale: streetLocaleForCountry("US") })
-				: null
-
-		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : null
-
-		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip }
-	}
-
-	readonly for: RegionDatabaseResolver = (stateSlug) => {
-		if (!stateSlug) return {}
-		let entry = this.#cache.get(stateSlug)
+		const key = subdivision.toUpperCase()
+		let entry = this.#cache.get(key)
 
 		if (!entry) {
-			entry = this.#open(stateSlug)
-			this.#cache.set(stateSlug, entry)
+			const addressPoints = this.#addressPoints.get(key)?.open() ?? null
+			const interpolation = this.#interpolation.get(key)?.open() ?? null
+
+			entry = {
+				addressPoints,
+				interpolation,
+				handles: [addressPoints, interpolation].filter((handle) => handle != null),
+			}
+
+			this.#cache.set(key, entry)
 		}
 
 		return { addressPoints: entry.addressPoints, interpolation: entry.interpolation }
-	}
+	};
 
-	/**
-	 * Returns a copy of the release manifest, or null when the data root has none.
-	 */
-	versions(): DataReleaseManifest | null {
-		return this.#manifest ? { ...this.#manifest } : null
-	}
-
-	close(): void {
-		for (const e of this.#cache.values()) {
-			e._ap?.[Symbol.dispose]()
-			e._ip?.[Symbol.dispose]()
+	[Symbol.dispose](): void {
+		for (const entry of this.#cache.values()) {
+			for (const handle of entry.handles) {
+				handle[Symbol.dispose]()
+			}
 		}
 
 		this.#cache.clear()
 	}
+}
 
-	[Symbol.dispose](): void {
-		this.close()
+function keepFirst<Lookup>(
+	files: Map<string, RegionFile<Lookup>>,
+	located: ReadonlyMap<string, RegionFile<Lookup>>
+): void {
+	for (const [key, file] of located) {
+		if (!files.has(key.toUpperCase())) {
+			files.set(key.toUpperCase(), file)
+		}
 	}
+}
+
+/**
+ * Builds the region provider a geocode reads: the address layer of every country that
+ * has a manifest, then the older per-state files of the United States.
+ *
+ * A region the address layer lists reads its address points there, and any other
+ * region reads the older per-state file when one exists.
+ * Interpolation has no manifest, so every region reads the older per-state file.
+ *
+ * @param catalog The snapshot a session already read, so the provider resolves
+ * from the session's generation.
+ * Absent, the older per-state files are resolved from the active selection.
+ */
+export async function createRegionDatabaseProvider(
+	factory: RegionDatabaseFactory,
+	dataRoot: PathBuilderLike,
+	catalog?: LayerCatalog
+): Promise<SubdivisionDatabaseProvider> {
+	const { openAddressLayerLookup, readLatestAddressLayerManifests } = factory
+
+	return SubdivisionDatabaseProvider.create([
+		...(openAddressLayerLookup && readLatestAddressLayerManifests
+			? [addressLayerSource({ openAddressLayerLookup, readLatestAddressLayerManifests }, dataRoot)]
+			: []),
+		...usStateFileSources(factory, dataRoot, catalog),
+	])
 }

@@ -39,7 +39,7 @@ import {
 	type ParsePriorArtifacts,
 	venueHeadOptsFor,
 } from "#geocode/parse-priors"
-import { USStateDatabaseProvider } from "#geocode/regions"
+import { createRegionDatabaseProvider } from "#geocode/regions"
 import { loadForkEntityDeps } from "#geocode/session/layers"
 import { poiTaxonomyLookup } from "#poi/intent"
 import {
@@ -644,7 +644,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
-	const regionDatabaseProvider = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
+	const regionDatabaseProvider = await createRegionDatabaseProvider(resolverMod, dataRootPath())
 	// `@mailwoman/osm` is an optional peer of `mailwoman`, which the opener loads lazily.
 	// The gauntlet grades with the OpenStreetMap tier, so its absence is an error here.
 	const osmProvider = await openOSMRegionDatabases(dataRootPath(), catalog)

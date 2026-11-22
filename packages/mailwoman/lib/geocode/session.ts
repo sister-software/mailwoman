@@ -40,7 +40,7 @@ import { geocodeAddress, parseForGeocode, type GeocodeDecoderSettingDeps, type G
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
 import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions, type SessionOptionSource } from "#geocode/options"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
-import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
+import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/regions"
 import {
 	registerGenerationServices,
 	registerProcessServices,
@@ -443,8 +443,8 @@ export async function createGeocodeSession(
 
 	const databases: RegionDatabaseResolver =
 		explicitAddressPoints || explicitInterpolation
-			? (slug) => {
-					const base = explicitAddressPoints && explicitInterpolation ? {} : regionDatabases.for(slug)
+			? (subdivision) => {
+					const base = explicitAddressPoints && explicitInterpolation ? {} : regionDatabases.for(subdivision)
 
 					return {
 						addressPoints: explicitAddressPoints ?? base.addressPoints,
@@ -629,13 +629,13 @@ export async function createGeocodeSession(
 	const defaultScope = resolverDefaultCountry(options)
 
 	const resolveTree = (tree: AddressTree, incoming: ResolveOpts = {}): Promise<AddressTree> => {
-		const slug = regionSlugFromTree(tree)
-		const { addressPoints, interpolation } = databases(slug)
+		const subdivision = regionSubdivisionOfTree(tree)
+		const { addressPoints, interpolation } = databases(subdivision)
 		const defaultCountry = incoming.defaultCountry ?? defaultScope
 
 		const calibration =
 			incoming.interpolationRadiusCalibration == null && interpolation?.radiusCalibration == null
-				? (options.interpCalibration ?? interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug))
+				? (options.interpCalibration ?? interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, subdivision))
 				: null
 
 		return resolver.resolveTree(tree, {

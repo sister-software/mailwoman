@@ -18,7 +18,7 @@
 
 export interface InterpCalibrationTable {
 	/**
-	 * Uppercase USPS region code → conformal multiplier.
+	 * ISO 3166-2 code of a region, such as `US-TX`, → conformal multiplier.
 	 */
 	byRegion: Record<string, number>
 	/**
@@ -37,18 +37,18 @@ export interface InterpCalibrationTable {
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 	byRegion: {
-		DC: 1.44,
-		NY: 1.53,
-		TX: 1.7,
-		AK: 1.72,
-		CA: 1.87,
-		CT: 1.91,
-		MI: 1.93,
-		AR: 2.24,
-		CO: 2.29,
-		AL: 2.79,
-		MT: 2.85,
-		AZ: 3.12,
+		"US-DC": 1.44,
+		"US-NY": 1.53,
+		"US-TX": 1.7,
+		"US-AK": 1.72,
+		"US-CA": 1.87,
+		"US-CT": 1.91,
+		"US-MI": 1.93,
+		"US-AR": 2.24,
+		"US-CO": 2.29,
+		"US-AL": 2.79,
+		"US-MT": 2.85,
+		"US-AZ": 3.12,
 	},
 	default: 1.95,
 }
@@ -56,14 +56,14 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 /**
  * The conformal multiplier for a parsed region.
  *
- * `stateSlug` is the lowercase 2-letter slug from {@link regionToStateSlug} (e.g. `"tx"`),
- * and falls back to the table's conservative `default` for an unmeasured or absent region.
+ * `subdivision` is the region's ISO 3166-2 code, such as `US-TX`, in either case.
+ * An unmeasured or absent region reads the table's conservative `default`.
  */
 export function interpCalibrationForRegion(
 	table: InterpCalibrationTable,
-	stateSlug: string | null | undefined
+	subdivision: string | null | undefined
 ): number {
-	if (!stateSlug) return table.default
+	if (!subdivision) return table.default
 
-	return table.byRegion[stateSlug.toUpperCase()] ?? table.default
+	return table.byRegion[subdivision.toUpperCase()] ?? table.default
 }
