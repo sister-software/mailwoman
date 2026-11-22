@@ -227,6 +227,33 @@ export function prepareInserts<DB extends WOFDatabase>(
 }
 
 /**
+ * The S3 glob of one type of the `divisions` theme at a release.
+ */
+export function overtureDivisionsGlob(release: string, type: "division" | "division_area"): string {
+	return `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=${type}/*`
+}
+
+/**
+ * Country codes as the body of an SQL `IN` list.
+ */
+export function overtureCountryList(countries: readonly string[]): string {
+	return countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
+}
+
+/**
+ * The SQL condition that selects the divisions the fold reads, over a `type=division` scan aliased `d`.
+ *
+ * {@linkcode assignSyntheticIDs} probes past a collision in the sorted order of the whole list.
+ * A reader that maps a synthetic id back to its division therefore selects with this same condition.
+ */
+export function overtureDivisionCondition(countries: readonly string[]): string {
+	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
+
+	return /* sql */ `d.country IN (${overtureCountryList(countries)}) AND d.subtype IN (${subtypes})
+			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL`
+}
+
+/**
  * Backfills the Overture `divisions` theme into an open unified ingest database.
  *
  * The query runs here, and {@link writeOvertureDivisions} writes the rows it returns.
@@ -247,14 +274,13 @@ export async function ingestOvertureDivisions(
 	 */
 	wof?: { index: WOFPlaceIndex; onGap: (gap: UnmatchedPlace) => void }
 ): Promise<OvertureDivisionsResult> {
-	const inlist = countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
-	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
-	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
+	const inlist = overtureCountryList(countries)
+	const glob = overtureDivisionsGlob(release, "division")
 	// The `type=division` row's bbox is only its label point.
 	// The query takes the real extent from the matching `type=division_area` rows
 	// and falls back to the point bbox when a division has no area.
 	// The extent also covers the stored point, because an area need not contain its division's point.
-	const areaGlob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division_area/*`
+	const areaGlob = overtureDivisionsGlob(release, "division_area")
 
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
@@ -294,8 +320,7 @@ export async function ingestOvertureDivisions(
 			d.wikidata AS wikidata
 		FROM read_parquet('${glob}') d
 		LEFT JOIN area a ON a.division_id = d.id
-		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
-			AND d.names.primary IS NOT NULL AND d.geometry IS NOT NULL
+		WHERE ${overtureDivisionCondition(countries)}
 		ORDER BY d.id
 	`)
 

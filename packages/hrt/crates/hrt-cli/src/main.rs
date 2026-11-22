@@ -19,6 +19,9 @@
 //! - `hrt building-tiles <theme=buildings directory> <output.pmtiles> [bounds=<west,south,east,north>]
 //!   [osm=<input.osm.pbf>]` writes the compact building tiles `hrt_profile::building_buffers` describes, one per z14
 //!   tile. With an OpenStreetMap file, buildings join its tags and walls are classified against its roads.
+//! - `hrt overlay <export directory> <output.pmtiles> [max-zoom=<zoom>] [bounds=<west,south,east,north>]` builds the
+//!   gazetteer overlay from a `mailwoman gazetteer build geoparquet` export: its boundaries and label points, each
+//!   with the place's id and columns. The archive covers the world unless `bounds` limits it.
 //! - `hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>` writes each name beside its `pgf:` encoding, for
 //!   comparison with `packages/hrt/parity/PgfProbe.java`.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
@@ -32,6 +35,7 @@ mod basemap_profile;
 mod building_tiles;
 mod clock;
 mod merge_probe;
+mod overlay_profile;
 mod parity_profile;
 mod pgf_probe;
 mod pipeline;
@@ -92,6 +96,7 @@ fn usage() -> ExitCode {
 	eprintln!(
 		"       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>] [osm=<file.osm.pbf>]"
 	);
+	eprintln!("       hrt overlay <export dir> <output.pmtiles> [max-zoom=<zoom>] [bounds=<w,s,e,n>]");
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -172,6 +177,36 @@ fn main() -> ExitCode {
 					ExitCode::FAILURE
 				}
 			}
+		}
+		Some("overlay") if (3..=5).contains(&args.len()) => {
+			let mut bounds = None;
+			let mut max_zoom = overlay_profile::DEFAULT_MAX_ZOOM;
+			for option in &args[3..] {
+				if let Some(text) = option.strip_prefix("bounds=") {
+					let Some(parsed) = parse_bounds(text) else {
+						eprintln!("bounds must be bounds=west,south,east,north degrees, but was {option}");
+						return ExitCode::FAILURE;
+					};
+					bounds = Some(parsed);
+				} else if let Some(text) = option.strip_prefix("max-zoom=") {
+					match text.parse::<u8>() {
+						Ok(zoom) if zoom <= basemap_profile::MAX_ZOOM => max_zoom = zoom,
+						_ => {
+							eprintln!("max-zoom must be 0 to {}, but was {text}", basemap_profile::MAX_ZOOM);
+							return ExitCode::FAILURE;
+						}
+					}
+				} else {
+					eprintln!("overlay takes max-zoom=<zoom> and bounds=<w,s,e,n>, but was given {option}");
+					return ExitCode::FAILURE;
+				}
+			}
+			let extra = [pipeline::ExtraSource {
+				name: "places".into(),
+				path: PathBuf::from(&args[1]),
+				format: pipeline::SourceFormat::GeoParquet,
+			}];
+			build("-", bounds, &extra, &args[2], &overlay_profile::OverlayProfile { max_zoom })
 		}
 		Some("pgf-probe") if args.len() == 4 => {
 			match pgf_probe::probe(

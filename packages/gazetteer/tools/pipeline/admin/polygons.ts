@@ -258,7 +258,10 @@ function readCountryPlaces(candidatePath: PathBuilderLike): Map<string, number[]
 /**
  * Lists the clones to read as glob patterns under the repositories directory.
  */
-function repositoryPatterns({ countries, postcodes }: Pick<BuildPolygonsOptions, "countries" | "postcodes">): string[] {
+export function repositoryPatterns({
+	countries,
+	postcodes,
+}: Pick<BuildPolygonsOptions, "countries" | "postcodes">): string[] {
 	const themes = postcodes ? ["admin", "postalcode"] : ["admin"]
 
 	return themes.flatMap((theme) =>
