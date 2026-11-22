@@ -52,7 +52,8 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { loadBundledPlaceCountry } from "mailwoman/default/placer"
+import { geocodeAddress } from "mailwoman/geocode"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -199,6 +200,7 @@ async function runArm(arm, panel) {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: arm.locale })
 	const lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
+	const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
 	const records = []
 
 	try {
@@ -206,7 +208,7 @@ async function runArm(arm, panel) {
 			let result
 
 			try {
-				result = await geocodeAddress(row.input, { classifier, resolver, ...arm.geocodeOpts })
+				result = await geocodeAddress(row.input, { classifier, resolver, placeCountry, ...arm.geocodeOpts })
 			} catch (error) {
 				records.push({
 					id: row.id,

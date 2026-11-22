@@ -27,6 +27,7 @@ import { readFormerDivisionLookup } from "@mailwoman/resolver-wof-sqlite/former-
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
+import { loadBundledPlaceCountry } from "#default/placer"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
 import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/fst-layers"
@@ -804,6 +805,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// grades the POI layers production opens (poi.db and the stations layer beside it).
 	const { deps: forkEntityDeps } = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
 
+	// The bundled placer's router, loaded once for the run and stated to every geocode.
+	const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
+
 	/**
 	 * The one geocode call both public entry points make; `extra` is spread last so a trace sink cannot
 	 * be shadowed, keeping the two entry points from drifting into different dependency assemblies.
@@ -823,6 +827,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// Unset on every shipping path, so the register comes from the verdict as production derives it.
 			...(opts.forceQueryKind ? { inputMode: deriveInputMode("auto", opts.forceQueryKind) } : {}),
 			resolver,
+			placeCountry,
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,
 			osmDatabases: osmProvider.for,

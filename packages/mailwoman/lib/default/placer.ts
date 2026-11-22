@@ -2,19 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The default coarse-placer for the user-facing geocoding surfaces.
+ *   The bundled coarse placer, and the place-country service built over it.
  *
- *   The soft country prior runs by default: `geocodeAddress` and `createRuntimePipeline`
- *   load this bundled placer unless the caller passes their own `placeCountry`
- *   or opts out with `placeCountry: "none"`.
+ *   A scope builds the service once and every pipeline and session on that scope reads it.
+ *   `createRuntimePipeline` registers it on the scope it owns.
  *
- *   Loaded lazily and cached once per process, because the bundled-artifact read is async.
- *   Returns `null` (no prior, graceful) when the bundled model can't be resolved,
- *   so a default-on consumer degrades to plain resolution and doesn't throw.
+ *   `geocodeAddress` holds no scope, so its caller loads the function and passes it.
+ *
+ *   The service is `null` when the bundled model can't be read, so a consumer runs without the prior.
  */
 
 import type { CoarsePlacer, CoarsePlacerOpts } from "@mailwoman/core/coarse-placer"
 import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
+import { createToken, type ServiceRegistry, type ServiceToken } from "async-init"
+
+import { defineUnlessProvided } from "#services/define"
 
 /**
  * The directory of the coarse-placer artifact this package ships, `data/coarse-placer/`.
@@ -51,33 +53,66 @@ export type PlaceCountryFn = (normalizedText: string) => {
  */
 const DEFAULT_ABSTAIN_BELOW = 0.9
 
-let cached: Promise<PlaceCountryFn | null> | null = null
+/**
+ * The settings of {@linkcode loadBundledPlaceCountry}.
+ */
+export interface PlaceCountryOptions {
+	/**
+	 * The probability below which the placer abstains.
+	 *
+	 * @defaultValue `0.9`
+	 */
+	abstainBelow?: number
+}
 
 /**
- * Lazy-load and cache the shipped coarse-placer as a place-country function, returning `null`
- * when the model couldn't be loaded so the caller proceeds with no prior.
+ * Loads the shipped coarse placer as a place-country function.
+ *
+ * Every call reads the artifact and builds a new placer, so a caller loads it once and keeps the function.
+ * The function hands the resolver the full in-map distribution.
+ *
+ * That distribution boosts every plausible country, and the resolver's own evidence breaks a tie.
+ *
+ * @returns `null` when the model can't be loaded, so the caller proceeds with no prior.
  */
-export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
-	if (!cached) {
-		cached = (async (): Promise<PlaceCountryFn | null> => {
-			try {
-				const { inMapPosterior } = await import("@mailwoman/core/coarse-placer")
-				const placer = await loadBundledCoarsePlacer({ abstainBelow: DEFAULT_ABSTAIN_BELOW, openSet: true })
+export async function loadBundledPlaceCountry(options: PlaceCountryOptions = {}): Promise<PlaceCountryFn | null> {
+	try {
+		const { inMapPosterior } = await import("@mailwoman/core/coarse-placer")
 
-				return (text: string) => {
-					const p = placer.predict(text)
-					// Hand the resolver the full in-map distribution.
-					// It boosts every plausible country and breaks ambiguous ties with its own evidence.
-					// The lossy one-hot argmax would lose that.
-					const posterior = inMapPosterior(p)
+		const placer = await loadBundledCoarsePlacer({
+			abstainBelow: options.abstainBelow ?? DEFAULT_ABSTAIN_BELOW,
+			openSet: true,
+		})
 
-					return { country: p.country, confidence: p.confidence, ...(posterior ? { posterior } : {}) }
-				}
-			} catch {
-				return null
+		return (text: string) => {
+			const prediction = placer.predict(text)
+			const posterior = inMapPosterior(prediction)
+
+			return {
+				country: prediction.country,
+				confidence: prediction.confidence,
+				...(posterior ? { posterior } : {}),
 			}
-		})()
+		}
+	} catch {
+		return null
 	}
+}
 
-	return cached
+/**
+ * The token of the place-country function over the bundled coarse placer,
+ * `null` when the model can't be loaded.
+ *
+ * @public
+ */
+export const PlaceCountryService: ServiceToken<PlaceCountryFn | null> = createToken("place-country")
+
+/**
+ * Registers the place-country function on `registry`.
+ *
+ * The placer loads when a caller first needs the service, once for the scope.
+ * It holds its weights in memory and opens no handle, so the scope has no release to run for it.
+ */
+export function registerPlaceCountryService(registry: ServiceRegistry, options: PlaceCountryOptions = {}): void {
+	defineUnlessProvided(registry, PlaceCountryService, { build: () => loadBundledPlaceCountry(options) })
 }

@@ -26,7 +26,7 @@ const config = createOxlintConfig({
 		scope: "exported",
 		// Command modules export these as framework metadata.
 		// `description` supplies the `--help` text.
-		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
+		ignoreNames: ["description", "args", "options", "alias"],
 	},
 	// An acronym is capitalized as a whole camelCase component, as in `parseJSON` and `POILookup`.
 	// These entries extend the shipped list with this project's acronyms.

@@ -10,9 +10,10 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { ServiceRegistry } from "async-init"
 import { describe, expect, it, vi } from "vitest"
 
-import { loadDefaultReverseGeocoder } from "#default"
+import { registerReverseGeocoderService, ReverseGeocoderService } from "#default"
 import {
 	bindCountryScope,
 	createPOIIntentStage,
@@ -461,7 +462,7 @@ const HERMETIC = { placeCountry: "none" as const, streetEvidence: "none" as cons
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC })
 		const result = await pipeline("hospital")
 
 		expect(result.path).toBe("poi")
@@ -473,7 +474,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("OFF: poiQueryKind: none disables the poi path entirely", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "none" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "none" })
 		const result = await pipeline("hospital")
 
 		expect(result.path).not.toBe("poi")
@@ -482,7 +483,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a category phrase takes the poi path end-to-end", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("hospital near Springfield")
 
 		expect(result.path).toBe("poi")
@@ -509,7 +510,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["churches near Church of the Holy Sepulchre", "place_of_worship", "near", "Church of the Holy Sepulchre"],
 		["places of worship in Stratford-upon-Avon", "place_of_worship", "in", "Stratford-upon-Avon"],
 	] as const)("keeps span-first POI semantics for %s", async (query, categoryID, relation, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale: "en-GB" })
 
 		expect(result.path).toBe("poi")
@@ -533,7 +534,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		["restaurant in 東京", "ja-JP", "restaurant", "東京"],
 		["hotel near Санкт-Петербург", "ru-RU", "hotel", "Санкт-Петербург"],
 	] as const)("preserves the multilingual anchor in %s", async (query, locale, categoryID, anchor) => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline(query, { locale })
 
 		expect(result.path).toBe("poi")
@@ -550,7 +551,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	it.each(["Carmel-by-the-Sea", "12 Carmel-by-the-Sea Road", "Church of the Holy Sepulchre"])(
 		"does not route the control %s as a category query",
 		async (query) => {
-			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+			await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 			const result = await pipeline(query, { locale: "en-GB" })
 
 			expect(result.path).not.toBe("poi")
@@ -610,7 +611,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 			await db.destroy()
 
-			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: { poiDatabasePath: databasePath } })
+			await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: { poiDatabasePath: databasePath } })
 			const result = await pipeline("Statue of Liberty", { locale: "en-US" })
 
 			expect(result.path).toBe("poi")
@@ -644,7 +645,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a plain address stays on the normal path", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("350 5th Ave, New York, NY 10118")
 
 		expect(result.path).not.toBe("poi")
@@ -652,7 +653,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("ON: a bare build-local-only category (neither local layer nor db) abstains", async () => {
-		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
+		await using pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: "extract" })
 		const result = await pipeline("fire hydrant")
 
 		expect(result.path).toBe("poi")
@@ -663,9 +664,13 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 
 		try {
-			await expect(loadDefaultReverseGeocoder()).resolves.toBeNull()
+			await using scope = new ServiceRegistry()
 
-			const pipeline = createRuntimePipeline({
+			registerReverseGeocoderService(scope)
+
+			await expect(scope.resolve(ReverseGeocoderService)).resolves.toBeNull()
+
+			await using pipeline = createRuntimePipeline({
 				...HERMETIC,
 				poiQueryKind: { poiDatabasePath: "/nonexistent/never/ancestry-degrade-poi.db" },
 			})
@@ -686,7 +691,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	})
 
 	it("Object form degrades to intent-only when the poi db is missing (neither throw nor retry storm)", async () => {
-		const pipeline = createRuntimePipeline({
+		await using pipeline = createRuntimePipeline({
 			...HERMETIC,
 			poiQueryKind: { poiDatabasePath: "/nonexistent/never/poi.db" },
 		})

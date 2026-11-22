@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman registry <csv>`: the geocode-first record matcher, end to end.
+ *   `mailwoman registry run <csv>`: the geocode-first record matcher, end to end.
  *
  *   Builds one geocode session, the engine `mailwoman geocode` answers from.
  *   It injects the session into the matcher's `GeocodeAddress` interface,
@@ -36,10 +36,6 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
-/**
- * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
- */
-export const isDefault = true
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -196,6 +192,9 @@ export interface EvalGeocoderFlags {
  * record-matcher tools take, pinned to a plain `WOFSQLitePlaceLookup`,
  * `defaultCountry: { country: "US", source: "caller" }`, `placeCountry: "none"`,
  * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
+ *
+ * It is an evaluation arm, built by hand on purpose: it isolates the record matcher's
+ * scores from every change to the engine a geocode session composes.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
@@ -411,7 +410,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 		const report = reconciliationReport(recon, {
 			scopeNote:
-				`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
+				`Resolved BLIND across ${specs.length} sources via \`mailwoman registry run --reconcile\`` +
 				`(${perSource.join(", ")}). Eligibility: ${eligibilitySources.join(", ")}; funding/enrollment: ` +
 				`${fundingSources.join(", ")}.`,
 			scorerNote:
@@ -494,7 +493,7 @@ const RegistryCommand: ParsedCommandComponent<Flags> = ({ args, options: flags, 
 		if (!csv || !csv.trim()) {
 			throw new CommandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
-					"e.g. mailwoman registry contacts.csv --out entities.geojson"
+					"e.g. mailwoman registry run contacts.csv --out entities.geojson"
 			)
 		}
 

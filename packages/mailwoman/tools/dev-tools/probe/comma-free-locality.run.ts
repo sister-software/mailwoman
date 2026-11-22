@@ -50,7 +50,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier })
+await using pipeline = createRuntimePipeline({ classifier })
 
 async function tagsFor(text: string): Promise<Map<string, string[]>> {
 	const tree = values.raw ? await classifier.parse(text) : (await pipeline(text, { locale: values.locale! })).tree

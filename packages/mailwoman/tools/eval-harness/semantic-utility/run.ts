@@ -149,7 +149,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 
 	const route = options.semanticObservation ? await createSemanticObservationRoute() : null
 
-	using pipelineHandle = await createPOIBoardPipeline({
+	await using pipelineHandle = await createPOIBoardPipeline({
 		...options,
 		...(route ? { poiSemanticLookup: route.lookup } : {}),
 	})

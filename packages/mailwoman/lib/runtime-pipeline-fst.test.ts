@@ -76,7 +76,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await using dirDirectory = await temporaryDirectory("mw-fst-autoload-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier })
+		await using pipeline = createRuntimePipeline({ classifier })
 
 		// A locale whose country has no street-type table in the codex, so the test reads the FST and no table.
 		await pipeline("1 Testville Road", { locale: "en-JM" })
@@ -98,7 +98,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 	it("concurrent first calls all parse with the auto-loaded FST", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-fst-concurrent-")
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dirDirectory.path))
-		const pipeline = createRuntimePipeline({ classifier })
+		await using pipeline = createRuntimePipeline({ classifier })
 
 		await Promise.all(["1 Testville Road", "2 Testville Road", "3 Testville Road"].map((input) => pipeline(input)))
 
@@ -114,7 +114,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await using dirDirectory = await temporaryDirectory("mw-fst-prior-off-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier, streetMorphologyPrior: false, venueHead: "none" })
+		await using pipeline = createRuntimePipeline({ classifier, streetMorphologyPrior: false, venueHead: "none" })
 
 		await pipeline("1 Testville Road")
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual(ZEROED_MORPHOLOGY_OPTS)
@@ -125,7 +125,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await using dirDirectory = await temporaryDirectory("mw-fst-venue-head-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier })
+		await using pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("1 Testville Road", { locale: "en-US" })
 
@@ -144,7 +144,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await using dirDirectory = await temporaryDirectory("mw-fst-optout-")
 		const dir = dirDirectory.path
 		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier, fst: "none" })
+		await using pipeline = createRuntimePipeline({ classifier, fst: "none" })
 
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
@@ -154,7 +154,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 
 	it("a classifier without fstPath parses without the gazetteer (byte-stable)", async () => {
 		const { classifier, calls } = fakeClassifier()
-		const pipeline = createRuntimePipeline({ classifier })
+		await using pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("1 Anywhere Road")
 		expect(calls.length).toBeGreaterThan(0)
@@ -169,7 +169,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")
 
 		const explicit = deserializeFST(await readLocalBuffer(explicitPath))
-		const pipeline = createRuntimePipeline({ classifier, fst: explicit })
+		await using pipeline = createRuntimePipeline({ classifier, fst: explicit })
 
 		await pipeline("1 Testville Road")
 		expect(calls[0]!.fst).toBe(explicit)

@@ -24,17 +24,15 @@
  *   `poi-executor.ts`'s `resolveCenter` walks the tree for that.
  *   `--db` queries abstain with `anchor_required` without it.
  *
- *   Mirrors `geocode.tsx`/`parse.tsx --resolve`: the same `createResolverBackend` +
- *   `createWOFResolver(lookup)` pairing, lazily built and closed after the run.
- *   A missing/unbuilt gazetteer degrades to today's behavior
- *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
+ *   `openPOIAnchorResolver` in `#poi/anchor-resolver` builds the resolver,
+ *   and the POI board builds its own there too.
+ *   A missing gazetteer leaves the probe without a resolver, with a stderr note,
+ *   and anchors keep zero coordinates.
  */
 
 import { Spinner } from "@inkjs/ui"
 import { prettyJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
-import { allKeyed } from "@mailwoman/core/promises"
-import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { Text } from "ink"
@@ -51,6 +49,7 @@ import {
 	writeRawStdout,
 } from "#cli-kit"
 import { typedLocaleHint } from "#cli/kit/locale-hint"
+import type { POIAnchorResolver } from "#poi/anchor-resolver"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -77,23 +76,22 @@ export const spec = {
 type Options = OptionsOf<typeof spec>
 
 /**
- * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an
- * anchor remainder resolves to lat/lon and `--db` category/brand queries can compute a search center.
+ * Opens the anchor resolver through `openPOIAnchorResolver`, so an anchor remainder resolves
+ * to a coordinate and a `--db` category or brand query can compute a search center.
  *
- * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer
- * degrades to no resolver (today's pre-wiring behavior) rather than failing the probe.
- * A stderr note explains what's missing.
- * Caller owns closing the returned handle's backend lookup.
+ * An absent gazetteer or an uninstalled `@mailwoman/resolver-wof-sqlite` peer leaves the probe
+ * without a resolver instead of failing it, and a stderr note states which one is missing.
+ * The caller disposes the returned resolver.
  */
-async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | null> {
-	const { resolvePOIResolverPaths } = await import("#resolver-backend")
+async function tryLoadResolver(options: Options): Promise<POIAnchorResolver | null> {
+	const { openPOIAnchorResolver } = await import("#poi/anchor-resolver")
 
-	const { candidateDB, wofPaths } = await resolvePOIResolverPaths({
-		candidateDB: options.candidateDB,
-		resolveDB: options.resolveDB,
+	const opened = await openPOIAnchorResolver({
+		...(options.candidateDB ? { candidateDB: options.candidateDB } : {}),
+		...(options.resolveDB ? { resolveDB: options.resolveDB } : {}),
 	})
 
-	if (!candidateDB && !wofPaths.length) {
+	if (opened === "unconfigured") {
 		console.error(
 			"note: no WOF resolver configured — anchor localities ('near Springfield IL') will not resolve to " +
 				"coordinates, so --db category/brand queries will abstain anchor_required. Set $MAILWOMAN_WOF_DB " +
@@ -104,24 +102,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 		return null
 	}
 
-	try {
-		const {
-			resolverWofSqlite: mod,
-			resolverBackend: { createResolverBackend },
-			resolver: { createWOFResolver },
-		} = await allKeyed({
-			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
-			resolverBackend: import("#resolver-backend"),
-			resolver: import("@mailwoman/resolver"),
-		})
-
-		// The probe resolves an anchor's parsed tree and never geocodes, so it builds
-		// the gazetteer backend with zero session.
-		// `withResolver` in `parse.tsx` states what a geocode session would cost in its place.
-		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
-
-		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }
-	} catch {
+	if (opened === "unavailable") {
 		console.error(
 			"note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve to " +
 				"coordinates. Run `npm install @mailwoman/resolver-wof-sqlite` to enable anchor resolution."
@@ -129,6 +110,8 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 
 		return null
 	}
+
+	return opened
 }
 
 function formatSubject(subject: POIIntent["subject"]): string {
@@ -252,7 +235,7 @@ async function runPOI(input: string, options: Options, localeHint: { locale?: st
 	try {
 		const poiQueryKind = options.db ? { poiDatabasePath: options.db } : "extract"
 
-		const pipeline = createRuntimePipeline({
+		await using pipeline = createRuntimePipeline({
 			classifier: classifier ?? undefined,
 			resolver: resolverHandle?.resolver,
 			poiQueryKind,

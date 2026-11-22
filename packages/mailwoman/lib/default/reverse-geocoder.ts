@@ -2,66 +2,70 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The default read-time WOF reverse geocoder for POI ancestry —
- *   the poiQueryKind register row's second debt payment (runtime-flags.mdx):
- *   `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` lazily loads this
- *   once per process and wires a synchronous adapter into `createPOIExecutor`'s
- *   `reverseGeocode` dep (the executor's return type includes no `Promise` —
- *   see `poi-intent.ts`'s `deps.execute`, called synchronously).
+ *   The default read-time WOF reverse geocoder for POI ancestry.
  *
- *   `WOFReverseGeocoder.reverseGeocodeSync` (added alongside this feature) is the real synchronous
- *   core the async `reverseGeocode` already wrapped — see resolver-wof-sqlite/reverse.ts.
+ *   `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` reads it from its scope
+ *   and wires a synchronous adapter into `createPOIExecutor`'s `reverseGeocode` dependency.
+ *   The executor is called synchronously, so the adapter calls `WOFReverseGeocoder.reverseGeocodeSync`.
  *
- *   `@mailwoman/resolver-wof-sqlite` is an optional peer dep and the admin gazetteer
- *   (with its `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build
- *   artifact that may not be on disk — either gap yields `null` and POI results have no
- *   `ancestry` key at all (house meaning-of-zero: absence, never an empty array).
- *   The polygon sidecar (`wof-polygons.db`) is optional too. without it every ancestry chain still
- *   resolves, just `containment: "approximate"` (`WOFReverseGeocoder`'s own centroid-descent fallback).
+ *   `@mailwoman/resolver-wof-sqlite` is an optional peer, and the admin gazetteer
+ *   with its `place_bbox` R*Tree (`mailwoman gazetteer build fts`) is a build
+ *   artifact of several gigabytes that may be absent.
+ *   Either gap yields `null`, and POI results then have no `ancestry` key.
  *
- *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` —
- *   the same default `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands
- *   use for their own `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`):
- *   first existing database in the list wins (`admin-global-priority.db` first).
- *   The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
- *   the same env var `mailwoman reverse` reads.
+ *   The polygon database (`wof-polygons.db`) is optional too.
+ *   Without it every ancestry chain still resolves, as `containment: "approximate"`.
+ *
+ *   The admin database is the first one `existingWOFDatabasePaths()` returns,
+ *   the default the Photon and Nominatim servers use for their own reverse geocoder.
+ *   The polygon database is read from `$MAILWOMAN_WOF_POLYGONS_DB`, as `mailwoman reverse` reads it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
+import { createToken, optional, type ServiceRegistry, type ServiceToken } from "async-init"
 
 import { $public } from "#env"
 import { existingWOFDatabasePaths } from "#resolver-backend"
-
-let cached: Promise<WOFReverseGeocoderType | null> | null = null
+import { defineUnlessProvided } from "#services/define"
+import { registerResolverModuleService, ResolverModuleService } from "#services/resolver-module"
 
 /**
- * Lazy-load + cache the default `WOFReverseGeocoder`.
+ * The token of the default reverse geocoder.
  *
- * `null` when no admin database with a `place_bbox` R*Tree is on disk, or `@mailwoman/resolver-wof-sqlite`
- * can't be resolved (stripped install) — the pipeline then wires no `reverseGeocode` fn at all,
- * so POI results degrade to no `ancestry` (byte-stable pre-feature behavior).
- * Cached for the process lifetime (one handle, reused).
+ * It is `null` when no admin database is on disk or `@mailwoman/resolver-wof-sqlite` can't be resolved.
+ *
+ * @public
  */
-export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | null> {
-	if (!cached) {
-		cached = (async (): Promise<WOFReverseGeocoderType | null> => {
+export const ReverseGeocoderService: ServiceToken<WOFReverseGeocoder | null> = createToken("reverse-geocoder")
+
+/**
+ * Registers the default reverse geocoder on `registry`, with the resolver module it is built from.
+ *
+ * The databases open when a caller first needs the service, and the scope closes them.
+ */
+export function registerReverseGeocoderService(registry: ServiceRegistry): void {
+	registerResolverModuleService(registry)
+
+	defineUnlessProvided(registry, ReverseGeocoderService, {
+		needs: { mod: optional(ResolverModuleService) },
+		build: async ({ mod }) => {
+			if (!mod) return null
+
 			try {
 				const [adminDBPath] = await existingWOFDatabasePaths()
 
 				if (!adminDBPath) return null
-				const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
+
 				const polygonDBPath = $public.MAILWOMAN_WOF_POLYGONS_DB
 
-				return new WOFReverseGeocoder({
+				return new mod.WOFReverseGeocoder({
 					adminDBPath,
 					...(polygonDBPath && (await pathExists(polygonDBPath)) ? { polygonDBPath } : {}),
 				})
 			} catch {
 				return null
 			}
-		})()
-	}
-
-	return cached
+		},
+	})
 }

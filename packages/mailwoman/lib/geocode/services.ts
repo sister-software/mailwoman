@@ -65,6 +65,7 @@ import {
 import { ClassifierService, registerClassifierService } from "#services/classifier"
 import { defineUnlessProvided } from "#services/define"
 import { ParsePriorArtifactsService, ParsePriorsService, registerParsePriorsService } from "#services/parse-priors"
+import { registerResolverModuleService, ResolverModuleService } from "#services/resolver-module"
 
 type ResolverModule = typeof import("@mailwoman/resolver-wof-sqlite")
 
@@ -73,17 +74,6 @@ type ActiveSelection = Awaited<ReturnType<typeof holdActiveSelection>>
 type ResolverBackend = Awaited<ReturnType<typeof createResolverBackend>>
 
 type OSMRegionDatabases = Awaited<ReturnType<typeof openOSMRegionDatabases>>
-
-/**
- * The token of the resolver module.
- *
- * The process scope holds it beside {@link ClassifierService}.
- *
- * A caller that builds its own scope registers a service under this token.
- *
- * @public
- */
-export const ResolverModuleService: ServiceToken<ResolverModule> = createToken("resolver-module")
 
 /**
  * The tokens of the generation scope, besides {@link ParsePriorArtifactsService}
@@ -126,19 +116,7 @@ export function registerProcessServices(
 	options: Pick<GeocodeSessionOptions, "locale" | "dataRoot" | "weightsCacheRoot">
 ): void {
 	registerClassifierService(registry, options)
-
-	defineUnlessProvided(registry, ResolverModuleService, {
-		build: async () => {
-			try {
-				return await import("@mailwoman/resolver-wof-sqlite")
-			} catch {
-				throw new CommandError(
-					"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
-						"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
-				)
-			}
-		},
-	})
+	registerResolverModuleService(registry)
 }
 
 async function resolveWOFPath(

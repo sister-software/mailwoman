@@ -16,10 +16,6 @@ import {
 	stringOption,
 	useCommandTask,
 } from "#cli-kit"
-/**
- * Bare `mailwoman corpus recipe` stays the recipe runner despite the subcommands in this directory.
- */
-export const isDefault = true
 
 /**
  * Native command-line interface consumed by the filesystem command router.

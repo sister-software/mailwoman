@@ -5,7 +5,8 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
-import { geocodeAddress, type GeocodeClassifier } from "#geocode"
+import { loadBundledPlaceCountry } from "#default/placer"
+import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "#geocode"
 
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }
@@ -42,10 +43,25 @@ describe("GeocodeAddress — coarse-placer soft prior", () => {
 		expect(seen[0]?.anchorWeight).toBeUndefined()
 	})
 
-	test("default-on (no placeCountry) ⇒ the bundled placer injects the in-map distribution for a clear address", async () => {
-		const { resolver, seen } = captureResolver()
+	test("a caller that states neither a placer nor none is refused, so the prior never turns off unstated", async () => {
+		const { resolver } = captureResolver()
+		const unstated = { classifier: fakeClassifier(emptyTree), resolver } as unknown as GeocodeDeps
 
-		await geocodeAddress("350 5th Ave, New York, NY 10118", { classifier: fakeClassifier(emptyTree), resolver })
+		await expect(geocodeAddress("12 rue de la Paix, Paris", unstated)).rejects.toThrow(/placeCountry/)
+	})
+
+	test("the bundled placer injects the in-map distribution for a clear address", async () => {
+		const { resolver, seen } = captureResolver()
+		const placeCountry = await loadBundledPlaceCountry()
+
+		expect(placeCountry, "the bundled placer should load from the package").not.toBeNull()
+
+		await geocodeAddress("350 5th Ave, New York, NY 10118", {
+			classifier: fakeClassifier(emptyTree),
+			resolver,
+			placeCountry: placeCountry ?? "none",
+		})
+
 		const post = seen[0]?.anchorPosterior
 		expect(post, "default-on should inject a country posterior for a clear in-map address").toBeDefined()
 		const entries = Object.entries(post ?? {})

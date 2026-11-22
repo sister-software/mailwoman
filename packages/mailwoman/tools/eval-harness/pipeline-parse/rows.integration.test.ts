@@ -27,7 +27,7 @@ describe("parsePipelineRows", () => {
 		const pooled = await parsePipelineRows(ROWS, { workers: 2 })
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-		const parse = createRuntimePipeline({ classifier })
+		await using parse = createRuntimePipeline({ classifier })
 
 		const direct = []
 

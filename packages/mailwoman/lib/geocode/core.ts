@@ -31,7 +31,6 @@ import {
 	isBarePostcodeTree,
 	type PlacerCountryUse,
 	type QueryKindResult,
-	type StageSource,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
 import type {
@@ -52,7 +51,7 @@ import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recogniz
 import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
-import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
+import type { PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
@@ -228,10 +227,13 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**
-	 * Coarse country router for soft country priors.
-	 * The default `"auto"` loads the bundled placer.
+	 * The coarse country router behind the soft country prior, or `"none"` for no prior.
+	 *
+	 * A caller states one or the other.
+	 * `loadBundledPlaceCountry` in `#default/placer` loads the bundled placer's router,
+	 * and a caller loads it once and passes the same function to every call.
 	 */
-	placeCountry?: StageSource<PlaceCountryFn>
+	placeCountry: PlaceCountryFn | "none"
 	/**
 	 * Proximity bias points forwarded to resolver bias.
 	 */
@@ -483,12 +485,21 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 }
 
 /**
- * Resolves the coarse country router from its source, loading the bundled placer for `"auto"`.
+ * The coarse country router a caller stated, or `null` for `"none"`.
+ *
+ * @throws {TypeError} When the caller stated neither, as a JavaScript caller can.
+ * A missing router would otherwise turn the country prior off without a word.
  */
-async function resolvePlaceCountry(source: StageSource<PlaceCountryFn>): Promise<PlaceCountryFn | null> {
+function statedPlaceCountry(source: GeocodeDeps["placeCountry"]): PlaceCountryFn | null {
 	if (source === "none") return null
 
-	return source === "auto" ? loadDefaultPlaceCountry() : source
+	if (typeof source !== "function") {
+		throw new TypeError(
+			'geocodeAddress needs `placeCountry`: pass the function `loadBundledPlaceCountry()` returns, or "none" for no country prior.'
+		)
+	}
+
+	return source
 }
 
 /**
@@ -630,7 +641,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	// Coarse country router: default loader, custom function, or disabled.
-	const placeCountry = await resolvePlaceCountry(deps.placeCountry ?? "auto")
+	const placeCountry = statedPlaceCountry(deps.placeCountry)
 
 	// Placer country reused for later country-dependent steps.
 	let placedCountry: string | null = null

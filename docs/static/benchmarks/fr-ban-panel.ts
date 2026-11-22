@@ -40,6 +40,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { loadBundledPlaceCountry } from "mailwoman/default/placer"
 import { geocodeAddress } from "mailwoman/geocode"
 import { basename, PathBuilder, resolvePath } from "path-ts"
 
@@ -306,6 +307,7 @@ async function run() {
 	using lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
 	const banExtracts = new BANRegionDatabaseProvider(DATA_ROOT)
+	const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
 
 	const arms: Record<string, (row: PanelRow) => string> = { clean: cleanForm, reordered: reorderedForm }
 	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}
@@ -322,6 +324,7 @@ async function run() {
 				result = await geocodeAddress(input, {
 					classifier,
 					resolver,
+					placeCountry,
 					nationalDatabases: banExtracts.for,
 					// Pinned to `FR`, so the panel measures resolution inside France
 					// and makes no claim about country disambiguation.

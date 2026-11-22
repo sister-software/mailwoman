@@ -18,6 +18,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
+import { loadBundledPlaceCountry } from "#default/placer"
 import { geocodeAddress } from "#geocode/core"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -100,6 +101,7 @@ async function main(): Promise<void> {
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = await createResolverBackend(mod, { dataRoot: dataRootPath(), wofPaths: [] })
 	const resolver = instrumented(createWOFResolver(lookup), traceRows > 0)
+	const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
 
 	const graded: GradedRow[] = []
 
@@ -109,6 +111,7 @@ async function main(): Promise<void> {
 		const result = (await geocodeAddress(row.raw, {
 			classifier,
 			resolver,
+			placeCountry,
 			defaultCountry: { country, source: "caller" },
 			adminContainmentRerank: true,
 			...(values.normalize === "false" ? { normalizeInput: false } : {}),

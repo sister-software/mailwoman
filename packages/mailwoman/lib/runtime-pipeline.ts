@@ -33,12 +33,14 @@ import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
+import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
+import { createToken, ServiceRegistry, type ServiceToken } from "async-init"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { localeToCountry } from "#country-scope"
-import { loadDefaultPlaceCountry } from "#default/placer"
-import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
-import { loadDefaultStreetEvidence } from "#default/street-evidence"
+import { PlaceCountryService, registerPlaceCountryService } from "#default/placer"
+import { registerReverseGeocoderService, ReverseGeocoderService } from "#default/reverse-geocoder"
+import { registerStreetEvidenceService, StreetEvidenceService } from "#default/street-evidence"
 import { $public } from "#env"
 import { loadParsePriors, type ParsePriorArtifacts, venueHeadOptsFor } from "#geocode/parse-priors"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
@@ -273,14 +275,76 @@ export function getMachinePreferences(): MachinePreferences {
 }
 
 /**
+ * The token of the POI database a pipeline opens for its `poiQueryKind`.
+ *
+ * Each pipeline defines it on its own scope, because the path is the pipeline's option.
+ */
+const POILookupService: ServiceToken<POILookup> = createToken("poi-lookup")
+
+/**
+ * A parse function over the full pipeline, with the scope that holds what it loaded.
+ *
+ * Its async disposal closes the databases the pipeline opened and releases the bundled placer:
+ *
+ * ```ts
+ * await using pipeline = createRuntimePipeline({ classifier })
+ * const result = await pipeline("350 5th Ave, New York, NY 10118")
+ * ```
+ *
+ * A stage the caller passed in stays the caller's to close.
+ */
+export interface RuntimePipeline extends AsyncDisposable {
+	(raw: string, runOpts?: PipelineOpts): Promise<PipelineResult>
+}
+
+/**
+ * The scope a runtime pipeline builds from.
+ */
+export interface RuntimePipelineScope {
+	/**
+	 * A scope whose services the pipeline reads in place of building its own.
+	 *
+	 * The pipeline registers its bundled defaults in a child of this scope,
+	 * and skips each one the scope provides.
+	 * Several pipelines on one parent share one copy of each default the parent registered.
+	 * {@linkcode registerRuntimePipelineServices} registers them.
+	 *
+	 * The pipeline disposes only the services it built.
+	 *
+	 * Absent, the pipeline builds each default it needs and disposes them with itself.
+	 */
+	parent?: ServiceRegistry
+}
+
+/**
+ * Registers the bundled defaults a runtime pipeline loads on its first call:
+ * the place-country function, the street-name index and the reverse geocoder.
+ *
+ * A caller that builds several pipelines registers them on one scope and passes it as each pipeline's
+ * `parent`, so the scope loads each default once and closes it when the caller disposes the scope.
+ * Each registration skips a service the scope or an ancestor provides.
+ */
+export function registerRuntimePipelineServices(registry: ServiceRegistry): void {
+	registerPlaceCountryService(registry)
+	registerStreetEvidenceService(registry)
+	registerReverseGeocoderService(registry)
+}
+
+/**
  * Creates a production parse function that runs the full pipeline with the given stages.
  *
- * Omitted stages use bundled defaults that load on the first call.
+ * Omitted stages use bundled defaults that load on the first call, once for the pipeline's scope.
  * The placer country use is `"filter"` unless the options or the call choose otherwise.
  */
 export function createRuntimePipeline(
-	opts: CreateRuntimePipelineOpts = {}
-): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
+	opts: CreateRuntimePipelineOpts = {},
+	scope: RuntimePipelineScope = {}
+): RuntimePipeline {
+	const registry = scope.parent ? scope.parent.createChild() : new ServiceRegistry()
+
+	// Each registration skips a service the parent scope provides.
+	registerRuntimePipelineServices(registry)
+
 	const poiQueryKind = opts.poiQueryKind ?? "extract"
 	const poiQueryKindEffective = poiQueryKind !== "none"
 	const machinePreferencesSource = opts.machinePreferences ?? "auto"
@@ -392,13 +456,23 @@ export function createRuntimePipeline(
 
 	const poiDatabasePath = typeof poiQueryKind === "object" ? poiQueryKind.poiDatabasePath : null
 
+	if (poiDatabasePath) {
+		registry.define(POILookupService, {
+			build: async () => {
+				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
+
+				return new POILookup({ databasePath: resolvePath(poiDatabasePath) })
+			},
+		})
+	}
+
 	// Every call awaits this one load before it reads `stages`, so concurrent
 	// first calls run with the same stages.
 	// A load that throws clears the memo and the next call loads again.
 	// Each assignment below writes the same value on a retry.
 	const loadFirstCallStages = memoizeResettable(async () => {
 		if (placeCountrySource === "auto") {
-			const fn = await loadDefaultPlaceCountry()
+			const fn = await registry.resolve(PlaceCountryService)
 
 			if (fn) {
 				stages.placeCountry = fn
@@ -407,11 +481,10 @@ export function createRuntimePipeline(
 
 		if (poiDatabasePath) {
 			try {
-				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
+				// A POI database that fails to open leaves the pipeline extracting intents without executing them.
+				const lookup = await registry.resolve(POILookupService)
+				const reverseGeocoder = await registry.resolve(ReverseGeocoderService)
 
-				const reverseGeocoder = await loadDefaultReverseGeocoder()
-
-				const lookup = new POILookup({ databasePath: resolvePath(poiDatabasePath) })
 				poiNameLookup = createPOINameLookup(lookup)
 
 				poiExecute = createPOIExecutor({
@@ -427,7 +500,7 @@ export function createRuntimePipeline(
 			const grammar = (opts.classifier as Partial<NeuralAddressClassifier> | undefined)?.spanGrammar
 
 			if (grammar) {
-				const evidence = await loadDefaultStreetEvidence()
+				const evidence = await registry.resolve(StreetEvidenceService)
 
 				if (evidence) {
 					stages.classifier = wrapWithStreetEvidence(opts.classifier, evidence)
@@ -460,7 +533,7 @@ export function createRuntimePipeline(
 		}
 	})
 
-	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
+	const parse = async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
 		await loadFirstCallStages()
 
 		let effectiveRunOpts = runOpts
@@ -483,4 +556,6 @@ export function createRuntimePipeline(
 
 		return result
 	}
+
+	return Object.assign(parse, { [Symbol.asyncDispose]: () => registry[Symbol.asyncDispose]() })
 }

@@ -47,7 +47,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 })
 
 const caseNormalization = caseNormalizationOf(values["case-normalization"])
-const pipeline = createRuntimePipeline({ classifier, caseNormalization })
+await using pipeline = createRuntimePipeline({ classifier, caseNormalization })
 
 interface Miss {
 	register: Register

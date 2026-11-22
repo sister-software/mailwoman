@@ -8,7 +8,7 @@
 
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 
-import { loadDefaultPlaceCountry } from "#default/placer"
+import { loadBundledPlaceCountry } from "#default/placer"
 import { createRuntimePipeline } from "#runtime-pipeline"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { buildParseRig } from "#tools/eval-harness/oa/resolver/parse-rig"
@@ -48,7 +48,7 @@ export async function buildAssembledArm(
 	const useHardCountryAll = options.placeCountryHardAll ?? false
 	const useHardCountry = (options.placeCountryHard ?? false) || useHardCountryAll
 	const usePlaceCountry = (options.placeCountry ?? false) || useHardCountry
-	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
+	const evalPlacer = runAssembled && usePlaceCountry ? await loadBundledPlaceCountry() : null
 
 	if (usePlaceCountry && !evalPlacer) {
 		reportError("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")

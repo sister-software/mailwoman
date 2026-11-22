@@ -35,7 +35,7 @@ function passthroughResolver(): Resolver {
 
 describe("createRuntimePipeline — wiring", () => {
 	it("surfaces inferred machine locale and timezone when the query has no locale evidence", async () => {
-		const pipeline = createRuntimePipeline({
+		await using pipeline = createRuntimePipeline({
 			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
 		})
 
@@ -49,7 +49,7 @@ describe("createRuntimePipeline — wiring", () => {
 	})
 
 	it("can disable host inference for a server runtime", async () => {
-		const pipeline = createRuntimePipeline({ machinePreferences: "none" })
+		await using pipeline = createRuntimePipeline({ machinePreferences: "none" })
 		const result = await pipeline("Paris")
 
 		expect(result.locale).toMatchObject({ locale: "en-US", confidence: 0.3, source: "detected" })
@@ -58,7 +58,7 @@ describe("createRuntimePipeline — wiring", () => {
 	it("runs normalize + queryShape + classifier + resolver in order", async () => {
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
-		const pipeline = createRuntimePipeline({ classifier, resolver })
+		await using pipeline = createRuntimePipeline({ classifier, resolver })
 
 		const result = await pipeline("350  5th Ave, New York, NY 10118", { locale: "en-US" })
 
@@ -79,7 +79,7 @@ describe("createRuntimePipeline — wiring", () => {
 
 	it("threads precomputed QueryShape into classifier.parse", async () => {
 		const classifier = fakeClassifier()
-		const pipeline = createRuntimePipeline({ classifier })
+		await using pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("10118")
 
@@ -94,7 +94,7 @@ describe("createRuntimePipeline — wiring", () => {
 	})
 
 	it("Runs without classifier (empty tree without throwing)", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("hello world")
 		expect(result.tree.roots).toEqual([])
 		expect(result.timing["normalize"]).toBeGreaterThanOrEqual(0)
@@ -102,7 +102,7 @@ describe("createRuntimePipeline — wiring", () => {
 	})
 
 	it("Preserves raw input through normalize → result.input", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("  350  5th Ave  ")
 		expect(result.input).toBe("  350  5th Ave  ")
 
@@ -112,7 +112,7 @@ describe("createRuntimePipeline — wiring", () => {
 	})
 
 	it("offsetMap on normalized input lets consumers map back to raw chars", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("350  5th Ave")
 
 		const map = (result.normalized as { offsetMap?: number[] }).offsetMap
@@ -130,7 +130,7 @@ describe("createRuntimePipeline — wiring", () => {
 			evidence: null,
 		}))
 
-		const pipeline = createRuntimePipeline({ detectLocale: customDetect })
+		await using pipeline = createRuntimePipeline({ detectLocale: customDetect })
 
 		const result = await pipeline("8 rue Lafayette")
 		expect(customDetect).toHaveBeenCalled()
@@ -141,38 +141,38 @@ describe("createRuntimePipeline — wiring", () => {
 
 describe("createRuntimePipeline — kind classifier defaults", () => {
 	it("classifies a bare US ZIP as postcode_only", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("10118")
 		expect(result.kind.kind).toBe("postcode_only")
 		expect(result.kind.confidence).toBeGreaterThan(0.5)
 	})
 
 	it("classifies a single-word input as locality_only", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("Paris")
 		expect(result.kind.kind).toBe("locality_only")
 	})
 
 	it("classifies a multi-segment address as structured_address", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("350 5th Ave, New York, NY 10118")
 		expect(result.kind.kind).toBe("structured_address")
 	})
 
 	it("classifies PO Box input as po_box", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("PO Box 1234")
 		expect(result.kind.kind).toBe("po_box")
 	})
 
 	it("classifies 'Behind the gas station' as landmark", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("Behind the gas station")
 		expect(result.kind.kind).toBe("landmark")
 	})
 
 	it("classifies '5th and Main' as intersection", async () => {
-		const pipeline = createRuntimePipeline({})
+		await using pipeline = createRuntimePipeline({})
 		const result = await pipeline("5th and Main")
 		expect(result.kind.kind).toBe("intersection")
 	})
@@ -180,7 +180,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 	it("Fast-paths unambiguous postcode (US ZIP+4) inputs to resolver, skipping classifier", async () => {
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
-		const pipeline = createRuntimePipeline({ classifier, resolver })
+		await using pipeline = createRuntimePipeline({ classifier, resolver })
 		const result = await pipeline("10118-1234")
 		expect(result.path).toBe("fast-path")
 		expect(classifier.parse).not.toHaveBeenCalled()
@@ -190,7 +190,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 	it("does NOT fast-path ambiguous 5-digit input (US/FR/DE overlap)", async () => {
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()
-		const pipeline = createRuntimePipeline({ classifier, resolver })
+		await using pipeline = createRuntimePipeline({ classifier, resolver })
 		const result = await pipeline("10118")
 		expect(result.kind.kind).toBe("postcode_only")
 		expect(result.path).toBe("full")
@@ -205,7 +205,7 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 			intentMarkers: null,
 		}))
 
-		const pipeline = createRuntimePipeline({ classifyKind: customKind })
+		await using pipeline = createRuntimePipeline({ classifyKind: customKind })
 		const result = await pipeline("Paris")
 		expect(customKind).toHaveBeenCalled()
 		expect(result.kind.kind).toBe("vague")
