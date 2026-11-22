@@ -42,6 +42,10 @@ export function failureFamilies(record: FailureRecord, country: string): string[
 	const shippedByTag = new Map(shipped)
 	const out: string[] = []
 
+	// country-branch: every Hong Kong failure takes the `set-aside:hk` family
+	// so a report can leave those rows out.
+	// The change that added it recorded no reason.
+	// A set-aside table in the suite's configuration would replace it.
 	if (country === "HK") {
 		out.push("set-aside:hk")
 	}

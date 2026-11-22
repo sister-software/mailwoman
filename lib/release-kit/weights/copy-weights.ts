@@ -21,7 +21,7 @@ import {
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix/index"
+import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix"
 import { readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"

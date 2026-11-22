@@ -26,6 +26,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { filesAtRef, renamesSince } from "@mailwoman/core/git"
 import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { describeCheckoutLeak, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
+import { isPresent } from "@mailwoman/core/objects"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
 import { parseArguments, type ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"
 import { shopOperations } from "@mailwoman/license-worker/shop/operations"
@@ -48,6 +49,7 @@ import {
 	checkPassed,
 	checks,
 	DEFAULT_TRIAGE_DATABASE,
+	DiagnosticSeverity,
 	findCheck,
 	findFix,
 	fixes,
@@ -111,6 +113,8 @@ const HEALTH_OPTIONS = {
 	...COMMON_OPTIONS,
 	moves: { type: "string" },
 	"literals-since": { type: "string" },
+	except: { type: "string" },
+	"errors-only": { type: "boolean" },
 } as const satisfies ParseArgsOptionsConfig
 
 /**
@@ -605,7 +609,26 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 
 	if (id === "comments") return runComments(rest.slice(1), options, io)
 
-	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== null)
+	// `--except` takes check ids and leaves those checks out of `all`.
+	// An id that matches no registered check is refused, so a renamed or removed
+	// check can't stay excluded by a stale name.
+	const excepted = typeof options["except"] === "string" ? options["except"].split(",").filter(isPresent) : []
+	const unknownExceptions = excepted.filter((excluded) => !findCheck(excluded))
+
+	if (unknownExceptions.length || (excepted.length && id !== "all")) {
+		io.stderr(
+			unknownExceptions.length
+				? `mwops health: --except lists an id that is no registered check: ${unknownExceptions.join(", ")}\n`
+				: "mwops health: --except applies to `all` only\n"
+		)
+
+		return 2
+	}
+
+	const selected =
+		id === "all"
+			? checks.filter((check) => !excepted.includes(check.id))
+			: [findCheck(id)].filter((check) => check !== null)
 
 	if (id === "all" && !checks.length) {
 		io.stdout(options.json === true ? "[]\n" : "no health checks registered yet\n")
@@ -637,6 +660,10 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 			io.stdout(`${result.passed ? "✓" : "✗"} ${result.id}\n`)
 
 			for (const diagnostic of result.diagnostics) {
+				// A run of the whole registry prints over a thousand warnings.
+				// An error is hard to find among them.
+				if (options["errors-only"] === true && diagnostic.severity !== DiagnosticSeverity.Error) continue
+
 				io.stdout(
 					`    ${diagnostic.severity}: ${diagnostic.message}${diagnostic.file ? ` (${diagnostic.file}${diagnostic.line ? `:${diagnostic.line}` : ""})` : ""}\n`
 				)

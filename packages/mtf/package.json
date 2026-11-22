@@ -20,7 +20,7 @@
 		"THIRD_PARTY_NOTICES.md",
 		"third-party/**",
 		"!**/*.test.ts",
-		"!test/**"
+		"!**/*.test.tsx"
 	],
 	"type": "module",
 	"sideEffects": [
