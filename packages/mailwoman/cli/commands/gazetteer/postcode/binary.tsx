@@ -5,7 +5,7 @@
  *   Implements `mailwoman gazetteer postcode-binary`.
  *
  *   It writes one `postcode-<cc>.bin` per country from the SQLite postcode databases.
- *   `PostcodeBinaryResolver` in `@mailwoman/neural` reads these file.
+ *   `PostcodeBinaryLookup` in `@mailwoman/neural` reads these file.
  *
  *   Per-country files let the browser fetch only the locale it needs.
  *

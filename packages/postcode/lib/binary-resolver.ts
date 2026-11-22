@@ -80,7 +80,7 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
 }
 
 /**
- * Serializes postcode entries into the PCB1 binary read by {@link PostcodeBinaryResolver},
+ * Serializes postcode entries into the PCB1 binary read by {@link PostcodeBinaryLookup},
  * sorted by postcode and then country so matching postcodes are adjacent.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
@@ -143,7 +143,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
  * Looks up postcodes by binary search over a PCB1 binary, in Node or the browser,
  * with the same `lookup()` interface as the SQLite `WOFPostcodeLookup`.
  */
-export class PostcodeBinaryResolver {
+export class PostcodeBinaryLookup {
 	readonly #buf: Uint8Array
 	readonly #view: DataView
 	readonly #count: number

@@ -284,7 +284,7 @@ export function serializePostcodePrefixIndex(
  * The resolver uses no Node APIs, so the browser runtime can load the same artifact.
  * Each ancestor is stored once in the file's dictionary and nodes reference it by index.
  */
-export class PostcodePrefixIndexResolver {
+export class PostcodePrefixIndexLookup {
 	readonly header: PostcodePrefixHeader
 	readonly #nodes: Map<string, PostcodePrefixNode>
 
@@ -292,20 +292,20 @@ export class PostcodePrefixIndexResolver {
 		const { header, cursor } = readFramedHeader<PostcodePrefixHeader>(
 			MAGIC,
 			bytes,
-			"PostcodePrefixIndexResolver: bad magic — not a PFX1 artifact"
+			"PostcodePrefixIndexLookup: bad magic — not a PFX1 artifact"
 		)
 
 		this.header = header
 
 		if (this.header.schemaVersion > KNOWN_SCHEMA_VERSION) {
 			throw new Error(
-				`PostcodePrefixIndexResolver: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
+				`PostcodePrefixIndexLookup: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
 					`(known up to ${KNOWN_SCHEMA_VERSION})`
 			)
 		}
 
 		if (this.header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
-			throw new Error(`PostcodePrefixIndexResolver: unsupported schemaVersion ${this.header.schemaVersion}`)
+			throw new Error(`PostcodePrefixIndexLookup: unsupported schemaVersion ${this.header.schemaVersion}`)
 		}
 
 		const decoder = new TextDecoder()
@@ -336,7 +336,7 @@ export class PostcodePrefixIndexResolver {
 				const ancestor = ancestors[idx]
 
 				if (!ancestor) {
-					throw new Error(`PostcodePrefixIndexResolver: prefix "${prefix}" references ancestor ${idx}, out of range`)
+					throw new Error(`PostcodePrefixIndexLookup: prefix "${prefix}" references ancestor ${idx}, out of range`)
 				}
 
 				nodeAncestors.push(ancestor)
@@ -391,7 +391,7 @@ export class PostcodePrefixIndexResolver {
 	/**
 	 * Iterates every node in the file's prefix-sorted order.
 	 *
-	 * Runtime lookups should use {@link PostcodePrefixIndexResolver.probe}.
+	 * Runtime lookups should use {@link PostcodePrefixIndexLookup.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {
 		return this.#nodes.values()

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix"
+import { PostcodePrefixIndexLookup, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix"
 import { describe, expect, it } from "vitest"
 
 import { createAnchorRegionLookup, prefixForLevel } from "#postcode/anchor/regions"
@@ -38,7 +38,7 @@ describe("prefixForLevel", () => {
 })
 
 describe("createAnchorRegionLookup", () => {
-	const us = new PostcodePrefixIndexResolver(
+	const us = new PostcodePrefixIndexLookup(
 		new Uint8Array(
 			serializePostcodePrefixIndex(header("us", "us", ["3"]), [
 				{ prefix: "054", ancestors: [US, VERMONT], lat: 44.6, lon: -73, radiusP95Km: 51.6, unitCount: 60 },
@@ -47,7 +47,7 @@ describe("createAnchorRegionLookup", () => {
 		)
 	)
 
-	const gb = new PostcodePrefixIndexResolver(
+	const gb = new PostcodePrefixIndexLookup(
 		new Uint8Array(
 			serializePostcodePrefixIndex(header("gb", "gb-esw", ["outward"]), [
 				{ prefix: "SW1A", ancestors: [UK, ENGLAND], lat: null, lon: null, radiusP95Km: null, unitCount: 10 },

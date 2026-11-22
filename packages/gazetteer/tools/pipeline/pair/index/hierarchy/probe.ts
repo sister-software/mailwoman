@@ -20,7 +20,7 @@
  * (US `region`; FR `region` + `macroregion`); surfaces from `spr.name` ∪ official `names`;
  * folded with `normalizeFSTToken` on both sides under `foldVersion: 1`.
  *
- * Self-verifying: the written bytes are re-read through a fresh `PairIndexResolver`
+ * Self-verifying: the written bytes are re-read through a fresh `PairIndexLookup`
  * and known per-country pairs are probed.
  * The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
@@ -33,7 +33,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
-	PairIndexResolver,
+	PairIndexLookup,
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
@@ -294,7 +294,7 @@ async function main(): Promise<void> {
 		await movePath(tmpPath, outPath)
 
 		// Self-verifying readback over the written bytes (not the in-memory entries).
-		const resolver = new PairIndexResolver(bytes)
+		const resolver = new PairIndexLookup(bytes)
 		const probePairs = PROBE_PAIRS_BY_COUNTRY[country]
 
 		if (!probePairs) {

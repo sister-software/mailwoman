@@ -10,7 +10,7 @@
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
-import type { PostcodeBinaryGroup, PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import type { PostcodeBinaryGroup, PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
 import type { PathBuilderLike } from "path-ts"
 
@@ -93,7 +93,7 @@ export function parseAnchorLookup(
 }
 
 /**
- * Builds an anchor lookup from postcode groups, such as `PostcodeBinaryResolver.groups()` yields.
+ * Builds an anchor lookup from postcode groups, such as `PostcodeBinaryLookup.groups()` yields.
  *
  * Each member country gets weight 1.
  * The centroid is the mean of the group's non-zero places.
@@ -159,7 +159,7 @@ function foldAnchorEntry(existing: AnchorEntry, entry: AnchorEntry): void {
 }
 
 /**
- * The largest character code a postcode binary key holds; `PostcodeBinaryResolver.lookup`
+ * The largest character code a postcode binary key holds; `PostcodeBinaryLookup.lookup`
  * masks every input character to it.
  */
 const BINARY_KEY_CHAR_MAX = 0x7f
@@ -191,10 +191,10 @@ function isBinaryKey(postcode: string): boolean {
  * folding the files in order exactly as the merge does.
  */
 export class BinaryAnchorLookup implements AnchorLookup {
-	readonly #resolvers: readonly PostcodeBinaryResolver[]
+	readonly #resolvers: readonly PostcodeBinaryLookup[]
 	#size: number | null = null
 
-	constructor(resolvers: readonly PostcodeBinaryResolver[]) {
+	constructor(resolvers: readonly PostcodeBinaryLookup[]) {
 		this.#resolvers = resolvers
 	}
 

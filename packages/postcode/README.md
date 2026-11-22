@@ -36,9 +36,9 @@ subregionsForPostcode("35203", "US") // [{ key: "AL", isoid: "AL" }]
 Every module under `lib/` is importable as `@mailwoman/postcode/<module>`. Three of them are not in the root
 export:
 
-- `@mailwoman/postcode/binary-resolver` holds `PostcodeBinaryResolver`, which reads a PCB1 postcode binary
+- `@mailwoman/postcode/binary-resolver` holds `PostcodeBinaryLookup`, which reads a PCB1 postcode binary
   from bytes and looks up the places recorded for a postcode, and `serializePostcodeBinary`, which writes one.
-- `@mailwoman/postcode/prefix-index` holds `PostcodePrefixIndexResolver`, which reads a PFX1 prefix index from
+- `@mailwoman/postcode/prefix-index` holds `PostcodePrefixIndexLookup`, which reads a PFX1 prefix index from
   bytes and probes a prefix for its weighted ancestry, and `serializePostcodePrefixIndex`, which writes one.
 
 - `@mailwoman/postcode/recognizer/legacy` holds `postcodeLegacy`, a family of `@mailwoman/recognizer` that fills the

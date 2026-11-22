@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
-	PlacetypeCensusResolver,
+	PlacetypeCensusLookup,
 	serializePlacetypeCensus,
 	type PlacetypeCensusHeader,
 	type PlacetypeCensusNode,
@@ -36,7 +36,7 @@ const nodes: PlacetypeCensusNode[] = [
 
 describe("PCN1 placetype census", () => {
 	it("round-trips nodes, counts and header through the binary", () => {
-		const resolver = new PlacetypeCensusResolver(serializePlacetypeCensus(header, nodes))
+		const resolver = new PlacetypeCensusLookup(serializePlacetypeCensus(header, nodes))
 
 		expect(resolver.size).toBe(3)
 		expect(resolver.header.country).toBe("gb")
@@ -50,7 +50,7 @@ describe("PCN1 placetype census", () => {
 	})
 
 	it("computes share and lift against the header's base rates", () => {
-		const resolver = new PlacetypeCensusResolver(serializePlacetypeCensus(header, nodes))
+		const resolver = new PlacetypeCensusLookup(serializePlacetypeCensus(header, nodes))
 
 		expect(resolver.share("manchester", "dependent_locality")).toBeCloseTo(0.67, 2)
 		// 0.67 share against a 0.1 country base rate.
@@ -58,7 +58,7 @@ describe("PCN1 placetype census", () => {
 	})
 
 	it("treats an unknown parent as NEUTRAL, never as a prohibition", () => {
-		const resolver = new PlacetypeCensusResolver(serializePlacetypeCensus(header, nodes))
+		const resolver = new PlacetypeCensusLookup(serializePlacetypeCensus(header, nodes))
 
 		expect(resolver.probe("narnia")).toBeNull()
 		expect(resolver.share("narnia", "dependent_locality")).toBe(0)
@@ -67,7 +67,7 @@ describe("PCN1 placetype census", () => {
 
 	it("returns 0 lift — not Infinity — when the base rate is missing", () => {
 		const noRates = serializePlacetypeCensus({ ...header, baseRates: {} }, nodes)
-		const resolver = new PlacetypeCensusResolver(noRates)
+		const resolver = new PlacetypeCensusLookup(noRates)
 
 		expect(resolver.share("london", "dependent_locality")).toBeCloseTo(0.964, 3)
 		expect(resolver.lift("london", "dependent_locality")).toBe(0)
@@ -80,7 +80,7 @@ describe("PCN1 placetype census", () => {
 	})
 
 	it("drops zero and negative counts at serialize time", () => {
-		const resolver = new PlacetypeCensusResolver(
+		const resolver = new PlacetypeCensusLookup(
 			serializePlacetypeCensus(header, [{ parent: "ghost", counts: { dependent_locality: 0, venue: 4 }, total: 4 }])
 		)
 
@@ -88,11 +88,11 @@ describe("PCN1 placetype census", () => {
 	})
 
 	it("rejects bytes that are not a PCN1 artifact", () => {
-		expect(() => new PlacetypeCensusResolver(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]))).toThrow(/bad magic/)
+		expect(() => new PlacetypeCensusLookup(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]))).toThrow(/bad magic/)
 	})
 
 	it("preserves non-ASCII parent surfaces byte-for-byte", () => {
-		const resolver = new PlacetypeCensusResolver(
+		const resolver = new PlacetypeCensusLookup(
 			serializePlacetypeCensus(header, [{ parent: "münchen", counts: { dependent_locality: 25 }, total: 25 }])
 		)
 

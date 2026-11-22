@@ -19,7 +19,7 @@ import { createRecognizer, type PrefixStatus } from "@mailwoman/recognizer"
 
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import type { PostcodePrefixIndexResolver } from "#prefix"
+import type { PostcodePrefixIndexLookup } from "#prefix"
 import { type PostalKindsOfCountry, postal, postalKindsOfCountry } from "#recognizer/postal"
 
 /**
@@ -92,7 +92,7 @@ export interface CanCompleteOptions {
 	 * PFX1 indexes to read membership from.
 	 * Membership is null when absent.
 	 */
-	readonly prefixIndexes?: readonly PostcodePrefixIndexResolver[]
+	readonly prefixIndexes?: readonly PostcodePrefixIndexLookup[]
 }
 
 const recognizer = createRecognizer([postal])
@@ -128,7 +128,7 @@ function syntaxCanComplete(
 	return acceptPostcode(value, country) != null
 }
 
-const sortedPrefixes = new WeakMap<PostcodePrefixIndexResolver, readonly string[]>()
+const sortedPrefixes = new WeakMap<PostcodePrefixIndexLookup, readonly string[]>()
 
 /**
  * The index of the first entry of sorted `values` not less than `key`.
@@ -153,7 +153,7 @@ function lowerBound(values: readonly string[], key: string): number {
 /**
  * Whether `index` holds a node that starts with `key` or that `key` starts with.
  */
-function indexObserves(index: PostcodePrefixIndexResolver, key: string): boolean {
+function indexObserves(index: PostcodePrefixIndexLookup, key: string): boolean {
 	let prefixes = sortedPrefixes.get(index)
 
 	if (!prefixes) {
@@ -176,7 +176,7 @@ function indexObserves(index: PostcodePrefixIndexResolver, key: string): boolean
 function membershipFor(
 	country: string,
 	text: string,
-	indexes: readonly PostcodePrefixIndexResolver[]
+	indexes: readonly PostcodePrefixIndexLookup[]
 ): PostcodeMembership {
 	const own = indexes.filter((index) => index.country.toUpperCase() === country)
 

@@ -26,7 +26,7 @@ import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	KNOWN_SCHEMA_VERSION,
 	type PairIndexHeader,
-	PairIndexResolver,
+	PairIndexLookup,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -241,7 +241,7 @@ async function main(): Promise<void> {
 			fail(`artifact pairCount ${pairCount.toLocaleString()} != DB-derived ${expected.size.toLocaleString()}`)
 		}
 
-		const resolver = new PairIndexResolver(bytes)
+		const resolver = new PairIndexLookup(bytes)
 		let misses = 0
 		let wrongTag = 0
 		let wrongParentTag = 0

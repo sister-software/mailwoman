@@ -9,7 +9,7 @@
  *   byte-identical to a census absent: same emission matrix and transition adjustments.
  *   On real weights the same emissions, path and tokens — so an accidental wiring fails loudly.
  *
- *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusResolver` round trip
+ *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusLookup` round trip
  *   because the fold agreement between the two artifacts (`foldVersion`) is part of what's under test.
  */
 
@@ -22,7 +22,7 @@ import { NeuralAddressClassifier } from "#classifier"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { PairEdge, PairIndexLike } from "#pair"
 import {
-	PlacetypeCensusResolver,
+	PlacetypeCensusLookup,
 	serializePlacetypeCensus,
 	type PlacetypeCensusHeader,
 	type PlacetypeCensusLike,
@@ -74,7 +74,7 @@ function mockPairIndex(entries: Record<string, PairEdge>, delta = 5): PairIndexL
 function makeCensus(
 	nodes: Array<{ parent: string; counts: Partial<Record<ComponentTag, number>> }>,
 	baseRates: Partial<Record<ComponentTag, number>>
-): PlacetypeCensusResolver {
+): PlacetypeCensusLookup {
 	const header: PlacetypeCensusHeader = {
 		country: "gb",
 		schemaVersion: 1,
@@ -90,7 +90,7 @@ function makeCensus(
 		total: Object.values(n.counts).reduce((a, b) => a + b, 0),
 	}))
 
-	return new PlacetypeCensusResolver(serializePlacetypeCensus(header, full))
+	return new PlacetypeCensusLookup(serializePlacetypeCensus(header, full))
 }
 
 const GB_CENSUS = makeCensus(

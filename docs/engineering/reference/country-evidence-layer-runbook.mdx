@@ -135,7 +135,7 @@ The builder (`mailwoman/commands/gazetteer/pair-index.tsx`) streams the CSV, fol
   layout as a β-less one.
 - **Per-country self-check probes are mandatory (#1283).** `PROBE_PAIRS_BY_COUNTRY` in the builder
   holds a few known `(child, parent)` pairs per country code. After writing, the command re-reads
-  the bytes through a fresh `PairIndexResolver` and prints `PROBE OK` / `PROBE MISS`. A country with
+  the bytes through a fresh `PairIndexLookup` and prints `PROBE OK` / `PROBE MISS`. A country with
   no registered probes gets a **loud throw** rather than a false pass — the `en-nz` first build ran the GB
   names against the NZ index and printed reassuring `PROBE MISS` lines that verified no probe pair (caught
   2026-07-24). Add your country's probe pairs before you build. Include the identity pair if the
@@ -144,7 +144,7 @@ The builder (`mailwoman/commands/gazetteer/pair-index.tsx`) streams the CSV, fol
   `schemaVersion`, `sourceMD5s`, `buildDate`. Per-country calibration lives **in the artifact
   header rather than in code** — a downstream consumer reads `delta` from the header, never a hardcoded
   constant. The format is owned end-to-end by `neural/pair-index-resolver.ts` (the `serializePairIndex`
-  writer and the `PairIndexResolver` reader in one file, so the layout can never drift).
+  writer and the `PairIndexLookup` reader in one file, so the layout can never drift).
 
 ## 3. Candidate geometry — decide this before you calibrate
 
@@ -388,13 +388,13 @@ Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate seg
 
 ## The shipped mechanism (file map)
 
-| File                                                                                                     | Role                                                                                                                                                                |
-| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `neural/pair-index-resolver.ts`                                                                          | PIX1 format — `serializePairIndex` writer + `PairIndexResolver` reader in one file. The header stores `country`/`delta`/`transitionBeta`/`foldVersion`/`sourceMD5s` |
-| `neural/placetype-pair-prior.ts`                                                                         | the decode prior — segment / anchored / window / auto chain, the `(x,x)` identity rule, transition-β, `{at,of}` suppression, the #1308 postcode strip               |
-| `mailwoman/commands/gazetteer/pair-index.tsx`                                                            | the builder + per-country self-check probes + the GB cross-check count assertion                                                                                    |
-| `neural-weights-en-<cc>/scripts/link-dev-weights.ts`                                                     | the dev-materialize + freshness guard (δ + β + source-md5 lockstep)                                                                                                 |
-| `release.config.json` · `.release-it.json` · `.github/workflows/publish.yml` · `scripts/copy-weights.ts` | the release wiring — every list an overlay touches                                                                                                                  |
+| File                                                                                                     | Role                                                                                                                                                              |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `neural/pair-index-resolver.ts`                                                                          | PIX1 format — `serializePairIndex` writer + `PairIndexLookup` reader in one file. The header stores `country`/`delta`/`transitionBeta`/`foldVersion`/`sourceMD5s` |
+| `neural/placetype-pair-prior.ts`                                                                         | the decode prior — segment / anchored / window / auto chain, the `(x,x)` identity rule, transition-β, `{at,of}` suppression, the #1308 postcode strip             |
+| `mailwoman/commands/gazetteer/pair-index.tsx`                                                            | the builder + per-country self-check probes + the GB cross-check count assertion                                                                                  |
+| `neural-weights-en-<cc>/scripts/link-dev-weights.ts`                                                     | the dev-materialize + freshness guard (δ + β + source-md5 lockstep)                                                                                               |
+| `release.config.json` · `.release-it.json` · `.github/workflows/publish.yml` · `scripts/copy-weights.ts` | the release wiring — every list an overlay touches                                                                                                                |
 
 The runtime flag and its resolution order are in [runtime flags](./runtime-flags.mdx)
 (`placetypePair` + `probeMode`); the model-first doctrine for closed-vocab fields is in

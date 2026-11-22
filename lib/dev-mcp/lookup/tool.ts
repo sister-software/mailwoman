@@ -7,7 +7,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights/channels"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { resolveImportanceOrRefusal } from "@mailwoman/resolver-wof-sqlite/importance-source"
 import { poiDatabaseRoot, wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -400,7 +400,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
-		return new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(artifact.path)))
+		return new PostcodeBinaryLookup(new Uint8Array(await readLocalBuffer(artifact.path)))
 	}
 
 	const lookup = parseAnchorLookup(await readLocalJSONFile(artifact.path))

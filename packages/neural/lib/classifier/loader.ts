@@ -14,7 +14,7 @@ import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
 import type { GazetteerLexicon } from "#gazetteer-inference"
 import { DEFAULT_INTRA_OP_THREADS, ONNXRunner } from "#onnx-runner"
-import { peekPairIndexHeader, PairIndexResolver } from "#pair/index/resolver"
+import { peekPairIndexHeader, PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
 import { MailwomanTokenizer } from "#tokenizer"
@@ -240,7 +240,7 @@ export async function loadClassifierFromWeights(
 
 			if (peekedHeader.country === localeCountry) {
 				placetypePair = {
-					index: new PairIndexResolver(pairIndexBytes),
+					index: new PairIndexLookup(pairIndexBytes),
 					...(!$public.MAILWOMAN_PAIR_PARENT_DELTA ? {} : { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
 				}
 			} else {

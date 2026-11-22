@@ -8,7 +8,7 @@
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -195,7 +195,7 @@ async function readModelCardObject(
  */
 export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
-		? new BinaryAnchorLookup([new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path)))])
+		? new BinaryAnchorLookup([new PostcodeBinaryLookup(new Uint8Array(await readLocalBuffer(source.path)))])
 		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 

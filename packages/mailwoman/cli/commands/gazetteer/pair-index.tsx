@@ -163,7 +163,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		const {
 			utils: { md5File, md5Hex },
 			fstPrior: { normalizeFSTToken },
-			pair: { PairIndexResolver, serializePairIndex },
+			pair: { PairIndexLookup, serializePairIndex },
 			pair2: { PairIndexBuilder, applyPairIndexHoldout },
 			spliterator: { CSVSpliterator, JSONSpliterator },
 			boroughPairs: { extractBoroughPairs },
@@ -335,7 +335,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		await writeLocalFile(bytes, outPath)
 
 		// The probes read the serialized bytes so they also verify serialization.
-		const resolver = new PairIndexResolver(bytes)
+		const resolver = new PairIndexLookup(bytes)
 		const countryProbePairs = PROBE_PAIRS_BY_COUNTRY[country]
 
 		if (!countryProbePairs) {

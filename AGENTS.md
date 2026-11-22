@@ -220,6 +220,41 @@ registers it. `health:checks` leaves out the checks its `--except` list holds, a
 waits on a decision recorded in its issue. The tests under `lib/repo-health`, which `mwops check
 health-tree` runs, cover each check's own logic.
 
+## Functions, classes and construction
+
+Most of this repository is exported functions over typed data. The rules below say when another form applies and
+how a long-lived object comes into being.
+
+1. Write a plain exported function over typed data unless rule 2 or rule 3 applies.
+2. Write a class when its instances own a resource handle or mutable state with a lifetime. The class keeps state in
+   `#` fields and declares `Symbol.dispose` or `Symbol.asyncDispose`. An error type is a class.
+3. When an interface has several stateless implementations, each is a `create*` function that returns an object typed
+   as the interface. A class may sit behind such a function when callers need only the interface.
+4. A class that opens something asynchronously has a private constructor and one `static async create`. A public
+   constructor never returns an instance that needs a second call before use.
+5. A class extends `Error`, a platform class, or a base that owns a resource, such as `SQLiteLookup` or `APIClient`.
+   Reuse code by composing objects, and keep inheritance for those three cases.
+6. A library module keeps zero handle in mutable module-level state. A handle belongs to a registry
+   service or to an object the caller owns. A module-level cache of a pure computation states its reason on the line
+   above.
+7. A resource that more than one consumer of an engine reads is defined on the service registry with its `needs`.
+   A value computed asynchronously from another service and read by several services is defined the same way, so it
+   is computed once per scope. A plain setting is an option and takes zero token. A request-scoped object is built by
+   a function. A definition omits `release` when its instance is itself disposable, because `async-init` disposes
+   such an instance.
+8. A role has one interface, declared in the package that owns the role. A `*Like` type is for a foreign shape the
+   package can't import.
+9. A long-running function reports progress through an `onX` callback option. When several listeners need the same
+   notification, the object exposes `subscribe(listener)` and returns a disposable.
+
+A class name's suffix states its role. A `*Client` extends `APIClient`, a `*Provider` implements an interface whose
+name ends in `Provider`, and a `*Resolver` implements `Resolver`. A class that reads one database or binary artifact
+by key is a `*Lookup`. The `role-suffixes` repository check reads each exported class's `extends` and `implements`
+clauses and reports a suffix whose role they don't declare.
+
+Four practices from larger class-based codebases stay out: decorator injection, a shared `Disposable` base class, an
+`I` prefix on interfaces, and the `private` keyword in place of `#`. `erasableSyntaxOnly` rejects a decorator.
+
 ## Vocabulary rules across the tree
 
 A vocabulary rule governs how this repository writes prose. It doesn't govern a string the repository

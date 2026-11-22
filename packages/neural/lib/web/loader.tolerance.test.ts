@@ -21,7 +21,7 @@
  *
  *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real
  *   model file is needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts`
- *   (which need a real tokenizer.model) while keeping `PostcodeBinaryResolver` +
+ *   (which need a real tokenizer.model) while keeping `PostcodeBinaryLookup` +
  *   `serializePostcodeBinary` real, so the postcode-load-and-merge path under test runs for real.
  */
 

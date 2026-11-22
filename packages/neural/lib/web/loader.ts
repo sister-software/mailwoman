@@ -5,8 +5,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
 import { startEarly } from "@mailwoman/core/promises"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
+import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, BinaryAnchorLookup } from "#anchor-inference"
@@ -23,7 +23,7 @@ import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
 import { inferRequiredChannelsFromInputs } from "#ort-feeds"
-import type { PairIndexResolver } from "#pair/index/resolver"
+import type { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { createAnchorRegionLookup } from "#postcode/anchor/regions"
 import { MailwomanTokenizer } from "#tokenizer"
@@ -50,7 +50,7 @@ export interface LoadedPairIndex {
 	/**
 	 * The resolver passed to the classifier.
 	 */
-	resolver: PairIndexResolver
+	resolver: PairIndexLookup
 }
 
 /**
@@ -284,9 +284,9 @@ async function loadPostcodeAnchorLookup(
 	fetchImpl: typeof fetch
 ): Promise<AnchorLookup | null> {
 	const settled = await Promise.all(
-		urls.map(async (url): Promise<PostcodeBinaryResolver | null> => {
+		urls.map(async (url): Promise<PostcodeBinaryLookup | null> => {
 			try {
-				return new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl))
+				return new PostcodeBinaryLookup(await fetchBytes(url, fetchImpl))
 			} catch (error) {
 				console.warn(
 					`[@mailwoman/neural/web/loader] optional postcode anchor binary skipped: ${url} — ` +
@@ -311,11 +311,11 @@ async function loadPostcodeAnchorLookup(
 async function fetchPostcodePrefixIndexes(
 	urls: readonly string[],
 	fetchImpl: typeof fetch
-): Promise<PostcodePrefixIndexResolver[]> {
+): Promise<PostcodePrefixIndexLookup[]> {
 	const settled = await Promise.all(
-		urls.map(async (url): Promise<PostcodePrefixIndexResolver | null> => {
+		urls.map(async (url): Promise<PostcodePrefixIndexLookup | null> => {
 			try {
-				return new PostcodePrefixIndexResolver(await fetchBytes(url, fetchImpl))
+				return new PostcodePrefixIndexLookup(await fetchBytes(url, fetchImpl))
 			} catch (error) {
 				console.warn(
 					`[@mailwoman/neural/web/loader] optional postcode-prefix index skipped: ${url} — ` +
@@ -328,7 +328,7 @@ async function fetchPostcodePrefixIndexes(
 		})
 	)
 
-	return settled.filter((index): index is PostcodePrefixIndexResolver => index !== null)
+	return settled.filter((index): index is PostcodePrefixIndexLookup => index !== null)
 }
 
 /**
@@ -426,7 +426,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const postcodePrefixIndexesLoad = postcodePrefixURLs.length
 		? fetchPostcodePrefixIndexes(postcodePrefixURLs, fetchImpl)
-		: Promise.resolve<PostcodePrefixIndexResolver[]>([])
+		: Promise.resolve<PostcodePrefixIndexLookup[]>([])
 
 	const [
 		modelBytes,
@@ -457,7 +457,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 	const anchorRegions = postcodePrefixIndexes.length ? createAnchorRegionLookup(postcodePrefixIndexes) : null
 
-	let configPairIndex: PairIndexResolver | null = null
+	let configPairIndex: PairIndexLookup | null = null
 
 	if (opts.country && pairIndexes.length) {
 		const pinnedCountry = resolvePairIndexCountry(opts.country)
