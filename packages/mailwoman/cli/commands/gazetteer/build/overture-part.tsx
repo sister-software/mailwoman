@@ -32,7 +32,7 @@ export const spec = {
 
 const GazetteerBuildOverturePart: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildOverturePart } = await import("@mailwoman/gazetteer/tools/pipeline/overture-part")
+		const { buildOverturePart } = await import("@mailwoman/gazetteer/tools/pipeline/collective-offer")
 
 		const r = await buildOverturePart({
 			candidateDB: options.candidate,
