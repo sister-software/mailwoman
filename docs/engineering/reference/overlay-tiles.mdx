@@ -66,13 +66,16 @@ seconds of its 3 minutes 25 seconds.
 
 ### Credentials
 
-`mwops release mint-aws-credentials -o <file>` creates two identities, and `lib/release-kit/deploy/aws-credentials.ts`
+`mwops release mint-aws-credentials -o <file>` creates three identities, and `lib/release-kit/deploy/aws-credentials.ts`
 holds their policies. Run it once under a session with IAM write access, then copy the two keys it writes into `.env`.
+After a policy change, `mint-aws-credentials --policies-only` rewrites every policy and keeps the existing key.
 
-- `mailwoman-tile-build` is an IAM user. Its key stages inputs in `mailwoman-basemaps-inputs-<account>`, launches
-  instances in `us-west-2`, and stops, terminates and commands only instances tagged `mailwoman:purpose=tile-build`.
+- `mailwoman-tile-build` is an IAM user with the managed policy of the same name. Its key stages inputs in
+  `mailwoman-basemaps-inputs-<account>`, launches instances in `us-west-2`, stops, terminates and commands only
+  instances tagged `mailwoman:purpose=tile-build`, and creates their termination schedules.
 - `mailwoman-tile-build-instance` is the instance role. A build instance reads the inputs bucket and the parameters
   under `/mailwoman/tile-build/` through it, without a key on its disk.
+- `mailwoman-tile-build-scheduler` is the role EventBridge Scheduler assumes. It may terminate only tagged instances.
 
 `mwops release aws-credentials` verifies the key in the environment.
 
@@ -95,9 +98,47 @@ offsets. Mountpoint for S3 refuses those writes. The work directory is therefore
 on 2026-11-02, and DuckDB holds a quarter of host memory by default. A 64 GB host covers both. The full-planet
 resource use of this build is unmeasured.
 
-### Steps that remain unbuilt
+### The image registry
 
-- The image has no registry. A push to `ghcr.io/sister-software/` or to ECR is the next decision, and the tile-build
-  policy holds no ECR permission.
-- No launch command exists yet. It will run the image on a tagged instance with the instance profile, read the R2 keys
-  from Parameter Store, and terminate the instance when the run exits.
+The image is published as `ghcr.io/sister-software/mailwoman-overlay-tiles:<commit>`. A push needs a GitHub token with
+`write:packages`:
+
+```sh
+gh auth token | podman login ghcr.io -u <login> --password-stdin
+podman tag localhost/mailwoman-overlay-tiles ghcr.io/sister-software/mailwoman-overlay-tiles:<commit>
+podman push ghcr.io/sister-software/mailwoman-overlay-tiles:<commit>
+```
+
+The package is public, so an instance pulls it without a token.
+
+### Launch
+
+```sh
+yarn mwops release launch-overlay-build --tileset-version v1 --dry-run
+yarn mwops release launch-overlay-build --tileset-version v1
+```
+
+The launch runs under the tile-build key and does five things:
+
+1. It uploads the admin database to `overlay-tiles/inputs/admin-<md5>.db` unless that key exists.
+2. It writes the R2 upload keys, `RCLONE_S3_PUBLIC_*` from `.env`, as `SecureString` parameters under
+   `/mailwoman/tile-build/`.
+3. It starts one instance tagged `mailwoman:purpose=tile-build`, with the instance profile and a shutdown behavior of
+   `terminate`.
+4. It creates the EventBridge schedule `mailwoman-tile-build-<instance id>`, which terminates the instance at the
+   deadline. A failed schedule terminates the instance at once.
+5. It prints the instance id, the deadline, the log key and the two tile set URLs.
+
+`--dry-run` hashes the admin database, prints the boot script, and makes only read requests.
+
+Three mechanisms end an instance:
+
+| Mechanism                                         | Ends the instance when                             |
+| ------------------------------------------------- | -------------------------------------------------- |
+| The boot script's exit trap                       | The build exits, with any status                   |
+| `shutdown -h +<minutes>`, the script's first line | The deadline passes while the kernel still runs    |
+| The EventBridge schedule                          | The deadline passes, whatever the instance's state |
+
+The deadline is `--hours` after the launch, 15 by default. On exit the boot script uploads its log to
+`overlay-tiles/logs/<version>-<instance id>.log`, and the build copies both exports to
+`overlay-tiles/exports/<version>/`.

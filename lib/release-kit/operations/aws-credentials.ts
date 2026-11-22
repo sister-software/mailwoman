@@ -4,134 +4,53 @@
 /**
  *   The AWS credential operations: report each role's identity, and create the scoped
  *   identities with an access key written to a new file.
- *   The roles live in `#release-kit/deploy/aws-credentials`.
  *
- *   Every request goes through the `aws` program, so the mint runs under whatever session
- *   the operator's shell holds and this workspace takes on no AWS SDK client.
+ *   The roles live in `#release-kit/deploy/aws-credentials`, and every request
+ *   runs through `#release-kit/deploy/aws-cli`.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { isProcessError } from "@mailwoman/core/process"
 import { OperationEffect } from "@mailwoman/core/scripting"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import {
-	AWS_BUILD_REGION,
+	type AccessKey,
+	aws,
+	type AWSCaller,
+	callerIdentity,
+	readEntity,
+	tileBuildKey,
+} from "#release-kit/deploy/aws-cli"
+import {
 	AWS_CREDENTIAL_ROLES,
 	type AWSCredentialRole,
 	AWSCredentialRoleID,
+	type AWSServiceRole,
 	type AWSUserRole,
 	findAWSCredentialRole,
 } from "#release-kit/deploy/aws-credentials"
-import { $private } from "#release-kit/env"
 import { defineOperation } from "#release-kit/operation"
 import { flag, list, text } from "#release-kit/operations/inputs"
 
-/**
- * An access key as two environment values.
- */
-interface AccessKey {
-	accessKeyID: string
-	secretAccessKey: string
-}
-
-/**
- * Who a request runs as: a profile of the operator's AWS configuration,
- * an access key, or the shell's own session.
- */
-type AWSCaller = { profile: string } | { key: AccessKey } | null
-
-/**
- * The environment variables that select a session other than an explicit access key.
- */
-const SESSION_VARIABLES: ReadonlySet<string> = new Set(["AWS_PROFILE", "AWS_DEFAULT_PROFILE", "AWS_SESSION_TOKEN"])
-
-/**
- * The error text IAM answers for a user, role or instance profile that doesn't exist.
- */
-const NO_SUCH_ENTITY = "NoSuchEntity"
-
-/**
- * Runs one `aws` request and answers its JSON output, or null when the request prints none.
- */
-async function aws<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
-	const profile = caller && "profile" in caller ? ["--profile", caller.profile] : []
-
-	// `execFile`'s `env` replaces the inherited environment, so a key extends a copy of it.
-	// The copy drops the shell's session token and profile.
-	// Either would otherwise outrank the key.
-	// An empty value fails instead: `aws` reads `AWS_PROFILE=""` as the profile "", which no config holds.
-	const options =
-		caller && "key" in caller
-			? {
-					env: {
-						...Object.fromEntries(
-							// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit the path and the rest. No typed helper exposes the whole environment.
-							Object.entries(process.env).filter(([name]) => !SESSION_VARIABLES.has(name))
-						),
-						AWS_ACCESS_KEY_ID: caller.key.accessKeyID,
-						AWS_SECRET_ACCESS_KEY: caller.key.secretAccessKey,
-					},
-				}
-			: {}
-
-	const { stdout } = await runFile(
-		"aws",
-		[...args, ...profile, "--region", AWS_BUILD_REGION, "--output", "json"],
-		options
-	)
-
-	return stdout.trim() ? parseJSONStrict<T>(stdout) : null
-}
-
-/**
- * Runs a read of one IAM entity and answers null when IAM reports that the entity doesn't exist.
- *
- * Any other failure, such as a refused permission, is thrown: an unreadable entity isn't an absent one.
- */
-async function readEntity<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
-	try {
-		return await aws<T>(caller, args)
-	} catch (error) {
-		if (isProcessError(error) && String(error.stderr).includes(NO_SUCH_ENTITY)) return null
-
-		throw error
-	}
-}
-
 function roleKey(role: AWSUserRole): AccessKey | null {
 	switch (role.id) {
-		case AWSCredentialRoleID.TileBuild: {
-			const accessKeyID = $private.AWS_TILE_BUILD_ACCESS_KEY_ID
-			const secretAccessKey = $private.AWS_TILE_BUILD_SECRET_ACCESS_KEY
-
-			return accessKeyID && secretAccessKey ? { accessKeyID, secretAccessKey } : null
-		}
+		case AWSCredentialRoleID.TileBuild:
+			return tileBuildKey()
 
 		default:
 			return null
 	}
 }
 
-interface CallerIdentity {
-	Account: string
-	Arn: string
-}
-
-async function callerIdentity(caller: AWSCaller): Promise<CallerIdentity> {
-	const identity = await aws<CallerIdentity>(caller, ["sts", "get-caller-identity"])
-
-	if (!identity) throw new Error("aws sts get-caller-identity printed no identity")
-
-	return identity
-}
+const roleKind = z.enum(["user", "service"])
 
 const roleReport = z.object({
 	role: z.string(),
-	kind: z.enum(["user", "instance"]),
+	kind: roleKind,
 	name: z.string(),
 	env: z.array(z.string()),
 	purpose: z.string(),
@@ -146,7 +65,7 @@ const roleReport = z.object({
 export const awsCredentials = defineOperation({
 	id: "release.aws-credentials",
 	description:
-		"Verify each AWS credential role's access key from the environment against AWS STS. An instance role has no key and is listed without a check. Run mint-aws-credentials to create them.",
+		"Verify each AWS credential role's access key from the environment against AWS STS. A service role has no key and is listed without a check. Run mint-aws-credentials to create them.",
 	effect: OperationEffect.Read,
 	options: {},
 	inputSchema: z.object({}).strict(),
@@ -156,7 +75,7 @@ export const awsCredentials = defineOperation({
 			AWS_CREDENTIAL_ROLES.map(async (role) => {
 				const base = { role: role.id, kind: role.kind, name: role.name, purpose: role.purpose }
 
-				if (role.kind === "instance") {
+				if (role.kind === "service") {
 					return { ...base, env: [], state: "not-checked" as const, arn: null, detail: null }
 				}
 
@@ -201,30 +120,42 @@ export const awsCredentials = defineOperation({
 })
 
 /**
- * The trust policy that lets an EC2 instance assume a role.
+ * The trust policy that lets one AWS service assume a role.
  */
-const INSTANCE_TRUST_POLICY = {
-	Version: "2012-10-17",
-	Statement: [{ Effect: "Allow", Principal: { Service: "ec2.amazonaws.com" }, Action: "sts:AssumeRole" }],
+function trustPolicy(service: string): string {
+	return stringifyJSON({
+		Version: "2012-10-17",
+		Statement: [{ Effect: "Allow", Principal: { Service: service }, Action: "sts:AssumeRole" }],
+	})
 }
 
 /**
- * Creates or updates one instance role: the role, its inline and managed policies, and its instance profile.
+ * Creates or updates one service role: the role, its trust, inline and managed policies,
+ * and its instance profile when it has one.
  */
-async function writeInstanceRole(
+async function writeServiceRole(
 	caller: AWSCaller,
-	role: Extract<AWSCredentialRole, { kind: "instance" }>,
+	role: AWSServiceRole,
 	accountID: string,
 	log: (line: string) => void
 ): Promise<void> {
-	if (!(await readEntity(caller, ["iam", "get-role", "--role-name", role.name]))) {
+	if (await readEntity(caller, ["iam", "get-role", "--role-name", role.name])) {
+		await aws(caller, [
+			"iam",
+			"update-assume-role-policy",
+			"--role-name",
+			role.name,
+			"--policy-document",
+			trustPolicy(role.service),
+		])
+	} else {
 		await aws(caller, [
 			"iam",
 			"create-role",
 			"--role-name",
 			role.name,
 			"--assume-role-policy-document",
-			stringifyJSON(INSTANCE_TRUST_POLICY),
+			trustPolicy(role.service),
 			"--description",
 			role.purpose,
 		])
@@ -248,6 +179,8 @@ async function writeInstanceRole(
 	}
 
 	log(`wrote the policies of role ${role.name}`)
+
+	if (!role.instanceProfile) return
 
 	if (!(await readEntity(caller, ["iam", "get-instance-profile", "--instance-profile-name", role.name]))) {
 		await aws(caller, ["iam", "create-instance-profile", "--instance-profile-name", role.name])
@@ -323,9 +256,29 @@ async function writeManagedPolicy(
 	return arn
 }
 
+/**
+ * Creates the user when it is absent and attaches its managed policy.
+ */
+async function writeUser(
+	caller: AWSCaller,
+	role: AWSUserRole,
+	accountID: string,
+	log: (line: string) => void
+): Promise<void> {
+	if (!(await readEntity(caller, ["iam", "get-user", "--user-name", role.name]))) {
+		await aws(caller, ["iam", "create-user", "--user-name", role.name])
+		log(`created user ${role.name}`)
+	}
+
+	const policyARN = await writeManagedPolicy(caller, role.name, stringifyJSON(role.policy(accountID)), accountID)
+
+	await aws(caller, ["iam", "attach-user-policy", "--user-name", role.name, "--policy-arn", policyARN])
+	log(`attached policy ${policyARN} to user ${role.name}`)
+}
+
 const mintedIdentity = z.object({
 	role: z.string(),
-	kind: z.enum(["user", "instance"]),
+	kind: roleKind,
 	name: z.string(),
 	env: z.array(z.string()),
 	accessKeyID: z.string().nullable(),
@@ -338,26 +291,34 @@ const mintedIdentity = z.object({
 export const mintAWSCredentials = defineOperation({
 	id: "release.mint-aws-credentials",
 	description:
-		"Create the scoped AWS identities (--roles tile-instance,tile-build; default both): an IAM user with one access key, and an instance role with its instance profile. Writes each key as KEY=value lines to a new file, --out/-o, readable only by its owner. Runs as the shell's AWS session, or as --profile, which needs IAM write access. --replace deletes a user's earlier access keys after the file is written.",
+		"Create the scoped AWS identities (--roles tile-scheduler,tile-instance,tile-build; default all): an IAM user with one access key, and service roles, one with an instance profile. Writes each new key as KEY=value lines to a new file, --out/-o, readable only by its owner. --policies-only rewrites every policy and creates no key, so it needs no --out. Runs as the shell's AWS session, or as --profile, which needs IAM write access. --replace deletes a user's earlier access keys after the file is written.",
 	effect: OperationEffect.ExternalWrite,
 	options: {
 		out: { type: "string", short: "o" },
 		roles: { type: "string" },
 		profile: { type: "string" },
 		replace: { type: "boolean" },
+		"policies-only": { type: "boolean" },
 	},
 	inputSchema: z
-		.object({ out: z.string({ error: "--out <file> is required" }), roles: list, profile: text, replace: flag })
-		.strict(),
-	outputSchema: z.object({ out: z.string(), account: z.string(), minter: z.string(), minted: z.array(mintedIdentity) }),
+		.object({ out: text, roles: list, profile: text, replace: flag, "policies-only": flag })
+		.strict()
+		.refine((input) => input["policies-only"] || input.out, { message: "--out <file> is required" }),
+	outputSchema: z.object({
+		out: z.string().nullable(),
+		account: z.string(),
+		minter: z.string(),
+		minted: z.array(mintedIdentity),
+	}),
 	async run(input, context) {
 		const roles: readonly AWSCredentialRole[] = input.roles.length
 			? AWS_CREDENTIAL_ROLES.filter((role) => input.roles.map(findAWSCredentialRole).includes(role))
 			: AWS_CREDENTIAL_ROLES
 
-		const out = resolvePath(input.out)
+		const policiesOnly = input["policies-only"]
+		const out = policiesOnly || !input.out ? null : resolvePath(input.out)
 
-		if (await tryStat(out)) throw new Error(`${out} exists; name a new file`)
+		if (out && (await tryStat(out))) throw new Error(`${out} exists; name a new file`)
 
 		const caller: AWSCaller = input.profile ? { profile: input.profile } : null
 		const identity = await callerIdentity(caller)
@@ -375,7 +336,7 @@ export const mintAWSCredentials = defineOperation({
 		const earlier = new Map<AWSCredentialRole, string[]>()
 
 		for (const role of roles) {
-			if (role.kind !== "user") continue
+			if (role.kind !== "user" || policiesOnly) continue
 
 			const user = await readEntity(caller, ["iam", "get-user", "--user-name", role.name])
 
@@ -395,7 +356,7 @@ export const mintAWSCredentials = defineOperation({
 
 		if (blocked.length) {
 			throw new Error(
-				`access keys already exist for ${blocked.map((role) => `${role.id} (${earlier.get(role)!.join(", ")})`).join("; ")}; pass --replace to delete them after the new keys are written`
+				`access keys already exist for ${blocked.map((role) => `${role.id} (${earlier.get(role)!.join(", ")})`).join("; ")}; pass --replace to delete them after the new keys are written, or --policies-only to rewrite the policies alone`
 			)
 		}
 
@@ -406,7 +367,7 @@ export const mintAWSCredentials = defineOperation({
 
 		if (context.dryRun) {
 			return {
-				out: out.toString(),
+				out: out?.toString() ?? null,
 				account: accountID,
 				minter: identity.Arn,
 				minted: roles.map((role) => ({
@@ -423,22 +384,20 @@ export const mintAWSCredentials = defineOperation({
 		const created: Array<{ role: AWSCredentialRole; key: AccessKey | null }> = []
 
 		for (const role of roles) {
-			if (role.kind === "instance") {
-				await writeInstanceRole(caller, role, accountID, context.log)
+			if (role.kind === "service") {
+				await writeServiceRole(caller, role, accountID, context.log)
 				created.push({ role, key: null })
 
 				continue
 			}
 
-			if (!(await readEntity(caller, ["iam", "get-user", "--user-name", role.name]))) {
-				await aws(caller, ["iam", "create-user", "--user-name", role.name])
-				context.log(`created user ${role.name}`)
+			await writeUser(caller, role, accountID, context.log)
+
+			if (policiesOnly) {
+				created.push({ role, key: null })
+
+				continue
 			}
-
-			const policyARN = await writeManagedPolicy(caller, role.name, stringifyJSON(role.policy(accountID)), accountID)
-
-			await aws(caller, ["iam", "attach-user-policy", "--user-name", role.name, "--policy-arn", policyARN])
-			context.log(`attached policy ${policyARN} to user ${role.name}`)
 
 			const result = await aws<{ AccessKey: { AccessKeyId: string; SecretAccessKey: string } }>(caller, [
 				"iam",
@@ -457,16 +416,18 @@ export const mintAWSCredentials = defineOperation({
 			})
 		}
 
-		await writePrivateTextFile(
-			created
-				.flatMap(({ role, key }) =>
-					role.kind === "user" && key
-						? [`${role.env.accessKeyID}=${key.accessKeyID}\n`, `${role.env.secretAccessKey}=${key.secretAccessKey}\n`]
-						: []
-				)
-				.join(""),
-			out
-		)
+		if (out) {
+			await writePrivateTextFile(
+				created
+					.flatMap(({ role, key }) =>
+						role.kind === "user" && key
+							? [`${role.env.accessKeyID}=${key.accessKeyID}\n`, `${role.env.secretAccessKey}=${key.secretAccessKey}\n`]
+							: []
+					)
+					.join(""),
+				out
+			)
+		}
 
 		for (const { role } of created) {
 			for (const id of replaced(role)) {
@@ -476,7 +437,7 @@ export const mintAWSCredentials = defineOperation({
 		}
 
 		return {
-			out: out.toString(),
+			out: out?.toString() ?? null,
 			account: accountID,
 			minter: identity.Arn,
 			minted: created.map(({ role, key }) => ({
@@ -492,10 +453,14 @@ export const mintAWSCredentials = defineOperation({
 	formatOutput({ out, account, minter, minted }) {
 		const lines = minted.map((identity) =>
 			identity.kind === "user"
-				? `${identity.role}: user ${identity.name}, ${identity.env.join(" and ")}${identity.accessKeyID ? ` = key ${identity.accessKeyID}` : " (dry run)"}${identity.replaced.length ? `, replacing ${identity.replaced.join(", ")}` : ""}`
-				: `${identity.role}: role and instance profile ${identity.name}`
+				? `${identity.role}: user ${identity.name}${identity.accessKeyID ? `, ${identity.env.join(" and ")} = key ${identity.accessKeyID}` : ", policy written"}${identity.replaced.length ? `, replacing ${identity.replaced.join(", ")}` : ""}`
+				: `${identity.role}: role ${identity.name}`
 		)
 
-		return [`account ${account}, minted as ${minter}`, `wrote ${out} (mode 0600)`, ...lines].join("\n")
+		return [
+			`account ${account}, minted as ${minter}`,
+			out ? `wrote ${out} (mode 0600)` : "policies only: no key file",
+			...lines,
+		].join("\n")
 	},
 })

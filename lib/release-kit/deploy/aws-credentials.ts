@@ -4,9 +4,11 @@
 /**
  * @file Lists the scoped AWS identities this repository uses for the remote tile build. Each role holds the
  *   permissions one consumer needs. The tile-build role is an IAM user whose access key the lab host reads from
- *   the environment: it stages inputs in the inputs bucket, launches and stops build instances, and sends them
- *   commands. The tile-instance role is the IAM role a build instance assumes through its instance profile, so the
- *   instance reads the inputs bucket without a key on its disk.
+ *   the environment: it stages inputs in the inputs bucket, launches and stops build instances, sends them
+ *   commands, and sets each instance's termination deadline. The tile-instance role is the IAM role a build
+ *   instance assumes through its instance profile, so the instance reads the inputs bucket without a key on its
+ *   disk. The tile-scheduler role is the IAM role EventBridge Scheduler assumes to terminate an instance at its
+ *   deadline.
  *
  *   `mwops release mint-aws-credentials` creates both from the operator's own AWS session, the counterpart of
  *   `mint-cloudflare-tokens`. The session needs IAM write access. The identities it creates have none.
@@ -44,6 +46,7 @@ export function awsInputsBucket(accountID: string): string {
 export const AWSCredentialRoleID = {
 	TileBuild: "tile-build",
 	TileInstance: "tile-instance",
+	TileScheduler: "tile-scheduler",
 } as const
 
 export type AWSCredentialRoleID = (typeof AWSCredentialRoleID)[keyof typeof AWSCredentialRoleID]
@@ -89,19 +92,41 @@ export interface AWSUserRole extends AWSCredentialRoleBase {
 }
 
 /**
- * An IAM role that an EC2 instance assumes through an instance profile of the same name.
+ * An IAM role that one AWS service assumes.
  */
-export interface AWSInstanceRole extends AWSCredentialRoleBase {
-	kind: "instance"
+export interface AWSServiceRole extends AWSCredentialRoleBase {
+	kind: "service"
+	/**
+	 * The service principal the role's trust policy admits, such as `ec2.amazonaws.com`.
+	 */
+	service: string
+	/**
+	 * Whether the role has an instance profile of the same name, through which an EC2 instance assumes it.
+	 */
+	instanceProfile: boolean
 	/**
 	 * AWS-managed policies attached beside the inline policy.
 	 */
 	managedPolicies: readonly string[]
 }
 
-export type AWSCredentialRole = AWSUserRole | AWSInstanceRole
+export type AWSCredentialRole = AWSUserRole | AWSServiceRole
 
-const INSTANCE_ROLE_NAME = "mailwoman-tile-build-instance"
+/**
+ * The role a build instance assumes through its instance profile.
+ */
+export const AWS_INSTANCE_ROLE_NAME = "mailwoman-tile-build-instance"
+
+/**
+ * The role EventBridge Scheduler assumes to terminate a build instance at its deadline.
+ */
+export const AWS_SCHEDULER_ROLE_NAME = "mailwoman-tile-build-scheduler"
+
+/**
+ * The prefix of each build instance's termination schedule.
+ * The schedule's name ends in the instance id.
+ */
+export const AWS_SCHEDULE_PREFIX = "mailwoman-tile-build-"
 
 /**
  * The statements both roles hold: list the inputs bucket, and read and write its objects.
@@ -130,14 +155,37 @@ const inBuildRegion = { StringEquals: { "aws:RequestedRegion": AWS_BUILD_REGION 
 /**
  * Every role, in the order the report lists them.
  *
- * The mint creates the instance role before the user, because the user's policy
- * refers to the role by its ARN.
+ * The mint creates the service roles before the user, because the user's policy
+ * refers to each role by its ARN.
  */
 export const AWS_CREDENTIAL_ROLES: readonly AWSCredentialRole[] = [
 	{
-		kind: "instance",
+		kind: "service",
+		id: AWSCredentialRoleID.TileScheduler,
+		name: AWS_SCHEDULER_ROLE_NAME,
+		service: "scheduler.amazonaws.com",
+		instanceProfile: false,
+		purpose: "EventBridge Scheduler: terminates a build instance at the deadline its launch set.",
+		managedPolicies: [],
+		policy: (accountID) => ({
+			Version: "2012-10-17",
+			Statement: [
+				{
+					Sid: "BuildInstancesTerminate",
+					Effect: "Allow",
+					Action: ["ec2:TerminateInstances"],
+					Resource: [`arn:aws:ec2:${AWS_BUILD_REGION}:${accountID}:instance/*`],
+					Condition: taggedForBuild,
+				},
+			],
+		}),
+	},
+	{
+		kind: "service",
 		id: AWSCredentialRoleID.TileInstance,
-		name: INSTANCE_ROLE_NAME,
+		name: AWS_INSTANCE_ROLE_NAME,
+		service: "ec2.amazonaws.com",
+		instanceProfile: true,
 		purpose:
 			"A build instance: reads and writes the inputs bucket, reads the build parameters, and answers Systems Manager commands.",
 		managedPolicies: ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"],
@@ -160,7 +208,7 @@ export const AWS_CREDENTIAL_ROLES: readonly AWSCredentialRole[] = [
 		name: "mailwoman-tile-build",
 		env: { accessKeyID: "AWS_TILE_BUILD_ACCESS_KEY_ID", secretAccessKey: "AWS_TILE_BUILD_SECRET_ACCESS_KEY" },
 		purpose:
-			"The lab host: stages inputs in the inputs bucket, launches, commands, stops and terminates build instances, and writes the build parameters.",
+			"The lab host: stages inputs in the inputs bucket, launches, commands, stops and terminates build instances, sets each instance's termination deadline, and writes the build parameters.",
 		policy: (accountID) => ({
 			Version: "2012-10-17",
 			Statement: [
@@ -184,8 +232,21 @@ export const AWS_CREDENTIAL_ROLES: readonly AWSCredentialRole[] = [
 					Sid: "InstanceRolePass",
 					Effect: "Allow",
 					Action: ["iam:PassRole"],
-					Resource: [`arn:aws:iam::${accountID}:role/${INSTANCE_ROLE_NAME}`],
+					Resource: [`arn:aws:iam::${accountID}:role/${AWS_INSTANCE_ROLE_NAME}`],
 					Condition: { StringEquals: { "iam:PassedToService": "ec2.amazonaws.com" } },
+				},
+				{
+					Sid: "SchedulerRolePass",
+					Effect: "Allow",
+					Action: ["iam:PassRole"],
+					Resource: [`arn:aws:iam::${accountID}:role/${AWS_SCHEDULER_ROLE_NAME}`],
+					Condition: { StringEquals: { "iam:PassedToService": "scheduler.amazonaws.com" } },
+				},
+				{
+					Sid: "DeadlineSchedules",
+					Effect: "Allow",
+					Action: ["scheduler:CreateSchedule", "scheduler:GetSchedule", "scheduler:DeleteSchedule"],
+					Resource: [`arn:aws:scheduler:${AWS_BUILD_REGION}:${accountID}:schedule/default/${AWS_SCHEDULE_PREFIX}*`],
 				},
 				{
 					Sid: "CommandsSendToBuildInstances",

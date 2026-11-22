@@ -25,6 +25,7 @@ import { deployTargets } from "#release-kit/operations/deploy-targets"
 import { fetchHFWeightsOperation } from "#release-kit/operations/fetch-hf-weights"
 import { generatedSurfaces } from "#release-kit/operations/generated-surfaces"
 import { linkWeightsOverlayOperation } from "#release-kit/operations/link-weights-overlay"
+import { launchOverlayBuild } from "#release-kit/operations/overlay-build"
 import { plan } from "#release-kit/operations/plan"
 import { preflight } from "#release-kit/operations/preflight"
 import { prepareVersion } from "#release-kit/operations/prepare-version"
@@ -71,6 +72,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	blessPackage,
 	mintCloudflareTokens,
 	mintAWSCredentials,
+	launchOverlayBuild,
 	purgeCloudflareCache,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>
 
