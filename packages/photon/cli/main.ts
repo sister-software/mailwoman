@@ -10,24 +10,19 @@
 
 import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
-	loadClassifierOrExit,
 	openAPICommand,
-	resolveGazetteerOrExit,
 	readListenPort,
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openServingRooftopProviders, unattachedLayerLines } from "mailwoman/geocode/serving-layers"
-import { createResolverBackend } from "mailwoman/resolver-backend"
+import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { titleCase } from "spliterator"
 
+import { openPhotonGeocoder } from "#cli/geocoder"
 import {
 	createPhotonApp,
 	PHOTON_DOC_INFO,
@@ -79,22 +74,11 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const port = readListenPort(values.port)
 	const host = values.host ?? "0.0.0.0"
 
-	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"] ?? null)
-	const { adminDBPath, candidateDB, wofPaths } = gazetteer
-	const classifier = await loadClassifierOrExit()
-
-	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
-	const resolver = createWOFResolver(backend)
-	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
+	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
+	const { gazetteer, rooftops, geocode } = await openPhotonGeocoder(values["candidate-db"] ?? null)
+	const { adminDBPath } = gazetteer
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
-	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse,
-	// a no-op when the extract is absent.
-	// Both read one generation of the active selection, else their conventional paths.
-	const rooftops = await openServingRooftopProviders(dataRootPath())
-	const banExtracts = rooftops.national
-	const osmExtracts = rooftops.osm
-	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
+	const reverseGeo = adminDBPath ? new WOFReverseGeocoder({ adminDBPath }) : null
 
 	const engine: PhotonEngine = {
 		async search(params) {
@@ -105,18 +89,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// folds into candidate scoring, only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
-			// No country constraint lets the placer route the query's own country.
-			// A hard-coded `US` value here would resolve every non-US query to its US namesake.
-			const result = await geocodeAddress(query, {
-				classifier,
-				resolver,
-				databases: extracts.for,
-				nationalDatabases: banExtracts.for,
-				...(osmExtracts ? { osmDatabases: osmExtracts.for } : {}),
-				bias,
-				// Photon is an autocomplete front where a human types fragments.
-				inputMode: "fragmented",
-			})
+			const result = await geocode(query, bias)
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			// Decorate from the resolved place using proper-cased ancestry names,

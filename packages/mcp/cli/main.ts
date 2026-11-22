@@ -4,25 +4,17 @@
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import type { PipelineResult } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
-import { memoizeResettable } from "@mailwoman/core/memoize"
-import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import { filerLookup } from "@mailwoman/filer/filer-lookup"
 import { toFRN, type FRN } from "@mailwoman/filer/frn"
-import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 
+import { geocodeThroughCore, loadCore } from "#cli/core"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -31,7 +23,7 @@ import {
 	openPlausibilityPOIDeps,
 } from "#layer-guards"
 import { createMCPServer } from "#server"
-import type { MCPGeocodeParent, MCPToolDeps } from "#tools"
+import type { MCPToolDeps } from "#tools"
 
 const { values } = parseArguments({
 	options: {
@@ -41,66 +33,6 @@ const { values } = parseArguments({
 })
 
 const poiDatabasePath = values["poi-db"] ?? null
-
-const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
-
-const CORE_FREE_TOOLS =
-	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
-
-/**
- * The classifier, resolver and state databases the core-backed tools share.
- *
- * A failed load, such as a missing gazetteer, is retried by the next tool call,
- * so installing the data needs no server restart.
- */
-const loadCore = memoizeResettable(
-	async (): Promise<{
-		classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
-		resolver: Resolver
-		/**
-		 * The concrete US provider, because `GeocodeDeps.databases` accepts a null state slug.
-		 */
-		databases: USStateDatabaseProvider
-	}> => {
-		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-		const wofPaths: string[] = []
-
-		for (const extractPath of wofExtractPaths()) {
-			if (await pathExists(extractPath)) {
-				wofPaths.push(extractPath)
-			}
-		}
-
-		const candidateDB = await resolveCandidateDBPath()
-
-		if (!candidateDB && !wofPaths.length) {
-			throw new Error(
-				`${buildNoGazetteerMessage({
-					dataRoot: dataRootPath(),
-					docsPath: "/docs/reference/data-and-locales",
-				})}\n\n  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
-			)
-		}
-
-		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
-		const resolver = createWOFResolver(backend)
-
-		let classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
-
-		try {
-			classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: "en-US" })
-		} catch (error) {
-			throw new Error(
-				`✗ ${error instanceof Error ? error.message : String(error)}\n\n` +
-					`  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
-			)
-		}
-
-		const databases = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-
-		return { classifier, resolver, databases }
-	}
-)
 
 type Pipeline = (raw: string) => Promise<PipelineResult>
 
@@ -136,17 +68,6 @@ async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
 	return pipeline
 }
 
-async function resolveGeocode(address: string, parent: MCPGeocodeParent | null = null) {
-	const { classifier, resolver, databases } = await loadCore()
-
-	return geocodeAddress(address, {
-		classifier,
-		resolver,
-		databases: databases.for,
-		...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
-	})
-}
-
 const deps: MCPToolDeps = {
 	async parse(text, opts) {
 		const pipeline = opts?.poi ? await getPoiPipeline(poiDatabasePath) : await getPlainPipeline()
@@ -155,7 +76,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async geocode(text, opts) {
-		return resolveGeocode(text, opts?.parent ?? null)
+		return geocodeThroughCore(text, opts?.parent ?? null)
 	},
 
 	async poiSearch(q) {
@@ -232,7 +153,7 @@ const deps: MCPToolDeps = {
 					technologyCode: q.technologyCode,
 					claimedDownloadMbps: q.claimedDownloadMbps,
 				},
-				{ bdcDB, poi, geocode: resolveGeocode }
+				{ bdcDB, poi, geocode: geocodeThroughCore }
 			)
 		} finally {
 			bdcDB?.destroy()

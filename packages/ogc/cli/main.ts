@@ -14,10 +14,8 @@
 import { serveNode } from "@mailwoman/api-kit"
 import { worldCountries } from "@mailwoman/codex/country/sets"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
 import {
 	PostcodePlaceBrowser,
@@ -28,10 +26,8 @@ import {
 	type GazetteerPaths,
 	gazetteerBannerLines,
 	gazetteerFreshness,
-	loadClassifierOrExit,
 	openAPICommand,
 	readListenPort,
-	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
@@ -39,10 +35,9 @@ import { parseObligationRefusals } from "mailwoman/data/obligations"
 import { readSourceLocations, type SourceLocations } from "mailwoman/data/source-locations"
 import { $public } from "mailwoman/env"
 import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openServingRooftopProviders, unattachedLayerLines } from "mailwoman/geocode/serving-layers"
-import { createResolverBackend } from "mailwoman/resolver-backend"
+import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 
+import { openOGCGeocoder } from "#cli/geocoder"
 import {
 	type AncestorsOf,
 	createOGCApp,
@@ -297,19 +292,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 	const baseURL = values["base-url"]
 
-	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"] ?? null)
-	const { candidateDB, wofPaths } = gazetteer
-	const classifier = await loadClassifierOrExit()
-
-	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
-	const resolver = createWOFResolver(backend)
-	// The gazetteer's own ancestry reader labels each place match with its region and county.
-	const ancestorsOf = backend.ancestors?.bind(backend)
-	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-	// The national open register ahead of the OpenStreetMap tier, read from one generation
-	// of the active selection, as the Photon and Nominatim servers read them.
-	const rooftops = await openServingRooftopProviders(dataRootPath())
+	const { gazetteer, ancestorsOf, extracts, rooftops, geocode } = await openOGCGeocoder(values["candidate-db"] ?? null)
 	const countries = worldCountries()
 
 	const probes: RegionLayerProbe[] = [
@@ -369,16 +352,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			return { ...collection, ...layersOf(collection.id), ...(items ? { items } : {}) }
 		}),
 		async search(q) {
-			// The call sets no country constraint, so the placer routes the query to its own country.
-			const result = await geocodeAddress(q, {
-				classifier,
-				resolver,
-				databases: extracts.for,
-				nationalDatabases: rooftops.national.for,
-				...(rooftops.osm ? { osmDatabases: rooftops.osm.for } : {}),
-			})
-
-			return geocodeSearchHits(result, ancestorsOf)
+			return geocodeSearchHits(await geocode(q), ancestorsOf)
 		},
 	}
 
