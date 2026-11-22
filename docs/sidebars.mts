@@ -39,6 +39,7 @@ const sidebars: SidebarsConfig = {
 				"guides/handle-po-boxes",
 				"guides/handle-intersections",
 				"guides/handle-bare-postcodes",
+				"guides/prefer-one-country",
 				"guides/handle-landmark-queries",
 				"guides/review-parse-results",
 				"guides/parse-in-browser",
