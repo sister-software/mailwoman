@@ -92,7 +92,7 @@
 	},
 	"addressLayers": {
 		"$comment": "The address-layer version this release serves, by country. `mailwoman data bom` reads that version's manifest and per-region ATTRIBUTION.json from the public bucket, or from the data root when it holds the version, to list each source inside the layer with its publisher's terms. `mailwoman situs publish` prints the line to change here after it publishes a version.",
-		"US": "2026-11-13"
+		"US": "2026-11-21"
 	},
 	"charWeights": {
 		"cjk": {
