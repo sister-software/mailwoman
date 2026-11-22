@@ -45,6 +45,11 @@ interface AccessKey {
 type AWSCaller = { profile: string } | { key: AccessKey } | null
 
 /**
+ * The environment variables that select a session other than an explicit access key.
+ */
+const SESSION_VARIABLES: ReadonlySet<string> = new Set(["AWS_PROFILE", "AWS_DEFAULT_PROFILE", "AWS_SESSION_TOKEN"])
+
+/**
  * The error text IAM answers for a user, role or instance profile that doesn't exist.
  */
 const NO_SUCH_ENTITY = "NoSuchEntity"
@@ -56,17 +61,19 @@ async function aws<T>(caller: AWSCaller, args: readonly string[]): Promise<T | n
 	const profile = caller && "profile" in caller ? ["--profile", caller.profile] : []
 
 	// `execFile`'s `env` replaces the inherited environment, so a key extends a copy of it.
-	// The empty session token and profile keep the shell's own session out of a request made with the key.
+	// The copy drops the shell's session token and profile.
+	// Either would otherwise outrank the key.
+	// An empty value fails instead: `aws` reads `AWS_PROFILE=""` as the profile "", which no config holds.
 	const options =
 		caller && "key" in caller
 			? {
 					env: {
-						// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit the path and the rest. No typed helper exposes the whole environment.
-						...process.env,
+						...Object.fromEntries(
+							// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit the path and the rest. No typed helper exposes the whole environment.
+							Object.entries(process.env).filter(([name]) => !SESSION_VARIABLES.has(name))
+						),
 						AWS_ACCESS_KEY_ID: caller.key.accessKeyID,
 						AWS_SECRET_ACCESS_KEY: caller.key.secretAccessKey,
-						AWS_SESSION_TOKEN: "",
-						AWS_PROFILE: "",
 					},
 				}
 			: {}
