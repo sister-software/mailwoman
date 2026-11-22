@@ -67,6 +67,7 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				query_shape: run.trace?.queryShape ?? null,
 				kind: run.trace?.kind ?? null,
 				input_mode: run.trace?.inputMode ?? null,
+				applied: run.applied,
 				parse_trace: run.trace?.parse ? (fullParseTrace ? run.trace.parse : slimParseTrace(run.trace.parse)) : null,
 				rendered,
 				...(absent_reason ? { trace_absent_reason: absent_reason } : {}),

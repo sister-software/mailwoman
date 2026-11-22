@@ -5,7 +5,7 @@ import { bareBIOTag } from "@mailwoman/codex/component"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { softmax } from "@mailwoman/neural/viterbi"
 
-import type { GeocodeTrace } from "#geocode/session"
+import type { GeocodeApplied, GeocodeTrace } from "#geocode/session"
 
 // #region Shared
 
@@ -47,8 +47,29 @@ export function systemRow(trace: GeocodeTrace | null): string {
 	return fields([
 		`${system} (${trace.parse.systemSource})`,
 		`mode ${trace.inputMode}`,
-		`locale ${trace.locale}`,
 		`format ${formats.length ? formats.join(",") : ABSENT}`,
+	])
+}
+
+/**
+ * The locale and the country scope the answer was computed under, each with its source in parentheses.
+ *
+ * `scope none` means the resolver searched every country.
+ * A `withheld` field gives the locale's country that didn't filter, and why.
+ */
+export function appliedRow(applied: GeocodeApplied | null): string {
+	if (!applied) return ABSENT
+
+	const { locale, countryScope } = applied
+
+	if (!countryScope) return fields([`locale ${locale.locale} (${locale.source})`, `scope ${ABSENT} not resolved`])
+
+	const { resolver, withheld } = countryScope
+
+	return fields([
+		`locale ${locale.locale} (${locale.source})`,
+		resolver ? `scope ${resolver.country} ${resolver.strength} (${resolver.source})` : "scope none",
+		withheld ? `withheld ${withheld.country} (${withheld.reason})` : null,
 	])
 }
 

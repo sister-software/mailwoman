@@ -10,8 +10,8 @@ import React, { memo, useMemo } from "react"
 
 import { outputLines, type OutputLine } from "#cli/debug-view/output-lines"
 import { tagColor } from "#cli/debug-view/tag-colors"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#cli/debug-view/trace-rows"
-import type { GeocodeTrace } from "#geocode/session"
+import { appliedRow, channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#cli/debug-view/trace-rows"
+import type { GeocodeApplied, GeocodeTrace } from "#geocode/session"
 
 export type DebugPane = "input" | "output" | "map"
 
@@ -24,6 +24,10 @@ export interface DebugData {
 	 * Shown in the map pane when frame is null: "no tiles: …" or "unresolved: no coordinate".
 	 */
 	mapNote: string | null
+	/**
+	 * The locale and country scope the session answered under, with the source of each.
+	 */
+	applied: GeocodeApplied
 	/**
 	 * The session's decode-path evidence for this run, absent when the session was opened without tracing.
 	 * The evidence rows then say so rather than showing zeros.
@@ -69,9 +73,9 @@ export interface DebugFrameProps {
 }
 
 /**
- * Border (2) + the input line (1) + the span ribbon (1) + the five evidence rows (5).
+ * Border (2) + the input line (1) + the span ribbon (1) + the six evidence rows (6).
  */
-const INPUT_ROW_HEIGHT = 9
+const INPUT_ROW_HEIGHT = 10
 
 const FOOTER_ROW_HEIGHT = 1
 
@@ -223,6 +227,7 @@ function EvidenceRow(props: { label: string; value: string }): React.ReactElemen
 const InputBar = memo(function InputBar(props: {
 	input: string
 	tree: AddressTree
+	applied: GeocodeApplied
 	trace: GeocodeTrace | undefined
 	focused: DebugPane | null
 	inputField: React.ReactNode | undefined
@@ -272,6 +277,7 @@ const InputBar = memo(function InputBar(props: {
 					</Text>
 				))}
 			</Box>
+			<EvidenceRow label="applied" value={appliedRow(props.applied)} />
 			<EvidenceRow label="system" value={systemRow(trace)} />
 			<EvidenceRow label="locale-head" value={localeHeadRow(trace)} />
 			<EvidenceRow label="tokens" value={tokensRow(trace)} />
@@ -453,6 +459,7 @@ export function DebugFrame(props: DebugFrameProps): React.ReactElement {
 			<InputBar
 				input={props.data.input}
 				tree={props.data.tree}
+				applied={props.data.applied}
 				trace={props.data.trace}
 				focused={props.focused}
 				inputField={props.inputField}

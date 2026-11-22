@@ -83,7 +83,14 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				// The structural stages that fed the parse rode along.
 				expect(trace.inputMode).toBe("formatted")
 				expect(trace.kind?.kind).toBe("structured_address")
-				expect(trace.locale).toBe(options.locale)
+
+				// Both runs state the locale and scope they answered under, traced or not.
+				expect(withTrace.applied).toEqual({
+					locale: { locale: options.locale, source: "default" },
+					countryScope: { resolver: { country: "US", source: "inferred", strength: "hard" }, withheld: null },
+				})
+
+				expect(without.applied).toEqual(withTrace.applied)
 
 				// Both paths report timing.
 				// The traced path includes its extra decode.

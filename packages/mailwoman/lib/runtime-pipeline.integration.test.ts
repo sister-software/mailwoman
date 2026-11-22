@@ -1,10 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { AddressClassifier } from "@mailwoman/core/pipeline"
+import { runFile } from "@mailwoman/core/process"
 import type { Resolver } from "@mailwoman/core/resolver"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, it, vi } from "vitest"
 
+import { $public } from "#env"
 import { createRuntimePipeline } from "#runtime-pipeline"
 
 function fakeClassifier(): AddressClassifier {
@@ -206,4 +210,53 @@ describe("createRuntimePipeline — kind classifier defaults", () => {
 		expect(customKind).toHaveBeenCalled()
 		expect(result.kind.kind).toBe("vague")
 	})
+})
+
+/**
+ * CI runs under one machine locale, set in `.github/workflows/test.yml`.
+ *
+ * These cases run the default pipeline under a second one, so a dependence on the first shows here.
+ */
+describe.skipIf(Boolean($public.MW_LOCALE))("createRuntimePipeline — under a second machine locale", () => {
+	const MACHINE_LOCALES = ["en-US", "fr-FR"] as const
+	const pipelineUnder = (locale: string) => createRuntimePipeline({ machinePreferences: { locale } })
+
+	it("detects the same locale from an input's own script or postcode on either machine", async () => {
+		for (const input of ["東京都千代田区丸の内1-1", "75008", "SW1A 1AA"]) {
+			const [first, second] = await Promise.all(MACHINE_LOCALES.map((locale) => pipelineUnder(locale)(input)))
+
+			expect(first!.locale.source, input).toBe("detected")
+			expect(second!.locale, input).toEqual(first!.locale)
+		}
+	})
+
+	it("gives an input with no such evidence the machine's locale, and states the machine supplied it", async () => {
+		for (const machine of MACHINE_LOCALES) {
+			const result = await pipelineUnder(machine)("12 Main Street")
+
+			expect(result.locale).toMatchObject({
+				locale: machine,
+				source: "machine",
+				evidence: { intlLocale: machine, environmentLocale: null },
+			})
+		}
+	})
+
+	it("reads the machine's locale from the environment the process started under", async () => {
+		// Node fixes `Intl`'s default locale at startup, so the real read needs a process of its own.
+		const script =
+			`const { createRuntimePipeline } = await import(${stringifyJSON(import.meta.resolve("#runtime-pipeline"))});` +
+			`const result = await createRuntimePipeline()("12 Main Street");` +
+			`console.log(JSON.stringify(result.locale));`
+
+		const { stdout } = await runFile(process.execPath, ["--input-type=module", "-e", script], {
+			env: childEnv({ LC_ALL: "fr_FR.UTF-8", MW_LOCALE: null }),
+		})
+
+		expect(parseJSONStrict(stdout)).toMatchObject({
+			locale: "fr-FR",
+			source: "machine",
+			evidence: { intlLocale: "fr-FR" },
+		})
+	}, 60_000)
 })

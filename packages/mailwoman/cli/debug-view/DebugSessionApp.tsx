@@ -457,6 +457,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 						result: run.result,
 						frame,
 						mapNote,
+						applied: run.applied,
 						...(run.trace ? { trace: run.trace } : {}),
 						timing: run.timing,
 					}

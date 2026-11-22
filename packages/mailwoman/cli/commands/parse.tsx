@@ -31,6 +31,7 @@ import {
 	writeRawStdout,
 } from "#cli-kit"
 import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
+import { typedLocaleHint } from "#cli/kit/locale-hint"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#runtime-pipeline"
 
@@ -148,6 +149,13 @@ interface ParseOptions {
 	streetEvidenceRerank: boolean
 	candidates?: number
 	benchmark?: number
+
+	/**
+	 * The locale the pipeline takes as the caller's: `--locale` when the user typed it, else zero options.
+	 *
+	 * The weights still load from `locale`, default included.
+	 */
+	localeHint: { locale?: string }
 }
 
 /**
@@ -193,7 +201,9 @@ function parsePolicySpecs(policySpecs: readonly string[]): PolicyOverride[] {
 	return out
 }
 
-const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) => {
+const ParseCommand: ParsedCommandComponent<Omit<ParseOptions, "localeHint">> = ({ options: flags, args, typed }) => {
+	const options: ParseOptions = { ...flags, localeHint: typedLocaleHint(typed, flags.locale) }
+
 	// The weights guard covers only the default pipeline path.
 	// The benchmark, policy, neural and explicit model paths load weights themselves.
 	const guardEligible =
@@ -412,7 +422,7 @@ async function structuralResult(input: string, options: ParseOptions) {
 	const { createRuntimePipeline } = await import("#runtime-pipeline")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 
-	return pipeline(input, { locale: options.locale })
+	return pipeline(input, options.localeHint)
 }
 
 async function serializeStructural(
@@ -493,7 +503,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		}
 	}
 
-	const pipelineOpts: { locale: string; resolveOpts: ResolveOpts } = { locale: options.locale, resolveOpts }
+	const pipelineOpts: { locale?: string; resolveOpts: ResolveOpts } = { ...options.localeHint, resolveOpts }
 
 	// The `undefined` value keeps the pipeline's default street-evidence rerank.
 	// A `false` value disables it.
@@ -564,7 +574,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		pipeline: ReturnType<typeof createRuntimePipeline>
 	): Promise<{ timing: Record<string, number>; total: number; path: string }> => {
 		const t0 = performance.now()
-		const result = await pipeline(input, { locale: options.locale })
+		const result = await pipeline(input, options.localeHint)
 		const total = performance.now() - t0
 
 		return { timing: { ...result.timing }, total, path: result.path }

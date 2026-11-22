@@ -50,6 +50,7 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
+import { typedLocaleHint } from "#cli/kit/locale-hint"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -237,7 +238,7 @@ async function formatResult(result: POIQueryResult, options: Options): Promise<s
 	return lines.join("\n")
 }
 
-async function runPOI(input: string, options: Options): Promise<string> {
+async function runPOI(input: string, options: Options, localeHint: { locale?: string }): Promise<string> {
 	const { createRuntimePipeline } = await import("#runtime-pipeline")
 
 	// An attempted-but-failed encoder load always reports its failure.
@@ -257,7 +258,9 @@ async function runPOI(input: string, options: Options): Promise<string> {
 			poiQueryKind,
 		})
 
-		const result = await pipeline(input, { locale: options.locale })
+		// The weights above follow `--locale`, default included.
+		// The pipeline takes it as a hint only when typed.
+		const result = await pipeline(input, localeHint)
 
 		if (options.json) {
 			return prettyJSON(result.poiIntent ?? null)
@@ -276,7 +279,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 	}
 }
 
-const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
+const PoiCommand: ParsedCommandComponent<Options> = ({ options, args, typed }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
@@ -286,7 +289,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 			)
 		}
 
-		return runPOI(input.trim(), options)
+		return runPOI(input.trim(), options, typedLocaleHint(typed, options.locale))
 	})
 
 	if (state.status !== "done") {

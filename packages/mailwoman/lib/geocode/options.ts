@@ -31,6 +31,24 @@ import type { CapitalTier } from "#resolver-backend"
 export const GEOCODE_DEFAULT_LOCALE = DEFAULT_WEIGHTS_LOCALE
 
 /**
+ * Where the value of a session option came from.
+ *
+ * - `"flag"`: a flag the user typed on a command line.
+ * - `"config_file"`: a config file's `geocode` key.
+ * - `"caller"`: a program that stated the option when it built the session's options.
+ * - `"default"`: the default {@linkcode GeocodeSessionOptionsSchema} declares,
+ *   because no source stated the option.
+ */
+export const SessionOptionSource = {
+	Flag: "flag",
+	ConfigFile: "config_file",
+	Caller: "caller",
+	Default: "default",
+} as const
+
+export type SessionOptionSource = (typeof SessionOptionSource)[keyof typeof SessionOptionSource]
+
+/**
  * An on/off option whose default is the one `geocodeAddress` applies for a caller with no session.
  */
 function switchOption(name: keyof typeof GEOCODE_SWITCH_DEFAULTS) {
@@ -296,6 +314,16 @@ export interface GeocodeSessionProgramOptions {
 	dataRoot: PathBuilderLike
 
 	/**
+	 * Where the session's `locale` came from.
+	 * Each geocode states it beside the locale.
+	 *
+	 * A file can't state it, because only the program that read the file knows the file supplied the locale.
+	 *
+	 * @defaultValue `"caller"` when the options stated a locale, else `"default"`
+	 */
+	localeSource: SessionOptionSource
+
+	/**
 	 * The former divisions table the `formerDivisions` option reads.
 	 *
 	 * A file can't hold a path builder.
@@ -343,15 +371,17 @@ export const GEOCODE_SESSION_DEFAULTS: Readonly<z.output<typeof GeocodeSessionOp
  * Builds a session's options from the ones a caller states, filling each one left out with its default.
  *
  * The data root defaults to `$MAILWOMAN_DATA_ROOT`.
+ * The locale's source defaults to the caller when `input` states a locale, and to the default otherwise.
  *
  * @throws {z.ZodError} When a stated option has the wrong type or isn't an option.
  */
 export function createGeocodeSessionOptions(input: GeocodeSessionOptionsInput = {}): GeocodeSessionOptions {
-	const { dataRoot, formerDivisionsTable, channelPins, onProgress, ...stated } = input
+	const { dataRoot, localeSource, formerDivisionsTable, channelPins, onProgress, ...stated } = input
 
 	return {
 		...GeocodeSessionOptionsSchema.parse(stated),
 		dataRoot: dataRoot ?? dataRootPath(),
+		localeSource: localeSource ?? (stated.locale == null ? SessionOptionSource.Default : SessionOptionSource.Caller),
 		...(formerDivisionsTable ? { formerDivisionsTable } : {}),
 		...(channelPins ? { channelPins } : {}),
 		...(onProgress ? { onProgress } : {}),

@@ -3,14 +3,22 @@
 
 /**
  *   A request's `defaultCountry` scopes that request's resolver and leaves the session's scope as it was.
+ *
+ *   Each run states the locale and country scope it answered under.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
-import { createGeocodeSessionOptions } from "#geocode/options"
-import { createGeocodeSession } from "#geocode/session"
+import { localeToCountry } from "#country-scope"
+import { createGeocodeSessionOptions, GEOCODE_DEFAULT_LOCALE } from "#geocode/options"
+import { createGeocodeSession, type GeocodeRequestOptions } from "#geocode/session"
+
+/**
+ * The country the session reads off its default locale.
+ */
+const GEOCODE_DEFAULT_COUNTRY = localeToCountry(GEOCODE_DEFAULT_LOCALE)
 
 const haveGazetteer = await pathExists(wofDatabasePath("candidate.db"))
 
@@ -29,5 +37,51 @@ describe.skipIf(!haveGazetteer)("a request's default country", () => {
 		}).toEqual({ before: "FR", scoped: "US", after: "FR" })
 
 		expect(after.result).toEqual(before.result)
+	}, 120_000)
+})
+
+describe.skipIf(!haveGazetteer)("the record of what a geocode ran under", () => {
+	it("states the scope the resolver was given, its source, and why a locale's scope didn't filter", async () => {
+		await using session = await createGeocodeSession(createGeocodeSessionOptions())
+
+		const scopeOf = async (input: string, request?: GeocodeRequestOptions) =>
+			(await session.geocode(input, request)).applied.countryScope
+
+		const inferred = { country: GEOCODE_DEFAULT_COUNTRY, source: "inferred", strength: "hard" }
+
+		// A full address takes the locale's country as a filter, and the record states it.
+		expect(await scopeOf("1001 Boulevard Saint-Laurent, Montréal")).toEqual({ resolver: inferred, withheld: null })
+
+		expect(await scopeOf("Paris")).toEqual({
+			resolver: null,
+			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "bare_locality" },
+		})
+
+		expect(await scopeOf("SW1A 1AA")).toEqual({
+			resolver: null,
+			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "bare_postcode_format_conflict" },
+		})
+
+		// `geocodeAddress` drops the scope the session passed, and the record follows that second decision.
+		expect(await scopeOf("10 Downing Street, London SW1A 2AA")).toEqual({
+			resolver: null,
+			withheld: { country: GEOCODE_DEFAULT_COUNTRY, reason: "contradicting_evidence" },
+		})
+
+		expect(await scopeOf("Paris", { defaultCountry: "FR" })).toEqual({
+			resolver: { country: "FR", source: "caller", strength: "hard" },
+			withheld: null,
+		})
+	}, 120_000)
+
+	it("states a locale the caller chose as the caller's, and zero scope under countryScope none", async () => {
+		await using session = await createGeocodeSession(
+			createGeocodeSessionOptions({ locale: GEOCODE_DEFAULT_LOCALE, countryScope: "none" })
+		)
+
+		expect((await session.geocode("1001 Boulevard Saint-Laurent, Montréal")).applied).toEqual({
+			locale: { locale: GEOCODE_DEFAULT_LOCALE, source: "caller" },
+			countryScope: { resolver: null, withheld: null },
+		})
 	}, 120_000)
 })

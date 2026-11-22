@@ -16,6 +16,7 @@ import {
 	createGeocodeSessionOptions,
 	type GeocodeSession,
 	type GeocodeSessionOptions,
+	SessionOptionSource,
 } from "mailwoman/geocode"
 import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/switch-pin"
 import type { PathBuilderLike } from "path-ts"
@@ -220,6 +221,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	return {
 		...production,
 		locale: config.locale ?? production.locale,
+		localeSource: config.locale ? SessionOptionSource.Caller : production.localeSource,
 		countryScope: config.country_scope ?? production.countryScope,
 		dataRoot: config.data_root ?? production.dataRoot,
 		localeCountryPrior: pinnedSwitch(config.locale_country_prior ?? "production", production.localeCountryPrior),

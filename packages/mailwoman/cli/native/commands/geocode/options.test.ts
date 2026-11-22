@@ -195,6 +195,37 @@ describe("resolveGeocodeCommandOptions", () => {
 		expect(sessionPart(resolved)).toEqual({ ...sessionPart(createGeocodeSessionOptions()), locale: "fr-FR" })
 	})
 
+	test("the locale's source is the flag, the file or the default, and a file can't state it", async () => {
+		await using directory = await temporaryDirectory("mw-geocode-options-")
+
+		const defaulted = await resolveGeocodeCommandOptions(parseCommand(spec, []), directory.path)
+
+		expect(defaulted.localeSource).toBe("default")
+
+		// A flag typed at the default value is still the user's statement.
+		const typed = await resolveGeocodeCommandOptions(
+			parseCommand(spec, ["--locale", GEOCODE_SESSION_DEFAULTS.locale]),
+			directory.path
+		)
+
+		expect(typed.localeSource).toBe("flag")
+
+		await writeLocalJSONFile({ geocode: { locale: "fr-FR" } }, directory.path("mailwoman.config.json"))
+
+		const fromFile = await resolveGeocodeCommandOptions(parseCommand(spec, []), directory.path)
+		const overFile = await resolveGeocodeCommandOptions(parseCommand(spec, ["--locale", "de-DE"]), directory.path)
+
+		expect(fromFile.localeSource).toBe("config_file")
+		expect(overFile.localeSource).toBe("flag")
+
+		expect(GeocodeFileOptionsSchema.safeParse({ localeSource: "flag" }).success).toBe(false)
+	})
+
+	test("a library caller's locale is the caller's, and an unstated one is the default", () => {
+		expect(createGeocodeSessionOptions().localeSource).toBe("default")
+		expect(createGeocodeSessionOptions({ locale: GEOCODE_SESSION_DEFAULTS.locale }).localeSource).toBe("caller")
+	})
+
 	test("--config reads the file it gives in place of the directory's own", async () => {
 		await using directory = await temporaryDirectory("mw-geocode-options-")
 

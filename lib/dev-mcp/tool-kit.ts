@@ -5,6 +5,7 @@ import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
 import {
+	appliedRow,
 	channelsRow,
 	decodeRow,
 	explanationRows,
@@ -435,11 +436,14 @@ function intentAdvisoryRow(run: GeocodeRun): string[] {
 
 /**
  * Renders a geocode run's trace as text rows, or explains in `absent_reason` why no trace exists.
+ *
+ * The first row states the locale and country scope the run answered under.
+ * A run without a trace has that record too, so the row is present either way.
  */
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
 		return {
-			rendered: [],
+			rendered: [appliedRow(run.applied)],
 			absent_reason:
 				"No trace was recorded. Either the session was opened without `trace`, or the loaded bundle's classifier " +
 				"cannot produce one — a property of the bundle, not a zero.",
@@ -448,6 +452,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 
 	return {
 		rendered: [
+			appliedRow(run.applied),
 			systemRow(run.trace),
 			tokensRow(run.trace),
 			channelsRow(run.trace),
