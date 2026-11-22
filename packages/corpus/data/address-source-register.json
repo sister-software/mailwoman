@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "39606f5218c67ba6b053f0ad43051822b0ba705ca9cc0774a7b1c4a31129b4d0",
+	"contentDigest": "253d98f1d988aa53efcb5636fba5c801f6844d20041de3a677ed1f996b6b6ea8",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -66271,6 +66271,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them is a party element: there is no owner, holder, `titular`, occupant or contact element. **`AD:LocatorName` needs its values read rather than its name counted.** The INSPIRE Addresses guideline types it as a free-text `GeographicalName` and states that it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Bizkaia populates it on 1,357 of 1,357 features, and every value read is an internal cadastral reference rather than a name: they take the form `48 001 CL\\TRAÑAETXOSTE(00066) 004`, which concatenates the municipality code 48001, a street-type abbreviation, the street name, its cadastral code and the house number. All 1,357 are distinct and each restates the address's own components. No value names a person."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-bizkaia`, and no held-out dataset had frozen rows from it, so every row Bizkaia publishes is still one no model has read.",
+				"issue": 3352
 			}
 		},
 		{
@@ -66301,6 +66308,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and none is a party element: there is no owner, holder, `titular`, occupant or contact element. **This source needs the `AD:LocatorName` values read, and they are the case the standard warns about.** The INSPIRE Addresses guideline types that element as a free-text `GeographicalName` and states it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Gipuzkoa populates it on 46,365 of 68,744 features, giving 30,452 distinct values, and every value read is a building name published as a Basque and Spanish pair: `Gasolinera` with `Gasolindegia`, `Ayuntamiento` with `Udaletxea`, `Pabellón` with `Pabilioia`. Many are farmhouses, `Agirre, baserria` with `Agirre, caserío` and `Etxeberri, baserria` with `Etxeberri, caserío`, and a Basque baserri name is commonly also a surname. **The reading stays `absent` because these name the building rather than its occupant.** They are carried inside `GN:GeographicalName`, with the nativeness, name-status and language structure a toponym takes, and the guideline states that a locator name is not the addressee. A corpus built from this source therefore holds a place name whose etymology may be a family name, rather than a record about an identifiable person. Reading this field was the check the element census missed: that census treated `LocatorName` as place vocabulary without opening it."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-gipuzkoa`, and no held-out dataset had frozen rows from it. Its CC BY-SA 4.0 grant already refuses a model release under #3278, so evaluation is the use its rows can serve.",
+				"issue": 3352
 			}
 		},
 		{
@@ -66330,6 +66344,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `AD_Navarra_1.gml` was counted over all 307,117 bytes, so this covers that partition rather than its first features. It holds 29 distinct element names across 115 address features, and every one of the 29 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The scope is one partition of 272; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another partition to populate."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-navarra`, and no held-out dataset had frozen rows from it, so every row Navarra publishes is still one no model has read.",
+				"issue": 3352
 			}
 		},
 		{

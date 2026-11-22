@@ -1,8 +1,9 @@
 {
 	"$comment": "Source fields a review resolved by reading a publisher's data, applied by `buildSourceRegister` over the rows it derives from the research CSV. An input to the build rather than an edit of its output, for the same reason as `license-decisions.json`: the build rewrites the register whole, so a field recorded in the output is erased by the next run with no error and a normal-looking count.",
 	"$whyNotTheCSV": "The research CSV records `address_role`, `coverage` and `upstream` as the placeholders `varies`, `country-specific` and the empty string on all 389 of its non-rail rows, and has no column for a personal-data review. That CSV is the record of what one research pass found on 2026-09-18, so a later review records its own findings here rather than by rewriting the pass's record.",
-	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage`, `personalDataReview` and `adapterID`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.\n\n`adapterID` names the corpus adapter that emits this source's rows, and a release-eligible build admits a row only through it. `readSourceEligibility` keys each source by `<adapterID>:<ISO2>` and `createIneligibilityReader` looks a row up by its own `source` and `country`, because the register scopes a source to one publisher in one jurisdiction while one adapter can serve several: `ban` emits eleven jurisdictions from one schema. A source that declares no adapter stays out of that map, which is correct rather than restrictive, since no adapter emits it and no row can arrive under it.",
+	"$shape": "Each key is a `sourceID` the register declares. Each value carries any of `addressRoles`, `coverage`, `upstreamLineage`, `personalDataReview`, `adapterID` and `reservation`, which replace the derived row's values. See `@mailwoman/corpus/source-register`'s `AddressSourceRecord`.\n\n`adapterID` names the corpus adapter that emits this source's rows, and a release-eligible build admits a row only through it. `readSourceEligibility` keys each source by `<adapterID>:<ISO2>` and `createIneligibilityReader` looks a row up by its own `source` and `country`, because the register scopes a source to one publisher in one jurisdiction while one adapter can serve several: `ban` emits eleven jurisdictions from one schema. A source that declares no adapter stays out of that map, which is correct rather than restrictive, since no adapter emits it and no row can arrive under it.",
 	"$addressRoles": "Keyed by the address column's path in the published record, because a publication can carry two roles on one record. `ingestEligibilityProblems` requires at least one column to have a role.",
+	"$reservation": "A reservation for evaluation by choice: `use`, `scope` (`source`, or `{ \"groups\": <path> }`), `since`, `because` and `issue`. The decision tree's `reservation` node refuses every action that performs `train` over a source whose reservation has no `lifted` entry, and corpus admission refuses it under every override. The operator lifts a reservation by filling `lifted` with `at`, `because`, `issue` and `retires`, the held-out datasets that froze rows from the source; the entry stays as the record. `auditReservationHistory` in `@mailwoman/corpus/source-register/reservations` refuses a source-scope reservation on a source a training manifest read and a lift whose `retires` omits a dataset.",
 	"$upstreamLineage": "The endpoint or dataset this source's copy was taken from, so two register rows fed by one upstream submission count as one observation rather than two. A URL when the upstream is not itself a register row.",
 	"$banRepetition": "Ten rows below are one database, IGN's Base Adresse Nationale, split by the INSEE department code each file is published under. `coverage` differs per territory because each is a measurement of that territory's file, and `addressRoles`, `upstreamLineage` and `personalDataReview` repeat because the column layout and the publisher's non-nominative characterisation are the BAN's and identical throughout. France's own row, `fr-property-building-1`, is the eleventh file of the same database and carries its own measurement of the whole-country extract. The license decisions point at the shared reading `ign-ban-lov2-territories`.",
 	"$sireneRepetition": "Nine rows below are one source, INSEE's SIRENE establishment register, split by overseas territory. The fields repeat because the register carries one row per jurisdiction and each row's coverage statement is about that territory, while the column layout and the diffusion mechanism are SIRENE's and identical throughout.",
@@ -475,6 +476,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `ES.BFA.AD.gml` was counted over all 5,902,666 bytes, so this covers the file rather than its first features. It holds 49 distinct element names across 1,357 address features, and none of them is a party element: there is no owner, holder, `titular`, occupant or contact element. **`AD:LocatorName` needs its values read rather than its name counted.** The INSPIRE Addresses guideline types it as a free-text `GeographicalName` and states that it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Bizkaia populates it on 1,357 of 1,357 features, and every value read is an internal cadastral reference rather than a name: they take the form `48 001 CL\\TRAÑAETXOSTE(00066) 004`, which concatenates the municipality code 48001, a street-type abbreviation, the street name, its cadastral code and the house number. All 1,357 are distinct and each restates the address's own components. No value names a person."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-bizkaia`, and no held-out dataset had frozen rows from it, so every row Bizkaia publishes is still one no model has read.",
+				"issue": 3352
 			}
 		},
 		"es-mixed-regulatory-4": {
@@ -491,6 +499,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `ES.GFA.AD.gml` was counted over all 313,162,472 bytes, so this covers the whole province rather than a sample of it. It holds 49 distinct element names across 68,744 address features, and none is a party element: there is no owner, holder, `titular`, occupant or contact element. **This source needs the `AD:LocatorName` values read, and they are the case the standard warns about.** The INSPIRE Addresses guideline types that element as a free-text `GeographicalName` and states it `sometimes refer to the name of the family or business entity which at present or in the past has owned or occupied the property or building`, adding that it `must not be confused with the name of the addressee`. Gipuzkoa populates it on 46,365 of 68,744 features, giving 30,452 distinct values, and every value read is a building name published as a Basque and Spanish pair: `Gasolinera` with `Gasolindegia`, `Ayuntamiento` with `Udaletxea`, `Pabellón` with `Pabilioia`. Many are farmhouses, `Agirre, baserria` with `Agirre, caserío` and `Etxeberri, baserria` with `Etxeberri, caserío`, and a Basque baserri name is commonly also a surname. **The reading stays `absent` because these name the building rather than its occupant.** They are carried inside `GN:GeographicalName`, with the nativeness, name-status and language structure a toponym takes, and the guideline states that a locator name is not the addressee. A corpus built from this source therefore holds a place name whose etymology may be a family name, rather than a record about an identifiable person. Reading this field was the check the element census missed: that census treated `LocatorName` as place vocabulary without opening it."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-gipuzkoa`, and no held-out dataset had frozen rows from it. Its CC BY-SA 4.0 grant already refuses a model release under #3278, so evaluation is the use its rows can serve.",
+				"issue": 3352
 			}
 		},
 		"es-mixed-regulatory-5": {
@@ -506,6 +521,13 @@
 			"personalDataReview": {
 				"reading": "absent",
 				"because": "Every element name in `AD_Navarra_1.gml` was counted over all 307,117 bytes, so this covers that partition rather than its first features. It holds 29 distinct element names across 115 address features, and every one of the 29 belongs to the INSPIRE address, geographical-name or geometry vocabulary. No element identifies a party: there is no owner, holder, `titular`, occupant or contact element, and no personal name. The scope is one partition of 272; the reading extends to the rest through the INSPIRE Addresses schema, which has no party element for another partition to populate."
+			},
+			"reservation": {
+				"use": "evaluation",
+				"scope": "source",
+				"since": "2026-11-22",
+				"because": "A permanent ES confirmation pool, unseen by every model. On 2026-11-22 no committed training manifest, no TRAINING_SOURCES.json under the data root and no training config named `es-navarra`, and no held-out dataset had frozen rows from it, so every row Navarra publishes is still one no model has read.",
+				"issue": 3352
 			}
 		},
 		"va-finance-1": {

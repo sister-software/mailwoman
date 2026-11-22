@@ -18,7 +18,9 @@ import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { EVALUATION_SOURCES } from "@mailwoman/corpus/evaluation/sources"
+import { readCorpusSourceInputs } from "@mailwoman/corpus/source-register/corpus-inputs"
 import { readAddressSourceRegister } from "@mailwoman/corpus/source-register/register"
+import { readCommittedTrainingManifests, trainedRegisterSources } from "@mailwoman/corpus/source-register/reservations"
 import { PathBuilder } from "path-ts"
 
 import { buildFreshSourceSet } from "#tools/eval-harness/heldout/fresh/build"
@@ -57,9 +59,24 @@ if (values.fetch) {
 	}
 }
 
+const register = await readAddressSourceRegister()
+
+const { readers: trained, unmapped } = trainedRegisterSources(
+	await readCommittedTrainingManifests(),
+	await readCorpusSourceInputs(register)
+)
+
+if (unmapped.length) {
+	throw new Error(
+		`corpus-source-inputs.json does not map ${unmapped.length} training manifest source(s), so whether they ` +
+			`read an evaluation source cannot be read: ${unmapped.join(", ")}`
+	)
+}
+
 const built = await buildFreshSourceSet({
 	sources: EVALUATION_SOURCES,
-	register: await readAddressSourceRegister(),
+	register,
+	trained,
 	sourcesRoot,
 	outDirectory: values.out,
 	perCountry: integer("per-country", values["per-country"]),

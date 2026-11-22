@@ -13,6 +13,7 @@ import { AssertedProposition } from "@mailwoman/evidence/status"
 import { LicenseAction } from "@mailwoman/license/actions"
 import { auditLicenseDecision, type LicenseDecision } from "@mailwoman/license/decision"
 import { SourceOperation } from "@mailwoman/license/operations"
+import { auditSourceReservation } from "@mailwoman/license/reservation"
 import { evaluateLicense, type LicenseRequest } from "@mailwoman/license/tree"
 import type { PathBuilderLike } from "path-ts"
 
@@ -343,6 +344,10 @@ function auditSources(register: AddressSourceRegister): string[] {
 
 		if (review?.reading === PersonalDataReading.Assessed && !review.record) {
 			problems.push(`source ${named} is assessed for personal data and names no record of the analysis`)
+		}
+
+		if (source.reservation) {
+			problems.push(...auditSourceReservation(source.sourceID, source.reservation))
 		}
 
 		if (!source.asserts.length) {

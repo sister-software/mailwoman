@@ -8,6 +8,7 @@ import {
 	OperationPermission,
 	PermissionBasis,
 } from "@mailwoman/license/decision"
+import { ReservationUse, SOURCE_RESERVATION_SCOPE, type SourceReservation } from "@mailwoman/license/reservation"
 import { describe, expect, it } from "vitest"
 
 import { evaluationSourceProblems, stratumQuotas } from "#tools/eval-harness/heldout/fresh/build"
@@ -44,7 +45,15 @@ describe("stratumQuotas", () => {
 describe("evaluationSourceProblems", () => {
 	const source = { id: "xx-eval", registerSource: "xx-src-1" }
 
-	const register = (train: OperationPermission) => {
+	const reservation: SourceReservation = {
+		use: ReservationUse.Evaluation,
+		scope: SOURCE_RESERVATION_SCOPE,
+		since: "2026-11-22",
+		because: "a confirmation pool",
+		issue: 1,
+	}
+
+	const register = (recorded?: SourceReservation) => {
 		const permitted: OperationDecision = {
 			permission: OperationPermission.Permitted,
 			basis: PermissionBasis.PublisherGrant,
@@ -61,20 +70,31 @@ describe("evaluationSourceProblems", () => {
 				fetch: permitted,
 				extract: permitted,
 				transform: permitted,
-				train: { ...permitted, permission: train },
+				train: permitted,
 			},
 		}
 
-		return { sources: [{ sourceID: "xx-src-1", license: "lic" }], licenses: [decision] }
+		return {
+			sources: [{ sourceID: "xx-src-1", license: "lic", ...(recorded ? { reservation: recorded } : {}) }],
+			licenses: [decision],
+		}
 	}
 
-	it("admits a source whose decision permits fetching and transforming and refuses training", () => {
-		expect(evaluationSourceProblems(source, register(OperationPermission.Refused))).toEqual([])
+	it("admits a reserved source no training manifest read, whatever its decision says of training", () => {
+		expect(evaluationSourceProblems(source, register(reservation), new Map())).toEqual([])
 	})
 
-	it("refuses a source whose decision permits training, so its rows could reach a corpus", () => {
-		expect(evaluationSourceProblems(source, register(OperationPermission.Permitted)).join("\n")).toMatch(
-			/permits train/u
-		)
+	it("refuses an unreserved source, a lifted reservation, and a source a training manifest read", () => {
+		const lifted = { ...reservation, lifted: { at: "2026-12-01", because: "x", issue: 2, retires: [] } }
+
+		expect(evaluationSourceProblems(source, register(), new Map())).toEqual([
+			"xx-eval: register source xx-src-1 is not reserved for evaluation",
+		])
+
+		expect(evaluationSourceProblems(source, register(lifted), new Map()).join("\n")).toMatch(/lifted on 2026-12-01/u)
+
+		expect(
+			evaluationSourceProblems(source, register(reservation), new Map([["xx-src-1", new Set(["v0.8.22"])]]))
+		).toEqual(["xx-eval: training manifest(s) v0.8.22 read register source xx-src-1"])
 	})
 })

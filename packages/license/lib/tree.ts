@@ -9,10 +9,11 @@
  *
  *   1. `registered`: the register declares the source's decision, or the source reads `unknown`.
  *   2. `review-state`: an unchecked decision reads `unknown`, and a refused one `no-go`.
- *   3. `reservation`: a placeholder that passes.
+ *   3. `reservation`: a source reserved for evaluation (`#reservation`) reads `no-go` for an action
+ *      that requires `train`, quoting the reservation's reason. A source the register's source list
+ *      lacks reads `unknown`, because whether it is reserved can't be read.
  *   4. `operations`: each operation the action requires, in table order.
  *      A refusal reads `no-go`, and an unreviewed operation `unknown`.
- *      A permission for an operation the action forbids reads `no-go`.
  *   5. `purpose`: a placeholder that passes.
  *   6. `basis-floor`: an action may require every permission to rest on one basis.
  *   7. `obligations`: collects what the source owes. The node has no refusal edge.
@@ -38,6 +39,13 @@ import {
 } from "#decision"
 import { type LicenseObligation, summarizeLicense } from "#obligations"
 import type { SourceOperation } from "#operations"
+import {
+	activeReservation,
+	refusingReservation,
+	reservationProblem,
+	type ActiveReservation,
+	type SourceReservation,
+} from "#reservation"
 
 /**
  * The nodes of the tree, in the order a source passes them.
@@ -92,14 +100,35 @@ export interface LicenseRequest {
 	 */
 	offering: string | null
 	sources: readonly LicenseRequestSource[]
+	/**
+	 * Whether a source whose decision refuses `train` reads as reserved for evaluation by its terms.
+	 *
+	 * TODO(PR 4 of #3343's plan): the `evaluate` operation replaces this flag.
+	 */
+	reservedByTerms?: boolean
 }
 
 /**
- * The register the tree reads: its decisions and the content digest that identifies them.
+ * One source the register lists, with the reservation it records.
+ */
+export interface LicenseRegisterSource {
+	sourceID: string
+	reservation?: SourceReservation
+}
+
+/**
+ * The register the tree reads: its decisions, its sources' reservations,
+ * and the content digest that identifies them.
  */
 export interface LicenseRegister {
 	contentDigest?: string
 	licenses: readonly LicenseDecision<SourceOperation>[]
+	/**
+	 * Every source the register lists.
+	 *
+	 * A request's `source` matches a `sourceID` here.
+	 */
+	sources: readonly LicenseRegisterSource[]
 }
 
 /**
@@ -113,10 +142,6 @@ export interface DecisionStep {
 	 * The operation an `operations` or `basis-floor` step read.
 	 */
 	operation?: SourceOperation
-	/**
-	 * Whether the step read an operation the action forbids.
-	 */
-	forbidden?: boolean
 	/**
 	 * The publisher's words the step rests on, when the decision records them.
 	 */
@@ -221,14 +246,33 @@ function owedBy(source: string, decision: LicenseDecision<SourceOperation>): Owe
 }
 
 /**
+ * Why the `reservation` node passed a source.
+ */
+function reservationPassReason(
+	recorded: SourceReservation | undefined,
+	active: ActiveReservation | null,
+	action: LicenseAction
+): string {
+	if (active) return `the source is reserved for ${active.use}, and ${action} does not train on it`
+
+	if (recorded?.lifted) {
+		return `the reservation of ${recorded.since} was lifted on ${recorded.lifted.at} (#${recorded.lifted.issue}): ${recorded.lifted.because}`
+	}
+
+	return "the source is not reserved"
+}
+
+/**
  * Walks one source through the tree.
  */
 function walkSource(
 	request: LicenseRequestSource,
 	decision: LicenseDecision<SourceOperation> | undefined,
+	listed: LicenseRegisterSource | undefined,
 	action: LicenseAction,
 	rule: ActionRule,
-	operations: readonly SourceOperation[]
+	operations: readonly SourceOperation[],
+	reservedByTerms: boolean
 ): SourceWalk {
 	const { source, licenseID } = request
 	const path: DecisionStep[] = []
@@ -272,7 +316,37 @@ function walkSource(
 	}
 
 	step({ node: DecisionNode.ReviewState, outcome: DecisionVerdict.Go, quote: null, because: decision.electedBecause })
-	step({ node: DecisionNode.Reservation, outcome: DecisionVerdict.Go, quote: null, because: "no reservation is read" })
+
+	if (!listed) {
+		const problem = `the register lists no source ${JSON.stringify(source)}, so whether it is reserved cannot be read`
+
+		step({ node: DecisionNode.Reservation, outcome: DecisionVerdict.Unknown, quote: null, because: problem })
+		problems.push(problem)
+
+		return stop(DecisionVerdict.Unknown)
+	}
+
+	const refusing = refusingReservation(listed.reservation, decision, operations, { reservedByTerms })
+
+	if (refusing) {
+		const problem = reservationProblem(source, refusing)
+
+		step({ node: DecisionNode.Reservation, outcome: DecisionVerdict.NoGo, quote: null, because: refusing.because })
+		problems.push(problem)
+
+		return stop(DecisionVerdict.NoGo)
+	}
+
+	step({
+		node: DecisionNode.Reservation,
+		outcome: DecisionVerdict.Go,
+		quote: null,
+		because: reservationPassReason(
+			listed.reservation,
+			activeReservation(listed.reservation, decision, { reservedByTerms }),
+			action
+		),
+	})
 
 	const outcomes = new Set<DecisionVerdict>()
 
@@ -285,18 +359,6 @@ function walkSource(
 
 		if (outcome !== DecisionVerdict.Go) {
 			problems.push(operationReadingProblem(operation, reading))
-		}
-	}
-
-	for (const { operation, because } of rule.forbids ?? []) {
-		const reading = permissionFor(decision, operation)
-		const outcome = reading.permission === OperationPermission.Permitted ? DecisionVerdict.NoGo : DecisionVerdict.Go
-
-		step({ node: DecisionNode.Operations, operation, forbidden: true, outcome, quote: null, because: reading.because })
-		outcomes.add(outcome)
-
-		if (outcome !== DecisionVerdict.Go) {
-			problems.push(`${source}'s decision permits ${operation}, ${because}`)
 		}
 	}
 
@@ -362,9 +424,11 @@ export function evaluateLicense(request: LicenseRequest, register: LicenseRegist
 		walkSource(
 			source,
 			register.licenses.find((entry) => entry.licenseID === source.licenseID),
+			register.sources.find((entry) => entry.sourceID === source.source),
 			request.action,
 			rule,
-			operations
+			operations,
+			request.reservedByTerms === true
 		)
 	)
 

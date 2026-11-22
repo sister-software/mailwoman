@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the fresh-source evaluation set: rows from evaluation-only publications that neither the
- *   published model's training corpus nor the candidate's reads (`@mailwoman/corpus/evaluation/sources`),
+ *   Builds the fresh-source evaluation set: rows from publications reserved for evaluation
+ *   that no committed training manifest reads (`@mailwoman/corpus/evaluation/sources`),
  *   frozen as a held-out dataset (`heldout/dataset/manifest.ts`) for the release check's
  *   comparative objective (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4).
  *
@@ -104,15 +104,20 @@ export function stratumQuotas(supply: ReadonlyMap<string, number>, quota: number
 }
 
 /**
- * Every reason the register keeps `source` from being an evaluation-only source: a decision
- * that withholds fetching, extracting or transforming it, or one that permits training on it.
+ * Every reason `source` can't give unseen evaluation rows: a decision that withholds
+ * fetching, extracting or transforming it, a register row with no reservation for
+ * evaluation in force, or a training manifest that read the row.
+ *
+ * `trained` maps each register source to the training manifests that read it
+ * (`trainedRegisterSources` in `@mailwoman/corpus/source-register/reservations`).
  */
 export function evaluationSourceProblems(
 	source: Pick<EvaluationSource, "id" | "registerSource">,
 	register: {
-		sources: readonly Pick<AddressSourceRegister["sources"][number], "sourceID" | "license">[]
+		sources: readonly Pick<AddressSourceRegister["sources"][number], "sourceID" | "license" | "reservation">[]
 		licenses: readonly LicenseDecision[]
-	}
+	},
+	trained: ReadonlyMap<string, ReadonlySet<string>>
 ): string[] {
 	const row = register.sources.find((entry) => entry.sourceID === source.registerSource)
 
@@ -127,7 +132,21 @@ export function evaluationSourceProblems(
 		register
 	).sources
 
-	return answer!.problems.map((problem) => `${source.id}: ${problem}`)
+	const problems = [...answer!.problems]
+
+	if (!row.reservation) {
+		problems.push(`register source ${row.sourceID} is not reserved for evaluation`)
+	} else if (row.reservation.lifted) {
+		problems.push(`register source ${row.sourceID}'s reservation was lifted on ${row.reservation.lifted.at}`)
+	}
+
+	const readers = trained.get(row.sourceID)
+
+	if (readers?.size) {
+		problems.push(`training manifest(s) ${[...readers].toSorted().join(", ")} read register source ${row.sourceID}`)
+	}
+
+	return problems.map((problem) => `${source.id}: ${problem}`)
 }
 
 /**
@@ -213,6 +232,10 @@ export interface BuiltFreshSourceSet {
 export async function buildFreshSourceSet(input: {
 	sources: readonly EvaluationSource[]
 	register: AddressSourceRegister
+	/**
+	 * Each register source a training manifest read, with the manifests that read it.
+	 */
+	trained: ReadonlyMap<string, ReadonlySet<string>>
 	sourcesRoot: PathBuilder
 	outDirectory: string
 	perCountry: number
@@ -222,7 +245,7 @@ export async function buildFreshSourceSet(input: {
 }): Promise<BuiltFreshSourceSet> {
 	if (!input.sources.length) throw new Error("no evaluation source is registered, so the set would be empty")
 
-	const problems = input.sources.flatMap((source) => evaluationSourceProblems(source, input.register))
+	const problems = input.sources.flatMap((source) => evaluationSourceProblems(source, input.register, input.trained))
 
 	if (problems.length) throw new Error(`refusing to build the evaluation set:\n  ${problems.join("\n  ")}`)
 

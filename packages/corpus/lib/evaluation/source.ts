@@ -6,10 +6,11 @@
  *
  *   An evaluation source is a publication whose rows give the release check's comparative objective
  *   rows a model didn't train on (`docs/engineering/HOLDOUT_AND_EVALUATION.mdx` section 6.4).
- *   A source stays unseen only while its register decision refuses `train`,
- *   which keeps it out of every build through `ingestEligibilityProblems`.
+ *   A source stays unseen while its register row is reserved for evaluation
+ *   (`AddressSourceRecord.reservation`), which keeps it out of every build through the
+ *   decision tree's `reservation` node, and no training manifest has read it.
  *
- *   The four sources `#evaluation/sources` lists now permit `train`, and each feeds a
+ *   The four sources `#evaluation/sources` lists are not reserved, and each feeds a
  *   corpus adapter built by `#evaluation/corpus-adapter` over the same record reader,
  *   so a fix to the reader reaches both.
  *   The fresh set frozen from them on 2026-11-14 is no longer registered by any release
