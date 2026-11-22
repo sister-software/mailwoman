@@ -59,6 +59,16 @@ export function repoURL(org: string, repo: string): string {
 }
 
 /**
+ * Returns the GitHub HTTPS URL for an org and repo.
+ *
+ * A read-only clone of a public repository takes this address, because it needs no SSH key.
+ * A clone the operator pushes from takes {@linkcode repoURL}.
+ */
+export function repoReadURL(org: string, repo: string): string {
+	return `https://github.com/${org}/${repo}.git`
+}
+
+/**
  * The organization holding a repository's original.
  *
  * The placetypes repository is the one Who's On First repository outside `whosonfirst-data`,

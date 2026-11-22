@@ -22,7 +22,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { runProcess } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { FORK_ORG, repoURL } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
+import { FORK_ORG, repoReadURL } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
 import { wofRepoName } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
@@ -155,7 +155,7 @@ async function cloneRepositories(names: readonly string[], reposDir: PathBuilder
 
 			if (await pathExists(directory)) return
 
-			await runProgram("git", ["clone", "--quiet", "--depth", "1", repoURL(FORK_ORG, name), directory.toString()])
+			await runProgram("git", ["clone", "--quiet", "--depth", "1", repoReadURL(FORK_ORG, name), directory.toString()])
 
 			cloned++
 		},
