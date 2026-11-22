@@ -4,7 +4,8 @@
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
-import { isBarrelModule, moduleReexports } from "#repo-health/checks/module/reexports"
+import { isBarrelModule, moduleReexports, moduleReexportsCheck } from "#repo-health/checks/module/reexports"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 function parse(text: string): ts.SourceFile {
 	return ts.createSourceFile("module.ts", text, ts.ScriptTarget.Latest, true)
@@ -44,5 +45,29 @@ describe("module-reexports", () => {
 		expect(isBarrelModule("packages/core/lib/coarse-placer/coarse-placer.ts", directories)).toBe(true)
 		// A nested `<dir>.ts` is an ordinary module.
 		expect(isBarrelModule("packages/core/lib/resolver/types.ts", directories)).toBe(false)
+	})
+
+	const REEXPORTING = 'export { lookup } from "#lookup"\nexport const limit = 4\n'
+
+	test("the check reports a tracked module that declares an export and re-exports another module's", async () => {
+		await using context = await plantFixtureRepository({
+			"packages/a/lib/resolver/types.ts": REEXPORTING,
+			"packages/a/lib/lookup.ts": "export const lookup = (id: string) => id\n",
+		})
+
+		const diagnostics = await moduleReexportsCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => [diagnostic.file, diagnostic.line])).toEqual([
+			["packages/a/lib/resolver/types.ts", 1],
+		])
+	})
+
+	test("the check accepts the same text in a package's root barrel", async () => {
+		await using context = await plantFixtureRepository({
+			"packages/a/lib/index.ts": REEXPORTING,
+			"packages/a/lib/lookup.ts": "export const lookup = (id: string) => id\n",
+		})
+
+		await expect(moduleReexportsCheck.run(context)).resolves.toEqual([])
 	})
 })

@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest"
 
 import { importTimeEffects, pureAnnotatedEffects, sideEffectsCheck } from "#repo-health/checks/side-effects"
 import { collectRepoContext } from "#repo-health/index"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 const FILE = "packages/postcode/lib/shapes.ts"
 
@@ -89,5 +90,32 @@ describe("pureAnnotatedEffects", () => {
 describe("sideEffectsCheck", () => {
 	test("reports nothing on the current tree", async () => {
 		await expect(sideEffectsCheck.run(await collectRepoContext())).resolves.toEqual([])
+	})
+
+	/**
+	 * A tree with one workspace declaring `sideEffects`, a module that registers a listener
+	 * on line 2 when it is imported, and a module that only declares.
+	 */
+	const effectTree = (sideEffects: false | string[]) => ({
+		"package.json": { name: "fixture", private: true, workspaces: ["packages/*"] },
+		"packages/a/package.json": { name: "@fixture/a", sideEffects },
+		"packages/a/lib/listen.ts": 'export const channel = "message"\nwindow.addEventListener(channel, () => {})\n',
+		"packages/a/lib/declare.ts": "export const double = (value: number) => value * 2\n",
+	})
+
+	test("reports a module with an import-time effect that its workspace's sideEffects leaves out", async () => {
+		await using context = await plantFixtureRepository(effectTree(false))
+
+		const diagnostics = await sideEffectsCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => [diagnostic.file, diagnostic.line])).toEqual([
+			["packages/a/lib/listen.ts", 2],
+		])
+	})
+
+	test("accepts the module once sideEffects lists it", async () => {
+		await using context = await plantFixtureRepository(effectTree(["./lib/listen.ts"]))
+
+		await expect(sideEffectsCheck.run(context)).resolves.toEqual([])
 	})
 })

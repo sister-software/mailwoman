@@ -9,7 +9,10 @@ import {
 	patternImports,
 	rootPatternEntry,
 	scopedFiles,
+	workspaceExportsCheck,
+	workspaceFilesCheck,
 } from "#repo-health/checks/workspace-manifest"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 const standard = (module: string) => ({
 	types: `./out/${module}.d.ts`,
@@ -144,5 +147,51 @@ describe("scopedFiles", () => {
 			"!**/*.test.ts",
 			"!**/*.test.tsx",
 		])
+	})
+})
+
+describe("the workspace manifest checks", () => {
+	const MANIFEST = "packages/a/package.json"
+
+	/**
+	 * A tree with one workspace that compiles `lib/` and declares `manifest`.
+	 */
+	const compilingTree = (manifest: object) => ({
+		"package.json": { name: "fixture", private: true, workspaces: ["packages/*"] },
+		"packages/a/tsconfig.json": { compilerOptions: { rootDir: "./lib", outDir: "./out" } },
+		[MANIFEST]: { name: "@fixture/a", ...manifest },
+	})
+
+	const listed = { ".": standard("index"), "./cells": standard("cells") }
+	const unscoped = ["out/", "*.ts", "!*.test.ts"]
+
+	test("workspace-exports reports a manifest that lists a module its pattern would express", async () => {
+		await using context = await plantFixtureRepository(compilingTree({ exports: listed }))
+
+		const diagnostics = await workspaceExportsCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual([MANIFEST])
+		expect(diagnostics[0]!.details).toEqual(["./cells"])
+	})
+
+	test("workspace-exports accepts the map its fix writes", async () => {
+		await using context = await plantFixtureRepository(compilingTree({ exports: patternExports(listed) }))
+
+		await expect(workspaceExportsCheck.run(context)).resolves.toEqual([])
+	})
+
+	test("workspace-files reports a manifest that publishes TypeScript from the workspace root", async () => {
+		await using context = await plantFixtureRepository(compilingTree({ files: unscoped }))
+
+		const diagnostics = await workspaceFilesCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual([MANIFEST])
+		expect(diagnostics[0]!.details).toContain("*.ts")
+	})
+
+	test("workspace-files accepts the list its fix writes", async () => {
+		await using context = await plantFixtureRepository(compilingTree({ files: scopedFiles(unscoped) }))
+
+		await expect(workspaceFilesCheck.run(context)).resolves.toEqual([])
 	})
 })

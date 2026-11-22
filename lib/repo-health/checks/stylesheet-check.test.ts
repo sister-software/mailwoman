@@ -16,7 +16,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { stylesheetDiagnostics } from "#repo-health/checks/stylesheet-check"
+import { stylesheetCheck, stylesheetDiagnostics } from "#repo-health/checks/stylesheet-check"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 /**
  * The path the system-wide invariants are asserted on.
@@ -144,5 +145,27 @@ describe("stylesheet-interface", () => {
 		const css = "/* .fake { background: red; cursor: pointer; } */\n.real { color: red; }"
 
 		expect(stylesheetDiagnostics(OTHER, css)).toEqual([])
+	})
+
+	describe("the check over tracked stylesheets", () => {
+		const CLEAN = ".a {\n\tcolor: red;\n}\n"
+
+		it("reports the stylesheet and line of a raw pixel radius", async () => {
+			await using context = await plantFixtureRepository({
+				[OTHER]: `${CLEAN}.b {\n\tborder-radius: 6px;\n}\n`,
+				"packages/earth/lib/styles/clean.css": CLEAN,
+			})
+
+			const diagnostics = await stylesheetCheck.run(context)
+
+			expect(diagnostics.map((diagnostic) => diagnostic.file)).toEqual([OTHER])
+			expect(diagnostics[0]!.line).toBeGreaterThan(3)
+		})
+
+		it("accepts a tree whose stylesheets break no rule", async () => {
+			await using context = await plantFixtureRepository({ [OTHER]: CLEAN })
+
+			await expect(stylesheetCheck.run(context)).resolves.toEqual([])
+		})
 	})
 })

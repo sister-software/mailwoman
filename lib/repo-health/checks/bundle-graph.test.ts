@@ -18,6 +18,13 @@ describe("the bundle-graph check", () => {
 		await expect(bundleGraphCheck.run(context)).resolves.toEqual([])
 	})
 
+	test("reports a tree that was never compiled rather than grading its sources", async () => {
+		const diagnostics = await bundleGraphCheck.run({ repoRoot: "/a/checkout/with/no/out", trackedFiles: [] })
+
+		expect(diagnostics).toHaveLength(1)
+		expect(diagnostics[0]!.message).toContain("packages/core/out/index.js is missing")
+	})
+
 	test("reports a static builtin edge, named by the file that makes it", async () => {
 		const context = await collectRepoContext()
 

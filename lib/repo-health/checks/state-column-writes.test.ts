@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 
 import { stateColumnWritesCheck, uncomparedStateWrites } from "#repo-health/checks/state-column-writes"
 import { collectRepoContext } from "#repo-health/index"
+import { plantFixtureRepository } from "#repo-health/test/fixture-repository"
 
 function writesIn(text: string) {
 	return uncomparedStateWrites(ts.createSourceFile("probe.ts", text, ts.ScriptTarget.Latest, true))
@@ -46,5 +47,34 @@ describe("uncomparedStateWrites", () => {
 describe("stateColumnWritesCheck", () => {
 	it("passes the current tree", async () => {
 		await expect(stateColumnWritesCheck.run(await collectRepoContext())).resolves.toEqual([])
+	})
+
+	const UNCOMPARED = [
+		"export async function markSent(db: Database, id: string) {",
+		'\tawait db.updateTable("t").set({ email_state: "sent" }).where("id", "=", id).execute()',
+		"}",
+		"",
+	].join("\n")
+
+	it("reports the file and line of a tracked source that writes a state column on the key alone", async () => {
+		await using context = await plantFixtureRepository({
+			"packages/a/lib/outbox.ts": UNCOMPARED,
+			// A test source plants such writes as cases, so the check leaves it unread.
+			"packages/a/lib/outbox.test.ts": UNCOMPARED,
+		})
+
+		const diagnostics = await stateColumnWritesCheck.run(context)
+
+		expect(diagnostics.map((diagnostic) => [diagnostic.file, diagnostic.line])).toEqual([
+			["packages/a/lib/outbox.ts", 2],
+		])
+	})
+
+	it("accepts the write once it compares the state it moves from", async () => {
+		await using context = await plantFixtureRepository({
+			"packages/a/lib/outbox.ts": UNCOMPARED.replace(".execute()", '.where("email_state", "=", "queued").execute()'),
+		})
+
+		await expect(stateColumnWritesCheck.run(context)).resolves.toEqual([])
 	})
 })
