@@ -4,170 +4,57 @@
 /**
  *   Container entrypoint that serves the `/v1` API on `0.0.0.0:3000`.
  *
+ *   The engine is the one `mailwoman serve` builds: `createServeEngine` composes
+ *   a geocode session and the routes read it.
  *   The API parser needs the bundled English weights and returns `501` when they're absent.
+ *
  *   The geocode and batch endpoints also need a gazetteer mounted at `$MAILWOMAN_DATA_ROOT`
  *   and return `503` when no gazetteer is available.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import type { GeocodeInit, MailwomanAPIEngine } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
-import type { EngineBatchRow } from "@mailwoman/api/operations/geocode/batch"
-import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { loadBundledPlaceCountry } from "mailwoman/default/placer"
+import { createServeEngine } from "mailwoman/api-engine"
 import { $public } from "mailwoman/env"
-import { deriveGeocodeRegister, geocodeAddress, parseForGeocode, USStateDatabaseProvider } from "mailwoman/geocode"
-import { createResolverBackend, resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
-import { AsyncSequence } from "spliterator"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 const PORT = 3000
 const HOST = "0.0.0.0"
 const DATA_ROOT = dataRootPath()
 
-/**
- * Resolve the WOF extract paths.
- *
- * An explicit `$MAILWOMAN_WOF_DB` list is returned unchanged.
- * Default paths are filtered to files that exist.
- */
-function wofPaths(): Promise<string[]> {
-	const paths = resolveWOFDatabasePaths()
+const candidateDB = await resolveCandidateDBPath()
 
-	if ($public.MAILWOMAN_WOF_DB) return Promise.resolve(paths)
+// country-branch: the candidate gazetteer covers every country, and without it the
+// session reads the WOF admin extracts under a caller scope of US.
+// The countries an extract's own manifest states would replace the literal.
+const extractScope = candidateDB ? {} : { defaultCountry: "US" }
 
-	return AsyncSequence.from<string>(paths).parallelFilter(pathExists).toArray()
+// The image answers queries from every country, so the session reads zero country scope off its locale.
+const serveEngine = await createServeEngine({ countryScope: "none", ...extractScope })
+
+if (serveEngine.preflight.ok) {
+	console.error(`[mailwoman] gazetteer found — /v1/geocode + /v1/batch enabled (data root: ${DATA_ROOT})`)
+} else if (serveEngine.engine.parse) {
+	console.error(
+		`[mailwoman] no gazetteer at ${DATA_ROOT} — booting parse-only (/v1/geocode + /v1/batch answer 503).\n` +
+			`[mailwoman] mount one read-only to enable geocoding: docker run -v <host-data>:/data:ro …`
+	)
 }
 
-/**
- * Build the engine, enabling geocoding only when weights and a gazetteer are available.
- */
-async function buildEngine() {
-	const engine: MailwomanAPIEngine = {
-		health: async () => ({
-			data: {
-				data_root: DATA_ROOT,
-			},
-		}),
-	}
+// The image serves the routes its README lists: parse, geocode, batch and health.
+// The engine's tree-resolve and reload operations stay unrouted here.
+const { parse, geocode, batch, health } = serveEngine.engine
 
-	// Weights load separately so that a gazetteer failure leaves parsing available.
-	const classifier: NeuralAddressClassifier | null = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-		.then((c) => {
-			engine.parse = (address, opts) =>
-				c
-					.parse(address, {
-						postcodeRepair: true,
-						inputMode:
-							opts.inputMode === "auto"
-								? deriveGeocodeRegister(address, undefined, c.queryShapeGeneration)
-								: opts.inputMode,
-					})
-					.then((tree) => {
-						return {
-							input: address,
-							components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
-							tree,
-							debug: opts.debug ? decodeAsXML(tree) : null,
-						}
-					})
-
-			return c
-		})
-		.catch((error) => {
-			console.error(`[mailwoman] neural weights not found — /v1/parse disabled (501): ${error}`)
-
-			return null
-		})
-
-	if (classifier) {
-		const candidateDB = await resolveCandidateDBPath()
-		const paths = await wofPaths()
-
-		if (candidateDB || paths.length) {
-			try {
-				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
-				const resolver = createWOFResolver(backend)
-				const extracts = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
-				const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
-				// The candidate database covers every country.
-				// The FTS backend falls back to US.
-				const countryScope = candidateDB ? {} : { defaultCountry: { country: "US", source: "caller" as const } }
-
-				const depsFor = (
-					inputMode: GeocodeInit["inputMode"],
-					bias: GeocodeInit["bias"] = [],
-					parent: GeocodeInit["parent"] = null
-				): Parameters<typeof geocodeAddress>[1] => ({
-					classifier,
-					resolver,
-					placeCountry,
-					databases: extracts.for,
-					...countryScope,
-					inputMode,
-					...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
-					...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
-				})
-
-				const oneGeocode = (address: string, { inputMode }: Pick<GeocodeInit, "inputMode">) =>
-					geocodeAddress(address, depsFor(inputMode))
-
-				// The tree is parsed once and handed to the geocoder, so the classifier runs once per request.
-				engine.geocode = async (address, init) => {
-					const deps = depsFor(init.inputMode, init.bias, init.parent)
-
-					if (!init.includeTree) return { ...(await geocodeAddress(address, deps)), tree: null }
-
-					const tree = await parseForGeocode(address, deps)
-
-					return { ...(await geocodeAddress(address, { ...deps, parsedTree: tree })), tree }
-				}
-
-				engine.batch = async (addresses, opts) => {
-					const inputs = addresses.map((a) => a.trim())
-					const results: EngineBatchRow[] = Array.from({ length: inputs.length })
-
-					for (let i = 0; i < inputs.length; i++) {
-						const input = inputs[i]!
-
-						try {
-							results[i] = await oneGeocode(input, opts)
-						} catch (error) {
-							results[i] = { input, error: error instanceof Error ? error.message : String(error) }
-						}
-					}
-
-					return { results }
-				}
-
-				console.error(`[mailwoman] gazetteer found — /v1/geocode + /v1/batch enabled (data root: ${DATA_ROOT})`)
-			} catch (error) {
-				console.error(
-					`[mailwoman] gazetteer at ${DATA_ROOT} could not be opened — /v1/geocode + /v1/batch answer 503: ${error}`
-				)
-			}
-		} else {
-			console.error(
-				`[mailwoman] no gazetteer at ${DATA_ROOT} — booting parse-only (/v1/geocode + /v1/batch answer 503).\n` +
-					`[mailwoman] mount one read-only to enable geocoding: docker run -v <host-data>:/data:ro …`
-			)
-		}
-	}
-
-	return engine
-}
-
-const engine = await buildEngine()
-const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
+const app = createMailwomanAPI(
+	{ health, ...(parse ? { parse } : {}), ...(geocode ? { geocode } : {}), ...(batch ? { batch } : {}) },
+	{ batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) }
+)
 
 // The handle lives as long as the process.
 // A `using` binding at module scope would dispose it, and close the server,
 // as soon as this module finished evaluating.
-// `shutdown` disposes it instead.
+// `shutdown` disposes it instead, and then the engine's session and classifier.
 const handle = await serveNode({
 	fetch: app.fetch,
 	port: PORT,
@@ -182,7 +69,9 @@ const shutdown = () => {
 
 	console.error("[mailwoman] draining")
 
-	void handle[Symbol.asyncDispose]().finally(() => process.exit(0))
+	void handle[Symbol.asyncDispose]()
+		.then(() => serveEngine[Symbol.asyncDispose]())
+		.finally(() => process.exit(0))
 }
 
 process.on("SIGINT", shutdown)

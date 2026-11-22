@@ -81,6 +81,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	addressSystemConventions: conventions,
 })
 
+// The worker thread owns this pipeline and its scope, and the pool terminates the thread.
 const parse = createRuntimePipeline({ classifier })
 
 /**

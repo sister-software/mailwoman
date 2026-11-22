@@ -73,9 +73,11 @@ mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ## Library
 
 ```ts
-import { decodeAsJSON, parse } from "mailwoman"
+import { createParser, decodeAsJSON } from "mailwoman"
 
-const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
+await using parser = await createParser()
+
+const { tree } = await parser.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 console.log(decodeAsJSON(tree))
 // { region: "CA", locality: "Mountain View", street: "Amphitheatre",
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }

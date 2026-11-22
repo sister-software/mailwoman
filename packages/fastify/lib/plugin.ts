@@ -8,10 +8,15 @@
  * `POST /v1/geocode`, `POST /v1/poi`, and `GET /health`.
  * The `fastify.mailwoman` decorator also exposes parse, geocode, and POI methods.
  *
- * Provide a ready-to-use pipeline with `pipeline`, or let the plugin build one lazily on the first request.
+ * Provide a ready-to-use pipeline with `pipeline`, or let the plugin build its
+ * engine lazily on the first request.
  * Lazy setup uses `locale` and the optional database paths.
  *
- * The plugin resolves model weights and gazetteer data as the CLI does.
+ * With a gazetteer path the engine is a geocode session, the one the drop-in
+ * servers build: `geocode` goes through `session.geocode`, and parse and POI run
+ * a pipeline over the session's classifier and gazetteer.
+ * Without one the engine is a pipeline over the weights, and a geocode answers
+ * the parse without a coordinate.
  *
  * The decorator's parse result extends `@mailwoman/api`'s parse response with the pipeline path.
  * Geocode returns a `GeocodeResult`.
@@ -24,10 +29,9 @@ import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse/addr
 import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/health"
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
 import { reportSupport } from "@mailwoman/api/support"
-import type { PipelineOpts } from "@mailwoman/core"
-import type { decodeAsTuples } from "@mailwoman/core/decoder"
+import type { AddressTree, decodeAsTuples } from "@mailwoman/core/decoder"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { memoizeResettable } from "@mailwoman/core/memoize"
-import type { Resolver } from "@mailwoman/core/resolver/types"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import {
@@ -37,8 +41,9 @@ import {
 	type ZodTypeProvider,
 } from "fastify-type-provider-zod"
 import type { extractGeocodeResult } from "mailwoman/geocode"
+import type { GeocodeRequestOptions, GeocodeSession } from "mailwoman/geocode/session"
 
-import type { MailwomanFastifyOptions, RuntimePipeline, MailwomanDecorator } from "#shared"
+import type { InjectedPipeline, MailwomanDecorator, MailwomanFastifyOptions } from "#shared"
 import { POINotConfiguredError } from "#shared"
 
 // #region Pipeline Helpers
@@ -60,49 +65,77 @@ async function loadHelpers(): Promise<PipelineHelpers> {
 	return { decodeAsTuples, extractGeocodeResult }
 }
 
-const loadPipelineModules = () => Promise.all([import("mailwoman/runtime-pipeline"), import("@mailwoman/neural")])
-
-const loadResolverModules = () =>
-	Promise.all([
-		import("@mailwoman/resolver-wof-sqlite"),
-		import("@mailwoman/resolver"),
-		import("mailwoman/resolver-backend"),
-	])
-
 /**
- * Build the pipeline on first use when no pipeline was provided.
+ * What the plugin answers from: a pipeline for parse and POI, and a session
+ * for geocode when a gazetteer was given.
+ *
+ * Its async disposal closes what the plugin built.
  */
-async function buildPipeline(
-	opts: MailwomanFastifyOptions,
-	locale: string
-): Promise<RuntimePipeline & AsyncDisposable> {
-	const [{ createRuntimePipeline }, { NeuralAddressClassifier }] = await loadPipelineModules()
-
-	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale })
-
-	let resolver: Resolver | null = null
-
-	if (opts.resolveDatabasePath) {
-		const [resolverMod, { createWOFResolver }, { createResolverBackend }] = await loadResolverModules()
-
-		const backend = await createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
-		resolver = createWOFResolver(backend)
-	}
-
-	return createRuntimePipeline({
-		classifier,
-		...(resolver ? { resolver } : {}),
-		poiQueryKind: opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : "extract",
-	})
+interface PluginEngine extends AsyncDisposable {
+	pipeline: InjectedPipeline
+	/**
+	 * The geocode session, or `null` for a parse-only registration and for an injected pipeline.
+	 */
+	session: GeocodeSession | null
 }
 
 /**
- * Add the default locale unless the caller supplied one.
+ * Builds the engine on first use when no pipeline was provided.
+ *
+ * With a gazetteer path the plugin builds the session a drop-in server builds:
+ * no country scope, over every layer `mailwoman geocode` composes.
+ * The pipeline for parse and POI reads that session's classifier and gazetteer, so the weights load once.
+ *
+ * Without one the plugin loads the weights and never reads a data root.
  */
-function withLocale(opts: PipelineOpts | null | undefined, locale: string): PipelineOpts {
-	if (opts?.locale) return opts
+async function buildEngine(opts: MailwomanFastifyOptions): Promise<PluginEngine> {
+	const { createRuntimePipeline } = await import("mailwoman/runtime-pipeline")
+	const poiQueryKind = opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : ("extract" as const)
 
-	return { ...opts, locale }
+	if (opts.candidateDatabasePath || opts.resolveDatabasePath) {
+		const [{ createDropInGeocodeSession }, { NODE_LAYER_CONTRIBUTIONS }, { createWOFResolver }] = await Promise.all([
+			import("mailwoman/geocode/session/drop-in"),
+			import("mailwoman/services/entry/node"),
+			import("@mailwoman/resolver"),
+		])
+
+		// A locale the plugin's user states is the caller's.
+		// With none, the session is given none and records its locale as the default.
+		const session = await createDropInGeocodeSession(NODE_LAYER_CONTRIBUTIONS, {
+			...(opts.candidateDatabasePath ? { candidateDB: opts.candidateDatabasePath } : {}),
+			...(opts.resolveDatabasePath ? { resolveDB: opts.resolveDatabasePath } : {}),
+			...(opts.locale ? { locale: opts.locale } : {}),
+		})
+
+		const pipeline = createRuntimePipeline({
+			classifier: session.services.routed,
+			resolver: createWOFResolver(session.services.lookup),
+			poiQueryKind,
+		})
+
+		return {
+			pipeline,
+			session,
+			// The pipeline reads the session's gazetteer, so it closes first.
+			[Symbol.asyncDispose]: async () => {
+				await pipeline[Symbol.asyncDispose]()
+				await session[Symbol.asyncDispose]()
+			},
+		}
+	}
+
+	const [{ NeuralAddressClassifier }, { DEFAULT_WEIGHTS_LOCALE }] = await Promise.all([
+		import("@mailwoman/neural"),
+		import("@mailwoman/neural/weights/families"),
+	])
+
+	const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({
+		locale: opts.locale ?? DEFAULT_WEIGHTS_LOCALE,
+	})
+
+	const pipeline = createRuntimePipeline({ classifier, poiQueryKind })
+
+	return { pipeline, session: null, [Symbol.asyncDispose]: () => pipeline[Symbol.asyncDispose]() }
 }
 
 // #endregion
@@ -117,9 +150,9 @@ const { default: packageJSON } = await import("@mailwoman/fastify/package.json",
 })
 
 const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, opts) => {
-	// country-branch: en-US is the weights locale a caller gets when it chooses none.
-	// A default read from the installed weights packages would replace the literal.
-	const locale = opts.locale ?? "en-US"
+	// A locale the plugin's user stated goes to every pipeline call.
+	// With none, the pipeline detects each input's locale.
+	const localeHint = opts.locale ? { locale: opts.locale } : {}
 	const prefix = opts.prefix ?? ""
 
 	// POI is available only when a database path was explicitly supplied.
@@ -128,34 +161,63 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	const startedAt = Date.now()
 	const { decodeAsTuples, extractGeocodeResult } = await loadHelpers()
 
-	// The pipeline loads model weights, so it is built on the first request rather than at registration.
+	// The engine loads model weights, so it is built on the first request rather than at registration.
 	// A failed build is retried by the next request, so installing the data needs no restart.
-	// The plugin owns a pipeline it built, and closes that pipeline's scope when the server closes.
+	// The plugin owns an engine it built, and closes it when the server closes.
 	// A pipeline the caller passed in stays the caller's.
-	let ownedPipeline: AsyncDisposable | null = null
+	let ownedEngine: PluginEngine | null = null
 
-	const loadPipeline = memoizeResettable(async () => {
-		const built = await buildPipeline(opts, locale)
+	const loadEngine = memoizeResettable(async () => {
+		const built = await buildEngine(opts)
 
-		ownedPipeline = built
+		ownedEngine = built
 
 		return built
 	})
 
 	fastify.addHook("onClose", async () => {
-		await ownedPipeline?.[Symbol.asyncDispose]()
+		await ownedEngine?.[Symbol.asyncDispose]()
 	})
 
-	const getPipeline = (): Promise<RuntimePipeline> => {
-		if (opts.pipeline) return Promise.resolve(opts.pipeline)
+	const getEngine = (): Promise<Pick<PluginEngine, "pipeline" | "session">> => {
+		if (opts.pipeline) return Promise.resolve({ pipeline: opts.pipeline, session: null })
 
-		return loadPipeline()
+		return loadEngine()
+	}
+
+	/**
+	 * Geocodes one address through the session, or through the pipeline when the registration has none.
+	 *
+	 * The pipeline path answers a parse-only registration and an injected pipeline: the request's
+	 * options become the pipeline's resolve options, and the result is read off the tree it returns.
+	 */
+	const runGeocode = async (
+		text: string,
+		request: GeocodeRequestOptions = {}
+	): Promise<{ result: GeocodeResult; tree: AddressTree }> => {
+		const { pipeline, session } = await getEngine()
+
+		if (session) return session.geocode(text, request)
+
+		const { tree } = await pipeline(text, {
+			...localeHint,
+			...(request.inputMode ? { inputMode: request.inputMode } : {}),
+			resolveOpts: {
+				...(request.bias?.length ? { bias: request.bias } : {}),
+				...(request.parentPlace ? { parentPlace: request.parentPlace } : {}),
+				...(request.defaultCountry
+					? { defaultCountry: { country: request.defaultCountry, source: "caller" as const } }
+					: {}),
+			},
+		})
+
+		return { result: extractGeocodeResult(text, tree), tree }
 	}
 
 	const mailwoman: MailwomanDecorator = {
 		async parse(text, runOpts) {
-			const pipeline = await getPipeline()
-			const result = await pipeline(text, withLocale(runOpts, locale))
+			const { pipeline } = await getEngine()
+			const result = await pipeline(text, { ...runOpts, ...localeHint })
 
 			return {
 				input: text,
@@ -166,18 +228,15 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 			}
 		},
 
-		async geocode(text, runOpts) {
-			const pipeline = await getPipeline()
-			const result = await pipeline(text, withLocale(runOpts, locale))
-
-			return extractGeocodeResult(text, result.tree)
+		async geocode(text, request) {
+			return (await runGeocode(text, request)).result
 		},
 
 		async poi(text, runOpts) {
 			if (!poiEnabled) throw new POINotConfiguredError()
 
-			const pipeline = await getPipeline()
-			const result = await pipeline(text, withLocale(runOpts, locale))
+			const { pipeline } = await getEngine()
+			const result = await pipeline(text, { ...runOpts, ...localeHint })
 
 			return result.poiIntent ?? { type: "not_poi_query" }
 		},
@@ -257,33 +316,15 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
 
-					const pipeline = await getPipeline()
-
-					const result = await pipeline(
-						address,
-						withLocale(
-							{
-								inputMode: input_mode,
-								...(bias.length || parent
-									? {
-											resolveOpts: {
-												...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
-												...(parent
-													? { parentPlace: { id: parent.id, source: "caller" as const, strength: parent.scope } }
-													: {}),
-											},
-										}
-									: {}),
-							},
-							locale
-						)
-					)
-
-					const geocoded = extractGeocodeResult(address, result.tree)
+					const { result: geocoded, tree } = await runGeocode(address, {
+						inputMode: input_mode,
+						...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+						...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
+					})
 
 					return {
 						...geocoded,
-						tree: include_tree ? result.tree : null,
+						tree: include_tree ? tree : null,
 						support: reportSupport(address, geocoded.countryCode),
 					}
 				},

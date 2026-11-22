@@ -6,7 +6,6 @@
  * beside its weights, and the runtime pipeline over both.
  */
 
-import { memoizeResettable } from "@mailwoman/core/memoize"
 import type {
 	CaseNormalization,
 	MachinePreferences,
@@ -164,21 +163,4 @@ export async function createParser(options: ParserOptions = {}): Promise<Parser>
 
 		throw error
 	}
-}
-
-const defaultParser = memoizeResettable(() => createParser())
-
-/**
- * Parses one address with the en-US parser.
- *
- * The parser loads on the first call and stays loaded for the life of the process.
- *
- * ```ts
- * const result = await parse("PO Box 1234, Springfield, IL 62701")
- * ```
- *
- * {@link createParser} builds a parser for another locale, other options, or a caller that disposes it.
- */
-export async function parse(raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> {
-	return (await defaultParser()).parse(raw, runOpts)
 }

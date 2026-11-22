@@ -34,14 +34,17 @@ npx mailwoman parse "350 5th Ave, New York, NY 10118"
 or in code:
 
 ```js
-import { parse } from "mailwoman"
+import { createParser } from "mailwoman"
 
-const result = await parse(input)
+await using parser = await createParser()
+
+const result = await parser.parse(input)
 ```
 
 `result.tree.roots` is an array of tagged nodes (`tag`, `value`, `confidence`, `children`) nested by
-geographic containment rather than a flat record. Build the pipeline once and reuse it across calls —
-loading the model is the expensive part rather than the parse.
+geographic containment rather than a flat record. Create the parser once and reuse it across calls —
+loading the model is the expensive part rather than the parse. The parser is yours to dispose:
+`await using` releases the model when the scope ends.
 
 The full `ComponentTag` vocabulary is the type of that name exported from `@mailwoman/codex/component`.
 Read it before assuming a tag exists or guessing at its name.

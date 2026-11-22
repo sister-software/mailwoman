@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
-import type { PipelineResult } from "@mailwoman/core"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import { filerLookup } from "@mailwoman/filer/filer-lookup"
@@ -12,9 +12,9 @@ import { toFRN, type FRN } from "@mailwoman/filer/frn"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
+import { createRuntimePipeline, type RuntimePipeline } from "mailwoman/runtime-pipeline"
 
-import { geocodeRunThroughCore, geocodeThroughCore, loadCore } from "#cli/core"
+import { closeCore, geocodeRunThroughCore, geocodeThroughCore, loadCore } from "#cli/core"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -34,13 +34,11 @@ const { values } = parseArguments({
 
 const poiDatabasePath = values["poi-db"] ?? null
 
-type Pipeline = (raw: string) => Promise<PipelineResult>
+let plainPipeline: RuntimePipeline | null = null
 
-let plainPipeline: Pipeline | null = null
+const poiPipelines = new Map<string, RuntimePipeline>()
 
-const poiPipelines = new Map<string, Pipeline>()
-
-async function getPlainPipeline(): Promise<Pipeline> {
+async function getPlainPipeline(): Promise<RuntimePipeline> {
 	if (!plainPipeline) {
 		const { classifier, resolver } = await loadCore()
 
@@ -50,7 +48,7 @@ async function getPlainPipeline(): Promise<Pipeline> {
 	return plainPipeline
 }
 
-async function getPoiPipeline(dbPath: string | null): Promise<Pipeline> {
+async function getPoiPipeline(dbPath: string | null): Promise<RuntimePipeline> {
 	const key = dbPath ?? ""
 	const cached = poiPipelines.get(key)
 
@@ -204,5 +202,34 @@ const deps: MCPToolDeps = {
 
 const server = createMCPServer(deps)
 const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js")
+
+let closing = false
+
+/**
+ * Closes what the tools opened: each pipeline's scope first, then the session whose resolver they read.
+ */
+async function shutdown(): Promise<void> {
+	if (closing) return
+
+	closing = true
+
+	const pipelines = [plainPipeline, ...poiPipelines.values()].filter(isPresent)
+
+	plainPipeline = null
+	poiPipelines.clear()
+
+	for (const pipeline of pipelines) {
+		await pipeline[Symbol.asyncDispose]()
+	}
+
+	await closeCore()
+}
+
+// The client closing its end of the transport ends the server, as a signal does.
+server.server.onclose = () => void shutdown()
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+	process.once(signal, () => void shutdown().finally(() => process.exit(0)))
+}
 
 await server.connect(new StdioServerTransport())

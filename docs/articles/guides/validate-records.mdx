@@ -31,7 +31,7 @@ Save this complete file as `validate-records.ts`:
 
 ```ts
 import { isZipCode } from "@mailwoman/codex/us"
-import { groupTuplesByTag, parse } from "mailwoman"
+import { createParser, groupTuplesByTag, type Parser } from "mailwoman"
 
 interface AddressRecord {
 	id: string
@@ -46,7 +46,7 @@ interface PolicyResult {
 
 const required = ["house_number", "street", "locality", "region", "postcode"]
 
-async function check(record: AddressRecord): Promise<PolicyResult> {
+async function check(parser: Parser, record: AddressRecord): Promise<PolicyResult> {
 	if (record.countryCode !== "US")
 		return { status: "unknown", reason: "US policy requires an established US country code" }
 
@@ -54,7 +54,7 @@ async function check(record: AddressRecord): Promise<PolicyResult> {
 		return { status: "unknown", reason: "address input is missing" }
 	}
 
-	const result = await parse(record.raw, { locale: "en-US" })
+	const result = await parser.parse(record.raw, { locale: "en-US" })
 
 	if (result.faults.length) return { status: "unknown", reason: "parser reported a stage fault" }
 	const components = groupTuplesByTag(result.tree)
@@ -77,8 +77,10 @@ const records: AddressRecord[] = [
 	{ id: "no-postcode", raw: "350 5th Ave, New York, NY", countryCode: "US" },
 ]
 
+await using parser = await createParser()
+
 for (const record of records) {
-	const { status, reason } = await check(record)
+	const { status, reason } = await check(parser, record)
 
 	console.log(`${record.id}: ${status} — ${reason}`)
 }

@@ -45,6 +45,7 @@ export async function mailwomanCLIPath(): Promise<string> {
 	return resolvePackagePath("mailwoman", entry)
 }
 
+// The memo holds the parsed manifest, a plain value that opens zero handle and needs zero disposal.
 let manifest: Promise<MailwomanManifest> | null = null
 
 /**

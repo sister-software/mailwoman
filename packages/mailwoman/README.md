@@ -14,9 +14,11 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 ```ts
 // Library — parse programmatically
-import { decodeAsJSON, parse } from "mailwoman"
+import { createParser, decodeAsJSON } from "mailwoman"
 
-const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
+await using parser = await createParser()
+
+const { tree } = await parser.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 console.log(decodeAsJSON(tree))
 // { region: "CA", locality: "Mountain View", street: "Amphitheatre",
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
@@ -79,13 +81,18 @@ mailwoman doctor --json   # machine-readable { checks: [{ id, label, status, det
 
 ## Library API
 
-`parse` runs normalization, locale detection, kind classification, phrase grouping and token
-classification. It loads the en-US model on its first call and keeps it loaded for later calls.
+`createParser` loads the en-US model and returns a parser that keeps it loaded. `parser.parse` runs
+normalization, locale detection, kind classification, phrase grouping and token classification.
+The caller owns the parser: `await using` releases the model when the scope ends, and a long-lived
+service keeps one parser and calls `await parser[Symbol.asyncDispose]()` at shutdown. The package
+holds zero parser of its own between calls.
 
 ```ts
-import { decodeAsJSON, decodeAsTuples, parse } from "mailwoman"
+import { createParser, decodeAsJSON, decodeAsTuples } from "mailwoman"
 
-const result = await parse("350 5th Ave, New York, NY 10118")
+await using parser = await createParser()
+
+const result = await parser.parse("350 5th Ave, New York, NY 10118")
 ```
 
 `result` is a `PipelineResult`:

@@ -33,7 +33,11 @@ import { Globerator } from "spliterator/node/fs"
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { createGeocodeSessionOptions, type GeocodeSessionOptions } from "#geocode/options"
+import {
+	createGeocodeSessionOptions,
+	type GeocodeSessionOptions,
+	type GeocodeSessionOptionsInput,
+} from "#geocode/options"
 import { createGeocodeProcessScope, createGeocodeSession } from "#geocode/session"
 import { GeocodeSessionSlot } from "#geocode/session/slot"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
@@ -183,9 +187,16 @@ export interface ServeEngine extends AsyncDisposable {
  * The server states no locale, so each session records its locale as the default.
  * `$MAILWOMAN_WOF_DB` and `$MAILWOMAN_CANDIDATE_DB` pin the gazetteer as they do for `mailwoman geocode`.
  */
-function serveSessionOptions(): GeocodeSessionOptions {
-	return createGeocodeSessionOptions({ dataRoot: DATA_ROOT })
+function serveSessionOptions(stated: ServeSessionOptionsInput): GeocodeSessionOptions {
+	return createGeocodeSessionOptions({ ...stated, dataRoot: DATA_ROOT })
 }
+
+/**
+ * The session options a server may state on top of the library defaults.
+ *
+ * The data root is the process's, so a caller can't state another.
+ */
+export type ServeSessionOptionsInput = Omit<GeocodeSessionOptionsInput, "dataRoot">
 
 /**
  * Builds the wired `mailwoman serve` engine, awaited once at boot so a misconfigured
@@ -195,11 +206,14 @@ function serveSessionOptions(): GeocodeSessionOptions {
  * The classifier lives in a process scope that every session shares,
  * and `reload` builds a session for the data root's current generation, swaps it in,
  * and closes the previous session once its in-flight requests finish.
+ *
+ * @param stated The session options the server states, such as the container image's `countryScope: "none"`.
+ * `mailwoman serve` states none and takes the library defaults.
  */
-export async function createServeEngine(): Promise<ServeEngine> {
+export async function createServeEngine(stated: ServeSessionOptionsInput = {}): Promise<ServeEngine> {
 	// `health` reads files best-effort and never throws, so it is wired unconditionally.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
-	const options = serveSessionOptions()
+	const options = serveSessionOptions(stated)
 	const processScope = createGeocodeProcessScope(options)
 	const disposeProcessScope = () => processScope[Symbol.asyncDispose]()
 
