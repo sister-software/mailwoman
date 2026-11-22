@@ -1,0 +1,103 @@
+---
+title: Gazetteer overlay tiles
+description: How the wof and gazetteer overlay tile sets are built, in a container on AWS or on the lab host.
+---
+
+# Gazetteer overlay tiles
+
+Two tile sets draw the gazetteer's places over the basemap, so a place that one source holds and the other lacks is
+visible on the map. Earth's Gazette explorer reads them.
+
+| Tile set              | Row set                                         | Boundaries from                                                           |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `wof.<version>`       | Every record of the Who's On First admin clones | The record's own geometry, at full resolution                             |
+| `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`   | The `wof` export by id, or the union of an Overture division's land areas |
+
+Each archive holds three layers: `boundaries`, `points` and `extents`. `extents` is the rectangle the gazetteer stores
+for each place, which the resolver reads in place of a boundary. Each feature's id is the place id, and its attributes
+are `name`, `placetype`, `country`, `source`, `parent_id`, `is_current`, `is_deprecated` and `is_superseded`. A
+`gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames publishes
+no boundaries.
+
+The tile worker serves each archive as XYZ tiles at `https://tiles.mailwoman.post/<tileset>/{z}/{x}/{y}.mvt`. Never
+publish either archive to `mailwoman-public`.
+
+## The build
+
+`mailwoman tiles overlays` runs the whole build from an empty work directory:
+
+1. It clones each admin repository from its `mailwoman` fork over HTTPS at depth 1.
+2. It copies the admin database when `--admin` is an `s3://` URL.
+3. `exportWOFGeoParquet` writes `export/rowset=wof/`.
+4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
+   `s3://overturemaps-us-west-2`, recomputes each division's synthetic id with `assignSyntheticIDs`, and fails when no
+   Overture place in the admin database maps to a division.
+5. `hrt overlay` builds one archive per row set, to zoom 12 unless `--max-zoom` says otherwise.
+6. `publishTiles` uploads each archive to `mailwoman-tiles/tiles/` through rclone. With `--dry-run`, it prints
+   each target in place of the upload.
+
+The steps run separately as `mailwoman gazetteer build geoparquet --rowset wof|gazetteer` and
+`hrt overlay <export>/rowset=<rowset> <out.pmtiles>`.
+
+## The image
+
+`docker/overlay-tiles.Dockerfile` builds `hrt` and the compiled monorepo into one `linux/amd64` image whose entry
+point is `mailwoman tiles overlays --work /work`. Build it from the repository root:
+
+```sh
+podman build -f docker/overlay-tiles.Dockerfile -t mailwoman-overlay-tiles .
+```
+
+The image measured 6.22 GB on 2026-11-22. Each rebuild leaves about 20 GB of untagged layers in podman's storage,
+and `podman image prune` removes them.
+
+A run on the lab host mounts a work directory and the admin database:
+
+```sh
+podman run --rm -v <work>:/work -v /mnt/mw/db/wof/admin-global-priority.db:/inputs/admin.db:ro \
+  localhost/mailwoman-overlay-tiles --tileset-version test --admin /inputs/admin.db --countries mc,bh --dry-run
+```
+
+On 2026-11-22 that run cloned 2 repositories and built a 91-tile `wof` archive and a 144-tile `gazetteer` archive. It
+read Overture's 85 folded countries to map the admin database's 883,204 Overture places, which took 3 minutes 18
+seconds of its 3 minutes 25 seconds.
+
+## A run on AWS
+
+### Credentials
+
+`mwops release mint-aws-credentials -o <file>` creates two identities, and `lib/release-kit/deploy/aws-credentials.ts`
+holds their policies. Run it once under a session with IAM write access, then copy the two keys it writes into `.env`.
+
+- `mailwoman-tile-build` is an IAM user. Its key stages inputs in `mailwoman-basemaps-inputs-<account>`, launches
+  instances in `us-west-2`, and stops, terminates and commands only instances tagged `mailwoman:purpose=tile-build`.
+- `mailwoman-tile-build-instance` is the instance role. A build instance reads the inputs bucket and the parameters
+  under `/mailwoman/tile-build/` through it, without a key on its disk.
+
+`mwops release aws-credentials` verifies the key in the environment.
+
+### Inputs
+
+| Input                       | Size                                                    | Where the run reads it                         |
+| --------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
+| `admin-global-priority.db`  | 7.3 GB (built 2026-11-21)                               | `s3://mailwoman-basemaps-inputs-<account>/`    |
+| Who's On First admin clones | Below 68 GB, the size of all 271 clones on the lab host | GitHub, cloned by the run                      |
+| Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region |
+| R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store    |
+
+The 68 GB figure covers every clone, postcode and other repositories included. The admin clones alone are unmeasured.
+
+### Instance
+
+The image is `linux/amd64`, so the instance is an x86 type. A type with local NVMe storage holds the clones, the
+exports and `hrt`'s sort files on instance scratch. Git, SQLite and the sort all write at random
+offsets. Mountpoint for S3 refuses those writes. The work directory is therefore never a bucket mount. `hrt` built all of Japan's basemap with a 15.8 GB peak
+on 2026-11-02, and DuckDB holds a quarter of host memory by default. A 64 GB host covers both. The full-planet
+resource use of this build is unmeasured.
+
+### Steps that remain unbuilt
+
+- The image has no registry. A push to `ghcr.io/sister-software/` or to ECR is the next decision, and the tile-build
+  policy holds no ECR permission.
+- No launch command exists yet. It will run the image on a tagged instance with the instance profile, read the R2 keys
+  from Parameter Store, and terminate the instance when the run exits.
