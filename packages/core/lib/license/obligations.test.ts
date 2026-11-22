@@ -12,6 +12,16 @@ import {
 	licenseIdentifiers,
 	summarizeLicense,
 } from "#license"
+import { soldUnderCommercialTerms } from "#license/obligations"
+
+describe("soldUnderCommercialTerms", () => {
+	it("reads the commercial branch of a dual license and nothing in a single open license", () => {
+		expect(soldUnderCommercialTerms("AGPL-3.0-only OR LicenseRef-Commercial")).toBe(true)
+		expect(soldUnderCommercialTerms("(AGPL-3.0-only OR LicenseRef-Commercial)")).toBe(true)
+		expect(soldUnderCommercialTerms("AGPL-3.0-only")).toBe(false)
+		expect(soldUnderCommercialTerms("LicenseRef-Commercial-Data")).toBe(false)
+	})
+})
 
 describe("summarizeLicense", () => {
 	it("reports an empty obligation list for a public-domain dedication as a statement, not an absence", () => {

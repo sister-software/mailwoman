@@ -25,6 +25,39 @@ export function grantsCommercialTerms(key: LicenseKeyVerification | null | undef
 }
 
 /**
+ * The identifier of Mailwoman's commercial terms (`commercial-LICENSE.md`).
+ */
+const COMMERCIAL_TERMS = "LicenseRef-Commercial"
+
+/**
+ * Whether an artifact's license expression offers it under Mailwoman's commercial terms,
+ * so a release of it performs `commercial-sublicense` on every source behind it.
+ *
+ * `commercial-sublicense` is the act of licensing a result built from a source's rows,
+ * trained weights or a served data layer, to a paying customer under `LicenseRef-Commercial`,
+ * beside or in place of the open-source branch.
+ * A source's decision permits it when its grant lets this repository license that result
+ * on terms of its own, for a fee: CC BY 4.0 §1(b) and §3(a)(4) let an adapter license
+ * Adapted Material under its own Adapter's License, and OGL v3.0 and Licence Ouverte
+ * 2.0 grant commercial exploitation `in your own product or application`.
+ *
+ * A grant refuses it when it limits use to non-commercial purposes, forbids sale
+ * or resale, or forbids terms on the result.
+ *
+ * The act passes on no license to the source's own rows.
+ * Under CC BY 4.0 §2(a)(5)(A), CC BY 3.0 AU clause 9, OGL v3.0 and Licence Ouverte 2.0
+ * a recipient takes the source's grant from its licensor directly, so the commercial
+ * terms add to that grant and never restrict it (CC BY 4.0 §2(a)(5)(B)).
+ *
+ * A grant's `non-sublicensable` clause therefore refuses an act this repository
+ * doesn't perform and doesn't refuse this one.
+ */
+export function soldUnderCommercialTerms(expression: string): boolean {
+	// A token match: the expression's words split on whitespace and parentheses, one linear pass.
+	return expression.split(/[\s()]+/u).includes(COMMERCIAL_TERMS)
+}
+
+/**
  * The obligation classes the summary reports.
  *
  * - `attribution` requires crediting the source where derived results are shown or redistributed.

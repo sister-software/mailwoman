@@ -240,7 +240,8 @@ export async function readCorpusSourceInputs(
 }
 
 /**
- * Why one corpus source lacks the permission {@linkcode TRAINING_OPERATIONS} need.
+ * Why one corpus source lacks a permission the checked operations need,
+ * {@linkcode TRAINING_OPERATIONS} unless the caller passes others.
  */
 export interface SourceRightsGap {
 	/**
@@ -273,12 +274,16 @@ export interface SourceRightsGap {
  * `corpusVersion` names a corpus already built, so a source whose inputs changed under
  * the same id is read against what that corpus's rows were built from.
  * A build or training check omits it and reads today's inputs.
+ *
+ * `operations` defaults to {@linkcode TRAINING_OPERATIONS}.
+ * A release check passes the operations releasing a model trained on the rows performs.
  */
 export function sourceRightsGaps(
 	source: string,
 	inputs: CorpusSourceInputs,
 	register: AddressSourceRegister,
-	corpusVersion?: string
+	corpusVersion?: string,
+	operations: readonly SourceOperation[] = TRAINING_OPERATIONS
 ): SourceRightsGap[] {
 	const resolved = inputs.resolve(source)
 
@@ -289,7 +294,7 @@ export function sourceRightsGaps(
 				registerSource: null,
 				licenseID: null,
 				state: null,
-				missing: [...TRAINING_OPERATIONS],
+				missing: [...operations],
 				because:
 					"no entry in packages/corpus/data/corpus-source-inputs.json says which register sources its rows are " +
 					"built from",
@@ -311,7 +316,7 @@ export function sourceRightsGaps(
 				registerSource: input.registerSource,
 				licenseID: row?.license ?? null,
 				state: null,
-				missing: [...TRAINING_OPERATIONS],
+				missing: [...operations],
 				because: row
 					? `the register declares no decision ${stringifyJSON(row.license)}`
 					: "the register has no such row",
@@ -320,7 +325,7 @@ export function sourceRightsGaps(
 			continue
 		}
 
-		const readings = TRAINING_OPERATIONS.map((operation) => ({
+		const readings = operations.map((operation) => ({
 			operation,
 			reading: permissionFor(decision, operation),
 		}))
