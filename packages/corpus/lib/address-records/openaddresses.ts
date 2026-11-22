@@ -73,7 +73,7 @@ export function openAddressesRunSubdivision(member: string): string | null {
  * because a street can end in its own town's name.
  *
  * A row with no `CITY` keeps its street, since no field states what a trailing town would repeat.
- * A street that would be left empty is kept whole.
+ * A street that would be left as one word shorter than three characters is kept whole.
  */
 function withoutRepeatedPlace(street: string, row: OpenAddressesRunRecord, member: string): string {
 	const city = row.city?.trim()
@@ -98,10 +98,22 @@ function withoutRepeatedPlace(street: string, row: OpenAddressesRunRecord, membe
 
 	if (!place) return street
 
-	const remainder = street.slice(0, place.index).trim()
+	const remainder = street
+		.slice(0, place.index)
+		.replace(/[\s,-]+$/u, "")
+		.trim()
 
-	return remainder || street
+	// A remainder of one word shorter than three characters, such as the `E` of `E YAKIMA WA`
+	// in Yakima, means the city's name is also the street's own name.
+	const lone = !/\s/u.test(remainder) && [...remainder].length < MIN_LONE_STREET_LENGTH
+
+	return remainder && !lone ? remainder : street
 }
+
+/**
+ * The fewest characters a one-word street left after the place is removed may hold.
+ */
+const MIN_LONE_STREET_LENGTH = 3
 
 /**
  * The address record for one run row, or `null` when the row lacks a number, a street or a position.

@@ -175,6 +175,10 @@ describe("OpenAddresses address records", () => {
 		)
 
 		expect(street({ street: "OLD STERLING" })?.streetRaw).toBe("OLD STERLING")
+		// A separator before the place goes with it, and a remainder of one short word keeps the street.
+		expect(street({ street: "PARK ST - STERLING CO" })?.streetRaw).toBe("PARK ST")
+		expect(street({ street: "K & H ST, STERLING, CO" })?.streetRaw).toBe("K & H ST")
+		expect(street({ street: "E STERLING CO" })?.streetRaw).toBe("E STERLING CO")
 		expect(street({ street: "CHURCH ST WRANGELL, AK 99929", city: "" })?.streetRaw).toBe("CHURCH ST WRANGELL, AK 99929")
 
 		// The digest identifier reads the street as written.
