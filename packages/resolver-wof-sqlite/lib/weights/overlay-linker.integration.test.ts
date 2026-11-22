@@ -12,7 +12,7 @@ import { md5File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { md5FileWithSidecar } from "#weights-overlay-linker"
+import { md5FileWithSidecar } from "#weights/overlay-linker"
 
 const fixtures = new AsyncDisposableStack()
 

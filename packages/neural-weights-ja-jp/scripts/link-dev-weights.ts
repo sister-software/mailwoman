@@ -10,7 +10,7 @@
  *   The graph, the character vocabulary and the encoder are therefore the cjk card's.
  *   This links the card and the per-locale FST (`fst-ja-jp.bin`).
  */
-import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 await materializeDevOverlay({
 	locale: "ja-jp",

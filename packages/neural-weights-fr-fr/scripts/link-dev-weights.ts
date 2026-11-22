@@ -4,7 +4,7 @@
 
 /**
  *   Materialize the fr-fr overlay's dev artifacts
- *   through `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.
+ *   through `@mailwoman/resolver-wof-sqlite/weights/overlay-linker`.
  *
  *   fr-fr declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and inherits the
  *   model, so this overlay links no model or tokenizer and removes any leftover local pair.
@@ -26,7 +26,7 @@ import {
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
-} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+} from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 /**
  * Raw BAN dump the lieu-dit pairs are extracted from.

@@ -74,20 +74,46 @@ describe("GeocodeAddress — national (BAN) rooftop tier wiring", () => {
 		expect(seen[0]?.addressPointBboxFallback).toBe(true)
 	})
 
-	test("a US parse never consults BAN (the US situs path owns address points)", async () => {
+	const regionTree = (region: string): AddressTree => ({
+		raw: "x",
+		roots: [{ tag: "region", value: region, start: 0, end: region.length, confidence: 1, children: [] }],
+	})
+
+	test("a region's database outranks the national source of its own country, which is never consulted", async () => {
 		const { resolver, seen } = captureResolver()
+		const stateLookup = sentinel()
 		const nationalDatabases = vi.fn((_c: string): RegionDatabases => ({ addressPoints: banLookup }))
+		const databases = vi.fn((_subdivision: string | null): RegionDatabases => ({ addressPoints: stateLookup }))
 
 		await geocodeAddress("350 5th Ave, New York, NY 10118", {
-			classifier: fakeClassifier(emptyTree),
+			classifier: fakeClassifier(regionTree("NY")),
 			resolver,
 			placeCountry: "none",
 			defaultCountry: { country: "US", source: "caller" },
+			databases,
 			nationalDatabases,
 		})
 
+		expect(databases).toHaveBeenCalledWith("US-NY")
 		expect(nationalDatabases).not.toHaveBeenCalled()
-		expect(seen[0]?.addressPoints).toBeUndefined()
+		expect(seen[0]?.addressPoints).toBe(stateLookup)
+	})
+
+	test("a region of another country ranks below the national source of the country the sources are picked for", async () => {
+		const { resolver, seen } = captureResolver()
+		const stateLookup = sentinel()
+
+		// `MI` is a state of the United States for a tree with no resolved country, and the scope is France.
+		await geocodeAddress("12 rue de la Paix, MI", {
+			classifier: fakeClassifier(regionTree("MI")),
+			resolver,
+			placeCountry: "none",
+			defaultCountry: { country: "FR", source: "caller" },
+			databases: () => ({ addressPoints: stateLookup }),
+			nationalDatabases: frRegister,
+		})
+
+		expect(seen[0]?.addressPoints).toBe(banLookup)
 	})
 
 	test("Wires the street-centroid provider + FR hint for a non-US parse", async () => {

@@ -148,12 +148,12 @@ export async function scaffoldWeightsOverlay(
 			? `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   Dev-weights linker for \`${packageName}\`.
  *
- *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the
+ *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights/overlay-linker\` and this file is the manifest — the
  *   overlay declares \`mailwoman.baseWeights\` on \`${basePackage}\`, so the graph and the character vocabulary are the
  *   family's and this links only the per-locale FST (\`${artifact}\`) from the shared build area, so
  *   \`resolveWeights({locale: "${slug}"})\` surfaces \`fstPath\` in local dev.
  */
-import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 await materializeDevOverlay({
 	locale: "${slug}",
@@ -164,7 +164,7 @@ await materializeDevOverlay({
 			: `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
  *   Dev-weights linker for \`${packageName}\`.
  *
- *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the
+ *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights/overlay-linker\` and this file is the manifest — the
  *   overlay declares \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
@@ -175,7 +175,7 @@ await materializeDevOverlay({
  *   for whichever locale you read first.
  */
 
-import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 await materializeDevOverlay({
 	locale: "${slug}",

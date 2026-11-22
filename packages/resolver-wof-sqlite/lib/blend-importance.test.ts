@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { blendImportance, ENCYCLOPEDIC_BOOST_CAP } from "#place-importance-schema"
+import { blendImportance, ENCYCLOPEDIC_BOOST_CAP } from "#schema/place-importance"
 
 describe("blendImportance", () => {
 	it("answers the referential score when there is no article", () => {

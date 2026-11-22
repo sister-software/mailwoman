@@ -33,7 +33,7 @@ import {
 	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
-} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+} from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 /**
  * The linz-derived OpenAddresses NZ countrywide CSV, the build's one source, md5-recorded in the header.

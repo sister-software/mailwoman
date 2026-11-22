@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { applyProximityRerank, combinedProminence, type ProximityRerankable } from "#proximity-rerank"
+import { applyProximityRerank, combinedProminence, type ProximityRerankable } from "#ranking/proximity-rerank"
 
 /**
  * A million-population primary and a coincidental foreign alias of the same name.

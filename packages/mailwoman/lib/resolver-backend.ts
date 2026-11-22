@@ -15,8 +15,8 @@ import type {
 	WOFPostalCityAliasLookup,
 	WOFSQLitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
-import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
-import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/candidate/capital-schema"
+import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/candidate/capitals"
 import { wofDatabaseRoot, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

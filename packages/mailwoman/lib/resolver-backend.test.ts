@@ -67,7 +67,7 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
+	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/candidate/capital-schema")
 	const { loadCapitalIndex } = await import("#resolver-backend")
 
 	await using dirDirectory = await temporaryDirectory("mw-capital-loader-")

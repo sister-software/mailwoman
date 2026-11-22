@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildPlaceSearchFTS } from "#fts"
 import { WOFSQLitePlaceLookup } from "#lookup"
-import { populationBoostTerm } from "#ranking-weights"
+import { populationBoostTerm } from "#ranking/weights"
 import type { WOFDatabase } from "#schema"
 
 interface FixturePlace {

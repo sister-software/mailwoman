@@ -13,7 +13,7 @@
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { STREET_TABLE_DDL, type StreetTableDatabase } from "@mailwoman/resolver-wof-sqlite/street/table"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

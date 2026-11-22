@@ -29,7 +29,7 @@ import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/cor
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
-import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 import { relative, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { $public } from "#release-kit/env"

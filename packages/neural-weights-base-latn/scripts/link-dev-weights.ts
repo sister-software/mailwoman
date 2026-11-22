@@ -17,7 +17,7 @@
  */
 
 import { workspacePath } from "@mailwoman/core/paths"
-import { committedSoftFeedLinks, materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { committedSoftFeedLinks, materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 const softFeed = await committedSoftFeedLinks()
 

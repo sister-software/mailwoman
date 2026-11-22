@@ -40,17 +40,17 @@ flowchart TD
     O --> P["winner + alternatives"]
 ```
 
-| pass              | sort key or rule                                                                   | input from the rest of the address            | source                                            |
-| ----------------- | ---------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------- |
-| SQL fetch         | `neg_rank` ascending, `RERANK_FETCH = 64` rows                                     | none                                          | `resolver-wof-sqlite/lib/candidate/lookup.ts`     |
-| Alias penalty     | `effectiveNegRank`, see below                                                      | none                                          | `resolver-wof-sqlite/lib/primary-preference.ts`   |
-| Anchor rerank     | `exactMatch` tier, then prominence plus the postcode's country posterior           | the postcode span                             | `resolver/lib/resolve.ts`                         |
-| Locale prior      | adds `DEFAULT_COUNTRY_PRIOR_WEIGHT = 2` to rows in the locale's country            | the session locale, set outside the address   | `resolver/lib/toponym-prior.ts`                   |
-| Importance        | `importance` descending within each `exactMatch` tier                              | none                                          | `resolver/lib/toponym-prior.ts`                   |
-| Capital promotion | a national capital may move ahead within `NATIONAL_CAPITAL_MARGIN_LOG10 = 2`       | none                                          | `capitalTier` in `runtime-flags.mdx`              |
-| Containment       | rows inside the qualifier move ahead, within the `exactMatch` tier                 | the parsed region, country or parent locality | `partitionByContainment`                          |
-| Placetype         | the requested placetype precedes a macro fallback                                  | the span's own tag                            | `resolver/lib/resolve.ts`                         |
-| Floor and repicks | refuse below `minWinningScore`; a bare country or region replaces a weaker top row | none                                          | `resolver/lib/resolve.ts`, `bare-toponym-race.ts` |
+| pass              | sort key or rule                                                                   | input from the rest of the address            | source                                                  |
+| ----------------- | ---------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| SQL fetch         | `neg_rank` ascending, `RERANK_FETCH = 64` rows                                     | none                                          | `resolver-wof-sqlite/lib/candidate/lookup.ts`           |
+| Alias penalty     | `effectiveNegRank`, see below                                                      | none                                          | `resolver-wof-sqlite/lib/ranking/primary-preference.ts` |
+| Anchor rerank     | `exactMatch` tier, then prominence plus the postcode's country posterior           | the postcode span                             | `resolver/lib/resolve.ts`                               |
+| Locale prior      | adds `DEFAULT_COUNTRY_PRIOR_WEIGHT = 2` to rows in the locale's country            | the session locale, set outside the address   | `resolver/lib/toponym-prior.ts`                         |
+| Importance        | `importance` descending within each `exactMatch` tier                              | none                                          | `resolver/lib/toponym-prior.ts`                         |
+| Capital promotion | a national capital may move ahead within `NATIONAL_CAPITAL_MARGIN_LOG10 = 2`       | none                                          | `capitalTier` in `runtime-flags.mdx`                    |
+| Containment       | rows inside the qualifier move ahead, within the `exactMatch` tier                 | the parsed region, country or parent locality | `partitionByContainment`                                |
+| Placetype         | the requested placetype precedes a macro fallback                                  | the span's own tag                            | `resolver/lib/resolve.ts`                               |
+| Floor and repicks | refuse below `minWinningScore`; a bare country or region replaces a weaker top row | none                                          | `resolver/lib/resolve.ts`, `bare-toponym-race.ts`       |
 
 The anchor rerank and importance pass are alternatives. If a postcode provides a country
 posterior, the resolver uses the anchor rerank and skips the locale prior, importance pass, and

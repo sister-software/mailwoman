@@ -5,7 +5,7 @@ import type { LatLonBounds as BrowseBox } from "@mailwoman/spatial/bbox"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { WOFPlaceBrowser } from "#browse"
+import { WOFPlaceBrowser } from "#lookup/browse"
 
 /**
  * The probe limit the browser is built with, small so the fixture stays small.

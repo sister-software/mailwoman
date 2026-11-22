@@ -21,8 +21,8 @@ import { bboxAround } from "@mailwoman/spatial/bbox"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
 import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "#fts"
-import type { RankingWeights } from "#ranking-weights"
-import type { FindPlaceQuery, WOFPlacetype } from "#types"
+import type { FindPlaceQuery, WOFPlacetype } from "#lookup/types"
+import type { RankingWeights } from "#ranking/weights"
 /**
  * Query length at or below which the FTS window is widened.
  *

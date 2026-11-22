@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   The place-lookup interface: the query a caller sends, the candidate a backend
+ *   returns, and the placetypes both speak in.
+ */
+
 import type { ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
 import type { LatLon, LatLonBounds } from "@mailwoman/spatial"
 

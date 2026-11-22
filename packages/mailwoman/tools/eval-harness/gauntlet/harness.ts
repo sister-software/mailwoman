@@ -23,7 +23,7 @@ import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { readFormerDivisionLookup } from "@mailwoman/resolver-wof-sqlite/former-divisions"
+import { readFormerDivisionLookup } from "@mailwoman/resolver-wof-sqlite/lookup/former-divisions"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"

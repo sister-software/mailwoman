@@ -25,7 +25,7 @@ import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 // The shared FTS sanitizer and ranking weights preserve its query and ranking behavior.
 import { aliasBagExactMatch, foldQueryText } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
-import { DEFAULT_WEIGHTS, populationBoostTerm } from "@mailwoman/resolver-wof-sqlite/ranking-weights"
+import { DEFAULT_WEIGHTS, populationBoostTerm } from "@mailwoman/resolver-wof-sqlite/ranking/weights"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
 import { disposeSlimWOFDatabase } from "#loader"

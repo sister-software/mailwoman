@@ -5,7 +5,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, test } from "vitest"
 
 import { WOFSQLitePlaceLookup } from "#lookup"
-import type { RankingWeights } from "#ranking-weights"
+import type { RankingWeights } from "#ranking/weights"
 import type { WOFDatabase } from "#schema"
 
 interface SeedRegion {

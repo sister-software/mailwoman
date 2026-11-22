@@ -86,7 +86,7 @@ describe("regionSubdivisionOfTree country check", () => {
 			roots: [node({ tag: "region", value, metadata: { resolver_name: "Kentucky" } })],
 		})
 
-		expect(regionSubdivisionOfTree(named("Kentuckey"))).toBe("US-KY")
+		expect(regionSubdivisionOfTree(named("Bluegrass State"))).toBe("US-KY")
 		expect(regionSubdivisionOfTree(named("ZZ"))).toBeNull()
 	})
 

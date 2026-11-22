@@ -15,8 +15,8 @@
  */
 
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { createPolygonsTable, type PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createPolygonsTable, type PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import type { AreaGeometry } from "@mailwoman/spatial/geometries/simplify"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"

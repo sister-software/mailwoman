@@ -38,7 +38,7 @@ import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
-import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { resolvePath } from "path-ts"
 
@@ -194,7 +194,7 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 			json: { tryParsingJSON },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
-			polygonSchema: import("@mailwoman/resolver-wof-sqlite/polygon-schema"),
+			polygonSchema: import("@mailwoman/resolver-wof-sqlite/schema/polygon"),
 			json: import("@mailwoman/core/json"),
 		})
 

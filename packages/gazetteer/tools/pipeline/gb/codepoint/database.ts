@@ -191,7 +191,7 @@ export async function buildPostcodeCodePoint(
 		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
 		geonames: { normalizePostcodeName },
 	} = await allKeyed({
-		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/schema/unified"),
 		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
 	})
 

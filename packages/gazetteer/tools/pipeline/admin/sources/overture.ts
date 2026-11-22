@@ -21,7 +21,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 // These imports are type-only because the package is an optional peer that callers load lazily.
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
-import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/overture-match-schema"
+import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/schema/overture-match"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
@@ -406,7 +406,7 @@ export async function writeOvertureDivisions(
 	wof?: { index: WOFPlaceIndex; onGap: (gap: UnmatchedPlace) => void }
 ): Promise<OvertureDivisionsResult> {
 	const { createOvertureWOFMatchTable, OVERTURE_WOF_MATCH_TABLE } =
-		await import("@mailwoman/resolver-wof-sqlite/overture-match-schema")
+		await import("@mailwoman/resolver-wof-sqlite/schema/overture-match")
 
 	await createOvertureWOFMatchTable(db)
 

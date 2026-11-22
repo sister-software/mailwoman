@@ -18,9 +18,9 @@ import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { createPhaseClock, formatPhaseTimings, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
-import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/overture-match-schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/schema/overture-match"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -114,7 +114,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
 	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/schema/unified")
 
 	const ingestPath = out + ".ingest"
 

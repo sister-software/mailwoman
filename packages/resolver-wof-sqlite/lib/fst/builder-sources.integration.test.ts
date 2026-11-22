@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF } from "#fst/builder"
 import type { WOFDatabase } from "#schema"
-import { createUnifiedSchema } from "#unified-schema"
+import { createUnifiedSchema } from "#schema/unified"
 
 /**
  * Writes a one-place admin database: Springfield, with a WOF name and an Overture alias.

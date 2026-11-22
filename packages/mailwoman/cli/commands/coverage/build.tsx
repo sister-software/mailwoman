@@ -139,7 +139,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 		// The holes layer reads `place_importance` from the importance build stamped with the admin's md5.
 		// A missing or mismatched build refuses here, giving both paths.
 		const importance = options.postcode
-			? await (await import("@mailwoman/resolver-wof-sqlite/importance-source")).resolveImportanceForAdmin(
+			? await (await import("@mailwoman/resolver-wof-sqlite/schema/importance-source")).resolveImportanceForAdmin(
 					options.admin
 				)
 			: null

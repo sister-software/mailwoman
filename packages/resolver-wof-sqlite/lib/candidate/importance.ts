@@ -41,7 +41,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { CandidateDatabase } from "#candidate/schema"
-import { loadPopulationEstimates, type PlacePopulationEstimateDatabase } from "#place-importance-schema"
+import { loadPopulationEstimates, type PlacePopulationEstimateDatabase } from "#schema/place-importance"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**

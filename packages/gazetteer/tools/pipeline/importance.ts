@@ -17,7 +17,7 @@
  *   and `encyclopedic` (the Wikipedia join, NULL when there's no article) in their own
  *   columns, plus the legacy `importance` column via `blendImportance`.
  *   Schema, DDL, the referential derivation and the blend live in
- *   `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing either score.
+ *   `@mailwoman/resolver-wof-sqlite/schema/place-importance` — read it before changing either score.
  *
  *   The admin database must already contain `concordances` and `place_population` for the fallback.
  *
@@ -44,14 +44,14 @@ import {
 	importanceDatabasePath,
 	type ImportanceSourceDatabase,
 	writeImportanceSource,
-} from "@mailwoman/resolver-wof-sqlite/importance-source"
+} from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import {
 	blendImportance,
 	createPlaceImportanceTable,
 	createPlacePopulationEstimateTable,
 	type PlaceImportanceDatabase,
 	type PlacePopulationEstimateDatabase,
-} from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+} from "@mailwoman/resolver-wof-sqlite/schema/place-importance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows } from "@mailwoman/sqlite/introspection"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"

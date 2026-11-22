@@ -19,7 +19,7 @@ import {
 	readImportanceSource,
 	resolveImportanceForAdmin,
 	resolveImportanceOrRefusal,
-} from "@mailwoman/resolver-wof-sqlite/importance-source"
+} from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { isSealed } from "@mailwoman/sqlite/sealed/db"
 import type { PathBuilder } from "path-ts"

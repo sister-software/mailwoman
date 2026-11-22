@@ -16,7 +16,7 @@ import { readReleaseConfig } from "@mailwoman/core/release-config"
 import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { materializeDevOverlay } from "#weights-overlay-linker"
+import { materializeDevOverlay } from "#weights/overlay-linker"
 
 const fixtures = new AsyncDisposableStack()
 

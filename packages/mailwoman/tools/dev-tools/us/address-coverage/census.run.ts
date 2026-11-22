@@ -27,12 +27,12 @@ import {
 	addressLayerManifestPath,
 	type AddressLayerCountryManifest,
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
+import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/lookup/reverse"
 import {
 	addressPointDatabasePath,
 	interpolationDatabasePath,
 	wofDatabasePath,
 } from "@mailwoman/resolver-wof-sqlite/paths"
-import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
