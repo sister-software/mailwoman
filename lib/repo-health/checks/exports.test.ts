@@ -14,10 +14,9 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { RepoContext } from "#repo-health/check"
-import { exportsCheck } from "#repo-health/checks/exports"
 
 const mocks = vi.hoisted(() => ({ run: vi.fn() }))
 
@@ -55,13 +54,23 @@ function issue(lists: { file: string } & Record<string, unknown>) {
 async function reportedFiles(...issues: Array<ReturnType<typeof issue>>): Promise<string[]> {
 	mocks.run.mockResolvedValue({ stdout: stringifyJSON({ issues }), stderr: "" })
 
+	const { exportsCheck } = await import("#repo-health/checks/exports")
 	const diagnostics = await exportsCheck.run(context)
 
 	return diagnostics.map((diagnostic) => diagnostic.file).filter(isPresent)
 }
 
+// Test files share one module graph per worker, so an earlier file may have
+// loaded the check with the real process module.
+// Each case loads the check again after the reset.
 beforeEach(() => {
+	vi.resetModules()
 	mocks.run.mockReset()
+})
+
+// The next test file in this worker loads its modules without the replacement.
+afterAll(() => {
+	vi.resetModules()
 })
 
 describe("exportsCheck", () => {

@@ -11,10 +11,9 @@
  */
 
 import type { SupportPromise } from "@mailwoman/codex/support"
-import { describe, expect, it, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DiagnosticSeverity, type RepoContext } from "#repo-health/check"
-import { supportPromisesCheck } from "#repo-health/checks/locale/support-promises"
 
 const planted = vi.hoisted(() => ({ promises: [] as unknown[] }))
 
@@ -27,12 +26,25 @@ vi.mock("@mailwoman/codex/support", async (importOriginal) => ({
 
 const context: RepoContext = { repoRoot: "/checkout", trackedFiles: [] }
 
+// Test files share one module graph per worker, so an earlier file may have
+// loaded the check with the declared promise list.
+// Each case loads the check again after the reset.
+beforeEach(() => {
+	vi.resetModules()
+})
+
+// The next test file in this worker loads its modules without the replacement.
+afterAll(() => {
+	vi.resetModules()
+})
+
 /**
  * The messages of the errors the check reports when the declaration holds `promises`.
  */
 async function errorsFor(promises: readonly SupportPromise[]): Promise<string[]> {
 	planted.promises = [...promises]
 
+	const { supportPromisesCheck } = await import("#repo-health/checks/locale/support-promises")
 	const diagnostics = await supportPromisesCheck.run(context)
 
 	return diagnostics
