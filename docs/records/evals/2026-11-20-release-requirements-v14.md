@@ -8,9 +8,9 @@ owner: evaluation
 # Release requirements v14 draft, the 11.2.0 comparator and a pending confirmation role
 
 Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v14.json`
-exists beside v13, and `release/current-spec.ts` still names v13. The reader refuses v14 while its confirmation
-pins read `@pending`. It is registered when a candidate passes the development role, as v12 and v13 were. No
-model has read a v14 role.
+exists beside v13, and `release/current-spec.ts` still names v13. Its confirmation pins name the two collections
+section 7 records, frozen on 2026-11-22. It is registered when a candidate passes the development role, as v12 and
+v13 were. No model has read a v14 role.
 
 ## 1. What changes
 
@@ -213,3 +213,53 @@ by default, so the release report states the arms' pins.
 | `pairIndexOwnCountry`         | off         | The locale head misreads rows: the Lebanese rows read as GB, and on 400 US probes 220 word labels changed.                                                                           |
 | `fstCountryRouting`           | off         | It routes by the same locale-head read as `pairIndexOwnCountry`, so the same misreads choose another country's FST (inferred, and unmeasured on these probes).                       |
 | postal-children pair index    | not shipped | At least 97 of the 184 US pairs it drops decode as two adjacent localities.                                                                                                          |
+
+## 7. The draw, 2026-11-22
+
+Corpus v0.8.22 is an overlay on `v0.8.21-retention-overlay` (`packages/corpus/data/builds/v0.8.22-overlay/OVERLAY_PLAN.json`):
+`wof-admin` rebuilt, `rendered-de` re-rendered, and `rendered-former-divisions` and `rendered-prominent-places` added.
+The build's manifest, `v0.8.22-overlay`, is the `<build>` of section 4. Its test rows outside every frozen group are
+those four sources' held-out places. Every other file is carried from v0.8.21 with v0.8.21's split, whose test rows
+are frozen groups only.
+
+The freeze excluded the nine collections section 4 lists and skipped two carried files,
+`invented-po-box-cedex-v0.8.20.parquet` and `invented-postal-unit-guideline-v0.8.20.parquet`. Their test rows are
+`v0.8.20-recipe-probe-text-collisions`' groups, a set the group list sends to test that no dataset manifest records,
+so `--exclude-dataset` can't name it. Without the skip, the draw took 50 of their rows (US 20, FR 13, CA 9, NZ 5, AU 3),
+whose text repeats a read probe row's. The first draw of 1,000 per country (seed 2211) left every objective country
+under 75 groups, and was discarded with only its counts read. The redraw at 4,000 (seed 2212) is the collection:
+
+| Collection                                        |  Rows | Rows sha256 | Audit against `v0.8.21-retention-overlay`, folded text and address key |
+| ------------------------------------------------- | ----: | ----------- | ---------------------------------------------------------------------- |
+| `heldout-confirm-v0.8.22@5383e65f6aa768bb`        | 4,681 | `ea90895f…` | 1,224 `verified_unseen`, 3,457 `known_overlap`                         |
+| `heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d` | 5,000 | `fc438185…` | 5,000 `verified_unseen`, no overlap of any kind                        |
+
+The redraw holds the same 1,224 admitted rows as the 1,000-row draw, so the pool is exhausted. Comparison-eligible
+address groups (`heldoutRowKind`) against the 75 target:
+
+| Country | Address rows | Eligible groups | Sources                                                   |
+| ------- | -----------: | --------------: | --------------------------------------------------------- |
+| US      |            0 |               0 | none                                                      |
+| FR      |            0 |               0 | none                                                      |
+| GB      |            0 |               0 | none                                                      |
+| ES      |            0 |               0 | none                                                      |
+| AU      |            0 |               0 | none                                                      |
+| DE      |        3,261 |               1 | `rendered-de`: 3,071 rows match a v0.8.21 row by identity |
+| IN      |            4 |               2 | `rendered-prominent-places`                               |
+| IT      |           10 |              10 | `rendered-former-divisions`                               |
+| NZ      |           19 |               8 | `rendered-prominent-places`                               |
+
+Every objective country reads insufficient evidence. The re-render of `rendered-de` keeps v0.8.21's seed and its rows'
+source ids, so its held-out rows are rows 11.2.0 read. `heldoutRowKind` counts `rendered-prominent-places` and
+`rendered-former-divisions` rows as addresses, though each writes one to four admin components. The collection's
+gazetteer rows are `wof-admin`'s: 1,080 rows in 440 groups, 369 of them eligible, NZ 142.
+
+Against `v0.8.22-retention-overlay`, the re-split under `evaluation-groups.v0.8.22-confirm.json`, the collection overlaps
+no train or val row by identity, group or address key. 132 rows match by folded text, 8 of them rows the audit
+against 11.2.0 admitted. All 5,000 probe rows stay unmatched by every kind.
+
+The freeze costs the prominent-place receipt (#3156) its presence rule. A `rendered-prominent-places` row takes its
+place's WOF record as `base_source_id`, so it shares the group of that record's `wof-admin` rows. The collection froze
+the groups of 123 of the recipe's 16,425 places, and the validation quota chose 16 more, so the re-split sends their
+rows out of train. On the v8.10.0 config the receipt covers 20,584 of 20,947 required forms and fails 11 of 813
+demand cells. Coherence passes.

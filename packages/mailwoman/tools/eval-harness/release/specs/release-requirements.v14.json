@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 4,
 	"specVersion": "14",
-	"rationale": "DRAFT, unregistered (docs/records/evals/2026-11-20-release-requirements-v14.md). Version 14 follows the release of v13's candidate as @mailwoman/neural-weights-en-us 11.2.0: the published identity becomes 11.2.0's model.onnx, and the corpus every comparative row must be absent from becomes v0.8.21-retention-overlay. Reads of v13: its development role was read on 2026-11-19 by 10.8.0 and v8.9.0 seed 42; its confirmation role (heldout-confirm-v0.8.20, heldout-confirm-v0.8.18-in, heldout-confirm-v0.8.20-probes) was read once on 2026-11-19 by 10.8.0 (baseline) and v8.9.0 seed 42, verdict pass, which retires all three for every later candidate (HOLDOUT_AND_EVALUATION section 6.5). The confirmation role is pending: the v0.8.21 corpus family holds no unread row unseen by 11.2.0 outside a registered collection (its test split holds 336,925 rows, all in evaluation-groups.v0.8.21.json), and the record names the draw and its commands. The development role keeps v13's three collections, whose groups v0.8.21 and the next corpus both send to test. #3156's prominent_places check is not added, because heldout-dev-prominent-v1 and heldout-confirm-prominent-v1 do not exist. Every requirement, the objective, the statistics, the provenance admission, the scorer and the inference rule are v13's. The candidate identity stays empty until a candidate passes the development role.",
+	"rationale": "DRAFT, unregistered (docs/records/evals/2026-11-20-release-requirements-v14.md). Version 14 follows the release of v13's candidate as @mailwoman/neural-weights-en-us 11.2.0: the published identity becomes 11.2.0's model.onnx, and the corpus every comparative row must be absent from becomes v0.8.21-retention-overlay. Reads of v13: its development role was read on 2026-11-19 by 10.8.0 and v8.9.0 seed 42; its confirmation role (heldout-confirm-v0.8.20, heldout-confirm-v0.8.18-in, heldout-confirm-v0.8.20-probes) was read once on 2026-11-19 by 10.8.0 (baseline) and v8.9.0 seed 42, verdict pass, which retires all three for every later candidate (HOLDOUT_AND_EVALUATION section 6.5). The v0.8.21 corpus family holds no unread row unseen by 11.2.0 outside a registered collection (its test split holds 336,925 rows, all in evaluation-groups.v0.8.21.json), so the confirmation role is drawn from the v0.8.22 build by the record's section 4: heldout-confirm-v0.8.22@5383e65f6aa768bb and heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d, frozen 2026-11-22. The build adds rows only from wof-admin, rendered-de, rendered-former-divisions and rendered-prominent-places, so no objective country reaches 75 comparison-eligible address groups against 11.2.0, and each reads insufficient evidence. The development role keeps v13's three collections, whose groups v0.8.21 and the next corpus both send to test. #3156's prominent_places check is not added, because heldout-dev-prominent-v1 and heldout-confirm-prominent-v1 do not exist. Every requirement, the objective, the statistics, the provenance admission, the scorer and the inference rule are v13's. The candidate identity stays empty until a candidate passes the development role.",
 	"requirements": [
 		{
 			"id": "country-US",
@@ -170,12 +170,12 @@
 	"identities": {
 		"dataset": [
 			{
-				"id": "heldout-confirm-v0.8.22@pending",
-				"sha256": null
+				"id": "heldout-confirm-v0.8.22@5383e65f6aa768bb",
+				"sha256": "ea90895f98321ce4edf2735ce93bc4cb19a4d0d1548fe495d2a8d549bf867073"
 			},
 			{
-				"id": "heldout-confirm-v0.8.22-probes@pending",
-				"sha256": null
+				"id": "heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d",
+				"sha256": "fc438185ec419fe000680c0e725f336ff6fcdee821771b51b4b8d0e7fd4d0c0f"
 			}
 		],
 		"scorer": {
@@ -223,8 +223,8 @@
 			"description": "v13's development collections, unchanged: heldout-dev-v0.8.18 v4, heldout-dev-v0.8.19-probes-r2 v2 and heldout-dev-v0.8.21, with the paths and sha256 values v13 records. evaluation-groups.v0.8.21.json sent every group of the three to test in corpus v0.8.21-retention-overlay, the corpus 11.2.0 trained on, and evaluation-groups.v0.8.22.json keeps them in test and adds the NAD address key of every frozen NAD row (#3125). 11.2.0 trained on the US rows of heldout-dev-v0.8.21 that a re-ingested NAD record repeats, so those rows stay known_overlap for every comparison against it; the record gives the counts. Used for recipe, checkpoint and seed selection."
 		},
 		"confirmation": {
-			"ids": ["heldout-confirm-v0.8.22@pending", "heldout-confirm-v0.8.22-probes@pending"],
-			"description": "Pending. Unread rows that neither 11.2.0 (corpus v0.8.21-retention-overlay) nor the next corpus trains on, with at least 75 comparison-eligible groups in each of US, FR, GB, DE, IN, ES, IT, AU and NZ, and a capability probe set rendered with a seed no corpus build or earlier probe set uses. The record names the draw for each country and its commands. Read once, for the release decision; every read is recorded in the next spec version's rationale."
+			"ids": ["heldout-confirm-v0.8.22@5383e65f6aa768bb", "heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d"],
+			"description": "Unread rows that neither 11.2.0 (corpus v0.8.21-retention-overlay) nor the v0.8.22 corpus trains on, and a capability probe set rendered with a seed no corpus build or earlier probe set uses. heldout-confirm-v0.8.22 is 4,681 rows drawn at 4,000 per country and kind (seed 2212) from the test rows of corpus v0.8.22-overlay, every frozen collection's groups excluded; the audit against v0.8.21-retention-overlay with folded text and address keys admits 1,224 rows as verified_unseen. Comparison-eligible address groups: US, FR, GB, ES and AU 0, DE 1, IN 2, IT 10, NZ 8, each under the 75-group target, so each objective country reads insufficient evidence. heldout-confirm-v0.8.22-probes is 5,000 rows (render seed 2213, confirmation draw seed 2215), all verified_unseen. evaluation-groups.v0.8.22-confirm.json sends both to test in v0.8.22-retention-overlay. Read once, for the release decision; every read is recorded in the next spec version's rationale."
 		}
 	}
 }

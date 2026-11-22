@@ -2,7 +2,7 @@
 # that corpus exists. Every key and value is that config's except these:
 #
 # 1. `data.corpus_dir` is corpus v0.8.22,
-#    /data/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay. It is to be built from the
+#    /data/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay, built on 2026-11-22 from the
 #    corpus fixes landed for this cycle:
 #    - `wof-admin` writes a dependent locality only beside its parent locality (#3156's label policy). On v0.8.21,
 #      111,355 `wof-admin` train rows in 159 countries wrote one without a locality, 104,920 of them in short admin
@@ -44,8 +44,10 @@
 #    country `country_weights` leaves out isn't required. `country_weights` admits at 1.0, as it does every other
 #    country, the 35 countries v8.9.0 left out that hold selected places on the 2026-11-19 table (518 places, YE 124
 #    and BO 101 the largest): AQ, BO, CC, CM, CX, EH, FJ, GA, GQ, GS, GY, KI, KP, LY, MR, NF, NR, NU, PN, PS, PW, SJ,
-#    SL, SS, SY, TD, TF, TG, TL, TV, WS, XK, XS, XX and YE. `prominent-places-exposure` floors the recipe's draws at
-#    0.9 of expected.
+#    SL, SS, SY, TD, TF, TG, TL, TV, WS and YE. It doesn't list XK, XS or XX, the three of the 35 WOF records under
+#    a code outside ISO 3166-1: `weightedCountries` (`countriesDeclaredBy`) refuses such a key, so the validation
+#    quota and the launch refuse a config that lists one. The v0.8.22 recipe holds 66 rows of theirs (XK 24, XX 42),
+#    which the run draws none of. `prominent-places-exposure` floors the recipe's draws at 0.9 of expected.
 # 4. `train.output_dir` and `train.trackio_run_name` name the run.
 # 5. `source_reps` gives `rendered-former-divisions` 1.0, one pass over its rows across the run. By the exposure
 #    arithmetic of `exposure/shapes.ts` (`drawsPerAdmittedRow`, `countryAdmission`), with the 16,024 tuple rows in the
@@ -65,18 +67,23 @@
 #
 # Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
 # section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
-# - not done: point 1 records the manifest's sha256 and split counts;
-# - not done: `required_validation_label_support` is re-derived from the v0.8.22 val draw, and
-#   `audits/validation/coverage.run.ts` finds every `required_validation_coverage` floor met;
-# - not done: the epoch-mixture audit meets every receipt;
-# - not done: `places.run.ts tuples --config <this file>` against the v0.8.22 base scan, after this config's weights are
-#   final, since the row counts follow from them.
-# - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. With the recipe simulated
-#   from v0.8.21 under this config it covers 21,034 of 21,034 required forms. Of 824 demand cells, 821 pass, 0 fail
-#   and 3 are unwritable: FJ and GD locality region (Suva and Saint George's have no WOF region) and ID sub-locality
-#   parent (Depok's GeoNames match fails the parent check). It still fails on coherence, 104,920 v0.8.21 `wof-admin`
-#   rows. The fixed adapter of point 1 writes none of them. `places.run.ts tuples --config` refuses v0.8.21 itself,
-#   which holds no `rendered-former-divisions` rows, so the simulation added the 16,024 tuple rows to the epoch.
+# - done 2026-11-22: the manifest, built by packages/corpus/data/builds/v0.8.22-overlay/OVERLAY_PLAN.json and re-split
+#   under evaluation-groups.v0.8.22-confirm.json, is MANIFEST.json sha256
+#   ddc5b1114b6acbde88a68148e346ecd0527860605c1819c638ec7459c0263e24: 1,104 files, train 889,241,008, val 22,845,
+#   test 366,701;
+# - done 2026-11-22: `required_validation_label_support` is re-derived from the v0.8.22 val draw (its comment), and
+#   `audits/validation/coverage.run.ts` finds all 21 `required_validation_coverage` floors met;
+# - done 2026-11-22: the epoch-mixture audit (1,000,000 draws) meets all 71 receipts. `former-divisions-exposure`
+#   draws 1,360 against 1,235 (expected 1,372), and `prominent-places-exposure` 11,757 against 10,503 (expected 11,671);
+# - done 2026-11-22: `places.run.ts tuples --config <this file>` against the scan of v0.8.22-base-overlay, the v0.8.22
+#   corpus before the recipe joins it, after this config's weights were final: 32,430 rows for 16,425 places,
+#   rendered with seed 20261122;
+# - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. On v0.8.22 coherence
+#   passes (0 short admin train rows write a dependent locality without a locality), but presence covers 20,584 of
+#   20,947 required forms and 11 of 813 demand cells fail (3 more are unwritable: FJ and GD locality region, ID
+#   sub-locality parent). The recipe's rows take their place's WOF record as `base_source_id`, so they share its
+#   group, and the re-split sends 139 of the 16,425 places out of train: 123 whose group heldout-confirm-v0.8.22 froze
+#   and 16 the validation quota chose. No earlier list held any of them.
 # - done: the places table `data.prominent_place_coverage` names is frozen on the host at
 #   /mnt/mw/audits/prominent-places/candidate-global-2026-11-19/ (`places.parquet` sha256 acfcd09a44b22622…, record
 #   version 3 with the `postal_pair` column). The version-2 table is kept beside it as `.v2-2026-11-20`. Only the
@@ -116,7 +123,7 @@ data:
       SR: 1.0, SS: 1.0, ST: 1.0, SV: 1.0, SX: 1.0, SY: 1.0, SZ: 1.0, TC: 1.0, TD: 1.0, TF: 1.0, TG: 1.0, TH: 1.0,
       TJ: 1.0, TK: 1.0, TL: 1.0, TM: 1.0, TN: 1.0, TO: 1.0, TR: 1.0, TT: 1.0, TV: 1.0, TW: 1.0, TZ: 1.0, UA: 1.0,
       UG: 1.0, UM: 1.0, US: 1.0, UY: 1.0, UZ: 1.0, VA: 1.0, VC: 1.0, VE: 1.0, VG: 1.0, VI: 1.0, VN: 1.0, VU: 1.0,
-      WF: 1.0, WS: 1.0, XK: 1.0, XS: 1.0, XX: 1.0, YE: 1.0, YT: 1.0, ZA: 1.0, ZM: 1.0, ZW: 1.0,
+      WF: 1.0, WS: 1.0, YE: 1.0, YT: 1.0, ZA: 1.0, ZM: 1.0, ZW: 1.0,
     }
   source_weights:
     invented-house-venue: 2.0
@@ -741,18 +748,22 @@ data:
       min_street_rows: 10
     # PM has no entry. The hashed place holdout (6ff893e25) leaves it no held-out place, so its val split held 1 row on
     # v0.8.1, and a country with no held-out split gets no floor, as BL and MF got none in v7.2.0.
-  # v8.9.0's floors, measured on v0.8.21. This config's header lists their re-derivation on v0.8.22 as not done.
+  # Half of each label's rows in the 21,596-row val draw of v0.8.22-retention-overlay, rounded down, measured
+  # 2026-11-22 by audits/label/support.run.ts on this config re-rooted at /mnt/mw. Measured counts: locality 18,957,
+  # street 16,518, postcode 15,134, house_number 15,102, region 5,152, venue 4,075, street_prefix 2,583, country
+  # 2,520, street_suffix 1,769, unit 363. dependent_locality 1,345, subregion 383 and po_box 47 take no floor, as
+  # the v0.8.2 floors set none for them.
   required_validation_label_support:
-    - {label: postcode, split: val, min_rows: 7377}
-    - {label: locality, split: val, min_rows: 9117}
-    - {label: street, split: val, min_rows: 8077}
-    - {label: house_number, split: val, min_rows: 7402}
-    - {label: region, split: val, min_rows: 2403}
-    - {label: street_suffix, split: val, min_rows: 885}
-    - {label: street_prefix, split: val, min_rows: 1297}
-    - {label: venue, split: val, min_rows: 1957}
-    - {label: unit, split: val, min_rows: 184}
-    - {label: country, split: val, min_rows: 1220}
+    - {label: postcode, split: val, min_rows: 7567}
+    - {label: locality, split: val, min_rows: 9478}
+    - {label: street, split: val, min_rows: 8259}
+    - {label: house_number, split: val, min_rows: 7551}
+    - {label: region, split: val, min_rows: 2576}
+    - {label: street_suffix, split: val, min_rows: 884}
+    - {label: street_prefix, split: val, min_rows: 1291}
+    - {label: venue, split: val, min_rows: 2037}
+    - {label: unit, split: val, min_rows: 181}
+    - {label: country, split: val, min_rows: 1260}
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row

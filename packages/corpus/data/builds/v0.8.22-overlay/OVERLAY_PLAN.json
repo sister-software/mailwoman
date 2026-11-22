@@ -1,0 +1,111 @@
+{
+	"$plan-note": "The plan for corpus v0.8.22, applied 2026-11-22 by `mailwoman corpus overlay-manifest` from origin/main 45866da933 (the fields below are the applied plan's). The re-split under the evaluation-group policy followed and wrote /mnt/mw/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay/MANIFEST.json (sha256 ddc5b1114b6acbde88a68148e346ecd0527860605c1819c638ec7459c0263e24; train 889,241,008, val 22,845, test 366,701; 1,104 files, 889,630,554 rows).",
+	"$why": "This cycle's corpus fixes: wof-admin writes a dependent locality only beside its parent locality (a794914c) and writes a New Zealand suburb as dependent_locality beside its town (92cb4e1ccb); rendered-de labels a numberless streetless hamlet dependent_locality (03d364fe3e); rendered-former-divisions (#3200) and rendered-prominent-places (#3156) are new. v0.8.21's wof-admin files hold 111,836 rows that write a dependent locality without a locality, the rebuild none. The NAD address key (#3125) is applied by the re-split through the group list, and the register merges change admission only.",
+	"$recipe-outputs": [
+		{
+			"recipe": "german",
+			"source": "rendered-de",
+			"command": "mailwoman corpus recipe german --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-de-v0.8.22.jsonl --count 200000 --seed 42 --variants 1",
+			"aligned": "mailwoman corpus align-recipe, 200,000 labeled, 0 quarantined; converted with mailwoman dev jsonl-to-parquet",
+			"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-de-v0.8.22.parquet",
+			"sha256": "e1f321c2250be4948a86c58b1f92279548499f651e5a299638378c7f4ff9dcd2",
+			"replaces": "/data/corpus/versioned/v0.8.2/corpus-v0.8.2/rendered-de.parquet",
+			"rows": 200000,
+			"note": "The options are the ones corpus/recipe-outputs-v0.8.0/rendered-de.jsonl.invocation.json records; the v0.8.2 rebuild recorded none. The render emitted 317 rows with a streetless hamlet and skipped 5,466 tuples (43 in v0.8.0), since a hamlet tuple borrows no second Ortsteil. 197,767 of its 200,000 texts are in the replaced file, and 197,516 rows keep both text and tags."
+		},
+		{
+			"recipe": "former-divisions",
+			"source": "rendered-former-divisions",
+			"command": "mailwoman corpus recipe former-divisions --input $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/former-division-tuples-v2.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-former-divisions-v0.8.22.jsonl --seed 1795230880574",
+			"aligned": "mailwoman corpus align-recipe, 16,024 labeled, 0 quarantined",
+			"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-former-divisions-v0.8.22.parquet",
+			"sha256": "7659a8cad5fba8d77e548b8e2d004cbfb3f557116de57e5b406857b9c63f723e",
+			"rows": 16024,
+			"note": "The tuples (sha256 1302d1e3…788c) are the 2026-11-21 table's after the forks restored the ceased divisions (#3205), written by packages/gazetteer/tools/former-divisions.run.ts --tuples into /mnt/mw/audits/restore-ceased/. The render is byte-identical to that lane's (jsonl sha256 c79ee960…223f). 31 countries, the counts the v8.10.0 config header lists."
+		},
+		{
+			"recipe": "prominent-places",
+			"source": "rendered-prominent-places",
+			"command": "mailwoman corpus recipe prominent-places --input $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/prominent-tuples-v0.8.22.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-prominent-places-v0.8.22.jsonl --seed 20261122",
+			"aligned": "mailwoman corpus align-recipe, 32,430 labeled, 0 quarantined",
+			"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.22/rendered-prominent-places-v0.8.22.parquet",
+			"sha256": "e901894f1a5afdb931686f6944e3e53606eb32687c40e946822c6873f78913f3",
+			"rows": 32430,
+			"note": "The tuples (sha256 e3e3f916…cf30, 16,425 places) are written by packages/mailwoman/tools/dev-tools/corpus/prominent/places.run.ts tuples --config packages/corpus/data/training-configs/v8.10.0-base-c6-90k-v0822-s42.yaml over the scan of v0.8.22-base-overlay, an interim manifest of this plan's files without this recipe (3,506,438 short admin train rows), and the places table at /mnt/mw/audits/prominent-places/candidate-global-2026-11-19 (places.parquet sha256 acfcd09a…6ce2d). A first render from tuples written while the config still admitted XK, XS and XX (32,552 rows) was set aside under recipe-outputs-v0.8.22/superseded/."
+		}
+	],
+	"$split-attributes": "Each splitAttribute was written by `mailwoman corpus split-overlay` under the base holdout policy bc45e7c6 (8490000348 changed it from 779ec991): the recipe files' under corpus/recipe-outputs-v0.8.22/split-dry/, the rebuild's val and test files' under the overlay directory. The rebuild's three train files are train. The rebuild's val and test files route as the build split them (25,099 val, 24,965 test).",
+	"$resplit": {
+		"note": "The v0.8.22 re-split reads packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json: evaluation-groups.v0.8.22.json (v0.8.21's 173,180 groups and the 5,553 NAD address keys of #3125) plus heldout-confirm-v0.8.22@5383e65f6aa768bb (4,681 rows, 3,915 groups) and heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d (5,000 rows), 182,095 groups. The validation quota under the v8.10.0 config chose 15,237 groups (22,783 rows) in 244 countries.",
+		"evaluationGroups": "packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json",
+		"commands": [
+			"node packages/mailwoman/tools/eval-harness/heldout/dataset/evaluation-groups.run.ts --extend packages/corpus/data/holdout/evaluation-groups.v0.8.22.json --datasets /mnt/mw/corpus/heldout/heldout-confirm-v0.8.22.json,/mnt/mw/corpus/heldout/heldout-confirm-v0.8.22-probes.json --out packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json",
+			"node packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts --manifest /mnt/mw/corpus/versioned/v0.8.22-overlay/corpus-v0.8.22-overlay/MANIFEST.json --config packages/corpus/data/training-configs/v8.10.0-base-c6-90k-v0822-s42.yaml --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json --out /mnt/mw/corpus/versioned/v0.8.22-overlay/corpus-v0.8.22-overlay/VALIDATION_GROUPS.json",
+			"node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/resplit.run.ts --manifest /mnt/mw/corpus/versioned/v0.8.22-overlay/corpus-v0.8.22-overlay/MANIFEST.json --out /mnt/mw/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay --corpus-version 0.8.22-retention-overlay --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.22-confirm.json --validation-groups /mnt/mw/corpus/versioned/v0.8.22-overlay/corpus-v0.8.22-overlay/VALIDATION_GROUPS.json --jobs 4 --duckdb-memory-gb 6"
+		]
+	},
+	"corpusVersion": "0.8.22-overlay",
+	"overlayBase": "0.8.21-retention-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.21-retention-overlay/corpus-v0.8.21-retention-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.22-overlay/corpus-v0.8.22-overlay",
+	"note": "v0.8.21-retention-overlay with wof-admin replaced by the v0.8.22 rebuild (packages/corpus/data/builds/v0.8.22-rebuild/inputs.json), rendered-de replaced by its v0.8.22 render, and rendered-former-divisions and rendered-prominent-places added. The rebuild's val and test files and every recipe file carry split attributes under the base holdout policy bc45e7c6; the rebuild's train files are train.",
+	"appliedAt": "2026-11-22T01:33:22.177Z",
+	"files": [
+		{
+			"parquet": "wof-admin-0f5a2a9b67da659aad1f70dbbe494d207fadc306b57fcc22501aec19bf6f19be.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-1059489085c0398aee1a47821788858061de1cb5fcdc57dd4ff29a6ae722e8ff.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-7565c0f54ffc2b0e23cfbc0996d6a8f74effdf75bdf602749d7b63a899fca19b.parquet",
+			"source": "wof-admin",
+			"splitAttribute": null
+		},
+		{
+			"parquet": "wof-admin-1b65ed05afd57ae049001547ecbb2de124dc721446f1807b85e3f25f6cb8ba20.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-1b65ed05afd57ae049001547ecbb2de124dc721446f1807b85e3f25f6cb8ba20.split.bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d.json",
+				"policyHash": "bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d"
+			}
+		},
+		{
+			"parquet": "wof-admin-77df38ca16feaa1aab557c43781669cab9ececf0874548a540680e71780bca99.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-77df38ca16feaa1aab557c43781669cab9ececf0874548a540680e71780bca99.split.bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d.json",
+				"policyHash": "bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d"
+			}
+		},
+		{
+			"parquet": "rendered-de-v0.8.22.parquet",
+			"source": "rendered-de",
+			"splitAttribute": {
+				"path": "rendered-de-v0.8.22.split.bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d.json",
+				"policyHash": "bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d"
+			}
+		},
+		{
+			"parquet": "rendered-former-divisions-v0.8.22.parquet",
+			"source": "rendered-former-divisions",
+			"splitAttribute": {
+				"path": "rendered-former-divisions-v0.8.22.split.bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d.json",
+				"policyHash": "bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d"
+			}
+		},
+		{
+			"parquet": "rendered-prominent-places-v0.8.22.parquet",
+			"source": "rendered-prominent-places",
+			"splitAttribute": {
+				"path": "rendered-prominent-places-v0.8.22.split.bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d.json",
+				"policyHash": "bc45e7c678b80fcc6922f9a325f17cb9959e87a40b00cc99fafc84488a3f3c2d"
+			}
+		}
+	],
+	"replacedSources": ["wof-admin", "rendered-de"]
+}
