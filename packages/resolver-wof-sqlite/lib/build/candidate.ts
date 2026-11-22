@@ -6,7 +6,7 @@ import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -15,7 +15,7 @@ import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors/sidecar"
 import { stageBareAdminNames } from "#candidate/bare-admin-names"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
-import { foldExtract } from "#candidate/extract-fold"
+import { stageExtractRows } from "#candidate/extract-rows"
 import { createCandidateFTS } from "#candidate/fts"
 import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/importance"
 import { applyCandidateKeyFold, type CandidateKeyFold } from "#candidate/key-fold"
@@ -427,7 +427,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 					r.placetype as string | null,
 					lat,
 					lon,
-					isOvertureFoldID(sid)
+					isOverturePartID(sid)
 				) ?? null,
 		}
 
@@ -568,7 +568,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nPostcodeAlias = 0
 
 	for (const pcDB of opts.postcodes ?? []) {
-		const folded = foldExtract({
+		const staged = stageExtractRows({
 			out: kdb,
 			extractPath: pcDB,
 			extractPlacetype: POSTCODE_PLACETYPE,
@@ -578,8 +578,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			progress,
 		})
 
-		nPostcode += folded.primaries
-		nPostcodeAlias += folded.aliases
+		nPostcode += staged.primaries
+		nPostcodeAlias += staged.aliases
 	}
 
 	if (nPostcode > 0) {
@@ -591,7 +591,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nLocalityAncestor = 0
 
 	for (const locDB of opts.localities ?? []) {
-		const folded = foldExtract({
+		const staged = stageExtractRows({
 			out: kdb,
 			extractPath: locDB,
 			extractPlacetype: "locality",
@@ -602,15 +602,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			progress,
 		})
 
-		nLocality += folded.primaries
-		nLocalityScoped += folded.scoped
-		nLocalityAncestor += folded.ancestorRows
+		nLocality += staged.primaries
+		nLocalityScoped += staged.scoped
+		nLocalityAncestor += staged.ancestorRows
 	}
 
 	if (nLocality > 0) {
 		progress(
 			"localities",
-			`${nLocality.toLocaleString()} extract localities folded` +
+			`${nLocality.toLocaleString()} extract localities added` +
 				(nLocalityScoped
 					? `; ${nLocalityScoped.toLocaleString()} carry a region scope (${nLocalityAncestor.toLocaleString()} closure rows)`
 					: "")

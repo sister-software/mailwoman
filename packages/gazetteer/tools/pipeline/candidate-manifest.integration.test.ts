@@ -22,9 +22,9 @@ import { afterAll, describe, expect, it } from "vitest"
 import {
 	ancestorIdentity,
 	candidateLayerManifest,
-	foldsRefusingPublication,
-	FoldTermsRecord,
-	readFoldTerms,
+	inputsRefusingPublication,
+	InputTermsRecord,
+	readInputTerms,
 } from "#tools/pipeline/candidate-manifest"
 
 const fixtures = new AsyncDisposableStack()
@@ -69,7 +69,7 @@ function databaseMetaLicensed(path: PathBuilder, license: string): void {
 	db.prepare("INSERT INTO database_meta VALUES ('license', ?)").run(license)
 }
 
-describe("readFoldTerms — where a fold recorded its terms", () => {
+describe("readInputTerms — where a contributing database recorded its terms", () => {
 	it("reads a layer manifest's tier and license", async () => {
 		const root = await scratchDirectory()
 
@@ -79,9 +79,9 @@ describe("readFoldTerms — where a fold recorded its terms", () => {
 		db.exec("ALTER TABLE layer_manifest ADD COLUMN tier TEXT")
 		db.exec("UPDATE layer_manifest SET tier = 'build-local'")
 
-		const terms = await readFoldTerms(root("ni.db"))
+		const terms = await readInputTerms(root("ni.db"))
 
-		expect(terms.recordedIn).toBe(FoldTermsRecord.LayerManifest)
+		expect(terms.recordedIn).toBe(InputTermsRecord.LayerManifest)
 		expect(terms.name).toBe("postalcode-ni-osm")
 		expect(terms.tier).toBe("build-local")
 		expect(terms.license).toBe("ODbL-1.0")
@@ -93,9 +93,9 @@ describe("readFoldTerms — where a fold recorded its terms", () => {
 
 		metaLicensed(root("postalcode-ni-osm.db"), "Open Database License (ODbL) 1.0", "build-local")
 
-		const terms = await readFoldTerms(root("postalcode-ni-osm.db"))
+		const terms = await readInputTerms(root("postalcode-ni-osm.db"))
 
-		expect(terms.recordedIn).toBe(FoldTermsRecord.Meta)
+		expect(terms.recordedIn).toBe(InputTermsRecord.Meta)
 		expect(terms.name).toBe("postalcode-ni-osm")
 		expect(terms.tier).toBe("build-local")
 		expect(terms.license).toBe("ODbL-1.0")
@@ -106,9 +106,9 @@ describe("readFoldTerms — where a fold recorded its terms", () => {
 
 		databaseMetaLicensed(root("localities-nz-linz.db"), "CC-BY-4.0, attribution Land Information New Zealand")
 
-		const terms = await readFoldTerms(root("localities-nz-linz.db"))
+		const terms = await readInputTerms(root("localities-nz-linz.db"))
 
-		expect(terms.recordedIn).toBe(FoldTermsRecord.DatabaseMeta)
+		expect(terms.recordedIn).toBe(InputTermsRecord.DatabaseMeta)
 		expect(terms.tier).toBeNull()
 		expect(terms.license).toBe("CC-BY-4.0")
 	})
@@ -121,30 +121,30 @@ describe("readFoldTerms — where a fold recorded its terms", () => {
 
 		await writeLocalTextFile("not a database", root("broken.db"))
 
-		const none = await readFoldTerms(root("silent.db"))
-		const broken = await readFoldTerms(root("broken.db"))
-		const absent = await readFoldTerms(root("absent.db"))
+		const none = await readInputTerms(root("silent.db"))
+		const broken = await readInputTerms(root("broken.db"))
+		const absent = await readInputTerms(root("absent.db"))
 
-		expect(none).toMatchObject({ recordedIn: FoldTermsRecord.None, tier: null, license: null })
+		expect(none).toMatchObject({ recordedIn: InputTermsRecord.None, tier: null, license: null })
 		expect(none.error).toBeNull()
-		expect(broken.recordedIn).toBe(FoldTermsRecord.None)
+		expect(broken.recordedIn).toBe(InputTermsRecord.None)
 		expect(broken.error).not.toBeNull()
 		expect(absent.error).toBe("not found")
 	})
 })
 
-describe("foldsRefusingPublication", () => {
-	it("keeps every fold whose stated tier is not shipped, and none that states no tier", () => {
-		const base = { path: "/x", name: "x", recordedIn: FoldTermsRecord.Meta, license: null }
+describe("inputsRefusingPublication", () => {
+	it("keeps every database whose stated tier is not shipped, and none that states no tier", () => {
+		const base = { path: "/x", name: "x", recordedIn: InputTermsRecord.Meta, license: null }
 
-		const refusing = foldsRefusingPublication([
+		const refusing = inputsRefusingPublication([
 			{ ...base, tier: "build-local", error: null },
 			{ ...base, tier: "private", error: null },
 			{ ...base, tier: "shipped", error: null },
 			{ ...base, tier: null, error: null },
 		])
 
-		expect(refusing.map((fold) => fold.tier)).toEqual(["build-local", "private"])
+		expect(refusing.map((input) => input.tier)).toEqual(["build-local", "private"])
 	})
 })
 
@@ -251,9 +251,9 @@ describe("candidateLayerManifest", () => {
 		expect(manifest.sourceVintage).toContain("importance=none")
 	})
 
-	it("composes its license from every fold's own terms rather than the ancestor's alone", async () => {
+	it("composes its license from every contributing database's own terms rather than the ancestor's alone", async () => {
 		// The defect this replaces: a literal `ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` stood here
-		// while the postcode folds supplied 23.90% of the table's places under terms it didn't name.
+		// while the postcode databases supplied 23.90% of the table's places under terms it didn't name.
 		const root = await scratchDirectory()
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "ODbL-1.0 AND CC-BY-4.0")
@@ -268,10 +268,10 @@ describe("candidateLayerManifest", () => {
 
 		// Sorted and deduplicated, so two builds of one input write the same expression.
 		expect(manifest.license).toBe("CC-BY-4.0 AND ODbL-1.0 AND OGL-UK-3.0")
-		expect(manifest.sourceVintage).toContain("undeclared-folds=0")
+		expect(manifest.sourceVintage).toContain("undeclared-inputs=0")
 	})
 
-	it("marks a fold that declares no terms, rather than omitting it from the expression", async () => {
+	it("marks a contributing database that declares no terms, rather than omitting it from the expression", async () => {
 		// Measured 2026-09-27: 28 of the 28 postcode and locality databases on the lab host
 		// have no `layer_manifest`, and 26 of them have no `meta.license` either.
 		// An expression that left them out would read as a complete list of the artifact's terms.
@@ -289,17 +289,36 @@ describe("candidateLayerManifest", () => {
 		})
 
 		expect(manifest.license).toBe("CC-BY-4.0 AND LicenseRef-Undeclared-Input")
-		expect(manifest.sourceVintage).toContain("undeclared-folds=1")
+		expect(manifest.sourceVintage).toContain("undeclared-inputs=1")
 	})
 
-	it("counts an absent admin database as an undeclared fold", async () => {
+	it("counts an absent admin database as an undeclared input", async () => {
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: (await scratchDirectory())("n.db") })
 
 		expect(manifest.license).toBe("LicenseRef-Undeclared-Input")
-		expect(manifest.sourceVintage).toContain("undeclared-folds=1")
+		expect(manifest.sourceVintage).toContain("undeclared-inputs=1")
 	})
 
-	it("records how many folds were build-local, so a publish decision needs no re-read of the inputs", async () => {
+	it("records each source's rows and places under one named field", async () => {
+		const adminDBPath = (await scratchDirectory())("n.db")
+
+		const counted = await candidateLayerManifest({
+			...BASE,
+			adminDBPath,
+			rowsBySource: [
+				{ source: "wof", rows: 10, places: 4 },
+				{ source: "ni-osm", rows: 6, places: 3 },
+			],
+		})
+
+		expect(counted.sourceVintage).toMatch(/ rows-by-source=wof:10\/4,ni-osm:6\/3$/)
+
+		await expect(candidateLayerManifest({ ...BASE, adminDBPath })).resolves.toMatchObject({
+			sourceVintage: expect.stringContaining("rows-by-source=unmeasured"),
+		})
+	})
+
+	it("records how many contributing databases were build-local, so a publish decision needs no re-read of the inputs", async () => {
 		const root = await scratchDirectory()
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-09-15", "CC-BY-4.0")
@@ -312,7 +331,7 @@ describe("candidateLayerManifest", () => {
 			contributingDatabases: { postcodes: [root("postalcode-ni-osm.db"), root("codepoint.db")], localities: [] },
 		})
 
-		expect(manifest.sourceVintage).toContain("build-local-folds=1")
+		expect(manifest.sourceVintage).toContain("build-local-inputs=1")
 		expect(manifest.license).toBe("CC-BY-4.0 AND ODbL-1.0 AND OGL-UK-3.0")
 	})
 })

@@ -5,10 +5,10 @@
  *   The admin gazetteer's `layer_manifest`.
  *
  *   Derived from the run rather than from the recipe: `source` is composed from the rows each
- *   fold ingested, so a build that reads no Overture rows doesn't claim Overture as a source.
+ *   source ingested, so a build that reads no Overture rows doesn't claim Overture as a source.
  *
- *   The license is a conjunction: three sources with three different terms fold into one file,
- *   so the field contains an SPDX-style `AND` expression naming exactly the contributing folds.
+ *   The license is a conjunction: three sources with three different terms write into one file,
+ *   so the field contains an SPDX-style `AND` expression naming exactly the contributing sources.
  *   Each term is the publisher's own grant read from that publisher's text.
  */
 
@@ -53,7 +53,7 @@ const SOURCE_TERMS = {
 } as const satisfies Record<keyof IngestCounts, { name: string; license: string }>
 
 /**
- * The folds that contributed rows, in a fixed order so two builds with the
+ * The sources that contributed rows, in a fixed order so two builds with the
  * same sources produce the same string.
  */
 function contributingSources(counts: IngestCounts): Array<keyof IngestCounts> {
@@ -112,7 +112,7 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		// `spr.id` is the WOF id — real for WOF rows, synthetic for the Overture
-		// and GeoNames folds — and the join key every consumer uses either way.
+		// and GeoNames places — and the join key every consumer uses either way.
 		spineKeys: { wofID: "id" },
 		createdAt: input.createdAt,
 		sourceRecords: null,

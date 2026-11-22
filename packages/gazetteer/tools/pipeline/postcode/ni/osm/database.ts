@@ -11,11 +11,11 @@
  *   The database is ODbL 1.0.
  *   No npm tarball ships it.
  *
- *   The candidate gazetteer folds its rows in as an independent part of a collective database:
+ *   The candidate gazetteer adds its rows as an independent part of a collective database:
  *   they keep their own id range, and no other row is matched against them.
- *   The published fold includes the ODbL offer at
+ *   The published rows include the ODbL offer at
  *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold,
- *   and a gazetteer that folds in a new build must publish that build's rows beside it.
+ *   and a gazetteer that adds the rows of a new build must publish that build's rows beside it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -59,7 +59,7 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#tools/pipeline/postcode/ni/osm"
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
@@ -314,7 +314,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 	await stampLayerManifest(
 		out,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "postalcode-ni-osm",
 			version: stamp,
 			// ODbL 1.0 is share-alike on a Derived Database.

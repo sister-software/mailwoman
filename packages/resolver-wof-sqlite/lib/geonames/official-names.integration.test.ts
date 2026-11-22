@@ -7,7 +7,7 @@
  * set when the language is CLDR-official for the country.
  *
  * Colloquial and historic forms never qualify.
- * Without the V2 file the fold is untagged.
+ * Without the V2 file the alias rows are untagged.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -133,7 +133,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
 })
 
-test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
+test("without the V2 file the alias rows are untagged, exactly the pre-#936 behavior", async () => {
 	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.path("nope") })

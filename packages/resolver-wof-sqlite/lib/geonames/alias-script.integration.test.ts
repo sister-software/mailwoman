@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests for `ingestGeonamesAliases`, where the fold admits an alternate name in
- * any script while the display name stays Latin.
+ * Tests for `ingestGeonamesAliases`, where the ingest admits an alternate name
+ * in any script while the display name stays Latin.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -134,7 +134,7 @@ test("packing noise is still refused, in every script", () => {
 	expect(namesFor("噪音鎮")).toHaveLength(1)
 })
 
-test("the fold reports names REFUSED, so a script gap is visible in the build and not only in the artifact", () => {
+test("the ingest reports names REFUSED, so a script gap is visible in the build and not only in the artifact", () => {
 	const hk = events.find((e) => e.country === "HK")
 
 	expect(hk?.aliasesRefused).toBe(2)

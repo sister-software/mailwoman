@@ -41,7 +41,7 @@ function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<numbe
  * the row also gets that region's scope and the region's ancestor chain.
  * The stored ancestors then agree with the row's scope.
  */
-export function foldExtract(ctx: {
+export function stageExtractRows(ctx: {
 	out: DatabaseClient<CandidateDatabase>
 	extractPath: PathBuilderLike
 	extractPlacetype: "postalcode" | "locality"
@@ -164,7 +164,7 @@ export function foldExtract(ctx: {
 
 		out.exec("COMMIT")
 	} else {
-		progress("postcode-aliases", `${extractPath} has no \`names\` table — no delivery-city aliases to fold`)
+		progress("postcode-aliases", `${extractPath} has no \`names\` table — no delivery-city aliases to add`)
 	}
 
 	return { primaries, aliases, scoped, ancestorRows }

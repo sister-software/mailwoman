@@ -143,7 +143,7 @@ const SOURCE_MANIFEST_DEFAULTS = {
 
 /**
  * The manifest terms of a layer built from sources other than one of the defaults above,
- * such as a layer that folds several publishers' rows into one file.
+ * such as a layer that writes several publishers' rows into one file.
  */
 export interface POILayerTerms {
 	/**

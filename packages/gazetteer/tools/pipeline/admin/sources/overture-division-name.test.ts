@@ -4,12 +4,12 @@
 /**
  *   The predicate is exported for direct tests.
  *
- *   The fold streams the Overture divisions theme remotely with no local fixture.
+ *   The Overture step streams the Overture divisions theme remotely with no local fixture.
  */
 
 import { describe, expect, it } from "vitest"
 
-import { isDivisionName } from "#tools/pipeline/admin/fold/overture"
+import { isDivisionName } from "#tools/pipeline/admin/sources/overture"
 
 describe("admitting an Overture division name", () => {
 	it("admits a name in the script its country writes", () => {

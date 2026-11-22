@@ -4,7 +4,7 @@
 /**
  *   `mailwoman gazetteer build candidate` — the byte-range candidate gazetteer
  *   (FTS5-trigram fuzzy index baked in), built from the admin database the admin
- *   build already folded GeoNames into.
+ *   build already added GeoNames places to.
  *
  *   The final summary goes to stdout.
  *   See releasing.md Step 5.
@@ -50,8 +50,8 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Fold a database whose own layer_manifest records tier build-local, for a gazetteer built for local use. " +
-				"Without it the build refuses such a fold and names it",
+				"Add the rows of a database whose own layer_manifest records tier build-local, for a gazetteer built for local use. " +
+				"Without it the build refuses such a database and names it",
 		},
 	},
 } as const satisfies CommandSpec
@@ -88,7 +88,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			// Without `--importance` the build finds the importance build for this admin DB itself.
 			importanceDB: options.skipImportance ? false : options.importance,
 			populationEstimates: options.populationEstimates,
-			includeBuildLocalFolds: options.includeBuildLocal,
+			includeBuildLocalInputs: options.includeBuildLocal,
 			onProgress: progress.report,
 		})
 

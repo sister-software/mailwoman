@@ -5,7 +5,7 @@
  * @file The one registry of synthetic place-id ranges, and of the range `mailwoman` mints WOF records from.
  *
  *   An upstream WOF id is below 2e9, and a WOF record minted in a `mailwoman` fork takes an id from
- *   {@link MAILWOMAN_WOF_ID_BASE}. Every other source a gazetteer artifact folds in mints ids from a higher base.
+ *   {@link MAILWOMAN_WOF_ID_BASE}. Every other source whose places a gazetteer artifact adds mints ids from a higher base.
  *   The bases must be pairwise distinct. The candidate table's `candidate_ancestor` and
  *   `candidate_interval` sidecars are keyed only by `spr_id`, a result's `placeID` is `wof:<spr_id>`, and the
  *   backend's `ancestors(id)` answers whichever row wrote last. Two builders that pick the same base give two places
@@ -61,14 +61,14 @@ export function nextMailwomanWOFID(minted: Iterable<number>): number {
 }
 
 /**
- * Overture-sourced admin rows (`fold-overture`).
+ * Overture-sourced admin rows (`add-overture`).
  *
  * Above any real WOF id.
  */
 export const OVERTURE_ID_BASE = 8_000_000_000_000
 
 /**
- * The GeoNames alias fold (`@mailwoman/resolver-wof-sqlite/geonames`).
+ * The places and aliases the GeoNames step adds (`@mailwoman/resolver-wof-sqlite/geonames`).
  */
 export const GEONAMES_ID_BASE = 9_000_000_000_000
 
@@ -78,7 +78,7 @@ export const GEONAMES_ID_BASE = 9_000_000_000_000
  * The part is ODbL-1.0 and the rest of the file isn't, so a pass that reads one part's rows to
  * change the other's needs this test, and the Overture part's offer selects its rows with it.
  */
-export function isOvertureFoldID(id: number): boolean {
+export function isOverturePartID(id: number): boolean {
 	return id >= OVERTURE_ID_BASE && id < GEONAMES_ID_BASE
 }
 
@@ -88,18 +88,18 @@ export function isOvertureFoldID(id: number): boolean {
 export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 
 /**
- * The id the GeoNames fold gives the place GeoNames numbers `geonameid`:
+ * The id the GeoNames step gives the place GeoNames numbers `geonameid`:
  * {@link GEONAMES_ID_BASE} plus that number.
  *
  * The id is computed from the GeoNames record's own number.
- * A place keeps its id whichever other countries a build folds, and every build
- * of one GeoNames dump numbers its places the same way.
+ * A place keeps its id whichever other countries a build adds, and every build of
+ * one GeoNames dump numbers its places the same way.
  *
- * @throws When `geonameid` isn't a positive integer below the fold's range width.
+ * @throws When `geonameid` isn't a positive integer below the GeoNames range's width.
  */
-export function geonamesFoldID(geonameid: number): number {
+export function geonamesPlaceID(geonameid: number): number {
 	if (!Number.isInteger(geonameid) || geonameid <= 0 || geonameid >= GEONAMES_POSTAL_ID_BASE - GEONAMES_ID_BASE) {
-		throw new RangeError(`geonameid ${geonameid} falls outside the GeoNames fold's id range`)
+		throw new RangeError(`geonameid ${geonameid} falls outside the GeoNames id range`)
 	}
 
 	return GEONAMES_ID_BASE + geonameid

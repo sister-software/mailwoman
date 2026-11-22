@@ -4,7 +4,7 @@
 /**
  *   The contract an official list of public structures satisfies to join the structures layer.
  *
- *   `mailwoman gazetteer build structures` folds every source in `STRUCTURE_SOURCES`
+ *   `mailwoman gazetteer build structures` combines every source in `STRUCTURE_SOURCES`
  *   (`#structures/sources`) into one `structures.db`.
  *   A source's identity, terms and reader live in its entry, under its country's
  *   directory (`lib/<cc>/structures/`).

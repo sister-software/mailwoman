@@ -34,7 +34,7 @@ test("the canonical coverage recipe holds its reconstructed shape (see #1015/#10
 	expect(DEFAULT_GEONAMES_COUNTRIES).toContain("GE")
 })
 
-test("geonamesAdminGapCountries is the zero-coverage gap set (#1026 — the GeoNames admin fold targets)", () => {
+test("geonamesAdminGapCountries is the zero-coverage gap set (#1026 — the countries that get GeoNames admin rows)", () => {
 	const gap = geonamesAdminGapCountries()
 
 	// GeoNames-only locales: in the alias set, but carrying no WOF or Overture admin.

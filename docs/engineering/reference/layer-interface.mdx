@@ -287,21 +287,21 @@ ship only the builder.
 `admin-global-priority.db` and `candidate.db` are Collective Databases under ODbL 1.0 section 4.5(a). Their
 Overture Divisions part is `ODbL-1.0`, and the rest of each file keeps its sources' own terms. Overture's
 [attribution page](https://docs.overturemaps.org/attribution/) gives the Divisions theme `License for theme:
-ODbL`. The Northern Ireland postcode fold is a second ODbL part of `candidate.db`, kept apart the same way.
+ODbL`. The Northern Ireland postcode rows are a second ODbL part of `candidate.db`, kept apart the same way.
 
 The Overture part is:
 
 - every row whose place id falls in the Overture range, `8000000000000` to `8999999999999`
-  (`isOvertureFoldID`), in `spr`, `names`, `concordances` and `place_population`, and in `candidate.db` its
+  (`isOverturePartID`), in `spr`, `names`, `concordances` and `place_population`, and in `candidate.db` its
   `candidate`, `candidate_ancestor` and `candidate_interval` rows;
 - the `overture_wof_match` table, which records the WOF record each matched division was matched to.
 
 The part stays independent because no row outside it depends on it:
 
-- `fold-overture` writes every division as its own row and adds no name, Wikidata id or population to a WOF
+- The admin build's `add-overture` step writes every division as its own row and adds no name, Wikidata id or population to a WOF
   record. A matched division's pair goes into `overture_wof_match`.
 - A division's `parent_id` may be a WOF record. That's a reference stored on the Overture row, and it leaves
-  the WOF row as a build without the fold writes it.
+  the WOF row as a build without Overture Divisions writes it.
 - The candidate build's cross-row passes read an Overture row only to change another Overture row: an
   Overture place is never a nickname's namesake, an Overture region's official name never refuses another
   region's alias, a WOF row never takes an Overture place's importance score, and the interval tree links a
@@ -313,7 +313,7 @@ The part stays independent because no row outside it depends on it:
 other row, closure row and interval label to match. A published gazetteer offers its Overture part by itself
 under ODbL 1.0 section 4.6. `mailwoman gazetteer build overture-part` copies the part out of a built
 candidate into a sealed database stamped `ODbL-1.0`, and both manifests' `attribution` states the part and
-the offer's address. An admin database without `overture_wof_match` predates the collective fold. From
+the offer's address. An admin database without `overture_wof_match` predates the independent Overture part. From
 2026-11-12 such a build wrote a matched division's names and Wikidata id onto the WOF record, and before
 that its Overture rows shared the candidate build's cross-row passes with the other rows. Either file is a
 Derivative Database of Overture Divisions as a whole.
@@ -480,7 +480,7 @@ unrecognized on every machine that opens it.
 | `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none        |
 | `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution |
 | `LicenseRef-US-Mixed`                | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown     |
-| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                       | unknown     |
+| `LicenseRef-Undeclared-Input`        | a contributing database that declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the database out of the expression                                | unknown     |
 | `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution |
 | `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution |
 
@@ -493,8 +493,16 @@ restricts reuse, the layer moves to GeoNames class `U` under CC BY 4.0.
 
 `LicenseRef-Undeclared-Input` is deliberately absent from the obligations table, so `summarizeLicense`
 reports it as unrecognized and `refusalsForPublication` refuses a layer that includes it. A grant no one has
-read imposes unknown obligations rather than none, and an expression that omitted the fold would read as a
-complete list of the artifact's terms.
+read imposes unknown obligations rather than none, and an expression that omitted the database would read as
+a complete list of the artifact's terms.
+
+The candidate manifest's `source_vintage` counts those databases as `undeclared-inputs=<n>`, and counts the
+contributing databases whose own tier permits no publication as `build-local-inputs=<n>`. Its
+`rows-by-source=` field records each source's rows and distinct places on the built table, keyed by the
+synthetic id range the source mints from, as `rows-by-source=wof:16283234/7104021,overture:1295235/883204,…`.
+A build that measured none records `rows-by-source=unmeasured`. A candidate built before 2026-11-22 records
+the same counts as `undeclared-folds=<n>` and `build-local-folds=<n>`, with each source's count as a bare
+`<source>=<rows>/<places>` token.
 
 ### Who's On First's obligations
 

@@ -127,7 +127,7 @@ live DB, that's what the number means.
 
 ## The candidate database rebuild
 
-The admin build folds GeoNames into the admin DB. The candidate build reads that admin DB as built
+The admin build adds GeoNames places and names to the admin DB. The candidate build reads that admin DB as built
 and adds the postcode databases and the importance column:
 
 ```sh

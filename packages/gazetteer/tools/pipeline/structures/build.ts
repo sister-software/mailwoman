@@ -15,7 +15,7 @@
  *   provenance class, vintage and record counts.
  *
  *   The manifest states one license: the conjunction of the contributing sources' licenses,
- *   as the admin gazetteer's manifest does for its folds.
+ *   as the admin gazetteer's manifest does for its sources.
  *   `sourceRecords` holds each source's input count.
  *
  *   The layer is `shipped` unless a contributing license has a share-alike obligation.
@@ -53,7 +53,7 @@ export interface StructureSourceCounts {
 }
 
 /**
- * The manifest terms for a layer folded from `sources`.
+ * The manifest terms for a layer built from `sources`.
  *
  * `sourceRecords` is the object the build fills as it reads, so it is complete once the rows are consumed.
  */

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Tests two GeoNames postal-fold rules: stored names match the sanitized-query token shape.
+ * Tests two GeoNames postal-ingest rules: stored names match the sanitized-query token shape.
  * Centroids are medoids rather than off-settlement means.
  */
 
@@ -51,7 +51,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 }
 
 describe("ingestGeonamesPostal", () => {
-	it("folds one medoid row per normalized code, with the display form as an alt name", async () => {
+	it("writes one medoid row per normalized code, with the display form as an alt name", async () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-")
 		const dir = dirDirectory.path
 

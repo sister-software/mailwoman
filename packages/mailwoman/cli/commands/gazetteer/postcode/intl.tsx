@@ -21,14 +21,14 @@
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen)
  *   while CZ writes "58001" though GeoNames stores "580 01".
  *
- *   `--fold-into <src> --fold-out <dst>` optionally folds the database straight into a copy
+ *   `--candidate <src> --candidate-out <dst>` optionally adds the database's rows to a copy
  *   of an existing candidate gazetteer, so a demo-ready DB falls out without a full rebuild.
  *   The database itself is the durable artifact for the canonical rebuild.
  *
  *   `--out` is written directly.
  *   The command drops and recreates its table in place on re-run.
  *
- *   `--fold-out` builds a copy of `--fold-into`.
+ *   `--candidate-out` builds a copy of `--candidate`.
  *   Neither option uses an atomic temp-swap.
  */
 
@@ -60,8 +60,8 @@ export const spec = {
 		geonames: { type: "string", description: "GeoNames postal TSV" },
 		countries: { type: "string", description: "Comma-separated ISO codes" },
 		out: { type: "string", description: "Database output path" },
-		"fold-into": { type: "string", description: "Candidate DB to fold" },
-		"fold-out": { type: "string", description: "Folded candidate destination" },
+		candidate: { type: "string", description: "Candidate DB whose copy receives the postcode rows" },
+		"candidate-out": { type: "string", description: "Destination of the candidate copy" },
 	},
 } as const satisfies CommandSpec
 
@@ -264,11 +264,11 @@ async function buildDatabase(
 }
 
 /**
- * Fold the freshly-built database into a copy of an existing candidate
+ * Add the freshly-built database's rows to a copy of an existing candidate
  * gazetteer, mirroring `build-candidate` pass-4's row construction
  * (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid).
  */
-async function foldIntoCandidate(
+async function addToCandidateCopy(
 	databasePath: PathBuilderLike,
 	srcPath: PathBuilderLike,
 	dstPath: PathBuilderLike,
@@ -375,8 +375,8 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : ["PL", "CZ"]
 
-		const foldInto = options.foldInto
-		const foldOut = options.foldOut
+		const candidate = options.candidate
+		const candidateOut = options.candidateOut
 
 		if (!(await pathExists(geonames))) {
 			throw new CommandError(`Missing GeoNames file: ${geonames}`)
@@ -406,21 +406,21 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 			`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
 		]
 
-		if (foldInto && foldOut) {
-			if (!(await pathExists(foldInto))) {
-				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
+		if (candidate && candidateOut) {
+			if (!(await pathExists(candidate))) {
+				throw new CommandError(`Missing --candidate DB: ${candidate}`)
 			}
 
-			console.error(`Folding database into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+			console.error(`Adding the database's rows to a copy of ${candidate} → ${candidateOut} (VACUUM after) …`)
 
-			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
+			const n = await addToCandidateCopy(out, candidate, candidateOut, normalizeLocalityForKey)
 
-			console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
+			console.error(`Inserted ${n} postcode candidate rows → ${candidateOut}`)
 
-			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
+			lines.push(`added ${n.toLocaleString()} postcode candidate rows → ${candidateOut}`)
 		} else {
 			console.error(
-				`(no --fold-into/--fold-out: database only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+				`(no --candidate/--candidate-out: database only — feed it to build-candidate via --postcodes for the canonical rebuild)`
 			)
 
 			lines.push(`database only — feed it to build-candidate via --postcodes for the canonical rebuild`)

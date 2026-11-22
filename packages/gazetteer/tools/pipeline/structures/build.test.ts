@@ -102,7 +102,7 @@ beforeEach(async () => {
 afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("buildStructureLayer", () => {
-	it("folds every source into one layer whose manifest states each source's license and record count", async () => {
+	it("writes every source into one layer whose manifest states each source's license and record count", async () => {
 		const out = scratch.path("structures.db")
 
 		const result = await buildStructureLayer({

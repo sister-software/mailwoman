@@ -31,7 +31,7 @@
  *   The build measures that percentile on each run rather than storing a constant.
  */
 
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { percentile } from "@mailwoman/core/stats"
 import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -305,12 +305,12 @@ export function estimateSubLocalityPopulations<DB>(db: DatabaseClient<DB>): SubL
 	// place's estimate, so the places outside that part are estimated without it,
 	// and only the divisions' own estimates come from the whole set.
 	// The calibration and counts returned are the part outside Overture's.
-	const restPlaces = places.filter((place) => !isOvertureFoldID(place.id))
+	const restPlaces = places.filter((place) => !isOverturePartID(place.id))
 	const rest = estimateFromHierarchy(restPlaces)
 
 	if (restPlaces.length === places.length) return rest
 
-	const overture = estimateFromHierarchy(places).estimates.filter((estimate) => isOvertureFoldID(estimate.id))
+	const overture = estimateFromHierarchy(places).estimates.filter((estimate) => isOverturePartID(estimate.id))
 
 	return { ...rest, estimates: [...rest.estimates, ...overture] }
 }

@@ -11,7 +11,7 @@
  *   attribution GeoNames), keeping rows whose name matches `Praha \d+` (the 22 administrative districts)
  *   with the A-feature (administrative-division) row preferred per name.
  *   It uses the same unified-schema shape as the LINZ NZ database, so the candidate
- *   build's `localities` fold consumes it as-is.
+ *   build's `localities` step consumes it as-is.
  *
  *   It also uses the same provenance discipline (`database_meta` + source MD5).
  *
@@ -32,7 +32,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The license grant the artifact records.
@@ -142,12 +142,12 @@ export async function buildCZDistrictsDatabase(
 	}
 
 	// The layer interface's manifest, beside `database_meta` and stating the same terms.
-	// The candidate build reads its tier before folding the database.
+	// The candidate build reads its tier before adding the database's rows.
 	const now = new Date()
 
 	await stampLayerManifest(
 		tmpPath,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "localities-cz-districts",
 			version: isoDate(now),
 			// CC-BY 4.0 requires attribution and has no share-alike term, so the artifact is published.

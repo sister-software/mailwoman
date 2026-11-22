@@ -7,7 +7,7 @@
  *   The country list lives in `../defaults.ts`.
  *
  *   The gazetteer is a Collective Database, and the Overture Divisions rows are its ODbL-1.0 part.
- *   Every division keeps its own rows in the Overture id range, and the fold leaves every WOF
+ *   Every division keeps its own rows in the Overture id range, and the Overture step leaves every WOF
  *   record as the WOF ingest wrote it, without a name, Wikidata id or population from Overture.
  *
  *   A division that matches a WOF record is recorded in `overture_wof_match`,
@@ -25,7 +25,12 @@ import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/ov
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
-import { type FoldGap, GAP_SOURCE_TERMS, type WOFMatch, type WOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
+import {
+	GAP_SOURCE_TERMS,
+	type UnmatchedPlace,
+	type WOFMatch,
+	type WOFPlaceIndex,
+} from "#tools/pipeline/admin/sources/wof-match"
 
 /**
  * Overture division subtypes that map to the resolver's admin placetypes.
@@ -40,8 +45,8 @@ export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "cou
  *
  * No admin tag queries the `county` placetype, because the locality filter group
  * covers only `locality`, `borough`, and `localadmin`.
- * Singapore's planning areas, such as Bedok, arrive as `county`, so the fold
- * writes them as `borough` to make them reachable.
+ * Singapore's planning areas, such as Bedok, arrive as `county`, so the Overture
+ * step writes them as `borough` to make them reachable.
  *
  * The list is explicit because a general rule would also admit other countries' `county` rows,
  * such as Kuwait's underscore-joined ASCII names and Qatar's numbered zones.
@@ -54,7 +59,7 @@ const COUNTY_IS_SETTLEMENT_TIER: ReadonlyMap<string, string> = new Map([["SG", "
  * This is the Overture subtype unless {@link COUNTY_IS_SETTLEMENT_TIER} maps the
  * country's `county` rows to another placetype.
  */
-export function foldedPlacetype(subtype: string, country: string): string {
+export function placetypeForSubtype(subtype: string, country: string): string {
 	if (subtype !== "county") return subtype
 
 	return COUNTY_IS_SETTLEMENT_TIER.get(country.trim().toUpperCase()) ?? subtype
@@ -63,7 +68,7 @@ export function foldedPlacetype(subtype: string, country: string): string {
 /**
  * The width of the ID range reserved for Overture rows.
  *
- * It runs from `OVERTURE_ID_BASE` up to the GeoNames fold's base.
+ * It runs from `OVERTURE_ID_BASE` up to the base of the GeoNames places' range.
  */
 const OVERTURE_ID_SPAN = 1_000_000_000_000
 
@@ -240,8 +245,8 @@ export async function ingestOvertureDivisions(
 	/**
 	 * The WOF records to match against. See {@link writeOvertureDivisions}.
 	 */
-	wof?: { index: WOFPlaceIndex; onGap: (gap: FoldGap) => void }
-): Promise<OvertureFoldResult> {
+	wof?: { index: WOFPlaceIndex; onGap: (gap: UnmatchedPlace) => void }
+): Promise<OvertureDivisionsResult> {
 	const inlist = countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
@@ -263,8 +268,8 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 
-	// The fold writes rows and lists gaps in row order, and DuckDB returns rows in an order
-	// that varies with its 4 threads, so the query fixes the order by division id.
+	// The Overture step writes rows and lists gaps in row order, and DuckDB returns rows in
+	// an order that varies with its 4 threads, so the query fixes the order by division id.
 	const result = await con.runAndReadAll(/*sql*/ `
 		WITH area AS (
 			SELECT division_id,
@@ -349,9 +354,9 @@ function readDivisionRow(r: Record<string, unknown>): OvertureDivisionRow {
 }
 
 /**
- * What one Overture fold wrote.
+ * What one run of the Overture step wrote.
  */
-export interface OvertureFoldResult {
+export interface OvertureDivisionsResult {
 	/**
 	 * Divisions written, each as its own row in the Overture id range.
 	 */
@@ -387,8 +392,8 @@ export interface OvertureFoldResult {
  * - A division whose parent division matched a WOF record takes that record as its `parent_id`.
  *
  * That parent link stays because it is a reference from an Overture row to a WOF id.
- * It is stored on the Overture row, and the WOF row's own columns, names and ancestry are
- * the same as in a build without the fold, so the WOF part keeps its unmodified form.
+ * It is stored on the Overture row, and the WOF row's own columns, names and ancestry are the
+ * same as in a build without the Overture step, so the WOF part keeps its unmodified form.
  *
  * It is what lets a division sit inside WOF's hierarchy, so region scoping and containment answer for it.
  *
@@ -398,8 +403,8 @@ export async function writeOvertureDivisions(
 	db: DatabaseClient<WOFDatabase & OvertureWOFMatchDatabase>,
 	rows: readonly OvertureDivisionRow[],
 	idBase: number = OVERTURE_ID_BASE,
-	wof?: { index: WOFPlaceIndex; onGap: (gap: FoldGap) => void }
-): Promise<OvertureFoldResult> {
+	wof?: { index: WOFPlaceIndex; onGap: (gap: UnmatchedPlace) => void }
+): Promise<OvertureDivisionsResult> {
 	const { createOvertureWOFMatchTable, OVERTURE_WOF_MATCH_TABLE } =
 		await import("@mailwoman/resolver-wof-sqlite/overture-match-schema")
 
@@ -424,7 +429,7 @@ export async function writeOvertureDivisions(
 
 		return {
 			name: r.name,
-			placetype: foldedPlacetype(r.subtype, country),
+			placetype: placetypeForSubtype(r.subtype, country),
 			country,
 			latitude: r.latitude,
 			longitude: r.longitude,
@@ -447,7 +452,7 @@ export async function writeOvertureDivisions(
 
 	db.exec("BEGIN")
 
-	const result: OvertureFoldResult = { written: 0, matched: 0, wofParents: 0, wikidata: 0 }
+	const result: OvertureDivisionsResult = { written: 0, matched: 0, wofParents: 0, wikidata: 0 }
 
 	for (const r of rows) {
 		const gers = r.id

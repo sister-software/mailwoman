@@ -87,7 +87,7 @@ describe("buildOverturePart", () => {
 		expect(manifest.source_vintage).toBe("overture-divisions=2026-09-23.1")
 	})
 
-	test("refuses a candidate built before the fold kept its Overture rows apart", async () => {
+	test("refuses a candidate built before the Overture step kept its rows apart", async () => {
 		await using scratch = await temporaryDirectory("overture-part-")
 		const candidate = scratch.path("candidate.db")
 

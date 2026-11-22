@@ -23,7 +23,7 @@ export const AdminSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`; it writes `spr` places
+	 * The GeoNames step, `DEFAULT_GEONAMES_COUNTRIES`; it writes `spr` places
 	 * (`locality` with `parent_id = -1`) rather than only alternate names.
 	 */
 	GeoNames: "geonames",
@@ -111,7 +111,7 @@ export function sourceConflicts(sources: readonly CountrySources[]): SourceConfl
 			reason: entry.sources.includes(AdminSource.WOF)
 				? `${entry.country} is cloned as a WOF repo AND listed under ${entry.sources
 						.filter((s) => s !== AdminSource.WOF)
-						.join(" + ")} — both fold into one database, and verifyAdmin tests FLOORS, so the duplication moves ` +
+						.join(" + ")} — both write into one database, and verifyAdmin tests FLOORS, so the duplication moves ` +
 					"every check number in the passing direction and the build ships"
 				: `${entry.country} is served by ${entry.sources.join(" + ")}, which the 2026-08-17 baseline does not record ` +
 					"— an existing measured trade is not the same as a country silently acquiring a second source",

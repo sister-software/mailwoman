@@ -17,7 +17,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { AdminSource } from "#tools/pipeline/country/sources"
 
 /**
- * The start of each fold's synthetic ID range, copied from the modules that assign them.
+ * The start of each source's synthetic ID range, copied from the modules that assign them.
  *
  * `country-sources.test.ts` checks these copies against the exported constants.
  */
@@ -37,7 +37,7 @@ export interface SourceCensus {
 /**
  * Reads the per-source row counts for one country from an admin gazetteer.
  *
- * The source is inferred from the ID range, because `spr` doesn't record which fold wrote a row.
+ * The source is inferred from the ID range, because `spr` doesn't record which source wrote a row.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
@@ -161,7 +161,7 @@ export function planCountryMove(options: {
 	}
 
 	// Remove every other current source.
-	// Otherwise both sources fold into one database.
+	// Otherwise both sources write into one database.
 	// `verifyAdmin` misses that duplication because it only checks counts.
 	// Duplicates raise those counts.
 	for (const source of current) {
@@ -184,7 +184,7 @@ export function planCountryMove(options: {
 					: source === AdminSource.Overture
 						? options.census.overture
 						: options.census.geonames
-			} rows from ${source}; leaving it listed folds both sources into one database`,
+			} rows from ${source}; leaving it listed writes both sources into one database`,
 		})
 	}
 

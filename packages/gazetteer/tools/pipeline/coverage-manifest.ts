@@ -17,7 +17,7 @@
  *
  *   The schema and canonical read/write functions live in
  *   `@mailwoman/resolver-wof-sqlite/coverage-manifest-schema`
- *   (the fold/build convention: canonical package functions, composed here).
+ *   (the pipeline convention: canonical package functions, composed here).
  *
  *   The shipped candidate gazetteer is never patched ("never patch databases, rebuild"):
  *   an artifact predating the manifest reads `undefined` at open.

@@ -6,7 +6,7 @@
  *   (WOF + Overture + GeoNames → verified, sealed admin gazetteer), then `importance` for
  *   that admin artifact, then `build candidate` (the byte-range candidate table) from both.
  *
- *   The admin build folds GeoNames into the admin database, and the candidate build reads it as built.
+ *   The admin build adds GeoNames places to the admin database, and the candidate build reads it as built.
  *   Both artifacts land at staging/dated paths.
  *
  *   The operator swaps and promotes them as separate steps (releasing.md).

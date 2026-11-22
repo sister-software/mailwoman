@@ -4,7 +4,7 @@
 /**
  *   The turnkey admin-gazetteer build — the runbook phases in one verified, sealed pipeline:
  *
- *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
+ *   ingest-wof → add-overture → add-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
  *
  *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it.
  *   On success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`,
@@ -26,14 +26,14 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { enrichAdmin } from "#tools/pipeline/admin/enrich"
-import { foldGeonames, type FoldGeonamesResult } from "#tools/pipeline/admin/fold/geonames"
-import { ingestOvertureDivisions } from "#tools/pipeline/admin/fold/overture"
-import { buildWOFPlaceIndex, type FoldGap } from "#tools/pipeline/admin/fold/wof-match"
 import { freezeAdmin } from "#tools/pipeline/admin/freeze"
 import { ingestWOF, type IngestWOFResult } from "#tools/pipeline/admin/ingest-wof"
 import { fingerprintAdminInputs } from "#tools/pipeline/admin/inputs"
 import { createGeoNamesAnchorLookup } from "#tools/pipeline/admin/label-point-adjudicator"
 import { adminLayerManifest, type IngestCounts } from "#tools/pipeline/admin/manifest"
+import { addGeonamesPlaces, type AddGeonamesPlacesResult } from "#tools/pipeline/admin/sources/geonames"
+import { ingestOvertureDivisions } from "#tools/pipeline/admin/sources/overture"
+import { buildWOFPlaceIndex, type UnmatchedPlace } from "#tools/pipeline/admin/sources/wof-match"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
@@ -122,7 +122,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// Check before the WOF ingest rather than at `fold-overture`.
+	// Check before the WOF ingest rather than at `add-overture`.
 	// A pruned pin is a one-request question.
 	// A release check after 2.9M records could look like a network fault instead of an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
@@ -148,9 +148,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	let overtureIngested: number
 
-	let folded: FoldGeonamesResult
+	let geonamesAdded: AddGeonamesPlacesResult
 
-	const gaps: FoldGap[] = []
+	const gaps: UnmatchedPlace[] = []
 
 	/**
 	 * The `names` and `concordances` rows each source wrote, read back from the staging database.
@@ -182,7 +182,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 				}
 			},
 			// GeoNames-anchored label-point adjudication.
-			// Reads the same per-country extracts that fold-geonames consumes.
+			// Reads the same per-country extracts that add-geonames consumes.
 			// A data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, found) =>
@@ -197,35 +197,35 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
 		)
 
-		// WOF holds every place it has a record of, and a folded place that matches none is listed as a gap.
+		// WOF holds every place it has a record of, and an added place that matches none is listed as a gap.
 		// A GeoNames place that matches a WOF record adds its names to that record.
 		// An Overture division keeps its own row either way, with the match recorded in
 		// the Overture part's `overture_wof_match`, because the gazetteer is a Collective
-		// Database whose Overture part is ODbL — see `admin/fold/overture.ts`.
-		phase("match-index", "indexing WOF records for the folds")
+		// Database whose Overture part is ODbL — see `admin/sources/overture.ts`.
+		phase("match-index", "indexing WOF records for the Overture and GeoNames places")
 		const index = buildWOFPlaceIndex(db)
-		const wof = { index, onGap: (gap: FoldGap) => void gaps.push(gap) }
+		const wof = { index, onGap: (gap: UnmatchedPlace) => void gaps.push(gap) }
 
-		phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
+		phase("add-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
 		const overture = await ingestOvertureDivisions(db, overtureCountries, overtureRelease, undefined, wof)
 		overtureIngested = overture.written
 
 		phase(
-			"fold-overture",
+			"add-overture",
 			`${overture.written.toLocaleString()} divisions written as their own rows, ` +
 				`${overture.matched.toLocaleString()} of them matched to a WOF record`
 		)
 
-		// The A-class admin fold for the zero-coverage locales — country + region nodes +
-		// locality ancestry — scoped to the countries in this run's geonames set.
+		// The GeoNames A-class admin rows for the zero-coverage locales — country + region
+		// nodes + locality ancestry — scoped to the countries in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
-		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
-		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet, wof })
-		phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places written as their own rows`)
+		phase("add-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin rows)`)
+		geonamesAdded = await addGeonamesPlaces(db, { countries: geonamesCountries, adminForCountries: gapSet, wof })
+		phase("add-geonames", `${geonamesAdded.placesIngested.toLocaleString()} places written as their own rows`)
 
 		index.dispose()
 
-		// A GeoNames fold that matched every place it read writes no row of its own, only names
+		// A GeoNames step that matched every place it read writes no row of its own, only names
 		// on WOF records, so the manifest's sources are the row sources the database holds.
 		for (const { source, rows } of db
 			.prepare(
@@ -240,17 +240,21 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			}
 		}
 
-		const gapsPath = `${out}.fold-gaps.jsonl`
+		const gapsPath = `${out}.unmatched-places.jsonl`
 
 		await writeLocalJSONLFile(gaps, gapsPath)
-		phase("fold-gaps", `${gaps.length.toLocaleString()} folded places match no WOF record → ${gapsPath}`)
+		phase("unmatched-places", `${gaps.length.toLocaleString()} added places match no WOF record → ${gapsPath}`)
 
 		// The fork worklist holds only the gaps whose source's data may enter WOF.
 		const candidates = gaps.filter((gap) => gap.upstreamEligible)
 		const candidatesPath = `${out}.wof-candidates.jsonl`
 
 		await writeLocalJSONLFile(candidates, candidatesPath)
-		phase("fold-gaps", `${candidates.length.toLocaleString()} of them may enter the WOF forks → ${candidatesPath}`)
+
+		phase(
+			"unmatched-places",
+			`${candidates.length.toLocaleString()} of them may enter the WOF forks → ${candidatesPath}`
+		)
 
 		phase("freeze")
 		await freezeAdmin(db, { dataDir, onPhase: phase })
@@ -318,7 +322,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build produced rather than the lists it was given, so a fold
+			// The counts the build produced rather than the lists it was given, so a source
 			// that ingested no places doesn't appear as a source — see manifest.ts.
 			counts: contributed,
 			buildSHA: sha,
@@ -349,7 +353,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		log.notes ??= []
 
 		log.notes.push(
-			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}; phases: ${timings}`
+			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${geonamesAdded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}; phases: ${timings}`
 		)
 
 		await writeLocalJSONFile(log, buildLogPath)
@@ -361,7 +365,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		out: out.toString(),
 		placesIngested: ingest.placesIngested,
 		overtureIngested,
-		geonamesIngested: folded.placesIngested,
+		geonamesIngested: geonamesAdded.placesIngested,
 		verify,
 		sealed: true,
 		elapsedSeconds: Math.round((performance.now() - t0) / 100) / 10,

@@ -54,7 +54,7 @@ import {
 } from "#locality-postcode-schema"
 import { finalizeSealedBuild } from "#tools/pipeline/database-lifecycle"
 import { writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The grant the finalized table records in its `license` meta row.
@@ -265,7 +265,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	// The layer interface's manifest, beside the `meta` record and stating the same terms.
 	await stampLayerManifest(
 		output,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "postcode-locality",
 			version: isoDate(now),
 			// The recorded grant requires attribution and has no share-alike term, so the artifact is published.

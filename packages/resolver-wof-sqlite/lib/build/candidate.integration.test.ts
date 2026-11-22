@@ -158,7 +158,7 @@ function addFixtureOverturePart(path: PathBuilderLike): void {
 	const child = OVERTURE_ID_BASE + 4
 
 	db.exec(`
-		-- Chicago's twin: the fold matched it to WOF 200 and kept its own row.
+		-- Chicago's twin: the Overture step matched it to WOF 200 and kept its own row.
 		INSERT INTO spr VALUES (${twin}, 'Chicago', 'locality', 'US', 41.881, -87.631, 41.6, -87.9, 42.0, -87.5, -1, 0);
 		INSERT INTO place_population VALUES (${twin}, 2800000);
 		INSERT INTO place_search VALUES (${twin}, 'Chicagoland');
@@ -428,7 +428,7 @@ describe("buildCandidateTable", () => {
 		expect(il?.placetype).toBe("region")
 	})
 
-	test("Folds postcode extracts in, dropping placeholder 0,0-coord rows", async () => {
+	test("Adds postcode extracts' rows, dropping placeholder 0,0-coord rows", async () => {
 		const input = scratch.path("admin.db")
 		const pc = scratch.path("postcodes.db")
 		const output = scratch.path("candidate.db")
@@ -447,8 +447,9 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
 	})
 
-	// The Collective Database reading of an ODbL postcode fold (issue #2618) rests on this invariant.
-	// The fold appends its own rows and reads or changes no other row.
+	// The Collective Database reading of an ODbL postcode database in the candidate
+	// (issue #2618) rests on this invariant.
+	// The build appends that database's own rows and reads or changes no other row.
 	test("a postcode extract adds only its own rows and leaves every other row and sidecar unchanged", async () => {
 		const { output: baselinePath } = await adminOnlyCandidate()
 		const input = scratch.path("admin.db")
@@ -481,7 +482,7 @@ describe("buildCandidateTable", () => {
 			expect(allRows(db.prepare(all))).toEqual(allRows(baseline.prepare(all)))
 		}
 
-		const folded = allRows<{
+		const added = allRows<{
 			spr_id: number
 			region_id: number
 			neg_rank: number
@@ -494,9 +495,9 @@ describe("buildCandidateTable", () => {
 			)
 		)
 
-		expect(new Set(folded.map((row) => row.spr_id))).toEqual(new Set(extractIDs))
+		expect(new Set(added.map((row) => row.spr_id))).toEqual(new Set(extractIDs))
 
-		for (const row of folded) {
+		for (const row of added) {
 			expect(row).toMatchObject({ region_id: 0, neg_rank: 0, population: 0, importance: null, name_role: null })
 		}
 	})
@@ -702,7 +703,7 @@ describe("buildCandidateTable", () => {
 		expect(answers("Philly")).toEqual(["Philadelphia", "Philly"])
 	})
 
-	test("a locality extract that names its region folds in with that region's scope and a closure row", async () => {
+	test("a locality extract that names its region adds its rows with that region's scope and a closure row", async () => {
 		const input = scratch.path("admin.db")
 		const localities = scratch.path("localities.db")
 		const output = scratch.path("candidate.db")
@@ -738,7 +739,7 @@ describe("buildCandidateTable", () => {
 		])
 	})
 
-	test("Folds postcode delivery-city aliases into the exact tier", async () => {
+	test("Adds postcode delivery-city aliases to the exact tier", async () => {
 		const input = scratch.path("admin.db")
 		const pc = scratch.path("postcodes.db")
 		const output = scratch.path("candidate.db")
@@ -819,7 +820,7 @@ describe("buildCandidateTable", () => {
 				-- Same name + country + placetype as the admin fixture's Springfield, but 1,500 km away:
 				-- a DIFFERENT town, so the check must refuse it rather than lend it the score.
 				INSERT INTO spr VALUES (7000000000201, 'Springfield', 'locality', 'US', 42.10, -72.59, -1, 0);
-				-- A postcode-shaped row: the extract fold must not pick it up either way.
+				-- A postcode-shaped row: reading the extract must not pick it up either way.
 				INSERT INTO spr VALUES (7000000060601, '60601', 'postalcode', 'US', 41.885, -87.62, -1, 0);
 
 				INSERT INTO place_importance VALUES (7000000000200, 0.8125);

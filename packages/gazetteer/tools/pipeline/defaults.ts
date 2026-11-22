@@ -11,7 +11,7 @@
  *   are the priority countries.
  *
  *   Overture divisions (`8e12 ≤ id < 9e12`) are the 86.
- *   The GeoNames alias fold (`id ≥ 9e12`) is the 161.
+ *   The GeoNames places and alternate names (`id ≥ 9e12`) are the 161.
  *
  *   See releasing.md "Rebuilding + swapping the canonical admin gazetteer".
  *
@@ -137,7 +137,8 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 
 // country-branch: an ingest list of a built artifact, as the first list in this module states.
 /**
- * GeoNames alias-fold tail (synthetic ids @ 9e12): bilingual/alt-name coverage for the remaining locales.
+ * The countries the admin build reads GeoNames places and alternate names for
+ * (synthetic ids @ 9e12): bilingual/alt-name coverage for the remaining locales.
  */
 export const DEFAULT_GEONAMES_COUNTRIES = [
 	"AD",
@@ -313,11 +314,11 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 /**
  * The zero-coverage gap set: GeoNames-alias locales carrying no WOF or Overture admin.
  *
- * These are the `adminForCountries` targets for the GeoNames fold.
- * Without the A-class fold (pcli country + ADM1 regions + locality ancestry linking),
+ * These are the `adminForCountries` targets for the GeoNames step.
+ * Without the GeoNames A-class rows (pcli country + ADM1 regions + locality ancestry linking),
  * their localities are orphans and "City, Country" scoping breaks.
  *
- * Countries with WOF/Overture admin are excluded by construction, because folding
+ * Countries with WOF/Overture admin are excluded by construction, because adding
  * their GeoNames admin would double up.
  */
 export function geonamesAdminGapCountries(): string[] {
@@ -332,7 +333,7 @@ export function geonamesAdminGapCountries(): string[] {
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 
 /**
- * The conventional admin source the fold copies from.
+ * The conventional admin source the candidate build copies from.
  */
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 

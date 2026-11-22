@@ -104,7 +104,7 @@ child projecting onto that rung).
 - **Built:** ${meta.buildDate}
 - **Parent-coverage floor:** ${formatPercent(meta.floor, 1)} — a sub-locality rung counts as reached only above this.
 - **Countries measured:** ${rows.length.toLocaleString()}
-- **Countries built from a cloned WOF repo:** ${fromWOFRepo.toLocaleString()} — the rest came from Overture divisions or the GeoNames alias fold.
+- **Countries built from a cloned WOF repo:** ${fromWOFRepo.toLocaleString()} — the rest came from Overture divisions or the GeoNames places and alternate names.
 - **Countries reaching \`dependent_locality\`:** ${reached.toLocaleString()}
 
 ## Read the \`source\` column first
@@ -113,7 +113,7 @@ child projecting onto that rung).
 admin repos; \`DEFAULT_WOF_PRIORITY_COUNTRIES\` names ${DEFAULT_WOF_PRIORITY_COUNTRIES.length} of
 them. Every other country's rows come from Overture divisions — whose \`OVERTURE_DIVISION_SUBTYPES\`
 is \`country\`/\`locality\`/\`region\`/\`county\`/\`localadmin\`, with no hood-level subtype — or from
-the GeoNames alias fold.
+the GeoNames places and alternate names the admin build adds.
 
 So a \`source\` of \`overture\` or \`geonames\` with an empty \`dependent_locality\` rung is **not a
 finding about WOF's depth in that country**. It is a country we never asked. The sub-locality tier

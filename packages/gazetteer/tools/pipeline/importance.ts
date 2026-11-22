@@ -36,7 +36,7 @@ import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import { type FSTSourceIdentity, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
@@ -180,12 +180,12 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
 		// A Wikidata id an Overture division shares with a WOF record would otherwise join
 		// one fan-out group, where the division could take the record's score away.
-		// Each part resolves its own group, so the WOF and GeoNames places get the
-		// scores a build without the fold gives them.
+		// Each part resolves its own group, so the WOF and GeoNames places get the scores
+		// a build without the Overture divisions gives them.
 		const grouped = new Map<string, { wikidataID: string; candidates: FanoutCandidate[] }>()
 
 		for (const row of rows) {
-			const key = `${row.other_id}\u0000${isOvertureFoldID(row.id) ? "overture" : "rest"}`
+			const key = `${row.other_id}\u0000${isOverturePartID(row.id) ? "overture" : "rest"}`
 			const existing = grouped.get(key)
 
 			if (existing) {

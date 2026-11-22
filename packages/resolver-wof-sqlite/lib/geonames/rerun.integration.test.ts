@@ -3,7 +3,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { GEONAMES_ID_BASE, geonamesFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { GEONAMES_ID_BASE, geonamesPlaceID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
@@ -15,10 +15,10 @@ type Row = Record<string, string | number | null>
 let dir: TemporaryDirectory
 
 /**
- * The fold ids of the fixture places, from their GeoNames ids.
+ * The ids the GeoNames ingest gives the fixture places, from their GeoNames ids.
  */
-const GABORONE = geonamesFoldID(933_773)
-const WIEN = geonamesFoldID(2_761_369)
+const GABORONE = geonamesPlaceID(933_773)
+const WIEN = geonamesPlaceID(2_761_369)
 
 function row(over: Record<number, string>): string {
 	const f = new Array(19).fill("")
@@ -50,7 +50,7 @@ function freshDB(): DatabaseClient<WOFDatabase> {
 }
 
 beforeAll(async () => {
-	dir = await temporaryDirectory("geonames-refold-")
+	dir = await temporaryDirectory("geonames-rerun-")
 
 	await writeLocalFile(
 		row({
@@ -79,7 +79,7 @@ beforeAll(async () => {
 
 afterAll(() => dir[Symbol.asyncDispose]())
 
-test("a re-fold with a different country list leaves no name bound to another country's place", async () => {
+test("a rerun with a different country list leaves no name bound to another country's place", async () => {
 	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
@@ -95,7 +95,7 @@ test("a re-fold with a different country list leaves no name bound to another co
 	expect(disagreeing.n).toBe(0)
 })
 
-test("a re-fold rewrites the range wholesale — no row survives from the previous run", async () => {
+test("a rerun rewrites the range wholesale — no row survives from the previous run", async () => {
 	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
@@ -131,7 +131,7 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 	expect(pop).toBeUndefined()
 })
 
-test("a place keeps its GeoNames id whichever other countries a build folds (#3061)", async () => {
+test("a place keeps its GeoNames id whichever other countries a build adds (#3061)", async () => {
 	using both = freshDB()
 	using austriaOnly = freshDB()
 
@@ -145,7 +145,7 @@ test("a place keeps its GeoNames id whichever other countries a build folds (#30
 	expect(wienIn(austriaOnly)).toBe("Wien")
 })
 
-test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
+test("running the SAME list twice is a no-op, not a doubling", async () => {
 	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})
@@ -157,7 +157,7 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 	expect(second.n).toBe(first.n)
 })
 
-test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
+test("every added locality gets its self-ancestor row, with or without the admin rows", async () => {
 	using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir.path, () => {})

@@ -5,7 +5,7 @@
  *   Tests the manifest stamped by postcode and locality builders.
  *   Each test also checks the tier a builder states.
  *
- *   The candidate build reads a fold's `layer_manifest.tier` before folding it.
+ *   The candidate build reads a contributing database's `layer_manifest.tier` before adding its rows.
  *   These tests pin the value each builder writes.
  *
  *   They call the Code-Point and Taiwan composers directly because full builds
@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest"
 
 import { codePointLayerManifest } from "#tools/pipeline/gb/codepoint/database"
 import { geonamesTailTerms } from "#tools/pipeline/postcode/geonames/tail"
-import { foldLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { contributingLayerManifest } from "#tools/pipeline/stamp-manifest"
 import { twDistrictsLayerManifest } from "#tools/pipeline/tw-districts"
 
 const BASE = {
@@ -32,10 +32,10 @@ const BASE = {
 	spineKeys: { wofID: "id" },
 }
 
-describe("foldLayerManifest", () => {
+describe("contributingLayerManifest", () => {
 	it("records the expression a builder's prose resolves to, never the prose", () => {
 		// The value `localities-nz-linz.db` writes into `database_meta`, measured 2026-09-27.
-		const manifest = foldLayerManifest({
+		const manifest = contributingLayerManifest({
 			...BASE,
 			tier: LayerTier.Shipped,
 			license: "CC-BY-4.0, attribution Land Information New Zealand",
@@ -47,7 +47,7 @@ describe("foldLayerManifest", () => {
 	})
 
 	it("refuses prose that resolves to no expression rather than stamping it", () => {
-		expect(() => foldLayerManifest({ ...BASE, tier: LayerTier.Shipped, license: "see the README" })).toThrow(
+		expect(() => contributingLayerManifest({ ...BASE, tier: LayerTier.Shipped, license: "see the README" })).toThrow(
 			/resolves to no SPDX expression/
 		)
 	})
@@ -56,10 +56,10 @@ describe("foldLayerManifest", () => {
 		// A share-alike grant cannot use the shipped tier.
 		// An attribution-only grant also cannot use build-local.
 		expect(() =>
-			foldLayerManifest({ ...BASE, tier: LayerTier.Shipped, license: "Open Database License (ODbL) 1.0" })
+			contributingLayerManifest({ ...BASE, tier: LayerTier.Shipped, license: "Open Database License (ODbL) 1.0" })
 		).toThrow(/carries share-alike/)
 
-		expect(() => foldLayerManifest({ ...BASE, tier: LayerTier.BuildLocal, license: "CC-BY-4.0" })).toThrow(
+		expect(() => contributingLayerManifest({ ...BASE, tier: LayerTier.BuildLocal, license: "CC-BY-4.0" })).toThrow(
 			/carries no share-alike/
 		)
 	})
@@ -67,7 +67,7 @@ describe("foldLayerManifest", () => {
 	it("accepts an admissible expression that stays unresolved at build-local", () => {
 		// An input without declared terms requires withholding publication.
 		// The manifest preserves the input text for review.
-		const manifest = foldLayerManifest({
+		const manifest = contributingLayerManifest({
 			...BASE,
 			tier: LayerTier.BuildLocal,
 			license: "CC-BY-4.0 AND LicenseRef-Undeclared-Input",
@@ -132,6 +132,6 @@ describe("geonamesTailTerms", () => {
 		expect(terms.tier).toBe(LayerTier.BuildLocal)
 		expect(terms.license).toBe("CC-BY-4.0 AND OGL-UK-3.0 AND LicenseRef-Undeclared-Input")
 		// The pair is what `assertTierMatchesLicense` accepts, so a build with GB still stamps.
-		expect(() => foldLayerManifest({ ...BASE, ...terms })).not.toThrow()
+		expect(() => contributingLayerManifest({ ...BASE, ...terms })).not.toThrow()
 	})
 })

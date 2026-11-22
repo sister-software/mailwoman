@@ -181,7 +181,7 @@ stops updating and no researcher checked the national portal behind it.
 
 ## Official lists of public structures
 
-`mailwoman gazetteer build structures` folds every country's official list of public structures, such
+`mailwoman gazetteer build structures` combines every country's official list of public structures, such
 as a postal operator's post offices or the USGS National Structures Dataset's schools, hospitals,
 emergency stations and government buildings, into one `structures.db` beside `poi.db`, and the geocoder
 searches it with `poi.db`. The records filed under the post-office category feed the post-office parse

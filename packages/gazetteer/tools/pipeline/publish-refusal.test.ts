@@ -16,7 +16,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 import { publishGazetteer } from "#tools/pipeline"
-import { foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 let root: TemporaryDirectory
 
@@ -38,7 +38,7 @@ test("a build-local candidate is refused by name before staging", async () => {
 	// The manifest in the lab host's candidate.db, measured 2026-09-27.
 	await stampLayerManifest(
 		candidateDB,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "candidate",
 			version: "2026-09-15",
 			tier: LayerTier.BuildLocal,
