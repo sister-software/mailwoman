@@ -177,7 +177,7 @@ either mode.
 ## License election
 
 A grant that enumerates its rights grants those rights and no others. An omission is neither a
-permission nor a prohibition. Two of the four `INGEST_OPERATIONS`, `transform` and `train`, need
+permission nor a prohibition. Two of the four operations the `ingest` action performs (`LICENSE_ACTIONS` in `@mailwoman/license/actions`), `transform` and `train`, need
 adaptation, so before electing a license grep the terms document for the verb the operation needs
 (`adapt`, `modify`, `derivative`, `alter`, `translate`) rather than for the word `licence`. CC BY and
 Licence Ouverte name adaptation explicitly. A bespoke government terms page may omit it, and the

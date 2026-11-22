@@ -24,13 +24,15 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
 import {
 	LicenseReviewState,
 	OperationPermission,
 	permissionFor,
 	type LicenseDecision,
 } from "@mailwoman/license/decision"
-import { TRAINING_OPERATIONS, type SourceOperation } from "@mailwoman/license/operations"
+import type { SourceOperation } from "@mailwoman/license/operations"
+import { evaluateLicense, DecisionVerdict } from "@mailwoman/license/tree"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
@@ -233,7 +235,7 @@ export async function readCorpusSourceInputs(
 
 /**
  * Why one corpus source lacks a permission the checked operations need,
- * {@linkcode TRAINING_OPERATIONS} unless the caller passes others.
+ * those of the `train` action unless the caller passes others.
  */
 export interface SourceRightsGap {
 	/**
@@ -267,7 +269,7 @@ export interface SourceRightsGap {
  * the same id is read against what that corpus's rows were built from.
  * A build or training check omits it and reads today's inputs.
  *
- * `operations` defaults to {@linkcode TRAINING_OPERATIONS}.
+ * `operations` defaults to the `train` action's.
  * A release check passes the operations releasing a model trained on the rows performs.
  */
 export function sourceRightsGaps(
@@ -275,7 +277,7 @@ export function sourceRightsGaps(
 	inputs: CorpusSourceInputs,
 	register: AddressSourceRegister,
 	corpusVersion?: string,
-	operations: readonly SourceOperation[] = TRAINING_OPERATIONS
+	operations: readonly SourceOperation[] = actionOperations(LicenseAction.Train, null)
 ): SourceRightsGap[] {
 	const resolved = inputs.resolve(source)
 
@@ -351,19 +353,23 @@ export interface RegisterDecisions {
 }
 
 /**
- * Whether one register row holds a decision that permits every operation in {@linkcode TRAINING_OPERATIONS}.
+ * Whether one register row holds a decision under which the decision tree
+ * answers `go` for the `train` action.
  *
  * A row the register lacks, or whose license has no decision, doesn't.
  */
 export function registerSourcePermitsTraining(register: RegisterDecisions, registerSource: string): boolean {
 	const row = register.sources.find((entry) => entry.sourceID === registerSource)
-	const decision = row ? register.licenses.find((entry) => entry.licenseID === row.license) : undefined
 
-	if (!decision) return false
+	if (!row) return false
 
-	return TRAINING_OPERATIONS.every(
-		(operation) => permissionFor(decision, operation).permission === OperationPermission.Permitted
-	)
+	const request = {
+		action: LicenseAction.Train,
+		offering: null,
+		sources: [{ source: row.sourceID, licenseID: row.license }],
+	}
+
+	return evaluateLicense(request, register).verdict === DecisionVerdict.Go
 }
 
 /**
@@ -395,7 +401,7 @@ export class SourceRightsError extends Error {
 	constructor(context: string, gaps: readonly SourceRightsGap[], overrideHint?: string) {
 		super(
 			`${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
-				`lack an elected decision permitting ${TRAINING_OPERATIONS.join(" and ")}:\n  ` +
+				`lack an elected decision permitting ${actionOperations(LicenseAction.Train, null).join(" and ")}:\n  ` +
 				gaps.map(describeSourceRightsGap).join("\n  ") +
 				"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
 				`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +

@@ -5,8 +5,8 @@
  *   Which sources the US address layer may serve, by each source's register decisions.
  *
  *   The layer copies a source's rows and redistributes them.
- *   A source is fully admitted when every register row its data comes from holds an elected
- *   decision permitting each operation in {@linkcode ADDRESS_LAYER_OPERATIONS}.
+ *   A source is fully admitted when the decision tree answers `go` for the
+ *   `serve-address-layer` action on every register row its data comes from.
  *
  *   The corpus build applies the same rule to `transform` and `train`.
  *   A refused source is always excluded, and {@linkcode EXCLUDE_UNREAD_SOURCES}
@@ -16,14 +16,14 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { LicenseAction } from "@mailwoman/license/actions"
 import {
 	createSourceAdmitter,
 	LayerExclusionReason,
 	type LayerSourceExclusion,
 	type SourceAdmission,
 } from "@mailwoman/license/admission"
-import { LicenseReviewState, OperationPermission, permissionFor } from "@mailwoman/license/decision"
-import { ADDRESS_LAYER_OPERATIONS } from "@mailwoman/license/operations"
+import { DecisionNode, evaluateLicense, DecisionVerdict } from "@mailwoman/license/tree"
 import type { PathBuilderLike } from "path-ts"
 
 import type { RegisterDecisions } from "#source-register/corpus-inputs"
@@ -70,21 +70,34 @@ function rowExclusion(
 		}
 	}
 
-	const decision = register.licenses.find((entry) => entry.licenseID === row.license)
+	const { verdict, path } = evaluateLicense(
+		{
+			action: LicenseAction.ServeAddressLayer,
+			offering: null,
+			sources: [{ source: registerSource, licenseID: row.license }],
+		},
+		register
+	)
 
-	if (!decision) {
+	if (verdict === DecisionVerdict.Go) return null
+
+	const stopped = path.at(-1)!
+
+	if (stopped.node === DecisionNode.Registered) {
 		return {
 			reason: LayerExclusionReason.Unread,
 			because: `register row ${registerSource} points at license ${row.license}, which has no decision.`,
 		}
 	}
 
-	if (decision.state === LicenseReviewState.Refused) {
-		return { reason: LayerExclusionReason.Refused, because: firstSentence(decision.refusedBecause) }
+	if (stopped.node === DecisionNode.ReviewState) {
+		const reason = verdict === DecisionVerdict.NoGo ? LayerExclusionReason.Refused : LayerExclusionReason.Unread
+
+		return { reason, because: firstSentence(stopped.because) }
 	}
 
-	const readings = ADDRESS_LAYER_OPERATIONS.map((operation) => ({ operation, ...permissionFor(decision, operation) }))
-	const refused = readings.find(({ permission }) => permission === OperationPermission.Refused)
+	const readings = path.filter((step) => step.node === DecisionNode.Operations)
+	const refused = readings.find((step) => step.outcome === DecisionVerdict.NoGo)
 
 	if (refused) {
 		return {
@@ -93,16 +106,14 @@ function rowExclusion(
 		}
 	}
 
-	const unread = readings.find(({ permission }) => permission !== OperationPermission.Permitted)
+	const unread = readings.find((step) => step.outcome === DecisionVerdict.Unknown)!
 
-	if (unread) return { reason: LayerExclusionReason.Unread, because: firstSentence(unread.because) }
-
-	return null
+	return { reason: LayerExclusionReason.Unread, because: firstSentence(unread.because) }
 }
 
 /**
  * Admits a source only when every register row the table maps it to permits each
- * of {@linkcode ADDRESS_LAYER_OPERATIONS}.
+ * operation the `serve-address-layer` action performs.
  *
  * A source whose rows include a refusal is excluded as refused.
  * One whose rows are otherwise unread is excluded as unread.

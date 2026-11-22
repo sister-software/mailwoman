@@ -17,6 +17,7 @@ import {
 	type AddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { LicenseAction } from "@mailwoman/license/actions"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname, type PathBuilderLike } from "path-ts"
@@ -136,7 +137,9 @@ export function countRegisterSources(register: AddressSourceRegister): Map<strin
 
 		count.total++
 
-		if (!ingestEligibilityProblems(source, register).length) { count.eligible++ }
+		if (!ingestEligibilityProblems(source, register, { action: LicenseAction.Ingest, offering: null }).length) {
+			count.eligible++
+		}
 
 		counts.set(source.iso2, count)
 	}

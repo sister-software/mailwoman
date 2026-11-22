@@ -6,6 +6,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LicenseAction } from "@mailwoman/license/actions"
 
 import { ingestEligibilityProblems, readAddressSourceRegister, type SourceDecisionTable } from "#source-register"
 import { readCorpusSourceInputs } from "#source-register/corpus-inputs"
@@ -39,7 +40,10 @@ export async function readSourceEligibility(): Promise<ReadonlyMap<string, reado
 	for (const source of register.sources) {
 		if (!source.adapterID) continue
 
-		keyed.set(sourceEligibilityKey(source.adapterID, source.iso2), ingestEligibilityProblems(source, register))
+		keyed.set(
+			sourceEligibilityKey(source.adapterID, source.iso2),
+			ingestEligibilityProblems(source, register, { action: LicenseAction.Ingest, offering: null })
+		)
 	}
 
 	return keyed

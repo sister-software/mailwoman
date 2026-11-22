@@ -5,6 +5,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
 import {
 	electedTermsLabel,
 	LicenseReviewState,
@@ -14,7 +15,7 @@ import {
 	type ElectedLicense,
 	type LicenseDecision,
 } from "@mailwoman/license/decision"
-import { INGEST_OPERATIONS, MODEL_RELEASE_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
+import { SourceOperation } from "@mailwoman/license/operations"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -34,6 +35,11 @@ import {
 	type AddressSourceRegister,
 } from "#source-register"
 import { AddressRole } from "#types"
+
+/**
+ * A model release offered under both branches of Mailwoman's license, as the published models are.
+ */
+const MODEL_RELEASE = { action: LicenseAction.ReleaseModel, offering: "AGPL-3.0-only OR LicenseRef-Commercial" }
 
 describe("the committed address-source register", () => {
 	let register: AddressSourceRegister
@@ -102,7 +108,7 @@ describe("the committed address-source register", () => {
 
 			expect(decision.state, source.sourceID).toBe(LicenseReviewState.Elected)
 
-			for (const operation of INGEST_OPERATIONS) {
+			for (const operation of actionOperations(LicenseAction.Ingest, null)) {
 				expect(permissionFor(decision, operation).permission, `${source.sourceID} ${operation}`).toBe(
 					OperationPermission.Permitted
 				)
@@ -586,7 +592,7 @@ describe("permission by operation", () => {
 	it("refuses model release on that same grant, because the terms never mention it", () => {
 		// A permissive dataset may be used without becoming publication-cleared.
 		// The grant is unchanged and the act being asked about is different.
-		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE_OPERATIONS)
+		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE)
 
 		expect(problems).toHaveLength(2)
 		expect(problems[0]).toContain("unreviewed for redistribute-model")
@@ -628,7 +634,7 @@ describe("permission by operation", () => {
 
 		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial))).toEqual([])
 
-		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial), MODEL_RELEASE_OPERATIONS)).toEqual([
+		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial), MODEL_RELEASE)).toEqual([
 			"the elected terms read refused for commercial-sublicense: §6 restricts reuse to non-commercial purposes",
 		])
 	})
@@ -724,7 +730,7 @@ describe("permission by operation", () => {
 			}
 
 			expect(ingestEligibilityProblems(source, registerWith(attributionOnly))).toEqual([])
-			expect(ingestEligibilityProblems(source, registerWith(attributionOnly), MODEL_RELEASE_OPERATIONS)).toEqual([])
+			expect(ingestEligibilityProblems(source, registerWith(attributionOnly), MODEL_RELEASE)).toEqual([])
 		})
 
 		it("admits a grant whose permission carries a condition, with the condition recorded beside it", () => {
@@ -771,7 +777,7 @@ describe("permission by operation", () => {
 
 			expect(ingestEligibilityProblems(source, registerWith(shareAlike))).toEqual([])
 
-			expect(ingestEligibilityProblems(source, registerWith(shareAlike), MODEL_RELEASE_OPERATIONS)).toEqual([
+			expect(ingestEligibilityProblems(source, registerWith(shareAlike), MODEL_RELEASE)).toEqual([
 				"the elected terms read refused for redistribute-model: §4.4 requires a derived database to be offered under these same terms",
 				"the elected terms read unreviewed for commercial-sublicense: the elected terms do not state whether commercial-sublicense is permitted",
 			])
