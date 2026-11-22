@@ -1,0 +1,113 @@
+---
+title: Keep answers inside one country
+description: Set a country in a config file or a flag so an ambiguous place name resolves in that country.
+role: guide
+source-of-truth: packages/mailwoman/lib/geocode/options.ts, packages/mailwoman/lib/inferred-scope.ts, packages/mailwoman/lib/country-scope.ts, packages/mailwoman/lib/geocode/options/config-file.ts
+verified-with: mailwoman source at commit 5b5c6f06f5, run on 2026-11-22
+---
+
+import { CommonPrerequisites } from "#partials/runtime"
+
+# Keep answers inside one country
+
+Use this guide when every address your application handles is in one country, and you want an ambiguous place name to resolve there.
+
+By default `mailwoman geocode` treats the country of its locale as a preference that evidence in the address can overrule. With the default locale `en-US`, `12 Oak St, Paris` answers Paris, France, because that Paris is the larger place of the name. A configured country keeps the answer in the United States.
+
+## Prerequisites
+
+<CommonPrerequisites />
+
+Start by installing the required packages:
+
+```sh npm2yarn
+npm install mailwoman
+```
+
+## 1. See the default
+
+Run the address with zero flags and zero config file:
+
+```sh
+mailwoman geocode "12 Oak St, Paris" --json
+```
+
+The answer is the admin point of Paris, France:
+
+```text
+"lat": 48.858705,
+"lon": 2.342865,
+"resolution_tier": "admin",
+"locality": "Paris",
+```
+
+The locale's country stops applying in two cases. The first is a locality whose largest namesake is in another country. The second is an address that finds zero place inside the locale's country. `1001 Boulevard Saint-Laurent, Montréal` answers Montréal, Canada, for the first reason.
+
+## 2. State the country in a config file
+
+Save this as `mailwoman.config.json` in the directory you run the command from:
+
+```json
+{
+	"geocode": {
+		"defaultCountry": "US"
+	}
+}
+```
+
+Run the same command again:
+
+```sh
+mailwoman geocode "12 Oak St, Paris" --json
+```
+
+The answer is now Paris, Texas:
+
+```text
+"lat": 33.659317,
+"lon": -95.561576,
+"resolution_tier": "admin",
+"locality": "Paris",
+```
+
+A stated country is a filter that never yields. With this file, `1001 Boulevard Saint-Laurent, Montréal` answers Montreal, Wisconsin, at 46.433871, -90.232951. Use it only when zero address you handle lies outside the country.
+
+The command reads one `mailwoman.config.*` file from the working directory, in JSON, YAML, TOML, or a JavaScript or TypeScript module with a default export. `--config <path>` reads a file from another place. A typed flag overrules the file, and the file overrules the built-in default.
+
+## 3. Choose between the two settings
+
+Two settings keep answers inside one country.
+
+| Choice                       | Config file                | Flag                     | Country it uses                                    |
+| ---------------------------- | -------------------------- | ------------------------ | -------------------------------------------------- |
+| A stated country             | `"defaultCountry": "US"`   | `--default-country US`   | The one you state                                  |
+| The locale's country, always | `"countryScope": "locale"` | `--country-scope locale` | The region of `--locale`, such as `US` for `en-US` |
+
+Both gave the same two answers above. State the country when your locale and your country differ, such as an `en-GB` weights package over Irish addresses.
+
+`"countryScope": "none"` removes the locale's country from the decision. A bare postcode such as `90210` then has zero country to prefer among the countries that hold it.
+
+## 4. Check which setting applied
+
+The debug view prints one row for the locale and the country that reached the resolver, with the source of each:
+
+```sh
+mailwoman geocode "12 Oak St, Paris" --debug
+```
+
+With the config file above, the row reports a `US` scope from the caller:
+
+```text
+applied     locale en-US (default)  scope US hard (caller)
+```
+
+With zero config, it reports that the inferred scope was withheld and gives the reason:
+
+```text
+applied     locale en-US (default)  scope none  withheld US (larger_namesake_abroad)
+```
+
+## Related
+
+- [Require country context for a bare postcode](./handle-bare-postcodes.mdx)
+- [Batch geocode](./batch-geocode.mdx)
