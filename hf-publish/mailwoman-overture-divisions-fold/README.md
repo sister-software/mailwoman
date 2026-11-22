@@ -45,7 +45,7 @@ candidate's own table definitions:
 | `layer_manifest`     | the part's license, credit, source candidate md5, Overture release and row counts                                                         |
 
 `mailwoman gazetteer build overture-part --candidate <candidate.db> --out <file> --release <overture release>
---version <gazetteer version>` writes the file from a built candidate.
+--part-version <gazetteer version>` writes the file from a built candidate.
 
 ## License
 

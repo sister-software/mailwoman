@@ -22,7 +22,11 @@ export const spec = {
 		candidate: { type: "string", description: "Built candidate gazetteer to copy the part out of.", required: true },
 		out: { type: "string", description: "Output database (a staging path).", required: true },
 		release: { type: "string", description: "Overture release the admin gazetteer folded.", required: true },
-		version: { type: "string", description: "Version of the part, such as the gazetteer version.", required: true },
+		"part-version": {
+			type: "string",
+			description: "Version of the part, such as the gazetteer version.",
+			required: true,
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -34,7 +38,7 @@ const GazetteerBuildOverturePart: CommandComponent<typeof spec> = ({ options }) 
 			candidateDB: options.candidate,
 			out: options.out,
 			overtureRelease: options.release,
-			version: options.version,
+			version: options.partVersion,
 		})
 
 		const counts = Object.entries(r.rows)
