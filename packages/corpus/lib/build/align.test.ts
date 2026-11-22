@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { describe, expect, it } from "vitest"
 
 import { createUnitSplitter } from "#adapters/street/unit"
@@ -11,7 +12,6 @@ import { componentFindingsRecord, ComponentRule } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
 import type { RegionNames } from "#build/region-names"
 import type { CanonicalRow } from "#types"
-import { createLicenseVerdictCache, LicensePolicy } from "#utils/license"
 
 const units = await createUnitSplitter()
 

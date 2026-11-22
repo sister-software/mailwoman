@@ -19,6 +19,7 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
+import type { LicensePolicy } from "@mailwoman/license/policy"
 import { PathBuilder } from "path-ts"
 
 import { alignSettings } from "#build/align"
@@ -48,7 +49,6 @@ import { shuffleSplitRows, SPLIT_SHUFFLE_SALT } from "#parquet/shuffle"
 import { writeParquetSplits, type ParquetManifest } from "#parquet/writers"
 import { runAdapter, type AdapterRunManifest } from "#runner"
 import type { AdapterOptions, LabeledRow } from "#types"
-import type { LicensePolicy } from "#utils/license"
 import { SPLIT_NAMES, sortLines, type CountryHoldout, type SplitName } from "#utils/split"
 
 /**

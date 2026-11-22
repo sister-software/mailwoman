@@ -36,6 +36,7 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { childElement, streamMarkupElements } from "@mailwoman/core/html/elements"
 import { workspacePath } from "@mailwoman/core/paths"
+import { LicensePolicy, licenseVerdict } from "@mailwoman/license/policy"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -49,7 +50,6 @@ import {
 import { isVoid, voidReason } from "#inspire/address"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
-import { LicensePolicy, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("brussels")
 

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { ObligationClass } from "@mailwoman/license/mixed"
 import { describe, expect, it } from "vitest"
 
-import { ObligationClass } from "#data/mixed-layer"
 import {
 	assembleReport,
 	checkPOI,

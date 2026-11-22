@@ -26,10 +26,11 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
-import { type LicenseDecision, operationProblems } from "@mailwoman/core/license/decision"
 import type { EvaluationSource } from "@mailwoman/corpus/evaluation/source"
 import { allocate } from "@mailwoman/corpus/recipes/sub/venue"
-import { type AddressSourceRegister, SourceOperation } from "@mailwoman/corpus/source-register/types"
+import type { AddressSourceRegister } from "@mailwoman/corpus/source-register/types"
+import { type LicenseDecision, operationProblems } from "@mailwoman/license/decision"
+import { EVALUATION_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
 import { type PathBuilder, resolvePath } from "path-ts"
 
 import { type HeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -118,11 +119,9 @@ export function evaluationSourceProblems(
 
 	const decision = register.licenses.find((entry) => entry.licenseID === row.license)
 
-	const problems = operationProblems(row.license, decision, [
-		SourceOperation.Fetch,
-		SourceOperation.Extract,
-		SourceOperation.Transform,
-	]).map((problem) => `${source.id}: ${problem}`)
+	const problems = operationProblems(row.license, decision, EVALUATION_OPERATIONS).map(
+		(problem) => `${source.id}: ${problem}`
+	)
 
 	if (!operationProblems(row.license, decision, [SourceOperation.Train]).length) {
 		problems.push(`${source.id}: ${row.sourceID}'s decision permits train, so its rows can reach a training corpus`)

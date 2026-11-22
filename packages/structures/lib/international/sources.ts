@@ -8,7 +8,7 @@
  *   individual landmark models come from.
  */
 
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import { permittedByGrant } from "#grants"
 import { RESEARCH_HANDOFF_NOTE } from "#research"

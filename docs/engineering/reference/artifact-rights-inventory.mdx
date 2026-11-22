@@ -329,7 +329,7 @@ name, placetype, country and name variants. The provenance properties are droppe
 **What the adapters assert.** `packages/corpus/lib/adapters/wof/admin/json/adapter.ts` and
 `packages/corpus/lib/adapters/wof/postalcode-json/adapter.ts` both set
 `defaultLicense: "CC0-1.0"`, so every `wof-*` row has that label, and
-`packages/core/lib/license/obligations.ts` reads `CC0-1.0` as having no obligation. The bundles'
+`packages/license/lib/obligations.ts` reads `CC0-1.0` as having no obligation. The bundles'
 `LICENSE.md` states that Creative Commons Zero covers Mapzen's original work, that the dataset is also a
 modification of existing open data, that some of those projects do require attribution, and that
 "linking back to this License is required". Whether the emitted strings fall inside the original-work
@@ -340,7 +340,7 @@ corpus rows are most `wof-*`, are not measured here.
 
 ## Publication control
 
-The module header of `packages/corpus/lib/utils/license.ts` (lines 9–12) states the posture. The build includes
+The module header of `packages/license/lib/policy.ts` (lines 9–12) states the posture. The build includes
 every row an adapter yields and stamps its license. A build that needs a set free of share-alike obligations
 requests the `LicensePolicy.ShareAlikeFree` policy, and a source is dropped only when the operator selects that
 policy.

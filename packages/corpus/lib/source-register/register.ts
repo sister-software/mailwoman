@@ -8,9 +8,10 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { auditLicenseDecision, operationProblems, type LicenseDecision } from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { AssertedProposition } from "@mailwoman/evidence/status"
+import { auditLicenseDecision, operationProblems, type LicenseDecision } from "@mailwoman/license/decision"
+import { INGEST_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
 import type { PathBuilderLike } from "path-ts"
 
 import {
@@ -19,7 +20,6 @@ import {
 	PersonalDataReading,
 	REGISTER_SECTORS,
 	SourceGeometry,
-	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
@@ -71,26 +71,6 @@ export function applyLicenseDecisions(
 
 	return generated.map((decision) => recorded.get(decision.licenseID) ?? decision)
 }
-
-/**
- * The operations that ingesting a source into the corpus performs.
- *
- * Redistribution and commercial sublicensing happen at release, so this list omits them.
- */
-export const INGEST_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.Fetch,
-	SourceOperation.Extract,
-	SourceOperation.Transform,
-	SourceOperation.Train,
-]
-
-/**
- * The operations that releasing a model trained on a source adds to {@link INGEST_OPERATIONS}.
- */
-export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.RedistributeModel,
-	SourceOperation.CommercialSublicense,
-]
 
 /**
  * Returns every reason that a source may not enter a training corpus, or an empty array when it may.

@@ -6726,6 +6726,7 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@types/trusted-types": "npm:^2.0.7"
@@ -6775,6 +6776,7 @@ __metadata:
     "@mailwoman/dictionaries": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/gazetteer": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
@@ -7086,6 +7088,7 @@ __metadata:
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/dictionaries": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/osm": "workspace:*"
@@ -7196,6 +7199,12 @@ __metadata:
     vitest: "npm:^5.0.5"
     wrangler: "npm:^4.156.0"
     zod: "npm:^4.6.7"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/license@workspace:*, @mailwoman/license@workspace:packages/license":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/license@workspace:packages/license"
   languageName: unknown
   linkType: soft
 
@@ -7492,6 +7501,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     hono: "npm:^4.13.14"
@@ -7546,6 +7556,7 @@ __metadata:
   resolution: "@mailwoman/osm@workspace:packages/osm"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
@@ -7861,6 +7872,7 @@ __metadata:
   resolution: "@mailwoman/structures@workspace:packages/structures"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     http-status-codes: "npm:^2.3.0"
     mailwoman: "workspace:*"
     sharp: "npm:0.35.5"
@@ -7952,6 +7964,7 @@ __metadata:
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/geocode-oracle": "workspace:*"
     "@mailwoman/libpostal": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
@@ -22154,6 +22167,7 @@ __metadata:
     "@mailwoman/gazetteer": "workspace:*"
     "@mailwoman/geographic-model": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/locale-hint": "workspace:*"
     "@mailwoman/map-tui": "workspace:*"
     "@mailwoman/match": "workspace:*"

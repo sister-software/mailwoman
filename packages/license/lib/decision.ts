@@ -16,8 +16,7 @@
  *   whereas a decision records a person's review of terms.
  */
 
-import { stringifyJSON } from "#json"
-import { LicenseObligation } from "#license/obligations"
+import { LicenseObligation } from "#obligations"
 
 /**
  * The review state of a source's terms.
@@ -347,7 +346,7 @@ export function operationProblems<Operation extends string>(
 	decision: LicenseDecision<Operation> | undefined,
 	operations: readonly Operation[]
 ): string[] {
-	const named = stringifyJSON(licenseID)
+	const named = JSON.stringify(licenseID)
 
 	if (!decision) return [`license ${named} is not declared in the register`]
 
@@ -378,7 +377,7 @@ export function auditLicenseDecision<Operation extends string>(
 	decision: LicenseDecision<Operation>,
 	knownOperations: readonly Operation[]
 ): string[] {
-	const named = stringifyJSON(decision.licenseID)
+	const named = JSON.stringify(decision.licenseID)
 
 	switch (decision.state) {
 		case LicenseReviewState.Unchecked:
@@ -414,7 +413,7 @@ function auditReading(reading: TermsReading | undefined, named: string): string[
 	}
 
 	if (!TERMS_STATEMENTS.has(reading.found)) {
-		problems.push(`license ${named} records an unknown terms finding ${stringifyJSON(reading.found)}`)
+		problems.push(`license ${named} records an unknown terms finding ${JSON.stringify(reading.found)}`)
 	}
 
 	return problems
@@ -456,13 +455,13 @@ function auditElected<Operation extends string>(
 
 		if (!permissions.has(reading.permission)) {
 			problems.push(
-				`license ${named} reads an unknown permission ${stringifyJSON(reading.permission)} for ${operation}`
+				`license ${named} reads an unknown permission ${JSON.stringify(reading.permission)} for ${operation}`
 			)
 		}
 
 		if (!known.has(operation)) {
 			problems.push(
-				`license ${named} names ${stringifyJSON(operation)}, which is not an operation this repository performs`
+				`license ${named} names ${JSON.stringify(operation)}, which is not an operation this repository performs`
 			)
 		}
 	}
@@ -486,12 +485,12 @@ function auditObligations<Operation extends string>(decision: ElectedLicense<Ope
 
 	for (const entry of decision.obligations ?? []) {
 		if (!LICENSE_OBLIGATIONS.has(entry.obligation)) {
-			problems.push(`license ${named} records an unknown obligation ${stringifyJSON(entry.obligation)}`)
+			problems.push(`license ${named} records an unknown obligation ${JSON.stringify(entry.obligation)}`)
 		}
 
 		if (!OBLIGATION_STRENGTHS.has(entry.strength)) {
 			problems.push(
-				`license ${named} records ${entry.obligation} with an unknown strength ${stringifyJSON(entry.strength)}`
+				`license ${named} records ${entry.obligation} with an unknown strength ${JSON.stringify(entry.strength)}`
 			)
 		}
 

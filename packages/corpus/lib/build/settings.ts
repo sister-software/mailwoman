@@ -10,6 +10,7 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
+import { LicensePolicy } from "@mailwoman/license/policy"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
 import { BuildProfile, PriorOutput, type BuildCorpusOptions } from "#build/types"
@@ -17,7 +18,6 @@ import { extractFingerprint, type FileDerivation, inputCheckouts } from "#parque
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW } from "#parquet/shuffle"
 import type { AdapterOptions, CorpusAdapter } from "#types"
-import { LicensePolicy } from "#utils/license"
 import type { CountryHoldout } from "#utils/split"
 
 /**

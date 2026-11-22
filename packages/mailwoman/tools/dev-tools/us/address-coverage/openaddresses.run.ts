@@ -30,7 +30,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { createSourceAdmitter, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
+import { EXCLUDE_UNREAD_SOURCES, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
+import { createSourceAdmitter } from "@mailwoman/license/admission"
 import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { addressPointDatabasePath, interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { shortCellToInt } from "@mailwoman/spatial"
@@ -67,7 +68,11 @@ const cache = currentSourcePath("openaddresses")
 
 await makeDirectories(cache)
 
-const admitter = createSourceAdmitter(await readUSAddressSourceAdmission(), values["exclude-unread-sources"])
+const admitter = createSourceAdmitter(
+	await readUSAddressSourceAdmission(),
+	values["exclude-unread-sources"] ?? EXCLUDE_UNREAD_SOURCES
+)
+
 const admitted = plan.filter((source) => admitter.admits(`openaddresses:${source.member}`))
 
 for (const { source, reason, because } of admitter.excluded) {

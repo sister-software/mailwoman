@@ -32,11 +32,11 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
+import { isMixedLicenseExpression } from "@mailwoman/license/mixed"
 
 import { BUNDLES, type BundlePart, PUBLIC_BUCKET_BASE_URL, type DataBundle } from "#data/bundles"
 import { Provenance, type InventoryEntry, type InventoryReport } from "#data/inventory"
 import {
-	isMixedLicenseExpression,
 	mixedAddressLayerOf,
 	type MixedLayerDescription,
 	type MixedLayerSource,

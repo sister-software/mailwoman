@@ -6,8 +6,9 @@
  *   The register has a jurisdiction table and a source table.
  */
 
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import type { AssertedProposition } from "@mailwoman/evidence/status"
+import type { LicenseDecision } from "@mailwoman/license/decision"
+import type { SourceOperation } from "@mailwoman/license/operations"
 
 import type { AddressRole } from "#types"
 
@@ -211,52 +212,6 @@ export const ResearchPass = {
  * One of the {@link ResearchPass} values.
  */
 export type ResearchPass = (typeof ResearchPass)[keyof typeof ResearchPass]
-
-/**
- * The acts this repository performs on a source, in pipeline order.
- *
- * A grant can permit some and stay silent on others, so license decisions record a permission per operation.
- */
-export const SourceOperation = {
-	/**
-	 * Bulk copy of the published dataset into `$MAILWOMAN_DATA_ROOT`.
-	 */
-	Fetch: "fetch",
-	/**
-	 * Postal-address extraction from the copied file.
-	 */
-	Extract: "extract",
-	/**
-	 * Transformation of extracted rows into a token and tag corpus.
-	 */
-	Transform: "transform",
-	/**
-	 * Model fitting on the transformed rows.
-	 */
-	Train: "train",
-	/**
-	 * Redistribution of raw or transformed rows as a database, lexicon or index.
-	 */
-	RedistributeData: "redistribute-data",
-	/**
-	 * Redistribution of weights trained on the rows.
-	 */
-	RedistributeModel: "redistribute-model",
-	/**
-	 * A paying customer receives a license, under `LicenseRef-Commercial`, to a result
-	 * built from the rows: trained weights or a served data layer.
-	 *
-	 * It passes on no license to the rows themselves.
-	 * `soldUnderCommercialTerms` in `@mailwoman/core/license/obligations` states
-	 * the definition and the grants that permit it.
-	 */
-	CommercialSublicense: "commercial-sublicense",
-} as const
-
-/**
- * One of the {@link SourceOperation} values.
- */
-export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
  * One jurisdiction row.

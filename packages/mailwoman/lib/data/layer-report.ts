@@ -13,8 +13,8 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerTerms, resolveLayerTerms, type SourceLocator } from "@mailwoman/core/layers/provenance"
-import { licenseIdentifiers, summarizeLicense } from "@mailwoman/core/license/obligations"
 import { licenseTextURL } from "@mailwoman/core/license/text-url"
+import { licenseIdentifiers, summarizeLicense } from "@mailwoman/license/obligations"
 
 import { type InventoryEntry, type InventoryReport, type LayerManifest, Provenance } from "#data/inventory"
 

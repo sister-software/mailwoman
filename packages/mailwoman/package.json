@@ -229,6 +229,7 @@
 		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/match": "workspace:*",

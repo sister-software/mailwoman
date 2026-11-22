@@ -22,7 +22,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import {
 	type CorpusSourceInput,

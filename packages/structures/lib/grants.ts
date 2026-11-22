@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { OperationPermission, PermissionBasis, type OperationDecision } from "@mailwoman/core/license/decision"
+import { OperationPermission, PermissionBasis, type OperationDecision } from "@mailwoman/license/decision"
 
 import { StructureOperation } from "#types"
 

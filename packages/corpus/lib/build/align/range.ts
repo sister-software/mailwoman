@@ -19,6 +19,7 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream, openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { createLicenseVerdictCache, type LicensePolicy } from "@mailwoman/license/policy"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -31,7 +32,6 @@ import { tryReadDefaultRegionNames } from "#build/region-names"
 import type { BuildProfile } from "#build/types"
 import { flushStream, once } from "#runner"
 import type { CanonicalRow } from "#types"
-import { createLicenseVerdictCache, type LicensePolicy } from "#utils/license"
 import { SPLIT_NAMES, type CountryHoldout, type SplitName } from "#utils/split"
 
 /**

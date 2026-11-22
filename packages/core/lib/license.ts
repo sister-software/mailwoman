@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   License posture utilities cover the obligations an SPDX expression is known to impose,
- *   the branch of a dual license that applies to an installation, the signed commercial
- *   license key with its offline verification and the engine stamp.
+ *   Mailwoman's own license: the branch of its dual license that applies to an installation,
+ *   the signed commercial license key with its offline verification and the engine stamp.
+ *
+ *   The rights of third-party data sources, from license decisions to the obligations
+ *   an SPDX expression imposes, are `@mailwoman/license`.
  *
  *   Everything here is offline.
  *   The well-known freshness check is `@mailwoman/core/license/publication`,
@@ -12,14 +14,12 @@
  *   on the CLI launcher's path for every invocation.
  */
 
+export * from "#license/branch"
 export * from "#license/configured"
-export * from "#license/decision"
 export * from "#license/declaration"
 export * from "#license/docs-site"
 export * from "#license/install-id"
 export * from "#license/key"
 export * from "#license/key/file"
-export * from "#license/obligations"
-export * from "#license/record"
 export * from "#license/register"
 export * from "#license/stamp"

@@ -23,26 +23,18 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import {
 	LicenseReviewState,
 	OperationPermission,
 	permissionFor,
 	type LicenseDecision,
-} from "@mailwoman/core/license/decision"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+} from "@mailwoman/license/decision"
+import { TRAINING_OPERATIONS, type SourceOperation } from "@mailwoman/license/operations"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
-import { SourceOperation, type AddressSourceRecord, type AddressSourceRegister } from "#source-register/types"
-
-/**
- * The operations a register decision must permit before a source's rows may
- * be built into a corpus or trained on.
- *
- * Both need adaptation: normalizing an address into labeled components is a derived work,
- * and fitting a model on it is another.
- */
-export const TRAINING_OPERATIONS: readonly SourceOperation[] = [SourceOperation.Transform, SourceOperation.Train]
+import type { AddressSourceRecord, AddressSourceRegister } from "#source-register/types"
 
 /**
  * One register source whose data reaches a corpus source's rows.

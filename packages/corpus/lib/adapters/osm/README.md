@@ -7,7 +7,7 @@ seen their formats.
 ## License — read this first
 
 OpenStreetMap is **ODbL-1.0**, share-alike. Every row this adapter emits stores that license string, and
-`@mailwoman/core/license/obligations` records share-alike among ODbL's obligations. A proprietary-weights
+`@mailwoman/license/obligations` records share-alike among ODbL's obligations. A proprietary-weights
 build runs `mailwoman corpus build --license-policy share-alike-free`, which refuses these rows at ingest,
 so the open weights are the only ones that learn from them. The adapter has no license option: the value
 is the interface.

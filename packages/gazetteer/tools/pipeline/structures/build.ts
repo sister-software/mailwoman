@@ -23,8 +23,8 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { LayerTier } from "@mailwoman/core/layers"
-import { carriesShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
 import type { StructureSource } from "@mailwoman/corpus/structures/source"
+import { carriesShareAlike, readLicenseRecord } from "@mailwoman/license/record"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { getPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"

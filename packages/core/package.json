@@ -142,10 +142,10 @@
 			"node": "./lib/license/key.ts",
 			"default": "./out/license/key.js"
 		},
-		"./license/decision": {
-			"types": "./out/license/decision.d.ts",
-			"node": "./lib/license/decision.ts",
-			"default": "./out/license/decision.js"
+		"./license/branch": {
+			"types": "./out/license/branch.d.ts",
+			"node": "./lib/license/branch.ts",
+			"default": "./out/license/branch.js"
 		},
 		"./license/declaration": {
 			"types": "./out/license/declaration.d.ts",
@@ -156,16 +156,6 @@
 			"types": "./out/license/install-id.d.ts",
 			"node": "./lib/license/install-id.ts",
 			"default": "./out/license/install-id.js"
-		},
-		"./license/obligations": {
-			"types": "./out/license/obligations.d.ts",
-			"node": "./lib/license/obligations.ts",
-			"default": "./out/license/obligations.js"
-		},
-		"./license/record": {
-			"types": "./out/license/record.d.ts",
-			"node": "./lib/license/record.ts",
-			"default": "./out/license/record.js"
 		},
 		"./license/register": {
 			"types": "./out/license/register.d.ts",
@@ -705,6 +695,7 @@
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"adm-zip": "^0.6.1",
 		"async-init": "^2.0.0",

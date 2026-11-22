@@ -16,13 +16,13 @@ import {
 	OperationPermission,
 	PermissionBasis,
 	type LicenseDecision,
-} from "@mailwoman/core/license/decision"
+} from "@mailwoman/license/decision"
+import { SourceOperation } from "@mailwoman/license/operations"
 import { describe, expect, it } from "vitest"
 
 import {
 	auditTrainingManifest,
 	freezeTrainingManifest,
-	SourceOperation,
 	sourcesNotPermitting,
 	TrainingDecisionGapReason,
 	trainingManifestDigest,

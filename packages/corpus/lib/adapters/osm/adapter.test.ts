@@ -3,6 +3,7 @@
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
@@ -20,7 +21,6 @@ import {
 import { OSM_LICENSE } from "#adapters/osm/license"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
-import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "#utils/license"
 
 const scratch = useScratchDir("osm")
 

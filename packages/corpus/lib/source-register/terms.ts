@@ -15,10 +15,11 @@ import {
 	permissionFor,
 	TermsStatement,
 	type TermsObligation,
-} from "@mailwoman/core/license/decision"
+} from "@mailwoman/license/decision"
+import { SourceOperation } from "@mailwoman/license/operations"
 
 import type { RegisterDecisions } from "#source-register/corpus-inputs"
-import { type AddressSourceRecord, SourceOperation } from "#source-register/types"
+import type { AddressSourceRecord } from "#source-register/types"
 
 /**
  * The ground a register row's decision gives for redistributing the publisher's rows.

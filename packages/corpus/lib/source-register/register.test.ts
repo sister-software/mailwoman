@@ -4,6 +4,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import {
 	electedTermsLabel,
 	LicenseReviewState,
@@ -12,24 +13,21 @@ import {
 	permissionFor,
 	type ElectedLicense,
 	type LicenseDecision,
-} from "@mailwoman/core/license/decision"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+} from "@mailwoman/license/decision"
+import { INGEST_OPERATIONS, MODEL_RELEASE_OPERATIONS, SourceOperation } from "@mailwoman/license/operations"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	BackboneState,
-	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
 	JurisdictionResearchState,
-	MODEL_RELEASE_OPERATIONS,
 	PersonalDataReading,
 	readAddressSourceRegister,
 	registerContentDigest,
 	ResearchPass,
 	SourceGeometry,
-	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,

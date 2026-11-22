@@ -7,11 +7,11 @@
  *   A structure source is a published dataset of building footprints, 3D building models,
  *   landmark meshes or tree heights that a basemap or a 3D layer draws.
  *
- *   License decisions use the shape `@mailwoman/core/license/decision` defines for every
+ *   License decisions use the shape `@mailwoman/license/decision` defines for every
  *   register of third-party data, with {@link StructureOperation} as the operation list.
  */
 
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
+import type { LicenseDecision } from "@mailwoman/license/decision"
 
 /**
  * The acts this repository performs on a structure source, in pipeline order.

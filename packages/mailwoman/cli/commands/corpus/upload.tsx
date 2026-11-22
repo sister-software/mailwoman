@@ -153,7 +153,7 @@ export async function refuseShareAlike(version: string, upload: CorpusUploadSour
 	const {
 		json: { stringifyJSON },
 		license: { shareAlikeFindings },
-	} = await allKeyed({ json: import("@mailwoman/core/json"), license: import("@mailwoman/corpus/utils/license") })
+	} = await allKeyed({ json: import("@mailwoman/core/json"), license: import("@mailwoman/license/policy") })
 
 	const uploadedPath = PathBuilder.from(upload.source)("MANIFEST.json")
 	const uploaded = await readRequiredManifest(version, uploadedPath)

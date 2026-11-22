@@ -19,6 +19,7 @@ import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { forkProcess } from "@mailwoman/core/process"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import type { LayerSourceExclusion } from "@mailwoman/license/admission"
 import {
 	ADDRESS_DUPLICATE_DISTANCE_KM,
 	ADDRESS_DUPLICATE_STACK_LIMIT,
@@ -53,12 +54,7 @@ import { readOvertureAddressRecords } from "#address-records/overture"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { recordPathFor } from "#parquet/record"
 import { readNADAddressRecords } from "#us/address-records/nad"
-import {
-	admitUSStateSources,
-	EXCLUDE_UNREAD_SOURCES,
-	type LayerSourceExclusion,
-	readUSAddressSourceAdmission,
-} from "#us/address-records/rights"
+import { admitUSStateSources, EXCLUDE_UNREAD_SOURCES, readUSAddressSourceAdmission } from "#us/address-records/rights"
 import { US_ADDRESS_LAYER_SOURCE } from "#us/address-records/sources"
 
 /**

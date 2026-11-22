@@ -5,7 +5,7 @@
  *   Structure sources published in Japan.
  */
 
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import { permittedByGrant } from "#grants"
 import { RESEARCH_HANDOFF_NOTE } from "#research"

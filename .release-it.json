@@ -26,6 +26,7 @@
 				"packages/geographic-model",
 				"packages/kind-classifier",
 				"packages/libpostal",
+				"packages/license",
 				"packages/locale-hint",
 				"packages/postcode",
 				"packages/mailwoman",

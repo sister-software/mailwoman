@@ -11,15 +11,13 @@ import {
 	docsSiteURL,
 	isSelfServicePayload,
 	chooseLicenseBranch,
-	LicenseObligation,
-	summarizeLicense,
 	type LicenseKeyVerification,
 } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
-
-import { ObligationClass } from "#data/mixed-layer"
-import { obligationFindings, type ObligationRefusal } from "#data/obligations"
+import { ObligationClass } from "@mailwoman/license/mixed"
+import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
+import { obligationFindings, type ObligationRefusal } from "@mailwoman/license/refusals"
 
 /**
  * Enumerates check results: working, absent but fixable, or present but impaired.

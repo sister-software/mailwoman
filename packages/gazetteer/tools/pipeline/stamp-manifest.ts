@@ -19,8 +19,8 @@ import {
 	type SpineKeys,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
-import { LicenseResolution, readLicenseRecord } from "@mailwoman/core/license/record"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/license/obligations"
+import { LicenseResolution, readLicenseRecord } from "@mailwoman/license/record"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -97,7 +97,7 @@ function manifestLicenseExpression(name: string, license: string): string {
 		throw new Error(
 			`${name} manifest: license ${stringifyJSON(license)} resolves to no SPDX expression whose ` +
 				`obligations are recorded. Record the grant as an identifier, or add the measured prose to ` +
-				`EXPRESSION_ALIASES in @mailwoman/core/license/record.`
+				`EXPRESSION_ALIASES in @mailwoman/license/record.`
 		)
 	}
 

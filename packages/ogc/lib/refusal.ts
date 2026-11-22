@@ -8,7 +8,7 @@
  *   applies to them as it applies to attaching an OpenStreetMap layer.
  */
 
-import { obligationFindings, ObligationRefusal } from "mailwoman/data/obligations"
+import { obligationFindings, ObligationRefusal } from "@mailwoman/license/refusals"
 
 /**
  * Why the refused classes keep a layer with this recorded license from serving items,

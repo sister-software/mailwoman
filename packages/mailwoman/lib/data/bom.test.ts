@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { RegisterTermsBasis } from "@mailwoman/corpus/source-register/terms"
+import { ObligationClass } from "@mailwoman/license/mixed"
 import { describe, expect, it } from "vitest"
 
 import { buildDataBOM, type DataBOMComponent, type DataBOMMixedLayer, LicenseBasis, serializeDataBOM } from "#data/bom"
 import { Provenance, type InventoryReport } from "#data/inventory"
-import { type MixedLayerSource, ObligationClass } from "#data/mixed-layer"
+import type { MixedLayerSource } from "#data/mixed-layer"
 
 const OSM_PATH = "db/osm/address-points-nz-nz.db"
 

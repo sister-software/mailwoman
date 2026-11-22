@@ -19,7 +19,7 @@ import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
-import { LicensePolicy } from "@mailwoman/corpus/utils/license"
+import { LicensePolicy } from "@mailwoman/license/policy"
 import { Box, Text } from "ink"
 
 import {

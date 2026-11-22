@@ -3,7 +3,7 @@
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
 import { ServingRole } from "@mailwoman/core/layers"
-import { summarizeLicense } from "@mailwoman/core/license/obligations"
+import { summarizeLicense } from "@mailwoman/license/obligations"
 import type { PathBuilderLike } from "path-ts"
 
 import { US_INTERPOLATION_EXTRACT_VERSION } from "#browser-runtime/resources"

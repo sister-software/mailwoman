@@ -72,6 +72,7 @@
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"hono": "^4.13.14",

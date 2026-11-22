@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { ExpressionOperator, licenseExpressionTerms } from "@mailwoman/license/expression"
 import { describe, expect, it } from "vitest"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
@@ -13,7 +14,7 @@ describe("resolveEngineStamp", () => {
 
 		expect(stamp.name).toBe("mailwoman")
 		expect(stamp.version).toBe(manifest.version)
-		expect(manifest.license.split(/\s+OR\s+/u)).toContain(stamp.license)
+		expect(licenseExpressionTerms(manifest.license, [ExpressionOperator.Or])).toContain(stamp.license)
 		expect(stamp.license_url.endsWith("/license")).toBe(true)
 	})
 

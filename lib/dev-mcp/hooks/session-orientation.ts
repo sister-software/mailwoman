@@ -22,7 +22,7 @@ import { Globerator } from "spliterator/node/fs"
  * The number of subpaths listed per workspace.
  * The listing counts the rest.
  */
-const SUBPATH_LIMIT = 12
+const SUBPATH_LIMIT = 11
 
 const LIB_PATTERN_TARGET = "./lib/*.ts"
 const LISTED_MODULE = /^(?!.*\.(?:test|d)\.ts$).+\.ts$/u

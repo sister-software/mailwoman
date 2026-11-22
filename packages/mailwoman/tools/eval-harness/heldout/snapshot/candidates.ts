@@ -32,7 +32,7 @@ import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpu
 import { flushStream, once } from "@mailwoman/corpus/runner"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
 import type { AdapterOptions, CorpusAdapter } from "@mailwoman/corpus/types"
-import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/corpus/utils/license"
+import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { resolvePath } from "path-ts"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"

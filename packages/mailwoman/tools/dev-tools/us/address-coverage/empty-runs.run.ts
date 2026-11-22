@@ -22,7 +22,8 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cachedRun, type OpenAddressesPlanEntry } from "@mailwoman/corpus/us/address-records/layer"
-import { createSourceAdmitter, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
+import { EXCLUDE_UNREAD_SOURCES, readUSAddressSourceAdmission } from "@mailwoman/corpus/us/address-records/rights"
+import { createSourceAdmitter } from "@mailwoman/license/admission"
 import {
 	addressLayerManifestPath,
 	type AddressLayerCountryManifest,
@@ -63,7 +64,7 @@ const empty: Array<{ member: string; region: string; cached: "geojson" | "zip" }
 let checked = 0
 
 // The layer build's own admission decides which runs it reads.
-const { admits } = createSourceAdmitter(await readUSAddressSourceAdmission())
+const { admits } = createSourceAdmitter(await readUSAddressSourceAdmission(), EXCLUDE_UNREAD_SOURCES)
 
 for (const { member, skip } of plan) {
 	const [country, state] = member.split("/")

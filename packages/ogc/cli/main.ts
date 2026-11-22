@@ -16,6 +16,7 @@ import { worldCountries } from "@mailwoman/codex/country/sets"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseObligationRefusals } from "@mailwoman/license/refusals"
 import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
 import {
 	PostcodePlaceBrowser,
@@ -31,7 +32,6 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { parseObligationRefusals } from "mailwoman/data/obligations"
 import { readSourceLocations, type SourceLocations } from "mailwoman/data/source-locations"
 import { $public } from "mailwoman/env"
 import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"

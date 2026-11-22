@@ -9,6 +9,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { LicensePolicy } from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 
 import type { AlignTotals } from "#build/align/totals"
@@ -20,7 +21,6 @@ import type { AdapterRunManifest } from "#runner"
 import type { SourceRightsAdmission } from "#source-register/corpus-inputs"
 import { committedRowLicenses } from "#source-register/row-license"
 import { freezeTrainingManifest, type SourceDecisionTable } from "#source-register/training-manifest"
-import type { LicensePolicy } from "#utils/license"
 import type { CountryHoldout, SplitManifest } from "#utils/split"
 
 export interface BuildManifestInputs {

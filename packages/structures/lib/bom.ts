@@ -9,7 +9,7 @@
  *   from the register entries of the sources the archive was built from.
  */
 
-import { electedTermsLabel } from "@mailwoman/core/license/decision"
+import { electedTermsLabel } from "@mailwoman/license/decision"
 import type { DataBOMComponent } from "mailwoman/data/bom"
 
 import { BASEMAP_INPUTS, type Basemap } from "#basemaps"

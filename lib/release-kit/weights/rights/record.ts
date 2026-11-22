@@ -19,9 +19,9 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import type { EffectiveTrainingManifest, RequiredAttribution } from "@mailwoman/corpus/source-register"
+import { attributionEntries, licenseNamedIn } from "@mailwoman/license/record"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#release-kit/pack/verify-tarball"

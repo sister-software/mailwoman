@@ -14,6 +14,7 @@
 		{ "path": "../api-kit" },
 		{ "path": "../codex" },
 		{ "path": "../core" },
+		{ "path": "../license" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../spatial" }
 	]

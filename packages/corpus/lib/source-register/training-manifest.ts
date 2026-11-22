@@ -12,11 +12,11 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
+import type { SourceOperation } from "@mailwoman/license/operations"
 
 import { mappingInputsFor, type CorpusSourceInputs } from "#source-register/corpus-inputs"
 import { inputDecisions } from "#source-register/row-license"
-import type { SourceOperation } from "#source-register/types"
 
 /**
  * The license label recorded for a source whose rows have no label.

@@ -15,73 +15,19 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { LicenseReviewState, OperationPermission, permissionFor } from "@mailwoman/core/license/decision"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import {
+	createSourceAdmitter,
+	LayerExclusionReason,
+	type LayerSourceExclusion,
+	type SourceAdmission,
+} from "@mailwoman/license/admission"
+import { LicenseReviewState, OperationPermission, permissionFor } from "@mailwoman/license/decision"
+import { ADDRESS_LAYER_OPERATIONS } from "@mailwoman/license/operations"
 import type { PathBuilderLike } from "path-ts"
 
 import type { RegisterDecisions } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
-import { SourceOperation } from "#source-register/types"
-
-/**
- * The operations building and serving the address layer performs on a source.
- *
- * They copy the publisher's file, read its address fields and redistribute the rows as a database.
- */
-export const ADDRESS_LAYER_OPERATIONS: readonly SourceOperation[] = [
-	SourceOperation.Fetch,
-	SourceOperation.Extract,
-	SourceOperation.RedistributeData,
-]
-
-/**
- * Why a source is left out of the layer.
- */
-const LayerExclusionReason = {
-	/**
-	 * A register row's decision is refused, or refuses one of the layer's operations.
-	 */
-	Refused: "refused",
-	/**
-	 * A register row's terms are unread.
-	 *
-	 * The decision is `unchecked`, or it states no permission for one of the layer's operations.
-	 */
-	Unread: "unread",
-	/**
-	 * The source maps to no register row, so the register records no publisher's terms for its rows.
-	 */
-	NoRegisterRow: "no-register-row",
-} as const
-
-/**
- * Why a source is left out of the layer: `refused`, `unread` or `no-register-row`.
- */
-export type LayerExclusionReason = (typeof LayerExclusionReason)[keyof typeof LayerExclusionReason]
-
-/**
- * One source the layer leaves out, with the register rows that decided it.
- */
-export interface LayerSourceExclusion {
-	/**
-	 * The layer source id, such as `openaddresses:us/il/cook` or `overture:OpenAddresses/MI/Kent County`.
-	 */
-	source: string
-	reason: LayerExclusionReason
-	/**
-	 * The register rows the source maps to, empty when the table maps it to none.
-	 */
-	registerSources: readonly string[]
-	/**
-	 * The first sentence of the deciding row's reason.
-	 */
-	because: string
-}
-
-/**
- * Decides, per layer source id, whether the layer may serve its rows.
- */
-export type USAddressSourceAdmission = (source: string) => LayerSourceExclusion | null
 
 /**
  * The table mapping each US address source id to the register rows its data comes from.
@@ -169,7 +115,7 @@ function rowExclusion(
 export async function readUSAddressSourceAdmission(
 	register?: RegisterDecisions,
 	table?: Readonly<Record<string, readonly string[]>>
-): Promise<USAddressSourceAdmission> {
+): Promise<SourceAdmission> {
 	const [decisions, sourceTable] = await Promise.all([
 		register ?? readAddressSourceRegister(),
 		table ?? readUSSitusSources(),
@@ -228,59 +174,6 @@ export interface USStateSources<Entry> {
 }
 
 /**
- * A build's admission policy over its sources, with the sources it has excluded
- * and those it admitted unread.
- */
-export interface SourceAdmitter {
-	/**
-	 * Whether the build reads the source.
-	 *
-	 * Each source is decided and listed on its first call, and a later call returns the same answer.
-	 */
-	admits: (source: string) => boolean
-	excluded: LayerSourceExclusion[]
-	/**
-	 * Sources admitted with unread terms or no register row, because the build doesn't exclude them.
-	 */
-	admittedUnread: LayerSourceExclusion[]
-}
-
-/**
- * Applies `admission` under a build's policy.
- *
- * A refused source is always excluded.
- * A source with unread terms or no register row is excluded when `excludeUnread` holds,
- * and admitted and listed in `admittedUnread` otherwise.
- */
-export function createSourceAdmitter(
-	admission: USAddressSourceAdmission,
-	excludeUnread: boolean = EXCLUDE_UNREAD_SOURCES
-): SourceAdmitter {
-	const excluded: LayerSourceExclusion[] = []
-	const admittedUnread: LayerSourceExclusion[] = []
-	const decided = new Map<string, boolean>()
-
-	const admits = (source: string): boolean => {
-		const known = decided.get(source)
-
-		if (typeof known === "boolean") return known
-
-		const exclusion = admission(source)
-		const admitted = !exclusion || (exclusion.reason !== LayerExclusionReason.Refused && !excludeUnread)
-
-		if (exclusion) {
-			;(admitted ? admittedUnread : excluded).push(exclusion)
-		}
-
-		decided.set(source, admitted)
-
-		return admitted
-	}
-
-	return { admits, excluded, admittedUnread }
-}
-
-/**
  * Keeps the state's sources that `admission` admits.
  *
  * NAD is read as `usgov-nad`, each Overture dataset as `overture:<dataset>`
@@ -294,7 +187,7 @@ export function createSourceAdmitter(
 export function admitUSStateSources<Entry extends { member: string; skip?: boolean }>(
 	state: string,
 	candidates: { hasNAD: boolean; datasets: readonly string[]; plan: readonly Entry[] },
-	admission: USAddressSourceAdmission,
+	admission: SourceAdmission,
 	excludeUnread: boolean = EXCLUDE_UNREAD_SOURCES
 ): USStateSources<Entry> {
 	const { admits, excluded, admittedUnread } = createSourceAdmitter(admission, excludeUnread)

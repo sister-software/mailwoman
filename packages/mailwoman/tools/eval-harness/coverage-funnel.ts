@@ -6,12 +6,12 @@
  *   with the register supplying the denominator so jurisdictions missing from the census still appear.
  */
 
-import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRegister,
 	JurisdictionResearchState,
 	readAddressSourceRegister,
 } from "@mailwoman/corpus/source-register"
+import { LicenseReviewState } from "@mailwoman/license/decision"
 
 import type { CountryCoverage } from "#tools/coverage/census"
 

@@ -9,7 +9,7 @@
  *   here records its state as `region`.
  */
 
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import { permittedByGrant } from "#grants"
 import { StructureDetail, type StructureOperation, type StructureSource } from "#types"

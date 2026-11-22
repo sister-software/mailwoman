@@ -17,6 +17,7 @@
 		{ "path": "../api" },
 		{ "path": "../api-kit" },
 		{ "path": "../evidence" },
+		{ "path": "../license" },
 		{ "path": "../bdc" },
 		{ "path": "../bdc/sdk" },
 		{ "path": "../coastal" },

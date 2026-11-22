@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { auditLicenseDecision, type ElectedLicense } from "#license/decision"
+import { auditLicenseDecision, type ElectedLicense } from "#decision"
 
 const OPERATIONS = ["transform", "train", "redistribute-data"] as const
 

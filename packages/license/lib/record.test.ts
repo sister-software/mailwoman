@@ -3,15 +3,15 @@
 
 import { describe, expect, it } from "vitest"
 
+import { LicenseObligation } from "#obligations"
 import {
 	attributionEntries,
 	carriesShareAlike,
-	LicenseObligation,
 	LicenseResolution,
 	licenseNamedIn,
 	mentionsShareAlike,
 	readLicenseRecord,
-} from "#license"
+} from "#record"
 
 /**
  * The `spliced-sub-venue` value, verbatim from 120,000 rows of `v0.7.0-de-holdout`.

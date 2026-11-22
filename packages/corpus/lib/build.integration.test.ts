@@ -8,6 +8,7 @@ import { appendLocalTextFile, removeFile, removePath, writeLocalJSONFile } from 
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { LicensePolicy, LicenseRefusalKind } from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
@@ -22,7 +23,7 @@ import type { ParquetManifest } from "#parquet/writers"
 import { SourceRegister } from "#registers"
 import { committedRowLicenses } from "#source-register/row-license"
 import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
+import { compileLicenseExcludes } from "#utils/license"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles } from "#utils/split"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")

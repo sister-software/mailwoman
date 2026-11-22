@@ -20,6 +20,7 @@ import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { type FilesystemSpace, readFilesystemSpace } from "@mailwoman/core/fs/readers/stat"
 import type { ArtifactID, ArtifactManifest, LayerInstallationID, SelectedSource } from "@mailwoman/core/layers"
 import { selectedSources } from "@mailwoman/core/layers"
+import { type ObligationFinding, obligationFindings, type ObligationRefusal } from "@mailwoman/license/refusals"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { AcquisitionReceipt } from "#data/acquire"
@@ -38,7 +39,6 @@ import {
 import { catalogPaths, LayerCatalog, readInstallations, readInstalledManifest } from "#data/catalog"
 import { probeManifest } from "#data/inventory"
 import { type ConfiguredKey, type LicensedPullDecision, licensedPullDecision } from "#data/licensed"
-import { type ObligationFinding, obligationFindings, type ObligationRefusal } from "#data/obligations"
 import {
 	type AvailableArtifact,
 	type AvailableDataEntry,

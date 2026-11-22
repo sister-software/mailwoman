@@ -8,7 +8,7 @@
  *   OpenAddresses records, and the committed register keeps every refused publisher out.
  */
 
-import { LicenseReviewState, OperationPermission, PermissionBasis } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, OperationPermission, PermissionBasis } from "@mailwoman/license/decision"
 import { describe, expect, it } from "vitest"
 
 import type { RegisterDecisions } from "#source-register/corpus-inputs"
