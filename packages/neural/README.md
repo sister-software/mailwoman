@@ -75,7 +75,7 @@ export { GazetteerInference } from "./gazetteer-inference.js"
 
 // Postcode lookup
 export { extractPostcodeAnchors } from "./postcode-anchor.js"
-export { PostcodeBinaryResolver } from "./postcode-binary-resolver.js"
+export { PostcodeBinaryLookup } from "./postcode-binary-resolver.js"
 
 // Case normalization
 export { normalizeCase, type CaseNormalizeResult } from "./case-normalize.js"

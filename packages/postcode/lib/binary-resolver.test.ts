@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { PostcodeBinaryResolver, serializePostcodeBinary, type PostcodeBinaryEntry } from "#binary-resolver"
+import { PostcodeBinaryLookup, serializePostcodeBinary, type PostcodeBinaryEntry } from "#binary-resolver"
 
 const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "94105", country: "US", lat: 37.789, lon: -122.396 },
@@ -20,13 +20,13 @@ const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "80144", country: "IT", lat: 0, lon: 0 },
 ]
 
-function resolver(): PostcodeBinaryResolver {
-	return new PostcodeBinaryResolver(serializePostcodeBinary(ENTRIES))
+function resolver(): PostcodeBinaryLookup {
+	return new PostcodeBinaryLookup(serializePostcodeBinary(ENTRIES))
 }
 
-describe("PostcodeBinaryResolver", () => {
+describe("PostcodeBinaryLookup", () => {
 	it("rejects a buffer with a bad magic", () => {
-		expect(() => new PostcodeBinaryResolver(new Uint8Array(16))).toThrow(/bad magic/)
+		expect(() => new PostcodeBinaryLookup(new Uint8Array(16))).toThrow(/bad magic/)
 	})
 
 	it("exact-matches a single-country postcode and round-trips the centroid within quantization", () => {

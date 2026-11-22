@@ -5,7 +5,7 @@
 # "london") → dependent_locality under locality. Written for the outside contributor (or a coding agent with a
 # limited context window) who needs to read or emit the format without the mailwoman tree in their
 # head. The reference implementation owns both ends of the format in one file:
-# `neural/pair-index-resolver.ts` (`serializePairIndex` / `PairIndexResolver`). The layout below is
+# `neural/pair-index-resolver.ts` (`serializePairIndex` / `PairIndexLookup`). The layout below is
 # kept honest by the "PIX1 layout conformance" test in `neural/pair-index-resolver.test.ts`, which
 # walks serializer output against this document's field order rather than against the reader.
 #

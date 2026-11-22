@@ -6,7 +6,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
 import {
-	PairIndexResolver,
+	PairIndexLookup,
 	peekPairIndexHeader,
 	serializePairIndex,
 	type PairIndexEntry,
@@ -85,11 +85,11 @@ const ENTRIES: PairIndexEntry[] = [
 const DEP_LOC_UNDER_LOCALITY = { tag: "dependent_locality", parentTag: "locality" }
 const LOCALITY_UNDER_REGION = { tag: "locality", parentTag: "region" }
 
-function resolver(entries: PairIndexEntry[] = ENTRIES, header: PairIndexHeaderInput = HEADER): PairIndexResolver {
-	return new PairIndexResolver(serializePairIndex(header, entries))
+function resolver(entries: PairIndexEntry[] = ENTRIES, header: PairIndexHeaderInput = HEADER): PairIndexLookup {
+	return new PairIndexLookup(serializePairIndex(header, entries))
 }
 
-describe("serializePairIndex / PairIndexResolver", () => {
+describe("serializePairIndex / PairIndexLookup", () => {
 	it("round-trips multiple entries: every (child, parent) probes to its whole typed edge", () => {
 		const r = resolver()
 
@@ -123,7 +123,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 
 	it("rejects a buffer with a bad magic", () => {
-		expect(() => new PairIndexResolver(new Uint8Array(16))).toThrow(/bad magic/)
+		expect(() => new PairIndexLookup(new Uint8Array(16))).toThrow(/bad magic/)
 	})
 
 	it("rejects a header claiming a schemaVersion newer than this reader knows", () => {
@@ -143,7 +143,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		out.set(bumpedBytes, 8)
 		out.set(rest, 8 + bumpedBytes.length)
 
-		expect(() => new PairIndexResolver(out)).toThrow(/schema/i)
+		expect(() => new PairIndexLookup(out)).toThrow(/schema/i)
 	})
 
 	it("handles an empty entry list as a valid file — every probe misses", () => {
@@ -164,8 +164,8 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 	it("is stable regardless of input order (sorted by child, parent bytes)", () => {
 		const reversed = [...ENTRIES].toReversed()
-		const a = new PairIndexResolver(serializePairIndex(HEADER, ENTRIES))
-		const b = new PairIndexResolver(serializePairIndex(HEADER, reversed))
+		const a = new PairIndexLookup(serializePairIndex(HEADER, ENTRIES))
+		const b = new PairIndexLookup(serializePairIndex(HEADER, reversed))
 
 		expect(a.probe("shoreditch", "london")).toEqual(b.probe("shoreditch", "london"))
 		expect(a.probe("camden", "london")).toEqual(b.probe("camden", "london"))
@@ -192,7 +192,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	it("round-trips a header WITH transitionBeta: header fidelity + the resolver accessor + peek all agree", () => {
 		const header: PairIndexHeaderInput = { ...HEADER, transitionBeta: 5 }
 		const bytes = serializePairIndex(header, ENTRIES)
-		const r = new PairIndexResolver(bytes)
+		const r = new PairIndexLookup(bytes)
 
 		expect(r.header).toEqual({ ...header, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] })
 		expect(r.transitionBeta).toBe(5)
@@ -203,7 +203,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 
 	it("old-binary compat: a header WITHOUT the field reads back !transitionBeta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
-		const r = new PairIndexResolver(bytes)
+		const r = new PairIndexLookup(bytes)
 
 		expect(r.transitionBeta).toBeNull()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
@@ -215,7 +215,7 @@ describe("ParentDelta header field (whole-edge default-on,)", () => {
 	it("round-trips a header WITH parentDelta: header fidelity + the resolver accessor + peek all agree", () => {
 		const header: PairIndexHeaderInput = { ...HEADER, parentDelta: 5 }
 		const bytes = serializePairIndex(header, ENTRIES)
-		const r = new PairIndexResolver(bytes)
+		const r = new PairIndexLookup(bytes)
 
 		expect(r.header).toEqual({ ...header, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] })
 		expect(r.parentDelta).toBe(5)
@@ -224,7 +224,7 @@ describe("ParentDelta header field (whole-edge default-on,)", () => {
 
 	it("absence-tolerant: a header WITHOUT the field reads back !parentDelta", () => {
 		const bytes = serializePairIndex(HEADER, ENTRIES)
-		const r = new PairIndexResolver(bytes)
+		const r = new PairIndexLookup(bytes)
 
 		expect(r.parentDelta).toBeNull()
 		expect(peekPairIndexHeader(bytes).parentDelta).toBeUndefined()
@@ -245,7 +245,7 @@ describe("peekPairIndexHeader", () => {
 
 		expect(peekPairIndexHeader(bytes)).toEqual(HEADER_AS_WRITTEN)
 
-		expect(peekPairIndexHeader(bytes)).toEqual(new PairIndexResolver(bytes).header)
+		expect(peekPairIndexHeader(bytes)).toEqual(new PairIndexLookup(bytes).header)
 	})
 
 	it("rejects a buffer with a bad magic, same as the constructor", () => {
@@ -261,7 +261,7 @@ describe("peekPairIndexHeader", () => {
 		const truncated = bytes.subarray(0, pairCountOffset + 4)
 
 		expect(peekPairIndexHeader(truncated)).toEqual(HEADER_AS_WRITTEN)
-		expect(() => new PairIndexResolver(truncated)).toThrow(/Offset is outside the bounds/)
+		expect(() => new PairIndexLookup(truncated)).toThrow(/Offset is outside the bounds/)
 	})
 })
 
@@ -281,13 +281,13 @@ describe("tagTable header field (self-describing tag decode)", () => {
 			["london", "greater london", idxOfLocality, idxOfRegion],
 		])
 
-		expect(new PairIndexResolver(bytes).probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
+		expect(new PairIndexLookup(bytes).probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 	})
 
 	it("throws on a record whose tagTable entry is not a known ComponentTag, naming the tag", () => {
 		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["definitely_not_a_tag", "locality"] }, [["a", "b", 0, 1]])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/definitely_not_a_tag/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/definitely_not_a_tag/)
 	})
 
 	it("throws on a record whose PARENT tagTable entry is not a known ComponentTag, naming it", () => {
@@ -295,7 +295,7 @@ describe("tagTable header field (self-describing tag decode)", () => {
 			["a", "b", 0, 1],
 		])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/definitely_not_a_parent_tag/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/definitely_not_a_parent_tag/)
 	})
 
 	it("tolerates unknown tagTable entries that no record references (forward compatibility within v3)", () => {
@@ -303,19 +303,19 @@ describe("tagTable header field (self-describing tag decode)", () => {
 			["a", "b", 0, 1],
 		])
 
-		expect(new PairIndexResolver(bytes).probe("a", "b")).toEqual(DEP_LOC_UNDER_LOCALITY)
+		expect(new PairIndexLookup(bytes).probe("a", "b")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
 	it("throws on a tagIdx outside the embedded table", () => {
 		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["locality"] }, [["a", "b", 7, 0]])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/tagIdx/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/tagIdx/)
 	})
 
 	it("throws on a parentTagIdx outside the embedded table", () => {
 		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["locality"] }, [["a", "b", 0, 7]])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/parentTagIdx/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/parentTagIdx/)
 	})
 })
 
@@ -352,7 +352,7 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 		const v2Header = { ...HEADER, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] }
 		const bytes = buildRawIndex(v2Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/gazetteer pair-index/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/gazetteer pair-index/)
 		expect(() => peekPairIndexHeader(bytes)).toThrow(/gazetteer pair-index/)
 	})
 
@@ -360,7 +360,7 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 		const v1Header = { ...HEADER, schemaVersion: 1 }
 		const bytes = buildRawIndex(v1Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])
 
-		expect(() => new PairIndexResolver(bytes)).toThrow(/gazetteer pair-index/)
+		expect(() => new PairIndexLookup(bytes)).toThrow(/gazetteer pair-index/)
 		expect(() => peekPairIndexHeader(bytes)).toThrow(/gazetteer pair-index/)
 	})
 })

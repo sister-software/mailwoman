@@ -65,7 +65,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			paths: { wofDatabasePath },
 			utils: { md5File },
 			fstPrior: { normalizeFSTToken },
-			placetype: { PlacetypeCensusResolver, serializePlacetypeCensus },
+			placetype: { PlacetypeCensusLookup, serializePlacetypeCensus },
 			placetypeCensus: { buildPlacetypeCensus, toBaseRates },
 		} = await allKeyed({
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
@@ -136,7 +136,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		await writeLocalFile(bytes, outPath)
 
 		// Self-verifying readback over the bytes this run wrote rather than the in-memory nodes.
-		const resolver = new PlacetypeCensusResolver(bytes)
+		const resolver = new PlacetypeCensusLookup(bytes)
 		const probeParents = PROBE_PARENTS_BY_COUNTRY[country]
 
 		if (!probeParents) {

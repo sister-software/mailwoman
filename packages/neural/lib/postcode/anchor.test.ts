@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { PostcodePlace } from "@mailwoman/core/resolver"
-import { PostcodeBinaryResolver, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -84,7 +84,7 @@ describe("extractPostcodeAnchors", () => {
 	})
 
 	it("reads a PCB1 binary through the same PostcodeResolver interface", () => {
-		const binary = new PostcodeBinaryResolver(
+		const binary = new PostcodeBinaryLookup(
 			serializePostcodeBinary([{ postcode: "1012LM", country: "NL", lat: 52.375, lon: 4.9 }])
 		)
 

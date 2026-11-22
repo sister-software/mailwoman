@@ -39,6 +39,7 @@ import { prefixDirectoriesCheck } from "#repo-health/checks/prefix-directories"
 import { privateNameShadowsCheck } from "#repo-health/checks/private-name-shadows"
 import { publishedBundlesCheck } from "#repo-health/checks/published-bundles"
 import { rightsChainCheck } from "#repo-health/checks/rights-chain"
+import { roleSuffixesCheck } from "#repo-health/checks/role-suffixes"
 import { runtimeFlagsCheck } from "#repo-health/checks/runtime-flags"
 import { sideEffectsCheck } from "#repo-health/checks/side-effects"
 import { spdxHeaderCheck } from "#repo-health/checks/spdx-header"
@@ -92,6 +93,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	prefixDirectoriesCheck,
 	nestedIndexCheck,
 	exportNameAffixCheck,
+	roleSuffixesCheck,
 	docLinkTargetsCheck,
 	mdxAnglesCheck,
 	duplicateExportedShapeCheck,

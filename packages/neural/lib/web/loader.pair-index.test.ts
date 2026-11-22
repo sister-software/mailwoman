@@ -51,7 +51,7 @@ vi.mock("#classifier", async (importOriginal) => ({
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-const { PairIndexResolver, serializePairIndex } = await import("#pair")
+const { PairIndexLookup, serializePairIndex } = await import("#pair")
 const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 const { resolvePairIndexCountry } = await import("#web/pair-index")
 
@@ -186,7 +186,7 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		expect(result.pairIndexes).toHaveLength(1)
 		expect(gb!.url).toBe(GB_INDEX)
 		expect(gb!.country).toBe("gb")
-		expect(gb!.resolver).toBeInstanceOf(PairIndexResolver)
+		expect(gb!.resolver).toBeInstanceOf(PairIndexLookup)
 		expect(gb!.resolver.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
 
 		expect(warn).not.toHaveBeenCalled()
@@ -200,7 +200,7 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX], "en-gb"))
 
 		const wired = capturedConfig?.placetypePair?.index
-		expect(wired).toBeInstanceOf(PairIndexResolver)
+		expect(wired).toBeInstanceOf(PairIndexLookup)
 
 		expect(capturedConfig?.placetypePair).toEqual({ index: wired })
 		expect(wired!.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
@@ -215,7 +215,7 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 
 		await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX], "gb"))
 
-		expect(capturedConfig?.placetypePair?.index).toBeInstanceOf(PairIndexResolver)
+		expect(capturedConfig?.placetypePair?.index).toBeInstanceOf(PairIndexLookup)
 	})
 
 	test("CONFIG DEFAULT requested but neither matching index → warn nor default; the other indexes still load LIVE", async () => {
@@ -230,7 +230,7 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		expect(capturedConfig?.placetypePair).toBeUndefined()
 
 		expect(result.pairIndexes.map((i) => i.country)).toEqual(["gb", "nz"])
-		expect(result.pairIndexes.every((i) => i.resolver instanceof PairIndexResolver)).toBe(true)
+		expect(result.pairIndexes.every((i) => i.resolver instanceof PairIndexLookup)).toBe(true)
 
 		const warned = warn.mock.calls.map((c) => String(c[0])).join("\n")
 		expect(warned).toContain('"fr"')
@@ -249,12 +249,12 @@ describe("LoadNeuralClassifierFromURLs — placetype-pair index", () => {
 		const result = await loadNeuralClassifierFromURLs(baseOpts(fetchImpl, [GB_INDEX, NZ_INDEX], "en-gb"))
 
 		const wired = capturedConfig?.placetypePair?.index
-		expect(wired).toBeInstanceOf(PairIndexResolver)
+		expect(wired).toBeInstanceOf(PairIndexLookup)
 
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")
-		expect(nz!.resolver).toBeInstanceOf(PairIndexResolver)
+		expect(nz!.resolver).toBeInstanceOf(PairIndexLookup)
 		expect(nz!.resolver.probe("mangawhai", "mangawhai")?.tag).toBe("dependent_locality")
 
 		expect(warn).not.toHaveBeenCalled()

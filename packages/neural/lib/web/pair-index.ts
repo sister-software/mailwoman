@@ -9,7 +9,7 @@ import { detectLocale } from "@mailwoman/locale-hint"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 
-import { PairIndexResolver } from "#pair/index/resolver"
+import { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import type { LoadedPairIndex } from "#web/loader"
 import { fetchBytes } from "#web/onnx-runner"
@@ -31,7 +31,7 @@ export function resolvePairIndexCountry(country: string | null): string {
  * `pair-index-<cc>.bin` is optional so a 404, a network failure or a corrupt binary is
  * skipped with a `console.warn` that reports the URL and the classifier load continues.
  *
- * Every successfully fetched index is constructed into a live {@link PairIndexResolver}
+ * Every successfully fetched index is constructed into a live {@link PairIndexLookup}
  * tagged by its header country.
  * The per-parse selection ({@link resolvePairIndexForText}) chooses among them at decode time.
  *
@@ -41,7 +41,7 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
 	const settled = await Promise.all(
 		urls.map(async (url): Promise<LoadedPairIndex | null> => {
 			try {
-				const resolver = new PairIndexResolver(await fetchBytes(url, fetchImpl))
+				const resolver = new PairIndexLookup(await fetchBytes(url, fetchImpl))
 
 				return { url, country: resolver.header.country, resolver }
 			} catch (error) {

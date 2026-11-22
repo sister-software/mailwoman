@@ -779,7 +779,7 @@ export function lookupCodex(queries: string[]): LookupRow[] {
 }
 
 /**
- * The part of `PostcodeBinaryResolver` that this probe uses.
+ * The part of `PostcodeBinaryLookup` that this probe uses.
  */
 export interface PostcodeAnchorResolver {
 	lookup(postcode: string): Array<{ country: string; lat: number; lon: number }>

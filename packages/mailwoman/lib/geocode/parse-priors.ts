@@ -25,7 +25,7 @@ import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman
 import { isStreetAffix } from "@mailwoman/neural/fst-prior"
 import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix"
+import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import type { PathBuilderLike } from "path-ts"
@@ -164,11 +164,11 @@ export function streetTypeTestFor(fst: FSTMatcherLike | null, country: string | 
 export async function loadPostcodePrefixIndexes(
 	paths: readonly PathBuilderLike[],
 	report: (message: string) => void
-): Promise<PostcodePrefixIndexResolver[]> {
-	const indexes: PostcodePrefixIndexResolver[] = []
+): Promise<PostcodePrefixIndexLookup[]> {
+	const indexes: PostcodePrefixIndexLookup[] = []
 
 	for (const path of paths) {
-		indexes.push(new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(path))))
+		indexes.push(new PostcodePrefixIndexLookup(new Uint8Array(await readLocalBuffer(path))))
 	}
 
 	if (paths.length) {

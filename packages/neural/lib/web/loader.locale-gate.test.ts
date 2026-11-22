@@ -8,7 +8,7 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, test } from "vitest"
 
-import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "#pair"
+import { PairIndexLookup, serializePairIndex, type PairIndexHeaderInput } from "#pair"
 import type { LoadedPairIndex } from "#web/loader"
 import { detectPairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 
@@ -124,7 +124,7 @@ function indexFor(country: string): LoadedPairIndex {
 		{ child: "shoreditch", parent: "london", tag: "dependent_locality", parentTag: "locality" },
 	])
 
-	return { url: `https://cdn.example/pair-index-${country}.bin`, country, resolver: new PairIndexResolver(bytes) }
+	return { url: `https://cdn.example/pair-index-${country}.bin`, country, resolver: new PairIndexLookup(bytes) }
 }
 
 describe("resolvePairIndexForText — per-parse selection among the loaded indexes", () => {

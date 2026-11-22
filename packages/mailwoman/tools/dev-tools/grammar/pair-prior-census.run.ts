@@ -49,7 +49,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { PairIndexResolver, type PairEdge } from "@mailwoman/neural/pair/index/resolver"
+import { PairIndexLookup, type PairEdge } from "@mailwoman/neural/pair/index/resolver"
 import type { NeuralParseTrace } from "@mailwoman/neural/trace"
 import { viterbi, type ViterbiTransitionAdjustment } from "@mailwoman/neural/viterbi"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -175,7 +175,7 @@ async function inventory(): Promise<IndexInventory[]> {
 	)
 
 	for (const path of await pairIndexPaths()) {
-		const index = new PairIndexResolver(new Uint8Array(await readLocalBuffer(path)))
+		const index = new PairIndexLookup(new Uint8Array(await readLocalBuffer(path)))
 		const postal = await readPostalPlaces(postalDir, index.country)
 		const locations = wofChildLocations(wof, index.country)
 		const verdicts = new Map<string, PostalVerdict>()

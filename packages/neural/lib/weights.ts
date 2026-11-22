@@ -12,7 +12,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { scriptFamilyBase } from "#char-encoder"
 import type { EncoderDescriptor } from "#char-encoder"
-import { PlacetypeCensusResolver } from "#placetype/census"
+import { PlacetypeCensusLookup } from "#placetype/census"
 import { packageHasBinaries, readEncoderFromModelCard, resolveCharVocab } from "#weights/channels"
 import { resolveEvidenceLexicon } from "#weights/lexicon"
 
@@ -643,13 +643,13 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
 export async function loadPlacetypeCensus(
 	country: string,
 	explicitPath?: PathBuilderLike
-): Promise<PlacetypeCensusResolver | null> {
+): Promise<PlacetypeCensusLookup | null> {
 	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 
 	if (!path) return null
 
 	try {
-		const census = new PlacetypeCensusResolver(new Uint8Array(await readLocalBuffer(path)))
+		const census = new PlacetypeCensusLookup(new Uint8Array(await readLocalBuffer(path)))
 
 		if (census.country === country) return census
 

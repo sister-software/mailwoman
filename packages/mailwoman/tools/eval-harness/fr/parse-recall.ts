@@ -15,7 +15,7 @@ import { anchorLookupFromPostcodes } from "@mailwoman/neural/anchor-inference"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import type { SpineAddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -209,7 +209,7 @@ export async function frParseRecall(
 		const card = await readLocalJSONFile<{ labels: string[] }>(args.modelCard)
 
 		const anchor = anchorLookupFromPostcodes(
-			new PostcodeBinaryResolver(
+			new PostcodeBinaryLookup(
 				await readLocalBuffer(await resolveWeightsSibling("postcode-us.bin", options.weightsCache))
 			).groups()
 		)

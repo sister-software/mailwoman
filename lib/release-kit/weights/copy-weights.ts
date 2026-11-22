@@ -21,7 +21,7 @@ import {
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
 } from "@mailwoman/core/release-config"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix"
+import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
@@ -407,7 +407,7 @@ async function materializePostcodePrefix(context: MaterializationContext, worksp
 			)
 		}
 
-		const header = new PostcodePrefixIndexResolver(new Uint8Array(await readLocalBuffer(source.path))).header
+		const header = new PostcodePrefixIndexLookup(new Uint8Array(await readLocalBuffer(source.path))).header
 
 		if (header.tier !== "shipped") {
 			throw new Error(

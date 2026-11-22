@@ -10,7 +10,7 @@ import { describe, expect, it, test } from "vitest"
 
 import { STAGE2_BIO_LABELS } from "#labels"
 import {
-	PairIndexResolver,
+	PairIndexLookup,
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
@@ -311,7 +311,7 @@ describe("BuildPlacetypePairPriors — end-to-end cross-form regression (real PI
 
 	it('a space-typed query ("Fishburn Stockton on Tees") resolves against the hyphen-folded real index entry, fixture tokenizer', async () => {
 		const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
-		const index = new PairIndexResolver(bytes)
+		const index = new PairIndexLookup(bytes)
 
 		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
 
@@ -325,7 +325,7 @@ describe("BuildPlacetypePairPriors — end-to-end cross-form regression (real PI
 		'a space-typed query ("Fishburn Stockton on Tees") resolves against the same real index entry, PRODUCTION tokenizer',
 		async () => {
 			const bytes = serializePairIndex(REAL_HEADER, REAL_BUILDER_ENTRIES)
-			const index = new PairIndexResolver(bytes)
+			const index = new PairIndexLookup(bytes)
 
 			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
 

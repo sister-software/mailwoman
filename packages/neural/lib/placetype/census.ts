@@ -179,7 +179,7 @@ export interface PlacetypeCensusLike {
  *
  * The resolver has no Node imports, so the browser runtime can load the same artifact.
  */
-export class PlacetypeCensusResolver implements PlacetypeCensusLike {
+export class PlacetypeCensusLookup implements PlacetypeCensusLike {
 	readonly header: PlacetypeCensusHeader
 	readonly #nodes: Map<string, PlacetypeCensusNode>
 
@@ -187,20 +187,20 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 		const { header, cursor } = readFramedHeader<PlacetypeCensusHeader>(
 			MAGIC,
 			bytes,
-			"PlacetypeCensusResolver: bad magic — not a PCN1 artifact"
+			"PlacetypeCensusLookup: bad magic — not a PCN1 artifact"
 		)
 
 		this.header = header
 
 		if (this.header.schemaVersion > KNOWN_SCHEMA_VERSION) {
 			throw new Error(
-				`PlacetypeCensusResolver: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
+				`PlacetypeCensusLookup: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
 					`(known up to ${KNOWN_SCHEMA_VERSION})`
 			)
 		}
 
 		if (this.header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
-			throw new Error(`PlacetypeCensusResolver: unsupported schemaVersion ${this.header.schemaVersion}`)
+			throw new Error(`PlacetypeCensusLookup: unsupported schemaVersion ${this.header.schemaVersion}`)
 		}
 
 		const decoder = new TextDecoder()
@@ -264,7 +264,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Returns {@link PlacetypeCensusResolver.share} divided by the country base rate for `tag`.
+	 * Returns {@link PlacetypeCensusLookup.share} divided by the country base rate for `tag`.
 	 *
 	 * A value of `1` matches the country as a whole.
 	 * A missing base rate returns `0` to avoid dividing by zero.

@@ -9,7 +9,7 @@
  *   The pinned vectors fail if the TypeScript implementation drifts.
  */
 import { mulberry32 } from "@mailwoman/core/random"
-import { PostcodeBinaryResolver, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -48,7 +48,7 @@ describe("BinaryAnchorLookup", () => {
 			)
 		)
 
-		const resolvers = files.map((bytes) => new PostcodeBinaryResolver(bytes))
+		const resolvers = files.map((bytes) => new PostcodeBinaryLookup(bytes))
 		const reference = mergeAnchorLookups(resolvers.map((resolver) => anchorLookupFromPostcodes(resolver.groups())))
 		const lookup = new BinaryAnchorLookup(resolvers)
 

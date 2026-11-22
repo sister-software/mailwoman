@@ -119,7 +119,7 @@ function pairKey(child: string, parent: string): string {
 }
 
 /**
- * Serializes a header and entries into the PIX1 binary that {@link PairIndexResolver} reads.
+ * Serializes a header and entries into the PIX1 binary that {@link PairIndexLookup} reads.
  *
  * Entries are sorted by (child, parent) so the output is deterministic.
  *
@@ -216,7 +216,7 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 /**
  * Reads and validates only the header of a PIX1 binary.
  *
- * Callers use it to check `country` or provenance before a full {@link PairIndexResolver} parse.
+ * Callers use it to check `country` or provenance before a full {@link PairIndexLookup} parse.
  */
 export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
 	return readHeaderBlock(bytes).header
@@ -247,7 +247,7 @@ function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; cursor: 
  *
  * It runs in Node and in the browser.
  */
-export class PairIndexResolver {
+export class PairIndexLookup {
 	readonly header: PairIndexHeader
 	readonly #probeMap: ReadonlyMap<string, PairEdge>
 
@@ -359,7 +359,7 @@ export class PairIndexResolver {
 }
 
 /**
- * The subset of {@link PairIndexResolver} used by priors.
+ * The subset of {@link PairIndexLookup} used by priors.
  * Test doubles can implement it.
  *
  * An absent `transitionBeta` means the index applies no transition bonus.

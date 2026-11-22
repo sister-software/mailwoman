@@ -14,7 +14,7 @@
 
 import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
 import { BinaryAnchorLookup } from "@mailwoman/neural/anchor-inference"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 
 /**
  * A centroid per postcode key, the map the postcode-only fallback reads.
@@ -168,7 +168,7 @@ export async function loadPostcodeCentroids(
 				throw new Error(`postcode centroids: ${url} answered ${response.status}`)
 			}
 
-			return new BinaryAnchorLookup([new PostcodeBinaryResolver(new Uint8Array(await response.arrayBuffer()))])
+			return new BinaryAnchorLookup([new PostcodeBinaryLookup(new Uint8Array(await response.arrayBuffer()))])
 		})
 	)
 

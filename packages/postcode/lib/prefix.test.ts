@@ -5,7 +5,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import type { PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix"
+import { PostcodePrefixIndexLookup, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix"
 
 const header: PostcodePrefixHeader = {
 	country: "gb",
@@ -35,7 +35,7 @@ const nodes: PostcodePrefixNode[] = [
 
 describe("PFX1 postcode-prefix index", () => {
 	it("round-trips nodes, ancestry and header through the binary", () => {
-		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
+		const resolver = new PostcodePrefixIndexLookup(serializePostcodePrefixIndex(header, nodes))
 
 		expect(resolver.size).toBe(4)
 		expect(resolver.country).toBe("gb")
@@ -55,7 +55,7 @@ describe("PFX1 postcode-prefix index", () => {
 	})
 
 	it("preserves a coordinate-less node as ABSENCE, never as 0,0", () => {
-		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
+		const resolver = new PostcodePrefixIndexLookup(serializePostcodePrefixIndex(header, nodes))
 		const bt9 = resolver.probe("BT9")!
 
 		expect(bt9.lat).toBeNull()
@@ -66,14 +66,14 @@ describe("PFX1 postcode-prefix index", () => {
 	})
 
 	it("sums unitCount across every node, coordinate-containing or not", () => {
-		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
+		const resolver = new PostcodePrefixIndexLookup(serializePostcodePrefixIndex(header, nodes))
 		const total = [...resolver.nodes()].reduce((sum, node) => sum + node.unitCount, 0)
 
 		expect(total).toBe(232 + 1040 + 121 + 300)
 	})
 
 	it("is neutral on an unknown prefix", () => {
-		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
+		const resolver = new PostcodePrefixIndexLookup(serializePostcodePrefixIndex(header, nodes))
 
 		expect(resolver.probe("ZZ99")).toBeNull()
 	})
@@ -116,7 +116,7 @@ describe("PFX1 postcode-prefix index", () => {
 
 		bytes[0] = 0
 
-		expect(() => new PostcodePrefixIndexResolver(bytes)).toThrow(/bad magic/)
+		expect(() => new PostcodePrefixIndexLookup(bytes)).toThrow(/bad magic/)
 	})
 })
 

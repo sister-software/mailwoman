@@ -52,7 +52,7 @@ import { anchorLookupFromPostcodes, mergeAnchorLookups } from "@mailwoman/neural
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
-import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
+import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -219,7 +219,7 @@ export async function demoCascadeSmoke(
 		? mergeAnchorLookups(
 				await Promise.all(
 					postcodeBinaries.map(async (p) =>
-						anchorLookupFromPostcodes(new PostcodeBinaryResolver(await readLocalBuffer(p)).groups())
+						anchorLookupFromPostcodes(new PostcodeBinaryLookup(await readLocalBuffer(p)).groups())
 					)
 				)
 			)

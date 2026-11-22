@@ -115,7 +115,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			dataRoot: { dataRootPath },
 			paths: { wofDatabasePath },
 			utils: { md5File, median },
-			index: { PostcodePrefixIndexResolver, serializePostcodePrefixIndex },
+			index: { PostcodePrefixIndexLookup, serializePostcodePrefixIndex },
 			prefix: { buildPostcodePrefixIndex },
 		} = await allKeyed({
 			dataRoot: import("@mailwoman/core/data-root"),
@@ -204,7 +204,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 
 		// Self-verifying readback: reading the buffer would verify the serializer against itself,
 		// so the round-trip bar is graded from the bytes on disk.
-		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
+		const resolver = new PostcodePrefixIndexLookup(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)
 		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === null ? [] : [node.radiusP95Km]))

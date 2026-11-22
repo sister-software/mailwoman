@@ -14,7 +14,7 @@ import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "#index"
-import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "#pair"
+import { PairIndexLookup, serializePairIndex, type PairIndexLike } from "#pair"
 import { weightsCachePackageDir } from "#weights"
 
 import { FIXTURE_TOKENIZER_PATH, MODEL_LOAD_TEST_TIMEOUT_MS, testModelAssets } from "../../test/model-assets.ts"
@@ -195,7 +195,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
 
-			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
+			const resolver = new PairIndexLookup(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("nz")
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.probe("plimmerton", "porirua")?.tag).toBe("dependent_locality")
@@ -218,7 +218,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			const r = await resolveWeights({ locale: "en-gb" })
 			expect(r.pairIndexPath).toMatch(/\/pair-index-gb\.bin$/)
 
-			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
+			const resolver = new PairIndexLookup(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("gb")
 			expect(resolver.probe("didsbury", "manchester")?.tag).toBe("dependent_locality")
 
@@ -237,7 +237,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
+			const resolver = new PairIndexLookup(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			const cls = await enGBClassifier()
 
@@ -294,7 +294,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
+			const resolver = new PairIndexLookup(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			expect(resolver.probe("headingley", "leeds")?.tag).toBe("dependent_locality")
 
@@ -315,7 +315,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (chec
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
+			const resolver = new PairIndexLookup(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)

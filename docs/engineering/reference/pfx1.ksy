@@ -7,7 +7,7 @@
 # contributor (or a coding agent with a limited context window) who needs to read or emit the format
 # without the mailwoman tree in their head. The reference implementation owns both ends of the format
 # in one file: `neural/postcode-prefix-index.ts` (`serializePostcodePrefixIndex` /
-# `PostcodePrefixIndexResolver`).
+# `PostcodePrefixIndexLookup`).
 #
 # PFX1 is the fourth member of the PCB1/PIX1/PCN1 family and follows PIX1 exactly through the header:
 # magic, `u32 header_len`, UTF-8 JSON. It diverges after that, because a prefix record is

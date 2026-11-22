@@ -9,7 +9,7 @@ import { describe, expect, test } from "vitest"
 import { canComplete } from "#completion"
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix"
+import { PostcodePrefixIndexLookup, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix"
 
 const COUNTRIES = Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
 
@@ -184,7 +184,7 @@ describe("membership", () => {
 		unitCount: 1,
 	})
 
-	const index = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, [node("SW1A"), node("M1")]))
+	const index = new PostcodePrefixIndexLookup(serializePostcodePrefixIndex(header, [node("SW1A"), node("M1")]))
 
 	test("reports observed, unobserved and out of coverage beside the syntax answer", () => {
 		const options = { countries: ["GB", "US"], prefixIndexes: [index] }
