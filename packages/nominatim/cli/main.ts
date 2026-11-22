@@ -19,7 +19,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
-import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { timezoneDatabasePath } from "@mailwoman/timezone-lookup/paths"
@@ -29,18 +28,15 @@ import {
 	gazetteerBannerLines,
 	rightsBannerLines,
 	gazetteerFreshness,
-	loadClassifierOrExit,
 	openAPICommand,
-	resolveGazetteerOrExit,
 	readListenPort,
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
-import { openServingRooftopProviders, unattachedLayerLines } from "mailwoman/geocode/serving-layers"
-import { createResolverBackend } from "mailwoman/resolver-backend"
+import { unattachedLayerLines } from "mailwoman/geocode/serving-layers"
 import { resolvePath } from "path-ts"
 
+import { openNominatimGeocoder } from "#cli/geocoder"
 import { forwardToResolved } from "#forward-address"
 import {
 	createNominatimApp,
@@ -99,20 +95,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const port = readListenPort(values.port)
 	const host = values.host ?? "0.0.0.0"
 
-	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"] ?? null)
-	const { adminDBPath, candidateDB, wofPaths } = gazetteer
-	const classifier = await loadClassifierOrExit()
-
-	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
-	const resolver = createWOFResolver(backend)
-	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse.
-	// A no-op when the extract isn't on disk, so the endpoint falls back to the OSM tier without an error.
-	// Both read one generation of the active selection, else their conventional paths.
-	const rooftops = await openServingRooftopProviders(dataRootPath())
-	const banExtracts = rooftops.national
-	const osmExtracts = rooftops.osm
+	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
+	const { gazetteer, rooftops, geocode } = await openNominatimGeocoder(values["candidate-db"] ?? null)
+	const { adminDBPath, candidateDB } = gazetteer
 	// The annotation fallback adds no country constraint to the geocode.
 	// The default-on placer already routes the query's country.
 	// `defaultCountry` is a hard override that beats it, so forcing "US" would
@@ -122,7 +107,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// US-centric data without a candidate DB omits it for US results, where "US" is
 	// the right guess, while non-US results include the country tag.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
-	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : null
+	const reverseGeo = adminDBPath ? new WOFReverseGeocoder({ adminDBPath }) : null
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = timezoneDatabasePath("timezone.db")
 
@@ -161,14 +146,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// For a list we apply the first, the common geopy case.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
 
-			const result = await geocodeAddress(query, {
-				classifier,
-				resolver,
-				databases: extracts.for,
-				nationalDatabases: banExtracts.for,
-				...(osmExtracts ? { osmDatabases: osmExtracts.for } : {}),
-				...(userCountry ? { defaultCountry: { country: userCountry, source: "caller" } } : {}),
-			})
+			const result = await geocode(query, userCountry)
 
 			if (result.lat == null || result.lon == null) return []
 			const resolved = forwardToResolved(result)
