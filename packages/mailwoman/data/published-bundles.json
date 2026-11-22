@@ -1,5 +1,5 @@
 {
-	"measuredAt": "2026-10-31T01:52:57Z",
+	"measuredAt": "2026-11-22T02:40:46Z",
 	"bucket": "https://public.mailwoman.post/mailwoman/",
 	"bundles": [
 		{
@@ -20,7 +20,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/wof/candidate.db is 3050020864 bytes and the published artifact is 2880921600 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/wof/candidate.db is 4107837440 bytes and the published artifact is 2880921600 bytes, so its manifest describes a different build"
 					}
 				}
 			]
@@ -89,7 +89,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ak.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ak.db is 88252416 bytes and the published artifact is 78602240 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -100,7 +100,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ak.db is 26771456 bytes and the published artifact is 27258880 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ak.db is 27267072 bytes and the published artifact is 27258880 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -111,7 +111,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-al.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-al.db is 758677504 bytes and the published artifact is 660025344 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -122,7 +122,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-al.db is 256548864 bytes and the published artifact is 260829184 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-al.db is 260845568 bytes and the published artifact is 260829184 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -133,7 +133,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ar.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ar.db is 446590976 bytes and the published artifact is 396853248 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -144,7 +144,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ar.db is 201338880 bytes and the published artifact is 204488704 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ar.db is 204509184 bytes and the published artifact is 204488704 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -166,18 +166,18 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-az.db is 207245312 bytes and the published artifact is 211460096 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-az.db is 211464192 bytes and the published artifact is 211460096 bytes, so its manifest describes a different build"
 					}
 				},
 				{
 					"remotePath": "street/us/ca/situs.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 3471339520
+						"contentLength": 3791847424
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ca.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ca.db is 4057350144 bytes and the published artifact is 3791847424 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -188,7 +188,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ca.db is 779272192 bytes and the published artifact is 794341376 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ca.db is 794361856 bytes and the published artifact is 794341376 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -199,7 +199,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-co.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-co.db is 874721280 bytes and the published artifact is 716697600 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -210,7 +210,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-co.db is 216334336 bytes and the published artifact is 220385280 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-co.db is 220377088 bytes and the published artifact is 220385280 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -221,7 +221,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ct.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ct.db is 290050048 bytes and the published artifact is 256991232 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -232,7 +232,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ct.db is 94732288 bytes and the published artifact is 96006144 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ct.db is 96002048 bytes and the published artifact is 96006144 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -254,7 +254,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-dc.db is 7426048 bytes and the published artifact is 7565312 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-dc.db is 7577600 bytes and the published artifact is 7565312 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -276,18 +276,18 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-de.db is 29114368 bytes and the published artifact is 29622272 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-de.db is 29634560 bytes and the published artifact is 29622272 bytes, so its manifest describes a different build"
 					}
 				},
 				{
 					"remotePath": "street/us/fl/situs.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 3226046464
+						"contentLength": 3461505024
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-fl.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-fl.db is 3508711424 bytes and the published artifact is 3461505024 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -298,7 +298,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-fl.db is 511512576 bytes and the published artifact is 522002432 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-fl.db is 522010624 bytes and the published artifact is 522002432 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -309,7 +309,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ga.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ga.db is 593686528 bytes and the published artifact is 173764608 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -320,18 +320,19 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ga.db is 365641728 bytes and the published artifact is 371814400 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ga.db is 371802112 bytes and the published artifact is 371814400 bytes, so its manifest describes a different build"
 					}
 				},
 				{
 					"remotePath": "street/us/hi/situs.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 77320192
+						"contentLength": 93069312
 					},
 					"manifest": {
-						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-hi.db holds no layer_manifest table"
+						"status": "measured",
+						"tier": "build-local",
+						"expression": "CDLA-Permissive-2.0"
 					}
 				},
 				{
@@ -342,7 +343,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-hi.db is 13205504 bytes and the published artifact is 13447168 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-hi.db is 13459456 bytes and the published artifact is 13447168 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -353,7 +354,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ia.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ia.db is 420737024 bytes and the published artifact is 358260736 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -364,18 +365,18 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ia.db is 193032192 bytes and the published artifact is 197267456 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ia.db is 197279744 bytes and the published artifact is 197267456 bytes, so its manifest describes a different build"
 					}
 				},
 				{
 					"remotePath": "street/us/id/situs.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 93683712
+						"contentLength": 22142976
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-id.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-id.db is 76144640 bytes and the published artifact is 22142976 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -386,7 +387,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-id.db is 82628608 bytes and the published artifact is 84283392 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-id.db is 84307968 bytes and the published artifact is 84283392 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -397,7 +398,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-il.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-il.db is 1310879744 bytes and the published artifact is 1134772224 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -408,7 +409,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-il.db is 373002240 bytes and the published artifact is 380829696 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-il.db is 380854272 bytes and the published artifact is 380829696 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -419,7 +420,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-in.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-in.db is 865480704 bytes and the published artifact is 767078400 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -430,7 +431,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-in.db is 301297664 bytes and the published artifact is 307281920 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-in.db is 307310592 bytes and the published artifact is 307281920 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -441,7 +442,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ks.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ks.db is 335429632 bytes and the published artifact is 240205824 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -451,8 +452,9 @@
 						"contentLength": 151560192
 					},
 					"manifest": {
-						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ks.db is 147968000 bytes and the published artifact is 151560192 bytes, so its manifest describes a different build"
+						"status": "measured",
+						"tier": "build-local",
+						"expression": "LicenseRef-USGov-Public-Domain"
 					}
 				},
 				{
@@ -463,7 +465,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ky.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ky.db is 618930176 bytes and the published artifact is 545275904 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -474,7 +476,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ky.db is 292974592 bytes and the published artifact is 296521728 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ky.db is 296525824 bytes and the published artifact is 296521728 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -485,7 +487,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-la.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-la.db is 219152384 bytes and the published artifact is 63488000 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -496,7 +498,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-la.db is 165015552 bytes and the published artifact is 168333312 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-la.db is 168337408 bytes and the published artifact is 168333312 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -518,7 +520,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ma.db is 163999744 bytes and the published artifact is 166559744 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ma.db is 166572032 bytes and the published artifact is 166559744 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -529,7 +531,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-md.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-md.db is 701812736 bytes and the published artifact is 594812928 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -540,7 +542,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-md.db is 147357696 bytes and the published artifact is 150126592 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-md.db is 150142976 bytes and the published artifact is 150126592 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -562,18 +564,18 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-me.db is 86224896 bytes and the published artifact is 87293952 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-me.db is 87302144 bytes and the published artifact is 87293952 bytes, so its manifest describes a different build"
 					}
 				},
 				{
 					"remotePath": "street/us/mi/situs.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 229376000
+						"contentLength": 141836288
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-mi.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-mi.db is 512004096 bytes and the published artifact is 141836288 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -583,8 +585,9 @@
 						"contentLength": 312545280
 					},
 					"manifest": {
-						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mi.db is 305459200 bytes and the published artifact is 312545280 bytes, so its manifest describes a different build"
+						"status": "measured",
+						"tier": "build-local",
+						"expression": "LicenseRef-USGov-Public-Domain"
 					}
 				},
 				{
@@ -595,7 +598,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-mn.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-mn.db is 738877440 bytes and the published artifact is 646877184 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -606,7 +609,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mn.db is 269025280 bytes and the published artifact is 274706432 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mn.db is 274714624 bytes and the published artifact is 274706432 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -617,7 +620,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-mo.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-mo.db is 525733888 bytes and the published artifact is 399859712 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -628,7 +631,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mo.db is 305311744 bytes and the published artifact is 311136256 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mo.db is 311140352 bytes and the published artifact is 311136256 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -639,7 +642,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ms.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ms.db is 318287872 bytes and the published artifact is 271257600 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -650,7 +653,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ms.db is 175767552 bytes and the published artifact is 178659328 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ms.db is 178651136 bytes and the published artifact is 178659328 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -672,7 +675,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mt.db is 88612864 bytes and the published artifact is 89899008 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mt.db is 89919488 bytes and the published artifact is 89899008 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -683,7 +686,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-nc.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-nc.db is 1555435520 bytes and the published artifact is 1380876288 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -694,7 +697,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nc.db is 512188416 bytes and the published artifact is 520089600 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nc.db is 520097792 bytes and the published artifact is 520089600 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -716,7 +719,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nd.db is 76918784 bytes and the published artifact is 78532608 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nd.db is 78548992 bytes and the published artifact is 78532608 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -727,7 +730,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ne.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ne.db is 212852736 bytes and the published artifact is 187617280 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -738,7 +741,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ne.db is 103297024 bytes and the published artifact is 105988096 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ne.db is 105996288 bytes and the published artifact is 105988096 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -749,7 +752,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-nh.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-nh.db is 6393856 bytes and the published artifact is 20480 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -760,7 +763,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nh.db is 57618432 bytes and the published artifact is 58322944 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nh.db is 58331136 bytes and the published artifact is 58322944 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -782,7 +785,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nj.db is 166936576 bytes and the published artifact is 169963520 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nj.db is 169975808 bytes and the published artifact is 169963520 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -793,7 +796,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-nm.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-nm.db is 306339840 bytes and the published artifact is 249671680 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -804,7 +807,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nm.db is 83804160 bytes and the published artifact is 85282816 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nm.db is 85295104 bytes and the published artifact is 85282816 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -815,7 +818,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-nv.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-nv.db is 72839168 bytes and the published artifact is 6553600 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -826,7 +829,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nv.db is 69890048 bytes and the published artifact is 71282688 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nv.db is 71290880 bytes and the published artifact is 71282688 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -837,7 +840,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ny.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ny.db is 1654005760 bytes and the published artifact is 1440923648 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -848,7 +851,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ny.db is 317833216 bytes and the published artifact is 323432448 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ny.db is 323448832 bytes and the published artifact is 323432448 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -870,7 +873,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-oh.db is 404860928 bytes and the published artifact is 412696576 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-oh.db is 412692480 bytes and the published artifact is 412696576 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -881,7 +884,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-ok.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-ok.db is 451334144 bytes and the published artifact is 354828288 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -891,8 +894,9 @@
 						"contentLength": 166379520
 					},
 					"manifest": {
-						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ok.db is 162582528 bytes and the published artifact is 166379520 bytes, so its manifest describes a different build"
+						"status": "measured",
+						"tier": "build-local",
+						"expression": "LicenseRef-USGov-Public-Domain"
 					}
 				},
 				{
@@ -903,7 +907,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-or.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-or.db is 1164677120 bytes and the published artifact is 1034625024 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -914,7 +918,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-or.db is 173268992 bytes and the published artifact is 176451584 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-or.db is 176472064 bytes and the published artifact is 176451584 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -925,7 +929,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-pa.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-pa.db is 778170368 bytes and the published artifact is 269873152 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -936,7 +940,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-pa.db is 482373632 bytes and the published artifact is 490303488 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-pa.db is 490307584 bytes and the published artifact is 490303488 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -958,7 +962,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ri.db is 28938240 bytes and the published artifact is 29446144 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ri.db is 29458432 bytes and the published artifact is 29446144 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -969,7 +973,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-sc.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-sc.db is 325001216 bytes and the published artifact is 47661056 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -980,7 +984,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sc.db is 255586304 bytes and the published artifact is 259309568 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sc.db is 259325952 bytes and the published artifact is 259309568 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -991,7 +995,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-sd.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-sd.db is 91684864 bytes and the published artifact is 21811200 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1002,7 +1006,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sd.db is 71929856 bytes and the published artifact is 73175040 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sd.db is 73191424 bytes and the published artifact is 73175040 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1013,7 +1017,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-tn.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-tn.db is 1080725504 bytes and the published artifact is 887808000 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1024,7 +1028,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tn.db is 365576192 bytes and the published artifact is 370663424 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tn.db is 370688000 bytes and the published artifact is 370663424 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1035,7 +1039,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-tx.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-tx.db is 2993823744 bytes and the published artifact is 2568024064 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1046,7 +1050,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tx.db is 721600512 bytes and the published artifact is 736587776 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tx.db is 736595968 bytes and the published artifact is 736587776 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1068,7 +1072,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ut.db is 86228992 bytes and the published artifact is 87908352 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ut.db is 87920640 bytes and the published artifact is 87908352 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1079,7 +1083,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-va.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-va.db is 1046224896 bytes and the published artifact is 933728256 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1090,7 +1094,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-va.db is 371740672 bytes and the published artifact is 377995264 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-va.db is 377991168 bytes and the published artifact is 377995264 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1123,7 +1127,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-vt.db is 58507264 bytes and the published artifact is 59269120 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-vt.db is 59285504 bytes and the published artifact is 59269120 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1134,7 +1138,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-wa.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-wa.db is 836390912 bytes and the published artifact is 735141888 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1145,7 +1149,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wa.db is 267419648 bytes and the published artifact is 272322560 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wa.db is 272297984 bytes and the published artifact is 272322560 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1156,7 +1160,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-wi.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-wi.db is 699408384 bytes and the published artifact is 340619264 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1167,7 +1171,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wi.db is 184680448 bytes and the published artifact is 188428288 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wi.db is 188440576 bytes and the published artifact is 188428288 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1189,7 +1193,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wv.db is 120385536 bytes and the published artifact is 121982976 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wv.db is 121995264 bytes and the published artifact is 121982976 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1200,7 +1204,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/address-points/address-points-us-wy.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/address-points/address-points-us-wy.db is 80101376 bytes and the published artifact is 51003392 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1211,7 +1215,7 @@
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wy.db is 37691392 bytes and the published artifact is 38330368 bytes, so its manifest describes a different build"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wy.db is 38346752 bytes and the published artifact is 38330368 bytes, so its manifest describes a different build"
 					}
 				}
 			]
