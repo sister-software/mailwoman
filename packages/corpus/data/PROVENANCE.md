@@ -42,18 +42,19 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 1,676 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 1,682 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
 OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, the 118 county and
 state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`), and one row per
 publisher of the 1,993 US OpenAddresses runs whose terms were read on 2026-11-21 (origin
-`2026-11-21_rights_review`), and one row per Taiwanese civil-affairs or county body whose house-number
+`2026-11-21_rights_review`), one row per publisher of the six Alaska runs that reading missed, read on
+2026-11-22 (origin `2026-11-22_rights_review`, #3293), and one row per Taiwanese civil-affairs or county body whose house-number
 coordinates reach `addresses-tw.parquet` and `address-points-tw.db` through Overture (15 rows, origin
 `2026-11-21_rights_review`, #3267). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
 until `license-decisions.json` records one. They sit in this repository because `corpus-source-inputs.json`,
 the table that names them, sits here (#2643).
 
-An elected US decision from the 2026-11-21 reading opens its `electedBecause` with its acceptance basis:
+An elected US decision from the 2026-11-21 and 2026-11-22 readings opens its `electedBecause` with its acceptance basis:
 `terms-read` (a page with terms text), `open-license` (an SPDX identifier) or `no-statement-found` (the
 publisher's metadata answered with empty license, access and copyright fields). A `no-statement-found` decision's `electedTerms` begins
 `US factual data published with no statement of terms`, so a stricter policy can refuse those rows by label. Each of these decisions also records `reading`: the
@@ -81,8 +82,8 @@ reading. The bare `openaddresses` value of the Hawaii database built before 2026
 has no entry. `situs address-points --oa-csv` now writes each row's run as `openaddresses:<member>`, read from
 the CSV's path, so a rebuilt Hawaii database maps to the four county rows.
 
-Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 maps to its publisher's row, the row whose
-`access` names the run (#3260, #3269). The US address layer build, `situs address-points` and the county
+Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 and the six Alaska runs read on 2026-11-22
+maps to its publisher's row, the row whose `access` names the run (#3260, #3269, #3293). The US address layer build, `situs address-points` and the county
 address-point builder admit a source only when every row its value maps to permits fetch, extract and
 redistribute-data.
 

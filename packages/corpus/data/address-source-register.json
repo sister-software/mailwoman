@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "031a7b24f7b5d799325e33c639f8f9f665d695a0c9c9290b004ac50fd22567b7",
+	"contentDigest": "4d34a04df5d468f85dccd8c8a09d9b19fdea2ce46d7e10e5e2a31e11c1532029",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -11078,6 +11078,149 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f"
+		},
+		{
+			"state": "refused",
+			"publisherStatement": "CORPUS INPUT, TERMS UNREAD",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"refusedBecause": "City and Borough of Juneau, Alaska spells out a restricted use, so the US factual-data reading does not elect it. As read on 2026-11-22: us/ak/city_of_juneau: the file OpenAddresses downloads, https://ftp.ci.juneau.ak.us/pub/CBJ_GIS_map_layers/juneau_alaska_gis_internet_parcel_layer.zip (3,416,838 bytes, sha256 `30b3830dee2fa670d6d3e6ac39224f86d68544e1ff1b027d6167fe2ddc3b71a1`), carries its metadata in `juneau_alaska_gis_internet_parcel_layer.shp.xml`, whose `useconst` reads `User may not edit this dataset.` and whose `accconst` disclaims liability and reads `the user agrees to indemnify and hold harmless the City Borough of Juneau, its officials, officers and employees from any liability arising out of the use of the data/information provided`. The OpenAddresses licence URL, https://epv.juneau.org/ (the CBJ Parcel Viewer, sha256 `58be1a72605c365fa7aed1bf8c606f26f83e203ab8858daf1aa31eac43a43121`), shows the same use constraints as an image, `Agree.png` (sha256 `91df35fdc3dbeb58bf684dc0e768189e3024ea01d3f5c4080e7d028250e70ce5`). A bar on editing the dataset reaches every operation that renders its rows into another form, as ADOA's `You may not modify or alter this dataset` did.",
+			"reading": {
+				"url": "https://ftp.ci.juneau.ak.us/pub/CBJ_GIS_map_layers/juneau_alaska_gis_internet_parcel_layer.zip",
+				"found": "terms",
+				"quote": "User may not edit this dataset."
+			},
+			"operations": {
+				"fetch": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"extract": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"redistribute-data": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"redistribute-model": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				},
+				"commercial-sublicense": {
+					"permission": "refused",
+					"because": "The publisher's terms read `User may not edit this dataset.`. That restriction is a term of use, which the US factual-data reading does not set aside."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-city-and-borough-of-juneau-alaska"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-11-22",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"electedBecause": "Acceptance basis: `terms-read`. US factual-data reading, decided by the operator on 2026-10-17 (`packages/corpus/lib/us/AGENTS.md`). Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. Terms that spell out a restricted use stay a refusal. What City and Borough of Wrangell, Alaska states, as read on 2026-11-22: us/ak/wrangell: https://www.arcgis.com/sharing/rest/content/items/1ab11d9f6c2b4ee186743e3da3bd7fab?f=json (sha256 `fcc839a03691effe91d185e1723462e2c1edffb4bac1cb7714a299ebac80894b`); `ArcGIS item 1ab11d9f6c2b4ee186743e3da3bd7fab 'Parcels' (owner kmcthomas, access public): licenseInfo: \"Disclaimer: Parcels are shown for planning purposes only.\"; accessInformation: \"City and Borough of Wrangell, AK\" | https://services7.arcgis.com/7cBSaoaaRaH5ojZy/ArcGIS/rest/services/Parcels/FeatureServer: copyrightText \"City and Borough of Wrangell, AK\"`; lane note: OpenAddresses' licence URL for this run names a Carlsbad, NM hub dataset, which is another publisher's and was not read as Wrangell's terms. The item owner is the borough's zoning administrator, whom the borough's parcel-data page, https://www.wrangell.com/planning/online-parcel-mapping-and-data (sha256 `de9c236d82646dda3111726c3dd9b30106c20f0f0b699df79db27c2ed5624f88`), names as its contact; that page states no terms. `for planning purposes only` is a fitness disclaimer.",
+			"reading": {
+				"url": "https://www.arcgis.com/sharing/rest/content/items/1ab11d9f6c2b4ee186743e3da3bd7fab?f=json",
+				"found": "terms",
+				"quote": "ArcGIS item 1ab11d9f6c2b4ee186743e3da3bd7fab 'Parcels' (owner kmcthomas, access public): licenseInfo: \"Disclaimer: Parcels are shown for planning purposes only.\"; accessInformation: \"City and Borough of Wrangell, AK\" | https://services7.arcgis.com/7cBSaoaaRaH5ojZy/ArcGIS/rest/services/Parcels/FeatureServer: copyrightText \"City and Borough of Wrangell, AK\""
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Wrangell, Alaska states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-city-and-borough-of-wrangell-alaska"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-11-22",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"electedBecause": "Acceptance basis: `terms-read`. US factual-data reading, decided by the operator on 2026-10-17 (`packages/corpus/lib/us/AGENTS.md`). Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. Terms that spell out a restricted use stay a refusal. What City and Borough of Yakutat, Alaska states, as read on 2026-11-22: us/ak/yakutat_borough: https://www.arcgis.com/sharing/rest/content/items/b15201fa8c624ae799ffedcad00d9530?f=json (sha256 `0a33753c5df8051369658e0c59bd596bbfc2c13dad7f8c9e23dc0a25da523315`); `ArcGIS item b15201fa8c624ae799ffedcad00d9530 'Yakutat Addressing' (owner yakutatGIS, org 'City and Borough of Yakutat', access public): licenseInfo: \"The locations and lines shown on this map are approximations only, and not intended to reflect the actual location or size of any parcel. The information contained on this map is not intended for official or legal use. The City and Borough of Yakutat assumes no responsibility for errors or omissions of any information presented here in, nor any responsibility for the use or misuse of this map.\"; accessInformation: \"City and Borough of Yakutat, Alaska Map Company, LLC\" | https://services2.arcgis.com/gRKiTtxkoTx0gERB/ArcGIS/rest/services/AddressingOnline/FeatureServer: copyrightText \"City and Borough of Yakutat, Alaska Map Company, LLC\"`; lane note: The item is the OpenAddresses licence URL and sits in the borough's own org; Alaska Map Company is the borough's contractor, as for Haines and Dillingham. The licence field is a disclaimer.",
+			"reading": {
+				"url": "https://www.arcgis.com/sharing/rest/content/items/b15201fa8c624ae799ffedcad00d9530?f=json",
+				"found": "terms",
+				"quote": "ArcGIS item b15201fa8c624ae799ffedcad00d9530 'Yakutat Addressing' (owner yakutatGIS, org 'City and Borough of Yakutat', access public): licenseInfo: \"The locations and lines shown on this map are approximations only, and not intended to reflect the actual location or size of any parcel. The information contained on this map is not intended for official or legal use. The City and Borough of Yakutat assumes no responsibility for errors or omissions of any information presented here in, nor any responsibility for the use or misuse of this map.\"; accessInformation: \"City and Borough of Yakutat, Alaska Map Company, LLC\" | https://services2.arcgis.com/gRKiTtxkoTx0gERB/ArcGIS/rest/services/AddressingOnline/FeatureServer: copyrightText \"City and Borough of Yakutat, Alaska Map Company, LLC\""
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). City and Borough of Yakutat, Alaska states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-city-and-borough-of-yakutat-alaska"
 		},
 		{
 			"state": "elected",
@@ -31700,6 +31843,63 @@
 		{
 			"state": "elected",
 			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-11-22",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"electedBecause": "Acceptance basis: `terms-read`. US factual-data reading, decided by the operator on 2026-10-17 (`packages/corpus/lib/us/AGENTS.md`). Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. Terms that spell out a restricted use stay a refusal. What Kenai Peninsula Borough, Alaska states, as read on 2026-11-22: us/ak/kenai_peninsula_borough: https://www.arcgis.com/sharing/rest/content/items/03f1d7cbe70244c7bf3cba92a4cee5e1?f=json (sha256 `657e3db8385150bb1ab0b13b346da6efbd0272f9ee26315612f65fff34396067`), ArcGIS item 'KPB Physical Addresses' (owner KPBAdmin), the dataset the OpenAddresses licence URL names on geohub.kpb.us: `licenseInfo: \"Every reasonable effort has been made to ensure the accuracy of these data. However, by accepting this material, you agree that the Kenai Peninsula Borough assumes no liability of any kind arising from the use of this data. The data are provided without warranty of any kind, either expressed or implied, including but not limited to time, money or goodwill arising from the use, operation or modification of the data. In using these data, you further agree to indemnify, defend, and hold harmless Kenai Peninsula Borough for any and all liability of any nature arising from the lack of accuracy or correctness of the data, or use of the data.\"; accessInformation: \"Kenai Peninsula Borough\"`; lane note: OpenAddresses downloads the same dataset as ftp://ftp.borough.kenai.ak.us/GIS/Downloads/Shapefiles/PhysicalAddress.zip, and that host timed out over https and http from this host, so the file's own metadata was not read. The borough site (https://www.kpb.us/ and https://kpb.us/ both answered) carries only a site-wide `All rights reserved` footer, which the register reads as a statement about the website. OpenAddresses' attribution `Copyright © 2021 Kenai Peninsula Borough` is a notice, not a designation under AS 29.71.060, and no borough text read restricts transfer.",
+			"reading": {
+				"url": "https://www.arcgis.com/sharing/rest/content/items/03f1d7cbe70244c7bf3cba92a4cee5e1?f=json",
+				"found": "terms",
+				"quote": "licenseInfo: \"Every reasonable effort has been made to ensure the accuracy of these data. However, by accepting this material, you agree that the Kenai Peninsula Borough assumes no liability of any kind arising from the use of this data. The data are provided without warranty of any kind, either expressed or implied, including but not limited to time, money or goodwill arising from the use, operation or modification of the data. In using these data, you further agree to indemnify, defend, and hold harmless Kenai Peninsula Borough for any and all liability of any nature arising from the lack of accuracy or correctness of the data, or use of the data.\"; accessInformation: \"Kenai Peninsula Borough\""
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Kenai Peninsula Borough, Alaska states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"obligations": [
+				{
+					"obligation": "indemnity",
+					"strength": "required",
+					"quote": "In using these data, you further agree to indemnify, defend, and hold harmless Kenai Peninsula Borough for any and all liability of any nature arising from the lack of accuracy or correctness of the data, or use of the data."
+				}
+			],
+			"licenseID": "unchecked-corpus-input-us-kenai-peninsula-borough-alaska"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "US factual data published without a use restriction (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
 			"termsVersion": "publisher statement read 2026-11-21",
 			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-21/hi-ms/",
 			"retrievedAt": "2026-11-21",
@@ -31997,6 +32197,56 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-kershaw-county-gis-department-south-carolina"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "US factual data published with no statement of terms (Feist Publications v. Rural Telephone Service, 499 U.S. 340 (1991))",
+			"termsVersion": "publisher statement read 2026-11-22",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"electedBecause": "Acceptance basis: `no-statement-found`. US factual-data reading, decided by the operator on 2026-10-17 (`packages/corpus/lib/us/AGENTS.md`). Street addresses, house numbers, place names and postcodes are facts. Facts are not copyrightable in the United States (Feist Publications, Inc. v. Rural Telephone Service Co., 499 U.S. 340 (1991)), and US law has no sui generis database right. A US public body's file published without terms restricting its use therefore carries no copyright or contract restriction this repository can infer. Terms that spell out a restricted use stay a refusal. What Ketchikan Gateway Borough, Alaska states, as read on 2026-11-22: us/ak/ketchikan: https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0?f=json (sha256 `39902f66e957d16c7e8820475247f9f1d7374af1ab46c1b3a6b6456a92e0af11`) and its item https://www.arcgis.com/sharing/rest/content/items/2787be973b534a969d57bda80010eb0e?f=json (sha256 `a2d29daa96517ef3e3fa71403e956add87ef241a93ef21ded990eab54d662d57`): `ArcGIS item 2787be973b534a969d57bda80010eb0e 'AddressPoints_KetchikanAK' (owner sidwell_Ad, access public): licenseInfo: (empty); accessInformation: (empty) | https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0: copyrightText \"Ketchikan Gateway Borough GIS\"; description \"This dataset compliments the parcel dataset for the City of Ketchikan, City of Saxman and outlying areas within the Ketchikan Gateway Borough.\"`; lane note: the service sits in the org of The Sidwell Company, the borough's parcel-viewer contractor, but unlike the Sidwell-hosted Colorado layers it names the borough as its source, and the borough's own GIS page, https://www.borough.ketchikan.ak.us/196/GIS-Maps (sha256 `8bf058e8b9d762b038baf86c248407028d5f24bf24338b58f7dde0621f971bec`; the bare host answered with the same bytes), states `Data layers present on the GIS Viewer are available as web map services for those that wish to utilize them.` Both Portico viewers (the OpenAddresses licence URL, which redirects to experience 'Ketchikan AK' b9025446a36742eca6c6c76c54f33e96, and the borough page's portico.sidwellco.com experience 79fd0f3f5b394eeea3243607556c9f35) say `By using this map, you agree to the disclaimer.`; neither app's configuration nor its rendered page carries a disclaimer text, and the borough site's /terms-of-use/, /privacy-policy/, /downloads/ and /Disclaimer.aspx answer 404.",
+			"reading": {
+				"url": "https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0?f=json",
+				"found": "no-statement",
+				"quote": "ArcGIS item 2787be973b534a969d57bda80010eb0e 'AddressPoints_KetchikanAK' (owner sidwell_Ad, access public): licenseInfo: (empty); accessInformation: (empty) | https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0: copyrightText \"Ketchikan Gateway Borough GIS\"; description \"This dataset compliments the parcel dataset for the City of Ketchikan, City of Saxman and outlying areas within the Ketchikan Gateway Borough.\""
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "other-documented",
+					"because": "US factual-data reading (Feist). Ketchikan Gateway Borough, Alaska states no restriction on this operation."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-ketchikan-gateway-borough-alaska"
 		},
 		{
 			"state": "elected",
@@ -37218,6 +37468,69 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-mrgis-city-of-rexburg-madison-county-idaho"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Municipality of Anchorage Terms of Use and Disclaimer for its GIS data (December 3, 2014)",
+			"termsVersion": "December 3, 2014",
+			"retrievedCopy": "internal/strategy/rights-receipts/us-terms-2026-11-22/ak-six/",
+			"retrievedAt": "2026-11-22",
+			"electedBecause": "Acceptance basis: `terms-read`. The publisher grants copying, distribution and derivative works over its data. What the Municipality of Anchorage, Alaska states, as read on 2026-11-22: us/ak/anchorage: the OpenAddresses definition's licence URL, https://cdn.ancgis.com/documents/legal/GIS_Data_Terms_and_Conditions.pdf (55,660 bytes, sha256 `205f6d6becabc35f07297cf773de147fc662d9e2de3db2a55a900e6670b8920e`), clause 7: `To the extent copyright in said information is held by MOA, you are hereby permitted by MOA to copy, distribute, store (electronically or otherwise), create derivative works based on and perform and display (publicly or otherwise) such Data, and make such Data available to end users.` Clause 6: `Should you use the Data for any purposes, you agree to provide the following legend, prominently displayed: \"Data provided courtesy of MOA\" unless otherwise agreed in advance by MOA in writing.` Clause 10 requires the user to indemnify, defend and hold harmless MOA. The address service's item, https://www.arcgis.com/sharing/rest/content/items/b00764a35800462fb337177ccbc352a2?f=json (sha256 `b1ef01e033f3a374a55e388d6c83f9145668e3373a4dc9ca568699a05bb2e6c6`), reads licenseInfo `for public use` and accessInformation `Municipality of Anchorage`. The terms neither designate the data as copyrighted under AS 29.71.060 nor restrict transfer, so Unalaska's and Mat-Su's refusal does not apply. The grant names no sublicence, so `commercial-sublicense` stays unreviewed.",
+			"reading": {
+				"url": "https://cdn.ancgis.com/documents/legal/GIS_Data_Terms_and_Conditions.pdf",
+				"found": "terms",
+				"quote": "To the extent copyright in said information is held by MOA, you are hereby permitted by MOA to copy, distribute, store (electronically or otherwise), create derivative works based on and perform and display (publicly or otherwise) such Data, and make such Data available to end users."
+			},
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The terms govern `accessing any data`, and the address service is published for public download (item licenseInfo `for public use`)."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant permits the user to `copy` and `store (electronically or otherwise)` the Data."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant permits the user to `create derivative works based on` the Data."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant permits the user to `create derivative works based on` the Data, and names no use it withholds."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The grant permits the user to `distribute` the Data `and make such Data available to end users`, with the legend clause 6 requires."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A trained model is a derivative work, which the grant permits the user to create and distribute."
+				},
+				"commercial-sublicense": {
+					"permission": "unreviewed",
+					"because": "No copyright or contract term binds the facts, and no reading has yet been made of what an onward grant would convey."
+				}
+			},
+			"obligations": [
+				{
+					"obligation": "attribution",
+					"strength": "required",
+					"quote": "Should you use the Data for any purposes, you agree to provide the following legend, prominently displayed: \"Data provided courtesy of MOA\" unless otherwise agreed in advance by MOA in writing.",
+					"text": "Data provided courtesy of MOA"
+				},
+				{
+					"obligation": "indemnity",
+					"strength": "required",
+					"quote": "You agree to indemnify, defend and hold harmless MOA and its officers, directors, and employees from and against all fines, suits, proceedings, claims, causes of action, demands, or liabilities of any kind or of any nature arising out of or in connection with your use of the data"
+				}
+			],
+			"licenseID": "unchecked-corpus-input-us-municipality-of-anchorage-alaska"
 		},
 		{
 			"state": "refused",
@@ -96867,6 +97180,102 @@
 			"publisher": "Weston County, Wyoming",
 			"sourceURL": "https://www.arcgis.com/sharing/rest/content/items/d09d0ec5b5ad46f0bec220a105b8ced8?f=json",
 			"note": "Read on 2026-11-21; the decision is recorded in license-decisions.json. Acceptance basis: refused."
+		},
+		{
+			"sourceID": "us-property-building-1616",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/anchorage",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "Municipality of Anchorage, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-municipality-of-anchorage-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/anchorage",
+			"publisher": "Municipality of Anchorage, Alaska",
+			"sourceURL": "https://cdn.ancgis.com/documents/legal/GIS_Data_Terms_and_Conditions.pdf",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: terms-read."
+		},
+		{
+			"sourceID": "us-property-building-1617",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/city_of_juneau",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "City and Borough of Juneau, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-city-and-borough-of-juneau-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/city_of_juneau",
+			"publisher": "City and Borough of Juneau, Alaska",
+			"sourceURL": "https://ftp.ci.juneau.ak.us/pub/CBJ_GIS_map_layers/juneau_alaska_gis_internet_parcel_layer.zip",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: refused."
+		},
+		{
+			"sourceID": "us-property-building-1618",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/kenai_peninsula_borough",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "Kenai Peninsula Borough, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-kenai-peninsula-borough-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/kenai_peninsula_borough",
+			"publisher": "Kenai Peninsula Borough, Alaska",
+			"sourceURL": "https://www.arcgis.com/sharing/rest/content/items/03f1d7cbe70244c7bf3cba92a4cee5e1?f=json",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: terms-read."
+		},
+		{
+			"sourceID": "us-property-building-1619",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/ketchikan",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "Ketchikan Gateway Borough, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-ketchikan-gateway-borough-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/ketchikan",
+			"publisher": "Ketchikan Gateway Borough, Alaska",
+			"sourceURL": "https://services2.arcgis.com/65jtiGuzdaRB5FxF/ArcGIS/rest/services/AddressPoints_KetchikanAK/FeatureServer/0?f=json",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: no-statement-found."
+		},
+		{
+			"sourceID": "us-property-building-1620",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/wrangell",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "City and Borough of Wrangell, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-city-and-borough-of-wrangell-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/wrangell",
+			"publisher": "City and Borough of Wrangell, Alaska",
+			"sourceURL": "https://www.arcgis.com/sharing/rest/content/items/1ab11d9f6c2b4ee186743e3da3bd7fab?f=json",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: terms-read."
+		},
+		{
+			"sourceID": "us-property-building-1621",
+			"iso2": "US",
+			"sector": "property-building",
+			"name": "Address points, through OpenAddresses us/ak/yakutat_borough",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "City and Borough of Yakutat, Alaska publishes the address data these OpenAddresses runs read",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-city-and-borough-of-yakutat-alaska",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "OpenAddresses per-source run us/ak/yakutat_borough",
+			"publisher": "City and Borough of Yakutat, Alaska",
+			"sourceURL": "https://www.arcgis.com/sharing/rest/content/items/b15201fa8c624ae799ffedcad00d9530?f=json",
+			"note": "Read on 2026-11-22; the decision is recorded in license-decisions.json. Acceptance basis: terms-read."
 		},
 		{
 			"sourceID": "tw-property-building-1",
