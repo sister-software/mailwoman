@@ -144,6 +144,22 @@ export function normalizeStreetForKey(street: string): StreetKey {
 /**
  * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
  * name into an address-point key.
+ *
+ * A member is the name of a fold, and `streetLocaleForCountry` in `#street/locale` maps a country to one.
+ * Artifact manifests record the member's spelling, so a member is renamed only with its artifacts rebuilt.
+ *
+ * - `es`, `fr`, `de`, `it`, `nl`, `pl` and `id` are ISO 639-1 language codes,
+ *   each with that language's street-type rule.
+ * - `vn` is the Vietnamese fold, spelled with the country's code rather than the language's `vi`.
+ * - `zh` is the Han fold.
+ *   It also folds a locality and a house number.
+ * - `en` is the English fold of {@link normalizeStreetForKey}.
+ *   A reader under it passes each street through {@link streetLocaleForSurface}, as the OSM builder does.
+ * - `us` keys a street exactly as `en` does and is the fold of a database built without that surface route.
+ *   `AddressPointSqliteLookup` also reads its locality keys as abbreviated.
+ *   The United States databases are the ones built this way.
+ * - `und` is the shared fold with no language's abbreviations, for a country whose
+ *   official languages select no one rule set.
  */
 export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh" | "und"
 
@@ -538,9 +554,7 @@ export function streetKeyVariants(
 	// The street locale recorded in the extract's manifest would replace the default.
 	locale: StreetLocale = "us"
 ): StreetKey[] {
-	// country-branch: `us` is keyed by the US suffix fold directly.
-	// A fold table for each street locale in the codex would replace the branch.
-	const primary = locale === "us" ? normalizeStreetForKey(street) : normalizeStreetForKeyLocale(street, locale)
+	const primary = normalizeStreetForKeyLocale(street, locale)
 	const variants: StreetKey[] = primary ? [primary] : []
 
 	// country-branch: the doubled-type and Saint forms below are English spellings, so two locales take them.

@@ -18,6 +18,8 @@ import type {
 } from "@mailwoman/core/resolver"
 import type { AddressLayerCountryManifest } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
@@ -123,7 +125,10 @@ export async function selectInterpolationDB(dataRoot: string, stateSlug: string 
  * The lookup classes that a {@link USStateDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
  */
 export interface RegionDatabaseFactory {
-	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
+	AddressPointSqliteLookup: new (
+		dbPath: string,
+		opts: { streetLocale: StreetLocale }
+	) => AddressPointLookup & Disposable
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
 	/**
 	 * Opens one region's address-layer `lookup.db`.
@@ -267,7 +272,7 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 		const ap = layerPath
 			? this.#factory.openAddressLayerLookup!(layerPath, "US")
 			: apPath
-				? new this.#factory.AddressPointSqliteLookup(apPath)
+				? new this.#factory.AddressPointSqliteLookup(apPath, { streetLocale: streetLocaleForCountry("US") })
 				: null
 
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : null

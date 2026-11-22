@@ -129,6 +129,25 @@ describe("AddressKeyLookup", () => {
 		})
 	})
 
+	it("folds a United States street that opens with a French type word the way its builder did", async () => {
+		// Louisiana's layer holds `PROMENADE BLVD` under `promenade boulevard` and `AVE A` under `ave a`.
+		const { dir, db, lookup } = await lookupOver([
+			record("10000", "PROMENADE BLVD", "70810", "Baton Rouge", 30.4),
+			record("204", "AVE A", "70072", "Marrero", 29.9),
+		])
+
+		await using _dir = dir
+		using _db = db
+
+		expect(await lookup.find({ street: "Promenade Blvd", number: "10000", postcode: "70810" })).toMatchObject({
+			hits: [{ lat: 30.4 }],
+		})
+
+		expect(await lookup.find({ street: "Ave A", number: "204", postcode: "70072" })).toMatchObject({
+			hits: [{ lat: 29.9 }],
+		})
+	})
+
 	it("returns every namesake row under one key, up to the row cap", async () => {
 		const { dir, db, lookup } = await lookupOver([
 			record("10", "Main St", "53001", "Adell", 43.6),

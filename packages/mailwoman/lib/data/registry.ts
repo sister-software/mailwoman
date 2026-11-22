@@ -28,6 +28,7 @@ import {
 	selectionScopesOf,
 	ServingRole,
 } from "@mailwoman/core/layers"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 
 import { bundleArtifactRole, bundleArtifactSubdivision, BUNDLES, type DataBundle } from "#data/bundles"
@@ -47,7 +48,7 @@ export const PUBLISHED_SCHEMA_VERSION = 1
 function streetLocale(bundle: DataBundle): string | null {
 	const [country] = bundle.countries ?? []
 
-	return country ? country.toLowerCase() : null
+	return country ? streetLocaleForCountry(country) : null
 }
 
 /**

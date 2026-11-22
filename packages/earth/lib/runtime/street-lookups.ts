@@ -44,16 +44,19 @@ export async function openStreetLookups(slug: string, sqliteRuntimeBaseURL: stri
 	const {
 		database: { openEarthRangeDatabase: openRangeDatabase },
 		street: { HTTPVFSAddressPointLookup, HTTPVFSInterpolator },
+		locale: { streetLocaleForCountry },
 	} = await allKeyed({
 		database: import("#runtime/range-database"),
 		street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
+		locale: import("@mailwoman/resolver-wof-sqlite/street/locale"),
 	})
 
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)
 
 		return {
-			situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: slug as "fr" }),
+			// A national extract's slug is its country code.
+			situs: new HTTPVFSAddressPointLookup(situsDB, { streetLocale: streetLocaleForCountry(slug) }),
 			interp: null,
 			close: () => situsDB.close?.(),
 		}

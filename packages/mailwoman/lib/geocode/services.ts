@@ -28,6 +28,7 @@ import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import {
 	createToken,
 	optional,
@@ -204,16 +205,19 @@ export function registerGenerationServices(
 		build: ({ candidateDB }) => capitalIndexFor(options.capitalTier, candidateDB),
 	})
 
-	// country-branch: an address-point database passed by path is keyed by the `fr`
-	// fold under a French locale and by `us` otherwise.
-	// The street locale recorded in the database's own manifest would replace the branch.
-	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
+	// An address-point database passed by path is read under the street locale
+	// of the session locale's country.
+	// A locale tag without a region leaves the choice to the lookup's own default.
+	const explicitAddressPointRegion = options.locale.split("-")[1]
 
 	defineUnlessProvided(registry, S.explicitAddressPoints, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.addressPointsDB
-				? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAddressPointLocale })
+				? new mod.AddressPointSqliteLookup(
+						options.addressPointsDB,
+						explicitAddressPointRegion ? { streetLocale: streetLocaleForCountry(explicitAddressPointRegion) } : {}
+					)
 				: null,
 	})
 
