@@ -82,6 +82,45 @@ function openAddressesMemberOf(path: string): string {
 }
 
 /**
+ * The manifest fields that name a build's inputs: the license, the attribution,
+ * the source and each source's row count under its wire id.
+ *
+ * An Overture build records Overture's terms over the kept datasets,
+ * because each allow-list has different terms.
+ * An OpenAddresses build's rows come from the runs' own publishers rather than from Overture.
+ *
+ * So each run is joined to its register rows as the US address layer joins it.
+ */
+async function manifestTerms(options: {
+	openAddresses: boolean
+	overtureLicense: string
+	counts: ReadonlyArray<readonly [dataset: string, rows: number]>
+	allowedDatasets: ReadonlySet<string>
+	sourceIDOf: (dataset: string) => string
+}): Promise<{ license: string; attribution: string; source: string; sourceRecords: Record<string, number> }> {
+	const sourceRecords = Object.fromEntries(options.counts.map(([dataset, rows]) => [options.sourceIDOf(dataset), rows]))
+
+	if (options.openAddresses) {
+		const { addressSourcesManifestTerms } = await import("#data/mixed-layer")
+		const terms = await addressSourcesManifestTerms({ country: "US", sourceRecords })
+
+		return { license: terms.license, attribution: terms.attribution, source: "openaddresses", sourceRecords }
+	}
+
+	const datasets = options.allowedDatasets.size
+		? [...options.allowedDatasets]
+		: options.counts.map(([dataset]) => dataset)
+
+	return {
+		// The manifest accepts only an SPDX expression that the obligations table knows.
+		license: options.overtureLicense,
+		attribution: `Overture addresses (${datasets.toSorted().join(", ")})`,
+		source: "overture-addresses",
+		sourceRecords,
+	}
+}
+
+/**
  * The number of `--bbox` fields: minLon, minLat, maxLon, maxLat.
  */
 const BBOX_FIELDS = 4
@@ -102,7 +141,13 @@ const BBOX_FIELDS = 4
  * Keys come from the shared normalizer in `@mailwoman/resolver-wof-sqlite`,
  * which the lookup tier also applies at query time.
  * The command needs `@duckdb/node-api` and the optional `@mailwoman/resolver-wof-sqlite` peer.
- * It builds into a temp path and swaps the result into place.
+ *
+ * It builds into a temp path, seals the result and swaps it into place.
+ *
+ * The manifest records the build's inputs: an Overture build Overture's terms,
+ * and an `--oa-csv` build each run joined to its register rows, under the US address
+ * layer's mixed identifier unless every row elects one expression.
+ * Both record each source's row count.
  */
 const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -110,7 +155,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			client: { DatabaseClient },
 			dataRoot: { dataRootPath, snapshotSourcePath },
 			paths: { addressPointDatabasePath },
-			db: { swapDatabaseIntoPlace },
+			db: { sealDatabase, swapDatabaseIntoPlace },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
 			dataRoot: import("@mailwoman/core/data-root"),
@@ -278,6 +323,10 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		const excludedRows = new Map<string, number>()
 
+		// A row's wire source id, and the vintage its `source_release` column and the manifest record.
+		const sourceIDOf = (dataset: string) => (OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`)
+		const sourceVintage = OA_MODE ? "openaddresses-latest" : options.release
+
 		const bboxFilter = bbox ? `AND lon BETWEEN ${bbox[0]} AND ${bbox[2]} AND lat BETWEEN ${bbox[1]} AND ${bbox[3]}` : ""
 
 		const streamSQL = OA_MODE
@@ -374,8 +423,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					streetRaw,
 					lat,
 					lon,
-					OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`,
-					OA_MODE ? "openaddresses-latest" : options.release,
+					sourceIDOf(dataset),
+					sourceVintage,
 					// Only a national build has an admin code: the third admin level, such as the Taiwanese 村里.
 					r.admin_code ? String(r.admin_code) : null,
 					null
@@ -403,15 +452,13 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			`${kept} points → ${finalOut}`,
 			`${totalReturned} ${SCOPE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
 			`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`,
-			`provenance (${SCOPE}, release ${options.release}):`,
+			`provenance (${SCOPE}, ${OA_MODE ? "OpenAddresses latest runs" : `release ${options.release}`}):`,
 		]
 
 		const sortedDatasets = [...datasetCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
 		for (const [dataset, count] of sortedDatasets) {
-			lines.push(
-				`  ${(OA_MODE ? `openaddresses:${dataset}` : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`
-			)
+			lines.push(`  ${sourceIDOf(dataset).padEnd(28)} ${count.toLocaleString()} rows`)
 		}
 
 		for (const exclusion of admitter.excluded) {
@@ -462,23 +509,26 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		await stampLayerManifest(tmpOut, {
 			name: COUNTRY ? `address-points-${COUNTRY.toLowerCase()}` : `address-points-us-${STATE.toLowerCase()}`,
-			version: options.release,
+			version: sourceVintage,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The manifest accepts only an SPDX expression that the obligations table knows.
-			// The attribution lists the kept datasets because each allow-list has different terms.
-			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
-			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,
-			source: "overture-addresses",
-			sourceVintage: options.release,
+			...(await manifestTerms({
+				openAddresses: OA_MODE,
+				overtureLicense: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
+				counts: sortedDatasets,
+				allowedDatasets,
+				sourceIDOf,
+			})),
+			sourceVintage,
 			buildCmd: "mailwoman situs address-points",
 			buildSHA: buildSHA(repoRootPath()),
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { street: { column: "street_norm" } },
 			createdAt: new Date().toISOString(),
-			sourceRecords: null,
 		})
 
+		// A published database is a read-only artifact, so the build seals it before it goes live.
+		await sealDatabase(tmpOut)
 		await swapDatabaseIntoPlace(tmpOut, finalOut)
 
 		return lines

@@ -5,6 +5,7 @@ import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { describe, expect, it, vi } from "vitest"
 
 import {
@@ -77,6 +78,26 @@ describe("publishToPublicBucket", () => {
 		)
 
 		expect(upload).not.toHaveBeenCalled()
+	})
+
+	it("refuses an unsealed street-tier database before invoking the upload transport, and admits it sealed", async () => {
+		await using directory = await temporaryDirectory("mw-public-bucket-")
+		const database = directory.path("street", "us", "hi", "situs.db")
+		await makeDirectories(directory.path("street", "us", "hi"))
+		await writeLocalFile("", database)
+		const upload = vi.fn()
+
+		await expect(publishToPublicBucket({ src: directory.path, upload })).rejects.toThrow(
+			/street\/us\/hi\/situs\.db: the staged database is not sealed/
+		)
+
+		expect(upload).not.toHaveBeenCalled()
+
+		await sealDatabase(database)
+
+		const uploads = await planPublicBucketUploads(directory.path, "mailwoman")
+
+		expect(uploads.map((entry) => entry.key)).toEqual(["mailwoman/street/us/hi/situs.db"])
 	})
 
 	it("admits gzip data under an identity-encoded extension", async () => {

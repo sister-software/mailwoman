@@ -154,4 +154,43 @@ describe("OpenAddresses address records", () => {
 		// Without a splitter the street is kept as written.
 		expect(openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", "us")?.unit).toBeNull()
 	})
+
+	it("removes a trailing city, state and ZIP only when each repeats the row's own fields", () => {
+		const base = { lon: "-103.2077", lat: "40.6255", number: "514", city: "STERLING", hash: "a1" }
+		const street = (row: Record<string, string>) => openAddressesAddressRecord({ ...base, ...row }, "us/co/logan", "us")
+
+		// The state may come from REGION or from the run's subdivision, and the ZIP may be the ZIP+4 form.
+		expect(street({ street: "CHURCH ST STERLING, CO 80751", postcode: "80751" })?.streetRaw).toBe("CHURCH ST")
+		expect(street({ street: "CHURCH ST, Sterling, CO 80751-1234", postcode: "80751" })?.streetRaw).toBe("CHURCH ST")
+		expect(street({ street: "CHURCH ST STERLING CO", region: "CO" })?.streetRaw).toBe("CHURCH ST")
+		expect(street({ street: "CHURCH ST STERLING 80751", postcode: "80751" })?.streetRaw).toBe("CHURCH ST")
+
+		// A tail naming another town or another ZIP, a bare trailing city, and a row with no CITY keep their street.
+		expect(street({ street: "CHURCH ST ILIFF, CO 80736", postcode: "80736" })?.streetRaw).toBe(
+			"CHURCH ST ILIFF, CO 80736"
+		)
+
+		expect(street({ street: "CHURCH ST STERLING, CO 80736", postcode: "80751" })?.streetRaw).toBe(
+			"CHURCH ST STERLING, CO 80736"
+		)
+
+		expect(street({ street: "OLD STERLING" })?.streetRaw).toBe("OLD STERLING")
+		// A separator before the place goes with it, and a remainder of one short word keeps the street.
+		expect(street({ street: "PARK ST - STERLING CO" })?.streetRaw).toBe("PARK ST")
+		expect(street({ street: "K & H ST, STERLING, CO" })?.streetRaw).toBe("K & H ST")
+		expect(street({ street: "E STERLING CO" })?.streetRaw).toBe("E STERLING CO")
+		expect(street({ street: "CHURCH ST WRANGELL, AK 99929", city: "" })?.streetRaw).toBe("CHURCH ST WRANGELL, AK 99929")
+
+		// The digest identifier reads the street as written.
+		expect(
+			openAddressesAddressRecord(
+				{ ...base, hash: "", street: "CHURCH ST STERLING, CO 80751", postcode: "80751" },
+				"us/co/logan",
+				"us"
+			)?.sourceRecordID
+		).not.toBe(
+			openAddressesAddressRecord({ ...base, hash: "", street: "CHURCH ST", postcode: "80751" }, "us/co/logan", "us")
+				?.sourceRecordID
+		)
+	})
 })

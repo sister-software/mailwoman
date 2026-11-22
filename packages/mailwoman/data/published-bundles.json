@@ -1,5 +1,5 @@
 {
-	"measuredAt": "2026-11-22T02:40:46Z",
+	"measuredAt": "2026-11-22T09:50:39Z",
 	"bucket": "https://public.mailwoman.post/mailwoman/",
 	"bundles": [
 		{
@@ -332,7 +332,7 @@
 					"manifest": {
 						"status": "measured",
 						"tier": "build-local",
-						"expression": "CDLA-Permissive-2.0"
+						"expression": "LicenseRef-US-Mixed"
 					}
 				},
 				{

@@ -7,6 +7,7 @@ import type { USAddressSourceTermsReader } from "@mailwoman/corpus/us/address-re
 import { describe, expect, it } from "vitest"
 
 import {
+	addressSourcesManifestTerms,
 	describeMixedAddressLayer,
 	isMixedLicenseExpression,
 	ObligationClass,
@@ -343,6 +344,48 @@ describe("renderAttributionNotice", () => {
 		expect(notice).toContain("  City [openaddresses:us/il/city_of_chicago]")
 		expect(notice).toContain("    The user agrees to indemnify the City.")
 		expect(renderAttributionNotice(await describeFixture())).toBe(notice)
+	})
+})
+
+describe("addressSourcesManifestTerms", () => {
+	it("records the mixed identifier when a source's register row elects no expression, and credits each publisher", async () => {
+		const manifest = await addressSourcesManifestTerms({
+			country: "US",
+			sourceRecords: { "openaddresses:us/fl/alachua": 3, "openaddresses:us/dc/statewide": 2 },
+			terms,
+		})
+
+		expect(manifest.license).toBe("LicenseRef-US-Mixed")
+
+		expect(manifest.attribution).toBe(
+			"District of Columbia (openaddresses:us/dc/statewide); Alachua County GIS (openaddresses:us/fl/alachua)"
+		)
+
+		expect(manifest.sources.map((source) => [source.source, source.records])).toEqual([
+			["openaddresses:us/dc/statewide", 2],
+			["openaddresses:us/fl/alachua", 3],
+		])
+	})
+
+	it("records the sources' own expression when every row elects one", async () => {
+		const manifest = await addressSourcesManifestTerms({
+			country: "US",
+			sourceRecords: { "openaddresses:us/dc/statewide": 2 },
+			terms,
+		})
+
+		expect(manifest.license).toBe("CC-BY-4.0")
+	})
+
+	it("keeps a source the register doesn't cover, at the mixed identifier", async () => {
+		const manifest = await addressSourcesManifestTerms({
+			country: "US",
+			sourceRecords: { "openaddresses:us/dc/statewide": 2, "openaddresses:us/fl/unmapped": 1 },
+			terms,
+		})
+
+		expect(manifest.license).toBe("LicenseRef-US-Mixed")
+		expect(manifest.attribution).toContain("unregistered publisher (openaddresses:us/fl/unmapped)")
 	})
 })
 
