@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // A shape that declares a validator ID with no binding in `recognizer_core::validators` fails the build.
 
 mod family {

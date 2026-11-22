@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // A shape that declares captures and no validator has no payload variant, so the build fails.
 
 mod family {

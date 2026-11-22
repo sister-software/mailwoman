@@ -16,7 +16,13 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePath } from "path-ts"
 
-import { LICENSE_FILE, PROVENANCE_FILE, provenanceMatches, renderLicenseFile } from "#release-kit/weights/rights/files"
+import {
+	LICENSE_FILE,
+	modelGraphUncompared,
+	PROVENANCE_FILE,
+	provenanceMatches,
+	renderLicenseFile,
+} from "#release-kit/weights/rights/files"
 import { weightsRightsRecords } from "#release-kit/weights/rights/write"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 
@@ -53,6 +59,18 @@ export const weightsRightsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${licenseFile} is missing, so the tarball states its terms nowhere — ${REGENERATE}`,
 					file: licenseFile,
+					line: null,
+					details: null,
+				})
+			}
+
+			const unreadGraph = modelGraphUncompared(record)
+
+			if (unreadGraph) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Warning,
+					message: `${provenanceFile}: the model graph went uncompared because this machine couldn't read it (${unreadGraph})`,
+					file: provenanceFile,
 					line: null,
 					details: null,
 				})

@@ -72,7 +72,7 @@
 		"fix:code-blocks": "yarn mwops code-blocks --fix",
 		"format": "oxfmt .",
 		"health": "run-p --aggregate-output --print-label --continue-on-error health:checks health:architecture health:manifests health:duplicates",
-		"health:checks": "yarn mwops health all --errors-only --except rights-chain,spdx-header,weights-rights,workspace-exports",
+		"health:checks": "yarn mwops health all --errors-only --except rights-chain",
 		"health:architecture": "depcruise packages --config dependency-cruiser.config.mjs",
 		"health:bundles": "yarn mwops health bundle-graph",
 		"health:debt": "yarn mwops health debt",

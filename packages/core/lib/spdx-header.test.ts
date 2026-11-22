@@ -136,6 +136,8 @@ describe("sourceHeaderSyntax", () => {
 		expect(sourceHeaderSyntax("packages/sentencepiece-wasm/sentencepiece.mjs")).toBeNull()
 		expect(sourceHeaderSyntax("config/vale/fixtures/clean.ts")).toBeNull()
 		expect(sourceHeaderSyntax("packages/core/lib/spdx-header.ts")).toBe(SourceHeaderSyntax.Slash)
+		expect(sourceHeaderSyntax("docs/src/snippets/home.snippet.mts")).toBeNull()
+		expect(sourceHeaderSyntax("packages/core/lib/home.snippet.mts")).toBe(SourceHeaderSyntax.Slash)
 		expect(sourceHeaderSyntax("docs/plans/a.md")).toBeNull()
 	})
 })

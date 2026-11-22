@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
 // A shape whose validator is bound and a shape with no captures compile, and the payload is the validator's output.
 
 mod family {
