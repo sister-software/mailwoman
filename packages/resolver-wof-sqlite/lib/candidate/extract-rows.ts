@@ -77,11 +77,14 @@ export function stageExtractRows(ctx: {
 
 	out.exec("BEGIN")
 
+	// A deprecated record is one its source withdrew as wrong, and it stays out whatever point it holds.
+	// A record that only ceased (`is_current = 0`) stays in: a terminated postcode still
+	// appears in written addresses, and the extract keeps its last point.
 	for (const r of pc
 		.prepare(
 			`SELECT id, name, country, latitude, longitude,
 				min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
-			 FROM spr WHERE placetype = ? AND latitude != 0 AND longitude != 0`
+			 FROM spr WHERE placetype = ? AND latitude != 0 AND longitude != 0 AND is_deprecated = 0`
 		)
 		.iterate(extractPlacetype)) {
 		const name = String(r.name ?? "")
