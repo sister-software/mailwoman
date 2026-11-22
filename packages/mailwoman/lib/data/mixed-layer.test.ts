@@ -1,16 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import { registerRowTerms, type RegisterTermsInput } from "@mailwoman/corpus/source-register/terms"
 import type { USAddressSourceTermsReader } from "@mailwoman/corpus/us/address-records/source-terms"
+import type { LicenseDecision } from "@mailwoman/license/decision"
+import { isMixedLicenseExpression, ObligationClass } from "@mailwoman/license/mixed"
 import { describe, expect, it } from "vitest"
 
 import {
 	addressSourcesManifestTerms,
 	describeMixedAddressLayer,
-	isMixedLicenseExpression,
-	ObligationClass,
 	renderAttributionNotice,
 	tallyObligationClasses,
 	type LayerFileReader,

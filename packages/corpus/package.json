@@ -79,6 +79,7 @@
 		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/gazetteer": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",

@@ -6,11 +6,12 @@
  *   register, as `load_training_config` did.
  */
 
+import { TRAINING_OPERATIONS } from "@mailwoman/license/operations"
+
 import {
 	createSourceRightsAdmission,
 	readCorpusSourceInputs,
 	SourceRightsError,
-	TRAINING_OPERATIONS,
 	type CorpusSourceInputs,
 	type SourceRightsRecord,
 } from "#source-register/corpus-inputs"

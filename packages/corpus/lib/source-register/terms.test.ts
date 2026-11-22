@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { auditLicenseDecision, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { auditLicenseDecision, type LicenseDecision } from "@mailwoman/license/decision"
+import { SourceOperation } from "@mailwoman/license/operations"
 import { describe, expect, it } from "vitest"
 
 import { registerRowTerms, RegisterTermsBasis, type RegisterTermsInput } from "#source-register/terms"
-import { SourceOperation } from "#source-register/types"
 
 const permitted = (basis: "publisher-grant" | "other-documented") => ({
 	[SourceOperation.RedistributeData]: { permission: "permitted" as const, basis, because: "Read. Second sentence." },

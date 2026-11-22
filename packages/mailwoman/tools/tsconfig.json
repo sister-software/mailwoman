@@ -29,6 +29,7 @@
 		{ "path": "../../corpus" },
 		{ "path": "../../dictionaries" },
 		{ "path": "../../evidence" },
+		{ "path": "../../license" },
 		{ "path": "../../kind-classifier" },
 		{ "path": "../../locale-hint" },
 		{ "path": "../../match" },

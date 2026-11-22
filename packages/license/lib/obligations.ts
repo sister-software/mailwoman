@@ -6,56 +6,7 @@
  *   The summary is a debugging aid and gives no legal advice.
  */
 
-import { stringifyJSON } from "#json"
-import type { LicenseKeyVerification } from "#license/key"
-import type { LicenseKeyPublication } from "#license/publication"
-
-/**
- * Returns whether a verification grants the commercial branch: the token is valid
- * and its terms are commercial.
- *
- * A valid open-source token answers false, so the AGPL branch and its notice stay in place for it.
- * The function lives here rather than in `key.ts` because this module sits in the
- * docs site's plugin graph that jiti evaluates.
- *
- * A value import of `key.ts` would pull its zod schema into that graph.
- */
-export function grantsCommercialTerms(key: LicenseKeyVerification | null | undefined): boolean {
-	return key?.status === "valid" && key.payload.terms === "LicenseRef-Commercial"
-}
-
-/**
- * The identifier of Mailwoman's commercial terms (`commercial-LICENSE.md`).
- */
-const COMMERCIAL_TERMS = "LicenseRef-Commercial"
-
-/**
- * Whether an artifact's license expression offers it under Mailwoman's commercial terms,
- * so a release of it performs `commercial-sublicense` on every source behind it.
- *
- * `commercial-sublicense` is the act of licensing a result built from a source's rows,
- * trained weights or a served data layer, to a paying customer under `LicenseRef-Commercial`,
- * beside or in place of the open-source branch.
- * A source's decision permits it when its grant lets this repository license that result
- * on terms of its own, for a fee: CC BY 4.0 §1(b) and §3(a)(4) let an adapter license
- * Adapted Material under its own Adapter's License, and OGL v3.0 and Licence Ouverte
- * 2.0 grant commercial exploitation `in your own product or application`.
- *
- * A grant refuses it when it limits use to non-commercial purposes, forbids sale
- * or resale, or forbids terms on the result.
- *
- * The act passes on no license to the source's own rows.
- * Under CC BY 4.0 §2(a)(5)(A), CC BY 3.0 AU clause 9, OGL v3.0 and Licence Ouverte 2.0
- * a recipient takes the source's grant from its licensor directly, so the commercial
- * terms add to that grant and never restrict it (CC BY 4.0 §2(a)(5)(B)).
- *
- * A grant's `non-sublicensable` clause therefore refuses an act this repository
- * doesn't perform and doesn't refuse this one.
- */
-export function soldUnderCommercialTerms(expression: string): boolean {
-	// A token match: the expression's words split on whitespace and parentheses, one linear pass.
-	return expression.split(/[\s()]+/u).includes(COMMERCIAL_TERMS)
-}
+import { ExpressionOperator, licenseExpressionTerms, licenseWithoutException } from "#expression"
 
 /**
  * The obligation classes the summary reports.
@@ -186,7 +137,8 @@ export interface LicenseSummary {
 	/**
 	 * The union of the known obligations of every identifier.
 	 *
-	 * For `OR`, this union applies until a branch is chosen with {@link chooseLicenseBranch}.
+	 * For `OR`, this union applies until a branch is chosen, as `chooseLicenseBranch` in
+	 * `@mailwoman/core/license/branch` does for Mailwoman's own license.
 	 */
 	obligations: LicenseObligation[]
 	/**
@@ -209,18 +161,7 @@ export interface LicenseSummary {
  * A `WITH` exception stays attached to its license.
  */
 export function licenseIdentifiers(expression: string): string[] {
-	return expression
-		.replaceAll(/[()]/g, " ")
-		.split(/\s+(?:AND|OR)\s+/i)
-		.map((part) => part.trim())
-		.filter((part) => part.length)
-}
-
-/**
- * Returns the license part of an identifier, without any `WITH` exception.
- */
-function withoutException(identifier: string): string {
-	return identifier.split(/\s+WITH\s+/i)[0]!
+	return licenseExpressionTerms(expression, [ExpressionOperator.And, ExpressionOperator.Or])
 }
 
 /**
@@ -232,7 +173,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
 	const unrecognized: string[] = []
 
 	for (const identifier of identifiers) {
-		const known = KNOWN_OBLIGATIONS.get(withoutException(identifier))
+		const known = KNOWN_OBLIGATIONS.get(licenseWithoutException(identifier))
 
 		if (!known) {
 			unrecognized.push(identifier)
@@ -254,48 +195,6 @@ export function summarizeLicense(expression: string): LicenseSummary {
 	}
 }
 
-/**
- * Returns the branch of mailwoman's license expression that applies to this installation.
- *
- * The commercial branch applies only when the key is `valid` and the published
- * key register hasn't marked it retired or unlisted.
- * The doctor passes both the key and the register status.
- * The stamp runs offline and passes only the key.
- */
-export function appliedLicenseBranch(
-	expression: string,
-	key?: LicenseKeyVerification,
-	publication?: LicenseKeyPublication
-): string {
-	const retired = publication === "retired" || publication === "unlisted"
-
-	return chooseLicenseBranch(expression, { commercialAgreement: grantsCommercialTerms(key) && !retired })
-}
-
-/**
- * Chooses the applicable branch of an `A OR B` expression.
- *
- * The first `LicenseRef-` branch applies when there's a commercial agreement.
- * Otherwise the first open-source branch applies.
- * An expression without `OR` is returned unchanged.
- */
-export function chooseLicenseBranch(expression: string, options: { commercialAgreement: boolean }): string {
-	const branches = expression
-		.replaceAll(/[()]/g, " ")
-		.split(/\s+OR\s+/i)
-		.map((part) => part.trim())
-		.filter((part) => part.length)
-
-	if (branches.length < 2) return expression
-
-	const commercial = branches.find((branch) => branch.startsWith("LicenseRef-"))
-	const open = branches.find((branch) => !branch.startsWith("LicenseRef-"))
-
-	if (options.commercialAgreement && commercial) return commercial
-
-	return open ?? branches[0]!
-}
-
 const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
 
 /**
@@ -309,12 +208,12 @@ const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
  */
 export function assertAdmissibleLicenseExpression(expression: string, context = "license"): void {
 	for (const identifier of licenseIdentifiers(expression)) {
-		const license = withoutException(identifier)
+		const license = licenseWithoutException(identifier)
 
 		if (license === "NOASSERTION" || KNOWN_OBLIGATIONS.has(license) || LICENSE_REF.test(license)) continue
 
 		throw new Error(
-			`${context}: ${stringifyJSON(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
+			`${context}: ${JSON.stringify(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/license/lib/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
 		)
 	}
 }

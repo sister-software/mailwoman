@@ -6,12 +6,12 @@
  */
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/license/obligations"
 import { sql } from "kysely"
 
 import { parseJSONStrict, stringifyJSON } from "#json"
 import { assertTierMatchesLicense } from "#layers/publication"
 import { LayerFreshnessPolicy, LayerTier, type layerschemahandle } from "#layers/schema"
-import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
 /**
  * Join keys available in a layer.

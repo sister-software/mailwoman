@@ -7,7 +7,7 @@ import {
 	type OperationDecision,
 	OperationPermission,
 	PermissionBasis,
-} from "@mailwoman/core/license/decision"
+} from "@mailwoman/license/decision"
 import { describe, expect, it } from "vitest"
 
 import { evaluationSourceProblems, stratumQuotas } from "#tools/eval-harness/heldout/fresh/build"

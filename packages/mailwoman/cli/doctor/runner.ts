@@ -19,6 +19,7 @@ import {
 } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
+import { type ObligationRefusal, parseObligationRefusals } from "@mailwoman/license/refusals"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
@@ -48,7 +49,6 @@ import {
 } from "#cli/doctor/checks"
 import { mailwomanCommandPrefix } from "#cli/kit/invocation"
 import { LayerCatalog } from "#data/catalog"
-import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import { $public } from "#env"
 import {
 	addressPointDatabases,

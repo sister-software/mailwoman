@@ -78,6 +78,7 @@
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/dictionaries": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/osm": "workspace:*",

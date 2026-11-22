@@ -15,8 +15,9 @@
  *   prints it for each database under a data root. Both read it from this one function.
  */
 
+import { LicenseObligation, licenseIdentifiers, summarizeLicense } from "@mailwoman/license/obligations"
+
 import { manifestSourceNames } from "#layers/manifest"
-import { LicenseObligation, licenseIdentifiers, summarizeLicense } from "#license/obligations"
 import { licenseTextURL } from "#license/text-url"
 import type { SourceLocation } from "#resolver/region-database-provider"
 

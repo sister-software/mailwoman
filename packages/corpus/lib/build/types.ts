@@ -9,13 +9,13 @@
  *   each phase. These types live separately because placing them beside the orchestrator would make phases import it.
  */
 
+import type { LicensePolicy, LicenseRefusalKind } from "@mailwoman/license/policy"
 import type { PathBuilderLike } from "path-ts"
 
 import type { ParquetManifest } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
 import type { SourceRightsRecord } from "#source-register/corpus-inputs"
 import type { AdapterOptions, CorpusAdapter } from "#types"
-import type { LicensePolicy, LicenseRefusalKind } from "#utils/license"
 import type { SplitManifest } from "#utils/split"
 
 /**

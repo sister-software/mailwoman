@@ -18,7 +18,7 @@ import {
 	type LicenseDecision,
 	type RefusedLicense,
 	type UncheckedLicense,
-} from "@mailwoman/core/license/decision"
+} from "@mailwoman/license/decision"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

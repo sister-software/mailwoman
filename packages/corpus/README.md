@@ -125,8 +125,8 @@ source once. The Korean permit registry (지방행정인허가데이터) is the 
 permit identity, and its address string is what a clerk typed in two address systems with no
 validation.
 
-**A label the build reads for obligations.** `license` holds a string, and `utils/license.ts` reads it
-through `readLicenseRecord` in `@mailwoman/core/license/record`, which resolves it to an SPDX expression
+**A label the build reads for obligations.** `license` holds a string, and `@mailwoman/license/policy` reads it
+through `readLicenseRecord` in `@mailwoman/license/record`, which resolves it to an SPDX expression
 and looks up that expression's recorded obligations. `--license-policy share-alike-free` refuses a row
 whose expression includes share-alike, and separately a row whose text cites a share-alike license while
 stating no grant of its own. Until 2026-09-27 the decision was an anchored prefix match over the column.

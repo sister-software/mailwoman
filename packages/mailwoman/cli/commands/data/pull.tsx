@@ -26,6 +26,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { createConsoleLogger, type IRuntimeLogger } from "@mailwoman/core/logging"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { OBLIGATION_REFUSALS, parseObligationRefusals } from "@mailwoman/license/refusals"
 import { Box, Text } from "ink"
 import { type ReactElement, useEffect, useState } from "react"
 
@@ -46,7 +47,6 @@ import {
 import { BUNDLES, type BundleRightsSummary, summarizeBundleRights } from "#data/bundles"
 import { ArtifactOutcome, type ArtifactResult, executeInstallation } from "#data/install"
 import { readConfiguredKey } from "#data/licensed"
-import { OBLIGATION_REFUSALS, parseObligationRefusals } from "#data/obligations"
 import {
 	describePlannedArtifact,
 	describePlanSummary,

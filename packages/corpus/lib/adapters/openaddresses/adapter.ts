@@ -15,12 +15,12 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { createLicenseVerdictCache, LicensePolicy } from "#utils"
 
 /**
  * Registry id for this adapter.

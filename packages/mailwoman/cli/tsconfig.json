@@ -33,6 +33,7 @@
 		{ "path": "../../dictionaries/sdk" },
 		{ "path": "../../corpus" },
 		{ "path": "../../evidence" },
+		{ "path": "../../license" },
 		{ "path": "../../filer" },
 		{ "path": "../../filer/sdk" },
 		{ "path": "../../filer/tools" },

@@ -268,6 +268,7 @@ export default {
 				"docs/static/**/*.mjs",
 				"packages/ancestrie/**/*.ts",
 				"packages/annotations/**/*.ts",
+				"packages/license/**/*.ts",
 				"packages/un-locode-lookup/**/*.ts",
 			],
 			rules: {

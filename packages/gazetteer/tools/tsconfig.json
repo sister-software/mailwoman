@@ -19,6 +19,7 @@
 		{ "path": "../../corpus" },
 		{ "path": "../../dictionaries" },
 		{ "path": "../../evidence" },
+		{ "path": "../../license" },
 		{ "path": "../../match" },
 		{ "path": "../../neural" },
 		{ "path": "../../osm" },

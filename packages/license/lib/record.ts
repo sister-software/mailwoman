@@ -28,7 +28,7 @@
  *   because a bare string made them easy to confuse.
  */
 
-import { LicenseObligation, summarizeLicense } from "#license/obligations"
+import { LicenseObligation, summarizeLicense } from "#obligations"
 
 /**
  * Whether a license value has been mapped to an expression whose obligations are recorded.

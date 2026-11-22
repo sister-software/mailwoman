@@ -14,9 +14,7 @@ export {
 	addressSourceRegisterPath,
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
-	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
-	MODEL_RELEASE_OPERATIONS,
 	readAddressSourceRegister,
 	registerContentDigest,
 } from "#source-register/register"
@@ -28,7 +26,6 @@ export {
 	REGISTER_SECTORS,
 	ResearchPass,
 	SourceGeometry,
-	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 } from "#source-register/types"

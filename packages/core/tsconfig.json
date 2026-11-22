@@ -12,6 +12,7 @@
 		{ "path": "../annotations" },
 		{ "path": "../codex" },
 		{ "path": "../evidence" },
+		{ "path": "../license" },
 		{ "path": "../registry" }
 	],
 	"include": ["./lib/**/*"],

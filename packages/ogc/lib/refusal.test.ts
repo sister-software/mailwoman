@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { ObligationRefusal } from "mailwoman/data/obligations"
+import { ObligationRefusal } from "@mailwoman/license/refusals"
 import { describe, expect, test } from "vitest"
 
 import { itemsRefusal } from "#refusal"

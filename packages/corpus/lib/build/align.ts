@@ -13,6 +13,12 @@ import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { truncateFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import {
+	createLicenseVerdictCache,
+	type LicensePolicy,
+	type LicenseRefusalKind,
+	type LicenseVerdictCache,
+} from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
@@ -39,12 +45,6 @@ import { flushStream, once, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils/align"
-import {
-	createLicenseVerdictCache,
-	type LicensePolicy,
-	type LicenseRefusalKind,
-	type LicenseVerdictCache,
-} from "#utils/license"
 import type { SplitRetention } from "#utils/retention"
 import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
 

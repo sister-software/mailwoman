@@ -5,7 +5,7 @@
  *   Structure sources published in the Netherlands.
  */
 
-import { LicenseReviewState, type LicenseDecision } from "@mailwoman/core/license/decision"
+import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import { RESEARCH_HANDOFF_NOTE } from "#research"
 import { StructureDetail, type StructureOperation, type StructureSource } from "#types"

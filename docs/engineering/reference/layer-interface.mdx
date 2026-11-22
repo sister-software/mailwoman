@@ -469,7 +469,7 @@ A new layer must meet these interface requirements, in order:
 ## Admissible license expressions
 
 `writeLayerManifest` accepts a `license` only if each of its identifiers is one of the following: an identifier in
-the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwoman doctor` also summarizes), a
+the obligations table (`packages/license/lib/obligations.ts`, which `mailwoman doctor` also summarizes), a
 `LicenseRef-` this repository defines, or `NOASSERTION` when the publisher states no license. A manifest is sealed
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
@@ -589,7 +589,7 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
   verbatim, and lists the sources whose terms require an indemnity.
 
 A decision records each condition its terms set in its `obligations` field
-(`packages/core/lib/license/decision.ts`): `attribution`, `share_alike`, `use_restriction` (a limit on one use,
+(`packages/license/lib/decision.ts`): `attribution`, `share_alike`, `use_restriction` (a limit on one use,
 such as a mailing-list ban), `notice_pass_through` (a text, such as a disclaimer, that must travel with the data)
 and `indemnity`. Each entry quotes the publisher and says whether the terms require it or only ask for it. An
 obligation decides no operation's permission: an indemnity allocates liability and restricts no use, so a decision

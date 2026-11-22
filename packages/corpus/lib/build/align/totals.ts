@@ -13,9 +13,10 @@
  *   Maps are stored as entry arrays rather than objects, because an object lists integer-like keys first.
  */
 
+import type { LicenseRefusalKind } from "@mailwoman/license/policy"
+
 import type { AlignPhaseResult, AlignTally } from "#build/align"
 import type { ComponentFindingCounts, ComponentRule } from "#build/component-check"
-import type { LicenseRefusalKind } from "#utils/license"
 import type { SplitName } from "#utils/split"
 
 /**

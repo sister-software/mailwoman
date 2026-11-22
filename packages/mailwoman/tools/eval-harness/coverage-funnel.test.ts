@@ -6,7 +6,6 @@
  *   denominator would drop a jurisdiction that has no row there at all.
  */
 
-import { LicenseReviewState } from "@mailwoman/core/license/decision"
 import {
 	type AddressSourceRecord,
 	type AddressSourceRegister,
@@ -18,6 +17,7 @@ import {
 	SourceStatus,
 } from "@mailwoman/corpus/source-register"
 import { AssertedProposition } from "@mailwoman/evidence/status"
+import { LicenseReviewState } from "@mailwoman/license/decision"
 import { describe, expect, it } from "vitest"
 
 import type { CountryCoverage } from "#coverage"

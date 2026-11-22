@@ -24,7 +24,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { LicenseObligation, summarizeLicense } from "@mailwoman/core/license/obligations"
+import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
 import type { PathBuilder } from "path-ts"
 
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#adapters/osm/license"

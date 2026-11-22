@@ -10,7 +10,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { auditLicenseDecision, operationProblems } from "@mailwoman/core/license/decision"
+import { auditLicenseDecision, operationProblems } from "@mailwoman/license/decision"
 
 import { CH_LICENSES, CH_SOURCES } from "#ch/sources"
 import { DE_LICENSES, DE_SOURCES } from "#de/sources"

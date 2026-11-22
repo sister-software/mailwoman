@@ -25,12 +25,10 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { soldUnderCommercialTerms } from "@mailwoman/core/license/obligations"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,
-	MODEL_RELEASE_OPERATIONS,
 	provenanceRefusals,
 	readAddressSourceRegister,
 	type EffectiveTrainingManifest,
@@ -42,7 +40,7 @@ import {
 	sourceRightsGaps,
 	type SourceRightsGap,
 } from "@mailwoman/corpus/source-register/corpus-inputs"
-import { SourceOperation } from "@mailwoman/corpus/source-register/types"
+import { MODEL_RELEASE_OPERATIONS, soldUnderCommercialTerms, SourceOperation } from "@mailwoman/license/operations"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 

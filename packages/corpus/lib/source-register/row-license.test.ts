@@ -6,7 +6,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
+import type { LicenseDecision } from "@mailwoman/license/decision"
+import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -25,7 +26,6 @@ import {
 	type RowLicenses,
 } from "#source-register/row-license"
 import type { AddressSourceRegister } from "#source-register/types"
-import { createLicenseVerdictCache, LicensePolicy } from "#utils/license"
 
 const ELECTED = { licenseID: "ogl-gb", state: "elected", electedTerms: "OGL v3", spdx: "OGL-UK-3.0" } as LicenseDecision
 const UNSTATED = { licenseID: "lo-fr", state: "elected", electedTerms: "Licence Ouverte" } as LicenseDecision

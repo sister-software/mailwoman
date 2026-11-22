@@ -303,10 +303,18 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// A US source is admitted by its register decisions, as the US address layer admits it:
 		// an Overture dataset as `overture:<dataset>` and an OpenAddresses CSV as `openaddresses:<member>`.
-		const { createSourceAdmitter, readUSAddressSourceAdmission } =
-			await import("@mailwoman/corpus/us/address-records/rights")
+		const {
+			rights: { readUSAddressSourceAdmission },
+			admission: { createSourceAdmitter },
+		} = await allKeyed({
+			rights: import("@mailwoman/corpus/us/address-records/rights"),
+			admission: import("@mailwoman/license/admission"),
+		})
 
-		const admitter = createSourceAdmitter(await readUSAddressSourceAdmission(), options.excludeUnreadSources)
+		const admitter = createSourceAdmitter(
+			await readUSAddressSourceAdmission(),
+			options.excludeUnreadSources ?? EXCLUDE_UNREAD_SOURCES
+		)
 
 		const oaCSVList = OA_MODE
 			? extractDelimited(options.oaCSV)

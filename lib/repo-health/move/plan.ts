@@ -137,10 +137,9 @@ function candidateReplacements(
 
 	if (!owner) return []
 
-	if (family === SpecifierFamily.Internal) {
-		// A `#` specifier is package-private: it can only be written by a file the same package owns.
-		if (owningManifest(manifests, containingFile)?.dir !== owner.dir) return []
-
+	// A `#` specifier is package-private, so a file whose target moves to another package
+	// reaches it through that package's bare specifier instead.
+	if (family === SpecifierFamily.Internal && owningManifest(manifests, containingFile)?.dir === owner.dir) {
 		return orderByLikeness(specifier, packageSpecifiersFor(owner, target).internal)
 	}
 

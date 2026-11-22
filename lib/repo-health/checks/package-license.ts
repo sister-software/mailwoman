@@ -22,8 +22,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/license/obligations"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"

@@ -120,6 +120,7 @@
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/license-worker": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",

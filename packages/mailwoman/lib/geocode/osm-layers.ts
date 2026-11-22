@@ -16,13 +16,14 @@ import {
 	probeLayerManifest,
 	ServingRole,
 } from "@mailwoman/core/layers"
+import { parseObligationRefusals } from "@mailwoman/license/refusals"
 import type { OSMRegionDatabaseProvider } from "@mailwoman/osm/region-database-provider"
 import type { LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
-import { assertLayerObligationsAccepted, parseObligationRefusals } from "#data/obligations"
+import { assertLayerObligationsAccepted } from "#data/obligations"
 import { $public } from "#env"
 
 /**

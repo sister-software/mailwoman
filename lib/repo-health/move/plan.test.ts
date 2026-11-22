@@ -71,18 +71,38 @@ const FILES: Record<string, string> = {
 	].join("\n"),
 }
 
-async function fixture() {
+/**
+ * A second workspace, for a move whose target leaves the first.
+ */
+const SHAPES = "packages/shapes"
+
+const SHAPES_FILES: Record<string, string> = {
+	[`${SHAPES}/package.json`]: stringifyJSON({
+		name: "@fixture/shapes",
+		type: "module",
+		imports: { "#*": { types: "./out/*.d.ts", node: "./lib/*.ts", default: "./out/*.js" } },
+		exports: { "./*": { types: "./out/*.d.ts", node: "./lib/*.ts", default: "./out/*.js" } },
+	}),
+}
+
+async function fixture(extra: Record<string, string> = {}) {
 	const directory = await temporaryDirectory("move-plan-")
 	// The temp root itself can be a symlink.
 	// TypeScript resolves modules to their real paths.
 	// The context must use the real root so resolved modules match tracked file paths.
 	const repoRoot = await realPath(directory.path)
+	const files = { ...FILES, ...extra }
 
-	for (const [file, content] of Object.entries(FILES)) {
+	for (const [file, content] of Object.entries(files)) {
 		await writeLocalTextFile(content, resolvePath(repoRoot, file))
 	}
 
 	await createSymbolicLink(resolvePath(repoRoot, PACKAGE), resolvePath(repoRoot, "node_modules/@fixture/recipes"))
+
+	if (Object.hasOwn(extra, `${SHAPES}/package.json`)) {
+		await createSymbolicLink(resolvePath(repoRoot, SHAPES), resolvePath(repoRoot, "node_modules/@fixture/shapes"))
+	}
+
 	await git(["init", "--quiet"], repoRoot)
 	await git(["add", "-A", "--", "packages", "package.json"], repoRoot)
 
@@ -93,7 +113,7 @@ async function fixture() {
 		repoRoot
 	)
 
-	const context: RepoContext = { repoRoot, trackedFiles: Object.keys(FILES) }
+	const context: RepoContext = { repoRoot, trackedFiles: Object.keys(files) }
 
 	return directory.moveWith({ context })
 }
@@ -142,6 +162,20 @@ describe("planModuleMoves", () => {
 
 		expect(plan.scanned.tracked).toBe(6)
 		expect(plan.scanned.read).toBe(5)
+	})
+
+	test("rewrites a # specifier whose target moves to another package to that package's bare specifier", async () => {
+		await using fixtureDirectory = await fixture(SHAPES_FILES)
+
+		const plan = await planModuleMoves(fixtureDirectory.context, [
+			{ from: `${PACKAGE}/lib/scaffold.ts`, to: `${SHAPES}/lib/scaffold.ts` },
+		])
+
+		expect(plan.unresolved).toEqual([])
+
+		expect(plan.rewrites.map((rewrite) => `${rewrite.file}: ${rewrite.specifier} -> ${rewrite.replacement}`)).toContain(
+			`${PACKAGE}/lib/recipes/fr-fragment.ts: #scaffold -> @fixture/shapes/scaffold`
+		)
 	})
 })
 

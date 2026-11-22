@@ -9,7 +9,8 @@
  *   refers to is recorded beside it here, and an identifier without one has no URL.
  */
 
-import { summarizeLicense } from "#license/obligations"
+import { summarizeLicense } from "@mailwoman/license/obligations"
+
 import { licensePageURL } from "#license/stamp"
 
 /**

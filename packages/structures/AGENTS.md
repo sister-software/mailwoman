@@ -10,7 +10,7 @@ spans countries, such as OpenStreetMap or Overture, lives in `lib/international/
 records its ISO 3166-2 code as `region`, and a city dataset also records `municipality`. `lib/register.ts` assembles
 the modules, and `auditStructureRegister` checks ids, regions and every decision.
 
-License decisions use the shape in `@mailwoman/core/license/decision`, which the corpus address-source register
+License decisions use the shape in `@mailwoman/license/decision`, which the corpus address-source register
 also uses. The operations are `StructureOperation`: `fetch`, `convert`, `adapt`, `redistribute` and
 `commercial-sublicense`. A published layer needs all five, because every viewer's browser downloads the adapted
 geometry.
