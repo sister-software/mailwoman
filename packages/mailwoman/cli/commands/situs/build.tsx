@@ -34,6 +34,9 @@
  *   `address_point` table and the `idx_ap_streetkey` index present.
  *   A half-built database (data inserted, indexing/vacuum not reached — e.g. a killed run)
  *   is detected as incomplete and rebuilt.
+ *
+ *   A complete database that isn't sealed is sealed in place of a rebuild, so every database
+ *   the driver leaves behind is a read-only artifact, as each child's own build leaves it.
  *   `--force` rebuilds regardless.
  */
 
@@ -48,6 +51,7 @@ import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rig
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
+import { isSealed, sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -210,7 +214,16 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const buildOneState = async (stateCode: string): Promise<StateResult> => {
 			const dbPath = outDir(`address-points-us-${stateCode.toLowerCase()}.db`)
 
-			if (!options.force && (await isComplete(dbPath))) return { state: stateCode, skipped: true }
+			if (!options.force && (await isComplete(dbPath))) {
+				// A database a build before sealing wrote is complete but still writable, so the skip seals it.
+				if (!(await isSealed(dbPath))) {
+					await sealDatabase(dbPath)
+
+					console.error(`[seal] ${stateCode} — sealed the complete database ${dbPath}`)
+				}
+
+				return { state: stateCode, skipped: true }
+			}
 
 			return new Promise((resolve) => {
 				const argv = [

@@ -561,6 +561,73 @@ export async function describeMixedAddressLayer(options: {
 }
 
 /**
+ * The terms a database built from a country's address sources records in its `layer_manifest`,
+ * each source joined to the register as {@linkcode describeMixedAddressLayer} joins it.
+ */
+export interface AddressSourcesManifestTerms {
+	/**
+	 * The one expression every source's register row elects, an `AND` of the expressions
+	 * when they differ, or the country's mixed identifier when any source's row elects none.
+	 */
+	license: string
+	/**
+	 * Each source's publisher, as the register spells it, beside its source id, in source-id order.
+	 */
+	attribution: string
+	sources: MixedLayerSource[]
+}
+
+/**
+ * The license and attribution for a database whose rows come from `sourceRecords`,
+ * read per source from the register rows the country's source table maps each one to.
+ *
+ * A source the register doesn't cover is kept and credited as unregistered,
+ * and its missing expression leaves the license at the mixed identifier.
+ *
+ * @param sourceRecords The record count of each wire source id, such as `openaddresses:us/hi/honolulu`.
+ * @param terms The register join, read once when absent.
+ * @throws When no mixed address layer is listed for `country`, or when `sourceRecords` is empty.
+ */
+export async function addressSourcesManifestTerms(options: {
+	country: string
+	sourceRecords: Readonly<Record<string, number>>
+	terms?: USAddressSourceTermsReader
+}): Promise<AddressSourcesManifestTerms> {
+	const entry = Object.entries(MIXED_ADDRESS_LAYERS).find(([, layer]) => layer.country === options.country)
+
+	if (!entry) throw new Error(`no mixed address layer is listed for ${stringifyJSON(options.country)}`)
+
+	const [mixedLicense, layer] = entry
+	const ids = Object.keys(options.sourceRecords).toSorted((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+
+	if (!ids.length) throw new Error("a manifest names at least one source, and sourceRecords holds none")
+
+	const terms = options.terms ?? (await layer.readTerms())
+
+	const sources = ids.map((source) =>
+		describeSource(
+			source,
+			{ records: options.sourceRecords[source]!, regions: new Set(), recordedLicense: null, recorded: null },
+			terms
+		)
+	)
+
+	const expressions = [...new Set(sources.map((source) => source.spdx))]
+
+	const license = expressions.some((expression) => expression == null)
+		? mixedLicense
+		: expressions.length === 1
+			? expressions[0]!
+			: expressions.map((expression) => `(${expression})`).join(" AND ")
+
+	const attribution = sources
+		.map((source) => `${source.publisher ?? "unregistered publisher"} (${source.source})`)
+		.join("; ")
+
+	return { license, attribution, sources }
+}
+
+/**
  * The count of sources and of records in each obligation class, every class present, most demanding first.
  */
 export function tallyObligationClasses(

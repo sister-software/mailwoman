@@ -18,6 +18,7 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { isSealed } from "@mailwoman/sqlite/sealed/db"
 import { relative, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -265,7 +266,34 @@ async function assertNotPrecompressed(file: string, relativePath: string): Promi
 }
 
 /**
+ * The directory the street tier's per-state databases are published under, such as `street/us/hi/situs.db`.
+ */
+const STREET_TIER_DIRECTORY = "street"
+
+/**
+ * Refuses a street-tier database that isn't sealed.
+ *
+ * A database is a read-only published artifact, and `sealDatabase` leaves it in
+ * rollback-journal mode with no write bits.
+ * An unsealed file may still hold writes in a `-wal` sidecar the upload leaves behind,
+ * so the bucket would serve a database missing them.
+ */
+async function assertStreetDatabaseSealed(file: string, relativePath: string): Promise<void> {
+	if (await isSealed(file)) return
+
+	throw new CommandError(
+		`refusing to publish ${relativePath}: the staged database is not sealed.\n` +
+			"  A street-tier database is a read-only artifact. Its builder seals it with sealDatabase\n" +
+			"  (@mailwoman/sqlite/sealed/db), which checkpoints the WAL, switches to a rollback journal and\n" +
+			"  removes the write bits. Rebuild it, or seal the built file before staging it."
+	)
+}
+
+/**
  * Lists and validates every object before any credentials are read or bytes are uploaded.
+ *
+ * @throws When a street-tier database is unsealed, a versioned directory holds an un-versioned object,
+ * a pair-index generation lacks its manifest, or a whole-fetch file is already gzip data.
  */
 export async function planPublicBucketUploads(
 	src: PathBuilderLike,
@@ -295,6 +323,10 @@ export async function planPublicBucketUploads(
 						"Overwriting a flat key leaves the CDN serving the old bytes for a week.\n" +
 						"Bump PAIR_INDEX_VERSION in packages/mailwoman/lib/browser-runtime/resources.ts to match."
 				)
+			}
+
+			if (directory === STREET_TIER_DIRECTORY && extension(relativePath) === ".db") {
+				await assertStreetDatabaseSealed(file, relativePath)
 			}
 
 			const metadata = metadataFor(relativePath)

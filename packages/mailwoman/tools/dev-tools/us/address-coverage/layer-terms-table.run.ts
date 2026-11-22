@@ -12,6 +12,8 @@
  *   and what its terms page held, with each group's obligation class.
  *   It replaces the text between the `layer-terms-table:begin` and `layer-terms-table:end` comments.
  *
+ *   The page is run through oxfmt, the repository formatter, before it is compared or written,
+ *   so a write needs no separate format pass and `--check` passes on a formatted page.
  *   `--check` exits 1 when the committed table differs from the generated one,
  *   and leaves the file unchanged.
  */
@@ -19,7 +21,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
+import { resolvePackageCommand } from "@mailwoman/core/module/package-command"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { runFileSync } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { describeMixedAddressLayer, localLayerFileReader, type MixedLayerSource } from "#data/mixed-layer"
@@ -92,7 +97,13 @@ const end = text.indexOf(END)
 
 if (start === -1 || end < start) throw new Error(`${DOC.toString()} holds no ${BEGIN} … ${END} block`)
 
-const next = `${text.slice(0, start + BEGIN.length)}\n\n${table}\n\n${text.slice(end)}`
+// The committed page is the formatter's output, so the generated page is formatted before it's compared or written.
+const oxfmt = await resolvePackageCommand(pathToFileURL(repoRootPath("package.json")).href, "oxfmt", "oxfmt")
+
+const next = runFileSync(oxfmt.file, [...oxfmt.argv, `--stdin-filepath=${DOC.toString()}`], {
+	cwd: repoRootPath(),
+	input: `${text.slice(0, start + BEGIN.length)}\n\n${table}\n\n${text.slice(end)}`,
+})
 
 if (values.check) {
 	if (next !== text) {

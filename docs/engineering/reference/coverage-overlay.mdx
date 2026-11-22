@@ -100,6 +100,8 @@ The 48 are every state except Hawaii and New Hampshire, so they include Alaska. 
 
 To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `mailwoman situs address-points --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 
+An `--oa-csv` build joins each run to its register rows, as the US address layer does. Its `layer_manifest` credits each run's publisher, counts each run's rows in `source_records`, and records `LicenseRef-US-Mixed` unless every run's row elects one SPDX expression. Every `situs address-points` build seals its output, and the public-bucket publish refuses a `street/` database that isn't sealed.
+
 ## Build options (`coverage build`)
 
 | Flag                         | Default                  | Effect                                                                                          |
