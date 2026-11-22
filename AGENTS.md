@@ -215,8 +215,8 @@ the output to a log outside the checkout, and prints the counts, failing tests a
 `--max-wait-minutes`. `mwops host status` names what holds the host, and `mwops check preflight` runs
 the direct-push set below. `yarn health` runs the whole check registry through `health:checks`, which calls `mwops health all`, beside the
 dependency, manifest and duplication checks. A check runs once `lib/repo-health/registry.ts`
-registers it. `health:checks` leaves out the checks its `--except` list holds, and each of those
-waits on a decision recorded in its issue. The tests under `lib/repo-health`, which `mwops check
+registers it. `mwops health all --except <id,id>` leaves a check out while a decision recorded in its
+issue is open, and `health:checks` passes zero ids today. The tests under `lib/repo-health`, which `mwops check
 health-tree` runs, cover each check's own logic.
 
 ## Functions, classes and construction
