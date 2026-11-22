@@ -4,7 +4,7 @@
 import { gzip } from "@mailwoman/core/fs/compression"
 import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeStreetForKeyLocale, parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { CSVSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
@@ -20,6 +20,8 @@ import {
 import { useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("address-records-openaddresses")
+const US = parseStreetLocale("us")
+const DE = parseStreetLocale("de")
 
 /**
  * Ten rows in an OpenAddresses run's own column order, with three the adapter refuses:
@@ -66,8 +68,8 @@ describe("OpenAddresses address records", () => {
 
 		await writeLocalBuffer(await gzip(features.map((feature) => stringifyJSON(feature)).join("\n")), geojson)
 
-		const fromCSV = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", "us"))
-		const fromGeoJSON = await Array.fromAsync(readOpenAddressesGeoJSONRunRecords(geojson, "us/wi/statewide", "us"))
+		const fromCSV = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", US))
+		const fromGeoJSON = await Array.fromAsync(readOpenAddressesGeoJSONRunRecords(geojson, "us/wi/statewide", US))
 
 		expect(geojson.toString()).toMatch(/us__wi__statewide\.source\.geojson\.gz$/)
 		expect(fromGeoJSON).toHaveLength(7)
@@ -79,7 +81,7 @@ describe("OpenAddresses address records", () => {
 
 		await writeLocalTextFile(RUN_CSV, csv)
 
-		const records = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", "us"))
+		const records = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", US))
 
 		expect(records).toHaveLength(7)
 		expect(new Set(records.map((record) => record.source))).toEqual(new Set(["openaddresses:us/wi/statewide"]))
@@ -104,7 +106,7 @@ describe("OpenAddresses address records", () => {
 				hash: "c1b2c3d4e5f60718",
 			},
 			"us/wi/statewide",
-			"us"
+			US
 		)
 
 		expect(record?.postcode).toBeNull()
@@ -122,11 +124,11 @@ describe("OpenAddresses address records", () => {
 		const record = openAddressesAddressRecord(
 			{ lon: "13.4050", lat: "52.5200", number: "1", street: "Unter den Linden", city: "Berlin" },
 			"de/berlin",
-			"de"
+			DE
 		)
 
 		expect(record?.names.map((name) => name.form)).toEqual(["written"])
-		expect(record?.streetKey).toBe(normalizeStreetForKeyLocale("Unter den Linden", "de"))
+		expect(record?.streetKey).toBe(normalizeStreetForKeyLocale("Unter den Linden", DE))
 		expect(record?.sourceRecordID).toMatch(/^digest:[0-9a-f]{12}$/u)
 	})
 
@@ -135,29 +137,29 @@ describe("OpenAddresses address records", () => {
 		const base = { lon: "-121.28801", lat: "38.74546", number: "100", postcode: "95678" }
 
 		// Placer County's run writes `VERNON ST APT 114` with an empty UNIT column.
-		const split = openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", "us", units)
+		const split = openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", US, units)
 
 		expect(split?.streetRaw).toBe("VERNON ST")
 		expect(split?.unit).toBe("APT 114")
-		expect(split?.streetKey).toBe(normalizeStreetForKeyLocale("VERNON ST", "us"))
+		expect(split?.streetKey).toBe(normalizeStreetForKeyLocale("VERNON ST", US))
 
 		// A stated unit is kept, and its street is left as written.
 		const stated = openAddressesAddressRecord(
 			{ ...base, street: "VERNON ST APT 114", unit: "114" },
 			"us/ca/placer",
-			"us",
+			US,
 			units
 		)
 
 		expect(stated?.streetRaw).toBe("VERNON ST APT 114")
 		expect(stated?.unit).toBe("114")
 		// Without a splitter the street is kept as written.
-		expect(openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", "us")?.unit).toBeNull()
+		expect(openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", US)?.unit).toBeNull()
 	})
 
 	it("removes a trailing city, state and ZIP only when each repeats the row's own fields", () => {
 		const base = { lon: "-103.2077", lat: "40.6255", number: "514", city: "STERLING", hash: "a1" }
-		const street = (row: Record<string, string>) => openAddressesAddressRecord({ ...base, ...row }, "us/co/logan", "us")
+		const street = (row: Record<string, string>) => openAddressesAddressRecord({ ...base, ...row }, "us/co/logan", US)
 
 		// The state may come from REGION or from the run's subdivision, and the ZIP may be the ZIP+4 form.
 		expect(street({ street: "CHURCH ST STERLING, CO 80751", postcode: "80751" })?.streetRaw).toBe("CHURCH ST")
@@ -186,10 +188,10 @@ describe("OpenAddresses address records", () => {
 			openAddressesAddressRecord(
 				{ ...base, hash: "", street: "CHURCH ST STERLING, CO 80751", postcode: "80751" },
 				"us/co/logan",
-				"us"
+				US
 			)?.sourceRecordID
 		).not.toBe(
-			openAddressesAddressRecord({ ...base, hash: "", street: "CHURCH ST", postcode: "80751" }, "us/co/logan", "us")
+			openAddressesAddressRecord({ ...base, hash: "", street: "CHURCH ST", postcode: "80751" }, "us/co/logan", US)
 				?.sourceRecordID
 		)
 	})

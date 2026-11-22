@@ -14,6 +14,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	streetLocaleForCountry,
 } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
@@ -96,7 +97,7 @@ export function openAddressesRow(
 
 	if (!lat || !lon || !number || !street) return null
 
-	const streetNorm = normalizeStreetForKeyLocale(street, "en")
+	const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForCountry("US"))
 
 	if (!streetNorm) return null
 

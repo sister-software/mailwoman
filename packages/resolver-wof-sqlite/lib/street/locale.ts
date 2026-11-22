@@ -7,13 +7,24 @@
 
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 
-import type { StreetLocale } from "#street/normalize"
+import { parseStreetLocale, type StreetLocale } from "#street/normalize"
+
+/**
+ * A table from a language or country code to the street locale each row spells.
+ *
+ * A row that spells no street locale stops the module from loading.
+ */
+function streetLocaleTable(
+	rows: ReadonlyArray<readonly [code: string, spelling: string]>
+): ReadonlyMap<string, StreetLocale> {
+	return new Map(rows.map(([code, spelling]) => [code, parseStreetLocale(spelling)]))
+}
 
 /**
  * The locale whose rules fold streets written in each language, keyed by the two-letter
  * ISO 639-1 code `OFFICIAL_LANGUAGES` lists first among a language's spellings.
  */
-const STREET_LOCALE_BY_LANGUAGE: ReadonlyMap<string, StreetLocale> = new Map([
+const STREET_LOCALE_BY_LANGUAGE = streetLocaleTable([
 	["en", "en"],
 	["es", "es"],
 	["fr", "fr"],
@@ -25,6 +36,11 @@ const STREET_LOCALE_BY_LANGUAGE: ReadonlyMap<string, StreetLocale> = new Map([
 	["id", "id"],
 	["zh", "zh"],
 ])
+
+/**
+ * The locale of a country whose official languages select no one row of rules.
+ */
+const UNDETERMINED_STREET_LOCALE = parseStreetLocale("und")
 
 /**
  * Countries whose built address databases fold under a locale their official languages don't select.
@@ -39,7 +55,7 @@ const STREET_LOCALE_BY_LANGUAGE: ReadonlyMap<string, StreetLocale> = new Map([
  * Their builders key every street under the English fold, so the reader leaves a
  * street such as `Promenade Blvd` to that fold too.
  */
-const STREET_LOCALE_EXCEPTIONS: ReadonlyMap<string, StreetLocale> = new Map([
+const STREET_LOCALE_EXCEPTIONS = streetLocaleTable([
 	["CA", "en"],
 	["US", "us"],
 ])
@@ -72,5 +88,30 @@ export function streetLocaleForCountry(countryCode: string): StreetLocale {
 		}
 	}
 
-	return locales.size === 1 ? [...locales][0]! : "und"
+	return locales.size === 1 ? [...locales][0]! : UNDETERMINED_STREET_LOCALE
+}
+
+/**
+ * Creates the street-locale lookup for one source's built databases.
+ *
+ * `localeFor` answers {@link streetLocaleForCountry} for a country in `countries`
+ * and throws for any other, since that source has built no database there to key a query for.
+ * Every source therefore keys a country's streets under one locale.
+ */
+export function createStreetLocaleRegistry(
+	countries: readonly string[],
+	label: string
+): { localeFor: (countryCode: string) => StreetLocale; supported: () => string[] } {
+	const built = new Set(countries.map((country) => country.toLowerCase()))
+
+	return {
+		localeFor: (countryCode) => {
+			if (!built.has(countryCode.toLowerCase())) {
+				throw new Error(`No database is registered for country "${countryCode}". ${label}`)
+			}
+
+			return streetLocaleForCountry(countryCode)
+		},
+		supported: () => [...built],
+	}
 }

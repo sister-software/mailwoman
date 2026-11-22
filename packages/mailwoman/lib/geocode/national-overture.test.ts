@@ -83,17 +83,17 @@ describe("OvertureNationalDatabaseProvider", () => {
 
 			await createAddressPointTable(kdb)
 
-			const street = normalizeStreetForKeyLocale("重慶南路一段", "zh")
+			const street = normalizeStreetForKeyLocale("重慶南路一段", streetLocaleForOvertureCountry("tw"))
 
 			kdb
 				.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 				.run(
 					street,
 					street,
-					normalizeHouseNumberForKey("１２２號", "zh"),
+					normalizeHouseNumberForKey("１２２號", streetLocaleForOvertureCountry("tw")),
 					null,
 					null,
-					normalizeLocalityForKeyLocale("臺北市中正區", "zh"),
+					normalizeLocalityForKeyLocale("臺北市中正區", streetLocaleForOvertureCountry("tw")),
 					"重慶南路一段",
 					25.0399658,
 					121.5124584,

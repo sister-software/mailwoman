@@ -48,6 +48,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	streetLocaleForCountry,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -56,6 +57,11 @@ import { latLngToCell } from "@sister.software/h3"
 import { PathBuilder } from "path-ts"
 import { TextSpliterator, titleCase } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
+
+/**
+ * The street locale G-NAF's keys are built under, the one Australia's reader probes under.
+ */
+const GNAF_STREET_LOCALE = streetLocaleForCountry("AU")
 
 /**
  * G-NAF `STREET_SUFFIX_CODE` → display word.
@@ -296,7 +302,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 					continue
 				}
 
-				const streetNorm = normalizeStreetForKeyLocale(streetRaw, "en")
+				const streetNorm = normalizeStreetForKeyLocale(streetRaw, GNAF_STREET_LOCALE)
 
 				if (!streetNorm) {
 					counts.noStreet++

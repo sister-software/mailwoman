@@ -16,6 +16,7 @@ import {
 	type StreetCentroidDatabase,
 	createStreetCentroidTable,
 	normalizeLocalityForKey,
+	streetLocaleForCountry,
 	stripArrondissement,
 } from "#street"
 
@@ -138,7 +139,7 @@ describe("StreetCentroidSqliteLookup", () => {
 			},
 		])
 
-		lookup = new StreetCentroidSqliteLookup(fixture.extractPath, { streetLocale: "fr" })
+		lookup = new StreetCentroidSqliteLookup(fixture.extractPath, { streetLocale: streetLocaleForCountry("FR") })
 	})
 
 	afterAll(() => {

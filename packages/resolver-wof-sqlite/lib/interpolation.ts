@@ -14,8 +14,16 @@ import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
+import { streetLocaleForCountry } from "#street/locale"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 import type { StreetSegmentDatabase } from "#street/segment-schema"
+
+// country-branch: the segment databases are built from TIGER, the United States' street network.
+// A street locale passed by the provider that opens a database would replace the constant.
+/**
+ * The street locale the segment databases' keys are built under.
+ */
+const SEGMENT_STREET_LOCALE = streetLocaleForCountry("US")
 
 /**
  * How an interpolated answer was computed, `address_point` for bracketed neighbor points
@@ -208,7 +216,7 @@ export class StreetInterpolator<
 		const n = Number(numberRaw)
 
 		// A variant advances the ladder when it produces no answer rather than merely no rows.
-		for (const variant of streetKeyVariants(query.street)) {
+		for (const variant of streetKeyVariants(query.street, SEGMENT_STREET_LOCALE)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
 			// A ZIP that scopes to no candidate is a miss rather than a statewide guess.

@@ -17,6 +17,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
 	normalizeStreetForKeyLocale,
+	streetKeyRulesOf,
 	type StreetLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
@@ -58,16 +59,11 @@ export class HTTPVFSAddressPointLookup {
 
 	/**
 	 * `streetLocale` must match the extract's build locale (the node class's interface).
-	 *
-	 * @defaultValue `"us"`
 	 */
-	constructor(database: RangeDatabase, opts: { streetLocale?: StreetLocale } = {}) {
+	constructor(database: RangeDatabase, opts: { streetLocale: StreetLocale }) {
 		this.#database = database
 		this.#hasTable = memoizeResettable(() => tableExists(database, "address_point"))
-		// country-branch: the default matches the node class.
-		// That class's first extracts were the US state databases.
-		// The street locale recorded in the extract's manifest would replace the default.
-		this.#locale = opts.streetLocale ?? "us"
+		this.#locale = opts.streetLocale
 	}
 
 	async find(query: {
@@ -93,15 +89,12 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (!rows.length && query.locality) {
-			// FR extracts fold arrondissement communes to the base city on both sides
-			// (the node class and BAN builder discipline), so mirror it here to keep the
-			// twins in lockstep. country-branch: the BAN builder keys an arrondissement
-			// at its base city, a rule of the French register.
-			// A locality-key rule recorded in the extract's manifest would replace the branch.
-			const localityKey =
-				this.#locale === "fr"
-					? stripArrondissement(normalizeLocalityForKey(query.locality))
-					: normalizeLocalityForKey(query.locality)
+			// The node class reads the same rule, so the two readers key an arrondissement commune alike.
+			const written = normalizeLocalityForKey(query.locality)
+
+			const localityKey = streetKeyRulesOf(this.#locale).arrondissementAtBaseCity
+				? stripArrondissement(written)
+				: written
 
 			rows = await this.#database.query<StreetPointHit>(ADDRESS_POINT_BY_LOCALITY, [localityKey, streetNorm, number])
 		}

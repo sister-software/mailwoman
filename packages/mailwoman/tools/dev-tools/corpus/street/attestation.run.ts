@@ -41,7 +41,11 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { gbOSOpenCanonicalRowsPath } from "@mailwoman/corpus/gb/adapters/os-open/adapter"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import {
+	normalizeStreetForKeyLocale,
+	parseStreetLocale,
+	type StreetLocale,
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { Globerator } from "spliterator/node/fs"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
@@ -74,17 +78,21 @@ const wanted = new Set(
  * A country absent here is reported as unmeasured.
  * A fold under another language's rules would return a count of a key the register writes for no row.
  */
-const MEASUREMENT_STREET_LOCALE = new Map<string, StreetLocale>([
-	["gb", "en"],
-	["us", "en"],
-	["es", "es"],
-	["mx", "es"],
-	["fr", "fr"],
-	["de", "de"],
-	["it", "it"],
-	["nl", "nl"],
-	["pl", "pl"],
-])
+const MEASUREMENT_STREET_LOCALE = new Map<string, StreetLocale>(
+	(
+		[
+			["gb", "en"],
+			["us", "en"],
+			["es", "es"],
+			["mx", "es"],
+			["fr", "fr"],
+			["de", "de"],
+			["it", "it"],
+			["nl", "nl"],
+			["pl", "pl"],
+		] as const
+	).map(([country, spelling]) => [country, parseStreetLocale(spelling)])
+)
 
 const cases = await loadRegressionCases()
 const rows = cases.filter((seed) => wanted.has(seed.id))

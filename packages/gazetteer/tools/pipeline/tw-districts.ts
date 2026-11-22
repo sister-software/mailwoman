@@ -64,7 +64,7 @@ import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-range
 import { getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKeyLocale, streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { licenseForOvertureCountry } from "mailwoman/geocode/national-overture"
@@ -148,7 +148,8 @@ export interface TaiwanRegionName {
  * A 縣市 the admin artifact doesn't know — and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | null {
-	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
+	const locale = streetLocaleForCountry("TW")
+	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, locale)
 	const wanted = fold(regionName)
 
 	const unique = (candidates: readonly TaiwanRegionName[]): number | null => {

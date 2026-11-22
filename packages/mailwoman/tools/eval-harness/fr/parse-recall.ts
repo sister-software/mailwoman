@@ -17,7 +17,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import type { SpineAddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -158,7 +158,7 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 
 	parts.sort((a, b) => a.start - b.start)
 
-	return normalizeStreetForKeyLocale(parts.map((p) => p.value).join(" "), "fr")
+	return normalizeStreetForKeyLocale(parts.map((p) => p.value).join(" "), streetLocaleForCountry("FR"))
 }
 
 /**
@@ -243,7 +243,7 @@ export async function frParseRecall(
 	const fails: string[] = []
 
 	for (const r of rows) {
-		const want = normalizeStreetForKeyLocale(r.street_raw, "fr")
+		const want = normalizeStreetForKeyLocale(r.street_raw, streetLocaleForCountry("FR"))
 		const bareQ = `${r.number} ${r.street_raw}, ${r.locality_norm}`
 		const anchQ = `${r.number} ${r.street_raw}, ${r.postcode} ${r.locality_norm}`
 		const bare = streetKeyOf(await classifier.parse(bareQ, { postcodeRepair: true, caseNormalization: "title-case" }))

@@ -80,7 +80,8 @@ export async function openStreetLookups(slug: string, sqliteRuntimeBaseURL: stri
 	}
 
 	return {
-		situs: new HTTPVFSAddressPointLookup(situs.value),
+		// A slug outside the national set is a United States state's.
+		situs: new HTTPVFSAddressPointLookup(situs.value, { streetLocale: streetLocaleForCountry("US") }),
 		interp: new HTTPVFSInterpolator(interp.value),
 		close: () => {
 			situs.value.close?.()

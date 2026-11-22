@@ -58,6 +58,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
@@ -236,7 +237,8 @@ async function buildCascade(paths: {
 	return {
 		neural,
 		resolver: createWOFResolver(backend),
-		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDB),
+		// The calibration reads a United States state's address points.
+		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDB, { streetLocale: streetLocaleForCountry("US") }),
 		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDB }),
 	}
 }

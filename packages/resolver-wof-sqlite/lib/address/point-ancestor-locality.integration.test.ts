@@ -17,6 +17,7 @@ import { describe, expect, test } from "vitest"
 import { AddressPointSqliteLookup } from "#address"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
 import { addressPointDatabasePath, wofDatabasePath } from "#paths"
+import { streetLocaleForCountry } from "#street/locale"
 
 const candidatePath = wofDatabasePath("candidate.db")
 const registerPath = addressPointDatabasePath("address-points-us-ny.db")
@@ -54,7 +55,7 @@ describe.skipIf(!hasStack)("an address keyed to an ancestor of the parsed locali
 		["716", "Ocean", "Ave", "Brooklyn"],
 	])("%s %s %s, %s reaches its address point inside the parsed place", async (number, street, suffix, locality) => {
 		using backend = new WOFCandidateTableLookup({ databasePath: candidatePath })
-		using register = new AddressPointSqliteLookup(registerPath)
+		using register = new AddressPointSqliteLookup(registerPath, { streetLocale: streetLocaleForCountry("US") })
 
 		const resolved = await createWOFResolver(backend).resolveTree(nycTree(number, street, suffix, locality), {
 			addressPoints: register,

@@ -1,10 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { describe, expect, it } from "vitest"
 
 import { createUnitSplitter } from "#adapters/street/unit"
 import { overtureAddressRecord, type OvertureAddressRow } from "#address-records/overture"
+
+const EN = parseStreetLocale("en")
 
 /**
  * The May 2026 release's row for 1927 Blessings Ave, Lorida, from Highlands County's OpenAddresses run.
@@ -25,7 +28,7 @@ const LORIDA: OvertureAddressRow = {
 
 describe("overtureAddressRecord", () => {
 	it("keeps the source id today's builder writes, and reads the state as the subdivision", () => {
-		expect(overtureAddressRecord(LORIDA, "en")).toMatchObject({
+		expect(overtureAddressRecord(LORIDA, EN)).toMatchObject({
 			source: "overture:OpenAddresses/FL/Highlands County",
 			sourceRecordID: "a3c9e144-facf-40f3-a174-84fe9d81df5e",
 			country: "US",
@@ -38,7 +41,7 @@ describe("overtureAddressRecord", () => {
 	it("states the region, the locality with its bare form, and the postal city", () => {
 		const record = overtureAddressRecord(
 			{ ...LORIDA, address_levels: [{ value: "WI" }, { value: "Town of Madison" }], postal_city: "Madison" },
-			"en"
+			EN
 		)
 
 		expect(record?.names.map(({ level, form, value }) => `${level}:${form}:${value}`)).toEqual([
@@ -56,7 +59,7 @@ describe("overtureAddressRecord", () => {
 				address_levels: [{ value: "Lombardia" }, { value: "Milano" }],
 				sources: [{ dataset: "Comune di Milano", record_id: null }],
 			},
-			"it"
+			parseStreetLocale("it")
 		)
 
 		expect(record).toMatchObject({ subdivision: null, sourceRecordID: LORIDA.id, source: "overture:Comune di Milano" })
@@ -66,15 +69,15 @@ describe("overtureAddressRecord", () => {
 		const units = await createUnitSplitter()
 
 		// Contra Costa County's dataset writes `COOGINS DR #106` with no unit.
-		const record = overtureAddressRecord({ ...LORIDA, street: "COOGINS DR #106", unit: null }, "en", units)
+		const record = overtureAddressRecord({ ...LORIDA, street: "COOGINS DR #106", unit: null }, EN, units)
 
 		expect(record?.streetRaw).toBe("COOGINS DR")
 		expect(record?.unit).toBe("#106")
 	})
 
 	it("refuses a row without a number, a source or a position", () => {
-		expect(overtureAddressRecord({ ...LORIDA, number: " " }, "en")).toBeNull()
-		expect(overtureAddressRecord({ ...LORIDA, sources: [] }, "en")).toBeNull()
-		expect(overtureAddressRecord({ ...LORIDA, lat: null }, "en")).toBeNull()
+		expect(overtureAddressRecord({ ...LORIDA, number: " " }, EN)).toBeNull()
+		expect(overtureAddressRecord({ ...LORIDA, sources: [] }, EN)).toBeNull()
+		expect(overtureAddressRecord({ ...LORIDA, lat: null }, EN)).toBeNull()
 	})
 })

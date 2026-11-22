@@ -41,7 +41,15 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { AddressPointDatabase } from "#address/point/schema"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#interpolation"
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
+import { streetLocaleForCountry } from "#street/locale"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
+
+// country-branch: this reader is opened over the United States' state extracts only.
+// A street locale passed by the provider that opens an extract would replace the constant.
+/**
+ * The street locale the extracts this reader interpolates over are keyed under.
+ */
+const EXTRACT_STREET_LOCALE = streetLocaleForCountry("US")
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond
  * the nearest known point (`t = 2`).
@@ -125,7 +133,7 @@ export class AddressPointInterpolator<
 		// Key-variant ladder (see `streetKeyVariants`), the same probe order as the exact-point reader.
 		let rows: PointRow[] = []
 
-		for (const variant of streetKeyVariants(query.street)) {
+		for (const variant of streetKeyVariants(query.street, EXTRACT_STREET_LOCALE)) {
 			const streetKey = canonicalizeRouteKey(variant)
 
 			rows = this.#byPostcode(query.postcode.trim(), streetKey, n)

@@ -207,17 +207,16 @@ export function registerGenerationServices(
 
 	// An address-point database passed by path is read under the street locale
 	// of the session locale's country.
-	// A locale tag without a region leaves the choice to the lookup's own default.
-	const explicitAddressPointRegion = options.locale.split("-")[1]
+	// A locale tag without a region takes the default locale's country.
+	const explicitAddressPointRegion = options.locale.split("-")[1] ?? GEOCODE_DEFAULT_LOCALE.split("-")[1]!
 
 	defineUnlessProvided(registry, S.explicitAddressPoints, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.addressPointsDB
-				? new mod.AddressPointSqliteLookup(
-						options.addressPointsDB,
-						explicitAddressPointRegion ? { streetLocale: streetLocaleForCountry(explicitAddressPointRegion) } : {}
-					)
+				? new mod.AddressPointSqliteLookup(options.addressPointsDB, {
+						streetLocale: streetLocaleForCountry(explicitAddressPointRegion),
+					})
 				: null,
 	})
 

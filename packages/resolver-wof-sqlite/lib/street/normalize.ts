@@ -4,8 +4,6 @@
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 import type { Tagged } from "type-fest"
 
-import { streetLocaleForCountry } from "#street/locale"
-
 /**
  * A place name folded by {@link normalizeLocalityForKey}, minted only by calling the fold.
  */
@@ -142,72 +140,18 @@ export function normalizeStreetForKey(street: string): StreetKey {
 }
 
 /**
- * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
- * name into an address-point key.
+ * The name of one row of {@link STREET_KEY_RULES}, the rules a database's street,
+ * locality and house-number keys are built under.
  *
- * A member is the name of a fold, and `streetLocaleForCountry` in `#street/locale` maps a country to one.
- * Artifact manifests record the member's spelling, so a member is renamed only with its artifacts rebuilt.
- *
- * - `es`, `fr`, `de`, `it`, `nl`, `pl` and `id` are ISO 639-1 language codes,
- *   each with that language's street-type rule.
- * - `vn` is the Vietnamese fold, spelled with the country's code rather than the language's `vi`.
- * - `zh` is the Han fold.
- *   It also folds a locality and a house number.
- * - `en` is the English fold of {@link normalizeStreetForKey}.
- *   A reader under it passes each street through {@link streetLocaleForSurface}, as the OSM builder does.
- * - `us` keys a street exactly as `en` does and is the fold of a database built without that surface route.
- *   `AddressPointSqliteLookup` also reads its locality keys as abbreviated.
- *   The United States databases are the ones built this way.
- * - `und` is the shared fold with no language's abbreviations, for a country whose
- *   official languages select no one rule set.
+ * Two functions produce one: `streetLocaleForCountry` in `#street/locale`, for a country,
+ * and {@link parseStreetLocale}, for a spelling an artifact manifest records or a command line passes.
+ * A string literal is therefore refused where a street locale is expected,
+ * and code reads a locale's behavior from its row with {@link streetKeyRulesOf}.
  */
-export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh" | "und"
-
-/**
- * Every locale {@link normalizeStreetForKeyLocale} keys streets under.
- */
-export const STREET_LOCALES = [
-	"us",
-	"en",
-	"es",
-	"fr",
-	"de",
-	"it",
-	"nl",
-	"pl",
-	"vn",
-	"id",
-	"zh",
-	"und",
-] as const satisfies readonly StreetLocale[]
+export type StreetLocale = Tagged<string, "StreetLocale">
 
 function foldHan(input: string): string {
 	return input.normalize("NFKC").replaceAll("臺", "台").replaceAll(/\s+/g, "").toLowerCase()
-}
-
-/**
- * Creates the street-locale lookup for one source's built databases.
- *
- * `localeFor` answers {@link streetLocaleForCountry} for a country in `countries`
- * and throws for any other, since that source has built no database there to fold a query for.
- * Every source therefore folds a country's streets under one locale.
- */
-export function createStreetLocaleRegistry(
-	countries: readonly string[],
-	label: string
-): { localeFor: (countryCode: string) => StreetLocale; supported: () => string[] } {
-	const built = new Set(countries.map((country) => country.toLowerCase()))
-
-	return {
-		localeFor: (countryCode) => {
-			if (!built.has(countryCode.toLowerCase())) {
-				throw new Error(`No database is registered for country "${countryCode}". ${label}`)
-			}
-
-			return streetLocaleForCountry(countryCode)
-		},
-		supported: () => [...built],
-	}
 }
 
 const FR_STREET_ABBREV = new Map<string, string>([
@@ -277,92 +221,241 @@ const ID_STREET_ABBREV = new Map<string, string>([
 	["gg", "gang"],
 ])
 
+const FRENCH_LEAD_TYPE =
+	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
+
 /**
- * Normalizes a street name into an address-point key under the given locale, delegating `us`
- * and `en` to {@link normalizeStreetForKey}; the extract builder and the probe must both call it.
+ * The rules one street locale builds and probes keys under.
+ *
+ * A builder and a reader of one database read the same row, so they agree on every key.
  */
-export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
-	// country-branch: `us` and `en` extracts are keyed by the US suffix fold.
-	// That fold is older than this function.
-	// A fold table for each street locale in the codex would replace the branch.
-	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
+export interface StreetKeyRules {
+	/**
+	 * Builds the key a street name is stored and probed under.
+	 */
+	streetKey: (street: string) => StreetKey
+	/**
+	 * The streets keyed under another locale's rules: a street whose surface matches
+	 * `pattern` is keyed under the row that `locale` spells.
+	 *
+	 * `null` keys every street under this row.
+	 */
+	surfaceRoute: { pattern: RegExp; locale: string } | null
+	/**
+	 * Whether a reader also probes the English respellings of a street: a doubled type word, a numbered
+	 * street with and without its ordinal suffix, `Saint` for `St`, and a numbered route's designators.
+	 */
+	englishRespellings: boolean
+	/**
+	 * Builds the key a locality name is stored and probed under.
+	 */
+	localityKey: (locality: string) => NameKey
+	/**
+	 * Whether the stored locality keys are abbreviated or replaced by a parent place.
+	 *
+	 * A reader then lets a row's locality select a row and never reject one.
+	 */
+	localityKeys: "abbreviated" | "full"
+	/**
+	 * Whether a reader strips a trailing arrondissement designator from a query's locality key,
+	 * because the builder keyed each arrondissement at its base city.
+	 */
+	arrondissementAtBaseCity: boolean
+	/**
+	 * Whether the stored locality key is the parse's `region` and `subregion` written together,
+	 * for a register whose rows state neither postcode nor locality.
+	 */
+	localityFromRegionAndSubregion: boolean
+	/**
+	 * Builds the key a house number is stored and probed under.
+	 */
+	houseNumberKey: (number: string) => string
+	/**
+	 * Matches a house number written as a base number with joined sub-numbers, and captures the base.
+	 * A reader probes the base after the written number misses.
+	 *
+	 * `null` when the locale writes no such number.
+	 */
+	houseNumberBase: RegExp | null
+}
 
-	// country-branch: a Han street name has no spaces and no type-word abbreviations,
-	// so `zh` takes its own fold.
-	// The same per-locale fold table would replace the branch.
-	if (locale === "zh") return foldHan(street) as StreetKey
-
-	const tokens = fold(street)
+/**
+ * The key of a street written in space-separated words: case folded, accents removed,
+ * `ß` written `ss`, hyphens read as spaces, and the words then passed to `rewrite`.
+ */
+function wordStreetKey(street: string, rewrite?: (words: string[]) => void): StreetKey {
+	const words = fold(street)
 		.replaceAll("ß", "ss")
 		.replaceAll("-", " ")
 		.split(/\s+/)
 		.filter((value) => value.length)
 
-	if (!tokens.length) return "" as StreetKey
+	if (!words.length) return "" as StreetKey
 
-	// country-branch: each case is one street locale's abbreviation and type-word rule,
-	// written beside its first extract.
-	// A fold table for each street locale in the codex would replace the switch.
-	switch (locale) {
-		case "fr":
-			for (let i = 0; i < tokens.length; i++) {
-				tokens[i] = FR_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
+	rewrite?.(words)
+
+	return words.join(" ") as StreetKey
+}
+
+/**
+ * Replaces every word that `expansions` lists.
+ */
+function expandEveryWord(expansions: ReadonlyMap<string, string>): (words: string[]) => void {
+	return (words) => {
+		for (let i = 0; i < words.length; i++) {
+			words[i] = expansions.get(words[i]!) ?? words[i]!
+		}
+	}
+}
+
+/**
+ * Replaces the leading word that `expansions` lists, in a name of two or more words.
+ *
+ * The leading type is expanded and kept, because dropping it merges distinct streets
+ * that share a name: `Calle Mayor` and `Plaza Mayor` can share a municipio.
+ */
+function expandLeadingWord(expansions: ReadonlyMap<string, string>): (words: string[]) => void {
+	return (words) => {
+		if (words.length > 1) {
+			words[0] = expansions.get(words[0]!) ?? words[0]!
+		}
+	}
+}
+
+/**
+ * Writes a word that ends in `str` with the full street word `full` in its place.
+ */
+function expandStreetSuffix(full: string): (words: string[]) => void {
+	return (words) => {
+		for (let i = 0; i < words.length; i++) {
+			const word = words[i]!
+
+			if (word.endsWith("str") && !word.endsWith(full)) {
+				words[i] = word.replace(/str$/, full)
 			}
-			break
-		case "de":
-			for (let i = 0; i < tokens.length; i++) {
-				const t = tokens[i]!
+		}
+	}
+}
 
-				if (t.endsWith("str") && !t.endsWith("strasse")) {
-					tokens[i] = t.replace(/str$/, "strasse")
+/**
+ * The rules every locale has unless its row states another.
+ */
+const SHARED_KEY_RULES: StreetKeyRules = {
+	streetKey: (street) => wordStreetKey(street),
+	surfaceRoute: null,
+	englishRespellings: false,
+	localityKey: normalizeLocalityForKey,
+	localityKeys: "full",
+	arrondissementAtBaseCity: false,
+	localityFromRegionAndSubregion: false,
+	houseNumberKey: (number) => number.trim().toLowerCase(),
+	houseNumberBase: null,
+}
+
+/**
+ * The rules of each street locale, keyed by the spelling an artifact manifest records.
+ *
+ * A spelling is therefore renamed only with its artifacts rebuilt.
+ *
+ * - `es`, `fr`, `de`, `it`, `nl`, `pl` and `id` are ISO 639-1 language codes.
+ * - `vn` is Vietnamese, spelled with the country's code where the language's is `vi`.
+ * - `zh` is Han script, and the one database under it is the Taiwanese register's.
+ * - `en` and `us` build the same street key.
+ *   `us` is the row of a database built without the surface route and with abbreviated
+ *   locality keys, as the United States databases are.
+ * - `und` has the shared rules only, for a country whose official languages select no one row.
+ */
+const STREET_KEY_RULES: Readonly<Record<string, StreetKeyRules>> = {
+	us: { ...SHARED_KEY_RULES, streetKey: normalizeStreetForKey, englishRespellings: true, localityKeys: "abbreviated" },
+	en: {
+		...SHARED_KEY_RULES,
+		streetKey: normalizeStreetForKey,
+		// The route reads the surface and never the province, so a bilingual Canadian extract keys each street one way.
+		surfaceRoute: { pattern: FRENCH_LEAD_TYPE, locale: "fr" },
+		englishRespellings: true,
+	},
+	es: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandLeadingWord(ES_STREET_TYPE_ABBREV)) },
+	fr: {
+		...SHARED_KEY_RULES,
+		streetKey: (street) => wordStreetKey(street, expandEveryWord(FR_STREET_ABBREV)),
+		arrondissementAtBaseCity: true,
+	},
+	de: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandStreetSuffix("strasse")) },
+	it: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandLeadingWord(IT_STREET_TYPE_ABBREV)) },
+	nl: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandStreetSuffix("straat")) },
+	pl: {
+		...SHARED_KEY_RULES,
+		streetKey: (street) =>
+			wordStreetKey(street, (words) => {
+				for (let i = 0; i < words.length; i++) {
+					words[i] = words[i]!.replaceAll("ł", "l")
 				}
-			}
-			break
-		case "it":
-			// The leading type is expanded and kept, unlike `pl`, because dropping it
-			// merges distinct streets that share a name.
-			if (tokens.length > 1) {
-				tokens[0] = IT_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
-			}
-			break
-		case "es":
-			// Keep the leading type, as `it` does and more strongly, because `Calle Mayor`
-			// and `Plaza Mayor` can share a municipio.
-			if (tokens.length > 1) {
-				tokens[0] = ES_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
-			}
-			break
-		case "nl":
-			for (let i = 0; i < tokens.length; i++) {
-				const t = tokens[i]!
 
-				if (t.endsWith("str") && !t.endsWith("straat")) {
-					tokens[i] = t.replace(/str$/, "straat")
+				if (words.length > 1 && PL_LEADING_TYPE.has(words[0]!)) {
+					words.shift()
 				}
-			}
-			break
-		case "pl":
-			for (let i = 0; i < tokens.length; i++) {
-				tokens[i] = tokens[i]!.replaceAll("ł", "l")
-			}
+			}),
+	},
+	vn: {
+		...SHARED_KEY_RULES,
+		streetKey: (street) =>
+			wordStreetKey(street, (words) => {
+				for (let i = 0; i < words.length; i++) {
+					words[i] = words[i]!.replaceAll("đ", "d").replaceAll("ð", "d")
+				}
+			}),
+	},
+	id: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandEveryWord(ID_STREET_ABBREV)) },
+	zh: {
+		...SHARED_KEY_RULES,
+		// A Han street name has no spaces and no type-word abbreviations.
+		streetKey: (street) => foldHan(street) as StreetKey,
+		localityKey: (locality) => foldHan(locality) as NameKey,
+		localityFromRegionAndSubregion: true,
+		// A Taiwanese house number ends in 號 and may be written in full-width digits.
+		houseNumberKey: (number) =>
+			foldHan(number)
+				.replace(/^(\d+)號([之附]\d+)$/u, "$1$2")
+				.replace(/號$/u, ""),
+		// 之 and 附 join a sub-number to a base number, and the Taiwanese register stores the base.
+		houseNumberBase: /^(\d+)(?:[之附]\d+)+$/u,
+	},
+	und: SHARED_KEY_RULES,
+}
 
-			if (tokens.length > 1 && PL_LEADING_TYPE.has(tokens[0]!)) {
-				tokens.shift()
-			}
-			break
-		case "id":
-			for (let i = 0; i < tokens.length; i++) {
-				tokens[i] = ID_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
-			}
-			break
-		case "vn":
-			for (let i = 0; i < tokens.length; i++) {
-				tokens[i] = tokens[i]!.replaceAll("đ", "d").replaceAll("ð", "d")
-			}
-			break
+/**
+ * The street locale a spelling names, for a spelling read from an artifact manifest or a command line.
+ *
+ * @throws For a spelling {@link STREET_KEY_RULES} has no row for.
+ */
+export function parseStreetLocale(spelling: string): StreetLocale {
+	if (!Object.hasOwn(STREET_KEY_RULES, spelling)) {
+		throw new Error(
+			`"${spelling}" is no street locale. The street locales are ${Object.keys(STREET_KEY_RULES).join(", ")}.`
+		)
 	}
 
-	return tokens.join(" ") as StreetKey
+	return spelling as StreetLocale
+}
+
+/**
+ * Every street locale, in the order {@link STREET_KEY_RULES} lists them.
+ */
+export const STREET_LOCALES: readonly StreetLocale[] = Object.keys(STREET_KEY_RULES).map(parseStreetLocale)
+
+/**
+ * The rules a street locale builds and probes keys under.
+ */
+export function streetKeyRulesOf(locale: StreetLocale): StreetKeyRules {
+	return STREET_KEY_RULES[locale]!
+}
+
+/**
+ * Builds a street name's address-point key under the given locale.
+ * The extract builder and the probe must both call it.
+ */
+export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
+	return streetKeyRulesOf(locale).streetKey(street)
 }
 
 /**
@@ -415,44 +508,29 @@ export function withArabicLetterVariantsFolded(key: NameKey): NameKey {
 }
 
 /**
- * Folds a locality name into a {@link NameKey} with the Han fold for `zh`
- * and {@link normalizeLocalityForKey} otherwise.
+ * Builds a locality name's {@link NameKey} under the given locale.
  *
- * The Han rule stays out of the shared fold so existing columns are not re-keyed.
+ * The Han rule is a row's own, so the columns of every other locale keep their keys.
  */
 export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
-	// country-branch: the Han fold applies under `zh` so that the columns of
-	// every other locale keep their keys.
-	// A fold table for each street locale in the codex would replace the branch.
-	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
+	return streetKeyRulesOf(locale).localityKey(locality)
 }
 
 /**
- * Folds a house number into an address-point key, additionally width-folding
- * and dropping the trailing 號 for `zh`.
+ * Builds a house number's address-point key under the given locale.
  */
 export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
-	// country-branch: a Taiwanese house number ends in 號 and may be written in full-width digits.
-	// A house-number grammar for each address system in the codex would replace the branch.
-	if (locale === "zh") {
-		return foldHan(number)
-			.replace(/^(\d+)號([之附]\d+)$/u, "$1$2")
-			.replace(/號$/u, "")
-	}
-
-	return number.trim().toLowerCase()
+	return streetKeyRulesOf(locale).houseNumberKey(number)
 }
 
-const FRENCH_LEAD_TYPE =
-	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
-
 /**
- * Routes an `en` street surface leading with a French type word to the `fr` locale
- * and returns any other base unchanged, routing on the surface rather than the province
- * so bilingual Canadian extracts fold consistently.
+ * The locale a street's key is built under: the one `base`'s surface route sends the street to,
+ * or `base` when the row has no route or the street doesn't match it.
  */
 export function streetLocaleForSurface(street: string, base: StreetLocale): StreetLocale {
-	return base === "en" && FRENCH_LEAD_TYPE.test(street.trimStart()) ? "fr" : base
+	const route = streetKeyRulesOf(base).surfaceRoute
+
+	return route?.pattern.test(street.trimStart()) ? parseStreetLocale(route.locale) : base
 }
 
 /**
@@ -545,21 +623,15 @@ function ordinalOf(n: number): string {
 }
 
 /**
- * Lists the lookup keys to probe for a street span, most literal first, adding doubled-type
- * and Saint/St-swap recovery forms for `us` and `en`.
+ * Lists the lookup keys to probe for a street span, most literal first, adding the
+ * English respellings for a locale whose rules probe them.
  */
-export function streetKeyVariants(
-	street: string,
-	// country-branch: the first address-point extracts were the US state databases, keyed by the `us` fold.
-	// The street locale recorded in the extract's manifest would replace the default.
-	locale: StreetLocale = "us"
-): StreetKey[] {
-	const primary = normalizeStreetForKeyLocale(street, locale)
+export function streetKeyVariants(street: string, locale: StreetLocale): StreetKey[] {
+	const rules = streetKeyRulesOf(locale)
+	const primary = rules.streetKey(street)
 	const variants: StreetKey[] = primary ? [primary] : []
 
-	// country-branch: the doubled-type and Saint forms below are English spellings, so two locales take them.
-	// A recovery-form list for each street locale in the codex would replace the guard.
-	if (!primary || (locale !== "us" && locale !== "en")) return variants
+	if (!primary || !rules.englishRespellings) return variants
 
 	const tokens = primary.split(" ")
 	const last = tokens.at(-1)
