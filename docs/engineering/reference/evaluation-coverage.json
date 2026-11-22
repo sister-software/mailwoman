@@ -1,150 +1,30 @@
 {
 	"dataset": {
-		"datasetID": "heldout-dev-v0.8.18",
-		"version": "adeeef40d7d81a7c",
-		"rowsSHA256": "b904f768bbd57deabab683ad12dcff7dd1c86dee429762ddf723b93ac6faab53",
-		"corpusVersion": "0.8.18-retention-overlay"
+		"datasetID": "heldout-confirm-v0.8.22",
+		"version": "5383e65f6aa768bb",
+		"rowsSHA256": "ea90895f98321ce4edf2735ce93bc4cb19a4d0d1548fe495d2a8d549bf867073",
+		"corpusVersion": "0.8.22-overlay"
 	},
-	"specVersion": "9",
+	"specVersion": "14",
 	"verdict": null,
-	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-dev-v0.8.18.v2.provenance-published-10.8.0.json (audit 4d6047b6254b33ee)",
+	"provenanceAudit": "/mnt/mw/corpus/heldout/heldout-confirm-v0.8.22.provenance-11.2.0.json (audit fba20a54c248b682)",
 	"rows": [
-		{
-			"country": "AD",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 83,
-				"sampled": 83
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
 		{
 			"country": "AE",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 9,
-				"sampled": 9
-			},
-			"places": {
-				"available": 141,
-				"sampled": 141
-			},
-			"groups": 9,
-			"sources": {
-				"osm-ae": 9
-			},
-			"provenance": {
-				"verified_unseen": 9,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 229,
-				"sampled": 229
+				"available": 15,
+				"sampled": 15
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 136,
-				"sampled": 136
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 11,
-				"sampled": 11
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 6,
-				"sampled": 6
-			},
-			"places": {
-				"available": 265,
-				"sampled": 265
-			},
-			"groups": 4,
-			"sources": {
-				"osm-al": 3,
-				"cordis": 3
-			},
-			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 0,
-				"known_overlap": 3,
-				"unknown": 0
-			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -156,22 +36,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 38,
-				"sampled": 38
+				"available": 5,
+				"sampled": 5
 			},
 			"places": {
-				"available": 178,
-				"sampled": 178
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 36,
+			"groups": 5,
 			"sources": {
-				"osm-am": 35,
-				"cordis": 3
+				"rendered-former-divisions": 5
 			},
 			"provenance": {
-				"verified_unseen": 35,
+				"verified_unseen": 5,
 				"unseen_by_candidate": 0,
-				"known_overlap": 3,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -185,37 +64,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 250,
-				"sampled": 250
+			"groups": 1,
+			"sources": {
+				"rendered-former-divisions": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AQ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
 			},
-			"places": {
-				"available": 95,
-				"sampled": 95
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -227,46 +92,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 467,
-				"sampled": 467
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 313,
-				"sampled": 313
-			},
-			"groups": 448,
-			"sources": {
-				"osm-ar": 436,
-				"gleif-lei": 30,
-				"cordis": 1
-			},
-			"provenance": {
-				"verified_unseen": 443,
-				"unseen_by_candidate": 0,
-				"known_overlap": 24,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 34,
-				"sampled": 34
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 3
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -278,23 +120,22 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 3758,
-				"sampled": 1000
+				"available": 23,
+				"sampled": 23
 			},
 			"places": {
-				"available": 318,
-				"sampled": 318
+				"available": 10,
+				"sampled": 10
 			},
-			"groups": 901,
+			"groups": 17,
 			"sources": {
-				"gleif-lei": 412,
-				"overture": 562,
-				"cordis": 26
+				"rendered-former-divisions": 19,
+				"rendered-prominent-places": 4
 			},
 			"provenance": {
-				"verified_unseen": 584,
+				"verified_unseen": 23,
 				"unseen_by_candidate": 0,
-				"known_overlap": 416,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -308,139 +149,19 @@
 			"objective": true,
 			"requirementIDs": ["country-AU"],
 			"addresses": {
-				"available": 6715,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 950,
-			"sources": {
-				"gnaf": 575,
-				"gleif-lei": 386,
-				"invented-po-box-cedex": 16,
-				"invented-postal-guideline": 9,
-				"invented-postal-unit-guideline": 6,
-				"fragment-assay": 7,
-				"cordis": 1
-			},
-			"provenance": {
-				"verified_unseen": 646,
-				"unseen_by_candidate": 0,
-				"known_overlap": 354,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "not_evaluated",
-				"reasons": ["no verdict supplied"]
-			}
-		},
-		{
-			"country": "AW",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 42,
-				"sampled": 42
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
 			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AX",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 54,
-				"sampled": 54
-			},
-			"places": {
-				"available": 138,
-				"sampled": 138
-			},
-			"groups": 54,
-			"sources": {
-				"ryhti-ax": 54
-			},
-			"provenance": {
-				"verified_unseen": 54,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "AZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 18,
-				"sampled": 18
-			},
-			"places": {
-				"available": 183,
-				"sampled": 183
-			},
-			"groups": 18,
-			"sources": {
-				"opendata-az": 18
-			},
-			"provenance": {
-				"verified_unseen": 18,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 109,
-				"sampled": 109
-			},
-			"places": {
-				"available": 144,
-				"sampled": 144
-			},
-			"groups": 102,
-			"sources": {
-				"osm-ba": 96,
-				"gleif-lei": 9,
-				"cordis": 4
-			},
-			"provenance": {
-				"verified_unseen": 96,
-				"unseen_by_candidate": 0,
-				"known_overlap": 13,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
+				"status": "insufficient_evidence",
+				"reasons": ["no sampled address rows (0 available)"]
 			}
 		},
 		{
@@ -449,24 +170,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
 				"available": 8,
 				"sampled": 8
 			},
-			"places": {
-				"available": 169,
-				"sampled": 169
-			},
-			"groups": 7,
-			"sources": {
-				"osm-bb": 6,
-				"gleif-lei": 2
-			},
-			"provenance": {
-				"verified_unseen": 6,
-				"unseen_by_candidate": 0,
-				"known_overlap": 2,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -478,24 +191,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 322,
-				"sampled": 322
+				"available": 9,
+				"sampled": 9
 			},
 			"places": {
-				"available": 15,
-				"sampled": 15
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 200,
+			"groups": 4,
 			"sources": {
-				"osm-bd": 123,
-				"rendered-bd-register": 75,
-				"osm": 119,
-				"gleif-lei": 5
+				"rendered-prominent-places": 9
 			},
 			"provenance": {
-				"verified_unseen": 317,
+				"verified_unseen": 7,
 				"unseen_by_candidate": 0,
-				"known_overlap": 5,
+				"known_overlap": 2,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -509,45 +219,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 2897,
-				"sampled": 1000
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 212,
-				"sampled": 212
+				"available": 8,
+				"sampled": 8
 			},
-			"groups": 724,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 952,
-				"cordis": 48
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 59,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 941,
+				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 147,
-				"sampled": 147
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -559,22 +247,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 129,
-				"sampled": 129
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 215,
-				"sampled": 215
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 50,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 117,
-				"cordis": 12
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 14,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 115,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -588,128 +275,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
+				"available": 4,
+				"sampled": 4
 			},
 			"places": {
-				"available": 83,
-				"sampled": 83
+				"available": 9,
+				"sampled": 9
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 104,
-				"sampled": 104
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BJ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 119,
-				"sampled": 119
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 3,
-				"sampled": 3
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 10,
-				"sampled": 10
-			},
-			"places": {
-				"available": 48,
-				"sampled": 48
-			},
-			"groups": 4,
+			"groups": 3,
 			"sources": {
-				"gleif-lei": 10
+				"rendered-former-divisions": 4
 			},
 			"provenance": {
-				"verified_unseen": 0,
+				"verified_unseen": 4,
 				"unseen_by_candidate": 0,
-				"known_overlap": 10,
+				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BN",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 97,
-				"sampled": 97
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -721,37 +303,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
+				"available": 7,
+				"sampled": 7
 			},
 			"places": {
-				"available": 194,
-				"sampled": 194
+				"available": 1,
+				"sampled": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BQ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"groups": 4,
+			"sources": {
+				"rendered-prominent-places": 7
 			},
-			"places": {
-				"available": 16,
-				"sampled": 16
+			"provenance": {
+				"verified_unseen": 6,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -763,66 +331,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 13417,
-				"sampled": 1000
+				"available": 7,
+				"sampled": 7
 			},
 			"places": {
-				"available": 344,
-				"sampled": 344
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": 1000,
+			"groups": 4,
 			"sources": {
-				"overture-latam": 995,
-				"gleif-lei": 5
+				"rendered-prominent-places": 7
 			},
 			"provenance": {
-				"verified_unseen": 995,
+				"verified_unseen": 5,
 				"unseen_by_candidate": 0,
-				"known_overlap": 5,
+				"known_overlap": 2,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 128,
-				"sampled": 128
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BT",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 62,
-				"sampled": 62
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -834,16 +359,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 100,
-				"sampled": 100
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 2
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -855,50 +387,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 343,
-				"sampled": 343
+				"available": 7,
+				"sampled": 7
 			},
 			"places": {
-				"available": 173,
-				"sampled": 173
-			},
-			"groups": 342,
-			"sources": {
-				"osm-by": 341,
-				"cordis": 2
-			},
-			"provenance": {
-				"verified_unseen": 341,
-				"unseen_by_candidate": 0,
-				"known_overlap": 2,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "BZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 10,
-				"sampled": 10
-			},
-			"places": {
-				"available": 146,
-				"sampled": 146
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": 4,
 			"sources": {
-				"gleif-lei": 10
+				"rendered-prominent-places": 7
 			},
 			"provenance": {
-				"verified_unseen": 0,
+				"verified_unseen": 7,
 				"unseen_by_candidate": 0,
-				"known_overlap": 10,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -912,24 +415,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 10193,
-				"sampled": 1000
+				"available": 9,
+				"sampled": 9
 			},
 			"places": {
-				"available": 362,
-				"sampled": 362
+				"available": 14,
+				"sampled": 14
 			},
-			"groups": 985,
+			"groups": 7,
 			"sources": {
-				"overture-latam": 809,
-				"gleif-lei": 174,
-				"spliced-trailing-region-ca-bare": 13,
-				"invented-po-box-cedex": 4
+				"rendered-prominent-places": 9
 			},
 			"provenance": {
-				"verified_unseen": 836,
+				"verified_unseen": 7,
 				"unseen_by_candidate": 0,
-				"known_overlap": 164,
+				"known_overlap": 2,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -943,86 +443,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 3,
-				"sampled": 3
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CD",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 9,
-				"sampled": 9
-			},
-			"places": {
-				"available": 155,
-				"sampled": 155
-			},
-			"groups": 9,
+			"groups": 1,
 			"sources": {
-				"osm-cd": 9
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 9,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 155,
-				"sampled": 155
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 176,
-				"sampled": 176
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -1034,25 +471,22 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 7497,
-				"sampled": 1000
+				"available": 8,
+				"sampled": 8
 			},
 			"places": {
-				"available": 112,
-				"sampled": 112
+				"available": 44,
+				"sampled": 44
 			},
-			"groups": 983,
+			"groups": 6,
 			"sources": {
-				"rendered-ch": 514,
-				"overture": 331,
-				"gleif-lei": 115,
-				"fragment-assay": 31,
-				"cordis": 9
+				"rendered-prominent-places": 2,
+				"rendered-former-divisions": 6
 			},
 			"provenance": {
-				"verified_unseen": 881,
+				"verified_unseen": 8,
 				"unseen_by_candidate": 0,
-				"known_overlap": 119,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1066,37 +500,24 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 6,
+				"sampled": 6
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 160,
-				"sampled": 160
+			"groups": 5,
+			"sources": {
+				"rendered-former-divisions": 4,
+				"rendered-prominent-places": 2
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"provenance": {
+				"verified_unseen": 5,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
 			},
-			"places": {
-				"available": 29,
-				"sampled": 29
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -1108,22 +529,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 194,
-				"sampled": 194
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 259,
-				"sampled": 259
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 181,
+			"groups": 1,
 			"sources": {
-				"osm-cl": 170,
-				"gleif-lei": 24
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 174,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 20,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1141,8 +561,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 171,
-				"sampled": 171
+				"available": 1,
+				"sampled": 1
 			},
 			"groups": null,
 			"sources": null,
@@ -1158,24 +578,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 75,
-				"sampled": 75
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 373,
-				"sampled": 373
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": 74,
+			"groups": 1,
 			"sources": {
-				"osm-cn": 64,
-				"fragment-assay": 7,
-				"cordis": 3,
-				"gleif-lei": 1
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 71,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 4,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1189,22 +606,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 27,
-				"sampled": 27
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 291,
-				"sampled": 291
+				"available": 2,
+				"sampled": 2
 			},
-			"groups": 27,
+			"groups": 1,
 			"sources": {
-				"osm-co": 26,
-				"gleif-lei": 1
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 26,
+				"verified_unseen": 0,
 				"unseen_by_candidate": 0,
-				"known_overlap": 1,
+				"known_overlap": 3,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1218,24 +634,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 8,
-				"sampled": 8
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 280,
-				"sampled": 280
+				"available": 7,
+				"sampled": 7
 			},
-			"groups": 5,
-			"sources": {
-				"osm-cr": 3,
-				"gleif-lei": 5
-			},
-			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -1247,90 +655,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 29,
-				"sampled": 29
-			},
-			"places": {
-				"available": 253,
-				"sampled": 253
-			},
-			"groups": 29,
-			"sources": {
-				"osm-cu": 29
-			},
-			"provenance": {
-				"verified_unseen": 29,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CV",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 125,
-				"sampled": 125
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CW",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 13,
-				"sampled": 13
-			},
-			"places": {
-				"available": 38,
-				"sampled": 38
-			},
-			"groups": 10,
-			"sources": {
-				"osm-cw": 8,
-				"gleif-lei": 5
-			},
-			"provenance": {
-				"verified_unseen": 8,
-				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "CX",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 5,
-				"sampled": 5
+				"available": 7,
+				"sampled": 7
 			},
 			"groups": null,
 			"sources": null,
@@ -1346,22 +676,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 182,
-				"sampled": 182
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 201,
-				"sampled": 201
+				"available": 2,
+				"sampled": 2
 			},
-			"groups": 75,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 172,
-				"cordis": 10
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 9,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 173,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1375,26 +704,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 1496,
-				"sampled": 1000
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 155,
-				"sampled": 155
+				"available": 5,
+				"sampled": 5
 			},
-			"groups": 660,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 667,
-				"rendered-cz-pcfirst-preposition-v21": 266,
-				"cordis": 42,
-				"rendered-cz-pcfirst-preposition": 16,
-				"codex-bare-postcode": 6,
-				"fragment-assay": 3
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 354,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 646,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1408,26 +732,21 @@
 			"objective": true,
 			"requirementIDs": ["country-DE"],
 			"addresses": {
-				"available": 12772,
-				"sampled": 1000
+				"available": 3261,
+				"sampled": 3261
 			},
 			"places": {
-				"available": 58,
-				"sampled": 58
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 990,
+			"groups": 3261,
 			"sources": {
-				"rendered-de": 584,
-				"gleif-lei": 112,
-				"spliced-country": 87,
-				"spliced-affix": 170,
-				"spliced-sub-venue": 46,
-				"invented-postal-guideline": 1
+				"rendered-de": 3261
 			},
 			"provenance": {
-				"verified_unseen": 895,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 105,
+				"known_overlap": 3260,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1436,72 +755,28 @@
 			}
 		},
 		{
-			"country": "DJ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 103,
-				"sampled": 103
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
 			"country": "DK",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 7712,
-				"sampled": 1000
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 265,
-				"sampled": 265
+				"available": 12,
+				"sampled": 12
 			},
-			"groups": 941,
+			"groups": 1,
 			"sources": {
-				"overture": 579,
-				"gleif-lei": 407,
-				"cordis": 14
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 606,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 394,
+				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "DM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 102,
-				"sampled": 102
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -1513,24 +788,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 41,
-				"sampled": 41
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 185,
-				"sampled": 185
+				"available": 4,
+				"sampled": 4
 			},
-			"groups": 38,
-			"sources": {
-				"gleif-lei": 5,
-				"osm-do": 36
-			},
-			"provenance": {
-				"verified_unseen": 36,
-				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -1542,21 +809,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 19,
-				"sampled": 19
+				"available": 6,
+				"sampled": 6
 			},
 			"places": {
-				"available": 277,
-				"sampled": 277
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 19,
+			"groups": 3,
 			"sources": {
-				"osm-dz": 19
+				"rendered-prominent-places": 6
 			},
 			"provenance": {
-				"verified_unseen": 19,
+				"verified_unseen": 5,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1570,19 +837,19 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 11,
-				"sampled": 11
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 247,
-				"sampled": 247
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": 11,
+			"groups": 1,
 			"sources": {
-				"osm-ec": 11
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 11,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
@@ -1598,23 +865,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 1376,
-				"sampled": 1000
+				"available": 4,
+				"sampled": 4
 			},
 			"places": {
-				"available": 141,
-				"sampled": 141
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 603,
+			"groups": 2,
 			"sources": {
-				"ads": 213,
-				"gleif-lei": 765,
-				"cordis": 22
+				"rendered-prominent-places": 4
 			},
 			"provenance": {
-				"verified_unseen": 268,
+				"verified_unseen": 4,
 				"unseen_by_candidate": 0,
-				"known_overlap": 732,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1628,62 +893,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 12,
-				"sampled": 12
-			},
-			"places": {
-				"available": 301,
-				"sampled": 301
-			},
-			"groups": 7,
-			"sources": {
-				"osm-eg": 1,
-				"gleif-lei": 11
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 11,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "EH",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 57,
-				"sampled": 57
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ER",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 217,
-				"sampled": 217
+				"available": 1,
+				"sampled": 1
 			},
 			"groups": null,
 			"sources": null,
@@ -1699,52 +914,19 @@
 			"objective": true,
 			"requirementIDs": ["country-ES"],
 			"addresses": {
-				"available": 32033,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 999,
-			"sources": {
-				"overture": 909,
-				"gleif-lei": 42,
-				"fragment-assay": 45,
-				"spliced-trailing-region-es-v28": 2,
-				"spliced-sub-venue": 1,
-				"cordis": 1
-			},
-			"provenance": {
-				"verified_unseen": 960,
-				"unseen_by_candidate": 0,
-				"known_overlap": 40,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "not_evaluated",
-				"reasons": ["no verdict supplied"]
-			}
-		},
-		{
-			"country": "ET",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 267,
-				"sampled": 267
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
 			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
+				"status": "insufficient_evidence",
+				"reasons": ["no sampled address rows (0 available)"]
 			}
 		},
 		{
@@ -1753,117 +935,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 2286,
-				"sampled": 1000
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 355,
-				"sampled": 355
+				"available": 15,
+				"sampled": 15
 			},
-			"groups": 781,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 601,
-				"overture": 332,
-				"cordis": 32,
-				"fragment-assay": 35
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 426,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 574,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "FJ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 199,
-				"sampled": 199
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "FK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 36,
-				"sampled": 36
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "FM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 125,
-				"sampled": 125
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "FO",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 89,
-				"sampled": 89
-			},
-			"places": {
-				"available": 89,
-				"sampled": 89
-			},
-			"groups": 61,
-			"sources": {
-				"gleif-lei": 39,
-				"adressur-fo": 45,
-				"cordis": 5
-			},
-			"provenance": {
-				"verified_unseen": 45,
-				"unseen_by_candidate": 0,
-				"known_overlap": 44,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -1877,50 +963,19 @@
 			"objective": true,
 			"requirementIDs": ["country-FR"],
 			"addresses": {
-				"available": 256595,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 46,
-				"sampled": 46
-			},
-			"groups": 997,
-			"sources": {
-				"ban": 996,
-				"invented-house-venue": 1,
-				"gleif-lei": 2,
-				"rendered-fr-admin-split": 1
-			},
-			"provenance": {
-				"verified_unseen": 52,
-				"unseen_by_candidate": 0,
-				"known_overlap": 948,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "not_evaluated",
-				"reasons": ["no verdict supplied"]
-			}
-		},
-		{
-			"country": "GA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 188,
-				"sampled": 188
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
 			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
+				"status": "insufficient_evidence",
+				"reasons": ["no sampled address rows (0 available)"]
 			}
 		},
 		{
@@ -1929,138 +984,19 @@
 			"objective": true,
 			"requirementIDs": ["country-GB"],
 			"addresses": {
-				"available": 4437,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 2289,
-				"sampled": 1000
-			},
-			"groups": 981,
-			"sources": {
-				"gleif-lei": 109,
-				"rendered-gb-os-open": 840,
-				"invented-postal-unit-guideline": 5,
-				"cordis": 11,
-				"spliced-sub-venue": 35
-			},
-			"provenance": {
-				"verified_unseen": 893,
-				"unseen_by_candidate": 0,
-				"known_overlap": 107,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "not_evaluated",
-				"reasons": ["no verdict supplied"]
-			}
-		},
-		{
-			"country": "GD",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 137,
-				"sampled": 137
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
 			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 4,
-				"sampled": 4
-			},
-			"places": {
-				"available": 143,
-				"sampled": 143
-			},
-			"groups": 4,
-			"sources": {
-				"osm-ge": 4
-			},
-			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 3188,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
-			"sources": {
-				"ban-gf": 992,
-				"fr-annuaire-education-overseas": 5,
-				"fr-finess-overseas": 3
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 11,
-				"sampled": 11
-			},
-			"places": {
-				"available": 100,
-				"sampled": 100
-			},
-			"groups": 7,
-			"sources": {
-				"gleif-lei": 10,
-				"osm-gg": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 10,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
+				"status": "insufficient_evidence",
+				"reasons": ["no sampled address rows (0 available)"]
 			}
 		},
 		{
@@ -2069,173 +1005,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 5,
-				"sampled": 5
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 173,
-				"sampled": 173
+				"available": 6,
+				"sampled": 6
 			},
-			"groups": 5,
+			"groups": 1,
 			"sources": {
-				"osm-gh": 4,
-				"cordis": 1
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 4,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
 				"known_overlap": 1,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 5,
-				"sampled": 5
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 4,
-			"sources": {
-				"gleif-lei": 5
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 9,
-				"sampled": 9
-			},
-			"places": {
-				"available": 134,
-				"sampled": 134
-			},
-			"groups": 4,
-			"sources": {
-				"gleif-lei": 9
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 9,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 183,
-				"sampled": 183
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GN",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 210,
-				"sampled": 210
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GP",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 6203,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
-			"sources": {
-				"ban-gp": 997,
-				"fr-finess-overseas": 2,
-				"fr-annuaire-education-overseas": 1
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GQ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 138,
-				"sampled": 138
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2247,45 +1033,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 247,
-				"sampled": 247
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 330,
-				"sampled": 330
-			},
-			"groups": 116,
-			"sources": {
-				"gleif-lei": 182,
-				"cordis": 65
-			},
-			"provenance": {
-				"verified_unseen": 17,
-				"unseen_by_candidate": 0,
-				"known_overlap": 230,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 20,
-				"sampled": 20
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 3
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2297,44 +1061,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 25,
-				"sampled": 25
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 213,
-				"sampled": 213
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 25,
+			"groups": 2,
 			"sources": {
-				"osm-gt": 25
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 25,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "GU",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 23,
-				"sampled": 23
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2346,16 +1089,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 238,
-				"sampled": 238
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2371,8 +1121,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 194,
-				"sampled": 194
+				"available": 9,
+				"sampled": 9
 			},
 			"groups": null,
 			"sources": null,
@@ -2388,40 +1138,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 35,
-				"sampled": 35
-			},
-			"places": {
-				"available": 118,
-				"sampled": 118
-			},
-			"groups": 35,
-			"sources": {
-				"osm-hk": 35
-			},
-			"provenance": {
-				"verified_unseen": 35,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "HM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 8,
-				"sampled": 8
+				"available": 5,
+				"sampled": 5
 			},
 			"groups": null,
 			"sources": null,
@@ -2441,44 +1163,12 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 249,
-				"sampled": 249
+				"available": 3,
+				"sampled": 3
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "HR",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 3732,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 261,
-				"sampled": 261
-			},
-			"groups": 993,
-			"sources": {
-				"rendered-hr": 798,
-				"fragment-assay": 17,
-				"overture": 152,
-				"gleif-lei": 27,
-				"cordis": 6
-			},
-			"provenance": {
-				"verified_unseen": 968,
-				"unseen_by_candidate": 0,
-				"known_overlap": 32,
-				"unknown": 0
-			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2490,21 +1180,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 8,
-				"sampled": 8
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 195,
-				"sampled": 195
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 8,
+			"groups": 1,
 			"sources": {
-				"osm-ht": 8
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 8,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2518,22 +1208,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 637,
-				"sampled": 637
+				"available": 4,
+				"sampled": 4
 			},
 			"places": {
-				"available": 180,
-				"sampled": 180
+				"available": 5,
+				"sampled": 5
 			},
-			"groups": 248,
+			"groups": 2,
 			"sources": {
-				"gleif-lei": 598,
-				"cordis": 39
+				"rendered-prominent-places": 4
 			},
 			"provenance": {
-				"verified_unseen": 50,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 587,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2547,23 +1236,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 1691,
-				"sampled": 1000
+				"available": 17,
+				"sampled": 17
 			},
 			"places": {
-				"available": 28,
-				"sampled": 28
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 981,
+			"groups": 8,
 			"sources": {
-				"osm-id": 960,
-				"gleif-lei": 39,
-				"cordis": 1
+				"rendered-prominent-places": 17
 			},
 			"provenance": {
-				"verified_unseen": 963,
+				"verified_unseen": 13,
 				"unseen_by_candidate": 0,
-				"known_overlap": 37,
+				"known_overlap": 4,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2577,22 +1264,22 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 250,
-				"sampled": 250
+				"available": 7,
+				"sampled": 7
 			},
 			"places": {
-				"available": 254,
-				"sampled": 254
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 105,
+			"groups": 6,
 			"sources": {
-				"gleif-lei": 213,
-				"cordis": 37
+				"rendered-prominent-places": 2,
+				"rendered-former-divisions": 5
 			},
 			"provenance": {
-				"verified_unseen": 17,
+				"verified_unseen": 7,
 				"unseen_by_candidate": 0,
-				"known_overlap": 233,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2606,51 +1293,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 56,
-				"sampled": 56
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 222,
-				"sampled": 222
+				"available": 12,
+				"sampled": 12
 			},
-			"groups": 23,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 53,
-				"cordis": 3
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 9,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 47,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "IM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 41,
-				"sampled": 41
-			},
-			"places": {
-				"available": 85,
-				"sampled": 85
-			},
-			"groups": 36,
-			"sources": {
-				"gleif-lei": 13,
-				"landregistry-im": 28
-			},
-			"provenance": {
-				"verified_unseen": 28,
-				"unseen_by_candidate": 0,
-				"known_overlap": 13,
+				"known_overlap": 2,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2664,23 +1321,21 @@
 			"objective": true,
 			"requirementIDs": ["country-IN"],
 			"addresses": {
-				"available": 1557,
-				"sampled": 1000
+				"available": 4,
+				"sampled": 4
 			},
 			"places": {
-				"available": 314,
-				"sampled": 314
+				"available": 29,
+				"sampled": 29
 			},
-			"groups": 888,
+			"groups": 2,
 			"sources": {
-				"invented-house-venue": 218,
-				"osm-in": 461,
-				"gleif-lei": 321
+				"rendered-prominent-places": 4
 			},
 			"provenance": {
-				"verified_unseen": 525,
+				"verified_unseen": 3,
 				"unseen_by_candidate": 0,
-				"known_overlap": 475,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2689,42 +1344,28 @@
 			}
 		},
 		{
-			"country": "IO",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 3,
-				"sampled": 3
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
 			"country": "IQ",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 7,
+				"sampled": 7
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 305,
-				"sampled": 305
+			"groups": 7,
+			"sources": {
+				"rendered-former-divisions": 7
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 7,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2736,21 +1377,22 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 17,
-				"sampled": 17
+				"available": 10,
+				"sampled": 10
 			},
 			"places": {
-				"available": 391,
-				"sampled": 391
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 17,
+			"groups": 6,
 			"sources": {
-				"osm-ir": 17
+				"rendered-prominent-places": 8,
+				"rendered-former-divisions": 2
 			},
 			"provenance": {
-				"verified_unseen": 17,
+				"verified_unseen": 9,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2764,24 +1406,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 217,
-				"sampled": 217
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 260,
-				"sampled": 260
+				"available": 4,
+				"sampled": 4
 			},
-			"groups": 86,
-			"sources": {
-				"gleif-lei": 206,
-				"cordis": 11
-			},
-			"provenance": {
-				"verified_unseen": 25,
-				"unseen_by_candidate": 0,
-				"known_overlap": 192,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2793,22 +1427,21 @@
 			"objective": true,
 			"requirementIDs": ["country-IT"],
 			"addresses": {
-				"available": 40618,
-				"sampled": 1000
+				"available": 10,
+				"sampled": 10
 			},
 			"places": {
-				"available": 2,
-				"sampled": 2
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 1000,
+			"groups": 10,
 			"sources": {
-				"overture": 998,
-				"gleif-lei": 2
+				"rendered-former-divisions": 10
 			},
 			"provenance": {
-				"verified_unseen": 998,
+				"verified_unseen": 10,
 				"unseen_by_candidate": 0,
-				"known_overlap": 2,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2817,56 +1450,21 @@
 			}
 		},
 		{
-			"country": "JE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 30,
-				"sampled": 30
-			},
-			"places": {
-				"available": 62,
-				"sampled": 62
-			},
-			"groups": 11,
-			"sources": {
-				"gleif-lei": 30
-			},
-			"provenance": {
-				"verified_unseen": 5,
-				"unseen_by_candidate": 0,
-				"known_overlap": 25,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
 			"country": "JM",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 8,
-				"sampled": 8
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 166,
-				"sampled": 166
+				"available": 1,
+				"sampled": 1
 			},
-			"groups": 3,
-			"sources": {
-				"gleif-lei": 8
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 8,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2878,24 +1476,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 6,
-				"sampled": 6
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 179,
-				"sampled": 179
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": 3,
-			"sources": {
-				"cordis": 2,
-				"gleif-lei": 4
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 6,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -2907,23 +1497,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 14,
-				"sampled": 14
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 4157,
-				"sampled": 1000
+				"available": 25,
+				"sampled": 25
 			},
-			"groups": 8,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 5,
-				"cordis": 5,
-				"fragment-assay": 4
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 8,
+				"verified_unseen": 0,
 				"unseen_by_candidate": 0,
-				"known_overlap": 6,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -2937,75 +1525,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 12,
-				"sampled": 12
-			},
-			"places": {
-				"available": 293,
-				"sampled": 293
-			},
-			"groups": 7,
-			"sources": {
-				"cordis": 9,
-				"osm-ke": 3
-			},
-			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 0,
-				"known_overlap": 9,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 30,
-				"sampled": 30
-			},
-			"places": {
-				"available": 197,
-				"sampled": 197
-			},
-			"groups": 22,
-			"sources": {
-				"gleif-lei": 6,
-				"osm-kg": 18,
-				"cordis": 6
-			},
-			"provenance": {
-				"verified_unseen": 18,
-				"unseen_by_candidate": 0,
-				"known_overlap": 12,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KH",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 3,
 				"sampled": 3
 			},
 			"places": {
-				"available": 171,
-				"sampled": 171
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 3,
+			"groups": 1,
 			"sources": {
-				"osm-kh": 3
+				"rendered-former-divisions": 3
 			},
 			"provenance": {
 				"verified_unseen": 3,
@@ -3013,69 +1542,6 @@
 				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 88,
-				"sampled": 88
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 102,
-				"sampled": 102
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KN",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 110,
-				"sampled": 110
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3091,8 +1557,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 240,
-				"sampled": 240
+				"available": 2,
+				"sampled": 2
 			},
 			"groups": null,
 			"sources": null,
@@ -3108,22 +1574,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 23,
-				"sampled": 23
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 193,
-				"sampled": 193
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 19,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 6,
-				"fragment-assay": 17
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 17,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 6,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -3137,97 +1602,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 94,
-				"sampled": 94
-			},
-			"places": {
-				"available": 116,
-				"sampled": 116
-			},
-			"groups": 94,
-			"sources": {
-				"osm-kw": 94
-			},
-			"provenance": {
-				"verified_unseen": 94,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KY",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 49,
-				"sampled": 49
-			},
-			"places": {
-				"available": 20,
-				"sampled": 20
-			},
-			"groups": 17,
-			"sources": {
-				"gleif-lei": 49
-			},
-			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 0,
-				"known_overlap": 45,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "KZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 156,
-				"sampled": 156
-			},
-			"places": {
-				"available": 316,
-				"sampled": 316
-			},
-			"groups": 154,
-			"sources": {
-				"osm-kz": 153,
-				"cordis": 3
-			},
-			"provenance": {
-				"verified_unseen": 153,
-				"unseen_by_candidate": 0,
-				"known_overlap": 3,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 216,
-				"sampled": 216
+				"available": 7,
+				"sampled": 7
 			},
 			"groups": null,
 			"sources": null,
@@ -3243,101 +1623,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 7,
-				"sampled": 7
-			},
-			"places": {
-				"available": 200,
-				"sampled": 200
-			},
-			"groups": 7,
-			"sources": {
-				"osm-lb": 7
-			},
-			"provenance": {
-				"verified_unseen": 7,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 90,
-				"sampled": 90
+				"available": 2,
+				"sampled": 2
 			},
 			"groups": null,
 			"sources": null,
 			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 51,
-				"sampled": 51
-			},
-			"places": {
-				"available": 110,
-				"sampled": 110
-			},
-			"groups": 19,
-			"sources": {
-				"gleif-lei": 51
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 51,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 20,
-				"sampled": 20
-			},
-			"places": {
-				"available": 171,
-				"sampled": 171
-			},
-			"groups": 13,
-			"sources": {
-				"gleif-lei": 11,
-				"osm-lk": 9
-			},
-			"provenance": {
-				"verified_unseen": 9,
-				"unseen_by_candidate": 0,
-				"known_overlap": 11,
-				"unknown": 0
-			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3349,37 +1644,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 190,
-				"sampled": 190
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
 			},
-			"places": {
-				"available": 96,
-				"sampled": 96
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3391,22 +1672,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 223,
-				"sampled": 223
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 191,
-				"sampled": 191
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 90,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 206,
-				"cordis": 17
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 13,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 210,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -3420,54 +1700,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 694,
-				"sampled": 694
-			},
-			"places": {
-				"available": 60,
-				"sampled": 60
-			},
-			"groups": 518,
-			"sources": {
-				"rendered-lu": 403,
-				"gleif-lei": 279,
-				"cordis": 12
-			},
-			"provenance": {
-				"verified_unseen": 429,
-				"unseen_by_candidate": 0,
-				"known_overlap": 265,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "LV",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 27829,
-				"sampled": 1000
-			},
-			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"groups": 1000,
-			"sources": {
-				"lv-varis": 982,
-				"gleif-lei": 18
+			"places": {
+				"available": 41,
+				"sampled": 41
 			},
-			"provenance": {
-				"verified_unseen": 985,
-				"unseen_by_candidate": 0,
-				"known_overlap": 15,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3483,8 +1725,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 226,
-				"sampled": 226
+				"available": 3,
+				"sampled": 3
 			},
 			"groups": null,
 			"sources": null,
@@ -3500,76 +1742,20 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 62,
-				"sampled": 62
+				"available": 22,
+				"sampled": 22
 			},
 			"places": {
-				"available": 316,
-				"sampled": 316
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 59,
+			"groups": 15,
 			"sources": {
-				"osm-ma": 57,
-				"gleif-lei": 5
+				"rendered-former-divisions": 19,
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 57,
-				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 12,
-				"sampled": 12
-			},
-			"places": {
-				"available": 30,
-				"sampled": 30
-			},
-			"groups": 5,
-			"sources": {
-				"gleif-lei": 12
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 12,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MD",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 329,
-				"sampled": 329
-			},
-			"places": {
-				"available": 121,
-				"sampled": 121
-			},
-			"groups": 329,
-			"sources": {
-				"osm-md": 329
-			},
-			"provenance": {
-				"verified_unseen": 329,
+				"verified_unseen": 22,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
@@ -3585,87 +1771,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 9,
-				"sampled": 9
-			},
-			"places": {
-				"available": 195,
-				"sampled": 195
-			},
-			"groups": 6,
-			"sources": {
-				"osm-me": 5,
-				"gleif-lei": 4
-			},
-			"provenance": {
-				"verified_unseen": 5,
-				"unseen_by_candidate": 0,
-				"known_overlap": 4,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
 				"available": 2,
 				"sampled": 2
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
 			"places": {
-				"available": 213,
-				"sampled": 213
+				"available": 1,
+				"sampled": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MH",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 2
 			},
-			"places": {
-				"available": 71,
-				"sampled": 71
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3677,194 +1799,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 13,
-				"sampled": 13
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 187,
-				"sampled": 187
-			},
-			"groups": 4,
-			"sources": {
-				"gleif-lei": 5,
-				"cordis": 8
-			},
-			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 0,
-				"known_overlap": 9,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ML",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 229,
-				"sampled": 229
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 5,
-				"sampled": 5
-			},
-			"places": {
-				"available": 224,
-				"sampled": 224
-			},
-			"groups": 5,
+			"groups": 1,
 			"sources": {
-				"osm-mm": 5
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 5,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MN",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 4,
-				"sampled": 4
-			},
-			"places": {
-				"available": 174,
-				"sampled": 174
-			},
-			"groups": 4,
-			"sources": {
-				"osm-mn": 4
-			},
-			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MO",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 34,
-				"sampled": 34
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MP",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 85,
-				"sampled": 85
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MQ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 6950,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
-			"sources": {
-				"ban-mq": 992,
-				"fr-finess-overseas": 3,
-				"fr-annuaire-education-overseas": 5
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MR",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 153,
-				"sampled": 153
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -3876,67 +1827,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 49,
-				"sampled": 49
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MT",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 41,
-				"sampled": 41
-			},
-			"places": {
-				"available": 153,
-				"sampled": 153
-			},
-			"groups": 21,
-			"sources": {
-				"cordis": 9,
-				"gleif-lei": 29,
-				"osm-mt": 3
-			},
-			"provenance": {
-				"verified_unseen": 8,
-				"unseen_by_candidate": 0,
-				"known_overlap": 33,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MU",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 1,
 				"sampled": 1
 			},
 			"places": {
-				"available": 160,
-				"sampled": 160
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": 1,
 			"sources": {
-				"gleif-lei": 1
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
 				"verified_unseen": 0,
@@ -3950,7 +1850,7 @@
 			}
 		},
 		{
-			"country": "MV",
+			"country": "MU",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -3959,17 +1859,17 @@
 				"sampled": 2
 			},
 			"places": {
-				"available": 60,
-				"sampled": 60
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 2,
+			"groups": 1,
 			"sources": {
-				"osm-mv": 2
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 2,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -3987,8 +1887,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 106,
-				"sampled": 106
+				"available": 2,
+				"sampled": 2
 			},
 			"groups": null,
 			"sources": null,
@@ -4004,25 +1904,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 4412,
-				"sampled": 1000
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 401,
-				"sampled": 401
+				"available": 11,
+				"sampled": 11
 			},
-			"groups": 993,
-			"sources": {
-				"invented-house-venue": 22,
-				"overture-latam": 943,
-				"gleif-lei": 35
-			},
-			"provenance": {
-				"verified_unseen": 946,
-				"unseen_by_candidate": 0,
-				"known_overlap": 54,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -4034,125 +1925,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 38,
-				"sampled": 38
-			},
-			"places": {
-				"available": 334,
-				"sampled": 334
-			},
-			"groups": 38,
-			"sources": {
-				"osm-my": 38
-			},
-			"provenance": {
-				"verified_unseen": 38,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "MZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1,
-				"sampled": 1
-			},
-			"places": {
-				"available": 219,
-				"sampled": 219
-			},
-			"groups": 1,
-			"sources": {
-				"osm-mz": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "NA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2,
-				"sampled": 2
-			},
-			"places": {
-				"available": 174,
-				"sampled": 174
-			},
-			"groups": 1,
-			"sources": {
-				"cordis": 2
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 2,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "NC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1184,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
-			"sources": {
-				"ban-nc": 990,
-				"fr-annuaire-education-overseas": 10
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "NE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 261,
-				"sampled": 261
+				"available": 19,
+				"sampled": 19
 			},
 			"groups": null,
 			"sources": null,
@@ -4163,7 +1941,7 @@
 			}
 		},
 		{
-			"country": "NF",
+			"country": "NA",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -4189,23 +1967,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 66,
-				"sampled": 66
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 52,
-				"sampled": 52
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 39,
+			"groups": 1,
 			"sources": {
-				"osm-ng": 22,
-				"cordis": 25,
-				"gleif-lei": 19
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 31,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 35,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -4223,8 +1999,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 212,
-				"sampled": 212
+				"available": 2,
+				"sampled": 2
 			},
 			"groups": null,
 			"sources": null,
@@ -4240,26 +2016,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 11322,
-				"sampled": 1000
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 3082,
-				"sampled": 1000
+				"available": 117,
+				"sampled": 117
 			},
-			"groups": 953,
+			"groups": 1,
 			"sources": {
-				"gleif-lei": 694,
-				"overture": 278,
-				"cordis": 12,
-				"codex-bare-postcode": 5,
-				"rendered-nl-postcode": 9,
-				"fragment-assay": 2
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 331,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 669,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -4273,26 +2044,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 2895,
-				"sampled": 1000
+				"available": 9,
+				"sampled": 9
 			},
 			"places": {
-				"available": 319,
-				"sampled": 319
+				"available": 10,
+				"sampled": 10
 			},
-			"groups": 764,
+			"groups": 8,
 			"sources": {
-				"gleif-lei": 795,
-				"overture": 91,
-				"fragment-no": 11,
-				"rendered-no-street-led": 42,
-				"fragment-assay": 51,
-				"cordis": 10
+				"rendered-former-divisions": 9
 			},
 			"provenance": {
-				"verified_unseen": 249,
+				"verified_unseen": 9,
 				"unseen_by_candidate": 0,
-				"known_overlap": 751,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -4306,23 +2072,16 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 8,
-				"sampled": 8
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 252,
-				"sampled": 252
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": 8,
-			"sources": {
-				"osm-np": 8
-			},
-			"provenance": {
-				"verified_unseen": 8,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -4334,37 +2093,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 1,
+				"sampled": 1
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 49,
-				"sampled": 49
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 1
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "NU",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
+			"provenance": {
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
 			},
-			"places": {
-				"available": 8,
-				"sampled": 8
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -4376,25 +2121,21 @@
 			"objective": true,
 			"requirementIDs": ["country-NZ"],
 			"addresses": {
-				"available": 1178,
-				"sampled": 1000
+				"available": 19,
+				"sampled": 19
 			},
 			"places": {
-				"available": 80,
-				"sampled": 80
+				"available": 423,
+				"sampled": 423
 			},
-			"groups": 738,
+			"groups": 11,
 			"sources": {
-				"gleif-lei": 482,
-				"fragment-assay": 386,
-				"invented-po-box-cedex": 68,
-				"invented-postal-unit-guideline": 50,
-				"cordis": 14
+				"rendered-prominent-places": 19
 			},
 			"provenance": {
-				"verified_unseen": 544,
+				"verified_unseen": 11,
 				"unseen_by_candidate": 0,
-				"known_overlap": 456,
+				"known_overlap": 8,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -4404,256 +2145,6 @@
 		},
 		{
 			"country": "OM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2,
-				"sampled": 2
-			},
-			"places": {
-				"available": 188,
-				"sampled": 188
-			},
-			"groups": 2,
-			"sources": {
-				"gleif-lei": 1,
-				"osm-om": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 1,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 18,
-				"sampled": 18
-			},
-			"places": {
-				"available": 176,
-				"sampled": 176
-			},
-			"groups": 7,
-			"sources": {
-				"gleif-lei": 14,
-				"cordis": 4
-			},
-			"provenance": {
-				"verified_unseen": 5,
-				"unseen_by_candidate": 0,
-				"known_overlap": 13,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 77,
-				"sampled": 77
-			},
-			"places": {
-				"available": 255,
-				"sampled": 255
-			},
-			"groups": 59,
-			"sources": {
-				"gleif-lei": 29,
-				"osm-pe": 48
-			},
-			"provenance": {
-				"verified_unseen": 48,
-				"unseen_by_candidate": 0,
-				"known_overlap": 29,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 96,
-				"sampled": 96
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 89,
-			"sources": {
-				"osm-pf": 77,
-				"fr-annuaire-education-overseas": 8,
-				"gleif-lei": 11
-			},
-			"provenance": {
-				"verified_unseen": 85,
-				"unseen_by_candidate": 0,
-				"known_overlap": 11,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 330,
-				"sampled": 330
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PH",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 53,
-				"sampled": 53
-			},
-			"places": {
-				"available": 274,
-				"sampled": 274
-			},
-			"groups": 49,
-			"sources": {
-				"osm-ph": 46,
-				"gleif-lei": 7
-			},
-			"provenance": {
-				"verified_unseen": 46,
-				"unseen_by_candidate": 0,
-				"known_overlap": 7,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2936,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 1,
-				"sampled": 1
-			},
-			"groups": 845,
-			"sources": {
-				"osm": 342,
-				"rendered-pk-register": 319,
-				"osm-pk": 338,
-				"cordis": 1
-			},
-			"provenance": {
-				"verified_unseen": 999,
-				"unseen_by_candidate": 0,
-				"known_overlap": 1,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1691,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 197,
-				"sampled": 197
-			},
-			"groups": 726,
-			"sources": {
-				"gleif-lei": 667,
-				"overture": 265,
-				"fragment-assay": 24,
-				"cordis": 44
-			},
-			"provenance": {
-				"verified_unseen": 338,
-				"unseen_by_candidate": 0,
-				"known_overlap": 662,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 29,
-				"sampled": 29
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PN",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -4674,375 +2165,26 @@
 			}
 		},
 		{
-			"country": "PR",
+			"country": "PE",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 54,
-				"sampled": 54
-			},
-			"places": {
-				"available": 270,
-				"sampled": 270
-			},
-			"groups": 52,
-			"sources": {
-				"osm-pr": 48,
-				"gleif-lei": 6
-			},
-			"provenance": {
-				"verified_unseen": 48,
-				"unseen_by_candidate": 0,
-				"known_overlap": 6,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 96,
-				"sampled": 96
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PT",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 6291,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 229,
-				"sampled": 229
-			},
-			"groups": 995,
-			"sources": {
-				"fragment-assay": 65,
-				"overture": 122,
-				"rendered-pt": 757,
-				"gleif-lei": 35,
-				"invented-house-venue": 9,
-				"cordis": 12
-			},
-			"provenance": {
-				"verified_unseen": 956,
-				"unseen_by_candidate": 0,
-				"known_overlap": 44,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PW",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 98,
-				"sampled": 98
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "PY",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2,
-				"sampled": 2
-			},
-			"places": {
-				"available": 174,
-				"sampled": 174
-			},
-			"groups": 1,
-			"sources": {
-				"gleif-lei": 2
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 2,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "QA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1,
-				"sampled": 1
-			},
-			"places": {
-				"available": 123,
-				"sampled": 123
-			},
-			"groups": 1,
-			"sources": {
-				"osm-qa": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "RE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 20900,
-				"sampled": 1000
+				"available": 4,
+				"sampled": 4
 			},
 			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"groups": 1000,
+			"groups": 3,
 			"sources": {
-				"ban-re": 995,
-				"fr-annuaire-education-overseas": 3,
-				"fr-finess-overseas": 2
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "RO",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2219,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 781,
-			"sources": {
-				"gleif-lei": 587,
-				"ro-retea-scolara": 349,
-				"cordis": 64
-			},
-			"provenance": {
-				"verified_unseen": 406,
-				"unseen_by_candidate": 0,
-				"known_overlap": 594,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "RS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 523,
-				"sampled": 523
-			},
-			"places": {
-				"available": 171,
-				"sampled": 171
-			},
-			"groups": 503,
-			"sources": {
-				"osm-rs": 494,
-				"cordis": 18,
-				"gleif-lei": 11
-			},
-			"provenance": {
-				"verified_unseen": 498,
-				"unseen_by_candidate": 0,
-				"known_overlap": 25,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "RU",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1934,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
-			"sources": {
-				"osm-ru": 1000
-			},
-			"provenance": {
-				"verified_unseen": 1000,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "RW",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 159,
-				"sampled": 159
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 11,
-				"sampled": 11
-			},
-			"places": {
-				"available": 285,
-				"sampled": 285
-			},
-			"groups": 7,
-			"sources": {
-				"gleif-lei": 8,
-				"osm-sa": 3
-			},
-			"provenance": {
-				"verified_unseen": 3,
-				"unseen_by_candidate": 0,
-				"known_overlap": 8,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SB",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 148,
-				"sampled": 148
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 5,
-				"sampled": 5
-			},
-			"places": {
-				"available": 63,
-				"sampled": 63
-			},
-			"groups": 2,
-			"sources": {
-				"gleif-lei": 5
+				"rendered-prominent-places": 4
 			},
 			"provenance": {
 				"verified_unseen": 4,
 				"unseen_by_candidate": 0,
-				"known_overlap": 1,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -5051,48 +2193,27 @@
 			}
 		},
 		{
-			"country": "SD",
+			"country": "PH",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
+				"available": 13,
+				"sampled": 13
+			},
+			"places": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 188,
-				"sampled": 188
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SE",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 3187,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 230,
-				"sampled": 230
-			},
-			"groups": 718,
+			"groups": 10,
 			"sources": {
-				"gleif-lei": 971,
-				"cordis": 29
+				"rendered-prominent-places": 3,
+				"rendered-former-divisions": 10
 			},
 			"provenance": {
-				"verified_unseen": 93,
+				"verified_unseen": 13,
 				"unseen_by_candidate": 0,
-				"known_overlap": 907,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -5101,190 +2222,7 @@
 			}
 		},
 		{
-			"country": "SG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 467,
-				"sampled": 467
-			},
-			"places": {
-				"available": 31,
-				"sampled": 31
-			},
-			"groups": 408,
-			"sources": {
-				"rendered-sg-register": 363,
-				"gleif-lei": 104
-			},
-			"provenance": {
-				"verified_unseen": 368,
-				"unseen_by_candidate": 0,
-				"known_overlap": 99,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SH",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 46,
-				"sampled": 46
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 819,
-				"sampled": 819
-			},
-			"places": {
-				"available": 158,
-				"sampled": 158
-			},
-			"groups": 718,
-			"sources": {
-				"overture": 558,
-				"rendered-si-bare-village": 59,
-				"fragment-assay": 35,
-				"gleif-lei": 145,
-				"cordis": 22
-			},
-			"provenance": {
-				"verified_unseen": 666,
-				"unseen_by_candidate": 0,
-				"known_overlap": 153,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SJ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 124,
-				"sampled": 124
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1394,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 133,
-				"sampled": 133
-			},
-			"groups": 891,
-			"sources": {
-				"rendered-sk": 739,
-				"fragment-assay": 50,
-				"cordis": 13,
-				"gleif-lei": 198
-			},
-			"provenance": {
-				"verified_unseen": 792,
-				"unseen_by_candidate": 0,
-				"known_overlap": 208,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 156,
-				"sampled": 156
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 8,
-				"sampled": 8
-			},
-			"places": {
-				"available": 53,
-				"sampled": 53
-			},
-			"groups": 4,
-			"sources": {
-				"gleif-lei": 8
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 8,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SN",
+			"country": "PL",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -5293,12 +2231,12 @@
 				"sampled": 2
 			},
 			"places": {
-				"available": 215,
-				"sampled": 215
+				"available": 18,
+				"sampled": 18
 			},
-			"groups": 2,
+			"groups": 1,
 			"sources": {
-				"osm-sn": 2
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
 				"verified_unseen": 2,
@@ -5312,108 +2250,80 @@
 			}
 		},
 		{
-			"country": "SO",
+			"country": "PR",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 237,
-				"sampled": 237
+				"available": 17,
+				"sampled": 17
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SR",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 133,
-				"sampled": 133
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 164,
-				"sampled": 164
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ST",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 143,
-				"sampled": 143
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "SV",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 15,
-				"sampled": 15
-			},
-			"places": {
-				"available": 190,
-				"sampled": 190
-			},
-			"groups": 15,
+			"groups": 1,
 			"sources": {
-				"osm-sv": 15
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 15,
+				"verified_unseen": 0,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PS",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
+				"available": 14,
+				"sampled": 14
+			},
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "PT",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 4,
+				"sampled": 4
+			},
+			"places": {
+				"available": 5,
+				"sampled": 5
+			},
+			"groups": 2,
+			"sources": {
+				"rendered-prominent-places": 4
+			},
+			"provenance": {
+				"verified_unseen": 4,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
@@ -5424,7 +2334,7 @@
 			}
 		},
 		{
-			"country": "SX",
+			"country": "QA",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -5433,8 +2343,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 66,
-				"sampled": 66
+				"available": 9,
+				"sampled": 9
 			},
 			"groups": null,
 			"sources": null,
@@ -5445,91 +2355,35 @@
 			}
 		},
 		{
-			"country": "SY",
+			"country": "RS",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 301,
-				"sampled": 301
+				"available": 5,
+				"sampled": 5
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 1,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
 			}
 		},
 		{
-			"country": "SZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 166,
-				"sampled": 166
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 48,
-				"sampled": 48
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TD",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 280,
-				"sampled": 280
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TF",
+			"country": "SA",
 			"status": "experimental",
 			"objective": false,
 			"requirementIDs": [],
@@ -5550,6 +2404,238 @@
 			}
 		},
 		{
+			"country": "SD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1,
+			"sources": {
+				"rendered-former-divisions": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SE",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 2,
+				"sampled": 2
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SG",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 1,
+				"sampled": 1
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SI",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 9,
+				"sampled": 9
+			},
+			"places": {
+				"available": 3,
+				"sampled": 3
+			},
+			"groups": 4,
+			"sources": {
+				"rendered-prominent-places": 4,
+				"rendered-former-divisions": 5
+			},
+			"provenance": {
+				"verified_unseen": 8,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SK",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 2,
+			"sources": {
+				"rendered-prominent-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 1,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SN",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 2,
+				"sampled": 2
+			},
+			"places": {
+				"available": 1,
+				"sampled": 1
+			},
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 2
+			},
+			"provenance": {
+				"verified_unseen": 2,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SO",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 6,
+				"sampled": 6
+			},
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "SV",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 0,
+				"sampled": 0
+			},
+			"places": {
+				"available": 5,
+				"sampled": 5
+			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
+			"country": "TD",
+			"status": "experimental",
+			"objective": false,
+			"requirementIDs": [],
+			"addresses": {
+				"available": 3,
+				"sampled": 3
+			},
+			"places": {
+				"available": 0,
+				"sampled": 0
+			},
+			"groups": 1,
+			"sources": {
+				"rendered-prominent-places": 3
+			},
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
+			"evaluation": {
+				"status": "unqualified",
+				"reasons": ["experimental: no registered requirement"]
+			}
+		},
+		{
 			"country": "TG",
 			"status": "experimental",
 			"objective": false,
@@ -5559,8 +2645,8 @@
 				"sampled": 0
 			},
 			"places": {
-				"available": 152,
-				"sampled": 152
+				"available": 3,
+				"sampled": 3
 			},
 			"groups": null,
 			"sources": null,
@@ -5576,171 +2662,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 72,
-				"sampled": 72
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 245,
-				"sampled": 245
-			},
-			"groups": 70,
-			"sources": {
-				"osm-th": 66,
-				"gleif-lei": 6
-			},
-			"provenance": {
-				"verified_unseen": 66,
-				"unseen_by_candidate": 0,
-				"known_overlap": 6,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TJ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1,
-				"sampled": 1
-			},
-			"places": {
-				"available": 177,
-				"sampled": 177
+				"available": 0,
+				"sampled": 0
 			},
 			"groups": 1,
 			"sources": {
-				"osm-tj": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TL",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 111,
-				"sampled": 111
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 215,
-				"sampled": 215
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TN",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 7,
-				"sampled": 7
-			},
-			"places": {
-				"available": 148,
-				"sampled": 148
-			},
-			"groups": 5,
-			"sources": {
-				"cordis": 5,
-				"osm-tn": 2
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
 				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 5,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TO",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 45,
-				"sampled": 45
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TR",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 21,
-				"sampled": 21
-			},
-			"places": {
-				"available": 336,
-				"sampled": 336
-			},
-			"groups": 10,
-			"sources": {
-				"cordis": 7,
-				"gleif-lei": 14
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 21,
+				"known_overlap": 0,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -5754,40 +2690,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 154,
-				"sampled": 154
-			},
-			"places": {
-				"available": 145,
-				"sampled": 145
-			},
-			"groups": 154,
-			"sources": {
-				"osm-tt": 154
-			},
-			"provenance": {
-				"verified_unseen": 154,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "TV",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 43,
-				"sampled": 43
+				"available": 1,
+				"sampled": 1
 			},
 			"groups": null,
 			"sources": null,
@@ -5803,19 +2711,19 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 11,
-				"sampled": 11
+				"available": 1,
+				"sampled": 1
 			},
 			"places": {
-				"available": 270,
-				"sampled": 270
+				"available": 13,
+				"sampled": 13
 			},
-			"groups": 11,
+			"groups": 1,
 			"sources": {
-				"fragment-assay": 11
+				"rendered-prominent-places": 1
 			},
 			"provenance": {
-				"verified_unseen": 11,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0
@@ -5831,21 +2739,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 6,
-				"sampled": 6
+				"available": 2,
+				"sampled": 2
 			},
 			"places": {
-				"available": 215,
-				"sampled": 215
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 6,
+			"groups": 1,
 			"sources": {
-				"osm-tz": 6
+				"rendered-prominent-places": 2
 			},
 			"provenance": {
-				"verified_unseen": 6,
+				"verified_unseen": 1,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -5859,74 +2767,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 93,
-				"sampled": 93
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 282,
-				"sampled": 282
-			},
-			"groups": 88,
-			"sources": {
-				"osm-ua": 84,
-				"gleif-lei": 4,
-				"cordis": 5
-			},
-			"provenance": {
-				"verified_unseen": 84,
-				"unseen_by_candidate": 0,
-				"known_overlap": 9,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "UG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 2,
-				"sampled": 2
-			},
-			"places": {
-				"available": 176,
-				"sampled": 176
-			},
-			"groups": 1,
-			"sources": {
-				"cordis": 2
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 2,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "UM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
-			"places": {
-				"available": 41,
-				"sampled": 41
+			"groups": 2,
+			"sources": {
+				"rendered-prominent-places": 3
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
+			"provenance": {
+				"verified_unseen": 3,
+				"unseen_by_candidate": 0,
+				"known_overlap": 0,
+				"unknown": 0
+			},
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -5938,30 +2795,19 @@
 			"objective": true,
 			"requirementIDs": ["country-US"],
 			"addresses": {
-				"available": 2197514,
-				"sampled": 1000
+				"available": 0,
+				"sampled": 0
 			},
 			"places": {
-				"available": 1324,
-				"sampled": 1000
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 1000,
-			"sources": {
-				"usgov-nad": 791,
-				"usgov-nppes": 90,
-				"tiger": 107,
-				"state-tx-notaries": 11,
-				"gleif-lei": 1
-			},
-			"provenance": {
-				"verified_unseen": 28,
-				"unseen_by_candidate": 0,
-				"known_overlap": 972,
-				"unknown": 0
-			},
+			"groups": null,
+			"sources": null,
+			"provenance": null,
 			"evaluation": {
-				"status": "not_evaluated",
-				"reasons": ["no verdict supplied"]
+				"status": "insufficient_evidence",
+				"reasons": ["no sampled address rows (0 available)"]
 			}
 		},
 		{
@@ -5970,90 +2816,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 160,
-				"sampled": 160
-			},
-			"places": {
-				"available": 185,
-				"sampled": 185
-			},
-			"groups": 154,
-			"sources": {
-				"ide-uy": 150,
-				"gleif-lei": 10
-			},
-			"provenance": {
-				"verified_unseen": 150,
-				"unseen_by_candidate": 0,
-				"known_overlap": 10,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "UZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 4,
-				"sampled": 4
-			},
-			"places": {
-				"available": 226,
-				"sampled": 226
-			},
-			"groups": 4,
-			"sources": {
-				"osm-uz": 4
-			},
-			"provenance": {
-				"verified_unseen": 4,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "VA",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 37,
-				"sampled": 37
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "VC",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 55,
-				"sampled": 55
+				"available": 7,
+				"sampled": 7
 			},
 			"groups": null,
 			"sources": null,
@@ -6069,68 +2837,12 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 6,
-				"sampled": 6
-			},
-			"places": {
-				"available": 365,
-				"sampled": 365
-			},
-			"groups": 6,
-			"sources": {
-				"osm-ve": 6
-			},
-			"provenance": {
-				"verified_unseen": 6,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "VG",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 23,
-				"sampled": 23
-			},
-			"places": {
-				"available": 32,
-				"sampled": 32
-			},
-			"groups": 10,
-			"sources": {
-				"gleif-lei": 23
-			},
-			"provenance": {
-				"verified_unseen": 0,
-				"unseen_by_candidate": 0,
-				"known_overlap": 23,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "VI",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 0,
 				"sampled": 0
 			},
 			"places": {
-				"available": 129,
-				"sampled": 129
+				"available": 11,
+				"sampled": 11
 			},
 			"groups": null,
 			"sources": null,
@@ -6146,171 +2858,23 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 448,
-				"sampled": 448
+				"available": 3,
+				"sampled": 3
 			},
 			"places": {
-				"available": 31,
-				"sampled": 31
+				"available": 0,
+				"sampled": 0
 			},
-			"groups": 228,
+			"groups": 2,
 			"sources": {
-				"osm": 226,
-				"osm-vn": 222
+				"rendered-prominent-places": 3
 			},
 			"provenance": {
-				"verified_unseen": 448,
+				"verified_unseen": 2,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "VU",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 158,
-				"sampled": 158
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "WF",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 4,
-				"sampled": 4
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "WS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 116,
-				"sampled": 116
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "XK",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 149,
-				"sampled": 149
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "XS",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 30,
-				"sampled": 30
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "XX",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 74,
-				"sampled": 74
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "XZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 0,
-				"sampled": 0
-			},
-			"places": {
-				"available": 21,
-				"sampled": 21
-			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
 			"evaluation": {
 				"status": "unqualified",
 				"reasons": ["experimental: no registered requirement"]
@@ -6322,44 +2886,21 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 0,
-				"sampled": 0
+				"available": 5,
+				"sampled": 5
 			},
 			"places": {
-				"available": 217,
-				"sampled": 217
+				"available": 3,
+				"sampled": 3
 			},
-			"groups": null,
-			"sources": null,
-			"provenance": null,
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "YT",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 3398,
-				"sampled": 1000
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 1000,
+			"groups": 3,
 			"sources": {
-				"ban-yt": 987,
-				"fr-annuaire-education-overseas": 8,
-				"fr-finess-overseas": 5
+				"rendered-prominent-places": 5
 			},
 			"provenance": {
-				"verified_unseen": 1000,
+				"verified_unseen": 4,
 				"unseen_by_candidate": 0,
-				"known_overlap": 0,
+				"known_overlap": 1,
 				"unknown": 0
 			},
 			"evaluation": {
@@ -6373,105 +2914,19 @@
 			"objective": false,
 			"requirementIDs": [],
 			"addresses": {
-				"available": 110,
-				"sampled": 110
+				"available": 5,
+				"sampled": 5
 			},
 			"places": {
-				"available": 238,
-				"sampled": 238
-			},
-			"groups": 42,
-			"sources": {
-				"gleif-lei": 108,
-				"cordis": 2
-			},
-			"provenance": {
-				"verified_unseen": 14,
-				"unseen_by_candidate": 0,
-				"known_overlap": 96,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ZM",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 1,
-				"sampled": 1
-			},
-			"places": {
-				"available": 193,
-				"sampled": 193
-			},
-			"groups": 1,
-			"sources": {
-				"osm-zm": 1
-			},
-			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 0,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ZW",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
 				"available": 4,
 				"sampled": 4
 			},
-			"places": {
-				"available": 168,
-				"sampled": 168
-			},
-			"groups": 2,
+			"groups": 3,
 			"sources": {
-				"osm-zw": 1,
-				"cordis": 3
+				"rendered-former-divisions": 5
 			},
 			"provenance": {
-				"verified_unseen": 1,
-				"unseen_by_candidate": 0,
-				"known_overlap": 3,
-				"unknown": 0
-			},
-			"evaluation": {
-				"status": "unqualified",
-				"reasons": ["experimental: no registered requirement"]
-			}
-		},
-		{
-			"country": "ZZ",
-			"status": "experimental",
-			"objective": false,
-			"requirementIDs": [],
-			"addresses": {
-				"available": 34,
-				"sampled": 34
-			},
-			"places": {
-				"available": 0,
-				"sampled": 0
-			},
-			"groups": 34,
-			"sources": {
-				"fragment-assay": 34
-			},
-			"provenance": {
-				"verified_unseen": 34,
+				"verified_unseen": 5,
 				"unseen_by_candidate": 0,
 				"known_overlap": 0,
 				"unknown": 0

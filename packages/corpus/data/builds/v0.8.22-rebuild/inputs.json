@@ -1,0 +1,37 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, or to $MAILWOMAN_CACHE_ROOT when the entry states `\"root\": \"cache\"`, resolved at launch.",
+	"$draft-note": "The input record for corpus v0.8.22, built 2026-11-21 from origin/main caf9791c52. As for v0.8.20 and v0.8.21, the rebuilt adapter source and the re-rendered and new recipe outputs replace or join their files in an overlay on v0.8.21-retention-overlay (`--replace-source`), recorded in packages/corpus/data/builds/v0.8.22-overlay/OVERLAY_PLAN.json, and the overlay is then re-split under the evaluation-group policy with `evaluation-groups.v0.8.22-confirm.json`. The overlay rebuilds one adapter and renders three recipe outputs. A base build would rebuild every unchanged adapter, usgov-nad among them, and its rows would read the same text as v0.8.21's.",
+	"$wof-note": "Only `wof-admin` is rebuilt. Its adapter writes a dependent locality only beside its parent locality (a794914c, #3173), and in a country whose postal towns are another WOF placetype (`postalTownPlacetypeForCountry`, New Zealand's `localadmin`) it writes the town as the locality and a WOF locality inside it as a dependent locality (92cb4e1ccb, #3193). It samples as v0.8.20-rebuild did, with the same seed, cells and comparison cells, and writes its cell counts and comparison rows beside this build. `wof-postalcode`'s code and options are unchanged since v0.8.20, so its v0.8.20 run is carried.",
+	"$unchanged-note": "Every other adapter source of v0.8.21-retention-overlay is carried. The cycle's other corpus changes don't rebuild an adapter: the NAD address key (8490000348, #3125) is applied by the re-split through `evaluation-groups.v0.8.22.json`; the register merges (a6f4939873, f7904900bf) add register rows and decisions that the overlay's source-rights admission reads, and add no rows; caf9791c52 changes the served US address layer, not a corpus source.",
+	"$recipe-outputs-note": "This file names adapters only: `readBuildInputs` reads `adapters` and nothing else. The recipe outputs this corpus adds are recorded in the overlay plan's `$recipe-outputs`: `rendered-de` re-rendered for the Ortsteil hamlet label (03d364fe3e, #3195), `rendered-former-divisions` (#3200) and `rendered-prominent-places` (#3156).",
+	"corpusVersion": "v0.8.22-rebuild",
+	"adapters": {
+		"wof-admin": {
+			"inputPath": "src/wof-repos",
+			"sample": {
+				"cellFloor": 5,
+				"rowsPerCountry": 2500,
+				"seed": 20260922,
+				"countsFile": "corpus/versioned/v0.8.22-rebuild/wof-admin-cell-counts.json",
+				"compareCells": [
+					"FR|country region subregion",
+					"FR|country region subregion dependent_locality",
+					"GB|country region",
+					"IR|country locality",
+					"IR|country region locality",
+					"IR|country subregion locality",
+					"IR|region locality",
+					"IR|region subregion locality",
+					"KR|country region locality",
+					"KR|region locality",
+					"KR|region subregion locality",
+					"KR|subregion locality",
+					"KZ|country locality",
+					"US|region dependent_locality"
+				],
+				"comparisonFile": "corpus/versioned/v0.8.22-rebuild/wof-admin-comparison-cells.jsonl",
+				"heldOutPerCell": 60
+			}
+		}
+	}
+}
