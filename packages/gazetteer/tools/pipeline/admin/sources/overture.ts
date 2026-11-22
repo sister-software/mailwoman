@@ -268,8 +268,8 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 
-	// The Overture step writes rows and lists gaps in row order, and DuckDB returns rows in an order
-	// that varies with its 4 threads, so the query fixes the order by division id.
+	// The Overture step writes rows and lists gaps in row order, and DuckDB returns rows in
+	// an order that varies with its 4 threads, so the query fixes the order by division id.
 	const result = await con.runAndReadAll(/*sql*/ `
 		WITH area AS (
 			SELECT division_id,
@@ -392,8 +392,8 @@ export interface OvertureDivisionsResult {
  * - A division whose parent division matched a WOF record takes that record as its `parent_id`.
  *
  * That parent link stays because it is a reference from an Overture row to a WOF id.
- * It is stored on the Overture row, and the WOF row's own columns, names and ancestry are
- * the same as in a build without the Overture step, so the WOF part keeps its unmodified form.
+ * It is stored on the Overture row, and the WOF row's own columns, names and ancestry are the
+ * same as in a build without the Overture step, so the WOF part keeps its unmodified form.
  *
  * It is what lets a division sit inside WOF's hierarchy, so region scoping and containment answer for it.
  *
@@ -452,7 +452,7 @@ export async function writeOvertureDivisions(
 
 	db.exec("BEGIN")
 
-	const result: OvertureDivisionsResult ={ written: 0, matched: 0, wofParents: 0, wikidata: 0 }
+	const result: OvertureDivisionsResult = { written: 0, matched: 0, wofParents: 0, wikidata: 0 }
 
 	for (const r of rows) {
 		const gers = r.id

@@ -74,7 +74,7 @@ export interface CandidateManifestInput {
 	version: string
 	createdAt: string
 	/**
-	 * Each source's row and place counts on the table this build wrote, from {@linkcode countRowsBySource}.
+	 * Each source's row and place counts on the table this build wrote, from {@linkcode tallyRowsBySource}.
 	 *
 	 * A caller that passes none records `rows-by-source=unmeasured` rather than a
 	 * set of zeroes, because a later reader cannot tell a source that contributed
@@ -160,7 +160,7 @@ export interface SourceRowCount {
  * place ids from, so a range added there reaches this census without a second list.
  * Rows below the first base contain Who's On First's own ids and are reported under `wof`.
  */
-export function countRowsBySource(candidateDBPath: PathBuilderLike): SourceRowCount[] {
+export function tallyRowsBySource(candidateDBPath: PathBuilderLike): SourceRowCount[] {
 	using db = new DatabaseClient<layerschemadatabase>(candidateDBPath, { readOnly: true })
 
 	if (!tableExists(db, "candidate")) return []

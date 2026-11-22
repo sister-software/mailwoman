@@ -180,8 +180,8 @@ export async function buildImportance(options: BuildImportanceOptions): Promise<
 		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
 		// A Wikidata id an Overture division shares with a WOF record would otherwise join
 		// one fan-out group, where the division could take the record's score away.
-		// Each part resolves its own group, so the WOF and GeoNames places get the
-		// scores a build without the Overture divisions gives them.
+		// Each part resolves its own group, so the WOF and GeoNames places get the scores
+		// a build without the Overture divisions gives them.
 		const grouped = new Map<string, { wikidataID: string; candidates: FanoutCandidate[] }>()
 
 		for (const row of rows) {

@@ -21,7 +21,11 @@ export const spec = {
 	options: {
 		candidate: { type: "string", description: "Built candidate gazetteer to copy the part out of.", required: true },
 		out: { type: "string", description: "Output database (a staging path).", required: true },
-		release: { type: "string", description: "Overture release the admin gazetteer read its divisions from.", required: true },
+		release: {
+			type: "string",
+			description: "Overture release the admin gazetteer read its divisions from.",
+			required: true,
+		},
 		"part-version": {
 			type: "string",
 			description: "Version of the part, such as the gazetteer version.",

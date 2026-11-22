@@ -116,7 +116,8 @@ export function refuseNicknamesOfNamesakes(
 	// An Overture division is never a namesake.
 	// The gazetteer is a Collective Database whose Overture Divisions part is ODbL, and a WOF
 	// or GeoNames alias refused because of a division's row would be that part altering the rest.
-	// The Overture step writes no nickname kind on a division, so no Overture row holds a nickname to refuse either.
+	// The Overture step writes no nickname kind on a division, so no Overture
+	// row holds a nickname to refuse either.
 	out.exec(
 		`INSERT OR IGNORE INTO namesake_key
 		 SELECT cs.name_key FROM cand_stage cs

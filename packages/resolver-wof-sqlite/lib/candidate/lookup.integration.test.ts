@@ -391,7 +391,7 @@ describe("WOFCandidateTableLookup", () => {
 		expect(hit?.country).toBe("CH")
 	})
 
-	test("folds postcodes in; resolves a real ZIP, drops the placeholder 0,0 row", async () => {
+	test("adds postcode rows; resolves a real ZIP, drops the placeholder 0,0 row", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const [zip] = await lk.findPlace({ text: "60601", placetype: "postalcode" })

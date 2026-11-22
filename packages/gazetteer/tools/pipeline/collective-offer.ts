@@ -12,9 +12,10 @@
  *   so a published gazetteer must offer it in machine-readable form (ODbL 4.6),
  *   and the rest of the file keeps its own terms (ODbL 4.5(a)).
  *
- *   The part qualifies because no other row depends on it: the Overture step leaves each WOF record as
- *   WOF wrote it (`admin/sources/overture.ts`), and the candidate build's cross-row passes read an Overture
- *   row only to change another Overture row (`@mailwoman/resolver-wof-sqlite/build/candidate`).
+ *   The part qualifies because no other row depends on it: the Overture step leaves
+ *   each WOF record as WOF wrote it (`admin/sources/overture.ts`), and the candidate
+ *   build's cross-row passes read an Overture row only to change another Overture
+ *   row (`@mailwoman/resolver-wof-sqlite/build/candidate`).
  *
  *   This module copies the part out of a built candidate, unchanged, into a sealed
  *   database stamped with the ODbL terms and the Overture credit.
@@ -52,8 +53,7 @@ export const OVERTURE_PART_ATTRIBUTION = "© OpenStreetMap contributors, Overtur
 /**
  * Where a published gazetteer offers its Overture Divisions part under ODbL 4.6.
  */
-export const OVERTURE_PART_OFFER_URL =
-	"https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions"
+export const OVERTURE_PART_OFFER_URL = "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions"
 
 /**
  * The statement a gazetteer manifest makes about its Overture Divisions part.
@@ -91,7 +91,8 @@ export interface BuildOverturePartOptions {
 	 */
 	out: PathBuilderLike
 	/**
-	 * The Overture release the candidate's admin gazetteer read its divisions from, recorded as the part's source vintage.
+	 * The Overture release the candidate's admin gazetteer read its divisions from,
+	 * recorded as the part's source vintage.
 	 */
 	overtureRelease: string
 	/**
@@ -122,7 +123,8 @@ export interface BuildOverturePartResult {
  * Each table keeps the candidate's DDL, so a reader of `candidate.db` reads the part the same way.
  *
  * @throws When the candidate has no `overture_wof_match` table.
- * Such a candidate was built before the Overture step kept the part apart, so it holds no independent part to offer.
+ * Such a candidate was built before the Overture step kept the part apart,
+ * so it holds no independent part to offer.
  */
 export async function buildOverturePart(options: BuildOverturePartOptions): Promise<BuildOverturePartResult> {
 	const phase = options.onPhase ?? (() => {})

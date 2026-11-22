@@ -79,8 +79,8 @@ export async function buildAncestorsSidecar(ctx: {
 		}
 
 		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
-		// The interval tree links a place only to a parent of its own part, so an Overture
-		// division under a WOF record leaves that record's labels as they are without the Overture divisions.
+		// The interval tree links a place only to a parent of its own part, so an Overture division
+		// under a WOF record leaves that record's labels as they are without the Overture divisions.
 		// The closure rows above keep every edge, and containment across the parts
 		// reads them instead of the labels.
 		const childOverture = isOverturePartID(childID)

@@ -5,7 +5,7 @@
  * @file The per-place record every candidate-staging pass writes its rows from.
  *
  *   Pass 1 reduces each current `spr` row to one {@link PlaceAttrs}. Every later pass (alias bags,
- *   region abbreviations, country display names, the currency backfill, the extract folds) discovers
+ *   region abbreviations, country display names, the currency backfill, the extract rows) discovers
  *   additional name keys for a place already in that map and stages a row against the same record.
  *   That keeps each candidate row denormalized without re-reading the source. A pass therefore needs
  *   exactly four values: the key, place, row ID, plus a flag for the place's canonical name.
@@ -45,7 +45,7 @@ export interface PlaceAttrs {
  * Stages one candidate row with a normalized name key, place, source ID,
  * plus a canonical-name flag (`is_primary`).
  *
- * `sid` is passed separately rather than read off the place because an extract fold
+ * `sid` is passed separately rather than read off the place because the extract-rows pass
  * and the alias pass stage rows for ids the admin `attrs` map never held.
  */
 export type StageRow = (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void

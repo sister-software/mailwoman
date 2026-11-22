@@ -41,7 +41,7 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	candidateLayerManifest,
-	countRowsBySource,
+	tallyRowsBySource,
 	type InputTerms,
 	inputsRefusingPublication,
 	readInputTerms,
@@ -334,7 +334,7 @@ export async function buildCandidate(
 		// Counted before the seal, because an upstream release is pruned from its bucket
 		// and a source's share of the published artifact is then unrecoverable from anything
 		// but the artifact's own manifest.
-		const rowsBySource = countRowsBySource(tmp)
+		const rowsBySource = tallyRowsBySource(tmp)
 
 		opts.onProgress?.(
 			"layer-manifest",
