@@ -15,6 +15,9 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
  *
  * AU's extract is built from G-NAF rather than OSM and lives in this provider's home.
  */
+// country-branch: the list records which countries have a built extract,
+// a fact about the data root's contents.
+// A read of the layer catalog's OpenStreetMap address-point artifacts would replace it.
 const OSM_EXTRACT_COUNTRIES = ["gb", "nz", "au", "fr", "de", "nl", "ca", "pl", "vn", "id", "pk"] as const
 
 const registry = createStreetLocaleRegistry(

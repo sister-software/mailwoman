@@ -697,6 +697,21 @@ source published the facts under CC0 or another open-data license. The recipe cr
 case, punctuation, accent, country-tail, and left-context forms while keeping each reviewed
 postcode-to-place join unchanged.
 
+## `region-slot-second-level.json` — countries whose rows write a second-level name in the region slot (#2898)
+
+`packages/corpus/lib/tools/region-slot-census.run.ts` writes the file when it is run with `--table`. For
+every country it counts a corpus's base rows that have a region (`withRegion`), and those whose region
+is a second-level (WOF `county`) name of the country and no region name of it (`secondLevelOnly`). The
+file's `manifest` field records the corpus manifest the counts were taken from.
+
+`secondLevelAdmitted` in `packages/corpus/lib/build/region-names.ts` reads the table and decides which
+countries the `region:unknown` rule admits second-level names for.
+
+To check the file, run the tool against the manifest the file records, with `--out` for the per-country
+detail, and compare the counts. The tool reads the WOF admin database through `wofDatabasePath`, so a
+rerun against a newer gazetteer build can move a count. An edit by hand is a corruption: the counts are
+a measurement of one corpus.
+
 ## `wof-refuted-parents.json` — WOF records whose point lies in another parent's polygon (#2857)
 
 The list comes from a point-in-polygon check of every live WOF admin record in the local GeoJSON

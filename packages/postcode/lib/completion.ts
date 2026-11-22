@@ -19,7 +19,7 @@ import { createRecognizer, type PrefixStatus } from "@mailwoman/recognizer"
 
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import type { PostcodePrefixIndexResolver } from "#prefix/index"
+import type { PostcodePrefixIndexResolver } from "#prefix"
 import { type PostalKindsOfCountry, postal, postalKindsOfCountry } from "#recognizer/postal"
 
 /**

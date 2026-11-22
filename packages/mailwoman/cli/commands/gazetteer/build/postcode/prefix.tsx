@@ -19,7 +19,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { allKeyed } from "@mailwoman/core/promises"
 import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
-import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix/index"
+import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -121,7 +121,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			dataRoot: import("@mailwoman/core/data-root"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 			utils: import("@mailwoman/core/utils"),
-			index: import("@mailwoman/postcode/prefix/index"),
+			index: import("@mailwoman/postcode/prefix"),
 			prefix: import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix"),
 		})
 

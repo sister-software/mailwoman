@@ -224,7 +224,9 @@ export const countryLiteralSetsCheck: RepoCheck = {
 	async run(context) {
 		const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 			.map((path) => relative(context.repoRoot, path))
-			.filter((file) => /\.tsx?$/u.test(file) && !/\/test\/|\.test\.tsx?$/u.test(file))
+			// A `.generated.ts` file is written from tables in a country home, and the check reads those tables there.
+			// A reason comment in generated output would be removed by the next generation.
+			.filter((file) => /\.tsx?$/u.test(file) && !/\/test\/|\.test\.tsx?$|\.generated\.tsx?$/u.test(file))
 
 		const files: { file: string; text: string }[] = []
 

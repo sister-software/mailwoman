@@ -15,6 +15,9 @@ import { isNationalAddressPointArtifact } from "#geocode/osm-layers"
 /**
  * The countries with a national address-point database built from Overture, in ISO 3166-1 alpha-2.
  */
+// country-branch: the list records which countries have a built database,
+// a fact about the data root's contents.
+// A read of the layer catalog's national address-point artifacts would replace it.
 const NATIONAL_OVERTURE_COUNTRIES = ["tw", "it", "es"] as const
 
 const registry = createStreetLocaleRegistry(

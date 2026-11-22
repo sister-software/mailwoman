@@ -9,7 +9,7 @@ import { describe, expect, test } from "vitest"
 import { canComplete } from "#completion"
 import { acceptPostcode } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix/index"
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix"
 
 const COUNTRIES = Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
 
