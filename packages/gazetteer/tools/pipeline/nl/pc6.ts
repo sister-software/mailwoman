@@ -70,7 +70,7 @@ export async function buildNLPC6Database(
 	} = await allKeyed({
 		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
-		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/schema/unified"),
 	})
 
 	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv"))

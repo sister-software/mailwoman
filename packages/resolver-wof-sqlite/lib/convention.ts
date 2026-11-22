@@ -7,7 +7,7 @@
  *   The strategy implementations live in `lookup.ts` and are registered by name.
  */
 
-import type { FindPlaceQuery, PlaceCandidate } from "#types"
+import type { FindPlaceQuery, PlaceCandidate } from "#lookup/types"
 
 /**
  * Soft-scoring weights for the `postcode_area_resolution` strategy: `pc·S_pc + name·S_name + pop·S_pop`.

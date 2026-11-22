@@ -10,7 +10,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { WOFPostcodeLookup } from "#postcode-point-lookup"
+import { WOFPostcodeLookup } from "#lookup/postcode-point"
 import type { WOFDatabase } from "#schema"
 
 /**

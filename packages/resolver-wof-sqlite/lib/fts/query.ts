@@ -5,7 +5,7 @@
  * Query shaping for the FTS5 lookup: placetype normalization and the match-expression sanitizer.
  */
 
-import type { FindPlaceQuery, WOFPlacetype } from "#types"
+import type { FindPlaceQuery, WOFPlacetype } from "#lookup/types"
 
 export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | null {
 	if (!p) return null

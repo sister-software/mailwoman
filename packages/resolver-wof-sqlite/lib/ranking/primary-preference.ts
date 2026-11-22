@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   The primary-name preference re-rank: a place whose primary name is the query outranks a place
+ *   that lists it as an alias, unless the alias row's population exceeds it by a stated log10 margin.
+ */
+
 import { latLonBoundsContain } from "@mailwoman/spatial/bbox"
 
 import type { CandidateTable } from "#candidate/schema"

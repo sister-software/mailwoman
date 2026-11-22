@@ -87,7 +87,7 @@ export interface AddressPointLookup {
  * One interpolated coordinate estimate, never an exact situs point.
  * `uncertaintyM` states the estimate's radius in meters.
  *
- * A structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/interpolation.ts`.
+ * A structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/street/interpolation.ts`.
  * Keep this a subset of that shape so the concrete `StreetInterpolator`
  * and `AddressPointInterpolator` satisfy {@link InterpolationLookup} with no adapter,
  * following the {@link AddressPointHit} precedent.

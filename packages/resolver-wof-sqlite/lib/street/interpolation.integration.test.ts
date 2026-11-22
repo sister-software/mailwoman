@@ -5,8 +5,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { StreetInterpolator } from "#interpolation"
 import { type StreetSegmentDatabase, writeInterpCalibration } from "#street"
+import { StreetInterpolator } from "#street/interpolation"
 
 interface SeedSegment {
 	street_norm: string

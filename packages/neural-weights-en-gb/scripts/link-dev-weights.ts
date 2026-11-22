@@ -42,7 +42,7 @@ import {
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
-} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+} from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 
 /**
  * Secondary pair sources.

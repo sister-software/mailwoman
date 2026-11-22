@@ -117,7 +117,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		dataRoot: import("@mailwoman/core/data-root"),
 		paths: import("@mailwoman/core/paths"),
 		paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
-		importanceSource: import("@mailwoman/resolver-wof-sqlite/importance-source"),
+		importanceSource: import("@mailwoman/resolver-wof-sqlite/schema/importance-source"),
 	})
 
 	const dataRoot = dataRootPath()

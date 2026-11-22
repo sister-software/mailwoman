@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   The postcode lookup over gazetteer databases: the country and point of each
+ *   `postalcode` place a postcode spells.
+ */
+
 import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

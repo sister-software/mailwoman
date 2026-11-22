@@ -8,7 +8,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

@@ -16,7 +16,7 @@
  *   and the emission step `buildCandidate` runs before sealing.
  *
  *   The schema and canonical read/write functions live in
- *   `@mailwoman/resolver-wof-sqlite/coverage-manifest-schema`
+ *   `@mailwoman/resolver-wof-sqlite/candidate/coverage-manifest`
  *   (the pipeline convention: canonical package functions, composed here).
  *
  *   The shipped candidate gazetteer is never patched ("never patch databases, rebuild"):
@@ -32,7 +32,7 @@ import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resol
 // resolver-wof-sqlite's runtime modules are imported inside the functions,
 // so loading this module doesn't evaluate them.
 // Type-only imports are erased.
-import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
+import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/coverage-manifest"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

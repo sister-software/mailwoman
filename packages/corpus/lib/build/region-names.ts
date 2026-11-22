@@ -12,8 +12,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isPresent } from "@mailwoman/core/objects"
+import { regionKeys } from "@mailwoman/resolver-wof-sqlite/lookup/region-keys"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import {
 	normalizeLocalityForKey,

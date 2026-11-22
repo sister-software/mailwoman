@@ -6,8 +6,8 @@
  *
  *   This is what house-number interpolation stands on: given a street segment's geometry
  *   and how far along its house-number range an address sits, it answers where that's on the ground.
- *   The node reader (`resolver-wof-sqlite/interpolation.ts`) and the browser twin
- *   (`resolver-wof-wasm/httpvfs/street.ts`) both call it: the geometry never
+ *   The node reader (`resolver-wof-sqlite/street/interpolation.ts`) and the browser
+ *   twin (`resolver-wof-wasm/httpvfs/street.ts`) both call it: the geometry never
  *   differs between them, only the I/O around it does.
  */
 

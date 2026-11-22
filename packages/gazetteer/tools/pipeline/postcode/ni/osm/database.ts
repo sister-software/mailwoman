@@ -212,7 +212,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 	// Imported lazily so loading this module doesn't evaluate resolver-wof-sqlite.
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
-		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+		await import("@mailwoman/resolver-wof-sqlite/schema/unified")
 
 	const ingestPath = `${out}.ingest`
 	await removeStagingArtifacts(ingestPath)

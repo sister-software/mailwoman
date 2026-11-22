@@ -8,9 +8,9 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/overture-match-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/schema/overture-match"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

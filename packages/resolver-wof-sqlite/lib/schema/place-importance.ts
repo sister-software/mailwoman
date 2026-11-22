@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   The `place_importance` table of an admin gazetteer: its columns, its DDL, the referential
+ *   score derived from population, and the blend of that score with the encyclopedic one.
+ */
+
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

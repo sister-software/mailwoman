@@ -14,6 +14,8 @@ import { POPULATION_CORRECTIONS } from "#build/population-corrections"
 import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors/sidecar"
 import { stageBareAdminNames } from "#candidate/bare-admin-names"
+import { createCapitalTable } from "#candidate/capital-schema"
+import type { CapitalPoint } from "#candidate/capitals"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
 import { stageExtractRows } from "#candidate/extract-rows"
 import { createCandidateFTS } from "#candidate/fts"
@@ -31,8 +33,6 @@ import {
 	type CandidateDatabase,
 	POSTCODE_PLACETYPE,
 } from "#candidate/schema"
-import { createCapitalTable } from "#capital-schema"
-import type { CapitalPoint } from "#capitals"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 

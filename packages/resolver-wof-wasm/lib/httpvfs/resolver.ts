@@ -11,8 +11,8 @@ import {
 	rankByPrimaryPreference,
 	type RankedRow,
 	RERANK_FETCH,
-} from "@mailwoman/resolver-wof-sqlite/primary-preference"
-import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
+} from "@mailwoman/resolver-wof-sqlite/ranking/primary-preference"
+import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/ranking/proximity-rerank"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 
 import type { MailwomanLookupLike } from "#browser-cascade"

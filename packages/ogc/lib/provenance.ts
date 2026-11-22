@@ -18,7 +18,7 @@
  */
 
 import { type LayerTerms, ProvenanceLinkKind, resolveLayerTerms } from "@mailwoman/core/layers/provenance"
-import { gazetteerSourceLocation } from "@mailwoman/resolver-wof-sqlite/sources"
+import { gazetteerSourceLocation } from "@mailwoman/resolver-wof-sqlite/build/sources"
 
 import type { OGCServedCollection } from "#engine"
 import { OGCLinkRelation, OGCMediaType, type OGCLink } from "#schema"

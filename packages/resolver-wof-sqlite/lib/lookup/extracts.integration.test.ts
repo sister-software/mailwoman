@@ -7,7 +7,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { deriveSchemaName, pickExtractForPlacetype, resolveExtracts } from "#extracts"
+import { deriveSchemaName, pickExtractForPlacetype, resolveExtracts } from "#lookup/extracts"
 
 describe("deriveSchemaName", () => {
 	test("strips whosonfirst-data prefix and -latest.db suffix", () => {

@@ -1,6 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   The development weights overlay linker: it links or builds each artifact a weights
+ *   package declares, from the data root into that package's directory.
+ *
+ *   Each weights package's `scripts/link-dev-weights.ts` is a manifest
+ *   and a call to `materializeDevOverlay`.
+ */
+
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"

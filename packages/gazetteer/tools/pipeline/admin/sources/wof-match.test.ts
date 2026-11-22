@@ -8,7 +8,7 @@
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

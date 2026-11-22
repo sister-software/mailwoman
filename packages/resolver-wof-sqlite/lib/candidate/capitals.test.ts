@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CAPITAL_LEVEL, CapitalIndex } from "#capitals"
+import { CAPITAL_LEVEL, CapitalIndex } from "#candidate/capitals"
 
 // San José CR (the national capital, with its GeoNames alternates) and Salt Lake City
 // (an admin-1 seat), real coordinates so the radius checks below mean what they say.

@@ -18,7 +18,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
-import type { CapitalPoint } from "#capitals"
+import type { CapitalPoint } from "#candidate/capitals"
 import { hasTable } from "#sqlite-utils"
 
 /**

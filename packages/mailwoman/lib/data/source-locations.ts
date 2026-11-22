@@ -15,7 +15,7 @@ import type { SourceLocator } from "@mailwoman/core/layers/provenance"
 import type { SourceLocation } from "@mailwoman/core/resolver"
 import { GNAF_SOURCE_LOCATIONS } from "@mailwoman/corpus/au/adapters/gnaf/source"
 import { US_ADDRESS_LAYER_SOURCE_LOCATIONS } from "@mailwoman/corpus/us/address-records/sources"
-import { GAZETTEER_SOURCE_LOCATIONS } from "@mailwoman/resolver-wof-sqlite/sources"
+import { GAZETTEER_SOURCE_LOCATIONS } from "@mailwoman/resolver-wof-sqlite/build/sources"
 
 /**
  * The joined source tables, and the owners whose table couldn't be loaded.

@@ -22,7 +22,7 @@ import {
 	loadImportanceSplit,
 	type PlaceImportanceDatabase,
 	splitLegacyImportance,
-} from "#place-importance-schema"
+} from "#schema/place-importance"
 
 describe("referentialFromPopulation", () => {
 	it("reproduces the FST builder's population fallback exactly", () => {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
+export type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
 
 export type {
 	AncestorsTable,
@@ -16,7 +16,7 @@ export type {
 } from "#schema"
 
 export { WOFSQLitePlaceLookup, type WOFSQLitePlaceLookupOpts } from "#lookup"
-export { type RankingWeights } from "#ranking-weights"
+export { type RankingWeights } from "#ranking/weights"
 
 export {
 	CANDIDATE_ANCESTOR_COLUMNS,
@@ -53,9 +53,9 @@ export {
 	createCountryCoverageTable,
 	readGazetteerCoverageManifest,
 	writeGazetteerCoverageManifest,
-} from "#coverage-manifest-schema"
+} from "#candidate/coverage-manifest"
 
-export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#coverage-manifest-schema"
+export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#candidate/coverage-manifest"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street/name-lookup"
 
 export { type GeonamesIngestProgress, ingestGeonamesAliases, purgeGeonamesAliasRange } from "#geonames/aliases"
@@ -95,7 +95,7 @@ export {
 
 export { SqliteConventionSource } from "#sqlite/convention-source"
 
-export { WOFPostcodeLookup } from "#postcode-point-lookup"
+export { WOFPostcodeLookup } from "#lookup/postcode-point"
 
 export {
 	PLACE_BBOX_TABLE,
@@ -115,7 +115,7 @@ export {
 	type ReverseGeocodeOpts,
 	type ReverseGeocodeResult,
 	type WOFReverseGeocoderOpts,
-} from "#reverse"
+} from "#lookup/reverse"
 
 export { AddressPointInterpolator } from "#address/point/interpolation"
 export { AddressPointSqliteLookup } from "#address/point"
@@ -136,7 +136,7 @@ export {
 	type InterpolatedHit,
 	type InterpolationMethod,
 	type InterpolationQuery,
-} from "#interpolation"
+} from "#street/interpolation"
 
 export {
 	deriveSchemaName,
@@ -144,4 +144,4 @@ export {
 	resolveExtracts,
 	type ResolvedExtract,
 	type ExtractConfig,
-} from "#extracts"
+} from "#lookup/extracts"

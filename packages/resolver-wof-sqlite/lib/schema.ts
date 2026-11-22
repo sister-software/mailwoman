@@ -85,7 +85,7 @@ export interface SprTable {
  *
  * Real WOF dumps omit it.
  * These are the aliases eligible to join the name-exact tier.
- * See `unified-schema.ts` for the full interface.
+ * See `schema/unified.ts` for the full interface.
  */
 export interface NamesTable {
 	id: number
@@ -102,7 +102,7 @@ export interface NamesTable {
 	name: string
 	lastmodified: number
 	/**
-	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 * The dataset the row came from, one of `ROW_SOURCES` in `schema/unified.ts`.
 	 *
 	 * Databases built before the column existed have no such column.
 	 */
@@ -177,7 +177,7 @@ export interface ConcordancesTable {
 	other_source: string
 	lastmodified: number
 	/**
-	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 * The dataset the row came from, one of `ROW_SOURCES` in `schema/unified.ts`.
 	 *
 	 * Databases built before the column existed have no such column.
 	 */

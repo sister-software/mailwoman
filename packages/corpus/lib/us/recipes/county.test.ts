@@ -11,7 +11,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
 import { createWOFRecordStoreTables, type WOFRecordStoreDatabase } from "@mailwoman/gazetteer/whosonfirst/record-store"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 

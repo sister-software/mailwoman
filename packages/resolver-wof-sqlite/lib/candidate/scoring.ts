@@ -5,11 +5,11 @@ import { compareReferential, referentialFromPopulation } from "@mailwoman/core/r
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { exactMatchIDs, officialNameIDs } from "#exact-match"
 import { foldQueryText } from "#fts"
-import { populationBoostTerm, type RankingWeights } from "#ranking-weights"
-import type { RawSearchRow } from "#search-fetch"
-import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
+import type { RawSearchRow } from "#fts/search-fetch"
+import { exactMatchIDs, officialNameIDs } from "#lookup/exact-match"
+import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#lookup/types"
+import { populationBoostTerm, type RankingWeights } from "#ranking/weights"
 
 /**
  * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated

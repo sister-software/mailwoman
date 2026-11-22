@@ -13,9 +13,9 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { buildCandidateTable } from "#build/candidate"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
 import { ALIAS_SEPARATOR } from "#fts"
-import { rankByPrimaryPreference } from "#primary-preference"
+import type { FindPlaceQuery } from "#lookup/types"
+import { rankByPrimaryPreference } from "#ranking/primary-preference"
 import type { WOFDatabase } from "#schema"
-import type { FindPlaceQuery } from "#types"
 
 let scratch: TemporaryDirectory
 let candidatePath: PathBuilder

@@ -143,6 +143,13 @@ map mirrors it with `#*` and `#<root>/*`. A directory module is a sibling file, 
 Move modules with `mwops health move`, which proves every rewritten specifier by TypeScript resolution
 before writing.
 
+A package's `lib/` root holds its entry file `index.ts`, its `env.ts` and `paths.ts` where the workspace
+convention requires those subpaths, and the sibling file of each directory. Every other module lives in
+a directory whose title states its role: the artifact it reads, as `candidate/` does, or the step it
+performs, as `ranking/` does. A new module goes into the directory of its role, and a role with no
+directory yet gets one. A directory holds one role. When its description would need "and", it is two
+directories.
+
 Use the established shared implementation before adding a local helper. `mailwoman/prefer-home` and
 the `private-name-shadows-export` repository check report repeated implementation shapes and private
 names that collide with exports. Before moving code into a shared package, count the runtime

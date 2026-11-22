@@ -226,7 +226,7 @@ address that still names it, takes the tag of the level it sat at: `subregion` a
 the first level, `locality` for a former municipality, and `country` for a former country. Avon, a county of
 England from 1974 to 1996, is `subregion` in `34 Coldharbour Rd, Redland, Avon, Bristol BS6 7NA`. The tag
 records the span's role in the address, so the `ComponentTag` set has no separate tag for former divisions.
-The former divisions table (`@mailwoman/resolver-wof-sqlite/former-divisions`, built by
+The former divisions table (`@mailwoman/resolver-wof-sqlite/lookup/former-divisions`, built by
 `packages/gazetteer/tools/former-divisions.run.ts`) states each division's level for every country: a ceased
 Who's On First record's placetype, or the placetype the country's current GeoNames divisions of the same
 level map to. The resolver's `formerDivisions` switch accepts such a span when the table links the division

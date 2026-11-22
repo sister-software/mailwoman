@@ -20,8 +20,8 @@ import { readWOFSourceIdentity } from "#fst/freshness"
 import type { FSTNode } from "#fst/matcher"
 import { FSTMatcher, normalizeTokens } from "#fst/matcher"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "#fst/types"
-import { loadImportanceSplit } from "#place-importance-schema"
 import type { WOFDatabase } from "#schema"
+import { loadImportanceSplit } from "#schema/place-importance"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
