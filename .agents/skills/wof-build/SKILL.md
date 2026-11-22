@@ -31,8 +31,13 @@ export doesn't hold, and a postcode current in more than one country. It exits 0
 2026-11-22 it took 8 to 15 minutes over 8 clones, most of it in the Great Britain clone.
 
 Compare the counts with the previous report. A count that rose since then is a change in the clones to read before the
-build. A record with a geometry at 0, 0 still reaches the gazetteer: `fillPostcodeCentroids` in
-`packages/gazetteer/tools/pipeline/postcode/centroid-fills.ts` gives it its parent locality's point.
+build. A current record with a geometry at 0, 0 still reaches the gazetteer: `fillPostcodeCentroids` in
+`packages/gazetteer/tools/pipeline/postcode/centroid-fills.ts` gives it its parent locality's point. Every fill skips
+a record with `is_current` 0, and the candidate build leaves out a record with `is_deprecated` set, whatever point it
+holds. A postcode that only ceased keeps its row.
+
+A deprecation in a clone reaches `candidate.db` only after the postcode database is rebuilt, and then the candidate
+table.
 
 ## The canonical gazetteer
 

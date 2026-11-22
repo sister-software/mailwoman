@@ -447,6 +447,30 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
 	})
 
+	test("leaves out a deprecated postcode that holds a point and keeps one that only ceased", async () => {
+		const input = scratch.path("admin-lifecycle.db")
+		const pc = scratch.path("postcodes-lifecycle.db")
+		const output = scratch.path("candidate-lifecycle.db")
+		buildFixtureAdmin(input)
+		buildFixturePostcodes(pc)
+
+		{
+			using extract = new DatabaseClient<WOFDatabase>(pc)
+
+			extract.exec(`
+				INSERT INTO spr VALUES (75008, '75008', 'postalcode', 'US', 32.988, -96.9, 32.98, -96.91, 32.99, -96.89, 0, 1);
+				INSERT INTO spr VALUES (60699, '60699', 'postalcode', 'US', 41.88, -87.63, 41.87, -87.64, 41.89, -87.62, 0, 0);
+			`)
+		}
+
+		await buildCandidateTable({ input, output, postcodes: [pc] })
+
+		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+
+		expect(probe(db, normalizeLocalityForKey("75008"))).toHaveLength(0)
+		expect(probe(db, normalizeLocalityForKey("60699"))).toHaveLength(1)
+	})
+
 	// The Collective Database reading of an ODbL postcode database in the candidate
 	// (issue #2618) rests on this invariant.
 	// The build appends that database's own rows and reads or changes no other row.
