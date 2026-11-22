@@ -34,7 +34,7 @@ import {
 } from "#tools/pipeline/database-lifecycle"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
 import type { BuildFTSResult } from "#tools/pipeline/fts"
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The terms the artifact's `layer_manifest` records for a given country list,
@@ -108,7 +108,7 @@ export interface GeonamesPostalSourceFact {
 
 export interface BuildPostcodeGeonamesTailOptions {
 	/**
-	 * ISO-2 countries to fold, in ingest order, defaulting to {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
+	 * ISO-2 countries to ingest, in ingest order, defaulting to {@link DEFAULT_GEONAMES_TAIL_COUNTRIES}.
 	 */
 	countries?: readonly string[] | null
 	/**
@@ -229,12 +229,12 @@ export async function buildPostcodeGeonamesTail(
 	)
 
 	// The layer interface's manifest beside the `meta` record.
-	// The candidate build reads its tier before folding the database.
+	// The candidate build reads its tier before adding the database's rows.
 	phase("layer-manifest")
 
 	await stampLayerManifest(
 		out,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "postalcode-geonames-tail",
 			version: isoDate(now),
 			...geonamesTailTerms(countries),

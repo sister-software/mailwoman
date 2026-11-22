@@ -53,7 +53,7 @@ const GazetteerBuildTWDistricts: CommandComponent<typeof spec> = ({ options }) =
 		}
 
 		for (const u of r.unmatchedRegions) {
-			lines.push(`no WOF region answers to ${u.region}: ${u.groups} district rows folded unscoped`)
+			lines.push(`no WOF region answers to ${u.region}: ${u.groups} district rows added without a region scope`)
 		}
 
 		return lines.join("\n")

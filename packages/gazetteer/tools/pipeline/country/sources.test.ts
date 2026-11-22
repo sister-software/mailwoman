@@ -69,7 +69,7 @@ describe("sourceConflicts", () => {
 
 	it("accepts a baseline country, because that trade was measured", () => {
 		// CZ duplicates Overture deliberately.
-		// FI in the same set gains names Overture lacks, so dropping the fold is a coverage decision.
+		// FI in the same set gains names Overture lacks, so dropping its GeoNames places is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])
@@ -117,9 +117,9 @@ describe("sourceSentence", () => {
 })
 
 describe("the id-band literals in country-plan.ts", () => {
-	it("agree with the folds that mint them", async () => {
+	it("agree with the source steps that mint them", async () => {
 		// `censusForCountry` spells the boundaries as SQL literals because a query cannot
-		// import a constant, so a fold that moves its base must move this test.
+		// import a constant, so a source step that moves its base must move this test.
 		const { GEONAMES_ID_BASE, OVERTURE_ID_BASE } = await import("@mailwoman/core/resolver/synthetic-id-ranges")
 
 		const source = await readLocalTextFile(

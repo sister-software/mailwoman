@@ -16,11 +16,11 @@ import { describe, expect, test } from "vitest"
 
 import {
 	assignSyntheticIDs,
-	foldedPlacetype,
+	placetypeForSubtype,
 	prepareInserts,
 	writeOvertureDivisions,
-} from "#tools/pipeline/admin/fold/overture"
-import { buildWOFPlaceIndex, type FoldGap } from "#tools/pipeline/admin/fold/wof-match"
+} from "#tools/pipeline/admin/sources/overture"
+import { buildWOFPlaceIndex, type UnmatchedPlace } from "#tools/pipeline/admin/sources/wof-match"
 
 /**
  * Real GERS ids are opaque 32-char hex strings.
@@ -67,7 +67,7 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns IDs from 9e12 upward.
+			// The GeoNames places own IDs from 9e12 upward.
 			// An overlap would make one source's rows readable as the other's without an error.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}
@@ -145,7 +145,10 @@ describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows
 	 * Harare as WOF holds it, with one name and no Wikidata id, then two divisions:
 	 * Harare itself, with its Overture aliases and a Wikidata id, and a suburb under it.
 	 */
-	async function fold(): Promise<{ db: DatabaseClient<WOFDatabase & OvertureWOFMatchDatabase>; gaps: FoldGap[] }> {
+	async function addDivisions(): Promise<{
+		db: DatabaseClient<WOFDatabase & OvertureWOFMatchDatabase>
+		gaps: UnmatchedPlace[]
+	}> {
 		const db = DatabaseClient.temp<WOFDatabase & OvertureWOFMatchDatabase>()
 
 		await createUnifiedSchema(db)
@@ -175,7 +178,7 @@ describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows
 			wikidata,
 		})
 
-		const gaps: FoldGap[] = []
+		const gaps: UnmatchedPlace[] = []
 		const index = buildWOFPlaceIndex(db)
 
 		await writeOvertureDivisions(
@@ -191,7 +194,7 @@ describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows
 	}
 
 	test("a matched division writes its own row and its match, and adds nothing to the WOF record", async () => {
-		const { db } = await fold()
+		const { db } = await addDivisions()
 		using _ = db
 		const ids = assignSyntheticIDs(GERS.slice(0, 2))
 		const harare = ids.get(GERS[0]!)!
@@ -216,7 +219,7 @@ describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows
 	})
 
 	test("a child of a matched division takes the WOF record as parent, and only unmatched divisions are gaps", async () => {
-		const { db, gaps } = await fold()
+		const { db, gaps } = await addDivisions()
 		using _ = db
 		const suburb = assignSyntheticIDs(GERS.slice(0, 2)).get(GERS[1]!)!
 
@@ -225,25 +228,25 @@ describe("writeOvertureDivisions keeps the Overture part apart from the WOF rows
 	})
 })
 
-describe("foldedPlacetype", () => {
+describe("placetypeForSubtype", () => {
 	test("Singapore's planning areas become boroughs, which a locality query already reaches", () => {
 		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never
-		// to `county`, so Singapore's planning areas are unreachable unless folded to borough.
-		expect(foldedPlacetype("county", "SG")).toBe("borough")
-		expect(foldedPlacetype("county", "sg")).toBe("borough")
+		// to `county`, so Singapore's planning areas are unreachable unless written as borough.
+		expect(placetypeForSubtype("county", "SG")).toBe("borough")
+		expect(placetypeForSubtype("county", "sg")).toBe("borough")
 	})
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
 		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's are
 		// Doha zone numbers, so both clear a count test but would attest surfaces absent from the source.
-		expect(foldedPlacetype("county", "KW")).toBe("county")
-		expect(foldedPlacetype("county", "QA")).toBe("county")
-		expect(foldedPlacetype("county", "US")).toBe("county")
+		expect(placetypeForSubtype("county", "KW")).toBe("county")
+		expect(placetypeForSubtype("county", "QA")).toBe("county")
+		expect(placetypeForSubtype("county", "US")).toBe("county")
 	})
 
 	test("passes every non-county subtype through untouched, Singapore included", () => {
 		for (const subtype of ["country", "region", "locality", "localadmin"]) {
-			expect(foldedPlacetype(subtype, "SG")).toBe(subtype)
+			expect(placetypeForSubtype(subtype, "SG")).toBe(subtype)
 		}
 	})
 })

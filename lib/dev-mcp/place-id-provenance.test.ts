@@ -30,7 +30,7 @@ describe("placeIDProvenance", () => {
 		}
 	})
 
-	it("separates the two GeoNames folds, which reserve different spans", () => {
+	it("separates the two GeoNames steps, which reserve different spans", () => {
 		expect(placeIDProvenance(GEONAMES_ID_BASE).id_source).toBe(PlaceIDSource.GeoNames)
 		expect(placeIDProvenance(GEONAMES_POSTAL_ID_BASE).id_source).toBe(PlaceIDSource.GeoNamesPostal)
 	})
@@ -55,7 +55,7 @@ describe("syntheticIDNote", () => {
 		expect(syntheticIDNote([890_463_199, 101_750_505])).toBeNull()
 	})
 
-	it("names the counts per fold on a mixed set", () => {
+	it("names the counts per source on a mixed set", () => {
 		const note = syntheticIDNote([890_463_199, 8_114_738_869_649, 8_837_168_432_019, GEONAMES_ID_BASE])
 
 		expect(note).toContain("2 overture")

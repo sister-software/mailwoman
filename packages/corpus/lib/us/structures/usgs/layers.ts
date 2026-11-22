@@ -3,7 +3,7 @@
 
 /**
  *   The point layers of the USGS National Map structures MapServer, one entry per layer the
- *   fetcher pulls, the adapter trains on, and the structures layer folds into `structures.db`.
+ *   fetcher pulls, the adapter trains on, and the structures layer writes into `structures.db`.
  *
  *   The service publishes every layer twice: layers 0–34 are the `Labels` group
  *   and serve the same rows as the `Features` layers 35 ids above them.

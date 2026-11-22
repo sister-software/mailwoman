@@ -27,11 +27,11 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * What a postcode or locality builder states about the database it seals.
  *
- * The candidate build folds these databases.
+ * The candidate build adds these databases' rows.
  * `candidateLayerManifest` composes its own terms from what each one records, so every field here
  * is a claim the builder makes about its own artifact rather than a value copied from a runbook.
  */
-export interface FoldLayerManifestInput {
+export interface ContributingLayerManifestInput {
 	/**
 	 * The artifact's filename without its extension.
 	 * `DEFAULT_POSTCODE_DATABASES` uses this name.
@@ -109,7 +109,7 @@ function manifestLicenseExpression(name: string, license: string): string {
  *
  * @throws When the license resolves to no recorded expression, or when the stated tier contradicts it.
  */
-export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest {
+export function contributingLayerManifest(input: ContributingLayerManifestInput): LayerManifest {
 	const license = manifestLicenseExpression(input.name, input.license)
 
 	assertTierMatchesLicense({ tier: input.tier, license }, `${input.name} manifest`)

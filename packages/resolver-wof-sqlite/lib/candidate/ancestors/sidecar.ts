@@ -5,7 +5,7 @@
  * @file Pass 3b of the candidate build — the containment sidecar (closure rows + interval labels).
  */
 
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { placetypeDepth } from "#ancestry"
@@ -80,11 +80,11 @@ export async function buildAncestorsSidecar(ctx: {
 
 		// The gazetteer is a Collective Database whose Overture Divisions part is ODbL.
 		// The interval tree links a place only to a parent of its own part, so an Overture
-		// division under a WOF record leaves that record's labels as they are without the fold.
+		// division under a WOF record leaves that record's labels as they are without the Overture divisions.
 		// The closure rows above keep every edge, and containment across the parts
 		// reads them instead of the labels.
-		const childOverture = isOvertureFoldID(childID)
-		const canonical = edges.find((edge) => isOvertureFoldID(edge.aid) === childOverture)?.aid
+		const childOverture = isOverturePartID(childID)
+		const canonical = edges.find((edge) => isOverturePartID(edge.aid) === childOverture)?.aid
 
 		if (typeof canonical !== "number") return
 
@@ -148,9 +148,9 @@ export async function buildAncestorsSidecar(ctx: {
 	const roots = [...forest].filter((id) => !canonicalParentOf.has(id))
 
 	// The Overture part's trees are numbered after every other tree, so the other parts' labels
-	// are the labels a build without the fold gives them.
+	// are the labels a build without the Overture divisions gives them.
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass built
-	roots.sort((a, b) => Number(isOvertureFoldID(a)) - Number(isOvertureFoldID(b)) || a - b)
+	roots.sort((a, b) => Number(isOverturePartID(a)) - Number(isOverturePartID(b)) || a - b)
 
 	let counter = 0
 

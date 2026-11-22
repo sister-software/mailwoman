@@ -13,7 +13,7 @@ import { describe, expect, test } from "vitest"
 
 import {
 	GEONAMES_ID_BASE,
-	isOvertureFoldID,
+	isOverturePartID,
 	MAILWOMAN_WOF_ID_BASE,
 	MAILWOMAN_WOF_ID_END,
 	nextMailwomanWOFID,
@@ -62,12 +62,12 @@ describe("SYNTHETIC_ID_RANGES", () => {
 	})
 })
 
-describe("isOvertureFoldID", () => {
+describe("isOverturePartID", () => {
 	test("admits the whole Overture range and nothing either side of it", () => {
-		expect(isOvertureFoldID(OVERTURE_ID_BASE)).toBe(true)
-		expect(isOvertureFoldID(GEONAMES_ID_BASE - 1)).toBe(true)
-		expect(isOvertureFoldID(OVERTURE_ID_BASE - 1)).toBe(false)
-		expect(isOvertureFoldID(GEONAMES_ID_BASE)).toBe(false)
+		expect(isOverturePartID(OVERTURE_ID_BASE)).toBe(true)
+		expect(isOverturePartID(GEONAMES_ID_BASE - 1)).toBe(true)
+		expect(isOverturePartID(OVERTURE_ID_BASE - 1)).toBe(false)
+		expect(isOverturePartID(GEONAMES_ID_BASE)).toBe(false)
 	})
 })
 

@@ -22,7 +22,7 @@
  *   - `wof_supersession`: a ceased WOF record's `wof:superseded_by`.
  *
  *   A linked GeoNames row reaches WOF through the admin database's `gn:id` concordances, or as the
- *   GeoNames fold's own row (`geonamesFoldID`).
+ *   row the GeoNames step wrote for it (`geonamesPlaceID`).
  *
  *   The `ComponentTag` a division takes is its WOF placetype's when a WOF record states one. A GeoNames
  *   division at level n takes the tag of the WOF placetype that the country's current `ADMn` rows
@@ -30,7 +30,7 @@
  */
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { geonamesFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { geonamesPlaceID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { FORMER_DIVISION_SHAPES, type FormerDivisionTuple } from "@mailwoman/corpus/recipes/former-divisions"
 import type { FormerDivisionLink, FormerDivisionRecord } from "@mailwoman/resolver-wof-sqlite/former-divisions"
 import { FormerDivisionEvidence } from "@mailwoman/resolver-wof-sqlite/former-divisions"
@@ -330,7 +330,7 @@ export interface WOFPlaceRef {
 
 /**
  * The current WOF places each GeoNames id maps to, through `gn:id` concordances
- * and the GeoNames fold's rows.
+ * and the rows the GeoNames step wrote.
  *
  * Every id in `geonamesIDs` is answered, with an empty list when it maps to none.
  */
@@ -367,16 +367,16 @@ export async function wofPlacesOfGeonamesIDs(
 			mapped.get(Number(row.other))?.push({ id: row.id, placetype: row.placetype ?? "", country: row.country ?? "" })
 		}
 
-		const foldedIDs = new Map(slice.map((id) => [geonamesFoldID(id), id]))
+		const placeIDs = new Map(slice.map((id) => [geonamesPlaceID(id), id]))
 
-		const folded = await db
+		const ownRows = await db
 			.selectFrom("spr")
 			.select(["id", "placetype", "country"])
-			.where("id", "in", [...foldedIDs.keys()])
+			.where("id", "in", [...placeIDs.keys()])
 			.execute()
 
-		for (const row of folded) {
-			const geonamesID = foldedIDs.get(row.id)
+		for (const row of ownRows) {
+			const geonamesID = placeIDs.get(row.id)
 
 			if (geonamesID != null) {
 				mapped.get(geonamesID)?.push({ id: row.id, placetype: row.placetype ?? "", country: row.country ?? "" })

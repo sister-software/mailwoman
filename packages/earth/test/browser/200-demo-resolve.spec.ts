@@ -40,7 +40,7 @@ test.describe("Demo — resolution cascade", () => {
 		})
 
 		await test.step("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async () => {
-			// -20f folds Canada's Overture divisions into the admin gazetteer
+			// -20f adds Canada's Overture divisions to the admin gazetteer
 			// (Toronto, Montréal, … — absent before) plus 843k CA postcode centroids.
 			// "Toronto" resolves to Ontario (top by population).
 			// The cascade restricts the country to CA.
@@ -56,7 +56,7 @@ test.describe("Demo — resolution cascade", () => {
 		})
 
 		await test.step("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async () => {
-			// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
+			// -20g adds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
 			// The English "Moscow" (an alias of Москва) resolves.
 			// The 10.4M-pop RU city outranks the 26k-pop US homonym.
 			// Grade the coordinate: Moscow ≈ 55.7, 37.6 rather than Idaho (46.7, -117).

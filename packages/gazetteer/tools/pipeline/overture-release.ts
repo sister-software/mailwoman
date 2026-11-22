@@ -8,8 +8,8 @@
  * Every build that reads Overture uses its own pin, so each pin dies silently when its release is pruned.
  *
  * The cost of finding out late is why this exists: the admin build reaches
- * `fold-overture` only after the WOF ingest, so a dead pin surfaced after ~30
- * minutes as an `IO Error` that reads like a network fault.
+ * `add-overture` only after the WOF ingest, so a dead pin surfaced after ~30 minutes
+ * as an `IO Error` that reads like a network fault.
  *
  * Anonymous http against the public bucket rather than the S3 SDK or DuckDB, so this is answerable
  * before any heavy optional dependency loads and is the same listing a human would check.

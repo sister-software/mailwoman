@@ -107,7 +107,7 @@ describe("buildDataBOM over the candidate gazetteer", () => {
 		expect(overture?.externalReferences).toEqual([
 			{
 				type: "distribution",
-				url: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions-fold",
+				url: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions",
 			},
 		])
 	})

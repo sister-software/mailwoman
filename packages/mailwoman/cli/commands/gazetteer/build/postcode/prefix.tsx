@@ -7,7 +7,7 @@
  *
  *   `gb-codepoint` (OS Code-Point Open, OGL v3) and `gb-ni-osm` (OpenStreetMap, ODbL 1.0)
  *   are deliberately two files rather than one `postcode-prefix-gb.bin`:
- *   folding the NI nodes into the Code-Point file would put a share-alike obligation
+ *   adding the NI nodes to the Code-Point file would put a share-alike obligation
  *   on an OGL artifact that no downstream check could see.
  *
  *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`,

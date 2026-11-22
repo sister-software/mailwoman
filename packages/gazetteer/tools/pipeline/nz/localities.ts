@@ -53,7 +53,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The license grant the artifact records.
@@ -264,12 +264,12 @@ export async function buildNZLocalitiesDatabase(
 	await db.destroy()
 
 	// The layer interface's manifest, beside `database_meta` and stating the same terms.
-	// The candidate build reads its tier before folding the database.
+	// The candidate build reads its tier before adding the database's rows.
 	const now = new Date()
 
 	await stampLayerManifest(
 		tmpPath,
-		foldLayerManifest({
+		contributingLayerManifest({
 			name: "localities-nz-linz",
 			version: isoDate(now),
 			// CC-BY 4.0 requires attribution and has no share-alike term, so the artifact is published.

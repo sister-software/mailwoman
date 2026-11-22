@@ -41,7 +41,7 @@ import {
 	extractCodePointOpen,
 } from "#tools/pipeline/gb/codepoint"
 import { createDatabaseMetaTable, writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The year the attribution block names, taken from OS's own `copyright date` rather than the build clock,
@@ -60,7 +60,7 @@ export function codePointLayerManifest(input: {
 	metadata: CodePointMetadata
 	now: Date
 }): LayerManifest {
-	return foldLayerManifest({
+	return contributingLayerManifest({
 		name: "postalcode-gb-codepoint",
 		version: input.osVersion,
 		tier: LayerTier.Shipped,
@@ -290,7 +290,7 @@ export async function buildPostcodeCodePoint(
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
 	// The layer interface's manifest beside the `meta` record.
-	// The candidate build reads its tier before folding the database.
+	// The candidate build reads its tier before adding the database's rows.
 	phase("layer-manifest")
 	await stampLayerManifest(out, codePointLayerManifest({ osVersion, metadata: extracted.metadata, now }))
 

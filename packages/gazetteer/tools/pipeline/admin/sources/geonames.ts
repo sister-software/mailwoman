@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The GeoNames alias fold for the admin gazetteer.
+ *   The admin build's GeoNames step adds GeoNames places and their alternate names to the admin gazetteer.
  *
  *   Thin composition over the canonical `@mailwoman/resolver-wof-sqlite` ingest functions.
  *   Directory defaults go through `dataRootPath`, because the data-root rule
@@ -10,7 +10,7 @@
  *
  *   The postal tail lives in `gazetteer-pipeline/postcode/geonames-tail.ts`
  *   (`mailwoman gazetteer build postcode-geonames`), which builds a standalone database.
- *   The admin gazetteer never wanted postcode rows folded into it.
+ *   The admin gazetteer never wanted postcode rows added to it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -18,11 +18,12 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { type FoldGap, GAP_SOURCE_TERMS, type WOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
+import { GAP_SOURCE_TERMS, type UnmatchedPlace, type WOFPlaceIndex } from "#tools/pipeline/admin/sources/wof-match"
 
-export interface FoldGeonamesOptions {
+export interface AddGeonamesPlacesOptions {
 	/**
-	 * ISO-2 codes for the alias fold (`<CC>.txt` under {@link FoldGeonamesOptions.geonamesDir}).
+	 * ISO-2 codes of the countries this step reads GeoNames places and alternate names
+	 * for (`<CC>.txt` under {@link AddGeonamesPlacesOptions.geonamesDir}).
 	 */
 	countries: readonly string[]
 	/**
@@ -38,32 +39,32 @@ export interface FoldGeonamesOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * Countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions)
+	 * Countries for which to also add the GeoNames A-class admin (pcli country + ADM1 regions)
 	 * and link locality ancestry.
 	 *
 	 * Pass only zero-coverage locales (no WOF/Overture admin).
 	 * See `geonamesAdminGapCountries()`.
 	 *
-	 * A zero-coverage locale has no A-class admin fold unless the lookup includes it.
+	 * A zero-coverage locale gets no GeoNames A-class admin rows unless the lookup includes it.
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
 	 * The WOF records to match against, and the receiver for places that match none.
 	 */
-	wof?: { index: WOFPlaceIndex; onGap: (gap: FoldGap) => void }
+	wof?: { index: WOFPlaceIndex; onGap: (gap: UnmatchedPlace) => void }
 }
 
-export interface FoldGeonamesResult {
+export interface AddGeonamesPlacesResult {
 	placesIngested: number
 }
 
 /**
- * Fold GeoNames aliases into an open unified staging DB.
+ * Add GeoNames places and their alternate names to an open unified staging DB.
  */
-export async function foldGeonames(
+export async function addGeonamesPlaces(
 	db: DatabaseClient<WOFDatabase>,
-	opts: FoldGeonamesOptions
-): Promise<FoldGeonamesResult> {
+	opts: AddGeonamesPlacesOptions
+): Promise<AddGeonamesPlacesResult> {
 	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const geonamesDir = opts.geonamesDir ?? dataRootPath("geonames")

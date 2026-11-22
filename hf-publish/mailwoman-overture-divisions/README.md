@@ -20,12 +20,12 @@ page](https://docs.overturemaps.org/attribution/) gives its Divisions theme `Lic
 ## How it relates to `candidate.db`
 
 `candidate.db` is a Collective Database under ODbL 1.0 section 4.5(a). This part is one independent database
-inside it. The other rows come from Who's On First, GeoNames and the postcode folds, and they keep their own
+inside it. The other rows come from Who's On First, GeoNames and the postcode databases, and they keep their own
 terms. Each published gazetteer's `layer_manifest.attribution` states this part and this offer's address.
 
-The part stays independent because no row outside it depends on it. The Overture fold writes every division as
-its own row and adds no name, Wikidata id or population to a Who's On First record. When a division matches a
-Who's On First place, the fold records the pair in `overture_wof_match`. A division's parent may be a Who's On First id,
+The part stays independent because no row outside it depends on it. The gazetteer build writes every Overture
+division as its own row and adds no name, Wikidata id or population to a Who's On First record. When a division
+matches a Who's On First place, the build records the pair in `overture_wof_match`. A division's parent may be a Who's On First id,
 which is a reference held on the division's row. The candidate build reads a division's row only to change
 another division's row.
 

@@ -4,26 +4,30 @@
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, geonamesFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import {
+	GEONAMES_ID_BASE,
+	GEONAMES_POSTAL_ID_BASE,
+	geonamesPlaceID,
+} from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 
-const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
+const GEONAMES_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
 
 /**
- * Deletes every row the GeoNames alias fold owns, with ids in
+ * Deletes every row the GeoNames alias step owns, with ids in
  * `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)`, and returns the count removed per table.
  *
- * Fold ids are assigned sequentially, so a re-fold without this purge would attach
- * stale names, ancestors and populations to other places.
+ * Without this purge, a rerun would keep the previous run's rows, with their names,
+ * ancestors and populations, beside the rows it writes.
  * The upper bound leaves the postal and postcode id ranges above it untouched.
  */
 export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<string, number> {
 	const removed: Record<string, number> = {}
 
-	for (const table of FOLD_OWNED_TABLES) {
+	for (const table of GEONAMES_OWNED_TABLES) {
 		const result = db
 			.prepare(`DELETE FROM ${table} WHERE id >= ? AND id < ?`)
 			.run(GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)
@@ -58,19 +62,19 @@ export interface GeonamesIngestProgress {
 	/**
 	 * The number of alternate names that the alias filter rejected.
 	 *
-	 * It distinguishes a sparse source from aliases that the fold discarded.
+	 * It distinguishes a sparse source from aliases that the ingest discarded.
 	 */
 	aliasesRefused: number | null
 
 	/**
 	 * The number of populated places that matched an existing record and added their
-	 * names to it, or null when the fold had no matcher.
+	 * names to it, or null when the ingest had no matcher.
 	 */
 	matched?: number | null
 }
 
 /**
- * Formats a GeoNames fold progress event as one log line.
+ * Formats a GeoNames ingest progress event as one log line.
  */
 export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, missingFile?: PathBuilderLike): string {
 	if (event.skipped) {
@@ -145,9 +149,9 @@ async function parseAlternateNamesV2(
 }
 
 /**
- * A GeoNames place the fold is about to write.
+ * A GeoNames place the ingest is about to write.
  */
-export interface GeonamesFoldPlace {
+export interface GeonamesPlace {
 	geonamesID: number
 	name: string
 	placetype: "country" | "region" | "locality"
@@ -157,47 +161,47 @@ export interface GeonamesFoldPlace {
 }
 
 /**
- * The record a GeoNames place matched in the database being folded into.
+ * The record a GeoNames place matched in the database the places are added to.
  */
-export interface GeonamesFoldMatch {
+export interface GeonamesPlaceMatch {
 	id: number
 	placetype: string
 }
 
 /**
- * Matches GeoNames places against the records already in the database being folded into.
+ * Matches GeoNames places against the records already in the database the places are added to.
  */
-export interface GeonamesFoldMatcher {
-	match(place: GeonamesFoldPlace): GeonamesFoldMatch | null
+export interface GeonamesPlaceMatcher {
+	match(place: GeonamesPlace): GeonamesPlaceMatch | null
 	/**
 	 * Answers whether the matched record lacks a name, recording it so the name is written once.
 	 */
-	claimName(match: GeonamesFoldMatch, country: string, name: string): boolean
-	onGap(place: GeonamesFoldPlace & { id: number }): void
+	claimName(match: GeonamesPlaceMatch, country: string, name: string): boolean
+	onGap(place: GeonamesPlace & { id: number }): void
 }
 
 /**
- * Folds one country's GeoNames `A`-class rows, its country and its ADM1 regions,
- * and links each region the fold wrote to the country.
+ * Adds one country's GeoNames `A`-class rows, its country and its ADM1 regions,
+ * and links each region this step wrote to the country.
  *
  * A row that matches an existing record writes no row and adds its name to that record,
  * and its id is the existing record's.
- * Only regions the fold wrote are re-parented, so an existing region keeps its own parent.
+ * Only regions this step wrote are re-parented, so an existing region keeps its own parent.
  */
-function foldAdminRows(
+function addAdminRows(
 	statements: { db: DatabaseClient<WOFDatabase>; spr: StatementSync; names: StatementSync; ancestors: StatementSync },
 	input: {
 		rows: readonly string[][]
 		country: string
 		clean: (s: string) => string | null
-		existing: GeonamesFoldMatcher | undefined
-		claim: (match: GeonamesFoldMatch, name: string) => void
+		existing: GeonamesPlaceMatcher | undefined
+		claim: (match: GeonamesPlaceMatch, name: string) => void
 	}
 ): { countryID: number; adminMap: Map<string, number> } {
 	const { rows, country: cc, clean, existing, claim } = input
 	let countryID = -1
 	const adminMap = new Map<string, number>()
-	// The regions this fold wrote, as opposed to existing records a region matched.
+	// The regions this step wrote, as opposed to existing records a region matched.
 	const writtenRegions = new Set<number>()
 
 	for (const f of rows) {
@@ -206,7 +210,7 @@ function foldAdminRows(
 		if (!aname) continue
 		const lat = Number(f[4]) || 0
 		const lon = Number(f[5]) || 0
-		const placetype: GeonamesFoldPlace["placetype"] = f[7]?.startsWith("PCL") ? "country" : "region"
+		const placetype: GeonamesPlace["placetype"] = f[7]?.startsWith("PCL") ? "country" : "region"
 
 		if (placetype === "country" && countryID >= 0) continue
 
@@ -219,7 +223,7 @@ function foldAdminRows(
 			claim(matched, aname)
 		}
 
-		const rid = matched?.id ?? geonamesFoldID(place.geonamesID)
+		const rid = matched?.id ?? geonamesPlaceID(place.geonamesID)
 
 		if (!matched) {
 			statements.spr.run(rid, -1, aname, placetype, cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -250,8 +254,8 @@ function foldAdminRows(
 }
 
 /**
- * Purges the fold's id range, then adds GeoNames `P`-class places and their
- * alternate names for `countries` to `db`.
+ * Purges the GeoNames alias id range, then adds GeoNames `P`-class places
+ * and their alternate names for `countries` to `db`.
  * It returns the number of places ingested.
  *
  * The caller must then rebuild `place_search` with `buildPlaceSearchFTS(db, { drop: true })`
@@ -272,7 +276,7 @@ export async function ingestGeonamesAliases(
 		 * A GeoNames place that matches one adds its names to that record and writes no row.
 		 * A place that matches none is written and reported to `onGap`.
 		 */
-		existing?: GeonamesFoldMatcher
+		existing?: GeonamesPlaceMatcher
 	}
 ): Promise<number> {
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
@@ -364,14 +368,14 @@ export async function ingestGeonamesAliases(
 		/**
 		 * Writes a place's name onto the existing record it matched, once.
 		 */
-		const claim = (match: GeonamesFoldMatch, name: string, language = "", privateuse = "", official = 0) => {
+		const claim = (match: GeonamesPlaceMatch, name: string, language = "", privateuse = "", official = 0) => {
 			if (opts?.existing?.claimName(match, cc, name)) {
 				namesInsert.run(match.id, name, match.placetype, cc, language, privateuse, official, 0)
 			}
 		}
 
 		const { countryID, adminMap } = addAdmin
-			? foldAdminRows(
+			? addAdminRows(
 					{ db, spr: sprInsert, names: namesInsert, ancestors: ancestorInsert },
 					{ rows: adminRows, country: cc, clean, existing: opts?.existing, claim }
 				)
@@ -423,7 +427,7 @@ export async function ingestGeonamesAliases(
 				continue
 			}
 
-			const nid = geonamesFoldID(place.geonamesID)
+			const nid = geonamesPlaceID(place.geonamesID)
 
 			opts?.existing?.onGap({ ...place, id: nid })
 

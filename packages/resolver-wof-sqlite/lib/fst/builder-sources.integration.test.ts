@@ -3,7 +3,7 @@
 
 /**
  *   The FST builder reads Who's On First and GeoNames data only: it refuses a country holding an
- *   Overture Divisions place, and it leaves out an alias the Overture fold added to a WOF record.
+ *   Overture Divisions place, and it leaves out an alias the Overture step added to a WOF record.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -42,7 +42,7 @@ async function writeDatabase(path: string, extraPlaceID?: number): Promise<void>
 }
 
 describe("buildFSTFromWOF sources", () => {
-	it("leaves out an alias the Overture fold added to a WOF record", async () => {
+	it("leaves out an alias the Overture step added to a WOF record", async () => {
 		await using directory = await temporaryDirectory("fst-sources-")
 		const dbPath = directory.path("admin.db").toString()
 
@@ -61,7 +61,7 @@ describe("buildFSTFromWOF sources", () => {
 		await writeDatabase(dbPath, OVERTURE_ID_BASE + 7)
 
 		await expect(buildFSTFromWOF({ dbPath, countries: ["US"], placetypes: ["locality"] })).rejects.toThrow(
-			"1 of 2 places for [US] come from the Overture Divisions fold"
+			"1 of 2 places for [US] come from Overture Divisions"
 		)
 	})
 })

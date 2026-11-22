@@ -35,7 +35,7 @@
  *   at the position population assigned it.
  */
 
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -289,7 +289,7 @@ export function loadImportanceIndex(
 			lat: Number(row.latitude),
 			lon: Number(row.longitude),
 			importance,
-			overture: isOvertureFoldID(Number(row.id)),
+			overture: isOverturePartID(Number(row.id)),
 		})
 
 		places++

@@ -5,7 +5,7 @@
  * @file Pass 2 of the candidate build: explode `place_search.alt_names` into distinct alias rows.
  */
 
-import { isOvertureFoldID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
@@ -52,7 +52,7 @@ function officialNameHoldersByRegion(
 
 			all.set(key, id)
 
-			if (!isOvertureFoldID(id)) {
+			if (!isOverturePartID(id)) {
 				rest.set(key, id)
 			}
 		}
@@ -121,7 +121,7 @@ export function explodeAliasBags(
 		const seen = new Set<string>([a.pkey])
 		const markFree = new Set<string>()
 		const isRegion = a.ptid === opts.regionPlacetypeID
-		const holders = isOvertureFoldID(id) ? official.all : official.rest
+		const holders = isOverturePartID(id) ? official.all : official.rest
 
 		const refused = (k: string): boolean => {
 			if (!isRegion) return false

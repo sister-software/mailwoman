@@ -28,7 +28,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Fold a database whose own layer_manifest records tier build-local. The publish step then refuses " +
+				"Add the rows of a database whose own layer_manifest records tier build-local. The publish step then refuses " +
 				"the result unless --override-refusals is passed as well",
 		},
 		"override-refusals": {
@@ -76,7 +76,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			adminDB,
 			out,
 			postcodeDatabases: databases,
-			includeBuildLocalFolds: options.includeBuildLocal,
+			includeBuildLocalInputs: options.includeBuildLocal,
 			onProgress: progress.report,
 		})
 

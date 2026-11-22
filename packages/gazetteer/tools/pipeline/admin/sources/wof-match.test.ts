@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A folded place matches the WOF record of its own tier by concordance,
+ *   An added place matches the WOF record of its own tier by concordance,
  *   by country for a country, or by a WOF name within the tier's radius.
  *   Past the radius, or in another tier, the match is null.
  */
@@ -12,7 +12,7 @@ import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-sche
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-import { buildWOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
+import { buildWOFPlaceIndex } from "#tools/pipeline/admin/sources/wof-match"
 
 /**
  * A staging database holding Zimbabwe, Harare Province, and Harare with an alternate name.

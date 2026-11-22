@@ -179,7 +179,7 @@ export interface PhaseClock {
 }
 
 /**
- * The timings as one line, `ingest-wof 1234.5s, fold-overture 61s`, in the order given.
+ * The timings as one line, `ingest-wof 1234.5s, add-overture 61s`, in the order given.
  */
 export function formatPhaseTimings(timings: readonly PhaseTiming[]): string {
 	return timings.map(({ phase, seconds }) => `${phase} ${seconds}s`).join(", ")

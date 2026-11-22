@@ -210,8 +210,8 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		//
 		// Scoped to `eng` deliberately.
 		// The names table is exhaustively multilingual — Bangalore has ~100 language rows —
-		// and folding all of them in would bloat the artifact with scripts this Latin
-		// model never sees and surfaces no English-written address uses.
+		// and adding all of them would bloat the artifact with scripts this Latin model
+		// never sees and surfaces no English-written address uses.
 		// The existing surface-expansion probe (`pair-index-hierarchy-probe.ts`) checks
 		// on `official = 1`; that's right for name-exactness checks but too strict here,
 		// because it is exactly the rows a rename leaves behind.

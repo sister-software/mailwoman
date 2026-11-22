@@ -5,7 +5,7 @@
  * The candidate-gazetteer build → promote → publish pipeline, as reusable functions the `mailwoman
  * gazetteer` commands compose.
  *
- * `fold` and `build` reuse the canonical package functions.
+ * The steps that add a source's places and the build itself reuse the canonical package functions.
  * The CLI and standalone scripts share one implementation.
  *
  * A future `build-unified-wof --geonames-countries` will use it too.
@@ -41,10 +41,10 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	candidateLayerManifest,
-	censusFolds,
-	type FoldTerms,
-	foldsRefusingPublication,
-	readFoldTerms,
+	countRowsBySource,
+	type InputTerms,
+	inputsRefusingPublication,
+	readInputTerms,
 } from "#tools/pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#tools/pipeline/coverage-manifest"
 import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
@@ -73,11 +73,11 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves.
 	// A miss on a BT code means not attested in OSM rather than that the code doesn't exist.
-	// ODbL 1.0 is share-alike, so this artifact is never published and folds
-	// only under `includeBuildLocalFolds`.
+	// ODbL 1.0 is share-alike, so this artifact is never published, and the candidate
+	// build adds it only under `includeBuildLocalInputs`.
 	"postalcode-ni-osm.db",
 	// Japan's 7-digit codes from WOF.
-	// The candidate fold skips the 48,216 rows whose coordinates equal the 0,0 unlocated sentinel.
+	// The candidate build skips the 48,216 rows whose coordinates equal the 0,0 unlocated sentinel.
 	"postalcode-jp.db",
 	// The GeoNames-postal tail database: ten countries in ingest order.
 	"postalcode-geonames-tail.db",
@@ -111,7 +111,7 @@ export async function resolvePostcodeDatabases(
 }
 
 /**
- * Locality databases folded into the candidate build by default, existence-filtered like the postcode set.
+ * Locality databases the candidate build adds by default, existence-filtered like the postcode set.
  * A machine without one builds without it.
  */
 export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
@@ -119,7 +119,7 @@ export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	// The Prague municipal districts, the missing locality half of the CZ pair rung.
 	"localities-cz-districts.db",
 	// Taiwan's 鄉鎮市區 from the civil-affairs address register, each row carrying its 縣市's WOF
-	// region as an `ancestors` row so the fold stamps the region scope. The admin artifact's own
+	// region as an `ancestors` row so the candidate build stamps the region scope. The admin artifact's own
 	// copies of the tier are unusable for a Han query.
 	"localities-tw-districts.db",
 ]
@@ -171,7 +171,7 @@ async function candidateImportance(
 export interface BuildOptions {
 	/**
 	 * Admin DB to build the candidate from.
-	 * The admin build already folds GeoNames into it.
+	 * The admin build has already added GeoNames places to it.
 	 */
 	adminDB: PathBuilderLike
 	/**
@@ -179,14 +179,15 @@ export interface BuildOptions {
 	 */
 	out: PathBuilderLike
 	/**
-	 * Absolute postcode-database paths to fold in.
+	 * Absolute paths of the postcode databases whose rows the build adds.
 	 *
 	 * @defaultValue {@link resolvePostcodeDatabases}
 	 */
 	postcodeDatabases?: readonly string[]
 	/**
-	 * Absolute locality-database paths to fold in (default {@link resolveLocalityDatabases} —
-	 * today the linz-derived NZ suburb database, when the machine holds it).
+	 * Absolute paths of the locality databases whose rows the build adds
+	 * (default {@link resolveLocalityDatabases} — today the linz-derived NZ suburb
+	 * database, when the machine holds it).
 	 *
 	 * Same tolerate-and-degrade shape as the postcode databases.
 	 */
@@ -207,28 +208,28 @@ export interface BuildOptions {
 	 */
 	populationEstimates?: boolean
 	/**
-	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
+	 * Add the rows of a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
-	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
-	 * The manifest records the number of such folds included, as `build-local-folds`.
+	 * Off by default, so a build that could reach a publish adds only databases whose tier allows it.
+	 * The manifest records the count of such databases the build added, as `build-local-inputs`.
 	 */
-	includeBuildLocalFolds?: boolean
+	includeBuildLocalInputs?: boolean
 	onProgress?: (phase: string, message: string) => void
 }
 
 /**
- * The message a build stops with when a fold's own tier permits no publication.
+ * The message a build stops with when a contributing database's own tier permits no publication.
  */
-function foldRefusalMessage(refusing: readonly FoldTerms[]): string {
+function buildLocalRefusalMessage(refusing: readonly InputTerms[]): string {
 	const lines = refusing.map(
-		(fold) => `  ${fold.path} (${fold.name}) tier ${fold.tier}, recorded in ${fold.recordedIn}`
+		(input) => `  ${input.path} (${input.name}) tier ${input.tier}, recorded in ${input.recordedIn}`
 	)
 
 	return (
-		`buildCandidate: ${refusing.length} fold(s) record a tier that permits no publication:\n${lines.join("\n")}\n` +
-		`Their rows would leave inside the candidate while the file itself stays behind. Pass includeBuildLocalFolds ` +
+		`buildCandidate: ${refusing.length} contributing database(s) record a tier that permits no publication:\n${lines.join("\n")}\n` +
+		`Their rows would leave inside the candidate while the file itself stays behind. Pass includeBuildLocalInputs ` +
 		`(mailwoman gazetteer build candidate --include-build-local) to build a gazetteer for local use, or leave ` +
-		`them out of the fold list.`
+		`them out of the database list.`
 	)
 }
 
@@ -273,29 +274,31 @@ export async function buildCandidate(
 	const postcodeDatabases = [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))]
 	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]
 
-	// Each fold's own tier decides whether its rows may enter a gazetteer that could be published.
-	// A fold that states no tier is reported rather than refused.
+	// Each contributing database's own tier decides whether its rows may enter
+	// a gazetteer that could be published.
+	// A database that states no tier is reported rather than refused.
 	// Its undeclared grant refuses publication of the whole.
-	const foldTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readFoldTerms(path)))
-	const refusing = foldsRefusingPublication(foldTerms)
-	const unstated = foldTerms.filter((fold) => fold.tier === null)
+	const inputTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readInputTerms(path)))
+
+	const refusing = inputsRefusingPublication(inputTerms)
+	const unstated = inputTerms.filter((input) => input.tier === null)
 
 	if (unstated.length) {
 		opts.onProgress?.(
-			"fold-terms",
-			`${unstated.length} of ${foldTerms.length} folds state no tier: ${unstated.map((fold) => fold.name).join(", ")}`
+			"input-terms",
+			`${unstated.length} of ${inputTerms.length} contributing databases state no tier: ${unstated.map((input) => input.name).join(", ")}`
 		)
 	}
 
 	if (refusing.length) {
-		if (!opts.includeBuildLocalFolds) {
-			throw new CommandError(foldRefusalMessage(refusing))
+		if (!opts.includeBuildLocalInputs) {
+			throw new CommandError(buildLocalRefusalMessage(refusing))
 		}
 
 		opts.onProgress?.(
-			"fold-terms",
-			`folding ${refusing.length} database(s) whose tier permits no publication, as asked: ` +
-				refusing.map((fold) => `${fold.name} (${fold.tier})`).join(", ")
+			"input-terms",
+			`adding ${refusing.length} database(s) whose tier permits no publication, as asked: ` +
+				refusing.map((input) => `${input.name} (${input.tier})`).join(", ")
 		)
 	}
 
@@ -329,13 +332,13 @@ export async function buildCandidate(
 		const sha = buildSHA(repoRootPath())
 
 		// Counted before the seal, because an upstream release is pruned from its bucket
-		// and a fold's share of the published artifact is then unrecoverable from anything
+		// and a source's share of the published artifact is then unrecoverable from anything
 		// but the artifact's own manifest.
-		const foldCensus = censusFolds(tmp)
+		const rowsBySource = countRowsBySource(tmp)
 
 		opts.onProgress?.(
 			"layer-manifest",
-			`folds: ${foldCensus.map((fold) => `${fold.fold} ${fold.rows} rows / ${fold.places} places`).join(", ")}`
+			`rows by source: ${rowsBySource.map((count) => `${count.source} ${count.rows} rows / ${count.places} places`).join(", ")}`
 		)
 
 		await stampLayerManifest(
@@ -348,7 +351,7 @@ export async function buildCandidate(
 				buildSHA: sha,
 				version: isoDate(),
 				createdAt: new Date().toISOString(),
-				foldCensus,
+				rowsBySource,
 				overturePart: result.overtureMatches != null,
 			})
 		)
@@ -558,8 +561,8 @@ export * from "#tools/pipeline/fts"
 export * from "#tools/pipeline/verify"
 export * from "#tools/pipeline/admin"
 export * from "#tools/pipeline/admin/enrich"
-export * from "#tools/pipeline/admin/fold/geonames"
-export * from "#tools/pipeline/admin/fold/overture"
+export * from "#tools/pipeline/admin/sources/geonames"
+export * from "#tools/pipeline/admin/sources/overture"
 export * from "#tools/pipeline/admin/freeze"
 export * from "#tools/pipeline/admin/ingest-wof"
 export * from "#tools/pipeline/postcode"

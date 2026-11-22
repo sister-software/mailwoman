@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A fold's own tier decides whether the candidate build takes its rows.
+ *   A contributing database's own tier decides whether the candidate build takes its rows.
  *
  *   The fixture is the state the lab host's `postalcode-ni-osm.db` has no `layer_manifest`
  *   and records `tier = build-local` in a `meta` table.
@@ -25,7 +25,7 @@ let root: TemporaryDirectory
 let ni: PathBuilder
 
 beforeAll(async () => {
-	root = await temporaryDirectory("candidate-folds-")
+	root = await temporaryDirectory("candidate-inputs-")
 	ni = root.path("postalcode-ni-osm.db")
 
 	using db = new DatabaseClient<WOFDatabase>(ni)
@@ -37,7 +37,7 @@ beforeAll(async () => {
 
 afterAll(() => root[Symbol.asyncDispose]())
 
-test("buildCandidate refuses a build-local fold before building, and names it", async () => {
+test("buildCandidate refuses a build-local database before building, and names it", async () => {
 	const out = root.path("candidate.db")
 
 	await expect(
@@ -64,7 +64,7 @@ test("buildCandidate refuses a build-local fold before building, and names it", 
 	await expect(pathExists(out)).resolves.toBe(false)
 })
 
-test("buildCandidate folds a build-local database when asked, and says so before the build", async () => {
+test("buildCandidate adds a build-local database when asked, and says so before the build", async () => {
 	const phases: string[] = []
 
 	// The build then fails on the absent admin gazetteer.
@@ -75,7 +75,7 @@ test("buildCandidate folds a build-local database when asked, and says so before
 		postcodeDatabases: [ni.toString()],
 		localityDatabases: [],
 		importanceDB: false,
-		includeBuildLocalFolds: true,
+		includeBuildLocalInputs: true,
 		onProgress: (phase, message) => phases.push(`${phase}: ${message}`),
 	}).then(
 		() => "built",
@@ -85,7 +85,7 @@ test("buildCandidate folds a build-local database when asked, and says so before
 	expect(candidate).not.toMatch(/permits no publication/)
 
 	expect(phases).toContainEqual(
-		"fold-terms: folding 1 database(s) whose tier permits no publication, as asked: postalcode-ni-osm (build-local)"
+		"input-terms: adding 1 database(s) whose tier permits no publication, as asked: postalcode-ni-osm (build-local)"
 	)
 })
 
@@ -94,7 +94,8 @@ test("buildCandidate leaves the previous artifact in place when the build fails,
 
 	await writeLocalTextFile("previous", out)
 
-	// The absent admin gazetteer fails the build inside buildCandidateTable, after the folds are admitted.
+	// The absent admin gazetteer fails the build inside buildCandidateTable,
+	// after the contributing databases are admitted.
 	await expect(
 		buildCandidate({
 			adminDB: root.path("nope.db"),
@@ -102,7 +103,7 @@ test("buildCandidate leaves the previous artifact in place when the build fails,
 			postcodeDatabases: [ni.toString()],
 			localityDatabases: [],
 			importanceDB: false,
-			includeBuildLocalFolds: true,
+			includeBuildLocalInputs: true,
 		})
 	).rejects.toThrow(/unable to open database/)
 

@@ -71,7 +71,7 @@ import { licenseForOvertureCountry } from "mailwoman/geocode/national-overture"
 import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_ADMIN_DB } from "#tools/pipeline/defaults"
-import { buildSHA, foldLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The license expression assigned to this artifact, read from the same entry the rooftop tier reads.
@@ -104,7 +104,7 @@ export function twDistrictsLayerManifest(input: {
 	sourceMD5: string
 	now: Date
 }): LayerManifest {
-	return foldLayerManifest({
+	return contributingLayerManifest({
 		name: "localities-tw-districts",
 		version: input.release,
 		tier: LayerTier.Shipped,
@@ -238,7 +238,7 @@ export interface BuildTWDistrictsResult {
 	inserted: number
 	/**
 	 * Rows whose 縣市 matched a WOF region and include an `ancestors` row.
-	 * The remainder folded unscoped.
+	 * The remainder are added without a region scope.
 	 */
 	scoped: number
 	/**
@@ -366,7 +366,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 
 	if (!regions.length) {
 		throw new Error(
-			`${adminPath} carries no Han names for a Taiwan region — the wrong admin database, or a fold that dropped them`
+			`${adminPath} carries no Han names for a Taiwan region — the wrong admin database, or a source step that dropped them`
 		)
 	}
 
@@ -445,7 +445,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	}
 
 	// The layer interface's manifest, beside `database_meta` and stating the same terms.
-	// The candidate build reads its tier before folding the database.
+	// The candidate build reads its tier before adding the database's rows.
 	await stampLayerManifest(tmpPath, twDistrictsLayerManifest({ license, release, sourceMD5, now: new Date() }))
 
 	await swapDatabaseIntoPlace(tmpPath, outPath)

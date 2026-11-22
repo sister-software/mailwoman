@@ -68,7 +68,7 @@ export interface RungMeasurement {
 	 */
 	overtureBackfilled: number
 	/**
-	 * The number of {@link nodes} that come from the GeoNames fold, with IDs at or above `GEONAMES_ID_BASE`.
+	 * The number of {@link nodes} that come from GeoNames, with IDs at or above `GEONAMES_ID_BASE`.
 	 */
 	geonamesBackfilled: number
 	/**

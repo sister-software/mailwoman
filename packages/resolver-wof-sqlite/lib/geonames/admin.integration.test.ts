@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin
+ * `ingestGeonamesAliases({ includeAdmin: true })` adds the GeoNames A-class admin
  * (pcli country and ADM1 regions) alongside the P-class localities and links the locality to
  * region to country ancestry, so `parentID` scoping and adminCoherence reach the gap countries.
  */
@@ -84,7 +84,7 @@ afterAll(async () => {
 	await dir[Symbol.asyncDispose]()
 })
 
-test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {
+test("adds the country (PCLI) and region (ADM1) as admin spr rows", () => {
 	const country = db
 		.prepare("SELECT name, placetype, country FROM spr WHERE placetype='country' AND country='GE'")
 		.get() as Row
@@ -191,7 +191,7 @@ test("a matched place writes no row, adds its names to the record it matched, an
 		},
 	})
 
-	// The country and region matched, so the only row the fold wrote is the locality.
+	// The country and region matched, so the only row the ingest wrote is the locality.
 	expect((matched.prepare("SELECT COUNT(*) n FROM spr").get() as Row).n).toBe(3)
 	expect(gaps).toEqual([611_717])
 
@@ -244,7 +244,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
-	// pcls is a country-level code, so the fold must seat Hong Kong as the country.
+	// pcls is a country-level code, so the ingest must seat Hong Kong as the country.
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)

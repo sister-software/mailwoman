@@ -5,7 +5,7 @@
  *   The `overture_wof_match` table: which Who's On First record each matched Overture division is.
  *
  *   The admin gazetteer is a Collective Database.
- *   Its Overture Divisions part is ODbL-1.0, and the fold writes every division as its own
+ *   Its Overture Divisions part is ODbL-1.0, and the Overture step writes every division as its own
  *   row in the Overture id range rather than adding its names or Wikidata id to a WOF record.
  *
  *   A lookup that returns each place once reads the match from this table
@@ -65,7 +65,7 @@ export async function createOvertureWOFMatchTable<DB extends OvertureWOFMatchDat
 /**
  * Every recorded match, or `null` when the database predates the table.
  *
- * A database without the table was built before the collective fold, when a matched
+ * A database without the table was built before the Overture rows became an independent part, when a matched
  * division wrote no row of its own, so its matches are unrecorded rather than zero.
  */
 export function readOvertureWOFMatches<DB>(db: DatabaseClient<DB>): OvertureWOFMatchTable[] | null {

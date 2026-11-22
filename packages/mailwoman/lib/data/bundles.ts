@@ -356,20 +356,20 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Who's On First",
 				"GeoNames",
 				"Overture Maps Foundation, for its Divisions theme",
-				"OpenStreetMap contributors, for the Northern Ireland postcode fold",
+				"OpenStreetMap contributors, for the Northern Ireland postcode rows",
 			],
 			// The published artifact's own `layer_manifest.license`, read over HTTP range requests on 2026-09-27.
 			expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
 			terms: [
 				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
 				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
-				"Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name folds Overture Divisions. On the lab host's 2026-09-15 chain, where each fold's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places.",
-				"OpenStreetMap, for the Northern Ireland postcode fold: the Open Database License, with the credit `© OpenStreetMap contributors` and https://www.openstreetmap.org/copyright. The fold is an independent part of a collective database, so the license governs the fold and the rest of the file keeps its own terms. Read-only queries against the published artifact on 2026-10-17 found 9,514 fold rows for 4,757 places, ids 9800000000000 to 9800000004756, whose names, coordinates and bounding boxes equal the rows of postalcode-ni-osm-2026-08-05.db. They carry region 0, population 0 and no importance or name role. No row outside the fold shares a name key or a coordinate with them, and the fold has no row in candidate_ancestor or candidate_interval. The fold step runs after every pass over the admin rows and reads no other row. The fold is published by itself under the Open Database License, as the section 4.6 offer, at https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold. The 22 Prague district rows from GeoNames share the ids 9800000000000 to 9800000000021 with the fold because both builders used one id base at the build revision 2b9894111, and they are excluded from that dataset by country and placetype.",
+				"Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name adds Overture Divisions places. On the lab host's 2026-09-15 chain, where each source's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places.",
+				"OpenStreetMap, for the Northern Ireland postcode rows: the Open Database License, with the credit `© OpenStreetMap contributors` and https://www.openstreetmap.org/copyright. Those rows are an independent part of a collective database, so the license governs them and the rest of the file keeps its own terms. Read-only queries against the published artifact on 2026-10-17 found 9,514 Northern Ireland rows for 4,757 places, ids 9800000000000 to 9800000004756, whose names, coordinates and bounding boxes equal the rows of postalcode-ni-osm-2026-08-05.db. They carry region 0, population 0 and no importance or name role. No other row shares a name key or a coordinate with them, and they have no row in candidate_ancestor or candidate_interval. The step that adds them runs after every pass over the admin rows and reads no other row. They are published by themselves under the Open Database License, as the section 4.6 offer, at https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold. The 22 Prague district rows from GeoNames share the ids 9800000000000 to 9800000000021 with them because both builders used one id base at the build revision 2b9894111, and they are excluded from that dataset by country and placetype.",
 			],
 			conditions: [
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
-				"Credit OpenStreetMap contributors for the Northern Ireland postcode fold, and keep the Open Database License on that fold and on any database derived from it.",
+				"Credit OpenStreetMap contributors for the Northern Ireland postcode rows, and keep the Open Database License on those rows and on any database derived from them.",
 				"Credit `© OpenStreetMap contributors, Overture Maps Foundation` for the Overture Divisions part, and keep the Open Database License on that part and on any database derived from it. A candidate gazetteer that carries the `overture_wof_match` table is a Collective Database: its Overture Divisions part, the rows with ids 8000000000000 to 8999999999999 and that table, is independent, and the rest of the file keeps its sources' own terms. A candidate gazetteer without that table, the file served at 2026-08-25b among them, is a Derivative Database of Overture Divisions under the Open Database License 1.0 as a whole, because its Overture rows share its ancestry and importance passes with the other sources' rows.",
 			],
 			parts: [
@@ -380,10 +380,10 @@ export const BUNDLES: Record<string, DataBundle> = {
 					selects:
 						"the rows whose spr_id is 8000000000000 to 8999999999999 in candidate, candidate_ancestor and candidate_interval, and the overture_wof_match table, in a file that carries that table",
 					attribution: "© OpenStreetMap contributors, Overture Maps Foundation",
-					offerURL: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions-fold",
+					offerURL: "https://huggingface.co/datasets/sister-software/mailwoman-overture-divisions",
 				},
 				{
-					name: "osm-ni-postcode-fold",
+					name: "osm-ni-postcode",
 					publisher: "OpenStreetMap contributors",
 					expression: "ODbL-1.0",
 					selects:
@@ -394,7 +394,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 			],
 			unresolved: [
 				"Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download.",
-				"Which Overture record each of those places came from. `fold-overture` writes a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible.",
+				"Which Overture record each of those places came from. The admin build's Overture step wrote a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible.",
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
 				"Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere.",
 				"Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date.",

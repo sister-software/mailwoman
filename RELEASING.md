@@ -275,7 +275,7 @@ node packages/mailwoman/out/cli/main.js gazetteer build admin        # ~10 min; 
 ```
 
 One command runs the whole pipeline: WOF ingest → Overture divisions (real `division_area` extents +
-country nodes, #1015) → GeoNames folds → freeze (ancestors closure → `ancestors(id)` index →
+country nodes, #1015) → GeoNames places and aliases → freeze (ancestors closure → `ancestors(id)` index →
 `wof:hierarchy` −4 backfill) → enrich (region abbrevs + `place_abbr`, the steps the
 2026-07-07 rebuild missed) → FTS (`place_search` + `place_bbox`) → the **structural verify step** → seal
 0444 → build-log append.
@@ -337,14 +337,14 @@ instead of as a per-release asset. See `project-candidate-table-byte-range`.
 
 To get new admin coverage into the demo after a gazetteer rebuild:
 
-**Turnkey:** `mailwoman gazetteer` commands wrap the whole pipeline below, with every decision set as a default (fold countries, postcode set, FTS, the dated version):
+**Turnkey:** `mailwoman gazetteer` commands wrap the whole pipeline below, with every decision set as a default (GeoNames countries, postcode set, FTS, the dated version):
 
 ```sh
 # build + promote + publish + demo bump, one shot (source .env for the R2 creds first):
 set -a; . ./.env; set +a
 mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
 # …or run the stages independently:
-mailwoman gazetteer build                       # admin build (GeoNames folded in) → importance → candidate build (FTS baked in)
+mailwoman gazetteer build                       # admin build (GeoNames places added) → importance → candidate build (FTS baked in)
 mailwoman gazetteer promote                      # symlink <data-root>/db/wof/candidate.db → the build
 mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + demo ADMIN_GAZETTEER_VERSION bump
 ```
@@ -352,10 +352,10 @@ mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + de
 The manual recipe below performs the same steps one at a time, for reference and one-off variations:
 
 ```sh
-# 0. The admin build folds GeoNames places and their alternate names into the admin DB's spr/names
+# 0. The admin build adds GeoNames places and their alternate names to the admin DB's spr/names
 #    (#743/#193). An alternate name attaches to the WOF place it matches ("Karjaa" → Karis) rather
 #    than adding a second row. Each GeoNames place keeps the id GEONAMES_ID_BASE + geonameid (#3061).
-node packages/mailwoman/out/cli/main.js gazetteer build   # admin (fold included) → importance → candidate, turnkey
+node packages/mailwoman/out/cli/main.js gazetteer build   # admin (GeoNames included) → importance → candidate, turnkey
 # 0b. After a swap, build the importance database for the live admin DB. It lands beside it as
 #     admin-global-priority-importance-<admin md5, 12 hex>.db, and the candidate build finds it by
 #     that md5 and refuses an importance database stamped with another admin DB.

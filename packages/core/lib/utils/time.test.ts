@@ -71,16 +71,16 @@ describe("createPhaseClock", () => {
 		ms = 1000
 		clock.mark("ingest-wof")
 		ms = 3000
-		clock.mark("fold-overture")
+		clock.mark("add-overture")
 		ms = 3500
 		clock.mark("verify")
 		ms = 4000
-		clock.mark("fold-overture")
+		clock.mark("add-overture")
 		ms = 4200
 
 		expect(clock.finish()).toEqual([
 			{ phase: "ingest-wof", seconds: 3 },
-			{ phase: "fold-overture", seconds: 0.7 },
+			{ phase: "add-overture", seconds: 0.7 },
 			{ phase: "verify", seconds: 0.5 },
 		])
 	})

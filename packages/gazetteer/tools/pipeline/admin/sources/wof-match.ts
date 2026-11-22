@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Matches a place another source folds into the admin gazetteer against the WOF records already ingested.
+ *   Matches a place another source adds to the admin gazetteer against the WOF records already ingested.
  *
  *   WOF is the gazetteer's record of every place it holds.
  *   What a match does depends on the source's terms:
@@ -16,7 +16,7 @@
  *     ids would make the WOF rows a Derivative Database under ODbL 4.4.
  *     Kept apart, the Overture rows are one independent part of a Collective Database.
  *
- *   A place that matches no WOF record is folded as its own row and listed as a gap.
+ *   A place that matches no WOF record is written as its own row and listed as a gap.
  *   A gap's source decides whether it may enter the `mailwoman` WOF forks:
  *   a GeoNames place may, under CC BY with its `gn:id`, and an Overture division may not,
  *   because its data is ODbL and WOF takes OpenStreetMap data as concordance only.
@@ -59,16 +59,16 @@ const TIER_OF_PLACETYPE = new Map<string, MatchTier>(
 )
 
 /**
- * The tier a placetype matches within, or null for a placetype no fold writes.
+ * The tier a placetype matches within, or null for a placetype no source step writes.
  */
 export function matchTier(placetype: string): MatchTier | null {
 	return TIER_OF_PLACETYPE.get(placetype) ?? null
 }
 
 /**
- * A place another source is about to fold.
+ * A place another source is about to add.
  */
-export interface FoldCandidate {
+export interface IncomingPlace {
 	name: string
 	placetype: string
 	country: string
@@ -79,7 +79,7 @@ export interface FoldCandidate {
 }
 
 /**
- * The WOF record a folded place matched, and the evidence that matched it.
+ * The WOF record an added place matched, and the evidence that matched it.
  */
 export interface WOFMatch {
 	id: number
@@ -88,9 +88,9 @@ export interface WOFMatch {
 }
 
 /**
- * A folded place that matched no WOF record, and so was folded as its own row.
+ * An added place that matched no WOF record, and so was written as its own row.
  */
-export interface FoldGap extends FoldCandidate {
+export interface UnmatchedPlace extends IncomingPlace {
 	/**
 	 * The source the place came from.
 	 */
@@ -108,7 +108,7 @@ export interface FoldGap extends FoldCandidate {
 	 */
 	sourceID: string
 	/**
-	 * The id the fold gave the place's own row.
+	 * The id the source step gave the place's own row.
 	 */
 	id: number
 }
@@ -124,24 +124,24 @@ export interface FoldGap extends FoldCandidate {
 export const GAP_SOURCE_TERMS = {
 	overture: { license: "ODbL-1.0", upstreamEligible: false },
 	geonames: { license: "CC-BY-4.0", upstreamEligible: true },
-} as const satisfies Record<FoldGap["source"], { license: string; upstreamEligible: boolean }>
+} as const satisfies Record<UnmatchedPlace["source"], { license: string; upstreamEligible: boolean }>
 
 /**
  * The name-key table the matcher reads, built in the staging database
  * and dropped by {@link WOFPlaceIndex.dispose}.
  */
-const NAME_KEY_TABLE = "fold_match_wof_name_key"
+const NAME_KEY_TABLE = "source_match_wof_name_key"
 
 /**
- * WOF records ingested so far, indexed for matching folded places.
+ * WOF records ingested so far, indexed for matching the places other sources add.
  */
 export interface WOFPlaceIndex {
 	/**
 	 * The WOF record a candidate is, or null when no current WOF record of its tier matches it.
 	 */
-	match(candidate: FoldCandidate): WOFMatch | null
+	match(candidate: IncomingPlace): WOFMatch | null
 	/**
-	 * Records a folded name on a matched WOF record, and answers whether the record lacked it.
+	 * Records an added place's name on a matched WOF record, and answers whether the record lacked it.
 	 *
 	 * A name the record already has under the same key answers false, so the caller writes each new name once.
 	 */
@@ -156,7 +156,7 @@ export interface WOFPlaceIndex {
  * Indexes the current WOF records in an open staging database.
  *
  * It reads every row below {@link OVERTURE_ID_BASE}, so it runs after the WOF ingest
- * and before any fold writes.
+ * and before any other source writes.
  * Names are keyed with {@link normalizeLocalityForKey}, the key the candidate table uses,
  * so a name the matcher treats as the same is one retrieval also treats as the same.
  */
@@ -254,7 +254,7 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 	)
 
 	/**
-	 * The `<id>\0<key>` pairs claimed so far, so a name two folds share is written once.
+	 * The `<id>\0<key>` pairs claimed so far, so a name two sources share is written once.
 	 */
 	const claimed = new Set<string>()
 

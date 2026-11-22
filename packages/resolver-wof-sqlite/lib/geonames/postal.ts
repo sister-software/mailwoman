@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fold GeoNames postcode rows into a WOF or unified postcode extract as first-class
+ *   Adds GeoNames postcode rows to a WOF or unified postcode extract as first-class
  *   `postalcode` places for countries whose WOF postalcode repos do not exist.
  *
  *   Two laws are enforced here in code rather than in a runbook.
@@ -18,7 +18,7 @@
  *      Their average puts the code somewhere no address is.
  *      The medoid is the member point nearest the group's mean.
  *
- *   `build-unified-wof --geonames-postal-countries`, standalone folds and the `mailwoman
+ *   `build-unified-wof --geonames-postal-countries`, standalone ingests and the `mailwoman
  *   gazetteer` commands share one implementation. The GeoNames postal dump is
  *   `download.geonames.org/export/zip/<CC>.zip` → `<CC>.txt`, a headerless TSV of country,
  *   postcode, place, admin1, code1, admin2, code2, admin3, code3, lat, lon and accuracy.
@@ -209,7 +209,7 @@ export interface GeonamesPostalIngestResult {
 }
 
 /**
- * Fold GeoNames postcodes for `countries` into an open unified/postcode ingest DB: one `spr` row
+ * Add GeoNames postcodes for `countries` to an open unified/postcode ingest DB: one `spr` row
  * per distinct normalized postcode (placetype `postalcode`, medoid centroid, degenerate bbox),
  * the normalized form as `name`, and the display form as an extra `names` row when it differs.
  *

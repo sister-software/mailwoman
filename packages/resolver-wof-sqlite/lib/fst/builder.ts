@@ -88,13 +88,13 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	progress("spr", `Loaded ${sprRows.length} places`)
 
 	// An FST ships in npm packages whose license cannot include the Open Database License,
-	// so no place from the Overture Divisions fold may reach one.
+	// so no place the admin build added from Overture Divisions may reach one.
 	const overturePlaces = sprRows.filter((row) => row.id >= OVERTURE_ID_BASE && row.id < GEONAMES_ID_BASE).length
 
 	if (overturePlaces) {
 		throw new Error(
-			`buildFSTFromWOF: ${overturePlaces} of ${sprRows.length} places for [${countries}] come from the Overture ` +
-				"Divisions fold, which is ODbL; build the FST from countries the fold does not cover"
+			`buildFSTFromWOF: ${overturePlaces} of ${sprRows.length} places for [${countries}] come from Overture ` +
+				"Divisions, which is ODbL; build the FST from countries the admin build adds no Overture places for"
 		)
 	}
 
@@ -204,9 +204,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	const allLanguages = languages.includes("*")
 
-	// A WOF record can hold an alias the Overture fold added to it.
+	// A WOF record can hold an alias the Overture step added to it.
 	// A database built before `names.source` existed holds no such alias,
-	// because the fold then wrote only its own places.
+	// because the Overture step then wrote only its own places.
 	const hasSource = allRows<{ name: string }>(db.prepare("SELECT name FROM pragma_table_info('names')")).some(
 		(column) => column.name === "source"
 	)

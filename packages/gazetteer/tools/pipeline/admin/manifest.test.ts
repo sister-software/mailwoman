@@ -13,7 +13,7 @@ import { adminLayerManifest } from "#tools/pipeline/admin/manifest"
 const BASE = { buildSHA: "abc1234", createdAt: "2026-08-17T00:00:00.000Z", version: "2026-08-17.0" }
 
 describe("adminLayerManifest — source is derived from the run", () => {
-	it("names only the folds that actually ingested rows", () => {
+	it("names only the sources that actually ingested rows", () => {
 		// A build that read no Overture rows mustn't claim Overture, whatever the recipe lists.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 

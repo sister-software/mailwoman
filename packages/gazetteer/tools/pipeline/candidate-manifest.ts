@@ -74,12 +74,13 @@ export interface CandidateManifestInput {
 	version: string
 	createdAt: string
 	/**
-	 * Each fold's row and place counts on the table this build wrote, from {@linkcode censusFolds}.
+	 * Each source's row and place counts on the table this build wrote, from {@linkcode countRowsBySource}.
 	 *
-	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes, because a
-	 * later reader cannot tell a fold that contributed zero rows from a census that the build skipped.
+	 * A caller that passes none records `rows-by-source=unmeasured` rather than a
+	 * set of zeroes, because a later reader cannot tell a source that contributed
+	 * zero rows from a count that the build skipped.
 	 */
-	foldCensus?: readonly FoldCensusRow[]
+	rowsBySource?: readonly SourceRowCount[]
 	/**
 	 * Whether the build kept the Overture Divisions rows an independent part.
 	 *
@@ -90,9 +91,9 @@ export interface CandidateManifestInput {
 }
 
 /**
- * The identifier that stands for a fold whose own terms this build couldn't read,
- * deliberately absent from `KNOWN_OBLIGATIONS` so `summarizeLicense` reports it as
- * unrecognized and `refusalsForPublication` refuses the layer.
+ * The identifier that stands for a contributing database whose own terms this build
+ * couldn't read, deliberately absent from `KNOWN_OBLIGATIONS` so `summarizeLicense`
+ * reports it as unrecognized and `refusalsForPublication` refuses the layer.
  */
 export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
 
@@ -100,25 +101,25 @@ export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
  * Where a contributing database recorded its terms, with `none` meaning it
  * records no terms or couldn't be read.
  */
-export const FoldTermsRecord = {
+export const InputTermsRecord = {
 	LayerManifest: "layer_manifest",
 	Meta: "meta",
 	DatabaseMeta: "database_meta",
 	None: "none",
 } as const
 
-export type FoldTermsRecord = (typeof FoldTermsRecord)[keyof typeof FoldTermsRecord]
+export type InputTermsRecord = (typeof InputTermsRecord)[keyof typeof InputTermsRecord]
 
 /**
  * What one contributing database records about its own publication.
  */
-export interface FoldTerms {
+export interface InputTerms {
 	path: string
 	/**
 	 * The layer name the manifest records, or the filename when no manifest identifies one.
 	 */
 	name: string
-	recordedIn: FoldTermsRecord
+	recordedIn: InputTermsRecord
 	/**
 	 * The tier as recorded, or `null` when the database states none.
 	 */
@@ -134,21 +135,21 @@ export interface FoldTerms {
 /**
  * The key/value tables a builder wrote its terms into before the manifest existed, consulted in this order.
  */
-const TERMS_TABLES = [FoldTermsRecord.Meta, FoldTermsRecord.DatabaseMeta] as const
+const TERMS_TABLES = [InputTermsRecord.Meta, InputTermsRecord.DatabaseMeta] as const
 
 /**
- * One fold's contribution to a built candidate table, counted by the id range its builder mints from.
+ * One source's contribution to a built candidate table, counted by the id range its builder mints from.
  */
-export interface FoldCensusRow {
-	fold: string
+export interface SourceRowCount {
+	source: string
 	rows: number
 	places: number
 }
 
 /**
- * Count each fold's rows and distinct places in a built candidate table.
+ * Count each source's rows and distinct places in a built candidate table.
  *
- * A fold's share of a published artifact is recoverable from the artifact itself only
+ * A source's share of a published artifact is recoverable from the artifact itself only
  * while the upstream release is still served.
  * Overture prunes a release from its bucket.
  *
@@ -159,22 +160,22 @@ export interface FoldCensusRow {
  * place ids from, so a range added there reaches this census without a second list.
  * Rows below the first base contain Who's On First's own ids and are reported under `wof`.
  */
-export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
+export function countRowsBySource(candidateDBPath: PathBuilderLike): SourceRowCount[] {
 	using db = new DatabaseClient<layerschemadatabase>(candidateDBPath, { readOnly: true })
 
 	if (!tableExists(db, "candidate")) return []
 
 	const ranges = [...SYNTHETIC_ID_RANGES].toSorted((a, b) => a.base - b.base)
 
-	const bounds: Array<{ fold: string; low: number; high: number }> = [
-		{ fold: "wof", low: 0, high: ranges[0]?.base ?? Number.MAX_SAFE_INTEGER },
+	const bounds: Array<{ source: string; low: number; high: number }> = [
+		{ source: "wof", low: 0, high: ranges[0]?.base ?? Number.MAX_SAFE_INTEGER },
 	]
 
 	for (const [index, range] of ranges.entries()) {
-		bounds.push({ fold: range.name, low: range.base, high: ranges[index + 1]?.base ?? Number.MAX_SAFE_INTEGER })
+		bounds.push({ source: range.name, low: range.base, high: ranges[index + 1]?.base ?? Number.MAX_SAFE_INTEGER })
 	}
 
-	const counted: FoldCensusRow[] = []
+	const counted: SourceRowCount[] = []
 
 	for (const bound of bounds) {
 		const row = db
@@ -185,10 +186,10 @@ export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
 
 		// A range holding zero rows is left out rather than recorded at zero.
 		// The registry lists every range any builder may mint from.
-		// One artifact folds only a handful, so zeroes would outnumber the counts
-		// and read as folds this build refused.
+		// One artifact takes rows from only a handful, so zeroes would outnumber the counts
+		// and read as sources this build refused.
 		if (row?.rows) {
-			counted.push({ fold: bound.fold, rows: row.rows, places: row.places })
+			counted.push({ source: bound.source, rows: row.rows, places: row.places })
 		}
 	}
 
@@ -199,14 +200,14 @@ export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
  * Read what a contributing database records about its tier and grant, resolving a pre-manifest prose
  * grant through `readLicenseRecord` and reporting prose that resolves to no expression as `null`.
  */
-export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
+export async function readInputTerms(path: PathBuilderLike): Promise<InputTerms> {
 	const pathString = path.toString()
 	const name = basename(pathString, ".db")
 
-	const none: FoldTerms = {
+	const none: InputTerms = {
 		path: pathString,
 		name,
-		recordedIn: FoldTermsRecord.None,
+		recordedIn: InputTermsRecord.None,
 		tier: null,
 		license: null,
 		error: null,
@@ -222,7 +223,7 @@ export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
 		return {
 			path: pathString,
 			name: probed.manifest.name,
-			recordedIn: FoldTermsRecord.LayerManifest,
+			recordedIn: InputTermsRecord.LayerManifest,
 			tier: probed.manifest.tier ?? null,
 			license: probed.manifest.license ? readLicenseRecord(probed.manifest.license).expression : null,
 			error: null,
@@ -261,11 +262,11 @@ export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
 }
 
 /**
- * Every contributing database whose recorded tier permits no publication, excluding a fold that
- * states no tier because its undeclared grant already reaches {@link UNDECLARED_INPUT_LICENSE}.
+ * Every contributing database whose recorded tier permits no publication, excluding a database
+ * that states no tier because its undeclared grant already reaches {@link UNDECLARED_INPUT_LICENSE}.
  */
-export function foldsRefusingPublication(terms: readonly FoldTerms[]): FoldTerms[] {
-	return terms.filter((fold) => fold.tier !== null && fold.tier !== LayerTier.Shipped)
+export function inputsRefusingPublication(terms: readonly InputTerms[]): InputTerms[] {
+	return terms.filter((input) => input.tier !== null && input.tier !== LayerTier.Shipped)
 }
 
 /**
@@ -277,12 +278,12 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 	const identifiers = new Set<string>()
 	let undeclared = 0
 
-	const adminTerms = await readFoldTerms(input.adminDBPath)
-	const foldTerms = await Promise.all(contributing.map((path) => readFoldTerms(path)))
-	// The ancestor isn't a fold, so the count reads only the contributing databases.
-	const buildLocal = foldsRefusingPublication(foldTerms).length
+	const adminTerms = await readInputTerms(input.adminDBPath)
+	const inputTerms = await Promise.all(contributing.map((path) => readInputTerms(path)))
+	// The ancestor isn't a contributing database, so the count reads only the contributing databases.
+	const buildLocal = inputsRefusingPublication(inputTerms).length
 
-	for (const terms of [adminTerms, ...foldTerms]) {
+	for (const terms of [adminTerms, ...inputTerms]) {
 		if (!terms.license) {
 			undeclared++
 
@@ -303,32 +304,32 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		version: input.version,
 		schemaVersion: 1,
 		// Never `shipped`: the admin ancestor is `build-local`, and this file includes its rows.
-		// The postcode folds add share-alike sources.
+		// The postcode databases add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
 		// A file whose Overture rows are an independent part is a Collective Database,
 		// and the attribution states which part the ODbL governs.
 		attribution:
-			"derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest" +
-			(input.overturePart && input.foldCensus?.some((fold) => fold.fold === "overture" && fold.rows > 0)
+			"derived from the mailwoman admin gazetteer and the postcode databases the build added; see each layer's manifest" +
+			(input.overturePart && input.rowsBySource?.some((count) => count.source === "overture" && count.rows > 0)
 				? `. ${OVERTURE_PART_NOTICE}`
 				: ""),
 		source: ancestor,
-		// `build-local-folds` is the count a publish decision reads without re-opening the inputs:
-		// a fold whose own tier permits no publication was folded in.
+		// `build-local-inputs` is the count a publish decision reads without re-opening the inputs:
+		// the build added a database whose own tier permits no publication.
 		sourceVintage:
 			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
-			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} ` +
+			`undeclared-inputs=${undeclared} build-local-inputs=${buildLocal} ` +
 			(input.importance
 				? `importance=${input.importance.path} importance-md5=${input.importance.md5}`
 				: "importance=none") +
 			(typeof input.populationEstimated === "number" ? ` population-estimates=${input.populationEstimated}` : "") +
-			// Each fold's rows and places, measured on the built table. Recorded here because a fold's share
+			// Each source's rows and places, measured on the built table. Recorded here because a source's share
 			// is recoverable from the artifact itself only while its upstream release is still served.
-			(input.foldCensus?.length
-				? ` ${input.foldCensus.map((fold) => `${fold.fold}=${fold.rows}/${fold.places}`).join(" ")}`
-				: " fold-census=unmeasured (the builder passed none)"),
+			(input.rowsBySource?.length
+				? ` rows-by-source=${input.rowsBySource.map((count) => `${count.source}:${count.rows}/${count.places}`).join(",")}`
+				: " rows-by-source=unmeasured (the builder passed none)"),
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,

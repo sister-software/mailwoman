@@ -5,7 +5,8 @@
  *   Classifies a gazetteer place ID by the source that minted it.
  *
  *   `spr.id` is a real Who's On First ID only for WOF rows.
- *   The Overture and GeoNames folds mint synthetic IDs in reserved ranges above every WOF ID.
+ *   The places the build adds from Overture and GeoNames take synthetic IDs in
+ *   reserved ranges above every WOF ID.
  *   Those IDs do not resolve on spelunker.
  */
 
@@ -16,7 +17,7 @@ import {
 } from "@mailwoman/core/resolver/synthetic-id-ranges"
 
 /**
- * The fold that minted a place ID.
+ * The source whose build step minted a place ID.
  */
 export const PlaceIDSource = {
 	/**
@@ -30,12 +31,12 @@ export const PlaceIDSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * A synthetic ID from the GeoNames alias fold.
+	 * A synthetic ID from the places the GeoNames alias step adds.
 	 */
 	GeoNames: "geonames",
 	/**
-	 * A synthetic ID from the GeoNames postal fold.
-	 * Its range sits above the alias fold's range.
+	 * A synthetic ID from the postcodes the GeoNames postal step adds.
+	 * Its range sits above the alias step's range.
 	 */
 	GeoNamesPostal: "geonames-postal",
 } as const
@@ -100,7 +101,7 @@ export function syntheticIDNote(ids: readonly number[]): string | null {
 	const parts = synthetic.map(([source, n]) => `${n} ${source}`).join(", ")
 
 	return (
-		`${parts} — those ids are SYNTHETIC, minted by a fold in a reserved range above every real WOF id, and they ` +
+		`${parts} — those ids are SYNTHETIC, minted by a non-WOF source in a reserved range above every real WOF id, and they ` +
 		"resolve to nothing on spelunker. `wof_id` is null on exactly those rows; a row with a non-null `wof_id` is a " +
 		"real Who's On First record and `wof_url` links it."
 	)
