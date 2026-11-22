@@ -9,7 +9,7 @@
  */
 
 import type { LayerContribution } from "#geocode/contributions"
-import { createGeocodeSessionOptions, GEOCODE_DEFAULT_LOCALE } from "#geocode/options"
+import { createGeocodeSessionOptions } from "#geocode/options"
 import { createGeocodeSession, type GeocodeSession } from "#geocode/session"
 
 /**
@@ -28,7 +28,6 @@ export function createDropInGeocodeSession(
 	candidateDB?: string | null
 ): Promise<GeocodeSession> {
 	const options = createGeocodeSessionOptions({
-		locale: GEOCODE_DEFAULT_LOCALE,
 		countryScope: "none",
 		...(candidateDB ? { candidateDB } : {}),
 	})

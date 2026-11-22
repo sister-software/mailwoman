@@ -31,6 +31,13 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  # The parse pipeline reads the machine's locale when an input has no script or postcode evidence
+  # and the caller gives no locale (`getMachinePreferences` in packages/mailwoman/lib/runtime-pipeline.ts).
+  # Node takes that locale from LC_ALL, then LANG, when the process starts, and reads this value as
+  # `en-US`. It is the value the lab runners already export, stated here so every leg runs under one
+  # declared locale. `packages/mailwoman/lib/runtime-pipeline.integration.test.ts` runs the pipeline
+  # under a second one.
+  LANG: en_US.UTF-8
   # The onnxruntime-node postinstall fetches GPU binaries from a CDN that the lab runners cannot
   # always reach. CI uses the CPU libraries bundled in the npm tarball, so the download is skipped.
   ONNXRUNTIME_NODE_INSTALL: skip

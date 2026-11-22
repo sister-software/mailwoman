@@ -36,7 +36,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 	await using session = await createGeocodeSession({ ...options, trace: true })
 
-	const { result, tree, trace, timing } = await session.geocode(input)
+	const { result, tree, applied, trace, timing } = await session.geocode(input)
 	const tilesPath = await resolveTilesPath(options.tiles)
 	let frame: MapFrame | null = null
 	let mapNote: string | null = null
@@ -74,7 +74,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 			rows={rows}
 			focused={null}
 			color={!$public.NO_COLOR}
-			data={{ input, tree, result, frame, mapNote, ...(trace ? { trace } : {}), timing }}
+			data={{ input, tree, result, frame, mapNote, applied, ...(trace ? { trace } : {}), timing }}
 		/>,
 		columns
 	)

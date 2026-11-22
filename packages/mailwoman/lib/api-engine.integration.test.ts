@@ -23,6 +23,7 @@ import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 import { createServeEngine } from "#api-engine"
 import { $public } from "#env"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? wofDatabasePath("admin-global-priority.db")
 const txSitus = addressPointDatabasePath("address-points-us-tx.db")
@@ -49,9 +50,13 @@ const describeIfWeights = describe.skipIf(!(await weightsPresent()))
 
 let app: ReturnType<typeof createMailwomanAPI>
 
+let sessionOptions: Awaited<ReturnType<typeof createServeEngine>>["sessionOptions"]
+
 beforeAll(async () => {
-	const { engine } = await createServeEngine()
-	app = createMailwomanAPI(engine)
+	const serveEngine = await createServeEngine()
+
+	app = createMailwomanAPI(serveEngine.engine)
+	sessionOptions = serveEngine.sessionOptions
 }, 120_000)
 
 beforeEach(() => {
@@ -84,6 +89,13 @@ describe("api-engine — error paths (run unconditionally)", () => {
 		const r = await postJSON("/v1/batch", { addresses: [] })
 		expect(r.status).toBe(200)
 		expect((r.body as { results: unknown[] }).results).toEqual([])
+	})
+})
+
+describe("api-engine — session options (run unconditionally)", () => {
+	test("the server states no locale, so its sessions record the locale as the default and never as a caller's", () => {
+		expect(sessionOptions.locale).toBe(GEOCODE_SESSION_DEFAULTS.locale)
+		expect(sessionOptions.localeSource).toBe("default")
 	})
 })
 

@@ -34,7 +34,8 @@ const country = cfg.country ?? "US"
 // The session lives as long as the worker thread, and the pool terminates the thread.
 const session = await createGeocodeSession(
 	createGeocodeSessionOptions({
-		locale: cfg.locale,
+		...(cfg.locale ? { locale: cfg.locale } : {}),
+		...(cfg.localeSource ? { localeSource: cfg.localeSource } : {}),
 		dataRoot: cfg.dataRoot,
 		resolveDB: cfg.wofDBPath,
 		defaultCountry: country,

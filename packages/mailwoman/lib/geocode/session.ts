@@ -46,7 +46,7 @@ import {
 	type GeocodeDeps,
 } from "#geocode/core"
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
-import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions } from "#geocode/options"
+import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions, type SessionOptionSource } from "#geocode/options"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {
@@ -81,14 +81,62 @@ export interface GeocodeTrace {
 	inputMode: InputMode
 
 	/**
-	 * The session's configured locale.
-	 */
-	locale: string
-
-	/**
 	 * One record per backend lookup that the resolver performed.
 	 */
 	resolver: ResolveNodeTrace[]
+}
+
+/**
+ * Why a session kept a locale-inferred country scope from the resolver as a filter.
+ *
+ * - `"bare_locality"`: the whole input is one place name.
+ * - `"bare_postcode_format_conflict"`: the whole input is one postcode,
+ *   in a format the country doesn't use.
+ * - `"contradicting_evidence"`: the locale head reads the address as another country's,
+ *   or the postcode's format excludes the country.
+ */
+export const ScopeWithheldReason = {
+	BareLocality: "bare_locality",
+	BarePostcodeFormatConflict: "bare_postcode_format_conflict",
+	ContradictingEvidence: "contradicting_evidence",
+} as const
+
+export type ScopeWithheldReason = (typeof ScopeWithheldReason)[keyof typeof ScopeWithheldReason]
+
+/**
+ * The locale and the country scope one geocode ran under, and where each came from.
+ *
+ * The session records each value where it decides it, so the record states the decision
+ * and never a second reading of it.
+ */
+export interface GeocodeApplied {
+	/**
+	 * The session's locale, keyed as a pipeline's `LocaleHint` keys its own.
+	 */
+	locale: {
+		locale: string
+		source: SessionOptionSource
+	}
+
+	/**
+	 * The country scope of this input, or null when the geocode answered without resolving.
+	 */
+	countryScope: {
+		/**
+		 * The scope the resolver was given, or null when it resolved with none.
+		 *
+		 * A `"caller"` scope is a default country a caller stated, and an `"inferred"`
+		 * one is read off the locale.
+		 */
+		resolver: Required<DefaultCountry> | null
+
+		/**
+		 * The locale's country, when the session or the address's own evidence kept it from filtering.
+		 *
+		 * {@linkcode resolver} is then a soft scope standing in for it, or null.
+		 */
+		withheld: { country: string; reason: ScopeWithheldReason } | null
+	} | null
 }
 
 /**
@@ -99,6 +147,11 @@ export interface GeocodeTrace {
 export interface GeocodeRun {
 	result: GeocodeResult
 	tree: AddressTree
+
+	/**
+	 * The locale and country scope the result was computed under, with the source of each.
+	 */
+	applied: GeocodeApplied
 
 	/**
 	 * Wall-clock milliseconds for `parse`, `resolve` and `total`, plus `trace` when the session traces,
@@ -439,7 +492,6 @@ export async function createGeocodeSession(
 				queryShape: inputs.queryShape,
 				kind: inputs.kind,
 				inputMode: inputs.inputMode,
-				locale: options.locale,
 			}
 		} catch {
 			return null
@@ -477,9 +529,20 @@ export async function createGeocodeSession(
 			return implied.length > 0 && !implied.includes(inferred)
 		}
 
-		const inferredScopeOK =
-			countryScope?.source === "caller" || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
+		// Only an inferred scope is ever withheld, and the reason found here is the one the run states.
+		const withheldReason =
+			countryScope?.source !== "inferred"
+				? null
+				: isBareLocalityTree(parsedTree)
+					? ScopeWithheldReason.BareLocality
+					: barePostcodeFormatConflict()
+						? ScopeWithheldReason.BarePostcodeFormatConflict
+						: null
 
+		const withheldBySession =
+			countryScope && withheldReason ? { country: countryScope.country, reason: withheldReason } : null
+
+		const inferredScopeOK = withheldReason == null
 		const withheldCountry = inferredScopeOK ? null : localeCountry
 
 		// A withheld locale country stays a soft scope under either prior.
@@ -491,7 +554,18 @@ export async function createGeocodeSession(
 		const resolverScope = inferredScopeOK && countryScope ? countryScope : softScope
 		const parentPlace = request.parentPlace ?? options.parentPlace
 
+		// The resolver's scope is recorded as `geocodeAddress` reports it, since that function may still drop it.
+		let appliedScope: GeocodeApplied["countryScope"] = null
+
 		const result = await geocodeAddress(input, {
+			countryScopeSink: ({ resolver: given, dropped }) => {
+				appliedScope = {
+					resolver: given ? { ...given, strength: given.strength ?? ScopeStrength.Hard } : null,
+					withheld:
+						withheldBySession ??
+						(dropped ? { country: dropped.country, reason: ScopeWithheldReason.ContradictingEvidence } : null),
+				}
+			},
 			...decoderSettings,
 			classifier: routed,
 			...(request.inputMode ? { inputMode: request.inputMode } : {}),
@@ -547,6 +621,7 @@ export async function createGeocodeSession(
 		return {
 			result,
 			tree: parsedTree,
+			applied: { locale: { locale: options.locale, source: options.localeSource }, countryScope: appliedScope },
 			timing: {
 				parse: parsedAt - startedAt,
 

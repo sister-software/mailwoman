@@ -17,7 +17,7 @@ import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { LayerContribution } from "mailwoman/geocode/contributions"
-import type { GeocodeSession } from "mailwoman/geocode/session"
+import type { GeocodeRun, GeocodeSession } from "mailwoman/geocode/session"
 import { createDropInGeocodeSession } from "mailwoman/geocode/session/drop-in"
 import { buildNoGazetteerMessage, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { NODE_LAYER_CONTRIBUTIONS } from "mailwoman/services/entry/node"
@@ -91,17 +91,29 @@ export const loadCore = memoizeResettable(
 
 /**
  * Geocodes one address through the shared session, inside `parent` when the caller gives one.
+ *
+ * `applied` states the locale and country scope the session answered under, with the source of each.
+ */
+export async function geocodeRunThroughCore(
+	address: string,
+	parent: MCPGeocodeParent | null = null
+): Promise<Pick<GeocodeRun, "result" | "applied">> {
+	const { session } = await loadCore()
+
+	const { result, applied } = await session.geocode(
+		address,
+		parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}
+	)
+
+	return { result, applied }
+}
+
+/**
+ * The `result` of {@linkcode geocodeRunThroughCore}, for a caller that reads only the answer.
  */
 export async function geocodeThroughCore(
 	address: string,
 	parent: MCPGeocodeParent | null = null
 ): Promise<GeocodeResult> {
-	const { session } = await loadCore()
-
-	const { result } = await session.geocode(
-		address,
-		parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}
-	)
-
-	return result
+	return (await geocodeRunThroughCore(address, parent)).result
 }

@@ -66,7 +66,7 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
  * If the chrome grows, `MIN_DEBUG_ROWS` must grow with it.
  */
 const MIN_DEBUG_COLUMNS = 60
-const MIN_DEBUG_ROWS = 20
+const MIN_DEBUG_ROWS = 21
 
 /**
  * Describes how a frame falls below the size floor, or returns null when it is large enough.

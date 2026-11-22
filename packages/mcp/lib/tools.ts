@@ -261,7 +261,9 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 			description:
 				"Parse a free-text location string (postal address or POI query) into a structured address tree — house " +
 				"number, street, locality, region, postcode, country, and (with `poi: true`) a POI intent. Use this to " +
-				"understand a query's structure before geocoding or searching; it does not resolve coordinates.",
+				"understand a query's structure before geocoding or searching; it does not resolve coordinates. The " +
+				"result's `locale` states the locale the parse ran under and its `source`: `detected` from the input, " +
+				"`environment` ($MW_LOCALE), `machine` (the server host's locale, with `evidence`) or `caller`.",
 			inputSchema: ParseInputSchema,
 			handler: async (args) => {
 				const { text, poi } = ParseInputSchema.parse(args)
@@ -274,7 +276,9 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 			description:
 				"Geocode a free-text postal address to coordinates via the full parse-then-resolve cascade (rooftop > " +
 				"interpolated > street > admin resolution tiers). Returns lat/lon, the resolution tier, an uncertainty " +
-				"radius in meters, and the resolved admin hierarchy. Use this to convert an address string into a location.",
+				"radius in meters, and the resolved admin hierarchy. Use this to convert an address string into a location. " +
+				"The result's `applied` states the session's `locale` with its `source`, and `countryScope`: the country " +
+				"scope the resolver was given (`resolver`, null when it searched every country) and any scope `withheld`.",
 			inputSchema: GeocodeInputSchema,
 			handler: async (args) => {
 				const { text, parent, parent_scope } = GeocodeInputSchema.parse(args)

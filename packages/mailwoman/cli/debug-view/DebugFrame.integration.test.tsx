@@ -3,11 +3,12 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, ribbonSegments } from "mailwoman/debug-view/DebugFrame"
 import { describe, expect, it } from "vitest"
 
 import { renderInkToString } from "#cli/debug-view/static-render"
-import type { GeocodeTrace } from "#geocode"
+import type { GeocodeApplied, GeocodeTrace } from "#geocode"
 
 const TREE = {
 	raw: "3215 SE Clinton St, Portland OR",
@@ -131,9 +132,13 @@ const TRACE = {
 	},
 	kind: { kind: "structured_address", confidence: 0.9, alternatives: [], intentMarkers: null },
 	inputMode: "formatted",
-	locale: "en-US",
 	resolver: [],
 } as GeocodeTrace
+
+const APPLIED: GeocodeApplied = {
+	locale: { locale: "en-US", source: "default" },
+	countryScope: { resolver: { country: "US", source: "inferred", strength: "hard" }, withheld: null },
+}
 
 const BASE_DATA = {
 	input: RESULT.input,
@@ -141,6 +146,7 @@ const BASE_DATA = {
 	result: RESULT,
 	frame: null,
 	mapNote: "no tiles: set $MAILWOMAN_TILES or --tiles",
+	applied: APPLIED,
 }
 
 /**
@@ -186,9 +192,12 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		for (const label of ["system", "locale-head", "tokens", "channels", "decode"]) {
+		for (const label of ["applied", "system", "locale-head", "tokens", "channels", "decode"]) {
 			expect(text).toContain(label)
 		}
+
+		// The label is dimmed, so the escape sequences come off before the row is matched.
+		expect(stripANSI(text)).toMatch(/applied\s+locale en-US \(default\)  scope US hard \(inferred\)/u)
 
 		expect(text).toContain("us (auto)")
 		expect(text).toContain("mode formatted")
@@ -207,6 +216,8 @@ describe("DebugFrame", () => {
 		// The rows keep their place and each reports that it has no evidence rather than
 		// a fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
+		// The applied row comes from the run and needs no trace.
+		expect(text).toContain("scope US hard (inferred)")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")
 		expect(frameLines(text)).toHaveLength(30)
@@ -318,10 +329,10 @@ describe("DebugFrame", () => {
 	})
 
 	it("keeps the pane budgets in step with the frame's fixed chrome", async () => {
-		// The two exported budgets subtract the same input area (9) plus footer (1) before
+		// The two exported budgets subtract the same input area (10) plus footer (1) before
 		// their own chrome, so asserting the pair catches a row added to one without the other.
-		expect(mapPaneCellSize(100, 30)).toEqual({ columns: 48, rows: 16 })
-		expect(outputPaneCapacity(30)).toBe(17)
+		expect(mapPaneCellSize(100, 30)).toEqual({ columns: 48, rows: 15 })
+		expect(outputPaneCapacity(30)).toBe(16)
 
 		const text = await renderInkToString(
 			<DebugFrame columns={100} rows={30} focused={null} color={false} data={BASE_DATA} />,

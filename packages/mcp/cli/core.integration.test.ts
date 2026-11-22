@@ -10,10 +10,11 @@
 
 // ci-runner: mailwoman-data
 
+import { GEOCODE_DEFAULT_LOCALE } from "mailwoman/geocode/options"
 import { serverParityDataPresent, serverParityDifferences } from "mailwoman/tools/eval-harness/test-kit/server-parity"
 import { describe, expect, it } from "vitest"
 
-import { geocodeThroughCore, loadCore } from "#cli/core"
+import { geocodeRunThroughCore, geocodeThroughCore, loadCore } from "#cli/core"
 
 /**
  * The time the two session builds and the sample's geocodes may take.
@@ -21,6 +22,21 @@ import { geocodeThroughCore, loadCore } from "#cli/core"
 const PARITY_TIMEOUT_MS = 600_000
 
 describe.skipIf(!(await serverParityDataPresent()))("The MCP server's geocode tool against the geocode session", () => {
+	// This case runs first and leaves the shared session open.
+	// The parity case disposes it.
+	it(
+		"states the default locale and the absent country scope it answered under",
+		async () => {
+			const { applied } = await geocodeRunThroughCore("1001 Boulevard Saint-Laurent, Montréal")
+
+			expect(applied).toEqual({
+				locale: { locale: GEOCODE_DEFAULT_LOCALE, source: "default" },
+				countryScope: { resolver: null, withheld: null },
+			})
+		},
+		PARITY_TIMEOUT_MS
+	)
+
 	it(
 		"answers every sampled gauntlet case as the session does",
 		async () => {

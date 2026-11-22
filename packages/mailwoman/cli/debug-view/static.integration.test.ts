@@ -59,7 +59,8 @@ if (!canRun) {
 
 describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
-		const options = await commandOptions("--tiles", TILES_PATH.toString(), "--debug-size", "100x30")
+		// 31 rows is the shortest frame whose output pane reaches the tier line for this address.
+		const options = await commandOptions("--tiles", TILES_PATH.toString(), "--debug-size", "100x31")
 
 		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
@@ -75,6 +76,7 @@ describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 
 		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
+		expect(text).toMatch(/applied\s+locale en-US \(default\)  scope US hard \(inferred\)/u)
 		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
 		expect(text).toContain("mode ")
 		expect(text).toMatch(/locale-head\s+[A-Z]{2} \d\.\d\d/u)
@@ -95,24 +97,24 @@ describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 })
 
 describe("runStaticDebug --debug-size floor", () => {
-	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
+	test("a --debug-size below 60x21 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
 		const options = await commandOptions("--debug-size", "100x5")
 
 		// The floor is checked before any DB or weights work, so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
-			/--debug-size below the 60x20 minimum: 100x5/
+			/--debug-size below the 60x21 minimum: 100x5/
 		)
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// 19 rows leaves the map pane 5 content rows and 20 leaves it 6, so asserting the
+		// 20 rows leaves the map pane 5 content rows and 21 leaves it 6, so asserting the
 		// pair keeps the constant and `mapPaneCellSize` from drifting apart.
-		expect(mapPaneCellSize(60, 20).rows).toBe(6)
-		expect(mapPaneCellSize(60, 19).rows).toBe(5)
+		expect(mapPaneCellSize(60, 21).rows).toBe(6)
+		expect(mapPaneCellSize(60, 20).rows).toBe(5)
 
 		await expect(
-			runStaticDebug("3215 SE Clinton St, Portland OR", await commandOptions("--debug-size", "60x19"))
-		).rejects.toThrow(/--debug-size below the 60x20 minimum: 60x19/)
+			runStaticDebug("3215 SE Clinton St, Portland OR", await commandOptions("--debug-size", "60x20"))
+		).rejects.toThrow(/--debug-size below the 60x21 minimum: 60x20/)
 	})
 })
 

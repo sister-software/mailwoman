@@ -14,7 +14,7 @@ import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 
-import { geocodeThroughCore, loadCore } from "#cli/core"
+import { geocodeRunThroughCore, geocodeThroughCore, loadCore } from "#cli/core"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -76,7 +76,10 @@ const deps: MCPToolDeps = {
 	},
 
 	async geocode(text, opts) {
-		return geocodeThroughCore(text, opts?.parent ?? null)
+		const { result, applied } = await geocodeRunThroughCore(text, opts?.parent ?? null)
+
+		// The tool states the locale and country scope behind the answer, so an agent can tell a default decided it.
+		return { ...result, applied }
 	},
 
 	async poiSearch(q) {

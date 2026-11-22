@@ -29,6 +29,13 @@ import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> {
 	options: Options
 	args: Args
+
+	/**
+	 * The flags the user typed, as `ParsedCommand.typed` states them.
+	 *
+	 * A value in `options` whose flag is absent here is the flag's default.
+	 */
+	typed: ReadonlySet<string>
 }
 
 /**

@@ -190,6 +190,14 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	defaultCountry?: DefaultCountry
 	/**
+	 * Receives the country scope the resolver was given, once per geocode that resolves.
+	 *
+	 * `dropped` is {@linkcode defaultCountry} when evidence in the address kept
+	 * it from the resolver, else null.
+	 * `resolver` is then the locale head's soft scope standing in for it, or null.
+	 */
+	countryScopeSink?: (decision: { resolver: DefaultCountry | null; dropped: DefaultCountry | null }) => void
+	/**
 	 * The bonus a soft country scope gives a candidate in its country, in log10-population units.
 	 */
 	softCountryWeight?: number
@@ -506,6 +514,11 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 			}
 		}
 	}
+
+	deps.countryScopeSink?.({
+		resolver: opts.defaultCountry ?? null,
+		dropped: deps.defaultCountry && opts.defaultCountry !== deps.defaultCountry ? deps.defaultCountry : null,
+	})
 
 	if (deps.softCountryWeight != null) {
 		opts.softCountryWeight = deps.softCountryWeight

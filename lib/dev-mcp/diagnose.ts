@@ -25,6 +25,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
+import { appliedRow } from "mailwoman/cli/debug-view/trace-rows"
+import type { GeocodeApplied } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import {
 	candidateBandProbe,
@@ -200,6 +202,7 @@ export interface AccountInput {
 		}>
 		admin_coherence?: { region: string; country: string } | null | undefined
 	}
+	applied?: GeocodeApplied | undefined
 	trace?:
 		| {
 				parse: NeuralParseTrace
@@ -351,6 +354,12 @@ export interface RowAccount {
 	 * The engine the row ran under on the board-routed path, or `null` on the single-config path.
 	 */
 	routing: RowRouting | null
+	/**
+	 * The locale and country scope the session answered this row under, with the source of each.
+	 *
+	 * `null` when the run handed to the account had no record.
+	 */
+	applied: GeocodeApplied | null
 	/**
 	 * A coordinate arrived and the resolver trace recorded no lookup, so the account's retrieval facts are
 	 * blind for this row (see {@link RetrievalFacts.lookups} for which passes the trace doesn't cover);
@@ -616,6 +625,8 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 		)
 	}
 
+	parts.push(...(account.applied ? [appliedRow(account.applied)] : []))
+
 	if (account.parse?.kind) {
 		parts.push(`kind=${account.parse.kind.verdict}@${account.parse.kind.confidence.toFixed(2)}`)
 	}
@@ -847,6 +858,7 @@ export function assembleAccount(
 		expectation,
 		expectation_reachability: reachability,
 		routing,
+		applied: run.applied ?? null,
 		resolved_without_recorded_lookup: !result.abstained && retrieval.lookups?.length === 0,
 		trace_absent_reason: trace
 			? null

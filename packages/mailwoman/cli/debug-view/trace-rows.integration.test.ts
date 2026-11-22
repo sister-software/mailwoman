@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	ABSENT,
+	appliedRow,
 	channelsRow,
 	decodeRow,
 	explanationRows,
@@ -19,7 +20,7 @@ import {
 	systemRow,
 	tokensRow,
 } from "#cli/debug-view/trace-rows"
-import type { GeocodeTrace } from "#geocode"
+import type { GeocodeApplied, GeocodeTrace } from "#geocode"
 
 const TEXT = "3215 SE Clinton St"
 
@@ -72,8 +73,11 @@ function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 		kind: null,
 		inputMode: "formatted",
 		resolver: [],
-		locale: "en-US",
 	}
+}
+
+function appliedOf(countryScope: GeocodeApplied["countryScope"]): GeocodeApplied {
+	return { locale: { locale: "en-US", source: "default" }, countryScope }
 }
 
 describe("evidence rows without a trace", () => {
@@ -85,8 +89,8 @@ describe("evidence rows without a trace", () => {
 })
 
 describe("systemRow", () => {
-	it("names the system, HOW it was chosen, the register, the locale and the detected formats", () => {
-		expect(systemRow(traceOf())).toBe(`us (auto)  mode formatted  locale en-US  format ${ABSENT}`)
+	it("names the system, HOW it was chosen, the register and the detected formats", () => {
+		expect(systemRow(traceOf())).toBe(`us (auto)  mode formatted  format ${ABSENT}`)
 	})
 
 	it("reports conventions-off as a source, not as a missing system", () => {
@@ -101,6 +105,27 @@ describe("systemRow", () => {
 		trace.queryShape = queryShapeOf([{ format: "us_zip", span: { start: 0, end: 5, body: "97202" }, confidence: 1 }])
 
 		expect(systemRow(trace)).toContain("format us_zip")
+	})
+})
+
+describe("appliedRow", () => {
+	it("states the locale and the scope with the source of each, and the scope's strength", () => {
+		const applied = appliedOf({ resolver: { country: "US", source: "inferred", strength: "hard" }, withheld: null })
+
+		expect(appliedRow(applied)).toBe("locale en-US (default)  scope US hard (inferred)")
+	})
+
+	it("tells a scope that was turned off from one the session withheld, and gives the reason", () => {
+		expect(appliedRow(appliedOf({ resolver: null, withheld: null }))).toBe("locale en-US (default)  scope none")
+
+		expect(appliedRow(appliedOf({ resolver: null, withheld: { country: "US", reason: "bare_locality" } }))).toBe(
+			"locale en-US (default)  scope none  withheld US (bare_locality)"
+		)
+	})
+
+	it("says the geocode didn't resolve rather than printing a scope the resolver never received", () => {
+		expect(appliedRow(appliedOf(null))).toBe(`locale en-US (default)  scope ${ABSENT} not resolved`)
+		expect(appliedRow(null)).toBe(ABSENT)
 	})
 })
 

@@ -19,6 +19,7 @@ import {
 	type GeocodeSessionOptions,
 	type GeocodeSessionOptionsInput,
 	GeocodeSessionOptionsSchema,
+	SessionOptionSource,
 } from "#geocode/options"
 import { loadGeocodeConfigFile } from "#geocode/options/config-file"
 
@@ -93,12 +94,23 @@ export async function resolveGeocodeCommandOptions(
 	const dataRoot = stringValue(values, "data-root")
 	const tiles = stringValue(values, "tiles")
 
+	const flagOptions = typedSessionOptions(parsed)
+
+	// The locale's source is read off the two objects the merge below spreads, in the merge's own order.
+	const localeSource =
+		"locale" in flagOptions
+			? SessionOptionSource.Flag
+			: file?.options.locale == null
+				? SessionOptionSource.Default
+				: SessionOptionSource.ConfigFile
+
 	// The flags were checked by the command's spec and the file by its schema, so this parse only fills defaults.
 	const session = createGeocodeSessionOptions({
 		...file?.options,
-		...typedSessionOptions(parsed),
+		...flagOptions,
 		...(parentPlace ? { parentPlace } : {}),
 		...(dataRoot ? { dataRoot } : {}),
+		localeSource,
 	} as GeocodeSessionOptionsInput)
 
 	return {
