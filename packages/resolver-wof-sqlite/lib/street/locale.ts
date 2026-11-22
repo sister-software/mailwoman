@@ -27,13 +27,22 @@ const STREET_LOCALE_BY_LANGUAGE: ReadonlyMap<string, StreetLocale> = new Map([
 ])
 
 /**
- * Countries whose official languages span several locales, with the locale their
- * published address databases were built under.
+ * Countries whose built address databases fold under a locale their official languages don't select.
  *
- * Canada's OSM extract folds under `en`, and `streetLocaleForSurface` routes a
- * street that opens with a French type word to `fr`.
+ * Each row records how that country's databases were keyed, since a built database records no street locale.
+ *
+ * Canada's official languages span two locales.
+ * Its OSM extract folds under `en`, and `streetLocaleForSurface` routes a street
+ * that opens with a French type word to `fr`.
+ *
+ * The United States' state databases and address layer fold under `us`.
+ * Their builders key every street under the English fold, so the reader leaves a
+ * street such as `Promenade Blvd` to that fold too.
  */
-const STREET_LOCALE_EXCEPTIONS: ReadonlyMap<string, StreetLocale> = new Map([["CA", "en"]])
+const STREET_LOCALE_EXCEPTIONS: ReadonlyMap<string, StreetLocale> = new Map([
+	["CA", "en"],
+	["US", "us"],
+])
 
 /**
  * The locale a country's streets fold under: its exception when it has one, else the one locale
@@ -41,6 +50,9 @@ const STREET_LOCALE_EXCEPTIONS: ReadonlyMap<string, StreetLocale> = new Map([["C
  *
  * The answer covers every ISO 3166-1 country, so a builder and a reader that
  * both call this fold one street to one key.
+ * It is the one place a country is mapped to a street locale: every builder,
+ * reader and artifact manifest reads it.
+ *
  * A country whose official languages span several locales folds under `und`
  * until its built databases name one in {@link STREET_LOCALE_EXCEPTIONS}.
  */

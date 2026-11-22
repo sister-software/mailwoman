@@ -66,13 +66,10 @@ const wanted = new Set(
 /**
  * The street-normalization locale this measurement folds a country's streets under.
  *
- * `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street` answers
- * the same question for every build.
- * Its membership records which countries have an OSM extract rather than
- * which countries the normalizer has rules for.
- *
- * It throws for `es`, `us` and `mx`, which this tool measures against Overture,
- * so the two registries serve different purposes.
+ * `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street` answers the
+ * same question for every country and every build.
+ * This table lists the countries the measurement has been checked against, with that function's
+ * answer for each, except that it spells the United States `en`, which keys a street as `us` does.
  *
  * A country absent here is reported as unmeasured.
  * A fold under another language's rules would return a count of a key the register writes for no row.

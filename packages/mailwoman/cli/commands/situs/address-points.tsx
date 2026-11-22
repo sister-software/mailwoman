@@ -205,10 +205,6 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const { licenseForOvertureCountry, nationalAddressPointsPath, streetLocaleForOvertureCountry } =
 			await import("#geocode/national-overture")
 
-		// A national build must key with the locale its provider reads with.
-		// An unregistered country throws here instead of keying with the wrong rules.
-		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : null
-
 		const finalOut = resolvePath(
 			options.out ??
 				(COUNTRY
@@ -244,11 +240,16 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const {
 			canonicalizeRouteKey,
 			normalizeHouseNumberForKey,
-			normalizeLocalityForKey,
 			normalizeLocalityForKeyLocale,
-			normalizeStreetForKey,
 			normalizeStreetForKeyLocale,
+			streetLocaleForCountry,
 		} = streetNormalize
+
+		// A build keys with the locale its provider reads with, and a build without
+		// a country is a United States state build.
+		// An unregistered country throws here, before any file is written,
+		// instead of keying with the wrong rules.
+		const streetLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : streetLocaleForCountry("US")
 
 		// An empty allow-list keeps every dataset.
 		const allowedDatasets: Set<string> = new Set(extractDelimited(options.licenseFilter).map((d) => d.toLowerCase()))
@@ -398,9 +399,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 				const streetRaw = String(r.street)
 
-				const streetNorm = nationalLocale
-					? normalizeStreetForKeyLocale(streetRaw, nationalLocale)
-					: normalizeStreetForKey(streetRaw)
+				const streetNorm = normalizeStreetForKeyLocale(streetRaw, streetLocale)
 
 				if (!streetNorm) continue
 				const lat = Number(r.lat)
@@ -409,15 +408,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 				// OpenAddresses rows can have empty coordinates.
 				if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
 
-				const locality = r.locality
-					? nationalLocale
-						? normalizeLocalityForKeyLocale(String(r.locality), nationalLocale)
-						: normalizeLocalityForKey(String(r.locality))
-					: null
-
-				// country-branch: a build without a national locale is a US state build, keyed by the `us` fold.
-				// A street locale recorded for each country's extract would replace the fallback.
-				const number = normalizeHouseNumberForKey(String(r.number), nationalLocale ?? "us")
+				const locality = r.locality ? normalizeLocalityForKeyLocale(String(r.locality), streetLocale) : null
+				const number = normalizeHouseNumberForKey(String(r.number), streetLocale)
 
 				if (!number) continue
 

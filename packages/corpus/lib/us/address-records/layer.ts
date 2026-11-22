@@ -42,6 +42,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/address/subdivision-bounds"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { dirname, resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
@@ -224,6 +225,12 @@ export interface USAddressLayerBuild {
 const NAD_TERMS: AddressSourceTerms = { license: "public-domain", authority: "U.S. Department of Transportation" }
 
 /**
+ * The street locale the layer's keys are folded under.
+ * The layer's reader folds a query under the same one.
+ */
+const STREET_LOCALE = streetLocaleForCountry("US")
+
+/**
  * The Overture datasets other than NAD that hold rows for `state`, read with one DuckDB scan.
  */
 async function overtureDatasets(overture: PathBuilderLike, state: string): Promise<string[]> {
@@ -312,7 +319,7 @@ async function* sourceRecords(
 
 		yield* readOvertureAddressRecords(options.overtureParquet, {
 			where: `country = 'US' AND address_levels[1].value = '${escapeSQLString(state)}' AND sources[1].dataset IN (${admitted})`,
-			streetLocale: "en",
+			streetLocale: STREET_LOCALE,
 			units,
 		})
 	}
@@ -323,7 +330,7 @@ async function* sourceRecords(
 		if (!cached) throw new Error(`the OpenAddresses cache lost ${member} after the plan admitted it`)
 
 		if (cached.geojson) {
-			yield* readOpenAddressesGeoJSONRunRecords(cached.path, member, "en", units)
+			yield* readOpenAddressesGeoJSONRunRecords(cached.path, member, STREET_LOCALE, units)
 
 			continue
 		}
@@ -333,7 +340,7 @@ async function* sourceRecords(
 		await extractZipEntry(cached.path, `${member}.csv`, csv)
 
 		try {
-			yield* readOpenAddressesRunRecords(csv, member, "en", units)
+			yield* readOpenAddressesRunRecords(csv, member, STREET_LOCALE, units)
 		} finally {
 			await removePathIfPresent(csv)
 		}

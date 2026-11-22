@@ -5,11 +5,11 @@ import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { describe, expect, it } from "vitest"
 
 import { streetLocaleForCountry } from "#street/locale"
-import { normalizeStreetForKeyLocale, STREET_LOCALES } from "#street/normalize"
+import { normalizeStreetForKeyLocale, STREET_LOCALES, streetLocaleForSurface } from "#street/normalize"
 
 describe("streetLocaleForCountry", () => {
 	it("folds a single-language country under that language's locale", () => {
-		expect(streetLocaleForCountry("US")).toBe("en")
+		expect(streetLocaleForCountry("GB")).toBe("en")
 		expect(streetLocaleForCountry("fr")).toBe("fr")
 		expect(streetLocaleForCountry("DE")).toBe("de")
 		expect(streetLocaleForCountry("VN")).toBe("vn")
@@ -21,6 +21,17 @@ describe("streetLocaleForCountry", () => {
 		expect(streetLocaleForCountry("CA")).toBe("en")
 		expect(streetLocaleForCountry("BE")).toBe("und")
 		expect(streetLocaleForCountry("CH")).toBe("und")
+	})
+
+	it("folds the United States under us, which keys a street like en and skips the French surface route", () => {
+		const locale = streetLocaleForCountry("US")
+
+		expect(locale).toBe("us")
+		expect(streetLocaleForSurface("Promenade Blvd", locale)).toBe("us")
+
+		expect(normalizeStreetForKeyLocale("Promenade Blvd", locale)).toBe(
+			normalizeStreetForKeyLocale("Promenade Blvd", "en")
+		)
 	})
 
 	it("answers every ISO 3166-1 country with a locale the normalizer keys under", () => {
