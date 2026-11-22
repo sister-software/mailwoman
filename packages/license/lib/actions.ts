@@ -3,7 +3,7 @@
 
 /**
  * @file The action table: each act a build or release performs on a set of address sources,
- *   and the operations a source's decision must permit, or must leave unpermitted, for it.
+ *   and the operations a source's decision must permit for it.
  *
  *   The table is the one list of what each action performs.
  *   `evaluateLicense` in `#tree` reads it.
@@ -36,7 +36,10 @@ export const LicenseAction = {
 	 */
 	ServeAddressLayer: "serve-address-layer",
 	/**
-	 * An evaluation set rendered from a source's records and kept out of every training corpus.
+	 * An evaluation set rendered from a source's records.
+	 *
+	 * The source's reservation for evaluation, rather than its decision,
+	 * keeps the rows out of every training corpus.
 	 */
 	EvaluateOnly: "evaluate-only",
 } as const
@@ -45,19 +48,6 @@ export const LicenseAction = {
  * One of the {@link LicenseAction} values.
  */
 export type LicenseAction = (typeof LicenseAction)[keyof typeof LicenseAction]
-
-/**
- * An operation a source's decision must leave unpermitted for an action.
- */
-export interface ForbiddenOperation {
-	operation: SourceOperation
-	/**
-	 * What a permission for the operation would allow.
-	 *
-	 * It completes the problem `<source>'s decision permits <operation>, <because>`.
-	 */
-	because: string
-}
 
 /**
  * What one action performs on each source.
@@ -72,10 +62,6 @@ export interface ActionRule {
 	 * under Mailwoman's commercial terms.
 	 */
 	requiresWhenSold?: readonly SourceOperation[]
-	/**
-	 * The operations a source's decision must leave unpermitted.
-	 */
-	forbids?: readonly ForbiddenOperation[]
 	/**
 	 * The basis every required permission must rest on, for an action that admits one basis only.
 	 */
@@ -103,8 +89,8 @@ export const LICENSE_ACTIONS: Readonly<Record<LicenseAction, ActionRule>> = {
 		requires: [SourceOperation.Fetch, SourceOperation.Extract, SourceOperation.RedistributeData],
 	},
 	[LicenseAction.EvaluateOnly]: {
+		// A reservation for evaluation (`#reservation`) keeps the rows out of every training corpus.
 		requires: [SourceOperation.Fetch, SourceOperation.Extract, SourceOperation.Transform],
-		forbids: [{ operation: SourceOperation.Train, because: "so its rows can reach a training corpus" }],
 	},
 }
 

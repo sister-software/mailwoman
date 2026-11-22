@@ -9,6 +9,7 @@
 import type { AssertedProposition } from "@mailwoman/evidence/status"
 import type { LicenseDecision } from "@mailwoman/license/decision"
 import type { SourceOperation } from "@mailwoman/license/operations"
+import type { SourceReservation } from "@mailwoman/license/reservation"
 
 import type { AddressRole } from "#types"
 
@@ -360,6 +361,14 @@ export interface AddressSourceRecord {
 	 * An adapter id is what lets `readSourceEligibility` answer for a row at all.
 	 */
 	adapterID?: string
+	/**
+	 * The source's evaluation reservation, recorded by choice in `source-resolutions.json`.
+	 *
+	 * A reservation not yet lifted keeps every row of the source out of every training corpus,
+	 * through the decision tree's `reservation` node.
+	 * A lifted one stays as the record.
+	 */
+	reservation?: SourceReservation
 }
 
 /**

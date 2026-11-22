@@ -40,7 +40,8 @@ access labels and applies the recorded ones over that, so a decision survives a 
 `addressRoles`, `coverage`, `upstreamLineage` and `personalDataReview`. The research CSV records the
 first three as the placeholders `varies`, `country-specific` and the empty string on all 426 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
-rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
+rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323). It also
+holds each source's `reservation` for evaluation, which the research pass had no column for (#3352).
 
 `--additions` defaults to `source-additions.json` and holds 1,682 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as

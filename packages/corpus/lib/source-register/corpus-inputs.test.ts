@@ -128,6 +128,30 @@ describe("sourceRightsGaps", () => {
 })
 
 describe("createSourceRightsAdmission", () => {
+	it.each(["es-bizkaia", "es-gipuzkoa", "es-navarra"])(
+		"refuses %s, a source reserved for evaluation, under an unshippable override too",
+		(source) => {
+			// Each decision permits transform and train, so only the reservation refuses the source.
+			const strict = createSourceRightsAdmission(register, inputs, { context: "test build" })
+
+			const overridden = createSourceRightsAdmission(register, inputs, {
+				context: "test build",
+				unshippableReason: "a local experiment",
+				log: () => {},
+			})
+
+			for (const rights of [strict, overridden]) {
+				expect(() => rights.admit(source)).toThrow(/reserved for evaluation, and no override admits one/u)
+				// A second admission of the same source is refused again rather than read from the first call's record.
+				expect(() => rights.admit(source)).toThrow(SourceRightsError)
+			}
+
+			expect(sourceRightsGaps(source, inputs, register)).toEqual([
+				expect.objectContaining({ reserved: true, missing: ["train"] }),
+			])
+		}
+	)
+
 	it("throws naming the source, the register row and the missing permission", () => {
 		const rights = createSourceRightsAdmission(register, inputs, { context: "test build" })
 

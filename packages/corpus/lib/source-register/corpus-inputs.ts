@@ -31,7 +31,8 @@ import {
 	permissionFor,
 	type LicenseDecision,
 } from "@mailwoman/license/decision"
-import type { SourceOperation } from "@mailwoman/license/operations"
+import { SourceOperation } from "@mailwoman/license/operations"
+import { refusingReservation, reservationProblem } from "@mailwoman/license/reservation"
 import { evaluateLicense, DecisionVerdict } from "@mailwoman/license/tree"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -256,6 +257,13 @@ export interface SourceRightsGap {
 	 */
 	missing: SourceOperation[]
 	because: string
+	/**
+	 * Present when the register source is reserved for evaluation.
+	 *
+	 * `--unshippable-reason` admits no reserved source, because a model trained on a local
+	 * experiment's output has seen the rows the reservation keeps unseen by every model.
+	 */
+	reserved?: true
 }
 
 /**
@@ -319,6 +327,22 @@ export function sourceRightsGaps(
 			continue
 		}
 
+		const reservation = refusingReservation(row.reservation, decision, operations)
+
+		if (reservation) {
+			gaps.push({
+				source,
+				registerSource: row.sourceID,
+				licenseID: decision.licenseID,
+				state: decision.state,
+				missing: [SourceOperation.Train],
+				because: reservationProblem(row.sourceID, reservation),
+				reserved: true,
+			})
+
+			continue
+		}
+
 		const readings = operations.map((operation) => ({
 			operation,
 			reading: permissionFor(decision, operation),
@@ -345,10 +369,11 @@ export function sourceRightsGaps(
 }
 
 /**
- * The register fields a permission check reads: each row's license and each license's decision.
+ * The register fields a permission check reads: each row's license and reservation,
+ * and each license's decision.
  */
 export interface RegisterDecisions {
-	sources: ReadonlyArray<Pick<AddressSourceRecord, "sourceID" | "license">>
+	sources: ReadonlyArray<Pick<AddressSourceRecord, "sourceID" | "license" | "reservation">>
 	licenses: readonly LicenseDecision<SourceOperation>[]
 }
 
@@ -399,13 +424,21 @@ export class SourceRightsError extends Error {
 	 * sets the override, as a training config's `data.unshippable_reason`.
 	 */
 	constructor(context: string, gaps: readonly SourceRightsGap[], overrideHint?: string) {
+		const reserved = gaps.filter((gap) => gap.reserved)
+
 		super(
-			`${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
-				`lack an elected decision permitting ${actionOperations(LicenseAction.Train, null).join(" and ")}:\n  ` +
-				gaps.map(describeSourceRightsGap).join("\n  ") +
-				"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
-				`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +
-				"experiment, which marks the output as not shippable."
+			reserved.length
+				? `${context} refuses ${new Set(reserved.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
+						"are reserved for evaluation, and no override admits one:\n  " +
+						reserved.map(describeSourceRightsGap).join("\n  ") +
+						"\nThe operator lifts a reservation by filling its `lifted` entry in " +
+						"packages/corpus/data/source-resolutions.json."
+				: `${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
+						`lack an elected decision permitting ${actionOperations(LicenseAction.Train, null).join(" and ")}:\n  ` +
+						gaps.map(describeSourceRightsGap).join("\n  ") +
+						"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
+						`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +
+						"experiment, which marks the output as not shippable."
 		)
 
 		this.name = "SourceRightsError"
@@ -525,12 +558,17 @@ export function createSourceRightsAdmission(
 			fresh.push(...gaps)
 			all.push(...gaps)
 
-			if (!gaps.length || reason !== null) {
+			if (!gaps.length || (reason !== null && !gaps.some((gap) => gap.reserved))) {
 				checked.set(source, gaps)
 			}
 		}
 
 		if (!fresh.length) return all
+
+		const reserved = fresh.filter((gap) => gap.reserved)
+
+		// No override admits a reserved source, so its rows stay unseen by every model, local experiments included.
+		if (reserved.length) throw new SourceRightsError(options.context, reserved, options.overrideHint)
 
 		if (reason === null) throw new SourceRightsError(options.context, fresh, options.overrideHint)
 

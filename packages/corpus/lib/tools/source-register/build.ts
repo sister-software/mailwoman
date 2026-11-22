@@ -671,7 +671,7 @@ function isSharedReference(value: RecordedDecision | SharedDecisionReference): v
  */
 type SourceResolution = Pick<
 	AddressSourceRecord,
-	"addressRoles" | "coverage" | "upstreamLineage" | "personalDataReview" | "adapterID"
+	"addressRoles" | "coverage" | "upstreamLineage" | "personalDataReview" | "adapterID" | "reservation"
 >
 
 /**

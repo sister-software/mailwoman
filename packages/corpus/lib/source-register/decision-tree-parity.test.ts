@@ -6,7 +6,10 @@
  * over every decision in the committed register.
  *
  * The oracle is the replaced implementation: `operationProblems` over each hand-written list.
- * For the evaluation-only reading it also checks that the decision leaves `train` unpermitted.
+ * Each decision is read for an unreserved source, so the `reservation` node passes it.
+ *
+ * The evaluation-only reading no longer checks that the decision leaves `train` unpermitted:
+ * a source's reservation keeps its rows out of training.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -41,17 +44,9 @@ const REPLACED_EVALUATION_LIST = [SourceOperation.Fetch, SourceOperation.Extract
 const SOURCE = "parity-source"
 
 function oracleProblems(action: LicenseAction, decision: LicenseDecision<SourceOperation>): string[] {
-	if (action !== LicenseAction.EvaluateOnly) {
-		return operationProblems(decision.licenseID, decision, REPLACED_LISTS[action])
-	}
+	const list = action === LicenseAction.EvaluateOnly ? REPLACED_EVALUATION_LIST : REPLACED_LISTS[action]
 
-	const problems = operationProblems(decision.licenseID, decision, REPLACED_EVALUATION_LIST)
-
-	if (!operationProblems(decision.licenseID, decision, [SourceOperation.Train]).length) {
-		problems.push(`${SOURCE}'s decision permits train, so its rows can reach a training corpus`)
-	}
-
-	return problems
+	return operationProblems(decision.licenseID, decision, list)
 }
 
 describe("the decision tree over the committed register", () => {
@@ -69,7 +64,7 @@ describe("the decision tree over the committed register", () => {
 						offering: "AGPL-3.0-only OR LicenseRef-Commercial",
 						sources: [{ source: SOURCE, licenseID: decision.licenseID }],
 					},
-					{ contentDigest: register.contentDigest, licenses: [decision] }
+					{ contentDigest: register.contentDigest, licenses: [decision], sources: [{ sourceID: SOURCE }] }
 				)
 
 				const expected = oracleProblems(action, decision)

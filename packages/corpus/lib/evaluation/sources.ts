@@ -4,8 +4,8 @@
 /**
  *   Every evaluation address source, in the order the evaluation-set builder reads them.
  *
- *   Each of the four now permits `train` and feeds the corpus adapter of the same id, so the
- *   evaluation-set builder refuses to freeze a new set from them (`heldout/fresh/build.ts`).
+ *   None of the four is reserved for evaluation, and each feeds the corpus adapter of the same id,
+ *   so the evaluation-set builder refuses to freeze a new set from them (`heldout/fresh/build.ts`).
  */
 
 import { auACNCRegisterSource } from "#au/evaluation/acnc-register"

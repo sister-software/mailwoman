@@ -50,7 +50,11 @@ answer.sources[0].problems // ['license "example-license" is not declared in the
 The tree reads each source through seven nodes in order: `registered`, `review-state`, `reservation`,
 `operations`, `purpose`, `basis-floor` and `obligations`. The first node a source doesn't pass stops it.
 The `obligations` node collects what the source owes and has no refusal edge, so an obligation, an
-indemnity included, never refuses an action. The answer carries each step's node, outcome and quote,
+indemnity included, never refuses an action. The `reservation` node refuses an action that requires
+`train` over a source reserved for evaluation (`@mailwoman/license/reservation`), quoting the
+reservation's reason. A register records a reservation by choice on the source, and lifts it by filling
+`lifted`. A reservation by terms is computed for a decision that refuses `train`, and only when the
+request sets `reservedByTerms`. The answer carries each step's node, outcome and quote,
 and the register's content digest.
 
 The summary is a debugging aid and gives no legal advice.
