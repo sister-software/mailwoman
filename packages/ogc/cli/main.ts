@@ -17,11 +17,11 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { parseObligationRefusals } from "@mailwoman/license/refusals"
-import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
 import {
 	PostcodePlaceBrowser,
 	wofDatabaseHoldsPostcodes,
 } from "@mailwoman/resolver-wof-sqlite/candidate/postcode-browse"
+import { WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/lookup/browse"
 import {
 	corsBannerLine,
 	type GazetteerPaths,

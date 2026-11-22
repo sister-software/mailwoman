@@ -436,7 +436,7 @@ export async function createGeocodeSession(
 		: null
 
 	const formerDivisionLookup = options.formerDivisions
-		? await import("@mailwoman/resolver-wof-sqlite/former-divisions").then((module) =>
+		? await import("@mailwoman/resolver-wof-sqlite/lookup/former-divisions").then((module) =>
 				module.readFormerDivisionLookup(options.formerDivisionsTable)
 			)
 		: null

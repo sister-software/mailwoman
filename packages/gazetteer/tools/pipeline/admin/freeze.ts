@@ -64,7 +64,7 @@ export async function freezeAdmin(
 		unifiedSchema: { createUnifiedIndexes, populateAncestors },
 	} = await allKeyed({
 		ancestry: import("@mailwoman/resolver-wof-sqlite/ancestry"),
-		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/schema/unified"),
 	})
 
 	const phase = opts.onPhase ?? (() => {})

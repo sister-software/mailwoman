@@ -27,13 +27,6 @@ import {
 	type Strategy,
 } from "#convention"
 import {
-	pickExtractForPlacetype,
-	pickExtractsForPlacetype,
-	resolveExtracts,
-	type ResolvedExtract,
-	type ExtractConfig,
-} from "#extracts"
-import {
 	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
@@ -43,14 +36,21 @@ import {
 	placeSearchFTSExists,
 } from "#fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
-import { cfNormalize, softNameScore } from "#name-score"
-import { encyclopedicClauses } from "#place-importance-schema"
+import { fetchSearchRows, type RawSearchRow } from "#fts/search-fetch"
+import {
+	pickExtractForPlacetype,
+	pickExtractsForPlacetype,
+	resolveExtracts,
+	type ResolvedExtract,
+	type ExtractConfig,
+} from "#lookup/extracts"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
 import type { WOFPostalCityAliasLookup } from "#postal/city/alias/lookup"
-import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
+import { cfNormalize, softNameScore } from "#ranking/name-score"
+import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking/weights"
 import type { WOFDatabase } from "#schema"
-import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
+import { encyclopedicClauses } from "#schema/place-importance"
 import { SqliteConventionSource } from "#sqlite/convention-source"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export interface WOFSQLitePlaceLookupOpts {
 	/**

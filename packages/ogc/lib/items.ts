@@ -10,7 +10,7 @@
  */
 
 import { isRFC3339DateTime } from "@mailwoman/core/utils"
-import type { BrowsedPlace, WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/browse"
+import type { BrowsedPlace, WOFPlaceBrowser } from "@mailwoman/resolver-wof-sqlite/lookup/browse"
 
 import { parseBBox } from "#bbox"
 import type { OGCItem, OGCItemPageRequest, OGCItemSource } from "#engine"

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { regionKeys } from "#region-keys"
+import { regionKeys } from "#lookup/region-keys"
 import { normalizeLocalityForKey } from "#street"
 
 describe("regionKeys", () => {

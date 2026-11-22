@@ -23,17 +23,17 @@ import {
 	type CandidateAncestorTable,
 	type IntervalLabel,
 } from "#candidate/ancestors/schema"
+import { readGazetteerCoverageManifest } from "#candidate/coverage-manifest"
 import { CANDIDATE_FTS_TABLE } from "#candidate/fts"
 import { candidateQueryKeyFold } from "#candidate/key-fold"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate/schema"
-import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"
+import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#lookup/region-keys"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal/city/candidate-schema"
-import { rankByPrimaryPreference, type RankedRow, regionAliasMargin, RERANK_FETCH } from "#primary-preference"
-import { applyProximityRerank } from "#proximity-rerank"
-import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#region-keys"
+import { rankByPrimaryPreference, type RankedRow, regionAliasMargin, RERANK_FETCH } from "#ranking/primary-preference"
+import { applyProximityRerank } from "#ranking/proximity-rerank"
 import { hasColumn, hasTable } from "#sqlite-utils"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street/normalize"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 /**
  * Where a {@link WOFCandidateTableLookup} reads from

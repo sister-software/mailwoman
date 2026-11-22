@@ -25,8 +25,8 @@ import { indexExists, tableExists } from "@mailwoman/sqlite/introspection"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 import type { PathBuilderLike } from "path-ts"
 
-import type { BrowsedPlace, BrowsePageRequest } from "#browse"
 import { CANDIDATE_POSTCODE_PLACE_INDEX, type CandidateDatabase, POSTCODE_PLACETYPE } from "#candidate/schema"
+import type { BrowsedPlace, BrowsePageRequest } from "#lookup/browse"
 import type { WOFDatabase } from "#schema"
 
 /**

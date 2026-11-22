@@ -33,8 +33,8 @@ import type { PathBuilderLike } from "path-ts"
 
 import { ancestorLineage, placetypeDepth } from "#ancestry"
 import { PLACE_BBOX_TABLE } from "#fts"
+import type { PlaceCandidate, WOFPlacetype } from "#lookup/types"
 import type { WOFDatabase } from "#schema"
-import type { PlaceCandidate, WOFPlacetype } from "#types"
 /**
  * Largest absolute latitude in WGS-84 degrees.
  */

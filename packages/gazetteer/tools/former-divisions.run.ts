@@ -31,7 +31,7 @@ import {
 	type FormerDivisionRecord,
 	type FormerDivisionsTable,
 	formerDivisionNameKey,
-} from "@mailwoman/resolver-wof-sqlite/former-divisions"
+} from "@mailwoman/resolver-wof-sqlite/lookup/former-divisions"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

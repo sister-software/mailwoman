@@ -6,8 +6,8 @@
  *   (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
  *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
  *
- *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate
- *   by country, proximity and name membership.
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/candidate/capitals`) matches a
+ *   candidate by country, proximity and name membership.
  *   All three conditions must match, so a capital-adjacent namesake cannot stand in for the capital.
  *
  *   Alternate names preserve exonym rows ("Vienna" for Wien) matching without a hand-kept exonym list.

@@ -39,8 +39,8 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { AddressPointDatabase } from "#address/point/schema"
-import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#interpolation"
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
+import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#street/interpolation"
 import { streetLocaleForCountry } from "#street/locale"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 

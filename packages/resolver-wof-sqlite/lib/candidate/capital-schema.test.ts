@@ -10,8 +10,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
+import { createCapitalTable, readCapitalPoints } from "#candidate/capital-schema"
 import type { CandidateDatabase } from "#candidate/schema"
-import { createCapitalTable, readCapitalPoints } from "#capital-schema"
 
 async function openWithTable(): Promise<DatabaseClient<CandidateDatabase>> {
 	const kdb = DatabaseClient.temp<CandidateDatabase>()

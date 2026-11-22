@@ -72,7 +72,7 @@ Every collection also links where its data comes from, read from the `layer_mani
   license text for `LicenseRef-WhosOnFirst-Mixed`, because that text requires the link back.
 - A `via` link ([RFC 4287](https://www.rfc-editor.org/rfc/rfc4287), "the source of the information") for each
   source the manifest records, to the page where a user obtains it. Each source's location belongs to the package
-  that builds its layers: `GAZETTEER_SOURCE_LOCATIONS` in `@mailwoman/resolver-wof-sqlite/sources` for the
+  that builds its layers: `GAZETTEER_SOURCE_LOCATIONS` in `@mailwoman/resolver-wof-sqlite/build/sources` for the
   gazetteer, `BAN_SOURCE_LOCATIONS` in `@mailwoman/ban/source`, and `OSM_SOURCE_LOCATIONS` in
   `@mailwoman/osm/source`. Each build writes its source names from the same table. The Who's On First entry points to
   the [`mailwoman` organization](https://github.com/mailwoman), whose `whosonfirst-data-admin-<cc>` repositories are
@@ -265,7 +265,7 @@ npx @mailwoman/ogc serve --base-url https://example.org/ogc/
 `createOGCApp` takes an `OGCEngine`: the collections it serves and a `search(q)` that returns its matches.
 `geocodeSearchHits` projects a `geocodeAddress` result to those matches. A collection serves items when it carries
 an `items` source, such as `placeItemSource(new WOFPlaceBrowser({ databasePath }), ancestorsOf)`, with
-`WOFPlaceBrowser` from `@mailwoman/resolver-wof-sqlite/browse`, and the app is built with `serveItems: true`.
+`WOFPlaceBrowser` from `@mailwoman/resolver-wof-sqlite/lookup/browse`, and the app is built with `serveItems: true`.
 A collection's `layers` lists the manifest terms its license and `via` links come from.
 
 ```ts

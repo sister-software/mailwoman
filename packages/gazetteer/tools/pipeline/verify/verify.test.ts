@@ -16,7 +16,7 @@ const TINY_BASELINE: VerifyBaseline = {
 }
 
 async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
-	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/schema/unified")
 	const db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 

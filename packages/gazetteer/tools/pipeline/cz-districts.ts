@@ -67,7 +67,7 @@ export async function buildCZDistrictsDatabase(
 		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
 		resolverWofSqlite: { buildPlaceSearchFTS },
 	} = await allKeyed({
-		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/schema/unified"),
 		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 	})
 

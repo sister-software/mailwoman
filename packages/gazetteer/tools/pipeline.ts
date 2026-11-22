@@ -32,9 +32,9 @@ import { createPhaseClock, isoDate, type PhaseTiming } from "@mailwoman/core/uti
 // because `mailwoman --help` imports every command and a module-level value import
 // would evaluate the resolver's module graph on that path.
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build/candidate"
-import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
-import type { ResolvedImportance } from "@mailwoman/resolver-wof-sqlite/importance-source"
+import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/candidate/capitals"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { ResolvedImportance } from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { probeManifest } from "mailwoman/data/inventory"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
@@ -153,7 +153,7 @@ async function candidateImportance(
 	importanceDB: PathBuilderLike | undefined
 ): Promise<ResolvedImportance> {
 	const { ImportanceSourceError, resolveImportanceForAdmin } =
-		await import("@mailwoman/resolver-wof-sqlite/importance-source")
+		await import("@mailwoman/resolver-wof-sqlite/schema/importance-source")
 
 	try {
 		return await resolveImportanceForAdmin(adminDB, importanceDB)

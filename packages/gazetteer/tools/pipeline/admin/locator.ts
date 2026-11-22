@@ -15,8 +15,8 @@
 
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

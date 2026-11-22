@@ -24,7 +24,7 @@ import {
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import { peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 import { resolvePath } from "path-ts"
 
 import { $public } from "#release-kit/env"

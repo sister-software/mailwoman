@@ -172,7 +172,7 @@ export async function buildPostcodeGeonamesTail(
 		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
 		geonames: { ingestGeonamesPostal },
 	} = await allKeyed({
-		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/schema/unified"),
 		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
 	})
 

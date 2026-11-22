@@ -17,8 +17,8 @@
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { CandidateDatabase } from "#candidate/schema"
-import { createOvertureWOFMatchTable, OVERTURE_WOF_MATCH_TABLE, readOvertureWOFMatches } from "#overture-match-schema"
 import type { WOFDatabase } from "#schema"
+import { createOvertureWOFMatchTable, OVERTURE_WOF_MATCH_TABLE, readOvertureWOFMatches } from "#schema/overture-match"
 
 /**
  * Copies the admin database's `overture_wof_match` into the candidate and drops each

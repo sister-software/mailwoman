@@ -15,7 +15,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { $public } from "#env"
-import { WOFReverseGeocoder } from "#reverse"
+import { WOFReverseGeocoder } from "#lookup/reverse"
 import type { WOFDatabase } from "#schema"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): LineStringPath => [

@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
+ *   The keys a parsed region qualifier is compared under: its own key,
+ *   its subdivision's names and its county-prefix variants.
+ *
  *   Both consumers use this expansion to compare parsed region qualifiers with stored keys.
  *
  *   Admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a qualifier
