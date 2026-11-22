@@ -17,6 +17,9 @@ import { selectedGazetteerFSTPath } from "#geocode/fst-layers"
 
 /**
  * The locale whose gazetteer FST autocomplete reads.
+ *
+ * Autocomplete loads zero weights, so this is the one FST the builder writes for it
+ * and is a separate declaration from the default weights locale.
  */
 const AUTOCOMPLETE_LOCALE = "en-US"
 

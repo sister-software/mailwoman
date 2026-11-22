@@ -22,6 +22,7 @@
  *   It is off by default and the floors are registered against the off arm:
  *   the board grades the construction that ships.
  */
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 
@@ -34,7 +35,7 @@ export const spec = {
 	name: "poi-board",
 	description,
 	options: {
-		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		locale: { type: "string", default: DEFAULT_WEIGHTS_LOCALE, description: "Weights package locale" },
 		"weights-cache": { type: "string", description: "Candidate weights dir" },
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		db: { type: "string", description: "Sealed poi.db" },

@@ -800,6 +800,11 @@ export const HELDOUT_INFERENCE_RULE =
 
 /**
  * The base package a country without its own shipped package is parsed with.
+ *
+ * It is a term of {@linkcode HELDOUT_INFERENCE_RULE}, which every report and release
+ * verdict records, and the release arm reads its `model.onnx` as the graph under test.
+ * It is a separate declaration from the default weights locale: a change of that default
+ * leaves the registered rule, and the verdicts recorded under it, as they are.
  */
 export const HELDOUT_BASE_LOCALE = "en-us"
 

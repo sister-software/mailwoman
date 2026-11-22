@@ -15,6 +15,7 @@ import { percentile } from "@mailwoman/core/stats"
 import type { Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type React from "react"
 
@@ -72,7 +73,7 @@ export const spec = {
 		"input-mode": { type: "string", choices: ["fragmented", "formatted"], description: "Input register" },
 		locale: {
 			type: "string",
-			default: "en-US",
+			default: DEFAULT_WEIGHTS_LOCALE,
 			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},

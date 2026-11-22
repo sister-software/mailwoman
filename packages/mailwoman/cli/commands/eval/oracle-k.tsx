@@ -10,6 +10,7 @@
  *   Informational (always exits 0).
  *   The standing floors stay on `eval parity`.
  */
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
 
@@ -27,7 +28,11 @@ export const spec = {
 	name: "oracle-k",
 	description,
 	options: {
-		locale: { type: "string", default: "en-US", description: "Weights package locale (default en-US)" },
+		locale: {
+			type: "string",
+			default: DEFAULT_WEIGHTS_LOCALE,
+			description: `Weights package locale (default ${DEFAULT_WEIGHTS_LOCALE})`,
+		},
 		"weights-cache": {
 			type: "string",
 			description: "Package-shaped candidate weights dir (mirrors eval parity --weights-cache)",

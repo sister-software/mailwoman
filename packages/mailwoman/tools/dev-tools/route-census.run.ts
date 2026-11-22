@@ -48,6 +48,7 @@ import {
 	routeFamilyWithLeadingRun,
 	routeFamilyWithPostcode,
 } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -67,14 +68,15 @@ const { values } = parseArguments({
 const CALLER = "(caller)"
 
 /**
- * Sets the family for an abstention.
- * `resolveWeights` uses this default locale.
+ * Sets the family for an abstention to the default weights locale.
+ *
+ * `resolveWeights` uses that locale for a caller that chooses none.
  *
  * Routers are compared after this resolution.
  * Otherwise an abstention and an explicit Latin answer would count as a disagreement
  * although both reach the same graph.
  */
-const DEFAULT_CALLER_FAMILY = "en-us"
+const DEFAULT_CALLER_FAMILY = DEFAULT_WEIGHTS_LOCALE.toLowerCase()
 
 /**
  * Returns the graph a router answer reaches.

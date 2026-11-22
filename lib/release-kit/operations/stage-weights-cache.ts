@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { OperationEffect } from "@mailwoman/core/scripting"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { z } from "zod"
 
 import { defineOperation } from "#release-kit/operation"
@@ -31,7 +32,7 @@ export const stageWeightsCacheOperation = defineOperation({
 	inputSchema: z
 		.object({
 			out: z.string({ error: "--out <dir> is required" }),
-			locale: z.string().default("en-us"),
+			locale: z.string().default(DEFAULT_WEIGHTS_LOCALE.toLowerCase()),
 			from: text,
 			file: list,
 			omit: list,

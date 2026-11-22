@@ -13,20 +13,22 @@ import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
 import { type DefaultCountrySource, ScopeStrength } from "@mailwoman/core/resolver"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"
 
 import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/switches"
 import type { CapitalTier } from "#resolver-backend"
 
-// country-branch: en-US is the weights locale a caller gets when it chooses none.
-// A default read from the installed weights packages would replace the literal.
 /**
  * The locale a geocode parses under when the caller chooses none.
  *
+ * It is the default weights locale by definition: a session's locale selects its weights package, and
+ * a session built on a parser's scope reuses the classifier `createParser` loaded under that default.
+ *
  * A session left at this locale states no country, since every caller starts from it.
  */
-export const GEOCODE_DEFAULT_LOCALE = "en-US"
+export const GEOCODE_DEFAULT_LOCALE = DEFAULT_WEIGHTS_LOCALE
 
 /**
  * An on/off option whose default is the one `geocodeAddress` applies for a caller with no session.

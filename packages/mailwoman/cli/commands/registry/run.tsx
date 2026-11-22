@@ -64,7 +64,7 @@ export const spec = {
 		source: { type: "string", description: "Provenance label" },
 		locale: {
 			type: "string",
-			default: "en-US",
+			default: DEFAULT_WEIGHTS_LOCALE,
 			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
