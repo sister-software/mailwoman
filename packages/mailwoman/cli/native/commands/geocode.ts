@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
+ * Native `mw geocode`: no React or Ink on the ordinary data path.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -10,29 +10,27 @@ import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
-import type { ScopeStrength } from "@mailwoman/core/resolver"
-import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/venue/head-prior"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
+import { type GeocodeCommandOptions, resolveGeocodeCommandOptions } from "#cli/native/commands/geocode/options"
 import {
-	booleanValue,
 	CLIUsageError,
 	type CommandSpec,
 	isLocaleTag,
-	numberValue,
 	renderCommandHelp,
 	renderInkCommand,
 	runNativeCommand,
-	stringValue,
 } from "#cli/native/spec"
 import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
-import type { GeocodeCommandOptions } from "#geocode/command-options"
+import { GEOCODE_SESSION_DEFAULTS as defaults } from "#geocode/options"
 
 const debugSizePattern = /^\d+x\d+$/u
 
 /**
  * Native geocode CLI interface.
  * Detailed help and parsing are both derived from this value.
+ *
+ * A flag that states a session option takes its `default` from the session's option schema.
  */
 export const spec = {
 	name: "geocode",
@@ -42,9 +40,15 @@ export const spec = {
 		{ name: "address", description: "A formatted postal address to geocode. Omit when using --stdin.", multiple: true },
 	],
 	options: {
+		config: {
+			type: "string",
+			hint: "path",
+			description:
+				"Config file whose geocode key states session options. Without it, the mailwoman.config.* file in the working directory is read. A typed flag wins over the file.",
+		},
 		locale: {
 			type: "string",
-			default: "en-US",
+			default: defaults.locale,
 			hint: "locale",
 			description: "Locale tag matching a weights package, such as en-US or fr-FR.",
 			validate: isLocaleTag,
@@ -62,7 +66,7 @@ export const spec = {
 		},
 		"country-scope": {
 			type: "string",
-			default: "auto",
+			default: defaults.countryScope,
 			choices: ["auto", "locale", "none"],
 			description: "Apply the locale-inferred resolver scope automatically, always, or never.",
 		},
@@ -90,112 +94,112 @@ export const spec = {
 		},
 		"locale-country-prior": {
 			type: "boolean",
-			default: false,
+			default: defaults.localeCountryPrior,
 			description: "Use a withheld locale country as a soft resolver ranking prior.",
 		},
 		"gazetteer-prior": {
 			type: "boolean",
-			default: true,
+			default: defaults.gazetteerPrior,
 			description: "Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.",
 		},
 		"venue-head-prior": {
 			type: "boolean",
-			default: true,
+			default: defaults.venueHeadPrior,
 			description:
 				"Feed the venue-head prior, from @mailwoman/poi-taxonomy's head-word table, to the parse; --no-venue-head-prior disables it.",
 		},
 		"venue-head-bias-scale": {
 			type: "number",
-			default: DEFAULT_VENUE_HEAD_BIAS_SCALE,
+			default: defaults.venueHeadBiasScale,
 			hint: "multiplier",
 			description: "Multiplier on the venue-head table's biases.",
 		},
 		"street-morphology-prior": {
 			type: "boolean",
-			default: true,
+			default: defaults.streetMorphologyPrior,
 			description:
 				"Bias a trailing street-type affix toward the street labels when its segment opens with a house number; --no-street-morphology-prior disables it.",
 		},
 		"place-country": {
 			type: "boolean",
-			default: true,
+			default: defaults.placeCountry,
 			description: "Use the coarse-placer country prior; --no-place-country disables it.",
 		},
 		"postcode-country-coherence": {
 			type: "boolean",
-			default: true,
+			default: defaults.postcodeCountryCoherence,
 			description: "Allow coherent postcode/locality evidence to override a wrong country scope.",
 		},
 		"fork-entity": {
 			type: "boolean",
-			default: true,
+			default: defaults.forkEntity,
 			description: "Probe POI data for exact entities when a fork parse doesn't resolve.",
 		},
 		"postcode-shape-coherence": {
 			type: "boolean",
-			default: true,
+			default: defaults.postcodeShapeCoherence,
 			description: "Exclude a postcode span whose shape fits no postcode syntax of a country the address mentions.",
 		},
 		"postcode-containment-coherence": {
 			type: "boolean",
-			default: false,
+			default: defaults.postcodeContainmentCoherence,
 			description: "Opt into postcode-centroid locality reranking.",
 		},
 		"admin-containment-rerank": {
 			type: "boolean",
-			default: true,
+			default: defaults.adminContainmentRerank,
 			description:
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
 		"dependent-locality-containment": {
 			type: "boolean",
-			default: true,
+			default: defaults.dependentLocalityContainment,
 			description:
 				"Resolve a parsed dependent locality inside its parent and answer its point; --no-dependent-locality-containment disables it (#2804).",
 		},
 		"county-designator-fallback": {
 			type: "boolean",
-			default: false,
+			default: defaults.countyDesignatorFallback,
 			description:
 				"Resolve a locality span written with its country's county designator (Harris County, TX) as the region's county when no locality of that name is there.",
 		},
 		"former-divisions": {
 			type: "boolean",
-			default: false,
+			default: defaults.formerDivisions,
 			description:
 				"Accept a county or region that's a former division linked to the resolved locality (Avon in 34 Coldharbour Rd, Redland, Avon, Bristol BS6 7NA), without letting it scope the result.",
 		},
 		"scope-country-retrieval": {
 			type: "boolean",
-			default: false,
+			default: defaults.scopeCountryRetrieval,
 			description:
 				"Retrieve a soft country scope's own rows and promote them after the importance rerank. A hard scope also reports the same-name places it excluded.",
 		},
 		"sibling-locality-containment": {
 			type: "boolean",
-			default: false,
+			default: defaults.siblingLocalityContainment,
 			description:
 				"Resolve one of two locality spans inside the other when the gazetteer contains it there (Kensington, London).",
 		},
 		"pair-prior-word-pieces": {
 			type: "boolean",
-			default: false,
+			default: defaults.pairPriorWordPieces,
 			description: "Leave the comma after a place-pair child unbiased, biasing only the pieces with letters or digits.",
 		},
 		"pair-prior-child-postcode-strip": {
 			type: "boolean",
-			default: false,
+			default: defaults.pairPriorChildPostcodeStrip,
 			description: "Keep a place-pair child's bias off the postcode in its own segment (Sutton Coldfield B72 1PU).",
 		},
 		"pair-index-own-country": {
 			type: "boolean",
-			default: false,
+			default: defaults.pairIndexOwnCountry,
 			description:
 				"Apply the place-pair index only when the address's country is the index's country. The country is the default country, a chosen locale's country, or the locale head's verdict.",
 		},
 		"fst-country-routing": {
 			type: "boolean",
-			default: false,
+			default: defaults.fstCountryRouting,
 			description:
 				"Parse with the gazetteer FST of the country the locale head reads, when one ships for that country. Otherwise the locale's FST applies.",
 		},
@@ -215,21 +219,21 @@ export const spec = {
 		},
 		"capital-tier": {
 			type: "string",
-			default: "auto",
+			default: defaults.capitalTier,
 			choices: ["auto", "required", "off"],
 			description:
 				"Bounded national-capital promotion on bare city names: auto (skip when the capitals reference is missing), required (fail when it is missing), or off.",
 		},
 		"variant-alias-exemption": {
 			type: "string",
-			default: "applied",
+			default: defaults.variantAliasExemption,
 			choices: VariantAliasExemptionSchema.options,
 			description:
 				"Whether own-name variant aliases keep their holder's rank in cross-country contests: applied or not_applied.",
 		},
 		"place-country-threshold": {
 			type: "number",
-			default: 0.9,
+			default: defaults.placeCountryThreshold,
 			hint: "probability",
 			description: "Coarse-placer abstention threshold.",
 			validate: (value) => value >= 0 && value <= 1,
@@ -270,66 +274,6 @@ export const spec = {
 type Format = "json" | "text" | "jsonld"
 
 type GeocodeOptions = GeocodeCommandOptions
-
-async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
-	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/data-root")).dataRootPath()
-
-	return {
-		locale: stringValue(values, "locale")!,
-		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias")! } : {}),
-		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country")! } : {}),
-		countryScope: stringValue(values, "country-scope") as GeocodeOptions["countryScope"],
-		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db")! } : {}),
-		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db")! } : {}),
-		dataRoot,
-		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db")! } : {}),
-		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db")! } : {}),
-		...(numberValue(values, "interp-calibration") !== null
-			? { interpCalibration: numberValue(values, "interp-calibration")! }
-			: {}),
-		localeCountryPrior: booleanValue(values, "locale-country-prior"),
-		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
-		venueHeadPrior: booleanValue(values, "venue-head-prior"),
-		venueHeadBiasScale: numberValue(values, "venue-head-bias-scale")!,
-		streetMorphologyPrior: booleanValue(values, "street-morphology-prior"),
-		placeCountry: booleanValue(values, "place-country"),
-		postcodeCountryCoherence: booleanValue(values, "postcode-country-coherence"),
-		forkEntity: booleanValue(values, "fork-entity"),
-		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
-		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
-		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
-		dependentLocalityContainment: booleanValue(values, "dependent-locality-containment"),
-		countyDesignatorFallback: booleanValue(values, "county-designator-fallback"),
-		formerDivisions: booleanValue(values, "former-divisions"),
-		scopeCountryRetrieval: booleanValue(values, "scope-country-retrieval"),
-		siblingLocalityContainment: booleanValue(values, "sibling-locality-containment"),
-		pairPriorWordPieces: booleanValue(values, "pair-prior-word-pieces"),
-		pairPriorChildPostcodeStrip: booleanValue(values, "pair-prior-child-postcode-strip"),
-		pairIndexOwnCountry: booleanValue(values, "pair-index-own-country"),
-		fstCountryRouting: booleanValue(values, "fst-country-routing"),
-		...(numberValue(values, "parent") !== null
-			? {
-					parentPlace: {
-						id: numberValue(values, "parent")!,
-						source: "caller" as const,
-						strength: stringValue(values, "parent-scope") as ScopeStrength,
-					},
-				}
-			: {}),
-		capitalTier: stringValue(values, "capital-tier") as GeocodeOptions["capitalTier"],
-		variantAliasExemption: VariantAliasExemptionSchema.parse(stringValue(values, "variant-alias-exemption")),
-		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
-		format: stringValue(values, "format") as Format,
-		json: booleanValue(values, "json"),
-		text: booleanValue(values, "text"),
-		jsonld: booleanValue(values, "jsonld"),
-		debug: booleanValue(values, "debug"),
-		debugSize: stringValue(values, "debug-size")!,
-		stdin: booleanValue(values, "stdin"),
-		timing: booleanValue(values, "timing"),
-		...(stringValue(values, "tiles") ? { tiles: stringValue(values, "tiles")! } : {}),
-	}
-}
 
 function resolveFormat(options: Pick<GeocodeOptions, "format" | "json" | "text" | "jsonld">): Format {
 	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
@@ -519,7 +463,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 
 export async function run(args: readonly string[]): Promise<number> {
 	return runNativeCommand(spec, args, async (parsed) => {
-		const options = await optionsOf(parsed.values)
+		const options = await resolveGeocodeCommandOptions(parsed)
 		const input = parsed.positionals.join(" ").trim()
 
 		if (options.debug) {

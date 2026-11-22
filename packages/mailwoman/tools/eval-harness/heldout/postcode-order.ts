@@ -16,8 +16,8 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { parseForGeocode } from "#geocode/core"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 import { loadParsePriors } from "#geocode/parse-priors"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { componentsMatchExactly, foldToComponents } from "#tools/eval-harness/per/locale-f1"
 import { normalizeComponent } from "#tools/eval-harness/per/tag-f1"
 

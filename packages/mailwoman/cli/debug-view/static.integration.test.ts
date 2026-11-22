@@ -15,8 +15,15 @@ import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
 import { describe, expect, test } from "vitest"
 
+import { spec } from "#cli/native/commands/geocode"
+import { resolveGeocodeCommandOptions } from "#cli/native/commands/geocode/options"
+import { parseCommand } from "#cli/native/spec"
 import { $public } from "#env"
-import { createGeocodeCommandOptions } from "#geocode"
+
+/**
+ * The options the geocode command resolves from these typed flags.
+ */
+const commandOptions = (...flags: string[]) => resolveGeocodeCommandOptions(parseCommand(spec, flags))
 
 const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
@@ -52,7 +59,7 @@ if (!canRun) {
 
 describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
-		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
+		const options = await commandOptions("--tiles", TILES_PATH.toString(), "--debug-size", "100x30")
 
 		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
@@ -64,7 +71,7 @@ describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 	})
 
 	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
-		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "140x40" })
+		const options = await commandOptions("--tiles", TILES_PATH.toString(), "--debug-size", "140x40")
 
 		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
@@ -89,7 +96,7 @@ describe.skipIf(!canRun)("runStaticDebug", { timeout: 30_000 }, () => {
 
 describe("runStaticDebug --debug-size floor", () => {
 	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
-		const options = createGeocodeCommandOptions({ debugSize: "100x5" })
+		const options = await commandOptions("--debug-size", "100x5")
 
 		// The floor is checked before any DB or weights work, so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
@@ -104,7 +111,7 @@ describe("runStaticDebug --debug-size floor", () => {
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
 		await expect(
-			runStaticDebug("3215 SE Clinton St, Portland OR", createGeocodeCommandOptions({ debugSize: "60x19" }))
+			runStaticDebug("3215 SE Clinton St, Portland OR", await commandOptions("--debug-size", "60x19"))
 		).rejects.toThrow(/--debug-size below the 60x20 minimum: 60x19/)
 	})
 })
@@ -113,7 +120,7 @@ describe("runStaticDebug empty input", () => {
 	test("an empty input rejects with the one-shot path's missing-argument message, not a junk frame", async () => {
 		// The empty-input guard runs before the format and size floors and before
 		// `createGeocodeSession`, so this rejects even without a resolvable session.
-		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
+		await expect(runStaticDebug("", await commandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
 	})
@@ -121,7 +128,7 @@ describe("runStaticDebug empty input", () => {
 
 describe("runStaticDebug --debug format guard", () => {
 	test("a --format shorthand alongside --debug rejects, not a silent pick", async () => {
-		const options = createGeocodeCommandOptions({ text: true })
+		const options = await commandOptions("--text")
 
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --text."
@@ -129,7 +136,7 @@ describe("runStaticDebug --debug format guard", () => {
 	})
 
 	test("an explicit non-default --format alongside --debug rejects the same way", async () => {
-		const options = createGeocodeCommandOptions({ format: "text" })
+		const options = await commandOptions("--format", "text")
 
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --format text."

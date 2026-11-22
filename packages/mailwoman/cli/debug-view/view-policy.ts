@@ -9,7 +9,7 @@
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import type { GeocodeCommandOptions } from "#geocode/command-options"
+import type { GeocodeCommandOptions } from "#cli/native/commands/geocode/options"
 
 // #region Zoom heuristic
 

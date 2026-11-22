@@ -19,7 +19,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, test } from "vitest"
 
 import { $public } from "#env"
-import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
+import { createGeocodeSessionOptions, createGeocodeSession } from "#geocode"
 
 const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
@@ -42,7 +42,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 	test(
 		"records the decode that produced the tree, and resolves the same answer as an untraced session",
 		async () => {
-			const options = createGeocodeCommandOptions()
+			const options = createGeocodeSessionOptions()
 			const traced = await createGeocodeSession({ ...options, trace: true })
 			const plain = await createGeocodeSession(options)
 

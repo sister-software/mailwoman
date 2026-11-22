@@ -76,6 +76,14 @@ export interface CommandSpec {
 export interface ParsedCommand {
 	positionals: string[]
 	values: Record<string, OptionValue | undefined>
+
+	/**
+	 * The options the user typed, each under its current spelling.
+	 *
+	 * A value in {@linkcode values} whose option is absent here is the option's `default`,
+	 * so a command that merges its flags over another source applies only the typed ones.
+	 */
+	typed: ReadonlySet<string>
 }
 
 /**
@@ -221,18 +229,18 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			type: "boolean" | "string"
 			short?: string
 			multiple?: boolean
-			default?: boolean | string | boolean[] | string[]
+			default?: boolean
 		}
 	> = {
 		help: { type: "boolean", short: "h", default: false },
 	}
 
+	// The definitions state no option default, so every value the parser answers is one the user typed.
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
 		definitions[name] = {
 			type: option.type === "boolean" ? "boolean" : "string",
 			...(option.short ? { short: option.short } : {}),
 			...(option.multiple ? { multiple: true } : {}),
-			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
 		// The retired spelling parses and sets no default.
@@ -272,6 +280,16 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 		])
 	) as Record<string, OptionValue | undefined>
 
+	const typed = new Set<string>()
+
+	for (const [name, option] of Object.entries(spec.options ?? {})) {
+		if (values[name] != null) {
+			typed.add(name)
+		} else if (option.type !== "number" && option.default != null) {
+			values[name] = option.default
+		}
+	}
+
 	for (const [name, option] of Object.entries(spec.options ?? {})) {
 		if (option.deprecatedName) {
 			const retired = values[option.deprecatedName]
@@ -289,6 +307,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 				console.error(`--${option.deprecatedName} is deprecated and will be removed; use --${name}.`)
 
 				values[name] = retired
+				typed.add(name)
 			}
 		}
 
@@ -353,7 +372,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 		}
 	}
 
-	return { positionals, values }
+	return { positionals, values, typed }
 }
 
 function optionLabel(name: string, option: OptionSpec): string {

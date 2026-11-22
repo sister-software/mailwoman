@@ -28,14 +28,9 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
-import {
-	type DecoderSettings,
-	GEOCODE_SWITCH_DEFAULTS,
-	geocodeAddress,
-	geocodeParseInputs,
-	type GeocodeDeps,
-} from "#geocode/core"
+import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/fst-layers"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import {
 	createCountryFSTLookup,
@@ -44,7 +39,6 @@ import {
 	venueHeadOptsFor,
 } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 import { loadForkEntityDeps } from "#geocode/session/layers"
 import { poiTaxonomyLookup } from "#poi/intent"
 import {
@@ -662,7 +656,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const pinDeps = {
 		...resolverPinDeps(pins),
-		...(pinnedSwitch(pins.formerDivisions, GEOCODE_SWITCH_DEFAULTS.formerDivisions)
+		...(pinnedSwitch(pins.formerDivisions, GEOCODE_SESSION_DEFAULTS.formerDivisions)
 			? { formerDivisionLookup: await readFormerDivisionLookup() }
 			: {}),
 	}

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "#geocode/command-options"
 export * from "#geocode/core"
+export * from "#geocode/options"
 export { type GeocodeClassifier } from "#geocode/classifier"
 export * from "#geocode/diff"
 export * from "#geocode/national-overture"
@@ -11,6 +11,7 @@ export * from "#geocode/result"
 export * from "#geocode/session"
 export { type CapitalTier } from "#resolver-backend"
 export * from "#geocode/stream"
+export * from "#geocode/switches"
 export * from "#geocode/tree-reads"
 
 // `#geocode/worker` is deliberately absent.

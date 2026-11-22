@@ -7,7 +7,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
+import { createGeocodeSessionOptions, createGeocodeSession } from "#geocode"
 
 const CANDIDATE_DB = wofDatabasePath("candidate.db")
 
@@ -19,7 +19,7 @@ const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line under --locale en-US (#2164 routing)", () => {
 	const sessionPromise = haveArtifacts
-		? createGeocodeSession(createGeocodeCommandOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
+		? createGeocodeSession(createGeocodeSessionOptions({ locale: "en-US", candidateDB: CANDIDATE_DB.toString() }))
 		: null
 
 	afterAll(async () => {

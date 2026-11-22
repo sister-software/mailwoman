@@ -14937,6 +14937,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"c12@npm:^3.3.3":
+  version: 3.3.4
+  resolution: "c12@npm:3.3.4"
+  dependencies:
+    chokidar: "npm:^5.0.0"
+    confbox: "npm:^0.2.4"
+    defu: "npm:^6.1.6"
+    dotenv: "npm:^17.3.1"
+    exsolve: "npm:^1.0.8"
+    giget: "npm:^3.2.0"
+    jiti: "npm:^2.6.1"
+    ohash: "npm:^2.0.11"
+    pathe: "npm:^2.0.3"
+    perfect-debounce: "npm:^2.1.0"
+    pkg-types: "npm:^2.3.0"
+    rc9: "npm:^3.0.1"
+  peerDependencies:
+    magicast: "*"
+  peerDependenciesMeta:
+    magicast:
+      optional: true
+  checksum: 10/2cf8fc91abd3bca463dae455209a2ca73fa6a035a22ea7506cc2e422caef31d0032fd9eb7855e58d0488eca2858335dd8f1c2604d4e74d134b9521e89fcdb1d5
+  languageName: node
+  linkType: hard
+
 "cache-parser@npm:^1.2.6":
   version: 1.2.6
   resolution: "cache-parser@npm:1.2.6"
@@ -16879,7 +16904,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"defu@npm:^6.1.4":
+"defu@npm:^6.1.4, defu@npm:^6.1.6, defu@npm:^6.1.7":
   version: 6.1.7
   resolution: "defu@npm:6.1.7"
   checksum: 10/09480a5fbe6318f622f30017f9386df6ae92ed895fb1ccc61e1ff0d5016b28a321c751749fdd52c996ddd4eafc2c95b77dc0c8cc109881a231c23c7fd630deb9
@@ -16967,7 +16992,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"destr@npm:^2.0.3":
+"destr@npm:^2.0.3, destr@npm:^2.0.5":
   version: 2.0.5
   resolution: "destr@npm:2.0.5"
   checksum: 10/0e4fba62a55a4188c7ab13eed5ebeeda037ead1ab21cf6be40ca39828b258475ad9eb1e7de50a5ea8041705d454a4d090caf9f92b89f03b04d2e229716f7da0a
@@ -17233,7 +17258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^17.2.3":
+"dotenv@npm:^17.2.3, dotenv@npm:^17.3.1":
   version: 17.4.2
   resolution: "dotenv@npm:17.4.2"
   checksum: 10/ca1b6f54d58e39914901e1518958e86083aca8deb5aa2e7f2a51acd53291d97852479b0ab26ed949b6a45a0e9adcc7b0d1c3c72375e8ea670f7005e341c6daba
@@ -19106,6 +19131,15 @@ __metadata:
   bin:
     giget: dist/cli.mjs
   checksum: 10/3ee0f4aa06bdaeda9d4d31791d6a1e4349f15e20ff1dbe60535c709d3acc03f29f36a648cd047851a332fc1a0e9997ab6c5036410cc1629c09ad45ee155ee6dd
+  languageName: node
+  linkType: hard
+
+"giget@npm:^3.2.0":
+  version: 3.3.1
+  resolution: "giget@npm:3.3.1"
+  bin:
+    giget: dist/cli.mjs
+  checksum: 10/94601ade8152e1e4b68f35b7b1fa90dbe9ecf0da8f575c5c9805b68842d6150be641365100f59e97ee6fda8959722ec1d250bf7d13ccb14ccc617b300b8445d7
   languageName: node
   linkType: hard
 
@@ -22147,6 +22181,7 @@ __metadata:
     "@mailwoman/zoning": "workspace:*"
     "@sister.software/h3": "npm:^1.1.0"
     async-init: "npm:^2.0.0"
+    c12: "npm:^3.3.3"
     chalk: "npm:^6.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
     ink: "npm:^8.0.0"
@@ -25031,7 +25066,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"perfect-debounce@npm:^2.0.0":
+"perfect-debounce@npm:^2.0.0, perfect-debounce@npm:^2.1.0":
   version: 2.1.0
   resolution: "perfect-debounce@npm:2.1.0"
   checksum: 10/1e45b92ab585fa1bfafaf01783b693b6d164a4da3b80865487f716a010d95e3d8b1131693258e342da25da671312c194cddb103c4743161f57dcf26574273fe6
@@ -26567,6 +26602,16 @@ __metadata:
     defu: "npm:^6.1.4"
     destr: "npm:^2.0.3"
   checksum: 10/0694d2a80579983a5e4f0452092d9f6a06b785b104b32f48f3d6bb263f637e53d9ebd1fd77a41b157b84c1c7e8e4ecc87c3824907738653a296e6d2faf3d1844
+  languageName: node
+  linkType: hard
+
+"rc9@npm:^3.0.1":
+  version: 3.1.0
+  resolution: "rc9@npm:3.1.0"
+  dependencies:
+    defu: "npm:^6.1.7"
+    destr: "npm:^2.0.5"
+  checksum: 10/0917a78dafec4b907e97b6af2a062810c9538893bfe61d762e7af34d81acdc2c0a8c9d57e8746dfee56369e0dec4338eb362406c4296f1bdaa0763b7ab57e090
   languageName: node
   linkType: hard
 

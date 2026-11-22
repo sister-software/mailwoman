@@ -9,13 +9,13 @@
  *   lexicon through the loader the geocode session uses, under the session's default switches.
  */
 
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 import {
 	type ParsePriorArtifacts,
 	type ParsePriorOptions,
 	loadParsePriors,
 	parsePriorOptions,
 } from "#geocode/parse-priors"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
 
 /**
  * Returns the parse options that feed a row's priors, keyed by the row's country.

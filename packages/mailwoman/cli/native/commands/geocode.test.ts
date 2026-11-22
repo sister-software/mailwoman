@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest"
 
 import { spec } from "#cli/native/commands/geocode"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
 
 describe("geocode command flags", () => {
 	it("defaults --variant-alias-exemption to the session's default and offers both named values", () => {

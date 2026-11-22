@@ -5,14 +5,14 @@
  *   The lockstep pin: dev-mcp's effective defaults are production's, field by field.
  */
 
-import { createGeocodeCommandOptions, GEOCODE_SWITCH_DEFAULTS } from "mailwoman/geocode"
+import { createGeocodeSessionOptions, GEOCODE_SWITCH_DEFAULTS } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 import { resolveConfig } from "#dev-mcp/engine/registry"
 
 describe("resolveConfig — production lockstep (#1732)", () => {
 	it("matches the geocode command's own defaults on every shared pin", () => {
-		const production = createGeocodeCommandOptions()
+		const production = createGeocodeSessionOptions()
 		const resolved = resolveConfig({})
 
 		expect(resolved.locale).toBe(production.locale)
@@ -50,7 +50,7 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 	})
 
 	it("resolves variant_alias_exemption from either named value or the production default", () => {
-		expect(resolveConfig({}).variantAliasExemption).toBe(createGeocodeCommandOptions().variantAliasExemption)
+		expect(resolveConfig({}).variantAliasExemption).toBe(createGeocodeSessionOptions().variantAliasExemption)
 		expect(resolveConfig({ variant_alias_exemption: "applied" }).variantAliasExemption).toBe("applied")
 		expect(resolveConfig({ variant_alias_exemption: "not_applied" }).variantAliasExemption).toBe("not_applied")
 	})

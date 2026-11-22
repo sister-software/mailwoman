@@ -32,7 +32,16 @@ describe("native CLI spec", () => {
 		expect(parsed).toEqual({
 			positionals: ["address"],
 			values: { help: false, feature: false, count: 4, format: "json" },
+			typed: new Set(["feature", "count", "format"]),
 		})
+	})
+
+	test("reports only the options the user typed, so a default never reads as a choice", () => {
+		const parsed = parseCommand(fixture, ["address", "--feature"])
+
+		expect(parsed.values).toMatchObject({ feature: true, count: 2 })
+		expect([...parsed.typed]).toEqual(["feature"])
+		expect([...parseCommand(fixture, ["address"]).typed]).toEqual([])
 	})
 
 	test("treats negative numbers as positionals instead of short options", () => {

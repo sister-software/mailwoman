@@ -21,7 +21,7 @@ import { basename, type PathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { createGeocodeCommandOptions } from "#geocode/command-options"
+import { createGeocodeSessionOptions } from "#geocode/options"
 import { createGeocodeSession } from "#geocode/session"
 
 interface SampledPostcode {
@@ -145,7 +145,7 @@ console.log(`[gb-codepoint] ${sample.length} postcodes sampled (${perArea}/area,
 const results: LegResult[] = []
 
 for (const locale of ["en-US", "en-GB"]) {
-	const session = await createGeocodeSession(createGeocodeCommandOptions({ locale }))
+	const session = await createGeocodeSession(createGeocodeSessionOptions({ locale }))
 
 	for (const row of sample) {
 		for (const { leg, input } of legsFor(row.postcode)) {

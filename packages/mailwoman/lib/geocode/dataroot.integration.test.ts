@@ -18,7 +18,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
+import { createGeocodeSessionOptions, createGeocodeSession } from "#geocode"
 
 const REAL_CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
@@ -39,7 +39,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		const session = await createGeocodeSession(
 			// The production defaults factory rather than a hand-built literal, the same lockstep factory the
 			// dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
-			createGeocodeCommandOptions({
+			createGeocodeSessionOptions({
 				locale: "en-US",
 				dataRoot: BOGUS_ROOT.path.toString(),
 				// A real candidate.db keeps the gazetteer check, resolved first, from masking the weights step.

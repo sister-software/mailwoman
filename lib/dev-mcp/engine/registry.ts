@@ -11,9 +11,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { type ChannelPins, SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
 import {
 	type CapitalTier,
-	createGeocodeCommandOptions,
 	createGeocodeSession,
-	GEOCODE_SWITCH_DEFAULTS,
+	createGeocodeSessionOptions,
 	type GeocodeSession,
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
@@ -68,62 +67,62 @@ export interface EngineConfig {
 	/**
 	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate (#2804).
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.dependentLocalityContainment`
 	 */
 	dependent_locality_containment?: SwitchPin
 	/**
 	 * Whether a `locality` span written with its country's county designator resolves as its region's county.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.countyDesignatorFallback`
 	 */
 	county_designator_fallback?: SwitchPin
 	/**
 	 * Whether a `subregion` or `region` value naming a former division linked to
 	 * the resolved locality is accepted.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.formerDivisions`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.formerDivisions`
 	 */
 	former_divisions?: SwitchPin
 	/**
 	 * Whether a soft country scope acts inside retrieval and a hard scope reports the places it excluded.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.scopeCountryRetrieval`
 	 */
 	scope_country_retrieval?: SwitchPin
 	/**
 	 * Whether one of two `locality` spans resolves inside the other when the gazetteer contains it there.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.siblingLocalityContainment`
 	 */
 	sibling_locality_containment?: SwitchPin
 	/**
 	 * Whether the placetype-pair prior leaves separator pieces unbiased.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.pairPriorWordPieces`
 	 */
 	pair_prior_word_pieces?: SwitchPin
 	/**
 	 * Whether a segment child's placetype-pair bias leaves out its same-field postcode.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.pairPriorChildPostcodeStrip`
 	 */
 	pair_prior_child_postcode_strip?: SwitchPin
 	/**
 	 * Whether the placetype-pair index applies only when the parse's country is the index's.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.pairIndexOwnCountry`
 	 */
 	pair_index_own_country?: SwitchPin
 	/**
 	 * Whether a parse takes the gazetteer FST of the country the locale head reads.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.fstCountryRouting`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.fstCountryRouting`
 	 */
 	fst_country_routing?: SwitchPin
 	/**
 	 * Whether `poi.db` entity upgrades reach the venue tier.
 	 *
-	 * @defaultValue `GEOCODE_SWITCH_DEFAULTS.poiVenueTier`
+	 * @defaultValue `GEOCODE_SESSION_DEFAULTS.poiVenueTier`
 	 */
 	poi_venue_tier?: SwitchPin
 	/**
@@ -212,12 +211,13 @@ export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSes
 /**
  * Resolves an engine configuration to session options.
  *
- * Unset keys take their defaults from the geocode command's option factory.
+ * Unset keys take their defaults from the session's option schema.
  */
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
-	const production = createGeocodeCommandOptions()
+	const production = createGeocodeSessionOptions()
 
 	return {
+		...production,
 		locale: config.locale ?? production.locale,
 		countryScope: config.country_scope ?? production.countryScope,
 		dataRoot: config.data_root ?? production.dataRoot,
@@ -272,7 +272,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		),
 		pairIndexOwnCountry: pinnedSwitch(config.pair_index_own_country ?? "production", production.pairIndexOwnCountry),
 		fstCountryRouting: pinnedSwitch(config.fst_country_routing ?? "production", production.fstCountryRouting),
-		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", GEOCODE_SWITCH_DEFAULTS.poiVenueTier),
+		poiVenueTier: pinnedSwitch(config.poi_venue_tier ?? "production", production.poiVenueTier),
 		capitalTier: config.capital_tier ?? production.capitalTier,
 		variantAliasExemption: config.variant_alias_exemption ?? production.variantAliasExemption,
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),

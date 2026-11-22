@@ -51,8 +51,8 @@ import {
 } from "#geocode/contributions"
 import type { GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
+import type { GeocodeSessionOptions } from "#geocode/options"
 import type { openOSMRegionDatabases } from "#geocode/osm-layers"
-import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
 import type { ForkEntityProbe, LayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
 import {
@@ -169,7 +169,6 @@ async function resolveWOFPath(
 export function registerGenerationServices(
 	registry: ServiceRegistry,
 	options: GeocodeSessionOptions,
-	settings: GeocodeSessionSettings,
 	contributions: readonly LayerContribution[]
 ): void {
 	const S = GenerationServices
@@ -201,8 +200,8 @@ export function registerGenerationServices(
 	})
 
 	registerParsePriorsService(registry, {
-		gazetteerPrior: settings.gazetteerPrior,
-		venueHeadPrior: settings.venueHeadPrior,
+		gazetteerPrior: options.gazetteerPrior,
+		venueHeadPrior: options.venueHeadPrior,
 		label: `locale ${options.locale}`,
 	})
 
@@ -219,13 +218,13 @@ export function registerGenerationServices(
 				catalog: selection.catalog,
 				dataRoot: options.dataRoot,
 				wofPaths,
-				variantAliasExemption: settings.variantAliasExemption,
+				variantAliasExemption: options.variantAliasExemption,
 			}),
 	})
 
 	defineUnlessProvided(registry, S.capitals, {
 		needs: { candidateDB: S.candidateDB },
-		build: ({ candidateDB }) => capitalIndexFor(settings.capitalTier, candidateDB),
+		build: ({ candidateDB }) => capitalIndexFor(options.capitalTier, candidateDB),
 	})
 
 	const explicitAddressPointLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? "fr" : "us"
@@ -272,7 +271,7 @@ export function registerGenerationServices(
 	const nationalSources: ServiceToken<NationalDatabaseSource>[] = []
 
 	for (const contribute of contributions) {
-		contribute({ registry, options, settings, nationalSource: (token) => void nationalSources.push(token) })
+		contribute({ registry, options, nationalSource: (token) => void nationalSources.push(token) })
 	}
 
 	// Each source is an optional need, so a source that fails to open is left out and the others still answer.
@@ -294,13 +293,12 @@ export function registerGenerationServices(
  */
 export async function describeGeocodeServices(
 	options: GeocodeSessionOptions,
-	settings: GeocodeSessionSettings,
 	contributions: readonly LayerContribution[]
 ): Promise<ServiceGraphNode[]> {
 	await using registry = new ServiceRegistry()
 
 	registerProcessServices(registry, options)
-	registerGenerationServices(registry, options, settings, contributions)
+	registerGenerationServices(registry, options, contributions)
 
 	return registry.graph()
 }

@@ -10,9 +10,8 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
-import type { GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
+import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
-	type ChannelPins,
 	type InputModeSelection,
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -40,7 +39,6 @@ import { TextSpliterator } from "spliterator"
 import { resolverDefaultCountry } from "#country-scope"
 import type { LayerContribution } from "#geocode/contributions"
 import {
-	GEOCODE_SWITCH_DEFAULTS,
 	geocodeAddress,
 	geocodeParseInputs,
 	parseForGeocode,
@@ -48,6 +46,7 @@ import {
 	type GeocodeDeps,
 } from "#geocode/core"
 import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
+import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions } from "#geocode/options"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
 import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
 import {
@@ -57,247 +56,12 @@ import {
 	unavailableLayers,
 } from "#geocode/services"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
-import type { CapitalTier } from "#resolver-backend"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
 
 /**
- * The session settings that have a default, resolved once by {@link geocodeSessionSettings}.
- */
-export interface GeocodeSessionSettings {
-	gazetteerPrior: boolean
-	venueHeadPrior: boolean
-	streetMorphologyPrior: boolean
-	capitalTier: CapitalTier
-	variantAliasExemption: VariantAliasExemption
-}
-
-/**
- * The locale a geocode parses under when the caller chooses none.
- *
- * A session left at this locale states no country, since every caller starts from it.
- */
-export const GEOCODE_DEFAULT_LOCALE = "en-US"
-
-/**
- * The defaults behind every unset {@link GeocodeSessionSettings} key.
- */
-export const GEOCODE_SESSION_DEFAULTS: Readonly<GeocodeSessionSettings> = {
-	gazetteerPrior: true,
-	venueHeadPrior: true,
-	streetMorphologyPrior: true,
-	capitalTier: "auto",
-	variantAliasExemption: "applied",
-}
-
-/**
- * Fills each unset session setting from {@link GEOCODE_SESSION_DEFAULTS}.
- */
-export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>): GeocodeSessionSettings {
-	return {
-		gazetteerPrior: options.gazetteerPrior ?? GEOCODE_SESSION_DEFAULTS.gazetteerPrior,
-		venueHeadPrior: options.venueHeadPrior ?? GEOCODE_SESSION_DEFAULTS.venueHeadPrior,
-		streetMorphologyPrior: options.streetMorphologyPrior ?? GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior,
-		capitalTier: options.capitalTier ?? GEOCODE_SESSION_DEFAULTS.capitalTier,
-		variantAliasExemption: options.variantAliasExemption ?? GEOCODE_SESSION_DEFAULTS.variantAliasExemption,
-	}
-}
-
-/**
- * The parsed geocode command options that a session reads, structural
- * so this module doesn't import the CLI specification.
- */
-export interface GeocodeSessionOptions {
-	/**
-	 * Whether to feed the gazetteer FST prior to the parse.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
-	 */
-	gazetteerPrior?: boolean
-	/**
-	 * Whether to feed the venue-head prior to the parse, using the head words of the
-	 * default country, or of the locale's country when no default country is set.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
-	 */
-	venueHeadPrior?: boolean
-	/**
-	 * Multiplier on the venue-head table's biases.
-	 * Each bias is a log rate ratio.
-	 *
-	 * @defaultValue `1`
-	 */
-	venueHeadBiasScale?: number
-	/**
-	 * Whether the street-morphology matcher biases a street affix on a segment that opens
-	 * with a house number, as `Plaza` in `30 Rockefeller Plaza, New York, NY 10112`.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
-	 */
-	streetMorphologyPrior?: boolean
-	locale: string
-
-	/**
-	 * An npm `--prefix` cache root to load weights from instead of the installed package. session
-	 * creation fails when this root lacks the locale's package because it never falls back.
-	 */
-	weightsCacheRoot?: string
-	bias?: string
-	defaultCountry?: string
-	countryScope: "auto" | "locale" | "none"
-	resolveDB?: string
-	candidateDB?: string
-	dataRoot: PathBuilderLike
-	addressPointsDB?: string
-	interpolationDB?: string
-	interpCalibration?: number
-	localeCountryPrior: boolean
-	placeCountry: boolean
-	postcodeCountryCoherence: boolean
-	forkEntity: boolean
-
-	/**
-	 * Whether to enable the venue tier for `poi.db` entity upgrades, where only `true` enables it.
-	 */
-	poiVenueTier?: boolean
-
-	/**
-	 * The national-capital promotion among same-name candidates for a bare place name.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}; see {@link CapitalTier}.
-	 */
-	capitalTier?: CapitalTier
-
-	/**
-	 * Whether own-name `variant` aliases skip the cross-country primary-name penalty,
-	 * affecting only the candidate backend and requiring the `name_role` column.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SESSION_DEFAULTS}
-	 */
-	variantAliasExemption?: VariantAliasExemption
-	postcodeShapeCoherence: boolean
-	postcodeContainmentCoherence: boolean
-
-	/**
-	 * Whether a parsed region re-ranks locality candidates by admin containment.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	adminContainmentRerank?: boolean
-
-	/**
-	 * Whether a parsed dependent locality resolves inside its parent and answers the coordinate.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	dependentLocalityContainment?: boolean
-
-	/**
-	 * Whether a `locality` span written with its country's county designator resolves as
-	 * its region's county when no locality of that name is in the region.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	countyDesignatorFallback?: boolean
-
-	/**
-	 * Whether a `subregion` or `region` value that no current division answers is accepted without scoping
-	 * the result, when the value is the name of a former division linked to the resolved locality.
-	 *
-	 * The session reads the former divisions table when it's on, and fails when the table is absent.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	formerDivisions?: boolean
-
-	/**
-	 * The former divisions table {@link GeocodeSessionOptions.formerDivisions} reads.
-	 *
-	 * @defaultValue `formerDivisionsTablePath()`, `$MAILWOMAN_DATA_ROOT/gazetteer/former-divisions-v1.json`
-	 */
-	formerDivisionsTable?: PathBuilderLike
-
-	/**
-	 * Whether a soft country scope acts inside retrieval, the locale head's contradicting
-	 * country stands in as a soft scope, and a hard scope reports the places it excluded.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	scopeCountryRetrieval?: boolean
-
-	/**
-	 * Whether one of two `locality` spans resolves inside the other when the gazetteer contains it there.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	siblingLocalityContainment?: boolean
-
-	/**
-	 * Whether the placetype-pair prior leaves separator pieces unbiased.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	pairPriorWordPieces?: boolean
-
-	/**
-	 * Whether a segment child's placetype-pair bias leaves out its same-field postcode.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	pairPriorChildPostcodeStrip?: boolean
-
-	/**
-	 * Whether the placetype-pair index applies only when the parse's country is the index's:
-	 * the default country when set, else the locale's country.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	pairIndexOwnCountry?: boolean
-
-	/**
-	 * Whether a parse takes the gazetteer FST of the country the locale head
-	 * confidently reads, when that country ships one.
-	 *
-	 * @defaultValue {@linkcode GEOCODE_SWITCH_DEFAULTS}
-	 */
-	fstCountryRouting?: boolean
-
-	/**
-	 * A parent place that scopes every lookup, as `--parent` sets it.
-	 */
-	parentPlace?: ParentPlaceScope
-
-	placeCountryThreshold: number
-
-	/**
-	 * Whether to record a {@link GeocodeTrace} per input.
-	 * This setting costs one extra decode per input.
-	 */
-	trace?: boolean
-
-	/**
-	 * Whether a lookup that resolves no candidate re-probes the value in the other admin bands,
-	 * leaving the result unchanged and requiring {@link trace}.
-	 */
-	diagnoseUnreachable?: boolean
-
-	/**
-	 * Per-channel feed pins for the classifier's soft-feature channels, for a diagnostic session.
-	 *
-	 * A channel pinned `off` is fed zeros in place of its built features.
-	 * Unset feeds every channel as built, as every production session does.
-	 */
-	channelPins?: ChannelPins
-
-	/**
-	 * Receives initialization progress messages.
-	 */
-	onProgress?: (message: string) => void
-}
-
-/**
  * The per-stage evidence behind one geocode, rendered by the `--debug` view
- * and built only when {@link GeocodeSessionOptions.trace} is set.
+ * and built only when the session's `trace` option is set.
  */
 export interface GeocodeTrace {
 	/**
@@ -495,7 +259,6 @@ export async function createGeocodeSession(
 ): Promise<GeocodeSession> {
 	const initStartedAt = performance.now()
 	const progress = options.onProgress ?? (() => {})
-	const settings = geocodeSessionSettings(options)
 	const timings: ServiceTimings = {}
 
 	// Each registration skips a service the parent scope provides.
@@ -504,7 +267,7 @@ export async function createGeocodeSession(
 
 	recordServiceTimings(registry, timings)
 	registerProcessServices(registry, options)
-	registerGenerationServices(registry, options, settings, scope.layers ?? NODE_LAYER_CONTRIBUTIONS)
+	registerGenerationServices(registry, options, scope.layers ?? NODE_LAYER_CONTRIBUTIONS)
 
 	progress("Loading the gazetteer, neural model and data layers…")
 
@@ -540,11 +303,10 @@ export async function createGeocodeSession(
 	const venueHeadCountry = options.defaultCountry ?? localeRegion
 
 	const decoderSettings: GeocodeDecoderSettingDeps = {
-		pairPriorWordPieces: options.pairPriorWordPieces ?? GEOCODE_SWITCH_DEFAULTS.pairPriorWordPieces,
-		pairPriorChildPostcodeStrip:
-			options.pairPriorChildPostcodeStrip ?? GEOCODE_SWITCH_DEFAULTS.pairPriorChildPostcodeStrip,
-		pairIndexOwnCountry: options.pairIndexOwnCountry ?? GEOCODE_SWITCH_DEFAULTS.pairIndexOwnCountry,
-		fstCountryRouting: options.fstCountryRouting ?? GEOCODE_SWITCH_DEFAULTS.fstCountryRouting,
+		pairPriorWordPieces: options.pairPriorWordPieces,
+		pairPriorChildPostcodeStrip: options.pairPriorChildPostcodeStrip,
+		pairIndexOwnCountry: options.pairIndexOwnCountry,
+		fstCountryRouting: options.fstCountryRouting,
 	}
 
 	// The caller states the parse's country by a default country, or by choosing a locale other than the default.
@@ -583,9 +345,7 @@ export async function createGeocodeSession(
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
-	const formerDivisions = options.formerDivisions ?? GEOCODE_SWITCH_DEFAULTS.formerDivisions
-
-	const formerDivisionLookup = formerDivisions
+	const formerDivisionLookup = options.formerDivisions
 		? await import("@mailwoman/resolver-wof-sqlite/former-divisions").then((module) =>
 				module.readFormerDivisionLookup(options.formerDivisionsTable)
 			)
@@ -629,7 +389,7 @@ export async function createGeocodeSession(
 		...(streetMorphology ? { streetMorphology } : {}),
 		...(anchorRegions ? { anchorRegions } : {}),
 		...(options.channelPins ? { channelPins: options.channelPins } : {}),
-		streetMorphologyPrior: settings.streetMorphologyPrior,
+		streetMorphologyPrior: options.streetMorphologyPrior,
 		...(venueHead
 			? {
 					venueHead,
@@ -695,11 +455,10 @@ export async function createGeocodeSession(
 			countryScope?.source === "caller" || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
 		const withheldCountry = inferredScopeOK ? null : localeCountry
-		const scopeCountryRetrieval = options.scopeCountryRetrieval ?? GEOCODE_SWITCH_DEFAULTS.scopeCountryRetrieval
 
 		// A withheld locale country stays a soft scope under either prior.
 		const softScope: DefaultCountry | null =
-			withheldCountry && (options.localeCountryPrior || scopeCountryRetrieval)
+			withheldCountry && (options.localeCountryPrior || options.scopeCountryRetrieval)
 				? { country: withheldCountry, source: "inferred", strength: ScopeStrength.Soft }
 				: null
 
@@ -729,15 +488,13 @@ export async function createGeocodeSession(
 			postcodeCountryCoherence: options.postcodeCountryCoherence,
 			postcodeShapeCoherence: options.postcodeShapeCoherence,
 			postcodeContainmentCoherence: options.postcodeContainmentCoherence,
-			adminContainmentRerank: options.adminContainmentRerank ?? GEOCODE_SWITCH_DEFAULTS.adminContainmentRerank,
-			dependentLocalityContainment:
-				options.dependentLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.dependentLocalityContainment,
-			countyDesignatorFallback: options.countyDesignatorFallback ?? GEOCODE_SWITCH_DEFAULTS.countyDesignatorFallback,
-			formerDivisions,
+			adminContainmentRerank: options.adminContainmentRerank,
+			dependentLocalityContainment: options.dependentLocalityContainment,
+			countyDesignatorFallback: options.countyDesignatorFallback,
+			formerDivisions: options.formerDivisions,
 			...(formerDivisionLookup ? { formerDivisionLookup } : {}),
-			scopeCountryRetrieval,
-			siblingLocalityContainment:
-				options.siblingLocalityContainment ?? GEOCODE_SWITCH_DEFAULTS.siblingLocalityContainment,
+			scopeCountryRetrieval: options.scopeCountryRetrieval,
+			siblingLocalityContainment: options.siblingLocalityContainment,
 
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 
@@ -746,7 +503,7 @@ export async function createGeocodeSession(
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
 
-			poiVenueTier: options.poiVenueTier ?? GEOCODE_SWITCH_DEFAULTS.poiVenueTier,
+			poiVenueTier: options.poiVenueTier,
 
 			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
 
@@ -756,7 +513,7 @@ export async function createGeocodeSession(
 
 			...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
-			diagnoseUnreachable: !!trace && (options.diagnoseUnreachable ?? GEOCODE_SWITCH_DEFAULTS.diagnoseUnreachable),
+			diagnoseUnreachable: !!trace && options.diagnoseUnreachable,
 		})
 
 		const finishedAt = performance.now()
