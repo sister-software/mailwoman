@@ -45,7 +45,6 @@ const banLayer: LayerContribution = ({ registry, options, nationalSource }) => {
 	defineUnlessProvided(registry, BANLayerService, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => openBANRegionDatabases(options.dataRoot, selection.catalog),
-		release: disposeHandle,
 	})
 
 	nationalSource(BANLayerService)
@@ -55,7 +54,6 @@ const overtureLayer: LayerContribution = ({ registry, options, nationalSource })
 	defineUnlessProvided(registry, OvertureLayerService, {
 		needs: { selection: S.selection },
 		build: ({ selection }) => OvertureNationalDatabaseProvider.create(resolvePath(options.dataRoot), selection.catalog),
-		release: disposeHandle,
 	})
 
 	nationalSource(OvertureLayerService)
@@ -76,7 +74,6 @@ const osmLayer: LayerContribution = ({ registry, options }) => {
 
 			return osm
 		},
-		release: disposeHandle,
 	})
 }
 
@@ -84,7 +81,6 @@ const usStateDatabases: LayerContribution = ({ registry, options }) => {
 	defineUnlessProvided(registry, S.regionDatabases, {
 		needs: { mod: ResolverModuleService, selection: S.selection },
 		build: ({ mod, selection }) => USStateDatabaseProvider.create(mod, options.dataRoot, selection.catalog),
-		release: disposeHandle,
 	})
 }
 

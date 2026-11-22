@@ -706,7 +706,6 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
-		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.1",
 		"async-init": "^2.0.0",
 		"axios": "^1.21.0",
@@ -733,13 +732,18 @@
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^2.0.0-r.1",
+		"@mailwoman/sqlite": "workspace:*",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
 	},
 	"peerDependencies": {
+		"@mailwoman/sqlite": "workspace:*",
 		"wrangler": "^4.156.0"
 	},
 	"peerDependenciesMeta": {
+		"@mailwoman/sqlite": {
+			"optional": true
+		},
 		"wrangler": {
 			"optional": true
 		}

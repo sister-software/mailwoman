@@ -214,9 +214,11 @@ the next step. Run a repository check with `mwops check <name>`: it exits with t
 the output to a log outside the checkout, and prints the counts, failing tests and log path, or with
 `--json` the whole result. A heavy check waits for the host lock and for CI within
 `--max-wait-minutes`. `mwops host status` names what holds the host, and `mwops check preflight` runs
-the direct-push set below. `yarn health` runs nine scripts. `node-modules-reacharound`, `prefix-directories`
-and the other checks that a test runs over the current tree run only through the tests under
-`lib/repo-health`, which `mwops check health-tree` runs.
+the direct-push set below. `yarn health` runs the whole check registry through `health:checks`, which calls `mwops health all`, beside the
+dependency, manifest and duplication checks. A check runs once `lib/repo-health/registry.ts`
+registers it. `health:checks` leaves out the checks its `--except` list holds, and each of those
+waits on a decision recorded in its issue. The tests under `lib/repo-health`, which `mwops check
+health-tree` runs, cover each check's own logic.
 
 ## Vocabulary rules across the tree
 

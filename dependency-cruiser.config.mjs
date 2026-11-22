@@ -125,11 +125,20 @@ const config = {
 				"EDGAR ingest along to reach three functions. Those three moved to the filer package root and the " +
 				"import now names them.",
 			severity: "error",
-			from: { path: "^packages/(?:react|tile-worker|api|fastify|mcp|earth|planetary)/" },
-			// The directory's own module sits beside it (`lib/sdk.ts` beside `lib/sdk/`),
-			// so the pattern names both.
+			// A test ships in no tarball, and a test that builds its fixture through `sdk/` is test setup.
+			from: {
+				path: "^packages/(?:react|tile-worker|api|fastify|mcp|earth|planetary)/",
+				pathNot: "[.]test[.]tsx?$",
+			},
+			// A workspace's `sdk/` and `tools/` are source roots beside `lib/`.
+			// A tooling workspace keeps them under `lib/`, so the pattern matches both places.
+			// The directory's own module sits beside it (`lib/sdk.ts` beside `lib/sdk/`).
+			// The pattern matches that module too.
 			// `mcp/lib/tools.ts` is `mcp`'s MCP tool definitions, a module with no directory beside it.
-			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)(?:/|\\.tsx?$)", pathNot: "^packages/mcp/lib/tools\\.ts$" },
+			to: {
+				path: "^packages/[^/]+/(?:lib/)?(?:tools|sdk)(?:/|\\.tsx?$)",
+				pathNot: "^packages/mcp/lib/tools\\.ts$",
+			},
 		},
 		{
 			name: "no-library-to-role-directory",

@@ -46,12 +46,12 @@ import {
 	firstCoveringSource,
 	type LayerContribution,
 	type NationalDatabaseSource,
+	type RegionDatabaseSource,
 	type UnavailableLayer,
 } from "#geocode/contributions"
 import type { GeocodeDeps } from "#geocode/core"
 import { selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import type { openOSMRegionDatabases } from "#geocode/osm-layers"
-import type { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
 import type { ForkEntityProbe, LayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
@@ -73,13 +73,6 @@ type ActiveSelection = Awaited<ReturnType<typeof holdActiveSelection>>
 type ResolverBackend = Awaited<ReturnType<typeof createResolverBackend>>
 
 type OSMRegionDatabases = Awaited<ReturnType<typeof openOSMRegionDatabases>>
-
-/**
- * Releases a value that's a disposable handle or `null`.
- */
-function disposeHandle(handle: Disposable | null | undefined): void {
-	handle?.[Symbol.dispose]()
-}
 
 /**
  * The token of the resolver module.
@@ -106,7 +99,7 @@ export const GenerationServices = {
 	wofPaths: createToken<string[]>("wof-paths"),
 	lookup: createToken<ResolverBackend>("resolver-backend"),
 	capitals: createToken<Awaited<ReturnType<typeof capitalIndexFor>>>("capitals"),
-	regionDatabases: createToken<USStateDatabaseProvider>("region-databases"),
+	regionDatabases: createToken<RegionDatabaseSource>("region-databases"),
 	explicitAddressPoints: createToken<InstanceType<ResolverModule["AddressPointSqliteLookup"]> | null>(
 		"explicit-address-points"
 	),
@@ -187,7 +180,7 @@ export function registerGenerationServices(
 	// Every service below reads this one snapshot, so the session reads one generation throughout.
 	defineUnlessProvided(registry, S.selection, {
 		build: () => holdActiveSelection(options.dataRoot),
-		release: (selection) => disposeHandle(selection.lease),
+		release: (selection) => selection.lease?.[Symbol.dispose](),
 	})
 
 	defineUnlessProvided(registry, S.candidateDB, {
@@ -228,7 +221,6 @@ export function registerGenerationServices(
 				wofPaths,
 				variantAliasExemption: settings.variantAliasExemption,
 			}),
-		release: disposeHandle,
 	})
 
 	defineUnlessProvided(registry, S.capitals, {
@@ -244,14 +236,12 @@ export function registerGenerationServices(
 			options.addressPointsDB
 				? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAddressPointLocale })
 				: null,
-		release: disposeHandle,
 	})
 
 	defineUnlessProvided(registry, S.explicitInterpolation, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null,
-		release: disposeHandle,
 	})
 
 	defineUnlessProvided(registry, S.classifyKind, {

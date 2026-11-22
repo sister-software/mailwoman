@@ -26,6 +26,16 @@ export interface NationalDatabaseSource extends Disposable {
 }
 
 /**
+ * The street-tier databases of a region inside a country, keyed by the region's slug.
+ *
+ * A session reads it for an address whose tree states a region, such as a US state.
+ * A `null` slug answers an empty bundle.
+ */
+export interface RegionDatabaseSource extends Disposable {
+	readonly for: (regionSlug: string | null) => RegionDatabases
+}
+
+/**
  * What a contribution reads and writes while it registers a layer.
  */
 export interface LayerRegistrar {
