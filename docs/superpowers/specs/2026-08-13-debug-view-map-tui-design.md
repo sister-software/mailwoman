@@ -92,23 +92,22 @@ Render note: solid fills pass through asciify's Bayer ordered dither, so a fill 
 luminance sets its stipple density. Water renders as a dim texture and roads as solid bright
 dots. The style table can tune this, so it isn't a design risk.
 
-Attribution: `MapFrame.attribution` holds the tile archive's attribution string. The dump is
-OSM-derived, so display attribution is required. Consumers render it, and the debug pane shows it
-bottom-right. No package ships tiles. The consumer always supplies the path.
+`MapFrame.attribution` holds the tile archive's attribution string. Consumers must display it
+because the dump uses OpenStreetMap data. The debug pane puts the attribution in its bottom-right
+corner. No package ships tiles. The consumer always supplies the path.
 
 ## 2. Geocode session (mailwoman workspace)
 
 Extract `runGeocode`'s dependency assembly (`mailwoman/commands/geocode.tsx`) into
 `createGeocodeSession(options)`, a sibling of `geocode-core.ts`. The session loads the
-classifier, opens the resolver backend, extract providers, placer, and poi deps once, and returns
-`{geocode(input), close()}`. `geocode(input)` returns the flat `GeocodeResult` **plus** the
+classifier and opens the resolver backend, extract providers, placer, and POI dependencies once.
+It returns `{geocode(input), close()}`. `geocode(input)` returns the flat `GeocodeResult` **plus** the
 parsed tree and the classifier's labeled char spans. The sentencepiece native-offsets path
 preserves offsets end to end. The exact accessor is plan-time verification item 1.
 
 The existing one-shot path becomes create → geocode → close in a try/finally and stays
 byte-identical. `geocode.test.ts` must pass unmodified. The #1577 requirement also stays in
-place: no output on the non-debug success path renders through Ink, and output goes through
-`writeRawStdout`.
+place. Write successful non-debug output directly through `writeRawStdout`.
 
 ## 3. The debug view (mailwoman workspace)
 

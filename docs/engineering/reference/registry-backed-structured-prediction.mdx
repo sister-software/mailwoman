@@ -1,8 +1,8 @@
 # Registry-backed structured prediction
 
 This page describes how Mailwoman may use address registries (BAN, BAG, TIGER, WOF, OSM)
-and why they feed the model instead of deciding for it. Registries provide soft lexical priors and
-synthetic coverage, and the model still resolves ambiguity.
+and why they feed the model instead of deciding for it. Registries supply data for synthetic training
+examples and soft lexical priors at parse time. The model resolves ambiguity.
 
 This page extends [closed-vocab fields: model-first](./closed-vocab-fields-model-first.mdx)
 to streets. That page decided `country` / `po_box` / `cedex`: the gazetteer enters as a soft
@@ -89,9 +89,8 @@ available where the bias is applied.
 5. **Split eval/train by street surface** rather than by record row.
 
 Rule 1 is the rule most likely to be broken. Negative evidence from an incomplete register
-reproduces Pelias's dictionary failure in a soft form. It penalizes real streets that the
-register lacks, everywhere, and the penalty is hard to see because it looks like a
-probability instead of a missing dictionary entry. No tier supplies global negative
+reproduces Pelias's dictionary failure in a soft form. It penalizes any real street absent from the
+register. The penalty is hard to identify in the output because it appears as a probability. No tier supplies global negative
 evidence, including the tiers that are complete in principle.
 
 Rule 5 addresses a problem we've already encountered in a similar form. A row-disjoint

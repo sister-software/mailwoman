@@ -157,8 +157,8 @@ compatibility re-export behind.
 | `pages/debug.tsx`, `pages/trace.tsx`                                                                                                             | the app's routes                                                                                                                             |                                                                          |
 | `plugins/demo-assets/`                                                                                                                           | deleted. Asset staging becomes a Vite build step in the app                                                                                  |                                                                          |
 
-The runtime assembly (`_runtime.ts`) stays application code. `@mailwoman/react` keeps its runtime hook
-free of the ONNX, httpvfs and maplibre graph by design, and the assembly imports all three. The loader
+The runtime assembly (`_runtime.ts`) stays application code. It imports ONNX, httpvfs and MapLibre so the
+runtime hook in `@mailwoman/react` can stay independent of those dependencies. The loader
 lives in `mailwoman`, the one package that already depends on `neural` and `resolver-wof-wasm`, so the
 version pins that `mailwoman gazetteer publish` bumps are local to that package. The sql.js staging stays
 in docs, because `PipelineExplorer` and `GuidedTour` resolve against the gazetteer. The docs embed

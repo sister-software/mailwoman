@@ -56,8 +56,8 @@ is transferred and prints the three routes. With a token, the CLI presents it to
 receives a short-lived presigned URL for the artifact in a private R2 bucket, and downloads it into the data root. The
 public bucket behind `PUBLIC_BUCKET_BASE_URL` stays public, so a paid artifact never enters it. The worker presigns
 with S3 API credentials held as secrets, because an R2 binding cannot presign, and the operator provisions the bucket
-and the credentials per environment as the prerequisites below list. An artifact on disk is read by the same code
-paths as a free one, and no runtime path consults the token.
+and the credentials per environment as the prerequisites below list. At runtime, the same code reads paid and free
+artifacts from disk without consulting the token.
 
 A paid weights overlay is delivered the same way, into the data-root weights overlay that `resolveWeights` already
 reads after the package directory. The alternative is a private npm registry in the Font Awesome shape. It needs a
@@ -83,14 +83,14 @@ strips unknown keys, so a token with the new claims verifies on a release that p
 `AGPL-3.0-only` fails the literal in an older release, so the release that ships the union precedes the first declared
 token.
 
-`isSelfServicePayload` requires `lid` and `agreement` today. A declared token has a `lid` and no agreement, so the
-online status check applies to any token with a `lid`, and `agreement` stays a claim of the commercial route only.
+`isSelfServicePayload` requires `lid` and `agreement` today. Declared tokens include `lid` without `agreement`.
+Check the online status of every token with a `lid`. Reserve the `agreement` claim for the commercial route.
 
 ### The installation id
 
 On its first license or data-pull action, the CLI mints a UUID and writes it to `$MAILWOMAN_CONFIG_ROOT/license/install`
-beside the key file. `mailwoman doctor` prints it. Every declare, evaluate, refresh and download request includes it, and
-the ledger records it with the request. The token is never bound to it, so a token refreshed on a build machine works
+beside the key file. `mailwoman doctor` prints it. The ledger records the installation ID included in each declare,
+evaluate, refresh or download request. The token is never bound to it, so a token refreshed on a build machine works
 in production. One license with hundreds of installation ids is information for the operator and never a refusal.
 
 ### Three routes on the worker
@@ -133,8 +133,8 @@ Each route has its own rate-limit namespace, following the three that exist.
 | `open-source`, `non-profit` | the lead date nearest to the issue date plus four months, where the lead dates are 21 days before each calendar quarter start, so 11 December, 11 March, 10 June and 10 September, with a tie going to the later date |
 
 The quarter rule gives a token a life between 11 weeks (issued 2026-12-25, expires 2027-03-11) and 24 weeks (issued
-2026-12-27, expires 2027-06-10). The CLI notice announces an expiry from 28 days before it. After expiry an installed
-artifact keeps running, the download route refuses, and the notice states the lapse and the routes.
+2026-12-27, expires 2027-06-10). The CLI notice first announces the expiry 28 days before it. An expired token
+leaves installed artifacts usable but cannot authorize new downloads. The notice reports the expiry and lists the routes.
 
 ### The CLI
 
@@ -192,8 +192,8 @@ and the first withheld artifact. `RELEASING.md` records the ordering.
 
 ## Prerequisites the code cannot supply
 
-These are operator work, and the download route cannot run end to end before them. The implementation doesn't wait
-for them.
+The operator must complete these steps before the download route can run end to end. Implementation can proceed
+while these steps are pending.
 
 1. A private R2 bucket per environment for paid artifacts. The only bucket any wrangler configuration binds today is
    the tile worker's `mailwoman-tiles`, and the public bundle base is `https://public.mailwoman.post/mailwoman/`.

@@ -131,10 +131,11 @@ and a `node:sqlite` adapter satisfies it in tests.
    parser as an operator, a column filter or a bare `*`.
 2. The primary query reads `records_fts` ordered by `bm25(records_fts, 10.0, 1.0)`, then `level`, then
    `position`, for 40 rows.
-3. When the primary query returns zero rows, each token of at least three characters is corrected:
-   `terms_trigram` is queried with the `OR` of the token's three-character windows for 10 candidates,
-   and the candidate with the smallest Damerau-Levenshtein distance that's at most 2, and at most
-   one for a token under 6 characters, replaces the token. The primary query runs again with the
+3. When the primary query returns zero rows, look up each token of at least three characters in
+   `terms_trigram`. Join the token's three-character windows with `OR` and request 10 candidates.
+   Replace the token with the candidate that has the smallest Damerau-Levenshtein distance if that
+   distance is at most 2. For tokens shorter than 6 characters, require a distance of at most 1.
+   The primary query runs again with the
    corrected tokens. The response reports the correction. A term that shares no three-character
    window with the token is never proposed, so a transposition inside a word of four letters or fewer
    isn't corrected.
@@ -262,9 +263,9 @@ The last row is misspelled on purpose and exercises the vocabulary correction.
 - A vector arm. `search.ts` is the merge point if one is added.
 - Search inside the Earth, Moon and Mars applications. The modal and the query code are reusable by
   them. The index is the docs site's.
-- Query analytics, and versioned or localized facets.
+- Query analytics and versioned or localized facets.
 
 ## Retirement of Algolia
 
-After the site serves its own search for one week, delete the Algolia crawler and application, and
-revoke the crawler API key and the search key that appears in `docs/docusaurus.config.ts` history.
+After the site serves its own search for one week, delete the Algolia crawler and application.
+Revoke the crawler API key and the search key that appears in `docs/docusaurus.config.ts` history.

@@ -36,9 +36,8 @@ Every major ISP runs a public address-serviceability endpoint on its own site, a
 a Broadband Facts label surface. This is a **higher-resolution claim from the same claimant**. It is
 address-grained instead of census-block-grained, and the provider publishes it directly instead of through a regulator.
 
-When a provider's own channel and its own filing disagree about the same address, both sides of the
-discrepancy are documented, and it requires neither inference nor third-party judgment. It is the strongest class of evidence
-this project can produce, because the provider is the sole source of both statements.
+When a provider's own channel and its own filing disagree about the same address, cite both
+statements. The discrepancy is directly observable because the provider published both claims.
 
 Operator-observed worked example (2026-07-31, a residential address on Plumbrook Rd, Sterling
 Heights, MI 48313). The house number is deliberately omitted because it is a private home. The filings below
@@ -83,10 +82,9 @@ home" is HFC, and HFC _is_ the filed cable technology code. The divergence is in
 availability fields and not in the technology field. Encode this so that the check doesn't flag correct
 technology reporting as a mismatch.
 
-**Constraints to respect:** these are third-party sites, so each provider's ToS and robots directives
-apply. Request volume must stay modest and identified, and results are cached with a timestamp
-because they change. We run address-level checks only for addresses a user asks about and never
-sweep addresses in bulk.
+**Constraints to respect:** follow each provider's terms of service and robots directives. Identify
+the client and keep request volume modest. Store a timestamp with each cached result because a
+provider's answer can change. Check only addresses a user asks about.
 
 ### 2.1 Filings decay — corporate identity moves faster than filing vintages
 

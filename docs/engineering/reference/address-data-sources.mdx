@@ -13,7 +13,7 @@ The canonical agency URLs were verified by web search. Some per-state entries in
 
 ## Formats to watch for beyond CSV
 
-State agencies distribute address data in geospatial formats. The DBF attribute table inside a shapefile is essentially a CSV with geometry attached. Extract it with `ogr2ogr -f CSV`, and the records are ready for training. Common formats:
+State agencies distribute address data in geospatial formats. The DBF attribute table inside a shapefile is essentially a CSV with geometry attached. Use `ogr2ogr -f CSV` to extract records for training. Common formats:
 
 - **Shapefile** (.shp/.dbf/.shx/.prj) — most common state GIS distribution
 - **GeoJSON** — increasingly standard on ArcGIS Hub portals
@@ -24,7 +24,7 @@ State agencies distribute address data in geospatial formats. The DBF attribute 
 
 The highest-value geospatial layers for address NER:
 
-- **Site address points / E911 / NG911 address points**: every addressable location as a point with a full component breakdown (housenumber, prefix, street, suffix, unit, city, ZIP, parcel ID). Counties publish these, and states increasingly do so through ArcGIS Hub. This is the most useful single layer type for component-supervised training.
+- **Site address points / E911 / NG911 address points**: every addressable location as a point with a full component breakdown (housenumber, prefix, street, suffix, unit, city, ZIP, parcel ID). Counties publish these points. States increasingly publish them through ArcGIS Hub. This is the most useful single layer type for component-supervised training.
 - **Parcel polygons with situs + owner addresses**: two addresses per record (the property situs and the owner's mailing address), which can differ structurally (P.O. boxes for owners, street addresses for situs). MA, NC, MN, UT, MT, VT, RI, and a handful of other states aggregate them statewide.
 - **Road centerlines with address ranges**: a current state-level analogue to TIGER. Each segment has from/to house numbers on each side.
 - **Critical infrastructure / facilities layers**: state equivalents of HIFLD covering hospitals, schools, fire/police, jails, courts, and public buildings. Each record is a `B-venue` + address pair.
@@ -48,9 +48,9 @@ For the safest licensing on published model weights, restrict training to US-fed
 
 ## Gazetteer / resolver coordinate sources (companion layer)
 
-Everything after this section is **corpus** material: address _strings_ and name/address pairs to train the BIO parser. This section covers the other half, the **gazetteer** that the resolver and the postcode anchor consume. These datasets turn a parsed span into a place and a coordinate. The requirements differ from the corpus, and this is where WOF's gaps cause problems (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
+Everything after this section is **corpus** material: address _strings_ and name/address pairs to train the BIO parser. This section covers the other half, the **gazetteer** that the resolver and the postcode anchor consume. These datasets turn a parsed span into a place and a coordinate. WOF's gaps matter when the resolver needs a place and coordinate (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
-WOF works well as an **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve without Elasticsearch, and it is **CC0**. Those two properties made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL have their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
+WOF works well as an **admin** gazetteer. Its in-DB hierarchy and ancestors table let us resolve places without Elasticsearch. WOF is **CC0**. Those two properties made it an easy choice. It has never been complete for every token type, however. It has [no street node](../../records/site-2026-08/concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly). Its postcode geometry is thin and uneven outside a few countries: US/NL have their own coordinates, DE is ~66% placeable by borrowing from ancestors, and ES/IT are mostly orphans and effectively unplaceable. Its POI/venue coverage is limited. The standard fix is the rest of the Pelias four-layer stack, supplemented for each gap: **WOF** (admin), **OpenAddresses** (addresses/postcodes), **OpenStreetMap** (streets/POIs), and **GeoNames** (places/postcodes).
 
 ### By gap layer
 
@@ -70,11 +70,11 @@ This probe measured GeoNames postal against the gap in the WOF postcode data (th
 | ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
 | NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
 
-GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half of DE's remaining gap, and it also corrects WOF's Italian mis-links. The integration follows the rules in "Keep supplemental data keyed to WOF ids" below: match on the postcode string, keep the WOF id, and write the GeoNames lat/lon as the centroid. (Overture was not probed. For _postcodes_ it includes OpenAddresses, and we already use OpenAddresses directly. Overture's additional value is therefore the POI layer. A POI probe needs a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, but not for postcodes.)
+GeoNames postal is therefore the cheap CC-BY fill for ES/IT and for roughly half of DE's remaining gap. It also corrects WOF's Italian postcode links. The integration follows the rules in "Keep supplemental data keyed to WOF ids" below: match on the postcode string, keep the WOF id, and write the GeoNames lat/lon as the centroid. (Overture was not probed. For _postcodes_ it includes OpenAddresses, and we already use OpenAddresses directly. Overture's additional value is therefore the POI layer. A POI probe needs a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, but not for postcodes.)
 
 ### Overture Maps
 
-Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the corpus catalog below). Its **Places** theme is a large open POI dataset, and its **Addresses** theme includes OpenAddresses. It therefore covers two of our three gaps in one source, with stable **GERS** entity IDs. It is distributed as cloud parquet (DuckDB/S3). Probe it before committing to per-source OSM imports.
+Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the corpus catalog below). Its **Places** theme is a large open POI dataset. Its **Addresses** theme includes OpenAddresses. It therefore covers two of our three gaps in one source, with stable **GERS** entity IDs. It is distributed as cloud parquet (DuckDB/S3). Probe it before committing to per-source OSM imports.
 
 ### License gradient
 
@@ -94,7 +94,7 @@ The licenses favor **GeoNames + Overture Places + OpenAddresses** as the supplem
 Overture Divisions with care, for derived signals rather than in the shipped DB.
 
 Overture licenses each theme separately, so the table gives it one row per theme. Its attribution page, read
-2026-09-25, gives a `License for theme:` line per theme, and the themes this repository reads differ. A
+2026-09-25, gives a `License for theme:` line for each theme. The terms vary across the themes this repository reads. A
 single Overture row would report the wrong terms for every theme but one.
 
 The Addresses row reads per-source because Overture's theme line for it is prose rather than an
@@ -116,7 +116,7 @@ records the current state.
 
 ### Keep supplemental data keyed to WOF ids
 
-Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Overture's GERS ids (or any parallel id space) would break WOF-id-keyed resolver evals as primary keys. That's the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because the postcode keeps its WOF id, and only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (such as a centroid or a popularity score) rather than importing entities with foreign ids. WOF remains the anchor and provides the eval keys, while the coordinates and the long tail come from other sources. Overture's GERS ids (or any parallel id space) would break WOF-id-keyed resolver evals as primary keys. That's the reason for the rule "extend the custom WOF build, never a prebuilt dump". OA centroid aggregation meets this requirement because it updates the coordinate without changing the postcode's WOF ID.
 
 ---
 
@@ -261,7 +261,7 @@ This section lists state-level public databases of licensed professionals, with 
 
 ### State unified license portals
 
-(Some states route all professions through a single search, and the per-profession entries below refer to it where applicable.)
+Some states route all professions through a single search. The entries below point to that search where it applies.
 
 - **California DCA License Search** — covers medical, nursing, real estate (separate ADRE), 150+ DCA professions — https://search.dca.ca.gov/
 - **Florida DBPR License Search** — covers real estate, contractors and other trades (health professions are separate at FL DOH MQA) — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name

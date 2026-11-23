@@ -122,7 +122,7 @@ only the real checkpoint shows it.
 
 [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/batch/stream.ts)
 moves work across a thread boundary. It is an async iterator over a `spliterator` worker pool. Each worker builds its
-own classifier and lookups, and results are yielded in completion order.
+own classifier and lookups. The iterator yields results as they finish.
 
 Expect a modest gain. The geocoding path is memory- and I/O-bound on a shared multi-gigabyte database. A
 measured NPPES sweep peaked at **two workers (~1.4x)** and degraded after that: four workers matched
@@ -173,7 +173,7 @@ The report separates the launcher/CLI import graph, session import, one-time ses
 backends, optional providers, priors), and the warm parse/resolve phases.
 
 The launcher and router import only the selected command. Root and group help list command paths without importing
-their implementations, and detailed command help imports only that command and the help renderer. A large CLI-import
+their implementations. Detailed command help imports only that command and the help renderer. A large CLI-import
 time therefore comes from the selected command's own static dependency graph.
 
 To measure persistent sequential throughput, feed one address per line. The command initializes once and emits one

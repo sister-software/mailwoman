@@ -124,9 +124,8 @@ atlas-locality.db         primary/local locality names + locality facts
 atlas-aliases-basic.db    reviewed native/English exonyms and common transliterations
 ```
 
-Further alias packs may be selected by language or script. WOF already supplies multilingual names, and
-the build must preserve their language and name-kind metadata instead of flattening them into an
-untyped string pile.
+Further alias packs may be selected by language or script. Preserve the language and name kind
+that WOF supplies for each name so the catalog can distinguish those aliases.
 
 Local Node serving can afford a lookup followed by an entity probe. The browser may continue to use
 a denormalized, byte-range-optimized projection built from the same graph. We should measure both
@@ -373,6 +372,5 @@ No distribution migration begins until a prototype answers these with receipts:
 8. Move the ten-minute guide after the profile is available from the public host and verified from a
    clean consumer project.
 
-The architecture can grow one layer at a time. The first implementation step is the census and
-the catalog plan. Both are read-only, and they show whether the proposed starter is small
-before we ask consumers to depend on it.
+The architecture can grow one layer at a time. Start with the read-only census and catalog plan.
+Use their size estimates to evaluate the `starter` profile before publishing it for consumers.

@@ -149,8 +149,9 @@ parent's model weights.
 
 ## Provenance manifest
 
-`trainer-export export-onnx` copies `TRAINING.json` and `CORPUS.json` beside the graph. It writes the provenance id into
-the graph's ONNX metadata as `mailwoman.provenance_id`, and writes `<graph>.provenance.json`:
+`trainer-export export-onnx` copies `TRAINING.json` and `CORPUS.json` beside the graph. It records the provenance id as
+`mailwoman.provenance_id` in the graph's ONNX metadata. It also writes the provenance manifest to
+`<graph>.provenance.json`.
 
 ```json
 { "format": "mailwoman-model-provenance/1", "payload": "<base64url JSON>", "kid": "p11-…", "signature": "<base64url>" }

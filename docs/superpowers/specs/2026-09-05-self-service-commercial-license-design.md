@@ -63,7 +63,7 @@ reports which one occurred.
 
 ## Prerequisites the code cannot supply
 
-These items are operator work. The first sale waits on them, and the implementation doesn't:
+The operator must complete these prerequisites before the first sale. Implementation can proceed in parallel:
 
 1. **Self-executing terms.** `COMMERCIAL-LICENSE.md` states that it is a non-self-executing template and that no rights are
    granted until terms are agreed in writing. A paid Checkout cannot grant under that text. A versioned clickwrap
@@ -231,8 +231,8 @@ constructor and a 300-second tolerance, and accepts only these event types:
   `review` and mints no token, and the operator decides.
 - `charge.dispute.closed` — reconciles to Stripe's current payment state.
 
-Every event id is written to `stripe_events` first, in the same D1 batch as its effects, and a duplicate id is a
-no-op 200. Any failure after signature verification answers 500 so Stripe retries. Bad signatures answer 400 and are
+The D1 batch writes the event ID to `stripe_events` before applying the event's effects. A duplicate event ID
+returns 200 without applying those effects again. Any failure after signature verification answers 500 so Stripe retries. Bad signatures answer 400 and are
 never retried. No code path logs a body, a customer field, a token, or a secret.
 
 **`GET /v1/checkout-sessions/:sessionID/license`.** The success page's claim. Answers `{ status }` with
@@ -390,7 +390,7 @@ Before production issuance is enabled:
 
 - A customer pays through either Payment Link and, within the webhook's arrival, holds exactly one token whose signed
   payload matches the server-side plan and whose `expires` is the paid period's end plus fourteen days.
-- Each renewal mints exactly one new token. `mailwoman license refresh` fetches it, and the email contains the same one.
+- Each renewal mints exactly one new token. `mailwoman license refresh` and the renewal email return that same token.
 - Stripe event replay, duplication, or reordering never creates a second token for one invoice.
 - No token is issued for an unpaid invoice, an unallowlisted Price, or a test-mode event in production.
 - A full refund or a dispute makes the license read `revoked` online while the offline token keeps its date, and the

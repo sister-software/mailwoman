@@ -122,9 +122,9 @@ does, it will call `@mailwoman/spatial` with the body radius the pipeline's `bod
 
 The pipeline builds an `@mailwoman/ancestrie` artifact per body over feature names and their aliases
 (`Sea of Tranquility` for `Mare Tranquillitatis`). The app fetches it once, walks it with the
-browser-safe reader, and lists results with their feature type. Results are keyboard navigable, and
-selecting one moves the camera and selects the feature. The app serves the artifact as a static asset
-rather than as a tile.
+browser-safe reader, and lists results with their feature type. Users can navigate results with the
+keyboard. When a user selects a result, the map selects its feature and moves the camera to it.
+The app serves the artifact as a static asset rather than as a tile.
 
 ### PWA
 

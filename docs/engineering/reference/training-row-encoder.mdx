@@ -56,10 +56,11 @@ Training uses the Rust encoder while serving continues to use the TypeScript pai
 
 `mtf_channels::resources` (the `finders` feature) reads an encoder's files once: `EncoderResources::load` takes the
 label schema, the `postal` family's artifact and definition (`packages/postcode/data/artifacts/postal.rca1` and
-`packages/postcode/data/definitions/postal.definition.json`), the anchor table and the lexicons a run configures,
-and `read_processor` the tokenizer model. The finder refuses an artifact that isn't the `postal` family, whose
-schema version or declarations hash differs from the one the crate was built against, or whose shapes differ from the
-definition's. Each refusal carries the file's path, and so does each file the loader can't read or parse. The trainer
+`packages/postcode/data/definitions/postal.definition.json`), the anchor table and the lexicons a run configures.
+`read_processor` loads the tokenizer model. The finder requires an artifact from the `postal` family.
+It checks the artifact's schema version and declarations hash against the crate's build and compares
+its shapes with the definition. An error for a mismatch or an unreadable or malformed file includes
+the file path. The trainer
 and the Node addon only convert their options and errors around it. `mtf_channels::Encoder` encodes a batch of rows into an `EncodedBatch`:
 
 - `input_ids`, `attention_mask`, `labels`: int64 `[B, L]`;
@@ -74,10 +75,10 @@ the pattern and the text. A `▁` piece's range includes the space before its wo
 filter's tags, the augmentation probabilities and exclusions, the affix lexicon, the postcode layouts, and the data
 root, volume mount and sha256 cache the corpus listing reads. Each row has `raw`, `tokens`, `labels`, `country`,
 `source` and, for a span-schema file, `span_starts`, `span_ends` and `span_tags`. `rows()` and `batches(batch_size)`
-iterate it, and a returned `None` is exhaustion. `row_limit` counts rows before the astral skip. A missing,
-unresolvable or unverified file is an error naming its path, and a corrupt row an error naming the file, the row group
-and the text. `open_with` adds a `CancelToken` and an `Observer` that receives `RowEmitted`, `RowSkipped(reason)`,
-`SourceRestarted` and `EpochComplete`, and `batch::encode_rows` encodes a batch through `mtf-channels`. The trainer
+iterate it until they return `None`. `row_limit` counts rows before the astral skip. An error for a missing,
+unresolvable or unverified file identifies its path. An error for a corrupt row identifies the file, row group
+and text. `open_with` adds a `CancelToken` and an `Observer` that receives `RowEmitted`, `RowSkipped(reason)`,
+`SourceRestarted` and `EpochComplete`. `batch::encode_rows` encodes a batch through `mtf-channels`. The trainer
 reopens the train split with `seed + epoch` for epochs 1, 2, … and skips the batches a resumed run already took. The
 character path encodes `char_ids` int64 `[B, S, W]`, and `attention_mask`, `labels` and an all-zero `input_ids` int64
 `[B, S]`.

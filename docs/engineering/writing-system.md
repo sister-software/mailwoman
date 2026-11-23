@@ -197,7 +197,7 @@ rather than by reordering the negation.
    neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
    benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
    never at one particular project.
-10. **An instruction installs the current release, and a record keeps the release it checked.** A fenced
+10. **Use the current release in instructions. Keep the tested version in records.** A fenced
     command writes `mailwoman`, which `docs/plugins/release-version/remark.ts`
     replaces with the `mailwoman` manifest's version at build time. A sentence that records a check, such
     as "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. The
@@ -208,8 +208,8 @@ rather than by reordering the negation.
     lints it with the repository's oxlint config. The `.cache/code-blocks/**` override in
     `oxlint.config.ts` turns off the rules that govern repository code rather than a reader's script, such
     as the license header and the Node builtin import ban. `yarn fix:code-blocks` applies oxlint's fixes,
-    writes each changed block back into its page, and runs oxfmt over the page. A signature or other
-    partial example adds `fragment` after the language, as in ` ```ts fragment `, and the lint skips it.
+    writes each changed block back into its page, and runs oxfmt over the page. For a signature or
+    other partial example, add `fragment` after the language as in ` ```ts fragment ` so the lint skips it.
     A script a reader runs, or one that a smoke test or a TSX page also uses, lives in a `*.snippet.mts`
     file beside its page. The page shows it with an empty fence, ` ```ts file=./start.snippet.mts `, which
     `docs/plugins/code-snippet/remark.ts` fills at build time. A TSX page reads it with `useCodeSnippet`.
@@ -268,8 +268,8 @@ language on first mention, then use the term.
 
 ## Machine-writing tells: the pre-commit audit
 
-Run this checklist over a page before committing it. Vale catches the token-level part of items 1, 4
-and 5. The rest of the list is structural, and a rule that matched it would also match correct prose.
+Run this checklist over a page before committing it. Vale catches wording covered by items 1, 4 and 5.
+Use editorial judgment for the other items because the same sentence patterns can appear in correct prose.
 
 1. **Inflated symbolism.** A sentence that assigns importance instead of stating a fact. Fix: state the
    fact, and let the reader judge its weight.

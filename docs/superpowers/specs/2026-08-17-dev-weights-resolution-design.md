@@ -98,8 +98,8 @@ the FST, or the pair index. It scores worse and reports no problem.
 
 The rung introduces this risk, so it mustn't ship without a report.
 
-`ResolvedWeights` gains a per-artifact resolution report: which siblings resolved, and from which directory
-(`package`, `base`, `overlay`, `cache`). `mailwoman doctor` renders it. The question
+`ResolvedWeights` reports each resolved sibling and the directory it came from
+(`package`, `base`, `overlay`, `cache`). `mailwoman doctor` renders that report. The question
 `ten-minute-trial.mdx` teaches the reader to ask, "which half do I have", then gets an answer per artifact
 rather than per package.
 

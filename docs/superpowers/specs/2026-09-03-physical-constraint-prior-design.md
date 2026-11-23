@@ -24,8 +24,6 @@ prior is a generative model of that register from open inputs: given the unit-po
 the UPRN points, and the buildings they sit in, assign each point to a unit postcode, and say for
 each assignment how it was reached.
 
-Two consequences follow, and both narrow the design.
-
 **The prior is a build-time product rather than a runtime scorer.** The assignment is computed once from
 sealed inputs into a sealed artifact, `postcode-unit-assignment-gb.db`, with a `layer_manifest` and
 per-row provenance. At runtime the resolver reads it as a lookup: a unit postcode resolves to the set
@@ -33,7 +31,7 @@ of points assigned to it, or to their bound. No runtime component reasons about 
 `uprn.db` and the postcode binaries work the same way: the builder does the inference, and the
 runtime reads a register.
 
-**An open register exists, and it answers the GB assignment directly.** The ONS National
+**An open register maps GB UPRNs to unit postcodes.** The ONS National
 Statistics UPRN Lookup (NSUL) publishes, for every GB UPRN in AddressBase, the unit postcode as field
 `PCDS` (null when the postcode isn't in Code-Point Open), the OSGB grid reference, and the
 statistical geographies, as a CSV collection of about 487 MB, every six weeks, under OGL-UK-3.0 with
@@ -126,8 +124,9 @@ OGL throughout. They return in section 7, where no OGL footprint source exists.
 
 **Grade.** The prototype is graded against NSUL for the same UPRNs on exact-assignment rate, `tie`
 rate, `unassigned` rate, and the confusion between adjacent unit postcodes. Each metric states its
-denominator (UPRNs in `PO` present in both inputs). The `nearest-centroid` baseline is graded first, then the two-rule
-model, and the difference is the footprint input's measured contribution.
+denominator (UPRNs in `PO` present in both inputs). Grade the `nearest-centroid` baseline first, then grade
+the two-rule model on the same UPRNs. Subtract the baseline's exact-assignment rate from the model's rate
+to measure the contribution of the footprint input.
 
 **Pre-registered rule.** If rule 2 doesn't lift exact assignment by at least 5 percentage points
 over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the `nearest-centroid`

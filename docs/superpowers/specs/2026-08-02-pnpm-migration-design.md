@@ -21,9 +21,8 @@ That result refutes **yarn's pnpm linker as a performance change**. It doesn't b
 pnpm the package manager. The package manager is a different mechanism: its own resolver, lockfile, and a
 machine-wide content-addressed store with hardlinks rather than a per-project `.store`.
 
-So this migration isn't justified on speed, and shouldn't be sold as such. Any speed it delivers
-is a bonus, and (e1) in the sibling spec is the change that removes install from the
-critical path either way.
+The migration responds to the ecosystem's adoption of pnpm. Step (e1) in the sibling spec removes
+installation from the critical path under either package layout.
 
 ## What was measured before designing
 
@@ -46,8 +45,8 @@ them. `smoke-clean-install.ts`, whose stated purpose is catching undeclared runt
 holding the line.
 
 Fix is mechanical: add the three to the workspaces that use them, or one `public-hoist-pattern` for
-`vitest`. Preference is declaring them. It is what the strictness is for, and it keeps
-`smoke-clean-install.ts` direct.
+`vitest`. Prefer declaring each dependency where it is used so `smoke-clean-install.ts` can check
+the package without a hoisting override.
 
 ### Constraint 2 — the publish pipeline is the risk
 

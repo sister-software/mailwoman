@@ -212,7 +212,7 @@ acceptance criterion didn't require them.
 These rules come from the repo's own documents. They're restated here because every phase can violate one.
 
 1. **Rebuild, never patch.** A built database is a read-only artifact. The sequence is build, verify, swap.
-   A failed verify leaves the artifact unsealed, and an unsealed artifact is never swapped in.
+   Swap in an artifact only after verification passes and the build seals it.
 2. **A log may be derived, and a register may not lag.** Anything this plan adds must be re-derivable from
    what it describes, or it will repeat #1015.
 3. **Absence is reported as absence.** A missing artifact is reported as missing, with what would produce

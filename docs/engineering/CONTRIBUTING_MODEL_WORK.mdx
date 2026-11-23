@@ -39,11 +39,11 @@ before comparing two training arms. A comparison uses three instruments from it:
    (policy adopted 2026-10-20, #2763).** The
    [release quality requirements](../articles/explanation/data-and-model-quality.mdx)
    replaces the D-rule. A candidate must meet every minimum registered for a required country or
-   capability, and the lower confidence bound on its improvement over the published model in the
-   equal-country exact-parse objective must meet the registered amount. The published model is the
+   capability. The lower confidence bound on its improvement over the published model must also
+   meet the registered target for the equal-country exact-parse objective. The published model is the
    comparison for reporting gains and losses. Its past answers do not define the minimum. A loss
-   inside the registered requirements may ship, and the release report lists the affected countries
-   and address patterns with their measured losses. This applies to decode-time mechanisms (priors,
+   inside the registered requirements may ship. List the affected countries and address patterns
+   with their measured losses in the release report. This applies to decode-time mechanisms (priors,
    admission checks, FSTs) as it does to model promotions.
 
    The procedure, with the tools that implement it:
@@ -92,7 +92,7 @@ before comparing two training arms. A comparison uses three instruments from it:
    removed on 2026-10-20.
 
    **The precondition: each required country needs a validation split that can show a
-   regression.** A check against the published model needs rows to compare, and `evaluate()` reports
+   regression.** A check against the published model needs rows to compare. `evaluate()` reports
    `val_loss`, `val_rows` and `macro_f1` over the whole split. A locale without rows in that split
    changes none of those numbers, so a run reports no regression for it regardless of what happened.
    That report looks identical to a real absence of regression.
@@ -133,8 +133,8 @@ before comparing two training arms. A comparison uses three instruments from it:
 
    **The opt-in half: a default-off path must ship with tests that turn it on.** The opt-in path is
    a compliant option, so default-off is where most new mechanisms land. An
-   untested default-off path breaks without anyone noticing. No test exercises it, so no test fails
-   when a refactor breaks it, and the flag's first real use is also its first execution. Every `ResolveOpts` / config flag therefore needs at least one test
+   untested default-off path can break during a refactor and stay broken until someone enables the flag.
+   Every `ResolveOpts` / config flag therefore needs at least one test
    that sets it to true and asserts the mechanism's own behavior. A test that only checks that the
    default path stays byte-stable covers the other half. That test is also required.
 
@@ -449,8 +449,8 @@ meant to attribute an effect.
 
 ## The character path (Japanese and Chinese)
 
-The CJK model is separate from everything above. It uses neither SentencePiece nor the soft-feed
-channels, and it has its own label set and its own board. The same practices still apply:
+The CJK model has its own label set and evaluation board. It runs without SentencePiece or the soft-feed
+channels. The same evaluation practices still apply:
 pre-register in the config header, grade the assembled coordinate, and read the Latin board before a
 resolver mechanism ships.
 

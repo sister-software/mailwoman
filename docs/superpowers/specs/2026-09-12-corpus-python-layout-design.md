@@ -8,12 +8,12 @@ the extension work (declared protocols plus training callbacks) folded into the 
 
 `corpus-python/` is the one part of this repository that no structural check reads. The TypeScript side has
 `repo-health`, `dependency-cruiser`, `oxlint.plugin.ts` and the `HELPER_HOMES` table. The Python side has ruff, mypy
-and bandit, and none of them checks layout. The result is 48 flat modules, a 5,278-line launcher, and a
+and bandit. None of those tools checks layout. The result is 48 flat modules, a 5,278-line launcher, and a
 duplicate-helper pattern that `AGENTS.md` describes for TypeScript and that no check reports for Python.
 
 Two requirements shape the target. First, a reader can find where a thing lives. Second, the tree can hold every
-country. The per-country Python code today is eight modules for three countries, and the plan covers every country,
-so a layout that adds one top-level entry per country wouldn't scale.
+country. Eight modules cover three countries today. The plan covers every country, so give country
+directories a common parent to keep them from crowding the package root.
 
 ## 2. What exists, measured
 
@@ -101,9 +101,9 @@ Role directories sit at the top for cross-country code. Country directories reus
 for country-specific code. Add one directory per country with only the roles it needs.
 
 `corpus-python` adopts that model with one change: the country keys sit under `countries/` rather than at the package
-root. Corpus has 14 country and region directories among 7 role directories today, and with every country present
-the role directories would be hard to find. One extra path segment keeps the package root at roughly twelve entries
-permanently.
+root. The corpus has 14 country and region directories alongside 7 role directories today. If every
+country had a directory at that level, the role directories would be hard to find. One extra path segment
+keeps the package root at roughly twelve entries.
 
 The key is `countries/` rather than `locales/`, because the Python per-country code (register readers,
 script-specific text normalization) is keyed by country. In this repository, `locale` means the `en-US` form that
@@ -254,8 +254,8 @@ The Bash write guard is unaffected, because `packages/dev-mcp/lib/hooks/bash/wri
 
 ### 8.6 `scripts/`
 
-Fifteen of seventeen become `cli/commands/` subcommands, giving one entry point instead of two conventions, and the
-two kebab-case files (`fit-isotonic-calibration.py`, `calibration-drift-guard.py`) get importable names.
+Move 15 of the 17 scripts into `cli/commands/` so callers use one entry point. Give the two kebab-case
+files (`fit-isotonic-calibration.py`, `calibration-drift-guard.py`) importable names.
 
 `verify_toolchain.py` stays a standalone script. It imports only standard library modules (`importlib.metadata`,
 `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it with bare `python3`,
@@ -294,10 +294,10 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
 - `uv run --extra dev --extra train pytest corpus-python/tests -q` reports at least 983 passed at every step.
 - `uv run mypy`, `uv run --extra dev ruff check corpus-python`, `uv run --extra dev ruff format --check corpus-python` and
   `uv run --extra dev bandit -c pyproject.toml -r corpus-python/src` pass.
-- `yarn health` and root `yarn test` pass, and the quoted-literal search reports no stale `train_remote.py` path in a
+- `yarn health` and root `yarn test` pass. The quoted-literal search reports no stale `train_remote.py` path in a
   tracked file.
-- No module in `src/mailwoman_train/` exceeds 500 lines, and no function exceeds 120. Two modules sit near the limit
-  and determine where it lands. `config.py`'s dataclass block is 478 lines and moves to `config/schema.py` under the
+- Under `src/mailwoman_train/`, modules have at most 500 lines and functions have at most 120.
+  Two modules determine the module limit. `config.py`'s dataclass block is 478 lines and moves to `config/schema.py` under the
   limit. `tokenizer.py` is 609 lines and must therefore split further than a rename into `tokenizer/__init__.py`.
 - The Python prefix check reports zero groups.
 - No intra-package import inside a function body imports a module that transitively imports the module holding it.

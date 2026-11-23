@@ -44,8 +44,8 @@ The argument against degradation is operational. A degraded artifact is a
 second product line with a second build recipe, a second verify baseline, a second set of eval
 numbers, and a second thing that can regress. "Degraded" also has no natural stopping point, so every
 support conversation would become an argument about whether a given miss is the degradation or a bug.
-A delayed artifact has neither problem. Its quality is exactly the quality we already graded and
-published, and anyone can compute how far behind it is by subtraction.
+A delayed artifact has the same quality as the subscriber version that was graded and published.
+Users can compare the version dates to measure how far behind the Lite channel is.
 
 Delay also fits the data. An address register is a moving record of the world.
 Subscribers pay for this quarter's buildings, and Lite users get last quarter's buildings at the same quality.
@@ -62,8 +62,7 @@ Subscribers pay for this quarter's buildings, and Lite users get last quarter's 
 | Coverage    | identical to the subscriber artifact of the same version | current                                      |
 | Support     | none, community issues only                              | per the license tier                         |
 
-Two constraints apply to the "weekly" claim, and both must hold before it appears anywhere
-customer-facing:
+Use the "weekly" claim in customer materials only after meeting both of these conditions:
 
 - **Upstream releases limit how frequently an artifact can be refreshed, so weekly is a maximum and not a promise per artifact.** Overture releases
   roughly monthly, WOF changes continuously, TIGER is annual, BAN updates frequently, and the FCC BDC vintage
@@ -99,8 +98,8 @@ on everything already published is irrevocable, and the pricing page publishes t
 - **A name.** A key attaches an email address and a company to a download. Today an embedder is
   invisible until they file an issue. GeoLite works the same way: MaxMind's free tier
   is a lead list that's also a useful product.
-- **Volume and shape.** Keys show which artifacts and versions are downloaded, how frequently, and the approximate count of
-  distinct users download them. That's enough to answer "is anyone using the FR extract" without
+- **Volume and shape.** Key logs identify the downloaded artifacts and versions, the download frequency,
+  and the approximate number of distinct users. That's enough to answer "is anyone using the FR extract" without
   instrumenting anyone's runtime.
 - **A notification channel.** When an artifact is rebuilt because the previous one had a bug
   (the #1015 class), we currently have no way to tell anyone.
@@ -128,7 +127,7 @@ infrastructure:
 - **The demo keeps its own path.** The docs demo range-loads `candidate.db` and `poi.db` from
   the public prefix without a key. That's a first-party use of our own artifact and must keep
   working. It is also why the split cannot authenticate everything.
-- **Key check at the edge.** The request presents a key, and a Worker validates it and grants a
+- **Key check at the edge.** A Worker validates the key presented in the request before granting a
   short-lived signed URL for the subscriber prefix. The Lite prefix also takes a key. Users obtain
   that key self-serve through a form.
 - **Issuance and rotation.** Lite keys are self-serve, and subscriber keys are issued with the license. Holders can
@@ -297,10 +296,9 @@ Steps 1–4 are ours and need no lawyer. Steps 5–7 are the ones likely to stal
 3. **Which artifact goes first?** `poi.db` is the candidate with the fewest licensing dependencies. It has one permissive upstream,
    a manifest that already records tier and license, and a version already on a dated path, and the
    OpenAddresses caveat doesn't apply to it. The gazetteer is the most valuable but depends on L4.
-4. **Does the free channel need a coverage floor?** If Lite is 90 days behind, an artifact
-   rebuilt less frequently than every 90 days is identical in Lite and subscriber, and the tier
-   distinction disappears for that artifact. That's acceptable, but the docs should state it
-   before users discover it.
+4. **Does the free channel need a coverage floor?** When builds are more than 90 days apart, both
+   channels serve the same version from the date it reaches Lite until the next subscriber release.
+   Document that overlap for artifacts whose build schedules allow it.
 
 ## See also
 

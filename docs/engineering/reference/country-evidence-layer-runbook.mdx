@@ -38,8 +38,8 @@ for the evaluation results.
 
 The doctrine this sits inside is
 [registry-backed structured prediction](./registry-backed-structured-prediction.mdx): the registry
-supplies **positive evidence only** — a pair's absence never penalizes anything, and the model
-keeps ownership of ambiguity. The prior adds a bias to the scores. It never overrides the model's decision.
+supplies **positive evidence only**. The prior can add a bias when it finds a pair and leaves the
+scores unchanged when a pair is absent. The model still resolves ambiguity.
 
 ## Prerequisites
 
@@ -164,8 +164,8 @@ The shipped chain is `probeMode: "auto"` (default), a strictly ordered fall-thro
    `macclesfield sk11 9pd`, so the bare parent still matches).
 2. **Anchored-adjacent path** — engages only on comma-free input. Segment mode never fires on that
    input, so any bias here adds to a matrix that would otherwise be zero. Candidates are built by **position** rather than by the model's own spans: the parent anchor is
-   the 1..3-word window immediately left of a postcode-shaped span (or string-final when no
-   postcode), and the child is the adjacent window immediately left of the parent
+   the 1..3-word window immediately left of a postcode-shaped span (or at the end of the input when
+   there's no postcode). The child is the adjacent window immediately left of the parent
    (`child.endPos + 1 === parent.startPos`, longest-match-left). Adjacency and suffix-anchoring keep
    its FP at the segment floor (~3–5%), against window mode's 79%, because a venue-embedded child
    at string start is never immediately left of the post-town anchor.

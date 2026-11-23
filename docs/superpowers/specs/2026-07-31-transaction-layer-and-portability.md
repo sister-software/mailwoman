@@ -22,7 +22,7 @@ assembly made systematic.** Not the conclusion: the conclusion stays the custome
 What the customer provides isn't having to spend a day in EDGAR, FCC dockets, and trade press to reach
 the point where judgment can start.
 
-## 2. The concrete gap: a transaction layer, and where family-edge dates come from
+## 2. Transaction records supply dates for family edges
 
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1 established that crosswalk edges must record
 `valid_from`/`valid_to`. It didn't state where those dates come from. They come from here:

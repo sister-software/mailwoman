@@ -114,6 +114,5 @@ means, and stop flagging the plain verb.
 config section, so a rule that stops matching fails a test instead of producing an unexplained drop in
 the count.
 
-The census and the Vale config must agree on every count at every step. They read the same files by
-different paths. A divergence means one of them is wrong, and a false negative in the measuring tool
-looks identical to a real absence.
+The census and Vale read the same files independently. Compare their counts after each step to
+catch missed matches that either tool would otherwise report as zero.

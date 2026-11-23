@@ -45,9 +45,9 @@ resolver-wof-sqlite/street-centroid.ts
 match/distance.ts
 ```
 
-The code at `match/distance.ts:25` shows that this is a documented adapter
-from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring states that. It doesn't reimplement the formula. Grep
-without a reading pass would have produced a false finding from its first candidate.
+The implementation and docstring at `match/distance.ts:25` show that the function passes `match`'s
+`LatLon` coordinates to `greatCircleKm` in `spatial`. An audit based only on grep would have
+reported delegation as a duplicate formula.
 
 That result sets the method for the whole sweep: **grep generates candidates, and reading produces
 findings.** Every entry in the findings doc has been read.

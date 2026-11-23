@@ -112,8 +112,8 @@ export const operations = [preflight, prepare, pack, verify, stage, publish, pub
 
 The CLI and the MCP adapter are views over these arrays. `mwops release <id>` binds flags from
 `inputSchema` and prints `outputSchema`. `release-mcp` exposes each operation as a tool with the same
-schemas and shows `effect` as the tool's annotation. A capability added to the registry appears in both.
-A file added beside the registry appears in neither, and knip reports it.
+schemas and shows `effect` as the tool's annotation. Both interfaces expose each registered
+capability. Knip reports an unreferenced file that the registry doesn't expose.
 
 ## 5. External writes are plan → execute
 

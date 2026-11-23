@@ -112,8 +112,8 @@ This spec depends on the 96 locality-band rows. Those rows fall into **several c
 
 The last class refers to real places. `Tel Aviv-Yafo` exists. `São Paulo - SP` exists with the state
 suffix stripped. The key "exists nowhere" **only under the fold we probed with**. An exclusion would
-fire on these rows with high confidence and be wrong, and at the decision point it looks identical to
-a true absence.
+misclassify these rows with high confidence because lookup returns the same value for a fold
+mismatch as for a true absence.
 
 `street-evidence.ts` already records the same problem one layer down: "the 4 v1-policy breaks were
 fold mismatches: `pillet-will` stored unhyphenated." This is the same defect at the locality band, and
@@ -171,8 +171,7 @@ type Evidence =
 The type enforces these rules:
 
 - **Observation** — retrieved from an identified source at a stated vintage. It never holds a score.
-- **Exclusion** — proves a candidate impossible. It can be constructed **only** through
-  `requireExclusionBasis`, and no public constructor skips the check.
+- **Exclusion** — proves a candidate impossible. `requireExclusionBasis` is its only constructor.
 - **Relation** — structural compatibility between entities. A relation holds an `assertion` and
   includes a `score` only when `assertion === "inferred"`. This moves `filer.db`'s check constraint into the type
   system.

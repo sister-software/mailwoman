@@ -24,10 +24,9 @@ what a candidate is compared against, and when a training run may start.
 
 ## 2. Principles
 
-**P1. Training gets the data by default, and evaluation keeps the evidence its claims need.** A row is held out
-only when a registered evaluation claim needs it. Evaluation reserves the smallest sample that meets the coverage
-and precision each registered requirement states, and the remainder trains. Independent evaluation data already
-frozen stays in place until its replacement is frozen and audited. When the available rows cannot satisfy both
+**P1. Train on the rows that evaluation doesn't need.** For each registered evaluation claim, reserve
+the smallest sample that meets its coverage and precision requirements. Train on the remaining rows.
+Independent evaluation data stays frozen until its replacement is frozen and audited. When the available rows cannot satisfy both
 jobs, the conflict is recorded in the allocation report (section 4.5) and the claim is reported as unmeasured,
 rather than either requirement being weakened in silence.
 
@@ -39,8 +38,8 @@ claim about memorization in general needs a controlled training comparison. That
 **P2. Hold out places below the region, and keep every capability's training support.** Held-out groups are
 geographic and sit below the first-level region wherever the data permits. Training keeps measured support for
 every required component role, every parent region, every script and every layout. Evaluation may introduce
-unseen lexical values where lexical generalization is the capability under test. A population for which these
-cannot hold together is reported in the allocation report, and the report is where the decision is made.
+unseen lexical values where lexical generalization is the capability under test. If a population cannot
+meet both requirements, document the conflict and the decision in the allocation report.
 
 Motivation: corpus v0.8.0 held out whole first-level regions, among them VT, ND and WY in the US, Asturias and
 the Balearic Islands in ES, Trento and Bolzano in IT, and Kerala, Cornwall, TAS and NT. Those regions then had zero region spans in training, and the model relabeled them as localities.
@@ -179,8 +178,8 @@ when the check ran, the countries it read and the files it counted.
    receipt is re-derived from the corpus's own epoch-mixture audit. A receipt copied from an older corpus fails
    on supply the new split moved, as `fr-annuaire-education-overseas` did at 1,278 of a stale 1,300. A receipt
    scoped to one source can state its floor as `min_fraction_of_expected`. The audit computes the expected draws
-   from the configured weights and the corpus it reads, so that floor is re-derived on every run, and it refuses
-   an absolute `min_draws` above its own expectation
+   on every run from the configured weights and the corpus it reads. It uses those draws to derive the
+   fractional floor and refuses an absolute `min_draws` above the expected draws
    ([#2391](https://github.com/sister-software/mailwoman/issues/2391)).
 
 ### 4.5 The allocation report
@@ -253,9 +252,10 @@ the corpus it was drawn from, because it depends on that corpus's rows. `resplit
 corpus manifest's `evaluation_groups` record. A new frozen set needs a new list, a new quota pass and a new
 re-split before any corpus trains on rows outside it.
 
-**Groups a training receipt requires stay in train.** A freeze and the quota each take whole groups out of
-training, and a receipt the next training config declares can need some of those groups in train. A
-`rendered-prominent-places` row's group is its place's WOF record, `wof-admin-<record>`, and that record's
+**Groups a training receipt requires stay in train.** An evaluation freeze and the validation quota
+each take whole groups out of training. A receipt in the next training config can require some of
+those groups to stay in training. A `rendered-prominent-places` row's group is its place's WOF record,
+`wof-admin-<record>`, and that record's
 `wof-admin` rows sit in `wof-admin-<record>-…` groups. On corpus v0.8.22 the v14 confirmation freeze and the quota
 took 139 of the 16,425 prominent places out of training, and the prominent-place receipt (#3156) failed 11 of 813
 demand cells. `readRequiredTrainingGroups` in `tools/training/audits/required-groups.ts` reads the receipt's places
@@ -286,8 +286,8 @@ a required group. It draws only in the countries a release reads, the objective 
 specification `--reserve-spec` names: in a small country `n` groups is most of the train pool, and the first v0.8.22
 reserve, drawn in all 259 countries, emptied the train rows of 17 sources (the v14 record, section 8). Its manifest records the collection kind `reserve` and the sampling method
 `per-group-train-pool-hash-order`. Listed in the evaluation-group list with the cycle's other collections, its
-groups go to `test` in the re-split, so the candidate trained on it never reads them, and the next cycle freezes its
-confirmation collection from them. A reserve is never scored: `release/collection.ts` refuses one.
+groups go to `test` in the re-split so the candidate never trains on them. The next cycle freezes its
+confirmation collection from those groups. A reserve is never scored: `release/collection.ts` refuses one.
 
 **The pass proof runs before any re-split.** A re-split commits a training run to the collections its list names.
 Before it runs, `release/pass/proof.run.ts` asks whether the evaluator can return `pass` on those collections under

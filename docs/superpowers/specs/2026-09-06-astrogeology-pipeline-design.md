@@ -11,8 +11,8 @@ independent of the Earth app and can proceed in parallel with it.
 
 ## The problem
 
-Moon and Mars have authoritative, public-domain nomenclature and topography, and no package in the
-repository can read, normalize or publish them. Every existing acquisition package assumes Earth: a
+The nomenclature and topography of the Moon and Mars are available from authoritative public-domain sources.
+The repository needs a package to read, normalize and publish those datasets. Every existing acquisition package assumes Earth: a
 country, a WGS84 coordinate, an elevation above sea level, a radius of 6,371 km typed once in
 `@mailwoman/spatial` and refused everywhere else by the `prefer-home` rule. Building a planetary pipeline
 tests the geographic primitives by exposing places where they assume Earth instead of accepting a body parameter.

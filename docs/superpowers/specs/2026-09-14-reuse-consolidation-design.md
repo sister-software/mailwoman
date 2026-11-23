@@ -154,15 +154,14 @@ These parts generalize: `sdk/cells.ts`, `sdk/download.ts`, `sdk/measure-resoluti
 `test-kit.ts`, plus the four `packages/mailwoman/lib/observations/*-route.ts` and the three
 `packages/mailwoman/lib/commands/gazetteer/build/*.tsx`.
 
-These parts must stay separate: each layer's vocabulary, its reading kinds, its scenario scoping, and its coverage
-semantics. They differ by design, and the differences are required. `flood` represents Zone 1 by absence, `coastal`
-and `zoning` license no negative claim at all, and `soil` answers a distribution rather than a winner class. A
-generic implementation takes them as parameters and never averages them.
+Each layer supplies its own vocabulary, reading kinds, scenario scoping, and coverage semantics.
+`flood` represents Zone 1 by absence. `coastal` and `zoning` support no negative claim. `soil` returns a
+distribution over classes. The shared implementation takes these rules as parameters.
 
-**Where the kit lives** is the one open question. `@mailwoman/core/layers` already holds the manifest and schema
-interface at 895 lines, and every layer already depends on `core`, but an ingest pipeline in `core` adds weight to
-the package everything depends on. A new `@mailwoman/layer-kit` workspace is cleaner and costs the seven-register
-registration that `AGENTS.md` documents. Decide before writing code.
+**Where the kit lives** is the one open question. Every layer already depends on `core`.
+`@mailwoman/core/layers` holds the 895-line manifest and schema interface. The ingest code would increase
+the size of `core` for its dependents. A separate `@mailwoman/layer-kit` keeps that code
+out of `core` and requires the seven registrations documented in `AGENTS.md`. Decide before writing code.
 
 **The acceptance tests already exist.** Each layer has a `lib/sdk/build.test.ts` that drives the full build to
 a sealed database from hand-built fixture geometry, without network access or GDAL. Those four suites plus the four
@@ -182,7 +181,7 @@ existing test, stop the work until the behavior change is explained.
 
 ### Home shadows
 
-These are real and small, and fixing them improves correctness without a tradeoff:
+These small changes improve correctness:
 
 | Declaration               | Lines | Where                                                            | Home               |
 | ------------------------- | ----: | ---------------------------------------------------------------- | ------------------ |
@@ -300,17 +299,17 @@ A lane is finished only when all of these pass, in order:
 4. For lane B only: the four layer `build.test.ts` suites and the four observation-route suites, unedited.
 5. `gh run list` after any push.
 
-The debt counters change as a side effect of this work. Ratchet them in the same commit without comment, per the
-standing rule, and do not open a separate pull request for a baseline.
+The debt counters change as a side effect of this work. Update the baseline in the same commit without comment,
+as the standing rule requires.
 
 ## Risks
 
 - **A generic implementation can average away a deliberate difference.** The four layers disagree about what
-  absence means, and that disagreement is part of the product. The parameterization must make each layer state its
-  own answer. Watch for a default that applies one layer's semantics to another without saying so.
+  absence means. Require each layer to supply its own rule so a default cannot apply one layer's semantics
+  to another.
 - **`yarn pack` freezes `workspace:*` at pack time.** A new `@mailwoman/layer-kit` joins seven registers. A
-  workspace missing from the release list freezes without warning, and consumers bear the cost. Run the
-  release-list arithmetic from `AGENTS.md` if lane B adds a workspace.
+  workspace missing from the release list freezes without warning. Consumers then receive the frozen dependency.
+  Run the release-list arithmetic from `AGENTS.md` if lane B adds a workspace.
 - **The compiler misses stale quoted paths after a move.** After any file move, search both imports and quoted
   literals whose first segment is a workspace name.
 

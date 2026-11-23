@@ -12,11 +12,11 @@ The docs serve three audiences (developers, the managers who pay, and investors)
 
 1. **One site, three tracks.** Developers, managers, and investors share mailwoman.post, each with a distinct entry point. There's no separate marketing site.
 2. **Start over from scratch.** Every maintained page is written fresh. Old pages serve only as raw material.
-3. **Lab notebook: keep only the best material, rewritten for clarity.** Curated benchmark/eval material returns as fresh evidence pages. Raw dated records leave the published site, and git history and unpublished repo directories keep them.
+3. **Lab notebook: keep only the best material, rewritten for clarity.** Rewrite selected benchmark and evaluation material as evidence pages. Keep the dated records in Git history or in unpublished repository directories.
 4. **Old links break.** The site gets no redirect infrastructure. The front page and search lead readers to the new material.
 5. **Docs and CLI land together.** Where a documented path needs a missing or broken command (data download, planet build, drop-in serve), building or fixing the command is in scope. Every tutorial is executed end-to-end before it ships.
 6. **Site shape: Ory-style top level.** The flat top nav holds doors that describe the company and its products, and the four-part manual (Diátaxis) lives inside the Developers door. The existing DocsSubHeader section-switcher provides per-door sub-navigation, so the site needs no mega menu.
-7. **Label notes:** the manager door is no longer called "Why Mailwoman", because the name stuttered next to the logo. The investor/trust door avoids the word "Company" because there's no company yet. Its working label is **About**, and drafting can try other words.
+7. **Label notes:** the manager door is no longer called "Why Mailwoman", because the name stuttered next to the logo. The investor/trust door avoids the word "Company" because there's no company yet. Use **About** as the working label until drafting settles the name.
 
 ## Target structure
 
@@ -92,7 +92,7 @@ The derivation tests this working hypothesis and may overturn it:
 
 ## CLI workstream (in scope, docs-driven)
 
-The tutorials define the interface, and the commands are built or fixed until the tutorials work:
+Build or fix the commands needed to run the tutorials as written:
 
 1. **Data acquisition:** a documented, verified download path for the datasets each tutorial needs, including the resolver database the drop-in servers need. The working name is `mailwoman data pull <bundle>`. The plan decides the exact shape after surveying the existing gazetteer/coverage CLI surface.
 2. **Drop-in serve paths:** `npx @mailwoman/photon serve` and its siblings must start cold from a documented command sequence. Cold-start testing found this path broken.

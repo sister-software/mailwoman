@@ -100,13 +100,12 @@ The operator picked A on 2026-11-14 and asked for the from-scratch form of it, w
 - The same check reports each `improvement_target` or `known_fail` case inside a promise as a warning, one open bug
   against that promise.
 - The promise rows replaced the tiers on 2026-11-15. `scope.config.json` keeps the training configs and a
-  `unpromisedShippingLocales` reason for each shipping country without a promise, and `locale-scope` compares the
-  shipping countries with the promises.
+  `unpromisedShippingLocales` reason for each shipping country without a promise. The `locale-scope` check compares
+  shipping countries with declared promises.
 - Release requirements read the promises as coverage rather than as thresholds. The `support-promises` check
-  warns for each promised country without a country requirement in the current specification. A minimum is a
-  measured decision registered in a new specification version, and generating one from a promise row would
-  register a threshold nobody measured (the AGENTS.md rule on data-derived thresholds), so the builder left
-  thresholds to that process. This is the builder's call.
+  warns for each promised country without a country requirement in the current specification. The builder kept
+  the existing process for setting minimums. A new minimum requires measurements and registration in a new
+  specification version under the AGENTS.md rule on data-derived thresholds.
 - `POST /v1/geocode` and `POST /v1/batch` report the matched promise in a `support` field, matched on the resolved
   `countryCode` and the query's script by `@mailwoman/api/support`. The repository check selects evidence with the
   same function. `POST /v1/parse` resolves no country, so it reports none.

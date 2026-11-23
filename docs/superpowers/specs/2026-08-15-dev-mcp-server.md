@@ -214,8 +214,9 @@ zero. The two are different facts and the output keeps them apart.").
 
 **Why the MCP process isn't the daemon.** MCP stdio servers start and exit with the agent process.
 The daemon amortizes a 1.0 s ONNX load, a 2.0 GB `candidate.db` handle, and the extract providers.
-That state must outlive agent restarts, context compactions and subagent spawns, and all of them must
-share it. The MCP shim holds no engine state. It forwards requests and is cheap to restart.
+The daemon keeps that state across agent restarts and context compactions. The agent and its
+subagents share the same state. The MCP shim holds no engine state. It forwards requests and is
+cheap to restart.
 
 If no daemon is reachable, the shim starts one and waits. `mwdev_daemon({action:"status"})` reports
 which case applied. A single-process `--embedded` mode exists for CI, where no state is shared and a
@@ -338,8 +339,8 @@ ways:
   comparison, and reloading between arms without reporting it would produce the kind of result this
   surface exists to prevent. The refusal prints both fingerprints.
 
-Every result records its `tree_fingerprint`, and `mwdev_compare` refuses arms that disagree on it
-unless the fingerprint is itself the declared variable (§6).
+Every result records its `tree_fingerprint`. `mwdev_compare` requires matching fingerprints unless
+the caller declares the fingerprint as the variable under test (§6).
 
 ### 3.5 Lifecycle
 
@@ -558,10 +559,9 @@ in:  { source: "fst" | "street_morphology" | "candidate" | "wof" | "normalize" |
 out: { provenance, rows: [{ query, hit: boolean, entries: […] | null, note?: string }] }
 ```
 
-`hit: false` with `entries: null` is **absence**, and a hit with a zero score is a **zero**. The tool
-exists to keep those two cases apart, and `probe-fst-bias.run.ts:19-21` already documents the
-distinction for the FST case. Reuse that module's collapse rather than re-deriving what `applyBias`
-reads.
+The tool reports a missing entry as `hit: false` with `entries: null`. It reports an entry with
+score zero as a hit. Reuse the FST classification in `probe-fst-bias.run.ts:19-21` to match what
+`applyBias` reads.
 
 ### 4.9 `mwdev_bench`
 
@@ -616,12 +616,11 @@ notifications where the client supports them, but polling must work regardless.
 
 ## 5. Make measurement direct by construction
 
-The rest of the design exists to support this section. Each rule is mechanical and checkable, and each
-applies a rule the repo already has rather than new vocabulary.
+Each requirement in this section applies an existing repository rule that the tool can check directly.
 
 ### 5.1 The full corpus is the default, and a panel costs more to type
 
-Every measuring tool takes `inputs: InputSetRef`, and `{ kind: "board" }` is the shortest legal value.
+Every measuring tool accepts `{ kind: "board" }` as the shortest `inputs: InputSetRef` value.
 A hand-picked set requires `{ kind: "literal", inputs: [...], why: "..." }`, which is an array **and**
 a justification string. The shortest input to type is the well-powered one.
 
@@ -790,8 +789,8 @@ symmetric difference of the two records, and checks it against what `variable` d
 
 **Decided 2026-08-16: an undeclared difference produces a warning instead of a refusal.** The warning
 lists the undeclared keys, sets `attribution: "ambiguous"`, and lists every changed key in
-`variable_effective`. The result still reports which arm won, and it reports that the delta cannot be
-attributed to the variable the caller meant to test. The reasoning matches §5.2. This guard was the
+`variable_effective`. The result identifies the winning arm and states that the undeclared changes
+prevent attributing the difference to the declared variable. The reasoning matches §5.2. This guard was the
 design's strongest protection against misattribution, and also the one most likely to block a
 legitimate quick look. A blocked quick look becomes a shell command with no guard at all. A warning in
 `summary` reaches the operator when the agent relays the summary. A refusal only helps if the agent
@@ -1056,9 +1055,8 @@ export interface GeocodeTrace {
 }
 ```
 
-`GeocodeRun.trace` holds it on any session opened with `trace: true`. When the loaded bundle's
-classifier cannot produce a trace, the field is absent. That's a property of the bundle, and the
-session reports it rather than fabricating a trace.
+In a session opened with `trace: true`, `GeocodeRun.trace` holds the trace supplied by the loaded
+bundle's classifier. The field is absent if that classifier cannot produce a trace.
 
 The renderer is deliberately independent of Ink. `debug-view/trace-rows.ts`'s docstring reads:
 

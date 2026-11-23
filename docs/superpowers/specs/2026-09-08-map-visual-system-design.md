@@ -8,8 +8,8 @@
 > sections still describe the apps.
 
 Three deployed apps (`earth.mailwoman.post`, `moon.mailwoman.post`, `mars.mailwoman.post`) share one React
-component package and one stylesheet, and none of them has a finished product design. This design gives
-the four consumers of `@mailwoman/react` a single token vocabulary that the package owns, replaces the
+component package and one stylesheet. At the time of this proposal, none had a finished product design.
+This design gives the four consumers of `@mailwoman/react` a single token vocabulary that the package owns, replaces the
 desktop control panel with map chrome, and repairs the rendering defects measured below.
 
 ## Measured state
@@ -168,9 +168,9 @@ above the address field. The right-hand panel lists internal style-layer counts 
    neutral. A reviewer can check this rule by grepping the compiled CSS.
 6. **`#e0367c` is retired.** It is Infima-era drift from `#ff00b0`, which `docs/src/css/theme-light.css`
    holds as `--mw-magenta`.
-7. **The typeface is bound per role, and the binding is expected to change.** A rule never refers to a
-   font family directly. It refers to a scale role, and each scale role maps to one of five face roles.
-   Bliss Pro is bound to `display` and `text`, and Fira Code to `number`, `code` and `glyph`. A swap edits
+7. **A typeface can change without editing component rules.** A rule refers to a scale role that maps
+   to one of five face roles.
+   Bliss Pro serves `display` and `text` roles. Fira Code serves `number`, `code` and `glyph` roles. A swap edits
    `font.family.*` and no other token. Map labels use a separate binding, `font.family.map`, because
    MapLibre draws them from a signed-distance-field range rather than a `@font-face`. Its value must be a
    stack the bucket serves. Today that means `Bliss Pro Regular`, `Bliss Pro Medium` or
@@ -179,7 +179,7 @@ above the address field. The right-hand panel lists internal style-layer counts 
    today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
    element types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`.
    Two places need behavior that shouldn't be hand-rolled. The layers panel needs a popover with
-   dismissal and focus return, and the result view needs a sheet. When Phase 2 reaches either, use
+   dismissal and focus return. The result view needs a sheet. When Phase 2 reaches either, use
    `@base-ui/react` for those two only, behind the project's own component names. This isn't a
    fourteen-component build-out.
 9. **Every control stays usable without glass.** Every material has an opaque fallback under
@@ -233,7 +233,7 @@ material.glass.shadow          material.glass.highlight
 material.glass.fallback-background
 ```
 
-Materials are applied through `[data-material="glass"]`, and the fallback branch is required.
+Apply glass materials through `[data-material="glass"]` and include the fallback branch.
 
 ### Themes
 
@@ -247,9 +247,8 @@ instead of inheriting it.
 @layer reset, tokens, base, components, utilities, overrides;
 ```
 
-`@mailwoman/react` writes into `tokens` and `components`. This lets the package embed in Docusaurus
-without taking over the page's global CSS, and it ensures the docs bridge wins over Infima on
-specificity.
+`@mailwoman/react` writes into `tokens` and `components`. These layers let Docusaurus embed the components
+without giving the package control of the page's global CSS. The docs bridge wins on specificity over Infima.
 
 ### Consumers
 
@@ -258,15 +257,13 @@ specificity.
 - `docs/` gets one bridge file that maps `--ifm-*` to the semantic tokens, so Docusaurus chrome and the
   theme toggle keep working. `theme-light.css` and `theme-dark.css` stop declaring the brand anchors and
   read them instead.
-- Storybook: `.storybook/preview-tokens.css` is deleted, and the real tokens serve it.
+- Switch Storybook to the shared tokens and delete `.storybook/preview-tokens.css`.
 
-`packages/react/styles.css` is rewritten against the semantic names, and no `--ifm-` string remains in
-it.
+Rewrite `packages/react/styles.css` to use semantic tokens throughout. Replace every `--ifm-` reference.
 
 ## Typography
 
-Type is organized on two axes so the face can be swapped. A rule never refers to a font family. It refers
-to a scale role, and each scale role maps to a face role. A typeface change edits five tokens.
+A rule refers to a scale role that maps to a face role. This indirection limits a typeface change to five tokens.
 
 ### Face roles
 
@@ -301,8 +298,8 @@ iOS type scale, applied to the project's face.
 
 A control glyph is typeset. It inherits color and size and aligns to the baseline, so it belongs to a
 face role. An icon is artwork. The category markers in the reference are a colored disc carrying a white
-mark. A monochrome icon font cannot express that mark. `glyph` is therefore a font role, and `icons` is an
-SVG sprite with a documented viewBox and a two-color interface.
+mark. A monochrome icon font cannot express that mark. Use the `glyph` font role for control glyphs.
+Use the `icons` SVG sprite with its documented viewBox and two-color interface for category markers.
 
 `@mailwoman/react`, `packages/earth` and `packages/planetary` contain zero inline `<svg>` elements today.
 Every control glyph is a literal character: `✓` in `CopyButton`, `PipelineExplorer` and `ResultPanel`,
@@ -312,8 +309,8 @@ differently per platform and cannot take the accent color, so the glyph role rep
 ### Map labels are a separate binding
 
 MapLibre draws a map label from a signed-distance-field glyph range, while the browser draws DOM text from
-a `@font-face`. `font.family.*` therefore doesn't reach the map, and a face bound in the DOM doesn't
-appear on the globe until an SDF range for it exists in the bucket. Map labels use their own token,
+a `@font-face`. A DOM font binding applies only to DOM text. To display that face on the globe,
+publish its signed-distance-field range (SDF) to the bucket. Map labels use their own token,
 `font.family.map`, whose value must be a stack the bucket serves.
 
 ## Map chrome
@@ -350,8 +347,8 @@ component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neit
 
 ### Mars
 
-`PlanetaryPalette` gains `hillshadeAccent` and `hillshadeShadow`, and `hillshadeLayer()` reads them. Moon
-takes the cool ramp, Mars the warm oxide ramp. The two bodies stop being the same picture.
+Add `hillshadeAccent` and `hillshadeShadow` to `PlanetaryPalette` for `hillshadeLayer()` to read.
+Use a cool ramp for Moon and a warm oxide ramp for Mars.
 
 ### Space
 

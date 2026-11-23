@@ -98,13 +98,13 @@ edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintag
   contact, with FRN/SPIN/ASN as `exactDiscriminator`s when present and name/address as scored
   comparators. This reuses the existing Fellegi-Sunter path and adds no new subsystem.
 
-**Edges are time-scoped, and the dates are required data.** Ownership changes faster than
+**Every family edge requires dates.** Ownership changes faster than
 filing vintages update. In the worked example, a filer acquired ~7 months before the BDC vintage under
 inspection still files under its pre-acquisition identity (see
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1). Every family rollup query therefore takes a date,
 and every answer states the vintage it was computed against. A rollup joined to a filing from a
-different vintage reports the skew instead of silently reconciling it. A family graph without dates
-reports today's ownership against last year's filing, and no reader of the output can see the error.
+different vintage reports the skew instead of silently reconciling it. Without dates, a family graph
+can present current ownership alongside last year's filing without disclosing the mismatch.
 
 Connected components over authoritative-only edges form **entity clusters**, each one operating company.
 Family edges (holding company, parent CIK) merge clusters into **corporate families**.

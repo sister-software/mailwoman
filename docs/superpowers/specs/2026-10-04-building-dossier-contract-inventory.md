@@ -43,7 +43,7 @@ consumer's dependency graph. This inventory doesn't establish a new workspace.
 
 1. **Identify physical objects explicitly.** Represent a parcel, building, entrance and unit as
    distinct entities. Retain external identifiers with their issuing namespace. Use application IDs
-   for unresolved objects, and preserve candidate matches rather than merging on proximity without other evidence.
+   for unresolved objects. Preserve candidate matches until evidence beyond proximity supports a merge.
 2. **Keep aliases and relationships sourced.** An alias points to a candidate entity through evidence.
    Entrance-to-building, unit-to-building and building-to-parcel relationships each record their own
    source record, observation date and applicable validity interval. One parcel can contain several

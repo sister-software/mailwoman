@@ -14,10 +14,10 @@ result, or a Photon FeatureCollection, makes no statement about who produced it 
 that deploys the Photon drop-in behind their product gets no indication from the tool itself that the
 AGPL source offer (section 13) applies to that deployment, or that a commercial license exists.
 
-The doctor already computes the answer. `runtimeLicenseCheck` in `packages/mailwoman/lib/doctor/checks.ts`
-derives the applied branch from `chooseLicenseBranch` and `verifyConfiguredLicenseKey`, and reports the
-licensee, key id, and key status. This design adds the same answer to the outputs the tool already
-produces.
+`runtimeLicenseCheck` in `packages/mailwoman/lib/doctor/checks.ts` uses `chooseLicenseBranch` and
+`verifyConfiguredLicenseKey` to determine which license applies. The doctor reports that license
+along with the licensee, key ID, and key status. This design adds the license and engine version to
+the outputs listed below.
 
 ## Decisions taken
 
@@ -69,7 +69,7 @@ wire:
 | `notice`      | present only when `license` is `AGPL-3.0-only`; absent otherwise                                          |
 
 An expired, unknown, invalid or retired key reads as `AGPL-3.0-only` with the notice present, the
-same reading the doctor gives it. The stamp doesn't say why, and the doctor does.
+same reading the doctor gives it. Run `mailwoman doctor` to see why the key failed verification.
 
 ### Home
 
@@ -130,8 +130,8 @@ expiry date appended to the first line:
 mailwoman is licensed AGPL-3.0-only (the configured license key expired on 2026-09-01): modified or network-served copies must offer their source.
 ```
 
-One function in `stamp.ts`, `licenseNotice(verification)`, produces the text. It returns the two lines
-or `undefined`, and the launcher writes what it returns. The doctor's `detail` line is unchanged.
+The launcher writes the two lines returned by `licenseNotice(verification)` in `stamp.ts`. When the
+function returns `undefined`, the launcher omits the notice. The doctor's `detail` line is unchanged.
 
 The same notice prints once at server startup, in `serveNode` (`packages/api-kit/lib/serve.ts`), after
 the `listening on` line, when the app options include a stamp with a `notice`.

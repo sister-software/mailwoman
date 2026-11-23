@@ -29,8 +29,7 @@ were fixed before it ran.
    here, abstain". The wrong answer (`Stanmore Bay` → "Banmore", IN) is what a missing coverage
    assertion produces at runtime.
 
-In summary, **every inference the design record proposes depends on knowing what data we hold,
-and today no layer can report what it holds.**
+The proposed inferences require measured coverage. The layers cannot yet report that coverage.
 
 ## What already exists
 
@@ -152,8 +151,7 @@ before the full register is built. Receipts are in `scratchpad/falsifiers/f4-sco
 3. Keep exact foreign matches available under a locale hint. Scope coverage applies only to the fuzzy and
    derived tiers. The Paris row on the #1585 board is the
    standing conditional test case.
-4. Prevent hard negative evidence from a partial namespace. Only `surveyed_complete` can power a
-   negative, and the interface must refuse `surveyed_partial` for that use.
+4. Accept `surveyed_complete` as the only coverage status that can support hard negative evidence.
 5. Reconcile sampled `surveyed_complete` claims against a second source. The disagreement rate measures
    the claim's calibration, and the schema must support the reconciliation query.
 

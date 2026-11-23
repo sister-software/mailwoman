@@ -341,8 +341,8 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   cache hit-or-miss variance is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
 - `active_caches_size_in_bytes` < 8 GB.
 - `unit-slow` test step ≤ 120s on a PR that doesn't touch the gazetteer pipeline.
-- The full-scale locality-surface build still runs, and still asserts `entries > 10_000`, in at least
-  the nightly and release layers. A run that skips it reports the skip in its step summary.
+- Run the full-scale locality-surface build and assert `entries > 10_000` in at least the nightly
+  and release layers. A run that skips it reports the skip in its step summary.
 - `evidence-lexicons.test.ts` on the PR path is invariant to gazetteer size — re-running it after a
   gazetteer rebuild produces no change.
 - No net loss of assertions. Every law currently asserted is still asserted somewhere that runs on
