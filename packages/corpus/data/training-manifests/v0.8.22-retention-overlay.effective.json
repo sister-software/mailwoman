@@ -1,0 +1,2544 @@
+{
+	"manifestID": "corpus-effective-training-manifest",
+	"schemaVersion": 2,
+	"drawEvidence": "replayed-epoch-audit",
+	"labelSet": null,
+	"requiredAttributions": [
+		{
+			"license": "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE",
+			"sources": ["rendered-fr-admin-split"],
+			"statement": null
+		},
+		{
+			"license": "CC-BY-3.0-AU",
+			"sources": ["au-acnc-register"],
+			"statement": null
+		},
+		{
+			"license": "CC-BY-4.0",
+			"sources": [
+				"cordis",
+				"gbpa-bs",
+				"geonames-features",
+				"gnaf",
+				"invented-postal-guideline",
+				"invented-postal-unit-guideline",
+				"lv-varis",
+				"ro-retea-scolara",
+				"ryhti-ax"
+			],
+			"statement": null
+		},
+		{
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse AND LicenseRef-unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida AND LicenseRef-unchecked-corpus-input-us-alpine-county-california AND LicenseRef-unchecked-corpus-input-us-amador-county-information-technology-departme AND LicenseRef-unchecked-corpus-input-us-athens-clarke-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-baker-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-bay-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-broward-county-gis-bcgis-florida AND LicenseRef-unchecked-corpus-input-us-butte-county-california AND LicenseRef-unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality AND LicenseRef-unchecked-corpus-input-us-charlotte-county-florida AND LicenseRef-unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f AND LicenseRef-unchecked-corpus-input-us-city-and-county-of-san-francisco-california AND LicenseRef-unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida AND LicenseRef-unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn AND LicenseRef-unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania AND LicenseRef-unchecked-corpus-input-us-clay-county-florida AND LicenseRef-unchecked-corpus-input-us-collier-county-growth-management-department-g AND LicenseRef-unchecked-corpus-input-us-columbia-county-florida AND LicenseRef-unchecked-corpus-input-us-contra-costa-county-california AND LicenseRef-unchecked-corpus-input-us-county-of-alameda-california AND LicenseRef-unchecked-corpus-input-us-county-of-calaveras-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-colusa-california AND LicenseRef-unchecked-corpus-input-us-county-of-fresno-california AND LicenseRef-unchecked-corpus-input-us-county-of-kern-california AND LicenseRef-unchecked-corpus-input-us-county-of-los-angeles-california AND LicenseRef-unchecked-corpus-input-us-county-of-monterey-california AND LicenseRef-unchecked-corpus-input-us-county-of-nevada-california AND LicenseRef-unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge AND LicenseRef-unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso AND LicenseRef-unchecked-corpus-input-us-county-of-san-benito-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-joaquin-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi AND LicenseRef-unchecked-corpus-input-us-county-of-santa-clara-california AND LicenseRef-unchecked-corpus-input-us-county-of-shasta-california AND LicenseRef-unchecked-corpus-input-us-county-of-sonoma-california AND LicenseRef-unchecked-corpus-input-us-dekalb-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-del-norte-county-assessor-s-office-california AND LicenseRef-unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis AND LicenseRef-unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie AND LicenseRef-unchecked-corpus-input-us-flagler-county-board-of-county-commissioners AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m AND LicenseRef-unchecked-corpus-input-us-glenn-county-gis-california AND LicenseRef-unchecked-corpus-input-us-hardee-county-gis-florida AND LicenseRef-unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f AND LicenseRef-unchecked-corpus-input-us-highlands-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-hillsborough-county-florida AND LicenseRef-unchecked-corpus-input-us-humboldt-county-gis-california AND LicenseRef-unchecked-corpus-input-us-imperial-county-california AND LicenseRef-unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida AND LicenseRef-unchecked-corpus-input-us-inyo-county-california AND LicenseRef-unchecked-corpus-input-us-jackson-county-oregon-gis AND LicenseRef-unchecked-corpus-input-us-kings-county-california AND LicenseRef-unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak AND LicenseRef-unchecked-corpus-input-us-lake-county-i-t-dept-california AND LicenseRef-unchecked-corpus-input-us-manatee-county-florida AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-martin-county-florida AND LicenseRef-unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm AND LicenseRef-unchecked-corpus-input-us-mendocino-county-information-services-departm AND LicenseRef-unchecked-corpus-input-us-merced-county-california AND LicenseRef-unchecked-corpus-input-us-miami-dade-county-florida AND LicenseRef-unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo AND LicenseRef-unchecked-corpus-input-us-mississippi-automated-resource-information-sy AND LicenseRef-unchecked-corpus-input-us-modoc-county-reach-parcels-service-california AND LicenseRef-unchecked-corpus-input-us-napa-county-california AND LicenseRef-unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp AND LicenseRef-unchecked-corpus-input-us-oakland-county-michigan AND LicenseRef-unchecked-corpus-input-us-okaloosa-county-florida AND LicenseRef-unchecked-corpus-input-us-orange-county-fl-orange-county-florida AND LicenseRef-unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or AND LicenseRef-unchecked-corpus-input-us-osceolagis-osceola-county-florida AND LicenseRef-unchecked-corpus-input-us-overture-maps-foundation AND LicenseRef-unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida AND LicenseRef-unchecked-corpus-input-us-pasco-county-pascogisonline-florida AND LicenseRef-unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services AND LicenseRef-unchecked-corpus-input-us-plumas-county-california AND LicenseRef-unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net AND LicenseRef-unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid AND LicenseRef-unchecked-corpus-input-us-sacramento-county-california AND LicenseRef-unchecked-corpus-input-us-san-bernardino-county-california AND LicenseRef-unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor AND LicenseRef-unchecked-corpus-input-us-sarasota-county-florida AND LicenseRef-unchecked-corpus-input-us-seminole-county-florida AND LicenseRef-unchecked-corpus-input-us-sierra-county-california AND LicenseRef-unchecked-corpus-input-us-siskiyou-county-california AND LicenseRef-unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno AND LicenseRef-unchecked-corpus-input-us-st-johns-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-st-lucie-county-slcgis-florida AND LicenseRef-unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform AND LicenseRef-unchecked-corpus-input-us-sutter-county-california AND LicenseRef-unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot AND LicenseRef-unchecked-corpus-input-us-trinity-county-planning-department-california AND LicenseRef-unchecked-corpus-input-us-tulare-county-california AND LicenseRef-unchecked-corpus-input-us-tuolumne-county-california AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-volusia-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-walton-county-gis-department-florida AND LicenseRef-unchecked-corpus-input-us-waupaca-county-land-information-wisconsin AND LicenseRef-unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca AND LicenseRef-unchecked-corpus-input-us-yuba-county-ca-california AND etalab-2.0",
+			"sources": ["invented-house-venue"],
+			"statement": null
+		},
+		{
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-city-of-berkeley AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-montana-state-library AND LicenseRef-unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-us-property-building-5 AND etalab-2.0",
+			"sources": ["invented-po-box-cedex"],
+			"statement": null
+		},
+		{
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"sources": ["rendered-former-divisions"],
+			"statement": null
+		},
+		{
+			"license": "CDLA-Permissive-2.0",
+			"sources": ["overture-latam"],
+			"statement": null
+		},
+		{
+			"license": "CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
+			"sources": ["rendered-sg-register"],
+			"statement": null
+		},
+		{
+			"license": "DL-DE-BY-2.0 AND DL-DE-ZERO-2.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"sources": ["rendered-de"],
+			"statement": null
+		},
+		{
+			"license": "etalab-2.0",
+			"sources": ["ban", "rendered-fr-order"],
+			"statement": null
+		},
+		{
+			"license": "Licence Ouverte 1.0",
+			"sources": ["fr-finess-overseas"],
+			"statement": null
+		},
+		{
+			"license": "Licence Ouverte 2.0",
+			"sources": [
+				"ban-bl",
+				"ban-gf",
+				"ban-gp",
+				"ban-mf",
+				"ban-mq",
+				"ban-nc",
+				"ban-pf",
+				"ban-pm",
+				"ban-re",
+				"ban-yt",
+				"fr-annuaire-education-overseas"
+			],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-CC-BY-unstated-version",
+			"sources": ["opendata-az"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
+			"sources": ["adressur-fo"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-IM-OGL",
+			"sources": ["landregistry-im"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-LI-ABI-OGD-2",
+			"sources": ["llv-li"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1",
+			"sources": ["ide-uy"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-access-free-es-ministerio-de-sanidad",
+			"sources": ["es-sanidad-centros-ap"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-access-free-it-ministero-dell-istruzione-e-del-merito",
+			"sources": ["it-miur-scuole"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-access-free-us-us-health-1",
+			"sources": ["usgov-nppes"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-access-free-us-us-health-2",
+			"sources": ["usgov-hrsa-fqhc"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+			"sources": ["deepseek-kryptonite"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-fr-agence-du-num-rique-en-sant AND etalab-2.0",
+			"sources": ["fr-laposte-poincont", "nc-opt-agences"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-new-york-department-of-state",
+			"sources": ["state-ny-notaries"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-overture-maps-foundation",
+			"sources": ["overture"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-texas-secretary-of-state",
+			"sources": ["state-tx-notaries"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-census-bureau",
+			"sources": ["tiger"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation",
+			"sources": ["usgov-nad"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-geological-survey",
+			"sources": ["usgov-usgs-structures"],
+			"statement": null
+		},
+		{
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"sources": [
+				"rendered-prominent-places",
+				"rendered-us-city-county",
+				"rendered-us-city-state",
+				"rendered-us-county",
+				"wof-admin",
+				"wof-postalcode"
+			],
+			"statement": null
+		},
+		{
+			"license": "none-recorded-on-rows",
+			"sources": ["invented-anchor-absorption"],
+			"statement": null
+		},
+		{
+			"license": "ODbL-1.0",
+			"sources": [
+				"osm-ae",
+				"osm-al",
+				"osm-am",
+				"osm-ao",
+				"osm-ar",
+				"osm-aw",
+				"osm-az",
+				"osm-ba",
+				"osm-bb",
+				"osm-bd",
+				"osm-bh",
+				"osm-bm",
+				"osm-bn",
+				"osm-bs",
+				"osm-bt",
+				"osm-bw",
+				"osm-by",
+				"osm-bz",
+				"osm-cd",
+				"osm-ci",
+				"osm-cl",
+				"osm-co",
+				"osm-cr",
+				"osm-cu",
+				"osm-cw",
+				"osm-do",
+				"osm-dz",
+				"osm-ec",
+				"osm-eg",
+				"osm-ge",
+				"osm-gg",
+				"osm-gh",
+				"osm-gl",
+				"osm-gt",
+				"osm-hk",
+				"osm-ht",
+				"osm-id",
+				"osm-in",
+				"osm-iq",
+				"osm-ir",
+				"osm-je",
+				"osm-jm",
+				"osm-jo",
+				"osm-ke",
+				"osm-kg",
+				"osm-kh",
+				"osm-kw",
+				"osm-kz",
+				"osm-lb",
+				"osm-lk",
+				"osm-lr",
+				"osm-ma",
+				"osm-md",
+				"osm-me",
+				"osm-mg",
+				"osm-mk",
+				"osm-mm",
+				"osm-mn",
+				"osm-mo",
+				"osm-mt",
+				"osm-mv",
+				"osm-my",
+				"osm-mz",
+				"osm-na",
+				"osm-ng",
+				"osm-np",
+				"osm-om",
+				"osm-pa",
+				"osm-pe",
+				"osm-pf",
+				"osm-ph",
+				"osm-pk",
+				"osm-pr",
+				"osm-py",
+				"osm-qa",
+				"osm-rs",
+				"osm-ru",
+				"osm-rw",
+				"osm-sa",
+				"osm-sm",
+				"osm-sn",
+				"osm-sr",
+				"osm-sv",
+				"osm-th",
+				"osm-tj",
+				"osm-tm",
+				"osm-tn",
+				"osm-tt",
+				"osm-tz",
+				"osm-ua",
+				"osm-ug",
+				"osm-uz",
+				"osm-ve",
+				"osm-vi",
+				"osm-vn",
+				"osm-zm",
+				"osm-zw",
+				"rendered-bd-register",
+				"rendered-pk-register",
+				"spliced-sub-venue"
+			],
+			"statement": "© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
+		},
+		{
+			"license": "OGL-UK-3.0",
+			"sources": ["rendered-gb-os-open"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+			"sources": ["spliced-unit-v30"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
+			"sources": ["spliced-affix"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+			"sources": ["spliced-suffix-boundary"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
+			"sources": ["rendered-ch"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses HR tuples, rendered native-order — see ingest SOURCES",
+			"sources": ["rendered-hr"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses LU tuples, rendered native-order — see ingest SOURCES",
+			"sources": ["rendered-lu"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
+			"sources": ["spliced-country"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses PT tuples, rendered native-order — see ingest SOURCES",
+			"sources": ["rendered-pt"],
+			"statement": null
+		},
+		{
+			"license": "OpenAddresses SK tuples, rendered native-order — see ingest SOURCES",
+			"sources": ["rendered-sk"],
+			"statement": null
+		},
+		{
+			"license": "Public Domain",
+			"sources": ["bsp-gu"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
+			"sources": ["codex-bare-postcode"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
+			"sources": ["rendered-cz-pcfirst-preposition-v21"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — derived from CC-BY / public-domain input tuples",
+			"sources": ["invented-po-box-military"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"sources": ["fragment-fr-bare-street-v22"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"sources": ["fragment-fr"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
+			"sources": ["fragment-assay"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
+			"sources": ["rendered-nl-postcode"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
+			"sources": ["fragment-no"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons",
+			"sources": ["spliced-sub-venue"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
+			"sources": ["rendered-si-bare-village"],
+			"statement": null
+		},
+		{
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"sources": ["spliced-trailing-region-ca-bare", "spliced-trailing-region-es-v28", "spliced-trailing-region-us"],
+			"statement": null
+		},
+		{
+			"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
+			"sources": ["invented-intersection"],
+			"statement": null
+		}
+	],
+	"corpusVersion": "v0.8.22-retention-overlay",
+	"corpusManifestDigest": "4eb23bd5e15c61bbb3fc5ad9e18ca94efd2f56b65fb3fa706e6695da37ccf401",
+	"config": "packages/corpus/data/training-configs/v8.10.0-base-c6-90k-v0822-s42.yaml",
+	"seed": 43,
+	"drawsRequested": 1000000,
+	"drawsRealized": 1000000,
+	"admittedCountries": 247,
+	"countriesDrawingRows": 247,
+	"admittedCountriesDrawingZero": [],
+	"sources": [
+		{
+			"source": "spliced-sub-venue",
+			"corpusRows": 120000,
+			"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons",
+			"weight": 12,
+			"drawnRows": 39943,
+			"emittedRows": 43573,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-si-bare-village",
+			"corpusRows": 6285,
+			"license": "Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
+			"weight": 12,
+			"drawnRows": 40090,
+			"emittedRows": 40562,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-cz-pcfirst-preposition-v21",
+			"corpusRows": 51037,
+			"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
+			"weight": 12,
+			"drawnRows": 39911,
+			"emittedRows": 40252,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "wof-admin",
+			"corpusRows": 2831424,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 15,
+			"drawnRows": 50050,
+			"emittedRows": 38531,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ru",
+			"corpusRows": 2000177,
+			"license": "ODbL-1.0",
+			"weight": 0.2,
+			"drawnRows": 34627,
+			"emittedRows": 35398,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fragment-fr-bare-street-v22",
+			"corpusRows": 64122,
+			"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"weight": 12,
+			"drawnRows": 40056,
+			"emittedRows": 33485,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fragment-no",
+			"corpusRows": 33203,
+			"license": "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
+			"weight": 12,
+			"drawnRows": 40155,
+			"emittedRows": 31293,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fragment-fr",
+			"corpusRows": 144865,
+			"license": "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"weight": 12,
+			"drawnRows": 40129,
+			"emittedRows": 30956,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "usgov-usgs-structures",
+			"corpusRows": 3083904,
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-geological-survey",
+			"weight": 0.075,
+			"drawnRows": 20194,
+			"emittedRows": 27366,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-anchor-absorption",
+			"corpusRows": 50000,
+			"license": "none-recorded-on-rows",
+			"weight": 6,
+			"drawnRows": 19922,
+			"emittedRows": 24728,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-ch",
+			"corpusRows": 500000,
+			"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
+			"weight": 6,
+			"drawnRows": 19992,
+			"emittedRows": 21540,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "gnaf",
+			"corpusRows": 149969,
+			"license": "CC-BY-4.0",
+			"weight": 6,
+			"drawnRows": 19953,
+			"emittedRows": 21454,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-lu",
+			"corpusRows": 150000,
+			"license": "OpenAddresses LU tuples, rendered native-order — see ingest SOURCES",
+			"weight": 6,
+			"drawnRows": 20196,
+			"emittedRows": 20529,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "overture-latam",
+			"corpusRows": 3771982,
+			"license": "CDLA-Permissive-2.0",
+			"weight": 6,
+			"drawnRows": 20204,
+			"emittedRows": 20476,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-pt",
+			"corpusRows": 800000,
+			"license": "OpenAddresses PT tuples, rendered native-order — see ingest SOURCES",
+			"weight": 6,
+			"drawnRows": 20127,
+			"emittedRows": 20446,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-gb-os-open",
+			"corpusRows": 800000,
+			"license": "OGL-UK-3.0",
+			"weight": 6,
+			"drawnRows": 20203,
+			"emittedRows": 20357,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-nl-postcode",
+			"corpusRows": 10000,
+			"license": "Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
+			"weight": 6,
+			"drawnRows": 20068,
+			"emittedRows": 20250,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-hr",
+			"corpusRows": 300000,
+			"license": "OpenAddresses HR tuples, rendered native-order — see ingest SOURCES",
+			"weight": 6,
+			"drawnRows": 19733,
+			"emittedRows": 20247,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-sk",
+			"corpusRows": 150000,
+			"license": "OpenAddresses SK tuples, rendered native-order — see ingest SOURCES",
+			"weight": 6,
+			"drawnRows": 19864,
+			"emittedRows": 19833,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "wof-postalcode",
+			"corpusRows": 1163834,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 7.5,
+			"drawnRows": 25100,
+			"emittedRows": 19804,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-fr-admin-split",
+			"corpusRows": 60000,
+			"license": "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE",
+			"weight": 6,
+			"drawnRows": 20117,
+			"emittedRows": 19612,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "gleif-lei",
+			"corpusRows": 7212893,
+			"license": "CC0-1.0",
+			"weight": 0.03,
+			"drawnRows": 18587,
+			"emittedRows": 19435,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-de",
+			"corpusRows": 200000,
+			"license": "DL-DE-BY-2.0 AND DL-DE-ZERO-2.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 6,
+			"drawnRows": 19948,
+			"emittedRows": 18853,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "tiger",
+			"corpusRows": 41478238,
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-census-bureau",
+			"weight": 4,
+			"drawnRows": 13239,
+			"emittedRows": 18068,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-us-city-state",
+			"corpusRows": 157069,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 1,
+			"drawnRows": 13571,
+			"emittedRows": 16887,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fragment-assay",
+			"corpusRows": 221335,
+			"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
+			"weight": 6,
+			"drawnRows": 20027,
+			"emittedRows": 16301,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "geonames-features",
+			"corpusRows": 1632545,
+			"license": "CC-BY-4.0",
+			"weight": 0.12,
+			"drawnRows": 16763,
+			"emittedRows": 14788,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "deepseek-kryptonite",
+			"corpusRows": 4822,
+			"license": "LicenseRef-unchecked-corpus-input-cn-hangzhou-deepseek-artificial-intelligence",
+			"weight": 3,
+			"drawnRows": 10049,
+			"emittedRows": 14263,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban",
+			"corpusRows": 141553081,
+			"license": "etalab-2.0",
+			"weight": 3.3,
+			"drawnRows": 11077,
+			"emittedRows": 10708,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-sg-register",
+			"corpusRows": 142083,
+			"license": "CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
+			"weight": 1,
+			"drawnRows": 12422,
+			"emittedRows": 10267,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-in",
+			"corpusRows": 57604,
+			"license": "ODbL-1.0",
+			"weight": 2,
+			"drawnRows": 9764,
+			"emittedRows": 10251,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-fr-order",
+			"corpusRows": 50000,
+			"license": "etalab-2.0",
+			"weight": 3,
+			"drawnRows": 9956,
+			"emittedRows": 10188,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "overture",
+			"corpusRows": 1851471,
+			"license": "LicenseRef-unchecked-corpus-input-us-overture-maps-foundation",
+			"weight": 3,
+			"drawnRows": 10073,
+			"emittedRows": 9951,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "usgov-hrsa-fqhc",
+			"corpusRows": 159041,
+			"license": "LicenseRef-unchecked-access-free-us-us-health-2",
+			"weight": 2,
+			"drawnRows": 6646,
+			"emittedRows": 9519,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-id",
+			"corpusRows": 56396,
+			"license": "ODbL-1.0",
+			"weight": 2,
+			"drawnRows": 9521,
+			"emittedRows": 9418,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "usgov-nppes",
+			"corpusRows": 63324242,
+			"license": "LicenseRef-unchecked-access-free-us-us-health-1",
+			"weight": 2,
+			"drawnRows": 6662,
+			"emittedRows": 9343,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "state-ny-notaries",
+			"corpusRows": 188633,
+			"license": "LicenseRef-unchecked-corpus-input-us-new-york-department-of-state",
+			"weight": 2,
+			"drawnRows": 6708,
+			"emittedRows": 9168,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-us-city-county",
+			"corpusRows": 157069,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 0.55,
+			"drawnRows": 7425,
+			"emittedRows": 9159,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-prominent-places",
+			"corpusRows": 32378,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 3.5,
+			"drawnRows": 11825,
+			"emittedRows": 9115,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-country",
+			"corpusRows": 50000,
+			"license": "OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
+			"weight": 2,
+			"drawnRows": 6641,
+			"emittedRows": 8550,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-postal-unit-guideline",
+			"corpusRows": 10000,
+			"license": "CC-BY-4.0",
+			"weight": 2.5,
+			"drawnRows": 8205,
+			"emittedRows": 7824,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-house-venue",
+			"corpusRows": 197725,
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse AND LicenseRef-unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida AND LicenseRef-unchecked-corpus-input-us-alpine-county-california AND LicenseRef-unchecked-corpus-input-us-amador-county-information-technology-departme AND LicenseRef-unchecked-corpus-input-us-athens-clarke-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-baker-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-bay-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-broward-county-gis-bcgis-florida AND LicenseRef-unchecked-corpus-input-us-butte-county-california AND LicenseRef-unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality AND LicenseRef-unchecked-corpus-input-us-charlotte-county-florida AND LicenseRef-unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f AND LicenseRef-unchecked-corpus-input-us-city-and-county-of-san-francisco-california AND LicenseRef-unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida AND LicenseRef-unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn AND LicenseRef-unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania AND LicenseRef-unchecked-corpus-input-us-clay-county-florida AND LicenseRef-unchecked-corpus-input-us-collier-county-growth-management-department-g AND LicenseRef-unchecked-corpus-input-us-columbia-county-florida AND LicenseRef-unchecked-corpus-input-us-contra-costa-county-california AND LicenseRef-unchecked-corpus-input-us-county-of-alameda-california AND LicenseRef-unchecked-corpus-input-us-county-of-calaveras-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-colusa-california AND LicenseRef-unchecked-corpus-input-us-county-of-fresno-california AND LicenseRef-unchecked-corpus-input-us-county-of-kern-california AND LicenseRef-unchecked-corpus-input-us-county-of-los-angeles-california AND LicenseRef-unchecked-corpus-input-us-county-of-monterey-california AND LicenseRef-unchecked-corpus-input-us-county-of-nevada-california AND LicenseRef-unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge AND LicenseRef-unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso AND LicenseRef-unchecked-corpus-input-us-county-of-san-benito-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-joaquin-california AND LicenseRef-unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california AND LicenseRef-unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi AND LicenseRef-unchecked-corpus-input-us-county-of-santa-clara-california AND LicenseRef-unchecked-corpus-input-us-county-of-shasta-california AND LicenseRef-unchecked-corpus-input-us-county-of-sonoma-california AND LicenseRef-unchecked-corpus-input-us-dekalb-county-gis-georgia AND LicenseRef-unchecked-corpus-input-us-del-norte-county-assessor-s-office-california AND LicenseRef-unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis AND LicenseRef-unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie AND LicenseRef-unchecked-corpus-input-us-flagler-county-board-of-county-commissioners AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue AND LicenseRef-unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m AND LicenseRef-unchecked-corpus-input-us-glenn-county-gis-california AND LicenseRef-unchecked-corpus-input-us-hardee-county-gis-florida AND LicenseRef-unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f AND LicenseRef-unchecked-corpus-input-us-highlands-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-hillsborough-county-florida AND LicenseRef-unchecked-corpus-input-us-humboldt-county-gis-california AND LicenseRef-unchecked-corpus-input-us-imperial-county-california AND LicenseRef-unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida AND LicenseRef-unchecked-corpus-input-us-inyo-county-california AND LicenseRef-unchecked-corpus-input-us-jackson-county-oregon-gis AND LicenseRef-unchecked-corpus-input-us-kings-county-california AND LicenseRef-unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak AND LicenseRef-unchecked-corpus-input-us-lake-county-i-t-dept-california AND LicenseRef-unchecked-corpus-input-us-manatee-county-florida AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-martin-county-florida AND LicenseRef-unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm AND LicenseRef-unchecked-corpus-input-us-mendocino-county-information-services-departm AND LicenseRef-unchecked-corpus-input-us-merced-county-california AND LicenseRef-unchecked-corpus-input-us-miami-dade-county-florida AND LicenseRef-unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo AND LicenseRef-unchecked-corpus-input-us-mississippi-automated-resource-information-sy AND LicenseRef-unchecked-corpus-input-us-modoc-county-reach-parcels-service-california AND LicenseRef-unchecked-corpus-input-us-napa-county-california AND LicenseRef-unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp AND LicenseRef-unchecked-corpus-input-us-oakland-county-michigan AND LicenseRef-unchecked-corpus-input-us-okaloosa-county-florida AND LicenseRef-unchecked-corpus-input-us-orange-county-fl-orange-county-florida AND LicenseRef-unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or AND LicenseRef-unchecked-corpus-input-us-osceolagis-osceola-county-florida AND LicenseRef-unchecked-corpus-input-us-overture-maps-foundation AND LicenseRef-unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida AND LicenseRef-unchecked-corpus-input-us-pasco-county-pascogisonline-florida AND LicenseRef-unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services AND LicenseRef-unchecked-corpus-input-us-plumas-county-california AND LicenseRef-unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net AND LicenseRef-unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid AND LicenseRef-unchecked-corpus-input-us-sacramento-county-california AND LicenseRef-unchecked-corpus-input-us-san-bernardino-county-california AND LicenseRef-unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor AND LicenseRef-unchecked-corpus-input-us-sarasota-county-florida AND LicenseRef-unchecked-corpus-input-us-seminole-county-florida AND LicenseRef-unchecked-corpus-input-us-sierra-county-california AND LicenseRef-unchecked-corpus-input-us-siskiyou-county-california AND LicenseRef-unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno AND LicenseRef-unchecked-corpus-input-us-st-johns-county-gis-division-florida AND LicenseRef-unchecked-corpus-input-us-st-lucie-county-slcgis-florida AND LicenseRef-unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform AND LicenseRef-unchecked-corpus-input-us-sutter-county-california AND LicenseRef-unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot AND LicenseRef-unchecked-corpus-input-us-trinity-county-planning-department-california AND LicenseRef-unchecked-corpus-input-us-tulare-county-california AND LicenseRef-unchecked-corpus-input-us-tuolumne-county-california AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-volusia-county-fl-florida AND LicenseRef-unchecked-corpus-input-us-walton-county-gis-department-florida AND LicenseRef-unchecked-corpus-input-us-waupaca-county-land-information-wisconsin AND LicenseRef-unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca AND LicenseRef-unchecked-corpus-input-us-yuba-county-ca-california AND etalab-2.0",
+			"weight": 2,
+			"drawnRows": 6576,
+			"emittedRows": 7780,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-affix",
+			"corpusRows": 90000,
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
+			"weight": 2,
+			"drawnRows": 6639,
+			"emittedRows": 7711,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-pk",
+			"corpusRows": 81501,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 7011,
+			"emittedRows": 7195,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-pk-register",
+			"corpusRows": 80081,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 6876,
+			"emittedRows": 7182,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "state-tx-notaries",
+			"corpusRows": 3690014,
+			"license": "LicenseRef-unchecked-corpus-input-us-texas-secretary-of-state",
+			"weight": 1.5,
+			"drawnRows": 5006,
+			"emittedRows": 7060,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-suffix-boundary",
+			"corpusRows": 30000,
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+			"weight": 2.5,
+			"drawnRows": 8257,
+			"emittedRows": 6535,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-unit-v30",
+			"corpusRows": 50000,
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+			"weight": 1.5,
+			"drawnRows": 5006,
+			"emittedRows": 6269,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "wikidata-vital-places",
+			"corpusRows": 222471,
+			"license": "CC0-1.0",
+			"weight": 0.4,
+			"drawnRows": 7592,
+			"emittedRows": 5962,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-po-box-cedex",
+			"corpusRows": 50000,
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-city-of-berkeley AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-montana-state-library AND LicenseRef-unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-us-property-building-5 AND etalab-2.0",
+			"weight": 1.5,
+			"drawnRows": 5010,
+			"emittedRows": 5677,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-vn",
+			"corpusRows": 68971,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 6039,
+			"emittedRows": 5503,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-eg",
+			"corpusRows": 50000,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 4361,
+			"emittedRows": 5200,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "cordis",
+			"corpusRows": 301768,
+			"license": "CC-BY-4.0",
+			"weight": 0.2,
+			"drawnRows": 5136,
+			"emittedRows": 5159,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-postal-guideline",
+			"corpusRows": 6000,
+			"license": "CC-BY-4.0",
+			"weight": 1.5,
+			"drawnRows": 5034,
+			"emittedRows": 5013,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-trailing-region-ca-bare",
+			"corpusRows": 13740,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"weight": 4,
+			"drawnRows": 4729,
+			"emittedRows": 4901,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "lv-varis",
+			"corpusRows": 550632,
+			"license": "CC-BY-4.0",
+			"weight": 0.1,
+			"drawnRows": 4635,
+			"emittedRows": 4681,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "usgov-nad",
+			"corpusRows": 606956657,
+			"license": "LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation",
+			"weight": 1,
+			"drawnRows": 3309,
+			"emittedRows": 4611,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-rs",
+			"corpusRows": 50000,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 4152,
+			"emittedRows": 4304,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ads",
+			"corpusRows": 50000,
+			"license": "CC0-1.0",
+			"weight": 1,
+			"drawnRows": 4291,
+			"emittedRows": 4297,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-md",
+			"corpusRows": 50000,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 4237,
+			"emittedRows": 4288,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ar",
+			"corpusRows": 45623,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 3859,
+			"emittedRows": 4019,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-intersection",
+			"corpusRows": 40000,
+			"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
+			"weight": 1,
+			"drawnRows": 3287,
+			"emittedRows": 3799,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "invented-po-box-military",
+			"corpusRows": 5279,
+			"license": "Synthetic — derived from CC-BY / public-domain input tuples",
+			"weight": 8,
+			"drawnRows": 3729,
+			"emittedRows": 3751,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-trailing-region-es-v28",
+			"corpusRows": 4944,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"weight": 8,
+			"drawnRows": 3396,
+			"emittedRows": 3436,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "au-acnc-register",
+			"corpusRows": 161647,
+			"license": "CC-BY-3.0-AU",
+			"weight": 0.2,
+			"drawnRows": 2838,
+			"emittedRows": 3321,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-bd-register",
+			"corpusRows": 4551,
+			"license": "ODbL-1.0",
+			"weight": 8,
+			"drawnRows": 3015,
+			"emittedRows": 3109,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-us-county",
+			"corpusRows": 6198,
+			"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 5,
+			"drawnRows": 2648,
+			"emittedRows": 2997,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ro-retea-scolara",
+			"corpusRows": 17533,
+			"license": "CC-BY-4.0",
+			"weight": 2,
+			"drawnRows": 2876,
+			"emittedRows": 2955,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-re",
+			"corpusRows": 352335,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.08,
+			"drawnRows": 2464,
+			"emittedRows": 2413,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-cl",
+			"corpusRows": 28225,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 2371,
+			"emittedRows": 2401,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-by",
+			"corpusRows": 25511,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 2187,
+			"emittedRows": 2214,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ng",
+			"corpusRows": 6762,
+			"license": "ODbL-1.0",
+			"weight": 4,
+			"drawnRows": 2409,
+			"emittedRows": 2166,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-gp",
+			"corpusRows": 161409,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.15,
+			"drawnRows": 1978,
+			"emittedRows": 2052,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ae",
+			"corpusRows": 22565,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 1908,
+			"emittedRows": 2041,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-tt",
+			"corpusRows": 21086,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 1796,
+			"emittedRows": 1861,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-mq",
+			"corpusRows": 138873,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.15,
+			"drawnRows": 1795,
+			"emittedRows": 1847,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ide-uy",
+			"corpusRows": 20479,
+			"license": "LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1",
+			"weight": 1,
+			"drawnRows": 1788,
+			"emittedRows": 1823,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bd",
+			"corpusRows": 11371,
+			"license": "ODbL-1.0",
+			"weight": 2,
+			"drawnRows": 1822,
+			"emittedRows": 1781,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "spliced-trailing-region-us",
+			"corpusRows": 15976,
+			"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
+			"weight": 1,
+			"drawnRows": 1360,
+			"emittedRows": 1733,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fr-laposte-poincont",
+			"corpusRows": 83415,
+			"license": "LicenseRef-unchecked-corpus-input-fr-agence-du-num-rique-en-sant AND etalab-2.0",
+			"weight": 0.25,
+			"drawnRows": 1913,
+			"emittedRows": 1647,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-gf",
+			"corpusRows": 59871,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.3,
+			"drawnRows": 1473,
+			"emittedRows": 1567,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "it-miur-scuole",
+			"corpusRows": 90802,
+			"license": "LicenseRef-unchecked-access-free-it-ministero-dell-istruzione-e-del-merito",
+			"weight": 0.2,
+			"drawnRows": 1562,
+			"emittedRows": 1454,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-nc",
+			"corpusRows": 51701,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.3,
+			"drawnRows": 1344,
+			"emittedRows": 1326,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-yt",
+			"corpusRows": 51705,
+			"license": "Licence Ouverte 2.0",
+			"weight": 0.3,
+			"drawnRows": 1289,
+			"emittedRows": 1279,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "codex-bare-postcode",
+			"corpusRows": 17398,
+			"license": "Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
+			"weight": 1,
+			"drawnRows": 1518,
+			"emittedRows": 1166,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-kz",
+			"corpusRows": 12781,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 1067,
+			"emittedRows": 1127,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "rendered-former-divisions",
+			"corpusRows": 16024,
+			"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+			"weight": 1,
+			"drawnRows": 1441,
+			"emittedRows": 1056,
+			"augmentExcluded": true,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ua",
+			"corpusRows": 11730,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 1037,
+			"emittedRows": 1048,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fr-annuaire-education-overseas",
+			"corpusRows": 2825,
+			"license": "Licence Ouverte 2.0",
+			"weight": 4,
+			"drawnRows": 906,
+			"emittedRows": 897,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-th",
+			"corpusRows": 8901,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 718,
+			"emittedRows": 846,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "fr-finess-overseas",
+			"corpusRows": 2395,
+			"license": "Licence Ouverte 1.0",
+			"weight": 4,
+			"drawnRows": 791,
+			"emittedRows": 805,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ph",
+			"corpusRows": 7303,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 619,
+			"emittedRows": 627,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-mf",
+			"corpusRows": 7360,
+			"license": "Licence Ouverte 2.0",
+			"weight": 1,
+			"drawnRows": 623,
+			"emittedRows": 615,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-co",
+			"corpusRows": 6290,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 507,
+			"emittedRows": 615,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-pf",
+			"corpusRows": 6755,
+			"license": "Licence Ouverte 2.0",
+			"weight": 1,
+			"drawnRows": 589,
+			"emittedRows": 590,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-pe",
+			"corpusRows": 6497,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 557,
+			"emittedRows": 560,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-dz",
+			"corpusRows": 6154,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 494,
+			"emittedRows": 548,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-kw",
+			"corpusRows": 6403,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 519,
+			"emittedRows": 547,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-am",
+			"corpusRows": 5949,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 459,
+			"emittedRows": 528,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-pm",
+			"corpusRows": 3049,
+			"license": "Licence Ouverte 2.0",
+			"weight": 2,
+			"drawnRows": 563,
+			"emittedRows": 509,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-my",
+			"corpusRows": 5948,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 480,
+			"emittedRows": 504,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ba",
+			"corpusRows": 5254,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 437,
+			"emittedRows": 475,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ban-bl",
+			"corpusRows": 5545,
+			"license": "Licence Ouverte 2.0",
+			"weight": 1,
+			"drawnRows": 442,
+			"emittedRows": 455,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "es-sanidad-centros-ap",
+			"corpusRows": 25342,
+			"license": "LicenseRef-unchecked-access-free-es-ministerio-de-sanidad",
+			"weight": 0.2,
+			"drawnRows": 429,
+			"emittedRows": 442,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-uz",
+			"corpusRows": 3840,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 355,
+			"emittedRows": 377,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "landregistry-im",
+			"corpusRows": 4156,
+			"license": "LicenseRef-IM-OGL",
+			"weight": 1,
+			"drawnRows": 372,
+			"emittedRows": 354,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bn",
+			"corpusRows": 3987,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 336,
+			"emittedRows": 354,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ir",
+			"corpusRows": 3731,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 339,
+			"emittedRows": 326,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ge",
+			"corpusRows": 2759,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 243,
+			"emittedRows": 248,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-cu",
+			"corpusRows": 2383,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 203,
+			"emittedRows": 206,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "ryhti-ax",
+			"corpusRows": 2464,
+			"license": "CC-BY-4.0",
+			"weight": 1,
+			"drawnRows": 199,
+			"emittedRows": 205,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "adressur-fo",
+			"corpusRows": 2776,
+			"license": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
+			"weight": 1,
+			"drawnRows": 241,
+			"emittedRows": 203,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-kg",
+			"corpusRows": 2531,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 219,
+			"emittedRows": 187,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ma",
+			"corpusRows": 1941,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 145,
+			"emittedRows": 175,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-hk",
+			"corpusRows": 2485,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 228,
+			"emittedRows": 165,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "bsp-gu",
+			"corpusRows": 1874,
+			"license": "Public Domain",
+			"weight": 1,
+			"drawnRows": 155,
+			"emittedRows": 143,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ec",
+			"corpusRows": 1754,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 150,
+			"emittedRows": 142,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "opendata-az",
+			"corpusRows": 1510,
+			"license": "LicenseRef-CC-BY-unstated-version",
+			"weight": 1,
+			"drawnRows": 129,
+			"emittedRows": 141,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-lk",
+			"corpusRows": 1909,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 165,
+			"emittedRows": 138,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-iq",
+			"corpusRows": 1295,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 127,
+			"emittedRows": 128,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-gt",
+			"corpusRows": 1562,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 135,
+			"emittedRows": 127,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-pr",
+			"corpusRows": 1504,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 111,
+			"emittedRows": 126,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-az",
+			"corpusRows": 1338,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 105,
+			"emittedRows": 122,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mk",
+			"corpusRows": 1340,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 107,
+			"emittedRows": 121,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "llv-li",
+			"corpusRows": 1114,
+			"license": "LicenseRef-LI-ABI-OGD-2",
+			"weight": 1,
+			"drawnRows": 90,
+			"emittedRows": 108,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-sm",
+			"corpusRows": 1071,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 102,
+			"emittedRows": 99,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-cd",
+			"corpusRows": 990,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 77,
+			"emittedRows": 98,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-tn",
+			"corpusRows": 1115,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 89,
+			"emittedRows": 97,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-np",
+			"corpusRows": 1091,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 100,
+			"emittedRows": 97,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-sa",
+			"corpusRows": 921,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 86,
+			"emittedRows": 93,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-al",
+			"corpusRows": 986,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 96,
+			"emittedRows": 89,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-sv",
+			"corpusRows": 961,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 85,
+			"emittedRows": 89,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ci",
+			"corpusRows": 1346,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 133,
+			"emittedRows": 88,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-gh",
+			"corpusRows": 1065,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 91,
+			"emittedRows": 87,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-do",
+			"corpusRows": 1065,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 81,
+			"emittedRows": 78,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mn",
+			"corpusRows": 1005,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 83,
+			"emittedRows": 78,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-py",
+			"corpusRows": 761,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 67,
+			"emittedRows": 77,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-tz",
+			"corpusRows": 945,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 85,
+			"emittedRows": 76,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-tm",
+			"corpusRows": 802,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 70,
+			"emittedRows": 74,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bm",
+			"corpusRows": 658,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 62,
+			"emittedRows": 72,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mm",
+			"corpusRows": 902,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 70,
+			"emittedRows": 71,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mt",
+			"corpusRows": 850,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 86,
+			"emittedRows": 71,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bz",
+			"corpusRows": 769,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 55,
+			"emittedRows": 69,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bb",
+			"corpusRows": 925,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 83,
+			"emittedRows": 68,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-me",
+			"corpusRows": 827,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 77,
+			"emittedRows": 67,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-tj",
+			"corpusRows": 948,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 89,
+			"emittedRows": 66,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ve",
+			"corpusRows": 935,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 71,
+			"emittedRows": 66,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-gl",
+			"corpusRows": 805,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 66,
+			"emittedRows": 63,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-jm",
+			"corpusRows": 689,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 62,
+			"emittedRows": 62,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-cr",
+			"corpusRows": 597,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 58,
+			"emittedRows": 61,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-cw",
+			"corpusRows": 535,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 50,
+			"emittedRows": 49,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-lb",
+			"corpusRows": 408,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 27,
+			"emittedRows": 49,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ug",
+			"corpusRows": 552,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 43,
+			"emittedRows": 47,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-zw",
+			"corpusRows": 464,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 52,
+			"emittedRows": 47,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-kh",
+			"corpusRows": 505,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 37,
+			"emittedRows": 43,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-na",
+			"corpusRows": 421,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 39,
+			"emittedRows": 41,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-sn",
+			"corpusRows": 405,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 26,
+			"emittedRows": 41,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-pa",
+			"corpusRows": 605,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 41,
+			"emittedRows": 40,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ke",
+			"corpusRows": 419,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 36,
+			"emittedRows": 40,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-jo",
+			"corpusRows": 398,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 43,
+			"emittedRows": 37,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ao",
+			"corpusRows": 350,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 38,
+			"emittedRows": 36,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mg",
+			"corpusRows": 335,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 26,
+			"emittedRows": 36,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "nc-opt-agences",
+			"corpusRows": 107,
+			"license": "LicenseRef-unchecked-corpus-input-fr-agence-du-num-rique-en-sant AND etalab-2.0",
+			"weight": 4,
+			"drawnRows": 27,
+			"emittedRows": 36,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bt",
+			"corpusRows": 324,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 19,
+			"emittedRows": 34,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-sr",
+			"corpusRows": 385,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 37,
+			"emittedRows": 31,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mz",
+			"corpusRows": 328,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 35,
+			"emittedRows": 31,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-qa",
+			"corpusRows": 301,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 30,
+			"emittedRows": 30,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-ht",
+			"corpusRows": 415,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 27,
+			"emittedRows": 29,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-rw",
+			"corpusRows": 228,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 15,
+			"emittedRows": 25,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mv",
+			"corpusRows": 230,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 23,
+			"emittedRows": 23,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "gbpa-bs",
+			"corpusRows": 200,
+			"license": "CC-BY-4.0",
+			"weight": 1,
+			"drawnRows": 14,
+			"emittedRows": 22,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-aw",
+			"corpusRows": 314,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 24,
+			"emittedRows": 19,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bh",
+			"corpusRows": 215,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 17,
+			"emittedRows": 19,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-vi",
+			"corpusRows": 171,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 22,
+			"emittedRows": 19,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-zm",
+			"corpusRows": 298,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 20,
+			"emittedRows": 18,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-om",
+			"corpusRows": 212,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 17,
+			"emittedRows": 17,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-pf",
+			"corpusRows": 308,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 15,
+			"emittedRows": 15,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-je",
+			"corpusRows": 235,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 22,
+			"emittedRows": 13,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-gg",
+			"corpusRows": 125,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 12,
+			"emittedRows": 11,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bs",
+			"corpusRows": 173,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 15,
+			"emittedRows": 10,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-mo",
+			"corpusRows": 100,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 12,
+			"emittedRows": 6,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-bw",
+			"corpusRows": 172,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 13,
+			"emittedRows": 4,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm-lr",
+			"corpusRows": 55,
+			"license": "ODbL-1.0",
+			"weight": 1,
+			"drawnRows": 6,
+			"emittedRows": 2,
+			"augmentExcluded": false,
+			"excludedBecause": null
+		},
+		{
+			"source": "osm",
+			"corpusRows": 153965,
+			"license": "ODbL-1.0",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "usgov-imls-pls",
+			"corpusRows": 106964,
+			"license": "LicenseRef-unchecked-corpus-input-us-institute-of-museum-and-library-services",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "state-ia-contractors",
+			"corpusRows": 106326,
+			"license": "LicenseRef-unchecked-corpus-input-us-iowa-workforce-development",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "nz-charities-register",
+			"corpusRows": 81787,
+			"license": "LicenseRef-unchecked-access-free-nz-nz-charity-nonprofit-1",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "osm-cn",
+			"corpusRows": 51555,
+			"license": "ODbL-1.0",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "spliced-unit",
+			"corpusRows": 50000,
+			"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "rendered-no-street-led",
+			"corpusRows": 12000,
+			"license": "Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "fragment-fr-bare-street",
+			"corpusRows": 10803,
+			"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		},
+		{
+			"source": "rendered-cz-pcfirst-preposition",
+			"corpusRows": 8501,
+			"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
+			"weight": 0,
+			"drawnRows": 0,
+			"emittedRows": 0,
+			"augmentExcluded": false,
+			"excludedBecause": "zero-weight"
+		}
+	],
+	"trainingSources": [
+		"spliced-sub-venue",
+		"rendered-si-bare-village",
+		"rendered-cz-pcfirst-preposition-v21",
+		"wof-admin",
+		"osm-ru",
+		"fragment-fr-bare-street-v22",
+		"fragment-no",
+		"fragment-fr",
+		"usgov-usgs-structures",
+		"invented-anchor-absorption",
+		"rendered-ch",
+		"gnaf",
+		"rendered-lu",
+		"overture-latam",
+		"rendered-pt",
+		"rendered-gb-os-open",
+		"rendered-nl-postcode",
+		"rendered-hr",
+		"rendered-sk",
+		"wof-postalcode",
+		"rendered-fr-admin-split",
+		"gleif-lei",
+		"rendered-de",
+		"tiger",
+		"rendered-us-city-state",
+		"fragment-assay",
+		"geonames-features",
+		"deepseek-kryptonite",
+		"ban",
+		"rendered-sg-register",
+		"osm-in",
+		"rendered-fr-order",
+		"overture",
+		"usgov-hrsa-fqhc",
+		"osm-id",
+		"usgov-nppes",
+		"state-ny-notaries",
+		"rendered-us-city-county",
+		"rendered-prominent-places",
+		"spliced-country",
+		"invented-postal-unit-guideline",
+		"invented-house-venue",
+		"spliced-affix",
+		"osm-pk",
+		"rendered-pk-register",
+		"state-tx-notaries",
+		"spliced-suffix-boundary",
+		"spliced-unit-v30",
+		"wikidata-vital-places",
+		"invented-po-box-cedex",
+		"osm-vn",
+		"osm-eg",
+		"cordis",
+		"invented-postal-guideline",
+		"spliced-trailing-region-ca-bare",
+		"lv-varis",
+		"usgov-nad",
+		"osm-rs",
+		"ads",
+		"osm-md",
+		"osm-ar",
+		"invented-intersection",
+		"invented-po-box-military",
+		"spliced-trailing-region-es-v28",
+		"au-acnc-register",
+		"rendered-bd-register",
+		"rendered-us-county",
+		"ro-retea-scolara",
+		"ban-re",
+		"osm-cl",
+		"osm-by",
+		"osm-ng",
+		"ban-gp",
+		"osm-ae",
+		"osm-tt",
+		"ban-mq",
+		"ide-uy",
+		"osm-bd",
+		"spliced-trailing-region-us",
+		"fr-laposte-poincont",
+		"ban-gf",
+		"it-miur-scuole",
+		"ban-nc",
+		"ban-yt",
+		"codex-bare-postcode",
+		"osm-kz",
+		"rendered-former-divisions",
+		"osm-ua",
+		"fr-annuaire-education-overseas",
+		"osm-th",
+		"fr-finess-overseas",
+		"osm-ph",
+		"ban-mf",
+		"osm-co",
+		"ban-pf",
+		"osm-pe",
+		"osm-dz",
+		"osm-kw",
+		"osm-am",
+		"ban-pm",
+		"osm-my",
+		"osm-ba",
+		"ban-bl",
+		"es-sanidad-centros-ap",
+		"osm-uz",
+		"landregistry-im",
+		"osm-bn",
+		"osm-ir",
+		"osm-ge",
+		"osm-cu",
+		"ryhti-ax",
+		"adressur-fo",
+		"osm-kg",
+		"osm-ma",
+		"osm-hk",
+		"bsp-gu",
+		"osm-ec",
+		"opendata-az",
+		"osm-lk",
+		"osm-iq",
+		"osm-gt",
+		"osm-pr",
+		"osm-az",
+		"osm-mk",
+		"llv-li",
+		"osm-sm",
+		"osm-cd",
+		"osm-tn",
+		"osm-np",
+		"osm-sa",
+		"osm-al",
+		"osm-sv",
+		"osm-ci",
+		"osm-gh",
+		"osm-do",
+		"osm-mn",
+		"osm-py",
+		"osm-tz",
+		"osm-tm",
+		"osm-bm",
+		"osm-mm",
+		"osm-mt",
+		"osm-bz",
+		"osm-bb",
+		"osm-me",
+		"osm-tj",
+		"osm-ve",
+		"osm-gl",
+		"osm-jm",
+		"osm-cr",
+		"osm-cw",
+		"osm-lb",
+		"osm-ug",
+		"osm-zw",
+		"osm-kh",
+		"osm-na",
+		"osm-sn",
+		"osm-pa",
+		"osm-ke",
+		"osm-jo",
+		"osm-ao",
+		"osm-mg",
+		"nc-opt-agences",
+		"osm-bt",
+		"osm-sr",
+		"osm-mz",
+		"osm-qa",
+		"osm-ht",
+		"osm-rw",
+		"osm-mv",
+		"gbpa-bs",
+		"osm-aw",
+		"osm-bh",
+		"osm-vi",
+		"osm-zm",
+		"osm-om",
+		"osm-pf",
+		"osm-je",
+		"osm-gg",
+		"osm-bs",
+		"osm-mo",
+		"osm-bw",
+		"osm-lr"
+	],
+	"excludedSources": {
+		"osm": "zero-weight",
+		"usgov-imls-pls": "zero-weight",
+		"state-ia-contractors": "zero-weight",
+		"nz-charities-register": "zero-weight",
+		"osm-cn": "zero-weight",
+		"spliced-unit": "zero-weight",
+		"rendered-no-street-led": "zero-weight",
+		"fragment-fr-bare-street": "zero-weight",
+		"rendered-cz-pcfirst-preposition": "zero-weight"
+	},
+	"emittedButUnrecorded": {},
+	"unrecordedSourceStages": {},
+	"totalEmittedRows": 1000000,
+	"contentDigest": "1af7fc67b8ebd32a249b46f692cdd676ec68f972fac1e27315067df9b2bb8209"
+}

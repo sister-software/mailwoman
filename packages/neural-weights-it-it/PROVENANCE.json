@@ -10,12 +10,12 @@
 	"inherited_lineage": {
 		"package": "@mailwoman/neural-weights-en-us",
 		"package_version": "11.2.0",
-		"model_card_version": "11.2.0",
+		"model_card_version": "11.3.0",
 		"chain": ["@mailwoman/neural-weights-it-it", "@mailwoman/neural-weights-en-us"],
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Corpus v0.8.21-retention-overlay reads v0.8.18's osm extracts, which render 30% of the osm sources' rows with a trailing country name. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.8.21-retention-overlay.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
+				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Corpus v0.8.22-retention-overlay reads v0.8.18's osm extracts, as v0.8.21 did, which render 30% of the osm sources' rows with a trailing country name. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.8.22-retention-overlay.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
 				"license_named": "ODbL-1.0"
 			},
 			{
@@ -89,6 +89,11 @@
 			{
 				"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-city-of-berkeley AND LicenseRef-unchecked-corpus-input-us-marin-county AND LicenseRef-unchecked-corpus-input-us-montana-state-library AND LicenseRef-unchecked-corpus-input-us-south-dakota-bureau-of-information-and-teleco AND LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation AND LicenseRef-unchecked-corpus-input-us-us-property-building-5 AND etalab-2.0",
 				"sources": ["invented-po-box-cedex"],
+				"statement": null
+			},
+			{
+				"license": "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+				"sources": ["rendered-former-divisions"],
 				"statement": null
 			},
 			{
@@ -169,11 +174,6 @@
 				"statement": null
 			},
 			{
-				"license": "LicenseRef-unchecked-access-free-nz-nz-charity-nonprofit-1",
-				"sources": ["nz-charities-register"],
-				"statement": null
-			},
-			{
 				"license": "LicenseRef-unchecked-access-free-us-us-health-1",
 				"sources": ["usgov-nppes"],
 				"statement": null
@@ -226,6 +226,7 @@
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
 				"sources": [
+					"rendered-prominent-places",
 					"rendered-us-city-county",
 					"rendered-us-city-state",
 					"rendered-us-county",
@@ -569,7 +570,7 @@
 				],
 				"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract",
 				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/59ebed0358279c08a6ce6e3b9f23d99a2ba5655c/MANIFEST.json",
-				"statement": "The OpenStreetMap-derived training extracts of corpus v0.8.21-retention-overlay, © OpenStreetMap contributors. Corpus v0.8.21 reads its osm sources from the v0.8.18 overlay's parquet files, and each of its 102 ODbL sources holds the row count its v0.8.18 frozen record states, so the extracts are v0.8.18's: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names model 10.8.0, trained on the same extracts, under produced_works."
+				"statement": "The OpenStreetMap-derived training extracts of corpus v0.8.22-retention-overlay, © OpenStreetMap contributors. Corpus v0.8.22 lists the same 101 osm-family parquet files as v0.8.21, by path and sha256. Corpus v0.8.21 reads its osm sources from the v0.8.18 overlay's parquet files, and each of its 102 ODbL sources holds the row count its v0.8.18 frozen record states, so the extracts are v0.8.18's: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names model 10.8.0, trained on the same extracts, under produced_works."
 			}
 		],
 		"unresolved": null
