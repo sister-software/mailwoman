@@ -381,6 +381,10 @@ export interface HeldoutSamplingRule {
 	 */
 	reserveGroups?: Array<{ country: string; kind: HeldoutRowKind; groups: number }>
 	/**
+	 * The countries a reserve was drawn from, sorted.
+	 */
+	reserveCountries?: string[]
+	/**
 	 * Mixed into the order hash; `null` orders by the raw text hash without a seed.
 	 */
 	seed: number | null

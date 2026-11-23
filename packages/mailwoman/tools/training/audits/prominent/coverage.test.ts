@@ -93,7 +93,8 @@ async function evaluate(
 	directory: string,
 	shortRows: readonly ShortRow[],
 	rates: EpochRates = RATES,
-	places = PLACES_SQL
+	places = PLACES_SQL,
+	heldOut: ReadonlySet<number> = new Set()
 ) {
 	{
 		using writer = await openDuckDB()
@@ -103,7 +104,13 @@ async function evaluate(
 
 	using db = await openDuckDB()
 
-	await createProminentCoverageTables(db, `${directory}/places.parquet`, `${directory}/short-admin-rows.parquet`, rates)
+	await createProminentCoverageTables(
+		db,
+		`${directory}/places.parquet`,
+		`${directory}/short-admin-rows.parquet`,
+		rates,
+		heldOut
+	)
 
 	// Awaited here, because `using` closes the database when the function returns.
 	return await evaluateProminentCoverage(db)
@@ -254,6 +261,36 @@ describe("prominent_place_coverage", () => {
 		expect(presence.failing.map((form) => form.name)).not.toContain("Delta")
 		expect(bare.undrawn_examples).toContain("Delta (5)")
 		expect(bare.undrawn_decile1_places).toBe(bare.undrawn_examples.length)
+	})
+
+	it("leaves a place held out by design out of presence and out of its demand cell", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		// Delta shares decile 1 with Alpha, and Beta in decile 10 holds 1,000 people, as each of them does.
+		const places = PLACES_SQL.replace("NULL, NULL, NULL, 10, NULL", "NULL, NULL, NULL, 1000, NULL").replace(
+			") AS t(",
+			", (5, 'GB', 'locality', 'Delta', 'delta', 1, 3, false, false, 'importance', NULL, NULL, NULL, 1000, NULL, " +
+				"'England', ['ENG'], 'none', false)) AS t("
+		)
+
+		// A freeze took every group of Alpha's, so the corpus trains on none of its rows.
+		const rows: ShortRow[] = [...COVERED.filter(([, s1]) => s1 !== "alpha"), ["locality", "delta", null, 4]]
+
+		const bare = (result: Awaited<ReturnType<typeof evaluate>>) =>
+			result.demand_share.failing.find((cell) => cell.band === "locality" && cell.query_shape === "bare")
+
+		const counted = await evaluate(directory.path.toString(), rows, RATES, places)
+
+		expect(counted.presence.failing.map((form) => form.name)).toContain("Alpha")
+		// Decile 1 holds 2,500 of 3,500 people, so the target is 0.357, and Delta's 4 of 12 draws miss it.
+		expect(bare(counted)?.target).toBeCloseTo(0.5 * (2500 / 3500))
+
+		const heldOut = await evaluate(directory.path.toString(), rows, RATES, places, new Set([1]))
+
+		expect(heldOut.presence.covered_forms).toBe(heldOut.presence.required_forms)
+		expect(heldOut.presence.not_required).toEqual({ "competing-candidate": 1, "held-out-by-design": 1 })
+		// Without Alpha, decile 1 holds 1,500 of 2,500 people, a target of 0.3 that 4 of 12 draws reach.
+		expect(bare(heldOut)).toBeUndefined()
 	})
 
 	it("weighs decile 1's rows by their expected draws, not their count on disk", async () => {

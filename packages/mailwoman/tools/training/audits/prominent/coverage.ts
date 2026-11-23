@@ -40,6 +40,11 @@
  *   A place whose score rests on a GeoNames population is required only when that
  *   match passed its checks (`geonames_check = 'verified'`).
  *
+ *   A place the corpus holds out by design is neither required nor counted in its demand cell:
+ *   every one of its groups is on the evaluation-group list or the validation list
+ *   the corpus manifest records ({@linkcode readHeldOutByDesign}).
+ *   A place can't be required in training and frozen for grading at once.
+ *
  *   Every threshold comes from the rule: presence is one row, the demand target is
  *   a population share from WOF and GeoNames, and the half follows the held-out
  *   span check's half-the-median convention (HOLDOUT §4.4).
@@ -67,6 +72,7 @@ import { countryAdmission, countSourceShapes, drawsPerAdmittedRow } from "../../
 import { countTrainShapes, type TrainShapeCount } from "../../exposure/train-shapes.ts"
 import { epochRows } from "../census.ts"
 import { requestedShares, resolveSourceWeights } from "../epoch/mixture.ts"
+import { type HeldOutByDesign, readHeldOutByDesign } from "./records.ts"
 
 /**
  * What one epoch of a config draws: its length, each source's requested share,
@@ -312,12 +318,14 @@ function valuesSQL(entries: ReadonlyMap<string, number>): string {
 
 /**
  * Creates `admission` from the admitted countries and `ranked` from a places table:
- * every ranked place, with `required` set on the places the rule requires.
+ * every ranked place, with `held_out` set on the places `heldOut` names
+ * and `required` set on the other places the rule requires.
  */
 export async function createRankedPlacesTable(
 	db: DisposableDuckDB,
 	placesPath: string,
-	admission: ReadonlyMap<string, number>
+	admission: ReadonlyMap<string, number>,
+	heldOut: ReadonlySet<number> = new Set()
 ): Promise<void> {
 	await db.run("CREATE OR REPLACE TABLE admission (country VARCHAR, chance DOUBLE)")
 
@@ -325,11 +333,25 @@ export async function createRankedPlacesTable(
 		await db.run(`INSERT INTO admission VALUES ${valuesSQL(admission)}`)
 	}
 
+	await db.run("CREATE OR REPLACE TABLE held_out_places (spr_id BIGINT)")
+
+	const held = [...heldOut]
+
+	for (let start = 0; start < held.length; start += 5000) {
+		await db.run(
+			`INSERT INTO held_out_places VALUES ${held
+				.slice(start, start + 5000)
+				.map((id) => `(${id})`)
+				.join(", ")}`
+		)
+	}
+
 	await db.run(
-		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, ` +
-			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND " +
+		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, h.spr_id IS NOT NULL AS held_out, ` +
+			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND h.spr_id IS NULL AND " +
 			"(p.score_source <> 'geonames' OR p.geonames_check = 'verified') AS required " +
-			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) WHERE p.rank IS NOT NULL`
+			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) ` +
+			"LEFT JOIN held_out_places h ON h.spr_id = p.spr_id WHERE p.rank IS NOT NULL"
 	)
 }
 
@@ -365,24 +387,12 @@ export async function readRequiredProminentPlaces(
 	return { record, places }
 }
 
-/**
- * The WOF record a corpus row's group belongs to, as a DuckDB `BIGINT` expression
- * over a group expression, `NULL` for a group of no WOF record.
- *
- * A `rendered-prominent-places` row's group is its `base_source_id`, `wof-admin-<record>`.
- * A `wof-admin` row's is `wof-admin-<record>-<name slot>-<hierarchy variant>`.
- *
- * Both read back as `<record>`, so the expression matches every group a place's train rows sit in.
- */
-export function prominentPlaceRecordSQL(group: string): string {
-	return `TRY_CAST(regexp_extract(${group}, '^wof-admin-([0-9]+)(-|$)', 1) AS BIGINT)`
-}
-
 export async function createProminentCoverageTables(
 	db: DisposableDuckDB,
 	placesPath: string,
 	shortAdminPath: string,
-	rates: EpochRates
+	rates: EpochRates,
+	heldOut: ReadonlySet<number> = new Set()
 ): Promise<void> {
 	await db.run("CREATE OR REPLACE TABLE source_rates (source VARCHAR, per_row DOUBLE)")
 
@@ -391,7 +401,7 @@ export async function createProminentCoverageTables(
 	}
 
 	await db.run(`CREATE OR REPLACE TABLE epoch AS SELECT ${rates.draws}::DOUBLE AS draws`)
-	await createRankedPlacesTable(db, placesPath, rates.admission)
+	await createRankedPlacesTable(db, placesPath, rates.admission, heldOut)
 
 	// A row's expected draws: its source's draws per admitted row times its country's admission chance.
 	await db.run(
@@ -407,15 +417,18 @@ export async function createProminentCoverageTables(
 
 	await db.run(`INSERT INTO requirements VALUES ${requirementValuesSQL()}`)
 
+	// A place held out by design has no form and no population in its cell: every place below is `counted`.
+	await db.run("CREATE OR REPLACE TABLE counted AS SELECT * FROM ranked WHERE NOT held_out")
+
 	// The second segment's tag comes with the place's own: a parent is a locality, or a postal pair's region.
 	await db.run(
 		"CREATE OR REPLACE TABLE forms AS SELECT f.*, q.tag, q.second_tag FROM (" +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM ranked UNION ALL " +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM ranked WHERE parent_locality IS NOT NULL UNION ALL ` +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM ranked WHERE region IS NOT NULL UNION ALL ` +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM counted UNION ALL " +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM counted WHERE parent_locality IS NOT NULL UNION ALL ` +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM counted WHERE region IS NOT NULL UNION ALL ` +
 			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region_abbr', ${foldSurfaceSQL("abbr")} FROM ` +
-			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM ranked) UNION ALL " +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM ranked" +
+			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM counted) UNION ALL " +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM counted" +
 			") f JOIN requirements q ON q.band = f.band AND q.query_shape = f.query_shape AND q.postal_pair = f.postal_pair"
 	)
 
@@ -458,7 +471,7 @@ export async function createProminentCoverageTables(
 	await db.run(
 		"CREATE OR REPLACE TABLE population AS SELECT country, band, " +
 			"sum(population_used) FILTER (WHERE decile = 1) / nullif(sum(population_used), 0) AS decile1_population_share " +
-			"FROM ranked WHERE population_used > 0 GROUP BY ALL"
+			"FROM counted WHERE population_used > 0 GROUP BY ALL"
 	)
 
 	await db.run(
@@ -496,6 +509,25 @@ export interface ProminentCoverageReport {
 		"candidate_db" | "candidate_db_sha256" | "places_sha256" | "rule" | "counts"
 	>
 	corpus: ShortAdminScanRecord
+	/**
+	 * The ranked places the corpus holds out by design ({@linkcode readHeldOutByDesign}),
+	 * which neither presence nor a demand cell counts.
+	 */
+	held_out_by_design: Omit<HeldOutByDesign, "records"> & {
+		/**
+		 * Held-out records that are ranked places.
+		 */
+		places: number
+		/**
+		 * Of those, the places the selection rule picks in an admitted country.
+		 * The receipt would otherwise require them.
+		 */
+		selected: number
+		/**
+		 * Held-out ranked places per country.
+		 */
+		by_country: Record<string, number>
+	}
 	presence: {
 		required_places: number
 		required_forms: number
@@ -682,7 +714,7 @@ export function readDecileOneWritability(db: DisposableDuckDB): Promise<DecileOn
 			`CASE WHEN count(f.spr_id) = 0 THEN ${MISSING_SEGMENT_SQL} ` +
 			`WHEN NOT any_value(${writablePlaceSQL("r")}) ` +
 			"THEN 'GeoNames check failed: ' || coalesce(any_value(r.geonames_check), 'unchecked') END AS reason " +
-			"FROM cells c JOIN ranked r ON r.country = c.country AND r.band = c.band AND r.decile = 1 " +
+			"FROM cells c JOIN counted r ON r.country = c.country AND r.band = c.band AND r.decile = 1 " +
 			"LEFT JOIN forms f ON f.spr_id = r.spr_id AND f.query_shape = c.query_shape " +
 			"GROUP BY c.country, c.band, c.query_shape, r.spr_id ORDER BY c.country, c.band, c.query_shape, r.spr_id",
 		(row) => ({
@@ -716,7 +748,8 @@ export async function evaluateProminentCoverage(
 
 	const notRequired = await queryRows(
 		db,
-		"SELECT CASE WHEN NOT admitted THEN 'country-not-admitted' ELSE coalesce(geonames_check, 'unchecked') END AS reason, " +
+		"SELECT CASE WHEN NOT admitted THEN 'country-not-admitted' WHEN held_out THEN 'held-out-by-design' " +
+			"ELSE coalesce(geonames_check, 'unchecked') END AS reason, " +
 			"count(*)::INTEGER AS places FROM ranked " +
 			"WHERE (by_rank OR capital) AND NOT required GROUP BY ALL ORDER BY reason",
 		(row) => [row.text("reason"), row.number("places")] as const
@@ -947,16 +980,27 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 		log: options.log,
 	})
 
+	const heldOut = await readHeldOutByDesign(options.manifest, options.limits, options.log)
+
 	using db = await openDuckDB(options.limits)
 
 	await createProminentCoverageTables(
 		db,
 		options.places,
 		scratch.path("short-admin-rows.parquet").toString(),
-		epochRates(options.epoch)
+		epochRates(options.epoch),
+		heldOut.records
 	)
 
 	const rules = await evaluateProminentCoverage(db)
+
+	const heldOutPlaces = await queryRows(
+		db,
+		"SELECT country, count(*)::INTEGER AS places, " +
+			"count(*) FILTER (WHERE (by_rank OR capital) AND admitted)::INTEGER AS selected " +
+			"FROM ranked WHERE held_out GROUP BY country ORDER BY country",
+		(row) => ({ country: row.text("country"), places: row.number("places"), selected: row.number("selected") })
+	)
 
 	const passed =
 		rules.presence.covered_forms === rules.presence.required_forms &&
@@ -975,6 +1019,14 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 			counts: record.counts,
 		},
 		corpus,
+		held_out_by_design: {
+			policy: heldOut.policy,
+			listed_records: heldOut.listed_records,
+			trained_records: heldOut.trained_records,
+			places: heldOutPlaces.reduce((sum, row) => sum + row.places, 0),
+			selected: heldOutPlaces.reduce((sum, row) => sum + row.selected, 0),
+			by_country: Object.fromEntries(heldOutPlaces.map((row) => [row.country, row.places])),
+		},
 		...rules,
 	}
 }

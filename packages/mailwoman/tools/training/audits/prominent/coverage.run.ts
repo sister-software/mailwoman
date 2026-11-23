@@ -53,9 +53,16 @@ const report = await prominentCoverageReport({
 	log: (line) => console.error(line),
 })
 
-const { presence, demand_share: demand, coherence } = report
+const { presence, demand_share: demand, coherence, held_out_by_design: heldOut } = report
 
 console.log(`prominent place coverage — ${configPath.split("/").at(-1)}`)
+
+console.log(
+	heldOut.policy
+		? `  held out by design: ${heldOut.places} ranked places (${heldOut.selected} selected) of ${heldOut.listed_records} ` +
+				`listed WOF records; ${heldOut.trained_records} listed records keep a train group`
+		: "  held out by design: none, the corpus records no evaluation-group policy"
+)
 console.log(`  presence: ${presence.covered_forms} of ${presence.required_forms} required forms covered`)
 
 console.log(

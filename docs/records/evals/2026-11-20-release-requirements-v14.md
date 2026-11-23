@@ -9,8 +9,9 @@ owner: evaluation
 
 Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v14.json`
 exists beside v13, and `release/current-spec.ts` still names v13. Its confirmation pins name the three collections
-section 8 records, drawn on 2026-11-22 from rows no corpus holds. They replace `heldout-confirm-v0.8.22` of section 7.
-That collection held too few eligible groups to decide a release, and no model read it. The specification is registered when
+section 9 records, drawn on 2026-11-22 from rows no corpus holds. They replace `heldout-confirm-v0.8.22` of section 7.
+That collection held too few eligible groups to decide a release, and no model read it. Section 8 records its
+retirement, the forward reserve and the second re-split of v0.8.22. The specification is registered when
 a candidate passes the development role, as v12 and v13 were. No model has read a v14 role.
 
 ## 1. What changes
@@ -20,7 +21,7 @@ a candidate passes the development role, as v12 and v13 were. No model has read 
 | `identities.published` | 10.8.0, `0bbb3385…e4a4`, corpus `v0.8.18-retention-overlay`                               | 11.2.0, `d51bb0ef…12b39f`, corpus `v0.8.21-retention-overlay`                                                     |
 | `identities.candidate` | v8.9.0 seed 42, `d51bb0ef…12b39f`                                                         | empty                                                                                                             |
 | development            | `heldout-dev-v0.8.18`, `heldout-dev-v0.8.19-probes-r2`, `heldout-dev-v0.8.21`             | unchanged                                                                                                         |
-| confirmation           | `heldout-confirm-v0.8.20`, `heldout-confirm-v0.8.18-in`, `heldout-confirm-v0.8.20-probes` | `heldout-confirm-v0.8.22b`, `heldout-confirm-v0.8.22b-capabilities`, `heldout-confirm-v0.8.22-probes` (section 8) |
+| confirmation           | `heldout-confirm-v0.8.20`, `heldout-confirm-v0.8.18-in`, `heldout-confirm-v0.8.20-probes` | `heldout-confirm-v0.8.22b`, `heldout-confirm-v0.8.22b-capabilities`, `heldout-confirm-v0.8.22-probes` (section 9) |
 | `identities.dataset`   | the three v13 confirmation collections                                                    | the same three pins                                                                                               |
 
 Every requirement, the objective, the statistics, the provenance admission, the scorer and the inference rule are
@@ -265,7 +266,60 @@ the groups of 123 of the recipe's 16,425 places, and the validation quota chose 
 rows out of train. On the v8.10.0 config the receipt covers 20,584 of 20,947 required forms and fails 11 of 813
 demand cells. Coherence passes.
 
-## 8. The draw of `heldout-confirm-v0.8.22b` from rows outside every corpus
+## 8. The retirement of `heldout-confirm-v0.8.22`, the forward reserve and the second re-split
+
+`heldout-confirm-v0.8.22@5383e65f6aa768bb` is retired unread on 2026-11-22 (#3333). Against 11.2.0's corpus it holds
+1,224 `verified_unseen` rows of 4,681, and its comparison-eligible address groups are US, FR, GB, ES and AU 0, DE 1,
+IN 2, IT 10 and NZ 8 against the 75-group target (section 7), so no objective country can read anything but
+insufficient evidence. Its freeze and the quota drawn beside it took 139 of the 16,425 prominent places out of
+training. Its groups return to training: `evaluation-groups.v0.8.22-reserve.json` extends `evaluation-groups.v0.8.22.json`
+with `heldout-confirm-v0.8.22-probes` and the reserve below, and leaves `heldout-confirm-v0.8.22` out. The probe set
+keeps its pin.
+
+**The forward reserve.** `heldout-reserve-v0.8.22@681f928c68575cc3` (rows sha256 `02139b6d…`) draws 400 groups per
+country and row kind (seed 2216) from the train pool of the first v0.8.22 re-split (manifest sha256 `ddc5b111…`),
+skipping the groups of the 7,764 places the v8.10.0 config's prominent-place receipt requires and every frozen
+collection's groups: 7,200 groups and 20,537 rows, address and gazetteer, in the nine objective countries. The countries
+come from the specification's objective and country requirements (`freeze.run.ts --reserve-spec`). Under the pass
+proof, at 0.95 against 0.85 and with the reserve's rows assumed `verified_unseen`, every country check reads `pass`,
+FR's lower bound 0.935 against 0.9. The capability checks read insufficient evidence on the reserve, because their rows
+come from the probe and capability collections rather than a per-country draw.
+
+The first draw took 400 groups in every one of 259 countries (160,652 groups), and its re-split (manifest sha256
+`41f74e22…`) emptied the train rows of 17 sources and shrank 78 by a tenth or more: in a small country 400 groups is
+most of the pool. The sampler refused the corpus (`reps-targeted sources have no readable train rows`) for `gbpa-bs` and 16
+`osm-<cc>` sources. That draw and that manifest were read by no model and are kept under
+`/mnt/mw/corpus/heldout/superseded/reserve-all-countries-2026-11-22/`. Before the second re-split, a dry run over the
+first split's train rows found 20,564 rows of 38 sources leaving training, every one in the nine countries, at most
+1.28% of a source (`nz-charities-register`, weighted 0).
+
+**The second re-split.** The validation quota (`--config v8.10.0-base-c6-90k-v0822-s42.yaml`, 15,330 groups, 226
+required groups skipped, `VALIDATION_GROUPS.reserve.json` sha256 `5100f0b1…`) and the re-split under the reserve list
+(sha256 `654817a9…`, `--jobs 8`, 10,363 s) wrote `v0.8.22-retention-overlay` MANIFEST.json sha256
+`7d8717025f6b64296064fc09fe5f831eb345e6212d00d38eb514d4e75c04386b`: 1,104 files, train 889,226,069, val 23,392, test
+381,093. Against the first split, the 17 emptied sources hold their earlier train rows exactly, every source holds at
+least its earlier count less the dry run's loss, and seven gain the retired collection's rows (`rendered-prominent-places` 32,040
+to 32,416).
+
+**The receipts on that manifest.** The epoch mixture meets every receipt (`former-divisions-exposure` 1,406 against a
+minimum of 1,239, `prominent-places-exposure` 11,706 against 10,505), and validation coverage and label support pass.
+The prominent-place receipt fails four items:
+
+| Item                       | First split (`ddc5b111…`) | Second split (`7d871702…`) | Cause                                                                                                                                         |
+| -------------------------- | ------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| NZ Rotorua, `country` form | covered                   | 0 train rows               | its only such rows are group `wof-admin-1729238557-default-with-country-form`, another WOF record's, which the reserve drew                   |
+| CA locality `region`       | 0.4203 against 0.4205     | 0.4177 against 0.4203      | the recipe's train rows rose 1.2%, so each draws 1.14% less. The cell already failed on the first split                                       |
+| CA locality `region_abbr`  | 0.4204 against 0.4205     | 0.4184 against 0.4203      | the same                                                                                                                                      |
+| PW locality `bare`         | 0.3316 against 0.3248     | 0.3295 against 0.3338      | the same dilution, and the target rises when the receipt leaves Babeldaob South – Airai State (decile 2, held out by design) out of the count |
+
+The required-group skip keys a place's groups by its WOF record, and the receipt counts any train row whose surface
+writes the place, so a namesake record's group covers a required form without being skipped. The census sized the
+recipe's rows to close each cell at its target on the base build, so a later split that changes the recipe's train rows
+moves those cells. Timmins (decile 1) reads held out by design while one train row in a group of another record writes
+it, so the receipt drops that row's 0.347 draws. The fixes and a third re-split wait for the operator's decision
+(#3333).
+
+## 9. The draw of `heldout-confirm-v0.8.22b` from rows outside every corpus
 
 Decided by the operator on 2026-11-22: the confirmation role is drawn from source rows no corpus holds, reversing the
 2026-11-18 stop on a newer-snapshot draw (section 3). No corpus is rebuilt for it. Three collections make up the role:
@@ -276,7 +330,7 @@ Decided by the operator on 2026-11-22: the confirmation role is drawn from sourc
 | `heldout-confirm-v0.8.22b-capabilities@6d55f1bee295a4ed` | 7,800 | `ae58924c…` | `spliced-sub-venue` and `spliced-country` rows   |
 | `heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d`        | 5,000 | `fc438185…` | the probe set of section 7, unchanged            |
 
-### 8.1 Sources
+### 9.1 Sources
 
 | Country | Source                                                                        | Rows 11.2.0 didn't read                                                                                                            |
 | ------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -294,7 +348,7 @@ The capability collection renders `sub-venue` (seed 2245, 40,000 rows, the `hous
 file used) and `country-balanced` (seed 2246, 150,000 rows, so the head-of-file pool reaches past the 50,000-row corpus
 file's records). `po_box_cedex` and `postal_unit` read the probe set.
 
-### 8.2 Filters
+### 9.2 Filters
 
 Each source's own adapter labels its rows as a build does, without augmentation (`heldout/snapshot/candidates.ts`
 where the adapter is a corpus source). Every row is then compared with every row of every split of the 1,110 data files
@@ -326,7 +380,7 @@ first cap kept. ES draws 40,000 rows of each source's 139,512, 68,744 and 180,94
 the `2026-11` monthly file adds against `2026-05` are not a pool: 334,376 of the 338,312 labeled are corpus rows by
 identity and the other 3,936 by text, because v0.8.20 read that file.
 
-### 8.3 The freeze and the audits
+### 9.3 The freeze and the audits
 
 `freeze.run.ts --training-config v8.10.0-base-c6-90k-v0822-s42.yaml --per-country 1000` (address, seed 2251) and
 `--per-country 600` (capabilities, seed 2252), every frozen collection on the data root excluded. The skip of required
@@ -352,7 +406,7 @@ selector). `evaluation-groups.v0.8.23.json` is `evaluation-groups.v0.8.22-reserv
 groups. The reserve list is the one the second v0.8.22 re-split read (sha256 `654817a9…8854`, recorded in the v0.8.22
 manifest's `evaluation_groups`), so the next re-split keeps the new groups in test with every earlier one.
 
-### 8.4 The pass proof
+### 9.4 The pass proof
 
 `release/pass/proof.run.ts --role confirmation` over the three collections and their audits against both corpora,
 under this specification with the pins above, read 21,158 rows in 21,158 groups, all `verified_unseen`. The arm at

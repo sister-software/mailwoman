@@ -27,7 +27,8 @@ import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString } from "@mail
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { RequiredGroupReceipt, RequiredGroupSkip } from "@mailwoman/corpus/utils/evaluation-groups"
 
-import { prominentPlaceRecordSQL, readRequiredProminentPlaces } from "#tools/training/audits/prominent/coverage"
+import { readRequiredProminentPlaces } from "#tools/training/audits/prominent/coverage"
+import { prominentPlaceRecordSQL } from "#tools/training/audits/prominent/records"
 import { hostPath } from "#tools/training/sampler"
 
 /**

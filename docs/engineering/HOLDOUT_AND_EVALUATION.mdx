@@ -264,13 +264,18 @@ table through the receipt's own reader and returns the WOF record of every requi
 admits. `freeze.run.ts --training-config <yaml>` and `quota.run.ts --config <yaml>` both skip every group of those
 records, and each records the skip in its output (`sampling.requiredTrainingGroups`, `requiredTrainingGroups`) and
 prints it by country. A row of another source that writes the place keeps its own group, and a draw can still take
-that group. `freeze.run.ts --dry-run` prints the pool's counts and the skip and draws no row.
+that group. `freeze.run.ts --dry-run` prints the pool's counts and the skip and draws no row. The receipt in turn
+counts no place the corpus holds out by design, one whose every group is on the evaluation-group list or the
+validation list the corpus manifest records: such a place is neither required nor part of its demand cell
+(`packages/mailwoman/tools/training/AGENTS.md`).
 
 **A forward reserve.** A collection frozen from a build's held-out places holds only the rows the build adds, so a
 build that adds little leaves the objective countries under their group target (the v14 record, section 7).
 `freeze.run.ts --reserve-groups-per-country <n>` draws `n` groups per country and row kind from the corpus's train
 rows instead (`heldout/dataset/reserve.ts`), never a group with a held-out row, an excluded collection's group or
-a required group. Its manifest records the collection kind `reserve` and the sampling method
+a required group. It draws only in the countries a release reads, the objective and country requirements of the
+specification `--reserve-spec` names: in a small country `n` groups is most of the train pool, and the first v0.8.22
+reserve, drawn in all 259 countries, emptied the train rows of 17 sources (the v14 record, section 8). Its manifest records the collection kind `reserve` and the sampling method
 `per-group-train-pool-hash-order`. Listed in the evaluation-group list with the cycle's other collections, its
 groups go to `test` in the re-split, so the candidate trained on it never reads them, and the next cycle freezes its
 confirmation collection from them. A reserve is never scored: `release/collection.ts` refuses one.

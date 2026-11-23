@@ -24,9 +24,13 @@
  *   `--reserve-groups-per-country <n>` draws a forward reserve instead of a held-out
  *   sample (`heldout/dataset/reserve`): `n` groups per country and row kind from the
  *   corpus's train rows, recorded under the collection kind `reserve`.
+ *   `--reserve-spec <spec .json>` names the countries it draws from: the specification's
+ *   objective countries and country requirements, the countries a release reads.
+ *
  *   `--per-country` and `--path-root` don't apply to it, and `--dry-run` refuses it.
  */
 
+import { countriesDeclaredBy, type CountrySet } from "@mailwoman/codex/country/sets"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -35,6 +39,7 @@ import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { readHeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-harness/heldout/dataset/manifest"
 import { sampleReserveRows } from "#tools/eval-harness/heldout/dataset/reserve"
 import { sampleHeldoutRows } from "#tools/eval-harness/heldout/per/country"
+import type { ReleaseRequirementSpec } from "#tools/eval-harness/release/requirements"
 import { describeRequiredGroupSkip, readRequiredTrainingGroups } from "#tools/training/audits/required-groups"
 import { loadTrainingConfig } from "#tools/training/config"
 
@@ -91,6 +96,11 @@ const { values } = parseArguments({
 			type: "string",
 			description: "Draw a forward reserve of this many train-pool groups per country and row kind instead",
 		},
+		"reserve-spec": {
+			type: "string",
+			description:
+				"The release-requirement specification whose objective and country requirements name the countries a reserve draws from",
+		},
 	},
 })
 
@@ -109,6 +119,28 @@ if (!values.manifest || (!dryRun && (!values["dataset-id"] || !values.out))) {
 }
 
 if (dryRun && reserve) throw new Error("--dry-run reads a held-out pool's counts; a reserve draw has no dry run")
+
+if (reserve && !values["reserve-spec"]) {
+	throw new Error("--reserve-groups-per-country needs --reserve-spec, which names the countries a release reads")
+}
+
+/**
+ * The countries a release reads under a specification: its objective's and its country requirements'.
+ *
+ * The file is read as JSON rather than through the specification reader.
+ * A reserve is drawn while the next role's pins are still placeholders,
+ * and the reader refuses a placeholder.
+ */
+async function releaseCountries(path: string): Promise<CountrySet> {
+	const spec = await readLocalJSONFile<Pick<ReleaseRequirementSpec, "objective" | "requirements">>(path)
+
+	const codes = new Set([
+		...spec.objective.countries,
+		...spec.requirements.flatMap((requirement) => (requirement.kind === "country" ? [requirement.country] : [])),
+	])
+
+	return countriesDeclaredBy(`${path} objective and country requirements`, codes)
+}
 
 const listedPaths = (value: string | undefined) =>
 	(value ?? "")
@@ -142,6 +174,7 @@ const sample = reserve
 	? await sampleReserveRows({
 			manifest: values.manifest,
 			groupsPerCountry: Number(reserve),
+			countries: await releaseCountries(values["reserve-spec"]!),
 			seed,
 			limits: duckDBLimits,
 			exclusions,
