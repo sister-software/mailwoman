@@ -16,8 +16,8 @@ import type { PathBuilderLike } from "path-ts"
 import { houseVenueTuplesPath } from "#recipes/house/venue/tuples"
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
-import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
-import { addressGroups, type Group, type Register, renderGroups, sampleRegister } from "#recipes/sub/venue/render"
+import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub-venue/context"
+import { addressGroups, type Group, type Register, renderGroups, sampleRegister } from "#recipes/sub-venue/render"
 import {
 	buildIdentifierModel,
 	defaultLexiconPath,
@@ -34,7 +34,7 @@ import {
 	readSubVenueLexicon,
 	rejectedPhrasesFor,
 	sampleIdentifier,
-} from "#recipes/sub/venue/sources"
+} from "#recipes/sub-venue/sources"
 import { DEFAULT_VENUE_NAMES } from "#recipes/venue"
 import type { SubVenueLexiconTable } from "#subvenue/table"
 import type { LocaleBaseTuple } from "#surfaces/locale"
