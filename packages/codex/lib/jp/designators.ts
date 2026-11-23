@@ -19,8 +19,8 @@
  * @see {@link https://en.wiktionary.org/wiki/私 Wiktionary 私}
  */
 
-import { JA_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorRow, type PostalDesignatorTable } from "#postal/designator"
+import { designatorRowsFromLevels, type PostalDesignatorRow, type PostalDesignatorTable } from "#designators/concepts"
+import { JA_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 import { JP_BLOCK_MARKERS } from "./address-unit.ts"
 

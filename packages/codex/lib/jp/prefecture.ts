@@ -29,7 +29,7 @@
  *   See `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 
-import { foldToken } from "#normalize"
+import { foldToken } from "#names/normalize"
 
 /**
  * A to/dō/fu/ken classification of the top-level admin unit.

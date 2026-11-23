@@ -6,7 +6,7 @@
  *   never a namesake county in another region, and never when the region holds a locality of that name.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"

@@ -11,7 +11,7 @@
  *   so they keep its identifiers `token-classify` and `resolve`.
  */
 
-import { placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
+import { placetypeMapForCountry } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import {
 	type InputMode,

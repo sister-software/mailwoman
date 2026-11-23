@@ -25,7 +25,7 @@
  */
 
 import { FR_VOIE_TYPES, type FrenchVoieType, isFrenchStreetWord } from "@mailwoman/codex/fr/voie"
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 
 import { decomposeFrStreet } from "#fr/street-decompose"
 

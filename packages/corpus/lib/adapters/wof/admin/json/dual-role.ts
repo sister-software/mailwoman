@@ -15,7 +15,7 @@
  *   region's bounding-box diagonal, or within 12 km.
  */
 
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

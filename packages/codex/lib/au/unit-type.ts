@@ -16,7 +16,7 @@
  */
 
 import { AU_HINTS_AND_TIPS_CITATION } from "#au/delivery/guideline"
-import type { PostalUnitGuidelineRule } from "#postal/guideline"
+import type { PostalUnitGuidelineRule } from "#designators/guideline"
 
 const SUB_UNIT_SECTION = "Undertaking analysis of unmatched addresses, Sub-unit (Flat/Unit Type)"
 

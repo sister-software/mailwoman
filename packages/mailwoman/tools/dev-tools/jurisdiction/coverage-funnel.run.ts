@@ -13,7 +13,7 @@
  *     node packages/mailwoman/tools/dev-tools/jurisdiction/coverage-funnel.run.ts [--config <path>] [--mixture-audit <path>] [--rows] [--out-json <path>]
  */
 
-import { POSTAL_REGIMES } from "@mailwoman/codex/postal/regimes"
+import { POSTAL_REGIMES } from "@mailwoman/codex/country/postal-regimes"
 import { SUPPORT_PROMISES } from "@mailwoman/codex/support"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

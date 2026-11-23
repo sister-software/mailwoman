@@ -14,7 +14,7 @@
  * @see {@link https://en.wiktionary.org/wiki/بجانب Wiktionary: بجانب}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#designators/concepts"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 

@@ -30,7 +30,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
-import { streetSpanConventionFor } from "@mailwoman/codex/street/convention"
+import { streetSpanConventionFor } from "@mailwoman/codex/labels/street/convention"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 

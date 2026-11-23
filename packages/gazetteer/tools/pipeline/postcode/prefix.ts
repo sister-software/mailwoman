@@ -19,7 +19,7 @@
  */
 
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
-import { postcodePrefixAt, type PostcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
+import { postcodePrefixAt, type PostcodePrefixLevel } from "@mailwoman/codex/labels/postcode/prefix"
 import { isZipCode } from "@mailwoman/codex/us"
 import { percentile } from "@mailwoman/core/math/stats"
 import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/core/resolver"

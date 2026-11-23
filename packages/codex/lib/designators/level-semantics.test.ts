@@ -8,7 +8,7 @@ import {
 	LEVEL_DESIGNATORS_BY_FAMILY,
 	levelToOrdinal,
 	lookupLevelDesignator,
-} from "#level-semantics"
+} from "#designators/level-semantics"
 
 describe("LEVEL_DESIGNATORS_BY_FAMILY — table integrity", () => {
 	it("every row has a non-empty code and name", () => {

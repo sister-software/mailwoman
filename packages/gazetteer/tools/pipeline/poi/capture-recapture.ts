@@ -8,7 +8,7 @@
  *   When the two sources tend to capture the same places, the estimate overstates completeness.
  */
 
-import { foldName } from "@mailwoman/codex/normalize"
+import { foldName } from "@mailwoman/codex/names/normalize"
 import { nameSimilarity } from "@mailwoman/match/comparators"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 

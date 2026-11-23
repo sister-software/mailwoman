@@ -31,7 +31,10 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { numbersHousesInSettlements, SETTLEMENT_HOUSE_NUMBER_PARENTS } from "@mailwoman/codex/settlement-house-numbers"
+import {
+	numbersHousesInSettlements,
+	SETTLEMENT_HOUSE_NUMBER_PARENTS,
+} from "@mailwoman/codex/labels/house-number/settlement"
 
 import type { AddressSystem } from "#decoder/types"
 

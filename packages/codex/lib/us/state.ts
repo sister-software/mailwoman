@@ -15,7 +15,7 @@
  *   and France in its own header — so this module includes the name→abbreviation direction too.
  */
 
-import { foldName } from "#normalize"
+import { foldName } from "#names/normalize"
 
 /**
  * USPS two-letter abbreviations: the 50 states, the District of Columbia and the five primary

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
+import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 

@@ -17,7 +17,7 @@
  */
 
 import { AU_DELIVERY_SERVICE_DESIGNATORS, type AuDeliveryServiceAbbreviation } from "#au/delivery/service"
-import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal/guideline"
+import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#designators/guideline"
 
 const CORRECT_ADDRESSING = {
 	document: "Correct addressing",

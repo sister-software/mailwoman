@@ -22,7 +22,7 @@
  * @see {@link https://en.wiktionary.org/wiki/next_to Wiktionary, next to}
  */
 
-import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
+import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#designators/concepts"
 import { US_FLOOR_DESIGNATORS } from "#us/floor-designator"
 import { US_PO_BOX_DESIGNATORS } from "#us/po-box"
 import {

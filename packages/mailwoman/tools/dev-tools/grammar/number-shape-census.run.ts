@@ -12,8 +12,8 @@
  *   It reads `postcode`.
  * - `range`: the value is two numbers joined by a hyphen or dash, as in `4-5` and `18 - 20`.
  *   It reads `house_number`.
- * - `unit-shape`: a row of `@mailwoman/codex/unit-shapes`, such as Singapore's
- *   `#09-71`, matches the whole value.
+ * - `unit-shape`: a row of `@mailwoman/codex/labels/unit/shapes`, such as
+ *   Singapore's `#09-71`, matches the whole value.
  *   It reads `unit`.
  *
  * A firing is explained when the expected component has the tag the detector reads,
@@ -27,7 +27,7 @@
  * This command changes no runtime behavior and isn't a release eval.
  */
 
-import { UNIT_SHAPES } from "@mailwoman/codex/unit-shapes"
+import { UNIT_SHAPES } from "@mailwoman/codex/labels/unit/shapes"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"

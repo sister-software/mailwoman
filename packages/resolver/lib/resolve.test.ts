@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"

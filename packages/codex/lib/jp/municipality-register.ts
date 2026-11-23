@@ -17,7 +17,7 @@
  *   The other four are listed so an early close inside them is also repaired.
  */
 
-import { completeFromRegister } from "#register-completion"
+import { completeFromRegister } from "#names/register-completion"
 
 /**
  * One town from Japan Post's KEN_ALL municipality list whose own name contains 市.

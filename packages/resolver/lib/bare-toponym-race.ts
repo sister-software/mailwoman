@@ -13,7 +13,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
+import type { PlacetypeMap } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { loneValueNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"

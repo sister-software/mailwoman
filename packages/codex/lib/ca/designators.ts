@@ -24,13 +24,13 @@
  * @see {@link https://en.wiktionary.org/wiki/penthouse Wiktionary, penthouse (translations)}
  */
 
-import { EN_LEVEL_DESIGNATORS, FR_LEVEL_DESIGNATORS, type LevelDesignatorRow } from "#level-semantics"
 import {
 	designatorRowsFromLevels,
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { EN_LEVEL_DESIGNATORS, FR_LEVEL_DESIGNATORS, type LevelDesignatorRow } from "#designators/level-semantics"
 
 const EN_GUIDELINES = "https://www.canadapost-postescanada.ca/cpc/doc/en/support/addressing-guidelines.pdf"
 const FR_GUIDELINES = "https://www.canadapost-postescanada.ca/scp/doc/fr/soutien/directives-dadressage.pdf"

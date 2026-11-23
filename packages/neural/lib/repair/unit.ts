@@ -12,7 +12,7 @@
  *   Opt-in through `ParseOpts.unitRepair`.
  */
 
-import { UNIT_SHAPES } from "@mailwoman/codex/unit-shapes"
+import { UNIT_SHAPES } from "@mailwoman/codex/labels/unit/shapes"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {

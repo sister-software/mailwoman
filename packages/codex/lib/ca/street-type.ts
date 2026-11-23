@@ -23,7 +23,7 @@
  *   {@link CA_DIRECTIONALS} spells out the French abbreviations so `O` = Ouest = West is recognized.
  */
 
-import { foldToken } from "#normalize"
+import { foldToken } from "#names/normalize"
 
 /**
  * English Canadian street-type words (Canada Post's recognized set, lowercase).

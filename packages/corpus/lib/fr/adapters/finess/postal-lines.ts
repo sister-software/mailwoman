@@ -12,7 +12,7 @@
  */
 
 import { matchCedex } from "@mailwoman/codex/fr/cedex"
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 
 /**
  * A routing line split into the components the French address layout prints on its last line.

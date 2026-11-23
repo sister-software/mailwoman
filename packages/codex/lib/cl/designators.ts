@@ -24,13 +24,13 @@
  * @see {@link https://en.wiktionary.org/wiki/m%C3%AD Wiktionary, mí}
  */
 
-import { ES_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	designatorRowsFromLevels,
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { ES_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/chlEn.pdf"
 

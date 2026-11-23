@@ -96,7 +96,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 import { JSONSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"

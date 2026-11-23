@@ -16,18 +16,18 @@ export {
 	type AddressSystemConventions,
 } from "#address/system/conventions"
 
-export * from "#abbreviations"
+export * from "#labels/street/abbreviations"
 export * from "#component"
-export * from "#normalize"
-export * from "#placetype-map"
-export * from "#postal/guideline"
+export * from "#names/normalize"
+export * from "#labels/placetype-map"
+export * from "#designators/guideline"
 export * as au from "#au"
 export * as ca from "#ca"
 export * as de from "#de"
 export * as fr from "#fr"
 export * as gb from "#gb"
 export * as jp from "#jp"
-export * as levels from "#level-semantics"
+export * as levels from "#designators/level-semantics"
 export * as nz from "#nz"
 
 export type { SystemCode } from "#address/system/code"

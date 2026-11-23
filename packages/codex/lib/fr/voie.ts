@@ -15,7 +15,7 @@
  *   which is why {@link isFrenchStreetWord} matches a whole token rather than a suffix.
  */
 
-import { foldToken } from "#normalize"
+import { foldToken } from "#names/normalize"
 
 /**
  * Canonical French voie type → common written abbreviations.

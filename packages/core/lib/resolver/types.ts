@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
+import type { PlacetypeMap } from "@mailwoman/codex/labels/placetype-map"
 
 import type { AddressTree } from "#decoder/types"
 import type { GazetteerArtifactCoverage } from "#resolver/coverage-facts"
@@ -689,7 +689,7 @@ export interface ResolveOpts {
 	 * Looks a `locality` span up as a WOF `county` in its resolved region
 	 * when no locality of that name is there and the value is written with
 	 * its country's county designator (`Harris County`, `Jefferson Parish`),
-	 * from `countyNameWithoutDesignator` in `@mailwoman/codex/county-designators`.
+	 * from `countyNameWithoutDesignator` in `@mailwoman/codex/designators/county`.
 	 *
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */

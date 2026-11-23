@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal/guideline"
+import { assertPostalGuidelineCitation } from "@mailwoman/codex/designators/guideline"
 import { US_UNIT_DESIGNATOR_VARIANTS, US_UNIT_GUIDELINE_RULES } from "@mailwoman/codex/us"
 import { beforeAll, describe, expect, it } from "vitest"
 
