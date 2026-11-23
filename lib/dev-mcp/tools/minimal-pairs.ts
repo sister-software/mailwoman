@@ -4,9 +4,9 @@
 import { z } from "zod"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { runMinimalPairs, type Ladder } from "#dev-mcp/minimal-pairs"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/tool-kit"
+import { runMinimalPairs, type Ladder } from "#dev-mcp/measure/minimal-pairs"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 const RUNGS_SCHEMA = z
 	.array(z.string())

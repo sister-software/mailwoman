@@ -11,8 +11,8 @@
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
-import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "#dev-mcp/source-census"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "#dev-mcp/holdings/source-census"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * Render one row as a line a reader can act on without re-querying.

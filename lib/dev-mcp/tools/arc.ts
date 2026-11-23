@@ -7,9 +7,9 @@
 
 import { z } from "zod"
 
-import { renderArc, runArc, summarizeArc } from "#dev-mcp/arc"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import { renderArc, runArc, summarizeArc } from "#dev-mcp/measure/arc"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_arc",

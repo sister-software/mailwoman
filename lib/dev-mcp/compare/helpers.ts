@@ -7,12 +7,12 @@
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
+import type { ExternalAnswer } from "#dev-mcp/arms/external-arm"
 import type { GradeRequest } from "#dev-mcp/compare"
-import type { ConfoundReading } from "#dev-mcp/confound"
-import type { ExternalAnswer } from "#dev-mcp/external-arm"
-import { DISTANCE_THRESHOLDS_KM, hitAt } from "#dev-mcp/geo-grade"
-import type { RecordedAnswer } from "#dev-mcp/run-store"
-import { assertStratumKey, type ComparedRow, type StratumKey } from "#dev-mcp/tool-kit"
+import type { ConfoundReading } from "#dev-mcp/compare/confound"
+import { DISTANCE_THRESHOLDS_KM, hitAt } from "#dev-mcp/grading/geo-grade"
+import { assertStratumKey, type ComparedRow, type StratumKey } from "#dev-mcp/result/tool-kit"
+import type { RecordedAnswer } from "#dev-mcp/runs/run-store"
 
 /**
  * One row of a cross-engine comparison.

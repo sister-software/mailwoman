@@ -30,7 +30,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { COMPONENT_TO_LIBPOSTAL, toLibpostalComponents, treeToParseMatches } from "@mailwoman/libpostal"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 
-import { assertScorableEndpoint, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS } from "#dev-mcp/external-arm"
+import { assertScorableEndpoint, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS } from "#dev-mcp/arms/external-arm"
 
 const PARSE_TIMEOUT_MS = 15_000
 

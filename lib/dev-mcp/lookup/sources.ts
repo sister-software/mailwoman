@@ -18,7 +18,7 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/sch
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { LookupRow } from "#dev-mcp/lookup"
-import { type PlaceIDProvenance, placeIDProvenance } from "#dev-mcp/place-id-provenance"
+import { type PlaceIDProvenance, placeIDProvenance } from "#dev-mcp/lookup/place-id-provenance"
 
 /**
  * Each probe reports the total match count separately.

@@ -21,8 +21,8 @@ import {
 import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import type { PathBuilderLike } from "path-ts"
 
-import { missingWeightsCacheArtifacts } from "#dev-mcp/eval-report"
-import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
+import { missingWeightsCacheArtifacts } from "#dev-mcp/runs/eval-report"
 
 /**
  * The engine configuration in CLI snake_case keys.

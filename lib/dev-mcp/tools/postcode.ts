@@ -3,8 +3,8 @@
 
 import { z } from "zod"
 
-import { lookupPostcodeRegions } from "#dev-mcp/postcode"
-import type { DevTool } from "#dev-mcp/tool-kit"
+import { lookupPostcodeRegions } from "#dev-mcp/lookup/postcode"
+import type { DevTool } from "#dev-mcp/result/tool-kit"
 
 const INPUT = z.object({
 	postcode: z.string().trim().min(1).max(64).describe("A complete postcode, preserving leading zeroes."),

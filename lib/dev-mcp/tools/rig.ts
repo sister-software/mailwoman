@@ -4,7 +4,7 @@
 import { z } from "zod"
 
 import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName } from "#dev-mcp/engine/rigs"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * Defines the `mwdev_rig` tool.

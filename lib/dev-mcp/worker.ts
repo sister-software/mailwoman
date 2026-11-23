@@ -15,7 +15,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import { EngineRegistry } from "#dev-mcp/engine/registry"
-import { JobRegistry } from "#dev-mcp/jobs"
+import { JobRegistry } from "#dev-mcp/process/jobs"
 import { buildToolTable, type DevTool } from "#dev-mcp/tools"
 
 interface HandshakeMessage {

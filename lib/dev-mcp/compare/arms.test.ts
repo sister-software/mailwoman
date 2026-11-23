@@ -12,10 +12,10 @@ import { createPostalAddressID } from "@mailwoman/address-id"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "#dev-mcp/arms/oracle-arm"
 import { runCompare } from "#dev-mcp/compare"
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "#dev-mcp/oracle-arm"
-import { listRuns } from "#dev-mcp/run-store"
+import { listRuns } from "#dev-mcp/runs/run-store"
 import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 const RUN_STORE = await temporaryDirectory("mwdev-arms-runs-")

@@ -27,7 +27,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { FINGERPRINTED_WORKSPACES } from "#dev-mcp/tree-fingerprint"
+import { FINGERPRINTED_WORKSPACES } from "#dev-mcp/process/tree-fingerprint"
 
 /**
  * The `ref` value that selects the current working tree, including uncommitted edits.

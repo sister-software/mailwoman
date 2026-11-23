@@ -11,8 +11,8 @@ import { z } from "zod"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
 import { LookupSource } from "#dev-mcp/lookup"
 import { runLookup } from "#dev-mcp/lookup/tool"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const lookupTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_lookup",

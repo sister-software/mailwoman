@@ -4,10 +4,10 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
+import type { RoutedMailwomanArm } from "#dev-mcp/arms/routed-mailwoman-arm"
 import { runCompare } from "#dev-mcp/compare"
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import type { ResolvedInput } from "#dev-mcp/input-sets"
-import type { RoutedMailwomanArm } from "#dev-mcp/routed-mailwoman-arm"
+import type { ResolvedInput } from "#dev-mcp/runs/input-sets"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 const RUN_STORE = await temporaryDirectory("mwdev-routed-compare-")

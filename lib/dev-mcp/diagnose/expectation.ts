@@ -11,8 +11,8 @@ import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"
 
-import { caseCarriesTruth, seedToCaseTable } from "#dev-mcp/grade"
-import type { ResolvedInput } from "#dev-mcp/input-sets"
+import { caseCarriesTruth, seedToCaseTable } from "#dev-mcp/grading/grade"
+import type { ResolvedInput } from "#dev-mcp/runs/input-sets"
 
 /**
  * How the row was graded and the basis for that grade.

@@ -9,8 +9,8 @@
 
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { runVocabulary } from "#dev-mcp/vocabulary"
+import { runVocabulary } from "#dev-mcp/measure/vocabulary"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 export const vocabTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_vocab",

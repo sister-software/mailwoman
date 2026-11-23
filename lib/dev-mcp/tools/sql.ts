@@ -29,7 +29,7 @@ import { DatabaseClient, type SQLInputValue, type StatementSync } from "@mailwom
 import { isAbsolute, relative, resolvePath } from "path-ts"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 1000

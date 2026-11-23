@@ -13,14 +13,14 @@ export {
 	CONCURRENCY_NOTE,
 	type BenchReading,
 	type LatencyReading,
-} from "#dev-mcp/bench"
+} from "#dev-mcp/measure/bench"
 
 export { checkCLIAllowlist, type AllowlistVerdict } from "#dev-mcp/cli/allowlist"
 
 // `CompiledFreshness` is declared by `@mailwoman/core/module/compiled-freshness`
 // and a consumer imports it from there: one public home per declaration,
 // so a reader can tell from the specifier which package owns the type.
-export { assertCompiledFresh, checkSpawnedTreeFreshness } from "#dev-mcp/compiled-tree"
+export { assertCompiledFresh, checkSpawnedTreeFreshness } from "#dev-mcp/process/compiled-tree"
 
 export {
 	lookupFST,
@@ -37,11 +37,17 @@ export {
 	LEDGER_NOTE,
 	type EvalReport,
 	type FloorReading,
-} from "#dev-mcp/eval-report"
+} from "#dev-mcp/runs/eval-report"
 
-export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#dev-mcp/gauntlet-report"
-export { JobRegistry, type Job, type JobSummary, type JobState } from "#dev-mcp/jobs"
-export { checkConfounds, VariableIsolation, assertComparableField, type ConfoundReading } from "#dev-mcp/confound"
+export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#dev-mcp/runs/gauntlet-report"
+export { JobRegistry, type Job, type JobSummary, type JobState } from "#dev-mcp/process/jobs"
+
+export {
+	checkConfounds,
+	VariableIsolation,
+	assertComparableField,
+	type ConfoundReading,
+} from "#dev-mcp/compare/confound"
 
 export {
 	aggregateByShape,
@@ -63,11 +69,11 @@ export {
 	COUNTERFACTUAL_SETTINGS,
 	type CounterfactualSetting,
 	type RowCounterfactuals,
-} from "#dev-mcp/counterfactual"
+} from "#dev-mcp/diagnose/counterfactual"
 
-export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "#dev-mcp/grade"
-export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "#dev-mcp/input-sets"
-export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "#dev-mcp/power"
-export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/tree-fingerprint"
+export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "#dev-mcp/grading/grade"
+export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "#dev-mcp/runs/input-sets"
+export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "#dev-mcp/result/power"
+export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
 export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "#dev-mcp/tools"
 export { createDevMCPServer } from "#dev-mcp/server"

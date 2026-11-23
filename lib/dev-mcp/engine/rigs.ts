@@ -13,7 +13,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { runFile } from "@mailwoman/core/scripting/process"
 import { TextSpliterator } from "spliterator"
 
-import { assertScorableEndpoint } from "#dev-mcp/external-arm"
+import { assertScorableEndpoint } from "#dev-mcp/arms/external-arm"
 
 /**
  * Delay between requests, matching the comparison client.

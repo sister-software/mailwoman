@@ -5,7 +5,7 @@ import type { GeocodeSession } from "mailwoman/geocode"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { EngineRegistry } from "#dev-mcp/engine/registry"
-import type { TreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import type { TreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
 
 const FINGERPRINT: TreeFingerprint = {
 	digest: "tree0",

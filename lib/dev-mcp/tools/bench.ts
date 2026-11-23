@@ -8,11 +8,11 @@
 
 import { z } from "zod"
 
-import { assembleBench, summarizeLatency } from "#dev-mcp/bench"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "#dev-mcp/tool-kit"
+import { assembleBench, summarizeLatency } from "#dev-mcp/measure/bench"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_bench",

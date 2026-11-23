@@ -24,7 +24,7 @@ import { resolvePath } from "path-ts"
 import type { ParsedCheckOutput } from "#check-kit/parsed"
 import { parseVitestReport, parseVitestText } from "#check-kit/parsers/vitest"
 import { type CheckCommand, CheckReader } from "#check-kit/registry"
-import { computeTreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import { computeTreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
 
 /**
  * The directory a check's log goes to when no `--log-dir` is given.

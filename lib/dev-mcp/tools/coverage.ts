@@ -20,7 +20,7 @@ import {
 } from "mailwoman/tools/coverage"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * Format one country's parse and geocoding coverage separately.

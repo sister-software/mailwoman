@@ -28,6 +28,25 @@ import {
 	type ArmRunner,
 	type RecordedArm,
 } from "#dev-mcp/arms"
+import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "#dev-mcp/arms/external-arm"
+import { prepareMailwomanArms } from "#dev-mcp/arms/mailwoman-comparison-arms"
+import {
+	answerFromOracle,
+	createOracleClient,
+	OracleMeter,
+	type OracleArmIdentity,
+	type OracleGeocoderLike,
+	ORACLE_GRADE_MODE,
+	ORACLE_VERDICT_NOTE,
+	OracleProviderName,
+} from "#dev-mcp/arms/oracle-arm"
+import {
+	artifactSetWarnings,
+	crossEngineReading,
+	VariableIsolation,
+	worktreePairReading,
+	worktreeTreeDelta,
+} from "#dev-mcp/compare/confound"
 import {
 	armsDiffered,
 	tierDiffered,
@@ -39,15 +58,7 @@ import {
 	resolveGradeMode,
 	withheldVerdict,
 } from "#dev-mcp/compare/helpers"
-import {
-	artifactSetWarnings,
-	crossEngineReading,
-	VariableIsolation,
-	worktreePairReading,
-	worktreeTreeDelta,
-} from "#dev-mcp/confound"
 import type { Engine, EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "#dev-mcp/external-arm"
 import {
 	DISTANCE_THRESHOLDS_KM,
 	distanceKm,
@@ -56,21 +67,19 @@ import {
 	thresholdKey,
 	thresholdTable,
 	tostEquivalence,
-} from "#dev-mcp/geo-grade"
-import { gradeRow, significance } from "#dev-mcp/grade"
-import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "#dev-mcp/input-sets"
-import { prepareMailwomanArms } from "#dev-mcp/mailwoman-comparison-arms"
+} from "#dev-mcp/grading/geo-grade"
+import { gradeRow, significance } from "#dev-mcp/grading/grade"
+import { describeObservedRate } from "#dev-mcp/result/power"
 import {
-	answerFromOracle,
-	createOracleClient,
-	OracleMeter,
-	type OracleArmIdentity,
-	type OracleGeocoderLike,
-	ORACLE_GRADE_MODE,
-	ORACLE_VERDICT_NOTE,
-	OracleProviderName,
-} from "#dev-mcp/oracle-arm"
-import { describeObservedRate } from "#dev-mcp/power"
+	bucketRows,
+	type ComparedRow,
+	firingSignals,
+	inputSetProvenance,
+	provenanceFor,
+	stratify,
+	type StratumKey,
+} from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "#dev-mcp/runs/input-sets"
 import {
 	getRun,
 	replayIndex,
@@ -80,16 +89,7 @@ import {
 	tryPutRun,
 	type StoredRun,
 	type RecordedAnswer,
-} from "#dev-mcp/run-store"
-import {
-	bucketRows,
-	type ComparedRow,
-	firingSignals,
-	inputSetProvenance,
-	provenanceFor,
-	stratify,
-	type StratumKey,
-} from "#dev-mcp/tool-kit"
+} from "#dev-mcp/runs/run-store"
 import { worktreeArmRunner } from "#dev-mcp/worktree/runner"
 
 /**

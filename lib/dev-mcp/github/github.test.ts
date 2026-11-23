@@ -18,7 +18,7 @@ import {
 	type RunGitHub,
 } from "#dev-mcp/github"
 import { trackedCIMarkerPath } from "#dev-mcp/hooks/ci-completion"
-import { JobRegistry, type Job } from "#dev-mcp/jobs"
+import { JobRegistry, type Job } from "#dev-mcp/process/jobs"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { githubTools } from "#dev-mcp/tools"
 
