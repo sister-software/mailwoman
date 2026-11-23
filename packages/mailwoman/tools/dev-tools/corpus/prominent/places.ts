@@ -29,10 +29,12 @@ import {
 	REFERENTIAL_POPULATION_DIVISOR,
 	referentialFromPopulation,
 } from "@mailwoman/core/resolver"
+import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { PLACE_BANDS, type PlaceBand } from "@mailwoman/corpus/recipes/prominent/places"
 import type { CorpusDeletion } from "@mailwoman/corpus/tools/overlay/deletions"
-import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { foldSurfaceSQL, stageTrainRows, type TrainManifestFile } from "@mailwoman/corpus/tools/support-index"
 import { isPostalLocalityPair, readPostalPoints } from "@mailwoman/gazetteer/tools/pipeline/pair/postal-children"
 import { normalizeFSTToken } from "@mailwoman/neural/prior/fst"
@@ -697,6 +699,11 @@ export const SHORT_ADMIN_MAX_SPANS = 3
 export interface ShortAdminScanOptions {
 	manifest: string
 	out: string
+	/**
+	 * Keeps each row's group as column `g` (`recordIDOf(base_source_id ?? source_id)`),
+	 * for a reader that needs which groups write a surface.
+	 */
+	groups?: boolean
 	limitFiles?: number
 	limits?: DuckDBLimits
 	log?: (line: string) => void
@@ -730,16 +737,27 @@ export async function scanShortAdminRows(options: ShortAdminScanOptions): Promis
 
 	await db.run("CREATE TEMP TABLE excluded_ids (id VARCHAR)")
 
+	const keys = options.groups ? "country, source, shape, s1, s2, s3, g" : "country, source, shape, s1, s2, s3"
+
 	await db.run(
-		"CREATE TEMP TABLE agg (country VARCHAR, source VARCHAR, shape VARCHAR, s1 VARCHAR, s2 VARCHAR, s3 VARCHAR, n BIGINT)"
+		"CREATE TEMP TABLE agg (country VARCHAR, source VARCHAR, shape VARCHAR, s1 VARCHAR, s2 VARCHAR, s3 VARCHAR, " +
+			`${options.groups ? "g VARCHAR, " : ""}n BIGINT)`
 	)
 
 	const tagList = SHORT_ADMIN_TAGS.map(quoted).join(", ")
 	const surface = (i: number) => `substr(raw, span_starts[${i}] + 1, span_ends[${i}] - span_starts[${i}])`
 
-	const projection =
+	const surfaces =
 		"country, source, array_to_string(span_tags, '|') AS shape, " +
 		[1, 2, 3].map((i) => `CASE WHEN len(span_tags) >= ${i} THEN ${foldSurfaceSQL(surface(i))} END AS s${i}`).join(", ")
+
+	// A row's group is its `base_source_id`, else its own `source_id`, each read up to the last `#`.
+	const groupColumn = async (file: TrainManifestFile) => {
+		const columns = await parquetColumnNames(localManifestFilePath(file.path))
+		const base = columns.includes("base_source_id") ? "CAST(base_source_id AS VARCHAR)" : "CAST(NULL AS VARCHAR)"
+
+		return `, ${recordIDSQL(`coalesce(${base}, CAST(source_id AS VARCHAR))`)} AS g`
+	}
 
 	const rowFilter = `len(span_tags) BETWEEN 1 AND ${SHORT_ADMIN_MAX_SPANS} AND list_has_all([${tagList}], span_tags)`
 
@@ -755,7 +773,7 @@ export async function scanShortAdminRows(options: ShortAdminScanOptions): Promis
 			options.manifest,
 			file,
 			manifest.deletions ?? [],
-			projection,
+			surfaces + (options.groups && file.split !== "val" && file.split !== "test" ? await groupColumn(file) : ""),
 			options.limits,
 			rowFilter
 		)
@@ -770,13 +788,11 @@ export async function scanShortAdminRows(options: ShortAdminScanOptions): Promis
 		rows += staged
 
 		if (staged) {
-			await db.run("INSERT INTO agg SELECT country, source, shape, s1, s2, s3, count(*) FROM r GROUP BY ALL")
+			await db.run(`INSERT INTO agg SELECT ${keys}, count(*) FROM r GROUP BY ALL`)
 		}
 
 		if (filesRead % 50 === 0) {
-			await db.run(
-				"CREATE TEMP TABLE agg_merged AS SELECT country, source, shape, s1, s2, s3, sum(n)::BIGINT AS n FROM agg GROUP BY ALL"
-			)
+			await db.run(`CREATE TEMP TABLE agg_merged AS SELECT ${keys}, sum(n)::BIGINT AS n FROM agg GROUP BY ALL`)
 
 			await db.run("DROP TABLE agg")
 			await db.run("ALTER TABLE agg_merged RENAME TO agg")
@@ -789,8 +805,8 @@ export async function scanShortAdminRows(options: ShortAdminScanOptions): Promis
 	}
 
 	await db.run(
-		"COPY (SELECT country, source, shape, s1, s2, s3, sum(n)::BIGINT AS rows FROM agg GROUP BY ALL " +
-			`ORDER BY country, shape, s1, s2, s3, source) TO ${quoted(`${options.out}/short-admin-rows.parquet`)} (FORMAT PARQUET)`
+		`COPY (SELECT ${keys}, sum(n)::BIGINT AS rows FROM agg GROUP BY ALL ` +
+			`ORDER BY country, shape, s1, s2, s3, source${options.groups ? ", g" : ""}) TO ${quoted(`${options.out}/short-admin-rows.parquet`)} (FORMAT PARQUET)`
 	)
 
 	return {

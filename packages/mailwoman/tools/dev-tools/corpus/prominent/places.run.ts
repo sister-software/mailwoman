@@ -46,6 +46,7 @@ import {
 import { drawGeocodeInputs, gradeGeocodes, renderProminenceReport } from "#tools/dev-tools/corpus/prominent/probe"
 import { writeProminentTuples } from "#tools/dev-tools/corpus/prominent/tuples"
 import { readEpochMeasure } from "#tools/training/audits/prominent/coverage"
+import { readHeldOutByDesign } from "#tools/training/audits/prominent/records"
 import { loadTrainingConfig } from "#tools/training/config"
 
 const { values, positionals } = parseArguments({
@@ -133,7 +134,10 @@ if (command === "places") {
 		limits,
 	})
 
-	console.log(stringifyJSON(await writeProminentTuples({ out, epoch, limits })))
+	// The places the base corpus holds out by design, so the cells take the receipt's targets.
+	const heldOut = await readHeldOutByDesign(scan.manifest, limits, log)
+
+	console.log(stringifyJSON(await writeProminentTuples({ out, epoch, heldOut: heldOut.records, limits })))
 } else {
 	throw new Error("expected one of places, scan, coverage, report, inputs, grade, tuples")
 }

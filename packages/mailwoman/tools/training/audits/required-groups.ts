@@ -19,15 +19,25 @@
  *   and report what they skipped by country with {@linkcode describeRequiredGroupSkip}.
  *
  *   The prominent-place receipt's groups are read by WOF record ({@linkcode prominentPlaceRecordSQL}).
- *   A row of another source that writes the place keeps its own group,
- *   and a draw can still take that group.
+ *   A row of another record or source that writes the place keeps its own group.
+ *   {@linkcode withRequiredFormGroups} adds those groups from a corpus's train rows, by the receipt's
+ *   own match, so the reserve draw (`freeze.run.ts --reserve-groups-per-country`) skips them too.
  */
 
-import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { allKeyed } from "@mailwoman/core/promises"
+import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { RequiredGroupReceipt, RequiredGroupSkip } from "@mailwoman/corpus/utils/evaluation-groups"
+import { PathBuilder } from "path-ts"
 
-import { readRequiredProminentPlaces } from "#tools/training/audits/prominent/coverage"
+import {
+	createProminentCoverageTables,
+	epochRates,
+	readEpochMeasure,
+	readRequiredFormGroups,
+	readRequiredProminentPlaces,
+} from "#tools/training/audits/prominent/coverage"
 import { prominentPlaceRecordSQL } from "#tools/training/audits/prominent/records"
 import { hostPath } from "#tools/training/sampler"
 
@@ -40,6 +50,12 @@ export interface RequiredTrainingGroups {
 	 * Each required WOF record and its country.
 	 */
 	records: ReadonlyMap<number, string>
+	/**
+	 * Groups of another record or source whose train rows write a required form, by the
+	 * receipt's match, with the country of the form, from {@linkcode withRequiredFormGroups}.
+	 * `null` when no corpus was read for them.
+	 */
+	formGroups: ReadonlyMap<string, string> | null
 }
 
 /**
@@ -55,7 +71,7 @@ export async function readRequiredTrainingGroups(
 ): Promise<RequiredTrainingGroups> {
 	const places = config.data.prominent_place_coverage
 
-	if (!places) return { receipts: [], records: new Map() }
+	if (!places) return { receipts: [], records: new Map(), formGroups: null }
 
 	const read = await readRequiredProminentPlaces(hostPath(places), config.data.country_weights, limits)
 
@@ -66,10 +82,70 @@ export async function readRequiredTrainingGroups(
 				places,
 				places_sha256: read.record.places_sha256,
 				required_places: read.places.length,
+				writable_places: read.writable.length,
 			},
 		],
-		records: new Map(read.places.map((place) => [place.spr_id, place.country])),
+		// A required place's groups, and a writable decile-1 place's.
+		// The recipe's rows for the latter close a demand cell.
+		records: new Map([...read.places, ...read.writable].map((place) => [place.spr_id, place.country])),
+		formGroups: null,
 	}
+}
+
+/**
+ * Adds to `required` every group of `manifest`'s train rows that writes a required form
+ * by the prominent-place receipt's own match ({@linkcode readRequiredFormGroups}):
+ * a namesake record's `wof-admin` group or another source's group can be the only train
+ * rows of a place's form, and a draw that takes it fails the receipt.
+ *
+ * It scans the corpus's short admin train rows with their groups and builds the
+ * receipt's tables over `config`'s epoch on that corpus.
+ *
+ * A config that declares no receipt adds no group.
+ */
+export async function withRequiredFormGroups(
+	required: RequiredTrainingGroups,
+	config: TrainingConfig,
+	manifest: string,
+	options: { limits?: DuckDBLimits; log?: (line: string) => void } = {}
+): Promise<RequiredTrainingGroups> {
+	const places = config.data.prominent_place_coverage
+
+	if (!places) return { ...required, formGroups: new Map() }
+
+	const {
+		places: { scanShortAdminRows },
+		native: { mtfNode },
+	} = await allKeyed({
+		places: import("#tools/dev-tools/corpus/prominent/places"),
+		native: import("@mailwoman/mtf/tools/sampler/native"),
+	})
+
+	await using scratch = await temporaryDirectory("mailwoman-required-form-groups-")
+
+	await scanShortAdminRows({
+		manifest,
+		out: scratch.path.toString(),
+		groups: true,
+		limits: options.limits,
+		log: options.log,
+	})
+
+	const corpusDir = PathBuilder.from(manifest).dirname().toString()
+	const epoch = await readEpochMeasure(await mtfNode(), config, { corpusDir, limits: options.limits })
+
+	using db = await openDuckDB(options.limits)
+
+	await createProminentCoverageTables(
+		db,
+		hostPath(places),
+		scratch.path("short-admin-rows.parquet").toString(),
+		epochRates(epoch)
+	)
+
+	const groups = await readRequiredFormGroups(db)
+
+	return { ...required, formGroups: new Map(groups.map(({ group, country }) => [group, country])) }
 }
 
 /**
@@ -82,30 +158,47 @@ const REQUIRED_RECORDS_TABLE = "required_training_records"
  */
 export async function createRequiredGroupsTable(
 	db: DisposableDuckDB,
-	required: Pick<RequiredTrainingGroups, "records">
+	required: Pick<RequiredTrainingGroups, "records"> & Partial<Pick<RequiredTrainingGroups, "formGroups">>
 ): Promise<void> {
 	await db.run(`CREATE OR REPLACE TEMP TABLE ${REQUIRED_RECORDS_TABLE} (id BIGINT PRIMARY KEY, country VARCHAR)`)
+	await db.run(`CREATE OR REPLACE TEMP TABLE ${REQUIRED_FORM_GROUPS_TABLE} (g VARCHAR PRIMARY KEY, country VARCHAR)`)
 
-	const entries = [...required.records]
-
-	for (let start = 0; start < entries.length; start += 5000) {
-		const values = entries
-			.slice(start, start + 5000)
-			.map(([id, country]) => `(${id}, '${escapeSQLString(country)}')`)
-			.join(", ")
-
-		await db.run(`INSERT INTO ${REQUIRED_RECORDS_TABLE} VALUES ${values}`)
+	const insert = async (table: string, rows: string[]) => {
+		for (let start = 0; start < rows.length; start += 5000) {
+			await db.run(`INSERT INTO ${table} VALUES ${rows.slice(start, start + 5000).join(", ")}`)
+		}
 	}
+
+	await insert(
+		REQUIRED_RECORDS_TABLE,
+		[...required.records].map(([id, country]) => `(${id}, '${escapeSQLString(country)}')`)
+	)
+
+	await insert(
+		REQUIRED_FORM_GROUPS_TABLE,
+		[...(required.formGroups ?? [])].map(
+			([group, country]) => `('${escapeSQLString(group)}', '${escapeSQLString(country)}')`
+		)
+	)
 }
 
 /**
- * A DuckDB predicate, true when the group `group` evaluates to is one a receipt requires in training.
+ * The table of {@linkcode RequiredTrainingGroups.formGroups} {@linkcode createRequiredGroupsTable} writes.
+ */
+const REQUIRED_FORM_GROUPS_TABLE = "required_training_form_groups"
+
+/**
+ * A DuckDB predicate, true when the group `group` evaluates to is one a receipt requires in
+ * training: a required place's record, or a group whose train rows write a required form.
  *
- * It is never `NULL`, so `NOT` of it keeps every group of no required record.
- * The connection must hold the table {@linkcode createRequiredGroupsTable} writes.
+ * It is never `NULL`, so `NOT` of it keeps every other group.
+ * The connection must hold the tables {@linkcode createRequiredGroupsTable} writes.
  */
 export function requiredGroupSQL(group: string): string {
-	return `coalesce(${prominentPlaceRecordSQL(group)} IN (SELECT id FROM ${REQUIRED_RECORDS_TABLE}), false)`
+	return (
+		`(coalesce(${prominentPlaceRecordSQL(group)} IN (SELECT id FROM ${REQUIRED_RECORDS_TABLE}), false) OR ` +
+		`coalesce(${group} IN (SELECT g FROM ${REQUIRED_FORM_GROUPS_TABLE}), false))`
+	)
 }
 
 /**
@@ -120,6 +213,7 @@ export function requiredGroupSkip(
 	return {
 		receipts: required.receipts,
 		requiredRecords: required.records.size,
+		...(required.formGroups ? { requiredFormGroups: required.formGroups.size } : {}),
 		skippedGroups: sorted.reduce((sum, [, groups]) => sum + groups, 0),
 		byCountry: Object.fromEntries(sorted),
 	}
@@ -134,8 +228,13 @@ export function describeRequiredGroupSkip(skip: RequiredGroupSkip): string[] {
 	const receipts = skip.receipts.map((receipt) => `${receipt.receipt} (${receipt.required_places} required places)`)
 	const countries = Object.entries(skip.byCountry).map(([country, groups]) => `${country} ${groups}`)
 
+	const formGroups =
+		skip.requiredFormGroups == null
+			? ""
+			: `, and ${skip.requiredFormGroups} groups whose train rows write a required form`
+
 	return [
-		`required training groups: ${receipts.join(", ")}; skipped ${skip.skippedGroups} groups the pool held`,
+		`required training groups: ${receipts.join(", ")}${formGroups}; skipped ${skip.skippedGroups} groups the pool held`,
 		...(countries.length ? [`  by country: ${countries.join(", ")}`] : []),
 	]
 }

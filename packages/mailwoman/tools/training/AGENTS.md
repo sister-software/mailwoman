@@ -163,11 +163,14 @@ toward presence. A place the corpus holds out by design counts toward neither: e
 evaluation-group list or the validation list that the corpus manifest records under `evaluation_groups`. A place
 can't be required in training and frozen for grading at once. `readHeldOutByDesign` in `audits/prominent/records.ts` reads both lists, refuses one
 whose sha256 isn't the manifest's, takes each listed group's WOF record, and keeps a record that has no train row in
-any of its groups. That pass reads every train file's ids: 322 s over v0.8.22's 1,104 files. The report's
+any of its groups. The receipt then releases any such place that a drawable train row still writes by its own match,
+in a group of another record or source, so that place stays required and counted. That pass reads every train file's ids: 322 s over v0.8.22's 1,104 files. The report's
 `held_out_by_design` gives the places and lists by country, and `not_required` counts them as
 `held-out-by-design`. A held-out place has no form and no population in its demand cell, so decile 1's
 population share is measured over the places training can read. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
-held-out freeze and the validation quota skip. A sub-locality's pair with its parent is required as `locality` and `region` when the
+held-out freeze and the validation quota skip. A reserve draw also skips `withRequiredFormGroups`: every group
+whose short admin train rows write a required form by the receipt's own match (`readRequiredFormGroups`), such as a
+namesake record's `wof-admin` group that was the only `country`-shape row of Rotorua on v0.8.22. A sub-locality's pair with its parent is required as `locality` and `region` when the
 places table marks it `postal_pair` (`isPostalLocalityPair` in `@mailwoman/gazetteer/tools/pipeline/pair/postal-children`),
 and as `dependent_locality` and `locality` otherwise. The draws are what the config's sampler reads in one epoch. A row's
 expected draws are its source's requested share of `train_rows_per_epoch` over the source's admitted rows, times

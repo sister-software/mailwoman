@@ -224,6 +224,7 @@ describe("sampleHeldoutRows grouping", () => {
 				},
 			],
 			records: new Map([[101, "BI"]]),
+			formGroups: null,
 		}
 
 		const { rows, rule } = await sampleHeldoutRows(manifest, 10, directory.path.toString(), 7, {}, [], [], required)

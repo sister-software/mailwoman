@@ -8,6 +8,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type DisposableDuckDB, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { describe, expect, it } from "vitest"
 
+import { createRequiredGroupsTable, requiredGroupSQL } from "../required-groups.ts"
 import {
 	createProminentCoverageTables,
 	decileOneDeficit,
@@ -15,6 +16,7 @@ import {
 	evaluateProminentCoverage,
 	PROMINENT_PLACES_RECORD_VERSION,
 	readProminentPlacesRecord,
+	readRequiredFormGroups,
 } from "./coverage.ts"
 
 /**
@@ -291,6 +293,66 @@ describe("prominent_place_coverage", () => {
 		expect(heldOut.presence.not_required).toEqual({ "competing-candidate": 1, "held-out-by-design": 1 })
 		// Without Alpha, decile 1 holds 1,500 of 2,500 people, a target of 0.3 that 4 of 12 draws reach.
 		expect(bare(heldOut)).toBeUndefined()
+	})
+
+	it("keeps a listed place that a train row of another group still writes", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		// Every WOF group of Alpha's is listed, but rows of other groups still write it, as one did Timmins on v0.8.22.
+		const listed = await evaluate(directory.path.toString(), COVERED, RATES, PLACES_SQL, new Set([1]))
+		const unlisted = await evaluate(directory.path.toString(), COVERED, RATES, PLACES_SQL)
+
+		expect(listed.presence).toEqual(unlisted.presence)
+		expect(listed.presence.not_required["held-out-by-design"]).toBeUndefined()
+		expect(listed.demand_share).toEqual(unlisted.demand_share)
+	})
+
+	it("names the groups whose train rows write a required form, a namesake record's among them", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+		const path = directory.path.toString()
+
+		{
+			using db = await openDuckDB()
+
+			// The places table and its record.
+			// The short rows are written below, with their groups.
+			await fixture(db, path, COVERED)
+
+			// Alpha's country form is written only by another WOF record's group, as Rotorua's was on v0.8.22.
+			// Beta isn't required, so the result leaves its group out.
+			await db.run(
+				"COPY (SELECT * FROM (VALUES " +
+					"('GB', 'wof-admin', 'locality|country', 'alpha', NULL, NULL::VARCHAR, 'wof-admin-9-default-with-country-form', 5::BIGINT), " +
+					"('GB', 'wof-admin', 'locality', 'alpha', NULL, NULL, 'wof-admin-1-default-self', 2), " +
+					"('GB', 'wof-admin', 'locality', 'beta', NULL, NULL, 'wof-admin-2-default-self', 8)" +
+					`) AS t(country, source, shape, s1, s2, s3, g, rows)) TO '${path}/short-admin-rows.parquet' (FORMAT PARQUET)`
+			)
+		}
+
+		using db = await openDuckDB()
+
+		await createProminentCoverageTables(db, `${path}/places.parquet`, `${path}/short-admin-rows.parquet`, RATES)
+
+		const groups = await readRequiredFormGroups(db)
+
+		expect(groups).toEqual([
+			{ group: "wof-admin-1-default-self", country: "GB" },
+			{ group: "wof-admin-9-default-with-country-form", country: "GB" },
+		])
+
+		// The skip then keeps the namesake group out of a draw.
+		// The required record's own groups don't include it.
+		await createRequiredGroupsTable(db, {
+			records: new Map([[1, "GB"]]),
+			formGroups: new Map(groups.map(({ group, country }) => [group, country])),
+		})
+
+		const skipped = await db.runAndReadAll(
+			`SELECT ${requiredGroupSQL("'wof-admin-9-default-with-country-form'")} AS namesake, ` +
+				`${requiredGroupSQL("'wof-admin-2-default-self'")} AS beta`
+		)
+
+		expect(skipped.getRowObjectsJson()).toEqual([{ namesake: true, beta: false }])
 	})
 
 	it("weighs decile 1's rows by their expected draws, not their count on disk", async () => {

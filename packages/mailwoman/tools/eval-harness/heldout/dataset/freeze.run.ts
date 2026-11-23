@@ -40,7 +40,11 @@ import { readHeldoutDatasetManifest, writeHeldoutDataset } from "#tools/eval-har
 import { sampleReserveRows } from "#tools/eval-harness/heldout/dataset/reserve"
 import { sampleHeldoutRows } from "#tools/eval-harness/heldout/per/country"
 import type { ReleaseRequirementSpec } from "#tools/eval-harness/release/requirements"
-import { describeRequiredGroupSkip, readRequiredTrainingGroups } from "#tools/training/audits/required-groups"
+import {
+	describeRequiredGroupSkip,
+	readRequiredTrainingGroups,
+	withRequiredFormGroups,
+} from "#tools/training/audits/required-groups"
 import { loadTrainingConfig } from "#tools/training/config"
 
 const { values } = parseArguments({
@@ -166,9 +170,17 @@ const exclusions = await Promise.all(
 	})
 )
 
-const required = values["training-config"]
-	? await readRequiredTrainingGroups(await loadTrainingConfig(values["training-config"]), duckDBLimits)
-	: null
+const trainingConfig = values["training-config"] ? await loadTrainingConfig(values["training-config"]) : null
+const recordGroups = trainingConfig ? await readRequiredTrainingGroups(trainingConfig, duckDBLimits) : null
+
+// A reserve draws train groups, so it also skips the groups whose train rows write a required form.
+const required =
+	reserve && trainingConfig && recordGroups
+		? await withRequiredFormGroups(recordGroups, trainingConfig, values.manifest, {
+				limits: duckDBLimits,
+				log: (line) => console.error(line),
+			})
+		: recordGroups
 
 const sample = reserve
 	? await sampleReserveRows({

@@ -43,7 +43,7 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DisposableDuckDB, type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import {
 	PROMINENT_PLACES_SOURCE,
 	type PlaceBand,
@@ -56,8 +56,10 @@ import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
 import {
 	createProminentCoverageTables,
+	type DemandCell,
 	epochRates,
 	type EpochMeasure,
+	type EpochRates,
 	queryRows,
 	readDemandCells,
 	DEMAND_SHARE_FRACTION,
@@ -303,12 +305,36 @@ export interface ProminentTuplesSummary {
  *
  * @throws When the config requests no draws of the recipe's source, or the base already holds its rows.
  */
+/**
+ * The demand cells the step sizes, each with its target: the receipt's tables over the base scan
+ * (`createProminentCoverageTables`), with the places the corpus holds out by design left out
+ * as the receipt leaves them out, so a cell's target is the one the receipt grades it against.
+ * The connection keeps the tables for the step's other reads.
+ */
+export async function readSizingCells(
+	db: DisposableDuckDB,
+	input: { places: string; shortAdminRows: string; rates: EpochRates; heldOut: ReadonlySet<number> }
+): Promise<Array<DemandCell & { target: number | null }>> {
+	await createProminentCoverageTables(db, input.places, input.shortAdminRows, input.rates, input.heldOut)
+
+	return (await readDemandCells(db)).map((cell) => ({
+		...cell,
+		target: cell.decile1_population_share == null ? null : DEMAND_SHARE_FRACTION * cell.decile1_population_share,
+	}))
+}
+
 export async function writeProminentTuples(options: {
 	out: string
 	/**
 	 * The training config's epoch over the base corpus the scan read.
 	 */
 	epoch: EpochMeasure
+	/**
+	 * The places the corpus holds out by design (`readHeldOutByDesign` over the base manifest),
+	 * which the receipt neither requires nor counts.
+	 * The cells are then sized against the receipt's own targets.
+	 */
+	heldOut: ReadonlySet<number>
 	limits?: DuckDBLimits
 }): Promise<ProminentTuplesSummary> {
 	const placesPath = `${options.out}/places.parquet`
@@ -342,7 +368,12 @@ export async function writeProminentTuples(options: {
 
 	using db = await openDuckDB(options.limits)
 
-	await createProminentCoverageTables(db, placesPath, `${options.out}/short-admin-rows.parquet`, rates)
+	const sized = await readSizingCells(db, {
+		places: placesPath,
+		shortAdminRows: `${options.out}/short-admin-rows.parquet`,
+		rates,
+		heldOut: options.heldOut,
+	})
 
 	const placeShapes = await queryRows(
 		db,
@@ -365,7 +396,7 @@ export async function writeProminentTuples(options: {
 		`${row.country}\u0000${row.band}\u0000${row.query_shape}`
 
 	const placeShapesByCell = Map.groupBy(placeShapes, cellKey)
-	const cells = await readDemandCells(db)
+	const cells = sized
 
 	const places = new Map(
 		(
@@ -426,7 +457,7 @@ export async function writeProminentTuples(options: {
 	const unwritable: Array<{ cell: (typeof cells)[number]; plan: DemandCellPlan }> = []
 
 	for (const cell of cells) {
-		if (cell.decile1_population_share == null) continue
+		if (cell.target == null) continue
 
 		const writable = placeShapesByCell.get(cellKey(cell)) ?? []
 		const members = writable.filter((row) => row.decile === 1)
@@ -435,7 +466,7 @@ export async function writeProminentTuples(options: {
 		const plan: DemandCellPlan = {
 			draws: cell.draws,
 			decile1Draws: cell.decile1_draws,
-			target: DEMAND_SHARE_FRACTION * cell.decile1_population_share,
+			target: cell.target,
 			presenceRows: writable.filter((row) => row.required && row.rows === 0).length,
 			decile1PresenceRows: members.filter((row) => row.required && row.rows === 0).length,
 			admission: admission(cell.country),

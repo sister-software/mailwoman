@@ -348,10 +348,24 @@ export async function createRankedPlacesTable(
 
 	await db.run(
 		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, h.spr_id IS NOT NULL AS held_out, ` +
-			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND h.spr_id IS NULL AND " +
-			"(p.score_source <> 'geonames' OR p.geonames_check = 'verified') AS required " +
+			"false AS required " +
 			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) ` +
 			"LEFT JOIN held_out_places h ON h.spr_id = p.spr_id WHERE p.rank IS NOT NULL"
+	)
+
+	await setRequiredPlaces(db)
+}
+
+/**
+ * Sets `required` on every place of `ranked` the rule requires: a selected place
+ * or capital of an admitted country that the corpus keeps in training.
+ *
+ * Its score comes from a source other than GeoNames, or from a GeoNames match that passed its checks.
+ */
+async function setRequiredPlaces(db: DisposableDuckDB): Promise<void> {
+	await db.run(
+		"UPDATE ranked SET required = (by_rank OR capital) AND admitted AND NOT held_out AND " +
+			"(score_source <> 'geonames' OR geonames_check = 'verified')"
 	)
 }
 
@@ -365,26 +379,80 @@ export interface RequiredProminentPlace {
 
 /**
  * Every place the receipt requires for a config's country weights, read from the places table
- * after {@linkcode readProminentPlacesRecord} checks it.
+ * after {@linkcode readProminentPlacesRecord} checks it, and every other place the recipe may write
+ * ({@linkcode writablePlaceSQL}) in an admitted country: a decile-1 place a demand cell's rows go to.
  */
 export async function readRequiredProminentPlaces(
 	placesPath: string,
 	countryWeights: Readonly<Record<string, number>>,
 	limits?: DuckDBLimits
-): Promise<{ record: ProminentPlacesRecord; places: RequiredProminentPlace[] }> {
+): Promise<{ record: ProminentPlacesRecord; places: RequiredProminentPlace[]; writable: RequiredProminentPlace[] }> {
 	const record = await readProminentPlacesRecord(placesPath)
 
 	using db = await openDuckDB(limits)
 
 	await createRankedPlacesTable(db, placesPath, admittedCountries(countryWeights))
 
-	const places = await queryRows(
-		db,
-		"SELECT spr_id, country FROM ranked WHERE required ORDER BY spr_id",
-		(row): RequiredProminentPlace => ({ spr_id: row.number("spr_id"), country: row.text("country") })
-	)
+	const read = (where: string) =>
+		queryRows(
+			db,
+			`SELECT spr_id, country FROM ranked WHERE ${where} ORDER BY spr_id`,
+			(row): RequiredProminentPlace => ({ spr_id: row.number("spr_id"), country: row.text("country") })
+		)
 
-	return { record, places }
+	return {
+		record,
+		places: await read("required"),
+		writable: await read(`NOT required AND admitted AND ${writablePlaceSQL()}`),
+	}
+}
+
+/**
+ * The short admin rows of `agg` keyed by the place's own span and the second segment,
+ * with their drawable rows and expected draws, as SQL.
+ * `extra` adds grouping columns of `agg`, such as `g, `.
+ *
+ * The place's own span is the dependent locality when the row writes one, else the locality,
+ * in either position: a largest-first layout writes `Iran, Tehran` and `東京都渋谷区`.
+ */
+function keyedRowsSQL(extra: string): string {
+	return (
+		`SELECT country, ${extra}` +
+		"CASE WHEN place = 1 THEN s1 ELSE s2 END AS s1, CASE WHEN len(tags) = 1 THEN NULL WHEN place = 1 THEN s2 ELSE s1 END AS s2, " +
+		"CASE WHEN len(tags) = 1 THEN 'bare' ELSE tags[3 - place] END AS second_tag, " +
+		"tags[place] AS place_tag, coalesce(sum(rows) FILTER (WHERE draws > 0), 0)::BIGINT AS rows, " +
+		"sum(draws) AS draws FROM (" +
+		"SELECT *, CASE WHEN list_contains(tags, 'dependent_locality') THEN list_position(tags, 'dependent_locality') " +
+		"WHEN list_contains(tags, 'locality') THEN list_position(tags, 'locality') ELSE 1 END AS place FROM agg WHERE len(tags) <= 2" +
+		") GROUP BY ALL"
+	)
+}
+
+/**
+ * Whether a keyed row `k` writes form `f`: the same country and surface, the form's
+ * tag on the place's own span, and the shape's second segment.
+ */
+const FORM_MATCH_SQL =
+	"k.country = f.country AND k.s1 = f.fold AND k.place_tag = f.tag AND (" +
+	"(f.query_shape = 'bare' AND k.second_tag = 'bare') OR (f.query_shape = 'country' AND k.second_tag = 'country') OR " +
+	"(f.query_shape IN ('parent', 'region', 'region_abbr') AND k.second_tag = f.second_tag AND k.s2 = f.second))"
+
+/**
+ * Every group with a drawable train row that writes a required form,
+ * by the match the receipt's presence rule reads.
+ *
+ * The tables must come from {@linkcode createProminentCoverageTables} over a scan written
+ * with groups (`scanShortAdminRows({ groups: true })`), whose rows hold column `g`.
+ */
+export async function readRequiredFormGroups(db: DisposableDuckDB): Promise<Array<{ group: string; country: string }>> {
+	await db.run(`CREATE OR REPLACE TEMP TABLE keyed_groups AS ${keyedRowsSQL("g, ")}`)
+
+	return queryRows(
+		db,
+		"SELECT DISTINCT k.g, f.country FROM forms f JOIN ranked r USING (spr_id) " +
+			`JOIN keyed_groups k ON ${FORM_MATCH_SQL} WHERE r.required AND k.rows > 0 ORDER BY k.g`,
+		(row) => ({ group: row.text("g"), country: row.text("country") })
+	)
 }
 
 export async function createProminentCoverageTables(
@@ -417,55 +485,49 @@ export async function createProminentCoverageTables(
 
 	await db.run(`INSERT INTO requirements VALUES ${requirementValuesSQL()}`)
 
-	// A place held out by design has no form and no population in its cell: every place below is `counted`.
-	await db.run("CREATE OR REPLACE TABLE counted AS SELECT * FROM ranked WHERE NOT held_out")
-
 	// The second segment's tag comes with the place's own: a parent is a locality, or a postal pair's region.
 	await db.run(
 		"CREATE OR REPLACE TABLE forms AS SELECT f.*, q.tag, q.second_tag FROM (" +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM counted UNION ALL " +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM counted WHERE parent_locality IS NOT NULL UNION ALL ` +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM counted WHERE region IS NOT NULL UNION ALL ` +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM ranked UNION ALL " +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM ranked WHERE parent_locality IS NOT NULL UNION ALL ` +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM ranked WHERE region IS NOT NULL UNION ALL ` +
 			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region_abbr', ${foldSurfaceSQL("abbr")} FROM ` +
-			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM counted) UNION ALL " +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM counted" +
+			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM ranked) UNION ALL " +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM ranked" +
 			") f JOIN requirements q ON q.band = f.band AND q.query_shape = f.query_shape AND q.postal_pair = f.postal_pair"
 	)
 
-	// The place's own span is the dependent locality when the row writes one, else the locality,
-	// in either position: a largest-first layout writes `Iran, Tehran` and `東京都渋谷区`.
-	await db.run(
-		"CREATE OR REPLACE TABLE keyed AS SELECT country, " +
-			"CASE WHEN place = 1 THEN s1 ELSE s2 END AS s1, CASE WHEN len(tags) = 1 THEN NULL WHEN place = 1 THEN s2 ELSE s1 END AS s2, " +
-			"CASE WHEN len(tags) = 1 THEN 'bare' ELSE tags[3 - place] END AS second_tag, " +
-			"tags[place] AS place_tag, coalesce(sum(rows) FILTER (WHERE draws > 0), 0)::BIGINT AS rows, " +
-			"sum(draws) AS draws FROM (" +
-			"SELECT *, CASE WHEN list_contains(tags, 'dependent_locality') THEN list_position(tags, 'dependent_locality') " +
-			"WHEN list_contains(tags, 'locality') THEN list_position(tags, 'locality') ELSE 1 END AS place FROM agg WHERE len(tags) <= 2" +
-			") GROUP BY ALL"
-	)
+	await db.run(`CREATE OR REPLACE TABLE keyed AS ${keyedRowsSQL("")}`)
 
 	// A form's rows: the drawable short rows of its surfaces whose own span holds the required tag.
 	await db.run(
 		"CREATE OR REPLACE TABLE hits AS SELECT f.spr_id, f.country, f.band, f.query_shape, f.decile, f.fold, f.second, " +
 			"coalesce(sum(k.rows), 0)::BIGINT AS rows, coalesce(sum(k.draws), 0)::DOUBLE AS draws " +
-			"FROM forms f LEFT JOIN keyed k ON k.country = f.country AND " +
-			"k.s1 = f.fold AND k.place_tag = f.tag AND (" +
-			"(f.query_shape = 'bare' AND k.second_tag = 'bare') OR (f.query_shape = 'country' AND k.second_tag = 'country') OR " +
-			"(f.query_shape IN ('parent', 'region', 'region_abbr') AND k.second_tag = f.second_tag AND k.s2 = f.second)) " +
-			"GROUP BY ALL"
+			`FROM forms f LEFT JOIN keyed k ON ${FORM_MATCH_SQL} GROUP BY ALL`
 	)
+
+	// A listed place that a drawable train row still writes, in any group
+	// (a namesake record's among them), isn't held out by design, so it stays required and counted.
+	await db.run(
+		"UPDATE ranked SET held_out = false WHERE held_out AND spr_id IN (SELECT spr_id FROM hits WHERE rows > 0)"
+	)
+
+	await setRequiredPlaces(db)
+
+	// A place held out by design has no form and no population in its cell: every place below is `counted`.
+	await db.run("CREATE OR REPLACE TABLE counted AS SELECT * FROM ranked WHERE NOT held_out")
 
 	// A place with several region abbreviations is covered in that shape by a row in any of them.
 	await db.run(
 		"CREATE OR REPLACE TABLE place_shapes AS SELECT spr_id, country, band, query_shape, sum(rows)::BIGINT AS rows, " +
-			"sum(draws) AS draws FROM hits GROUP BY ALL"
+			"sum(draws) AS draws FROM hits WHERE spr_id IN (SELECT spr_id FROM counted) GROUP BY ALL"
 	)
 
 	// Each surface key counts once in its cell, toward the best decile among the ranked places that write it.
 	await db.run(
 		"CREATE OR REPLACE TABLE surface_rows AS SELECT country, band, query_shape, fold, second, " +
-			"min(decile) AS decile, any_value(rows) AS rows, any_value(draws) AS draws FROM hits GROUP BY ALL"
+			"min(decile) AS decile, any_value(rows) AS rows, any_value(draws) AS draws FROM hits " +
+			"WHERE spr_id IN (SELECT spr_id FROM counted) GROUP BY ALL"
 	)
 
 	await db.run(
