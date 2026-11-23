@@ -14,7 +14,7 @@ import {
 	type InferCharsFunction,
 	type InferFunction,
 	type OutputTensor,
-} from "#ort-feeds"
+} from "#onnx/feeds"
 
 /**
  * Options for {@link WebONNXRunner}.

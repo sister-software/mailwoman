@@ -1,0 +1,567 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The anchor channel: per-piece features for the postcodes a lookup places.
+ *
+ *   The per-piece anchor feature layout is cross-language and must match the
+ *   training encoder's `feature_vector` (`mtf-channels::anchor`) byte-for-byte,
+ *   since a wrong locale order or centroid scale feeds the model garbage.
+ */
+
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
+import { stringifyJSON } from "@mailwoman/core/json"
+import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
+import type { PostcodeBinaryGroup, PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
+import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
+import type { PathBuilderLike } from "path-ts"
+
+import type { TokenizedPiece } from "#input/tokenizer"
+import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
+import { collectMatches } from "#postcode/repair"
+
+/**
+ * Anchor feature width = posterior over the locale set + a 2-d centroid.
+ */
+export const ANCHOR_FEATURE_DIM = LOCALE_ORDER.length + 2
+
+/**
+ * One postcode's anchor record (from the pilot lookup): country posterior + a single centroid.
+ */
+export interface AnchorEntry {
+	posterior: Record<string, number>
+	lat: number
+	lon: number
+}
+
+/**
+ * A read-only postcode→anchor lookup.
+ *
+ * A `Map` built by {@link parseAnchorLookup} or {@link anchorLookupFromPostcodes}
+ * satisfies it, and so does {@link BinaryAnchorLookup}, which answers from the
+ * postcode binaries without copying them into objects.
+ */
+export interface AnchorLookup {
+	get(postcode: string): AnchorEntry | undefined
+	has(postcode: string): boolean
+	readonly size: number
+	keys(): Iterable<string>
+}
+
+/**
+ * Builds the fixed-width anchor feature vector mirroring the training encoder's
+ * `feature_vector` (`mtf-channels::anchor`): the in-set country posterior renormalized
+ * over {@linkcode LOCALE_ORDER}, plus a `lat/90`, `lon/180` centroid.
+ */
+export function anchorFeatureVector(posterior: Record<string, number>, lat: number, lon: number): number[] {
+	const vec = new Array<number>(ANCHOR_FEATURE_DIM).fill(0)
+	let total = 0
+
+	for (const [country, weight] of Object.entries(posterior)) {
+		const idx = LOCALE_ORDER.indexOf(country.toUpperCase() as (typeof LOCALE_ORDER)[number])
+
+		if (idx !== -1) {
+			vec[idx] = weight
+			total += weight
+		}
+	}
+
+	if (total > 0) {
+		for (let i = 0; i < LOCALE_ORDER.length; i++) {
+			vec[i]! /= total
+		}
+	}
+
+	vec[LOCALE_ORDER.length] = Math.max(-1, Math.min(1, lat / 90))
+	vec[LOCALE_ORDER.length + 1] = Math.max(-1, Math.min(1, lon / 180))
+
+	return vec
+}
+
+/**
+ * Parses the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`)
+ * into a Map, taking the parsed object rather than a path so this module stays browser-safe.
+ */
+export function parseAnchorLookup(
+	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
+): Map<string, AnchorEntry> {
+	const out = new Map<string, AnchorEntry>()
+
+	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) {
+		out.set(pc, { posterior, lat, lon })
+	}
+
+	return out
+}
+
+/**
+ * Builds an anchor lookup from postcode groups, such as `PostcodeBinaryLookup.groups()` yields.
+ *
+ * Each member country gets weight 1.
+ * The centroid is the mean of the group's non-zero places.
+ * A postcode with no non-zero place gets `0, 0`.
+ */
+export function anchorLookupFromPostcodes(groups: Iterable<PostcodeBinaryGroup>): Map<string, AnchorEntry> {
+	const out = new Map<string, AnchorEntry>()
+
+	for (const { postcode, places } of groups) {
+		out.set(postcode, anchorEntryOf(places))
+	}
+
+	return out
+}
+
+/**
+ * Builds one postcode's anchor entry from its places: weight 1 per member country,
+ * and the mean of the non-zero centroids, or `0, 0` when every place is unplaced.
+ */
+function anchorEntryOf(places: PostcodeBinaryGroup["places"]): AnchorEntry {
+	const posterior: Record<string, number> = {}
+	let latSum = 0
+	let lonSum = 0
+	let centroidCount = 0
+
+	for (const place of places) {
+		posterior[place.country] = 1
+
+		if (place.lat !== 0 || place.lon !== 0) {
+			latSum += place.lat
+			lonSum += place.lon
+
+			centroidCount++
+		}
+	}
+
+	return {
+		posterior,
+		lat: centroidCount ? latSum / centroidCount : 0,
+		lon: centroidCount ? lonSum / centroidCount : 0,
+	}
+}
+
+/**
+ * Folds `entry` into `existing` as {@link mergeAnchorLookups} merges two files' entries
+ * for one postcode: the posteriors union, and a non-zero centroid replaces a `(0,0)` one
+ * or is averaged with another non-zero one.
+ */
+function foldAnchorEntry(existing: AnchorEntry, entry: AnchorEntry): void {
+	for (const country of Object.keys(entry.posterior)) {
+		existing.posterior[country] = 1
+	}
+
+	if (entry.lat !== 0 || entry.lon !== 0) {
+		if (existing.lat === 0 && existing.lon === 0) {
+			existing.lat = entry.lat
+			existing.lon = entry.lon
+		} else {
+			existing.lat = (existing.lat + entry.lat) / 2
+			existing.lon = (existing.lon + entry.lon) / 2
+		}
+	}
+}
+
+/**
+ * The largest character code a postcode binary key holds; `PostcodeBinaryLookup.lookup`
+ * masks every input character to it.
+ */
+const BINARY_KEY_CHAR_MAX = 0x7f
+
+/**
+ * Reports whether `postcode` is a key a postcode binary can hold: non-empty,
+ * with every character in `1..0x7f`.
+ *
+ * `lookup` masks each input character with `0x7f`, so without this check `Á` would
+ * match a key holding `A`, where a `Map` built from the same binary misses.
+ */
+function isBinaryKey(postcode: string): boolean {
+	if (!postcode.length) return false
+
+	for (let index = 0; index < postcode.length; index++) {
+		const code = postcode.charCodeAt(index)
+
+		if (code === 0 || code > BINARY_KEY_CHAR_MAX) return false
+	}
+
+	return true
+}
+
+/**
+ * An anchor lookup that answers from postcode binaries in place.
+ *
+ * {@link anchorLookupFromPostcodes} with {@link mergeAnchorLookups} builds one object per postcode.
+ * This lookup keeps the resolvers and builds an entry when a postcode is read,
+ * folding the files in order exactly as the merge does.
+ */
+export class BinaryAnchorLookup implements AnchorLookup {
+	readonly #resolvers: readonly PostcodeBinaryLookup[]
+	#size: number | null = null
+
+	constructor(resolvers: readonly PostcodeBinaryLookup[]) {
+		this.#resolvers = resolvers
+	}
+
+	get(postcode: string): AnchorEntry | undefined {
+		if (!isBinaryKey(postcode)) return undefined
+
+		let merged: AnchorEntry | undefined
+
+		for (const resolver of this.#resolvers) {
+			const places = resolver.lookup(postcode)
+
+			if (!places.length) continue
+
+			const entry = anchorEntryOf(places)
+
+			if (merged) {
+				foldAnchorEntry(merged, entry)
+			} else {
+				merged = entry
+			}
+		}
+
+		return merged
+	}
+
+	has(postcode: string): boolean {
+		return isBinaryKey(postcode) && this.#resolvers.some((resolver) => resolver.lookup(postcode).length > 0)
+	}
+
+	/**
+	 * Every postcode once, in file order and then key order within a file.
+	 */
+	*keys(): Generator<string> {
+		for (let index = 0; index < this.#resolvers.length; index++) {
+			for (const { postcode } of this.#resolvers[index]!.groups()) {
+				if (!this.#resolvers.slice(0, index).some((earlier) => earlier.lookup(postcode).length > 0)) {
+					yield postcode
+				}
+			}
+		}
+	}
+
+	get size(): number {
+		if (this.#size === null) {
+			let count = 0
+
+			for (const _key of this.keys()) {
+				count++
+			}
+
+			this.#size = count
+		}
+
+		return this.#size
+	}
+}
+
+/**
+ * `alnum-run` scans `[A-Za-z0-9]+` runs and so can never key a space-joined postcode
+ * (`SW1A 2AA`), while `shaped` takes the postcode-shaped spans from {@linkcode collectMatches}
+ * and keys them `span.replace(" ", "").toUpperCase()` like the train painter.
+ *
+ * `postal` takes the spans of the `postal` family through `findPostcodeSpans`.
+ * The training encoder reads the same artifact, and the keys come from {@linkcode anchorKey}.
+ *
+ * The family matches either case, so the text isn't upper-cased first.
+ *
+ * `shaped` stays for the models published with it, and the shape table behind it is frozen.
+ * It is deleted when the first model that declares `postal` ships.
+ */
+export type AnchorSpanMode = "alnum-run" | "shaped" | "postal"
+
+/**
+ * The key the anchor table is looked up under for a postcode span: the span's
+ * text with each space removed, upper-cased.
+ *
+ * The training encoder computes the same key in `mtf-channels/src/anchor.rs`.
+ */
+export function anchorKey(spanText: string): string {
+	return spanText.replaceAll(" ", "").toUpperCase()
+}
+
+/**
+ * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index
+ * into `text` and `String.prototype.toUpperCase` isn't length-preserving (`ß` → `SS`),
+ * which would shift every subsequent span and paint the anchor onto the wrong pieces.
+ */
+function asciiUpper(text: string): string {
+	return text.replaceAll(/[a-z]/g, (c) => c.toUpperCase())
+}
+
+/**
+ * Length of a GB inward code (`2AA`); the outward district is the rest of the key.
+ */
+const GB_INWARD_LENGTH = 3
+
+/**
+ * Merges per-binary anchor lookups by unioning the country posteriors per postcode and meaning
+ * the centroids, treating a `(0,0)` centroid as a placeholder that's never averaged in.
+ */
+export function mergeAnchorLookups(
+	lookups: readonly ReadonlyMap<string, AnchorEntry>[]
+): ReadonlyMap<string, AnchorEntry> {
+	if (lookups.length === 1) return lookups[0]!
+	const merged = new Map<string, AnchorEntry>()
+
+	for (const lookup of lookups) {
+		for (const [postcode, entry] of lookup) {
+			const existing = merged.get(postcode)
+
+			if (existing) {
+				foldAnchorEntry(existing, entry)
+			} else {
+				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+			}
+		}
+	}
+
+	return merged
+}
+
+export function countShapedOnlyKeys(lookup: AnchorLookup): number {
+	let count = 0
+
+	for (const key of lookup.keys()) {
+		if (UK_POSTCODE_PATTERN.test(key)) {
+			count++
+
+			if (count >= SHAPED_ONLY_KEY_SCAN_LIMIT) break
+		}
+	}
+
+	return count
+}
+
+/**
+ * The scan cap for {@linkcode countShapedOnlyKeys}.
+ *
+ * The error message needs to say only whether any keys exist and their approximate count.
+ */
+export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
+
+/**
+ * Returns the ship-obligation message when a lookup includes GB unit keys that a
+ * card without `span_mode: "shaped"` can never reach.
+ *
+ * The one artifact-pairing check a runtime can make, since the mode itself is
+ * unobservable from the ONNX graph.
+ */
+export function shapedKeyerObligationViolation(
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null
+): string | null {
+	if (!lookup || spanMode === "shaped" || spanMode === "postal") return null
+	const shapedOnly = countShapedOnlyKeys(lookup)
+
+	if (!shapedOnly) return null
+	const magnitude = shapedOnly >= SHAPED_ONLY_KEY_SCAN_LIMIT ? `≥${SHAPED_ONLY_KEY_SCAN_LIMIT}` : String(shapedOnly)
+
+	return (
+		`the loaded anchor lookup${anchorSourcePath ? ` (${anchorSourcePath})` : ""} carries ${magnitude} GB unit keys, ` +
+		`which the DEFAULT alnum-run scan can never produce — a GB unit is written with a space, so the scan probes ` +
+		`"SW1A" and "2AA", never "SW1A2AA". The model-card declares \`requires.anchor.span_mode\` = ` +
+		`${stringifyJSON(spanMode ?? null)}, so those keys are dead and the channel feeds zeros on exactly the rows ` +
+		`the lookup exists for. Declare "requires": { "anchor": { "required": true, "span_mode": "shaped" } } on a ` +
+		`card whose model TRAINED that way (the v4.2.0-base-anchor-v2 recipe's SHIP OBLIGATION), or ship a lookup ` +
+		`without unit keys.`
+	)
+}
+
+/**
+ * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}, since a mispackaged bundle
+ * is a property of the artifact set, so the warning prints once per process.
+ */
+let warnedShapedObligation = false
+
+/**
+ * Emits {@linkcode shapedKeyerObligationViolation} at most once per process from
+ * `buildSoftFeatures`, the only site holding both the loaded lookup and the card-declared mode,
+ * so it covers every construction path rather than only a loader-side one.
+ */
+export function warnShapedKeyerObligationOnce(
+	lookup: AnchorLookup | null,
+	spanMode: AnchorSpanMode | null,
+	anchorSourcePath: PathBuilderLike | null
+): void {
+	if (warnedShapedObligation) return
+	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
+
+	if (!violation) return
+	warnedShapedObligation = true
+
+	console.error(`[mailwoman/neural] ${violation}`)
+}
+
+export interface BuildAnchorFeaturesOptions {
+	/**
+	 * Span-collection mode, defaulting to `alnum-run` — the shipped behavior.
+	 */
+	spanMode?: AnchorSpanMode
+}
+
+/**
+ * One postcode span the anchor lookup resolved.
+ */
+export interface AnchoredPostcodeSpan {
+	start: number
+	end: number
+	/**
+	 * The lookup key the span resolved under: the span itself, or a GB unit's outward district.
+	 */
+	key: string
+	entry: AnchorEntry
+}
+
+/**
+ * The entry restricted to the posterior it holds on `countries`, or undefined when it holds none.
+ *
+ * The weights that remain keep their order, and {@linkcode anchorFeatureVector}
+ * renormalizes them over the locale set as it does any posterior.
+ * The training encoder restricts the same way in `mtf-channels/src/anchor.rs`.
+ */
+function restrictEntry(entry: AnchorEntry, countries: readonly string[]): AnchorEntry | undefined {
+	const kept = Object.entries(entry.posterior).filter(([country, weight]) => weight > 0 && countries.includes(country))
+
+	return kept.length ? { ...entry, posterior: Object.fromEntries(kept) } : undefined
+}
+
+/**
+ * Returns the postcode spans of `text` that the anchor lookup resolves, with the key each resolved under.
+ *
+ * {@linkcode buildAnchorFeatures} paints these spans and the anchor-region prior
+ * reads their keys, so the two agree on which postcodes anchored.
+ */
+export function anchoredPostcodeSpans(
+	text: string,
+	lookup: AnchorLookup,
+	spanMode: AnchorSpanMode = "alnum-run"
+): AnchoredPostcodeSpan[] {
+	const spans: AnchoredPostcodeSpan[] = []
+
+	if (spanMode === "shaped" || spanMode === "postal") {
+		for (const match of spanMode === "postal" ? findPostcodeSpans(text) : collectMatches(asciiUpper(text))) {
+			// The train painter's normalization verbatim — uppercased with literal spaces removed.
+			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
+			// A `postal` candidate resolves only under a country its shapes belong to,
+			// and paints that part of the posterior.
+			const countries = "countries" in match ? match.countries : null
+
+			const resolve = (candidateKey: string): AnchorEntry | undefined => {
+				const found = lookup.get(candidateKey)
+
+				return found && countries ? restrictEntry(found, countries) : found
+			}
+
+			let key = anchorKey(text.slice(match.start, match.end))
+			let entry = resolve(key)
+
+			// An unknown GB unit still anchors from its outward district, painting the whole unit span
+			// so the painted extent matches what a known unit would have produced.
+			if (!entry && UK_POSTCODE_PATTERN.test(key)) {
+				key = key.slice(0, -GB_INWARD_LENGTH)
+				entry = resolve(key)
+			}
+
+			// The `postal` candidates overlap and arrive in the order they compete,
+			// and the first one the lookup resolves keeps its range.
+			// The `shaped` matches are disjoint, so the test never fires for them.
+			if (entry && !spans.some((kept) => match.start < kept.end && kept.start < match.end)) {
+				spans.push({ start: match.start, end: match.end, key, entry })
+			}
+		}
+
+		return spans.toSorted((a, b) => a.start - b.start)
+	}
+
+	const tokenRe = /[A-Za-z0-9]+/g
+	let m: RegExpExecArray | null
+
+	while ((m = tokenRe.exec(text))) {
+		const key = m[0].toUpperCase()
+		const entry = lookup.get(key)
+
+		if (!entry) continue
+
+		spans.push({ start: m.index, end: m.index + m[0].length, key, entry })
+	}
+
+	return spans
+}
+
+/**
+ * Projects per-piece anchor features onto `pieces` by the same char→piece rule the labels use —
+ * a piece takes the anchor of the postcode span its first non-whitespace char falls inside.
+ */
+export function buildAnchorFeatures(
+	text: string,
+	pieces: ReadonlyArray<TokenizedPiece>,
+	lookup: AnchorLookup,
+	options: BuildAnchorFeaturesOptions = {}
+): { features: number[][]; confidence: number[] } {
+	const features: number[][] = pieces.map(() => new Array<number>(ANCHOR_FEATURE_DIM).fill(0))
+	const confidence: number[] = pieces.map(() => 0)
+
+	/**
+	 * Paint `[spanBegin, spanEnd)` with `entry`'s vector.
+	 *
+	 * Shared by both modes so they can only ever differ in where they paint,
+	 * never in what they paint or how it lands on pieces — the same guarantee the
+	 * train side gets from sharing `_paint_anchor_chars`.
+	 */
+	const paint = (spanBegin: number, spanEnd: number, entry: AnchorEntry): void => {
+		const vec = anchorFeatureVector(entry.posterior, entry.lat, entry.lon)
+
+		for (let i = 0; i < pieces.length; i++) {
+			const p = pieces[i]!
+
+			for (let c = p.start; c < p.end; c++) {
+				if (c < text.length && !/\s/.test(text[c]!)) {
+					if (c >= spanBegin && c < spanEnd) {
+						features[i] = vec
+						confidence[i] = 1
+					}
+
+					break // first non-whitespace char of the piece decides (mirrors realign_anchor_to_pieces)
+				}
+			}
+		}
+	}
+
+	for (const span of anchoredPostcodeSpans(text, lookup, options.spanMode)) {
+		paint(span.start, span.end, span.entry)
+	}
+
+	return { features, confidence }
+}
+
+/**
+ * Returns the WOF ids of the regions the input's anchored postcodes assert.
+ *
+ * A postcode whose anchor posterior spans several countries asserts no region,
+ * because the index that answers for it is the one country's.
+ */
+export function anchoredRegionIDs(
+	text: string,
+	lookup: AnchorLookup,
+	spanMode: AnchorSpanMode | undefined,
+	regions: AnchorRegionLookupLike
+): Set<number> {
+	const ids = new Set<number>()
+
+	for (const span of anchoredPostcodeSpans(text, lookup, spanMode)) {
+		const countries = Object.entries(span.entry.posterior)
+			.filter(([, weight]) => weight > 0)
+			.map(([country]) => country)
+
+		if (countries.length !== 1) continue
+
+		for (const ancestor of regions.ancestorsFor(span.key, countries[0]!)) {
+			if (ancestor.placetype === "region") {
+				ids.add(ancestor.wofID)
+			}
+		}
+	}
+
+	return ids
+}

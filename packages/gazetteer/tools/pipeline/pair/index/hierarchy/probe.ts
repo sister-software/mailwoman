@@ -31,13 +31,13 @@ import { md5File } from "@mailwoman/core/hash"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
-import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	PairIndexLookup,
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair"
+import { normalizeFSTToken } from "@mailwoman/neural/prior/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

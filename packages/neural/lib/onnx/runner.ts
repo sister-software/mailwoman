@@ -16,21 +16,21 @@ import {
 	type InferCharsFunction,
 	type InferFunction,
 	type OutputTensor,
-} from "#ort-feeds"
+} from "#onnx/feeds"
 
 /**
  * Re-exports the evidence feature widths from the browser-safe gazetteer inference module.
  */
-export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
+export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#channels/gazetteer-inference"
 
 /**
  * Re-exports the character feed packer from the pure feed module shared with the browser runner.
  */
-export { packCharFeed } from "#ort-feeds"
+export { packCharFeed } from "#onnx/feeds"
 /**
  * Re-exports the inference result type from the feed module shared with the browser runner.
  */
-export type { InferResult } from "#ort-feeds"
+export type { InferResult } from "#onnx/feeds"
 
 /**
  * Configures an {@link ONNXRunner}.

@@ -20,7 +20,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { gazetteerCharPaint, parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
+import { gazetteerCharPaint, parseGazetteerLexicon } from "@mailwoman/neural/channels/gazetteer-inference"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 

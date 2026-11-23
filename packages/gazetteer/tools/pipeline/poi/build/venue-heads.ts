@@ -34,7 +34,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
-import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
+import { normalizeFSTToken } from "@mailwoman/neural/prior/fst"
 import type {
 	VenueHeadBiases,
 	VenueHeadCountry,

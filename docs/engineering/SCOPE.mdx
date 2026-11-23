@@ -78,7 +78,7 @@ promise; `scope.config.json` records the reason under `unpromisedShippingLocales
 New corpus recipes train against the spliced vocab that shipped in v5.1.0 (the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign). Any
 future splice runs under the [#900](https://github.com/sister-software/mailwoman/issues/900)
-codepoint-overlap safety check. CJK-family locales route through the character path (`@mailwoman/neural/char-encoder`, served by
+codepoint-overlap safety check. CJK-family locales route through the character path (`@mailwoman/neural/input/char-encoder`, served by
 `@mailwoman/neural-weights-cjk`) rather than vocab splicing.
 
 ## The standing invariants

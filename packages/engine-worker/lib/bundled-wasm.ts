@@ -14,7 +14,7 @@
 
 // Wrangler's bundler turns each `.wasm` import into a compiled module, and `wasm-modules.d.ts` declares that type.
 import mtfModule from "@mailwoman/mtf/wasm/mtf.wasm"
-import { setTokenizerRuntimeSource } from "@mailwoman/neural/tokenizer"
+import { setTokenizerRuntimeSource } from "@mailwoman/neural/input/tokenizer"
 import ortModule from "onnxruntime-web/ort-wasm-simd-threaded.wasm"
 
 /**

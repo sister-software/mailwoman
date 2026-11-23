@@ -6,7 +6,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 import { POSTCODE_SHAPES } from "@mailwoman/postcode/frozen-shapes"
 import { findPostcodeHits } from "@mailwoman/postcode/postal-spans"
 
-import type { AnchorSpanMode } from "#anchor-inference"
+import type { AnchorSpanMode } from "#channels/anchor-inference"
 import {
 	collectMatchesFor,
 	createLabelSetter,

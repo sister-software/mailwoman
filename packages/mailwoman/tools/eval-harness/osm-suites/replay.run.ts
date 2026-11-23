@@ -27,7 +27,12 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { countInto } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbiKBest } from "@mailwoman/neural/viterbi"
+import {
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
+	viterbiKBest,
+} from "@mailwoman/neural/decode/viterbi"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

@@ -10,7 +10,8 @@
 
 import { bareBIOTag } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import type { DecodeExplanation, LedgerPrior } from "@mailwoman/neural/decode-explanation"
+import type { DecodeExplanation, LedgerPrior } from "@mailwoman/neural/decode/explanation"
+import { softmax } from "@mailwoman/neural/decode/viterbi"
 import {
 	groupPiecesIntoWords,
 	isStreetShapedSurface,
@@ -18,8 +19,7 @@ import {
 	type FSTAcceptedMatch,
 	type FSTMatcherLike,
 	type FSTPlaceEntryLike,
-} from "@mailwoman/neural/fst-prior"
-import { softmax } from "@mailwoman/neural/viterbi"
+} from "@mailwoman/neural/prior/fst"
 
 export interface CensusSpan {
 	tag: string

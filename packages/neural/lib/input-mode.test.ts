@@ -13,9 +13,9 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
+import { parseGazetteerLexicon } from "#channels/gazetteer-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
-import { parseGazetteerLexicon } from "#gazetteer-inference"
-import { MailwomanTokenizer } from "#tokenizer"
+import { MailwomanTokenizer } from "#input/tokenizer"
 
 interface Fixture {
 	street_lexicon: Parameters<typeof parseGazetteerLexicon>[0]

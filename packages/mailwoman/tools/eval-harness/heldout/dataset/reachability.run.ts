@@ -15,7 +15,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { MailwomanTokenizer } from "@mailwoman/neural/input/tokenizer"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { censusReachability } from "#tools/eval-harness/heldout/dataset/reachability"

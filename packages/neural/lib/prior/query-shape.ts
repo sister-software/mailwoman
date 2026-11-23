@@ -1,0 +1,197 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Soft-prior emission biases derived from `QueryShape`: when the query-shape subsystem
+ *   has identified a known-format span (US ZIP, UK postcode, PO box, etc.) this module
+ *   produces an additive bias matrix that nudges the encoder's per-token emissions
+ *   toward the matching BIO label without overriding the encoder.
+ *   The encoder stays authoritative on context-dependent calls.
+ *
+ *   The `QueryShape` value is consumed structurally and the format-name convention is imported from its
+ *   owner rather than restated, because a restated convention drops the formats added after it.
+ */
+
+import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
+import type { CharRange } from "@mailwoman/recognizer/types"
+
+import { emptyPriorMatrix, labelColumnIndex } from "#prior/matrix"
+import { spansOverlap } from "#span/repair"
+
+/**
+ * Candidate count above which the shape prior is too diffuse to apply.
+ */
+const MAX_PRIOR_CANDIDATES = 4
+
+export interface QueryShapeLike {
+	knownFormats: ReadonlyArray<KnownFormatHitView>
+	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
+}
+
+interface RegionAbbreviationHitLike {
+	start: number
+	/**
+	 * The abbreviation's text under the `legacy` generation, and its span under the `postal` generation.
+	 */
+	span: string | { end: number }
+}
+
+/**
+ * The offset one past the abbreviation, in UTF-16 code units.
+ */
+function regionAbbreviationEnd(abbreviation: RegionAbbreviationHitLike): number {
+	return typeof abbreviation.span === "string" ? abbreviation.start + abbreviation.span.length : abbreviation.span.end
+}
+
+/**
+ * Minimal subset of `TokenizedPiece` this module consumes.
+ */
+export type TokenLike = CharRange
+
+/**
+ * The BIO label a non-postcode `KnownFormat` biases.
+ *
+ * Postcode formats are decided by name through {@linkcode isPostcodeFormat}, so a format
+ * added to the detector's table reaches this prior without a second list to keep in step.
+ */
+const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
+
+/**
+ * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
+ * or `null` when the format identifies no label.
+ *
+ * An uncovered format contributes zero bias and raises no error.
+ */
+function formatLabel(format: string): string | null {
+	return isPostcodeFormat(format) ? "B-postcode" : (FORMAT_TO_LABEL.get(format) ?? null)
+}
+
+export interface BuildPriorsOpts {
+	/**
+	 * Maximum bias magnitude in log-odds units, default 1.0 and scaled by hit confidence.
+	 */
+	biasScale?: number
+	/**
+	 * Raw input text, without which the scoped locality bias's digit guard cannot run.
+	 */
+	inputText?: string
+}
+
+/**
+ * Build a `[seqLen][numLabels]` matrix of additive log-bias for encoder emissions before Viterbi
+ * decoding, where each token overlapping a format hit receives `hit.confidence × biasScale` on
+ * the format's mapped label and the matrix is all zeros when `shape.knownFormats` is empty.
+ */
+export function buildEmissionPriors(
+	shape: QueryShapeLike,
+	tokens: ReadonlyArray<TokenLike>,
+	labels: ReadonlyArray<string>,
+	opts: BuildPriorsOpts = {}
+): number[][] {
+	const T = tokens.length
+	const L = labels.length
+	const biasScale = opts.biasScale ?? 1
+	const matrix = emptyPriorMatrix(T, L)
+	const labelToCol = labelColumnIndex(labels)
+
+	if (!shape.knownFormats.length && !shape.regionAbbreviations?.length) {
+		return matrix
+	}
+
+	for (const hit of shape.knownFormats) {
+		const targetLabel = formatLabel(hit.format)
+
+		if (!targetLabel) continue
+		const col = labelToCol.get(targetLabel)
+
+		if (!col) continue
+		const bias = hit.confidence * biasScale
+
+		for (let t = 0; t < T; t++) {
+			const tok = tokens[t]!
+
+			if (spansOverlap(tok, hit.span)) {
+				matrix[t]![col] = Math.max(matrix[t]![col]!, bias)
+			}
+		}
+	}
+
+	applyScopedLocalityBias(matrix, shape, tokens, labelToCol, opts.inputText)
+
+	return matrix
+}
+
+/**
+ * The scoped locality bias fires on the name written in the comma segment directly
+ * before a region abbreviation (`Cool, CA`, and `Cool` in `Cool Post Office, Cool, CA`),
+ * and only when the input holds no digits and the abbreviation is the final token.
+ *
+ * At most {@link MAX_PRIOR_CANDIDATES} tokens may sit in that segment.
+ *
+ * Earlier segments, such as a venue's name, are outside it, so the name before the
+ * abbreviation reads as the locality whether or not something precedes it.
+ */
+function applyScopedLocalityBias(
+	matrix: number[][],
+	shape: QueryShapeLike,
+	tokens: ReadonlyArray<TokenLike>,
+	labelToCol: Map<string, number>,
+	inputText?: string
+): void {
+	const abbrevs = shape.regionAbbreviations
+
+	if (!abbrevs?.length || !inputText || /\d/.test(inputText)) return
+
+	const bLocCol = labelToCol.get("B-locality")
+	const iLocCol = labelToCol.get("I-locality")
+
+	if (!bLocCol) return
+
+	for (const abbrev of abbrevs) {
+		if (tokens.some((tok) => tok.start > regionAbbreviationEnd(abbrev))) continue
+
+		// The segment opens after the last comma that precedes the separator before the abbreviation.
+		const prefix = inputText.slice(0, abbrev.start).replace(/[\s,]+$/u, "")
+		const segmentStart = prefix.lastIndexOf(",") + 1
+
+		const candidates = tokens
+			.map((tok, t) => ({ tok, t }))
+			.filter(({ tok }) => tok.start >= segmentStart && tok.end <= abbrev.start)
+
+		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
+
+		for (let i = 0; i < candidates.length; i++) {
+			const col = i === 0 ? bLocCol : iLocCol
+
+			if (!col) continue
+			matrix[candidates[i]!.t]![col] = Math.max(matrix[candidates[i]!.t]![col]!, SCOPED_LOCALITY_BIAS)
+		}
+	}
+}
+
+/**
+ * Log-odds bias for the scoped doubleton case.
+ */
+const SCOPED_LOCALITY_BIAS = 2
+
+/**
+ * Element-wise add two matrices of equal shape, returning a new matrix.
+ */
+export function addEmissionMatrix(emissions: number[][], priors: number[][]): number[][] {
+	if (!priors.length) return emissions.map((row) => row.slice())
+	const out: number[][] = []
+
+	for (let t = 0; t < emissions.length; t++) {
+		const e = emissions[t]!
+		const p = priors[t] ?? new Array<number>(e.length).fill(0)
+		const row = new Array<number>(e.length)
+
+		for (let k = 0; k < e.length; k++) {
+			row[k] = e[k]! + (p[k] ?? 0)
+		}
+
+		out.push(row)
+	}
+
+	return out
+}

@@ -19,7 +19,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
-import { gazetteerCharPaint, parseGazetteerLexicon } from "#gazetteer-inference"
+import { gazetteerCharPaint, parseGazetteerLexicon } from "#channels/gazetteer-inference"
 import { PackedStringMap } from "#latn/packed-string-map"
 
 const LATIN_GRAPH_PACKAGE = "@mailwoman/neural-weights-en-us"

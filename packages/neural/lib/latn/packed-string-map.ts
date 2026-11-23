@@ -10,8 +10,8 @@
  *   en-GB, en-AU, en-IN, en-NZ, de-DE, es-ES, fr-FR and it-IT.
  *   Keys compare as exact UTF-8 bytes with no normalization.
  *
- *   The painter in `#gazetteer-inference` folds case and strips punctuation before a lookup,
- *   and that fold is what decides which languages the lexicons serve.
+ *   The painter in `#channels/gazetteer-inference` folds case and strips punctuation
+ *   before a lookup, and that fold is what decides which languages the lexicons serve.
  *   A family in another script moves this module to a shared home only with a
  *   parity test over that family's own lexicon.
  *

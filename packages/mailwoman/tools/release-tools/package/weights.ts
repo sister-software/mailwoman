@@ -27,7 +27,7 @@ import {
 	STAGE3_FINE_TAGS,
 	STAGE3_TAGS,
 } from "@mailwoman/neural/labels"
-import { labelSetContract } from "@mailwoman/neural/semantic-tags"
+import { labelSetContract } from "@mailwoman/neural/labels/semantic-tags"
 import type { AddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 import { join, type PathBuilderLike } from "path-ts"
 

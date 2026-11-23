@@ -4,8 +4,8 @@
 /**
  *   Browser-safe aggregate of this package.
  *
- *   It is the main entry minus `./weights.ts` and `./scorer.ts` — the only two modules left
- *   that statically reach `node:fs`, and so the only two a browser graph cannot contain.
+ *   It is the main entry minus `weights.ts` and `classifier/scorer.ts` — the only two modules
+ *   left that statically reach `node:fs`, and so the only two a browser graph cannot contain.
  *   Everything else here is reachable from a bundle by construction: `neural/onnx-runner`
  *   resolves to a throwing browser counterpart under the `browser` condition.
  *   oxlint enforces the no-`node:*` rule for the rest.
@@ -18,18 +18,18 @@
  *   A browser caller fetches each lexicon alongside the model and feeds it.
  */
 
-export * from "#anchor-inference"
+export * from "#channels/anchor-inference"
 export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 export * from "#classifier"
-export * from "#country-inference"
-export * from "#gazetteer-inference"
+export * from "#channels/country-inference"
+export * from "#channels/gazetteer-inference"
 export * from "#labels"
 // Resolution rather than curation: the `browser` condition on this subpath serves a counterpart
 // whose every entry point throws, so the value exports below are safe to name from a bundle.
 export * from "#onnx-runner"
 export * from "#pair/index/resolver"
-export * from "#soft-features"
-export * from "#tokenizer"
+export * from "#channels/soft-features"
+export * from "#input/tokenizer"
 // `./placetype-pair-prior.ts` is reached only through the classifier's decode,
 // so callers need the option shape and not the module.
 // A `type` re-export is fully erased.

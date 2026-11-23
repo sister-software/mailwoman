@@ -32,7 +32,7 @@
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createScorer } from "@mailwoman/neural/scorer"
+import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"

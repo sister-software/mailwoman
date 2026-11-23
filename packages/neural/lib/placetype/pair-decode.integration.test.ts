@@ -17,10 +17,10 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferResult } from "#onnx-runner"
 import type { PairIndexLike } from "#pair"
-import { MailwomanTokenizer } from "#tokenizer"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 

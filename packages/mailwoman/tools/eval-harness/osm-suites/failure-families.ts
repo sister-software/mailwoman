@@ -9,7 +9,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { countInto } from "@mailwoman/core/stats"
-import { SINGLETON_TAGS } from "@mailwoman/neural/cardinality-filter"
+import { SINGLETON_TAGS } from "@mailwoman/neural/decode/cardinality-filter"
 
 /**
  * One failure-list entry: the input and the expected and shipped components,

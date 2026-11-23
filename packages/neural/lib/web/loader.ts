@@ -8,9 +8,9 @@ import { startEarly } from "@mailwoman/core/promises"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 
-import { parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, BinaryAnchorLookup } from "#anchor-inference"
-import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
+import { type AnchorLookup, BinaryAnchorLookup } from "#channels/anchor-inference"
+import { type CountryLexicon, parseCountryLexicon } from "#channels/country-inference"
+import { type GazetteerLexicon, parseGazetteerLexicon } from "#channels/gazetteer-inference"
 import { NeuralAddressClassifier } from "#classifier"
 import {
 	type ConventionsSetting,
@@ -19,14 +19,14 @@ import {
 	type DeclaredModelBehavior,
 	type ModelCardToggle,
 } from "#classifier/options"
-import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
-import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
-import { inferRequiredChannelsFromInputs } from "#ort-feeds"
+import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#input/char-encoder"
+import { MailwomanTokenizer } from "#input/tokenizer"
+import { parseAddressSystemTable } from "#labels/address-system"
+import { inferRequiredChannelsFromInputs } from "#onnx/feeds"
 import type { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { createAnchorRegionLookup } from "#postcode/anchor/regions"
-import { MailwomanTokenizer } from "#tokenizer"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 

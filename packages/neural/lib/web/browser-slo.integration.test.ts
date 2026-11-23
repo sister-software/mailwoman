@@ -8,7 +8,7 @@
  *   The test name identifies the arm (backend) that produced it.
  *
  *   This measures the neural browser runtime as a client bundles it — `@mailwoman/neural/web/onnx-runner`
- *   plus `@mailwoman/neural/tokenizer` through the package's compiled `out/` tree —
+ *   plus `@mailwoman/neural/input/tokenizer` through the package's compiled `out/` tree —
  *   so run `yarn compile` first, because a stale `out/` measures stale code.
  *   `@mailwoman/neural/web/loader` composes those into a `NeuralAddressClassifier` that also
  *   reaches `@mailwoman/core`, and the `bundle-graph` health check proves that graph bundles.
@@ -593,7 +593,7 @@ const BROWSER_ENTRY_SOURCE = [
 	// A `#` specifier resolves against the nearest `package.json`, so it reads
 	// the root manifest there and fails.
 	// The entry therefore imports the package's public subpaths.
-	'import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"',
+	'import { MailwomanTokenizer } from "@mailwoman/neural/input/tokenizer"',
 	'import { WebONNXRunner } from "@mailwoman/neural/web/onnx-runner"',
 	"",
 	"// Pinned so the warm number names one arm. Without cross-origin isolation ORT would settle on a",

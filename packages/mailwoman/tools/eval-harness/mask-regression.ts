@@ -3,7 +3,7 @@
 
 /**
  *   Per-release mask-regression check, the "second lock" paired with the load-time capability-manifest
- *   delta check shipped in `neural/scorer.ts` (`assertConventionsRespectCapabilities`).
+ *   delta check shipped in `neural/classifier/scorer.ts` (`assertConventionsRespectCapabilities`).
  *
  *   What it adds over the load-time delta check (and why two locks):
  *

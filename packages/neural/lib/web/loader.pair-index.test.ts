@@ -34,8 +34,8 @@ let capturedConfig: {
 	}
 } | null = null
 
-vi.mock("#tokenizer", async (importOriginal) => ({
-	...(await importOriginal<typeof import("#tokenizer")>()),
+vi.mock("#input/tokenizer", async (importOriginal) => ({
+	...(await importOriginal<typeof import("#input/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 

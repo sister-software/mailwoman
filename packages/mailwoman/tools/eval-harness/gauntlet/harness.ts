@@ -19,7 +19,7 @@ import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/re
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"
-import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
+import type { FSTMatcherLike } from "@mailwoman/neural/prior/fst"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
 import { createWOFResolver } from "@mailwoman/resolver"

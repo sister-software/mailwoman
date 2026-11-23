@@ -47,7 +47,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { createScorer } from "@mailwoman/neural/scorer"
+import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { assembleStreetName } from "#street/name-assembly"

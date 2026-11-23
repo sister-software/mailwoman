@@ -17,7 +17,7 @@ import type { AddressScript } from "@mailwoman/codex/address/layouts"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 
-import type { LabelSchemaAddressSystems } from "#label-schema"
+import type { LabelSchemaAddressSystems } from "#labels/schema"
 
 /**
  * The committed registry's path segments from the repository root.

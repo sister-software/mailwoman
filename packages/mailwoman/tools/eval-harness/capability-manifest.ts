@@ -7,8 +7,8 @@
  *   The model card declares, per tier, per address-system and per tag,
  *   the model's measured per-tag F1 with the conventions mask off, plus the mask-on
  *   F1 for any tag a codex `forbiddenTags` row would suppress.
- *   The `createScorer` loader (neural/scorer.ts) reads this `capabilities` block and fails
- *   closed when a conventions mask would forbid a tag the model is certified to emit.
+ *   The `createScorer` loader (neural/classifier/scorer.ts) reads this `capabilities` block
+ *   and fails closed when a conventions mask would forbid a tag the model is certified to emit.
  *
  *   The guard is a delta (`maskOffF1 − maskOnF1 > 5pp`), so a tag the model emits
  *   at 0.80 is still guarded if the mask drops it to 0.0.
@@ -41,7 +41,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
-import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { ScorerOverrides } from "@mailwoman/neural/classifier/scorer"
 import type { CapabilityManifest, TagCapability } from "@mailwoman/neural/weights/channels"
 import type { PathBuilderLike } from "path-ts"
 

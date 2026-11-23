@@ -24,7 +24,7 @@ import { isAdminHierarchyTag } from "@mailwoman/codex/component"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { createScorer } from "@mailwoman/neural/scorer"
+import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"

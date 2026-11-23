@@ -170,7 +170,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			lieuditPairs: { extractLieuDitPairs },
 		} = await allKeyed({
 			utils: import("@mailwoman/core/utils"),
-			fstPrior: import("@mailwoman/neural/fst-prior"),
+			fstPrior: import("@mailwoman/neural/prior/fst"),
 			pair: import("@mailwoman/neural/pair"),
 			pair2: import("@mailwoman/gazetteer/tools/pipeline/pair"),
 			spliterator: import("spliterator"),

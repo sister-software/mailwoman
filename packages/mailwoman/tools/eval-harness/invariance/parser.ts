@@ -7,7 +7,7 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createScorer } from "@mailwoman/neural/scorer"
+import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { resolvePath } from "path-ts"
 

@@ -10,7 +10,7 @@
 import { us } from "@mailwoman/codex"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { allRows, getRow } from "@mailwoman/core/utils"
-import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
+import type { AnchorSpanMode } from "@mailwoman/neural/channels/anchor-inference"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/schema/place-importance"

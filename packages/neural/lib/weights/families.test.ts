@@ -17,7 +17,6 @@ import { isScriptCode } from "@mailwoman/registry/iso15924/codes"
 import type { BCP47 } from "@mailwoman/registry/types"
 import { describe, expect, it } from "vitest"
 
-import { scriptFamilyBase } from "#char-encoder"
 import {
 	FAMILIES,
 	FAMILY_SCRIPTS,
@@ -30,6 +29,7 @@ import {
 	routeFamilyForText,
 	RouteSource,
 } from "#index"
+import { scriptFamilyBase } from "#input/char-encoder"
 
 /**
  * A registry script code, or a thrown error for a string the registry lacks.

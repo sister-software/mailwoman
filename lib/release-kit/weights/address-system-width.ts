@@ -8,7 +8,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { assertAddressSystemWidth, parseAddressSystemTable } from "@mailwoman/neural/address-system"
+import { assertAddressSystemWidth, parseAddressSystemTable } from "@mailwoman/neural/labels/address-system"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 

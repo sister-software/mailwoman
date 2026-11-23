@@ -6,14 +6,14 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import type { AnchorLookup } from "#anchor-inference"
+import type { AnchorLookup } from "#channels/anchor-inference"
+import { parseGazetteerLexicon } from "#channels/gazetteer-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
-import { parseGazetteerLexicon } from "#gazetteer-inference"
+import { TRACE_PRIOR_KINDS } from "#decode/trace"
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferResult } from "#onnx-runner"
-import type { QueryShapeLike } from "#query-shape-prior"
-import { MailwomanTokenizer } from "#tokenizer"
-import { TRACE_PRIOR_KINDS } from "#trace"
+import type { QueryShapeLike } from "#prior/query-shape"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 

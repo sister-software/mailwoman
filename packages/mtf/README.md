@@ -90,7 +90,7 @@ toolchain. A repository check will rebuild it and compare hashes.
   character's span.
 - **Model loading.** The loader validates lengths, counts and versions before allocating, and bounds input
   length and token count.
-- **Downstream consumers.** `packages/neural/lib/tokenizer.ts` converts byte offsets to UTF-16 ranges and
+- **Downstream consumers.** `packages/neural/lib/input/tokenizer.ts` converts byte offsets to UTF-16 ranges and
   trims leading whitespace. The deleted Python tokenizer converted them to Python
   character positions for label projection. A change to `▁` or to word boundaries changes both.
 
@@ -114,8 +114,8 @@ The CJK family uses a character encoder and no SentencePiece model.
 
 ### Consumers of sentencepiece-wasm
 
-- `packages/neural/lib/tokenizer.ts` (`MailwomanTokenizer`)
-- `packages/neural/lib/native-offsets.integration.test.ts`
+- `packages/neural/lib/input/tokenizer.ts` (`MailwomanTokenizer`)
+- `packages/neural/lib/input/native-offsets.integration.test.ts`
 - `packages/neural/lib/web/browser-slo.integration.test.ts`
 - `packages/mailwoman/tools/dev-tools/man-page.ts`
 

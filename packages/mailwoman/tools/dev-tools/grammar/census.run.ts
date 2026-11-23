@@ -10,7 +10,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
-import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
+import { findFSTAcceptedMatches } from "@mailwoman/neural/prior/fst"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

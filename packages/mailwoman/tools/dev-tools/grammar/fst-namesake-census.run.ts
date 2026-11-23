@@ -42,14 +42,14 @@
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
-import { confidentLocaleCountry } from "@mailwoman/neural/address-system"
+import type { NeuralParseTrace } from "@mailwoman/neural/decode/trace"
+import { confidentLocaleCountry } from "@mailwoman/neural/labels/address-system"
 import {
 	findFSTAcceptedMatches,
 	PLACETYPE_TO_BIO,
 	type FSTMatcherLike,
 	type FSTPlaceEntryLike,
-} from "@mailwoman/neural/fst-prior"
-import type { NeuralParseTrace } from "@mailwoman/neural/trace"
+} from "@mailwoman/neural/prior/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

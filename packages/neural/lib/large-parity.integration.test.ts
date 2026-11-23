@@ -7,7 +7,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
-import { MailwomanTokenizer, SPACE_SENTINEL } from "#tokenizer"
+import { MailwomanTokenizer, SPACE_SENTINEL } from "#input/tokenizer"
 
 const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const LARGE_FIXTURE_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json")

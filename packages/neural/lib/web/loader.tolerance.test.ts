@@ -20,7 +20,7 @@
  *   identity (undefined lookup) and still loads.
  *
  *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real
- *   model file is needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts`
+ *   model file is needed — plus partial mocks of `input/tokenizer.ts` + `classifier.ts`
  *   (which need a real tokenizer.model) while keeping `PostcodeBinaryLookup` +
  *   `serializePostcodeBinary` real, so the postcode-load-and-merge path under test runs for real.
  */
@@ -52,8 +52,8 @@ let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = nul
 
 // The real tokenizer needs a valid SentencePiece model.
 // Stub the load (we feed dummy bytes).
-vi.mock("#tokenizer", async (importOriginal) => ({
-	...(await importOriginal<typeof import("#tokenizer")>()),
+vi.mock("#input/tokenizer", async (importOriginal) => ({
+	...(await importOriginal<typeof import("#input/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 

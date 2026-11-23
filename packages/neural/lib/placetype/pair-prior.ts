@@ -14,8 +14,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 
-import type { AnchorSpanMode } from "#anchor-inference"
-import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
+import type { AnchorSpanMode } from "#channels/anchor-inference"
 import type { PairEdge, PairIndexLike } from "#pair/index/resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
@@ -35,8 +34,9 @@ import {
 } from "#pair/prior-windows"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { collectMatches } from "#postcode/repair"
-import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
-import type { TokenLike } from "#query-shape-prior"
+import { groupPiecesIntoWords, type WordGroup } from "#prior/fst"
+import { emptyPriorMatrix, labelColumnIndex } from "#prior/matrix"
+import type { TokenLike } from "#prior/query-shape"
 
 /**
  * `probeMode` selects how candidates are built.

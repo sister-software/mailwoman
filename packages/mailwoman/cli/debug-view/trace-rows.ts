@@ -3,7 +3,7 @@
 
 import { bareBIOTag } from "@mailwoman/codex/component"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { softmax } from "@mailwoman/neural/viterbi"
+import { softmax } from "@mailwoman/neural/decode/viterbi"
 
 import type { GeocodeApplied, GeocodeTrace } from "#geocode/session"
 

@@ -17,7 +17,7 @@
 /* oxlint-disable sister-software/multiline-statement-padding -- feature-vector records stay adjacent as one receipt */
 
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
-import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
+import type { FSTAcceptedMatch } from "@mailwoman/neural/prior/fst"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import type { CharRange } from "@mailwoman/recognizer/types"
 

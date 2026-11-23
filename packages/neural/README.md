@@ -25,34 +25,30 @@ const session = await loadModel("path/to/model.onnx")
 
 ## What's inside
 
-| Module                            | Purpose                                                                                                                   |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **`tokenizer.ts`**                | SentencePiece unigram tokenizer (loads `.model` file)                                                                     |
-| **`onnx-runner.ts`**              | ONNX Runtime Web inference session (WASM backend)                                                                         |
-| **`classifier.ts`**               | `NeuralAddressClassifier` — tokenize → run → decode                                                                       |
-| **`scorer.ts`**                   | `createScorer` / `ProductionScorer` — canonical entry point that reads `requires` from `model-card.json` and fails closed |
-| **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel rather than override)                                                     |
-| **`gazetteer-inference.ts`**      | Gazetteer lexicon soft-feature injection                                                                                  |
-| **`viterbi.ts`**                  | Viterbi decoder (linear-chain CRF) with BIO transition masks                                                              |
-| **`labels.ts`**                   | Label index ↔ `ComponentTag` mapping                                                                                      |
-| **`weights.ts`**                  | Weight loading from `@mailwoman/neural-weights-*` bundles                                                                 |
-| **`soft-features.ts`**            | Soft-feature vector construction (anchor + gazetteer channels)                                                            |
-| **`postcode-anchor.ts`**          | Postcode extraction and anchor coordinate resolution                                                                      |
-| **`postcode-binary-resolver.ts`** | Sorted-binary postcode lookup (browser)                                                                                   |
-| **`query-shape-prior.ts`**        | Query-shape-based emission priors                                                                                         |
-| **`span-proposal-prior.ts`**      | Phrase-grouper-based span proposal priors                                                                                 |
-| **`span-proposer-lexicon.ts`**    | Lexicon-based span proposals                                                                                              |
-| **`proposal-classifier.ts`**      | Proposal-level classification wrapper                                                                                     |
-| **`case-normalize.ts`**           | All-caps case normalization before the model                                                                              |
+Each directory under `lib/` holds one role, and a directory's module is its sibling file.
+
+| Directory                                                                 | Role                                                                                       |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **`classifier.ts`**, **`classifier/`**                                    | `NeuralAddressClassifier`, its loader and options, the scorer and the proposal adapter     |
+| **`input/`**                                                              | The SentencePiece tokenizer and the character encoder                                      |
+| **`channels/`**                                                           | The soft-feature channels fed beside the pieces: anchor, gazetteer, country and code units |
+| **`onnx/`**                                                               | The ONNX runners and the tensor feeds they share                                           |
+| **`prior/`**                                                              | Emission priors: query shape, FST and street morphology                                    |
+| **`decode/`**                                                             | The Viterbi and semi-Markov decoders, the passes over their paths, and the parse trace     |
+| **`repair/`**                                                             | Repairs applied to a decoded sequence                                                      |
+| **`labels.ts`**, **`labels/`**                                            | The label sets, the label schema, the semantic tag registry and the address-system table   |
+| **`weights.ts`**, **`weights/`**                                          | Weight loading from `@mailwoman/neural-weights-*` bundles                                  |
+| **`postcode/`**, **`span/`**, **`pair/`**, **`placetype/`**, **`venue/`** | One evidence source each: its lookup, its prior and its repair                             |
+| **`web/`**                                                                | The browser loader and runner                                                              |
 
 ## Key exports
 
 ```ts
 // Canonical entry point — respects model-card.json "requires" interface
-export { createScorer, ProductionScorer, type Scorer } from "./scorer.js"
+export { createScorer, ProductionScorer, type Scorer } from "./classifier/scorer.js"
 
 // Tokenizer (SentencePiece unigram, byte_fallback)
-export { loadTokenizer, Tokenizer, tokenizeToIDs } from "./tokenizer.js"
+export { loadTokenizer, Tokenizer, tokenizeToIDs } from "./input/tokenizer.js"
 
 // ONNX inference
 export { loadModel, createOrtSession, OnnxRunner } from "./onnx-runner.js"
@@ -61,7 +57,7 @@ export { loadModel, createOrtSession, OnnxRunner } from "./onnx-runner.js"
 export { NeuralAddressClassifier } from "./classifier.js"
 
 // Decoder (Viterbi + BIO masks + argmax)
-export { viterbi, softmax, perTokenArgmax, buildBioTransitionMask } from "./viterbi.js"
+export { viterbi, softmax, perTokenArgmax, buildBioTransitionMask } from "./decode/viterbi.js"
 
 // Label mapping
 export { labelIndexToClassification, classificationToLabelIndices } from "./labels.js"
@@ -70,8 +66,8 @@ export { labelIndexToClassification, classificationToLabelIndices } from "./labe
 export { loadFromWeights, type WeightsBundle } from "./weights.js"
 
 // Anchor + gazetteer features (soft channels, never overrides)
-export { AnchorInference, type AnchorResult } from "./anchor-inference.js"
-export { GazetteerInference } from "./gazetteer-inference.js"
+export { AnchorInference, type AnchorResult } from "./channels/anchor-inference.js"
+export { GazetteerInference } from "./channels/gazetteer-inference.js"
 
 // Postcode lookup
 export { extractPostcodeAnchors } from "./postcode-anchor.js"

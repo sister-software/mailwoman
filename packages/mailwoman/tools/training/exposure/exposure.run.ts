@@ -24,7 +24,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import { mtfNode, type MTFNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 import type { LabelSetName } from "@mailwoman/neural/labels"
-import { labelSetContract } from "@mailwoman/neural/semantic-tags"
+import { labelSetContract } from "@mailwoman/neural/labels/semantic-tags"
 import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 import { drawnRows } from "../audits/census.ts"

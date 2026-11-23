@@ -1,0 +1,127 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Interface tests for address-system detection and the conventions mask.
+ *
+ *   Detection never acts below threshold or off-vocabulary.
+ *   The mask removes forbidden tags from the decodable vocabulary.
+ *   A model without a locale head is a byte-identical no-op.
+ */
+
+import { conventionsForSystem } from "@mailwoman/codex"
+import { describe, expect, it } from "vitest"
+
+import { LOCALE_COUNTRIES } from "#labels"
+import {
+	assertAddressSystemWidth,
+	detectAddressSystem,
+	localeHintID,
+	parseAddressSystemTable,
+} from "#labels/address-system"
+import { packLocaleHintFeed } from "#onnx/feeds"
+
+/**
+ * Logits that put `prob` mass on `idx` (softmax of one-hot × scale).
+ */
+function confident(idx: number, scale = 10): number[] {
+	return LOCALE_COUNTRIES.map((_, i) => (i === idx ? scale : 0))
+}
+
+describe("detectAddressSystem", () => {
+	it("detects a confident locale and maps it to a system", () => {
+		const fr = detectAddressSystem(confident(LOCALE_COUNTRIES.indexOf("FR")))
+		expect(fr).toMatchObject({ system: "fr", country: "FR" })
+		expect(fr!.confidence).toBeGreaterThan(0.99)
+	})
+
+	it("returns null below the confidence threshold", () => {
+		expect(detectAddressSystem(LOCALE_COUNTRIES.map(() => 1))).toBeNull()
+	})
+
+	it("returns null for locales without a codex system (ES/IT/NL)", () => {
+		expect(detectAddressSystem(confident(LOCALE_COUNTRIES.indexOf("ES")))).toBeNull()
+	})
+
+	it("returns null when the model has no locale head", () => {
+		expect(detectAddressSystem(null)).toBeNull()
+	})
+
+	it("returns null on a vocabulary-size mismatch (drifted head)", () => {
+		expect(detectAddressSystem([5, 0, 0])).toBeNull()
+	})
+
+	it("respects a custom threshold", () => {
+		const logits = confident(LOCALE_COUNTRIES.indexOf("FR"), 1.5)
+		expect(detectAddressSystem(logits, 0.99)).toBeNull()
+		expect(detectAddressSystem(logits, 0.3)).not.toBeNull()
+	})
+})
+
+describe("conventions table", () => {
+	it("fr forbids no tag and pins the 5-digit shape", () => {
+		// France is detected on addresses elsewhere that hold French words,
+		// where a suffix mask deletes a real street type (#2987).
+		const fr = conventionsForSystem("fr")!
+		expect(fr.forbiddenTags).toBeUndefined()
+		expect(fr.postcodePattern!.test("47110")).toBe(true)
+		expect(fr.postcodePattern!.test("4711")).toBe(false)
+	})
+
+	it("absent rows mean no constraints, never defaults", () => {
+		expect(conventionsForSystem("us")).toBeNull()
+		expect(conventionsForSystem(null)).toBeNull()
+	})
+})
+
+describe("assertAddressSystemWidth", () => {
+	const table = parseAddressSystemTable({ count: 40, no_hint: 40, members: { "US/local": 0 } }, "card")!
+
+	it("reads count from the card", () => {
+		expect(table.count).toBe(40)
+	})
+
+	it("passes when the graph width equals the card count", () => {
+		expect(() => assertAddressSystemWidth(table, 40, "card")).not.toThrow()
+	})
+
+	it("refuses a graph whose head width differs from the card count", () => {
+		expect(() => assertAddressSystemWidth(table, 39, "card")).toThrow(/declares 40 address systems.*39 wide/)
+	})
+
+	it("passes a graph without the head and a card without count", () => {
+		expect(() => assertAddressSystemWidth(table, null, "card")).not.toThrow()
+		const legacy = parseAddressSystemTable({ no_hint: 39, members: {} }, "card")!
+
+		expect(() => assertAddressSystemWidth(legacy, 40, "card")).not.toThrow()
+	})
+})
+
+describe("locale hint", () => {
+	const table = parseAddressSystemTable(
+		{ count: 3, no_hint: 3, members: { "RU/local": 0, "HK/local": 1, "HK/latin": 2 } },
+		"test card"
+	)!
+
+	it("reads the country's latin system for Latin-script text and its local system otherwise", () => {
+		expect(localeHintID(table, "hk", "1 Queen's Road Central")).toBe(2)
+		expect(localeHintID(table, "HK", "香港中環皇后大道中1號")).toBe(1)
+		expect(localeHintID(table, "RU", "Tverskaya 13, Moscow")).toBe(0)
+	})
+
+	it("gives no hint for an absent or unknown country", () => {
+		expect(localeHintID(table, null, "anything")).toBe(3)
+		expect(localeHintID(table, "GH", "Plot 12, Spintex Road")).toBe(3)
+	})
+
+	it("reads a card without the field as no table, and refuses a malformed one", () => {
+		expect(parseAddressSystemTable(undefined, "card")).toBeNull()
+		expect(() => parseAddressSystemTable({ no_hint: "3", members: {} }, "card")).toThrow(/address_systems/u)
+	})
+
+	it("feeds the hint only to a graph that declares it, and feeds -1 for a missing id", () => {
+		expect(packLocaleHintFeed(["input_ids"], undefined)).toBeNull()
+		expect(packLocaleHintFeed(["input_ids", "locale_hint"], 2)).toEqual({ data: BigInt64Array.of(2n), dims: [1] })
+		expect(packLocaleHintFeed(["locale_hint"], undefined)).toEqual({ data: BigInt64Array.of(-1n), dims: [1] })
+	})
+})

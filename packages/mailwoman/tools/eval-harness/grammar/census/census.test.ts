@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { buildFSTEmissionPriors, findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
+import { buildFSTEmissionPriors, findFSTAcceptedMatches } from "@mailwoman/neural/prior/fst"
 import { describe, expect, it } from "vitest"
 
 import { buildFixtureFST } from "#test-kit/fst-fixture"

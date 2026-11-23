@@ -176,7 +176,7 @@ async function main() {
 	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadBundledPlaceCountry }] =
 		await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite"),
-			import("@mailwoman/neural/scorer"),
+			import("@mailwoman/neural/classifier/scorer"),
 			import("@mailwoman/resolver"),
 			import("#default/placer"),
 		])

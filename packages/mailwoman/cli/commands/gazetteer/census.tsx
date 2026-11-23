@@ -70,7 +70,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		} = await allKeyed({
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 			utils: import("@mailwoman/core/utils"),
-			fstPrior: import("@mailwoman/neural/fst-prior"),
+			fstPrior: import("@mailwoman/neural/prior/fst"),
 			placetype: import("@mailwoman/neural/placetype"),
 			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/placetype-census"),
 		})
