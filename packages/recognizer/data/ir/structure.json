@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "2d6b43ce97e13cf47d6edf02f5b7985e6dea4660b299d199f38e71705fc2e5f0",
+	"hash": "fff0d258727878d85036d1774ade22733ed1591c930461669b6d4147912219f7",
 	"family": "structure",
 	"terms": [
 		{
@@ -19,7 +19,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 103
+				"line": 104
 			}
 		},
 		{
@@ -37,7 +37,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 104
+				"line": 105
 			}
 		},
 		{
@@ -65,7 +65,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 105
+				"line": 106
 			}
 		},
 		{
@@ -90,7 +90,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 106
+				"line": 107
 			}
 		},
 		{
@@ -107,7 +107,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 107
+				"line": 108
 			}
 		},
 		{
@@ -123,7 +123,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 108
+				"line": 109
 			}
 		},
 		{
@@ -166,7 +166,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 109
+				"line": 110
 			}
 		},
 		{
@@ -191,7 +191,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 110
+				"line": 111
 			}
 		},
 		{
@@ -207,7 +207,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 111
+				"line": 112
 			}
 		},
 		{
@@ -222,7 +222,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 112
+				"line": 113
 			}
 		},
 		{
@@ -234,7 +234,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 113
+				"line": 114
 			}
 		},
 		{
@@ -246,7 +246,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 114
+				"line": 115
 			}
 		},
 		{
@@ -269,7 +269,7 @@
 			},
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 115
+				"line": 116
 			}
 		}
 	],
@@ -290,7 +290,7 @@
 			"partition": "segment",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 166
+				"line": 167
 			}
 		},
 		{
@@ -309,7 +309,7 @@
 			"partition": "segment",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 171
+				"line": 172
 			}
 		},
 		{
@@ -333,7 +333,7 @@
 			"partition": "segment",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 181
+				"line": 182
 			}
 		},
 		{
@@ -352,7 +352,7 @@
 			"partition": "segment",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 176
+				"line": 177
 			}
 		},
 		{
@@ -397,7 +397,7 @@
 			"partition": "segment",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 186
+				"line": 187
 			}
 		},
 		{
@@ -439,7 +439,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 146
+				"line": 147
 			}
 		},
 		{
@@ -481,7 +481,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 130
+				"line": 131
 			}
 		},
 		{
@@ -523,7 +523,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 138
+				"line": 139
 			}
 		},
 		{
@@ -565,7 +565,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 122
+				"line": 123
 			}
 		},
 		{
@@ -611,7 +611,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 154
+				"line": 155
 			}
 		},
 		{
@@ -644,7 +644,7 @@
 			"partition": "token",
 			"source": {
 				"file": "packages/recognizer/crates/recognizer-core/src/grammars/structure.rs",
-				"line": 117
+				"line": 118
 			}
 		}
 	]
