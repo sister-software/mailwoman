@@ -264,6 +264,43 @@ clauses and reports a suffix whose role they don't declare.
 Four practices from larger class-based codebases stay out: decorator injection, a shared `Disposable` base class, an
 `I` prefix on interfaces, and the `private` keyword in place of `#`. `erasableSyntaxOnly` rejects a decorator.
 
+## Role words
+
+Each word below has one sense in a new name, a directory title and prose. A census on 2026-11-23 found 19 of these
+words in several senses each across exported declarations. An existing name in another sense keeps its spelling
+until a change renames it, and a wire identifier or an external name keeps it for good.
+
+- **service**: an object the service registry builds once per scope from a definition with `needs`. A remote
+  endpoint is "a web service" or its own title, such as the Census geocoder.
+- **registry**: the service registry. A keyed in-memory table is "a table", and a government's list of records is
+  "a register".
+- **provider**: an interchangeable implementation of an interface whose title ends in `Provider`. A broadband
+  company is a provider in the BDC data's own vocabulary, and those field names stay as published.
+- **resolver**: an implementation of `Resolver`, which maps a parsed tree to places. A reader of one database or
+  binary artifact by key is a **lookup**.
+- **client**: a class that extends `APIClient`, `DatabaseClient` or `GitClient`. The browser side of an application
+  is "the page".
+- **adapter**: a corpus adapter. It reads one publication into rows.
+- **stage**: an object `{ id, run }` that `runStage` in `@mailwoman/core/pipeline` runs. The **request context** is
+  what every stage of one request reads: the abort signal, the trace sink, the timing and the faults.
+- **pipeline**: the stages of one request, in order. A build that produces database files is "a build".
+- **session**: a `GeocodeSession`, built by `createGeocodeSession`.
+- **engine**: what a caller runs to parse or geocode, built by the modules under `packages/mailwoman/lib/engine/`.
+- **layer**: a spatial data layer with a manifest. A map's drawing layer is "a tile layer".
+- **source**: the publication a row or a file came from. A map's tile endpoint is "a tile source".
+- **scope**: a geographic restriction on a geocode, such as the country scope. A child of the service registry is
+  "a child registry", and the files a pull request changes are "the change".
+- **recipe**: a corpus recipe. **overlay** is always written with its kind: "the corpus overlay" or "the weights overlay".
+- **artifact**: a built file with an identity. A **manifest** records an artifact's identity and inputs.
+- **label**: a `ComponentTag`. A module whose subject is one label sits under `labels/<label>/`, and a step applied
+  to a label sits under its step. `codex/lib/country/` is the registry of countries as jurisdictions, and a `poi/`
+  directory reads the point-of-interest database, a data layer. The label for a place of business is `venue`.
+- **fold**: to map text to a canonical form for comparison while every word stays the same word: case, width,
+  diacritics, whitespace and script variants. A function that expands `blvd` to `boulevard` is "normalize". A
+  function that joins rows, tables or categories is "merge". The rule set a database's keys were built under is its "key rules", as in
+  `STREET_KEY_RULES`. `foldVersion` in the PIX1 and PCN1 headers and the candidate key table inside built databases
+  are wire identifiers and keep their spelling.
+
 ## Vocabulary rules across the tree
 
 A vocabulary rule governs how this repository writes prose. It doesn't govern a string the repository
