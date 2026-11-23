@@ -463,3 +463,22 @@ under this specification with the pins above, read 21,158 rows in 21,158 groups,
 0.108). The arm at 0.85 against 0.85 reads `fail`, so the evaluator separates the two (exit 0, proven). No rows file was
 read and no model was scored. Before US and IN joined, the same proof against 11.2.0's audit read insufficient evidence
 on the first arm, because the objective requires every one of the nine countries.
+
+## 10. Model 11.3.0 shipped under a recorded override
+
+On 2026-11-23 the operator decided to publish v8.10.0 seed 42 as model 11.3.0 without a `pass` verdict. No registered
+specification identifies the artifact: v13 is current and names v8.9.0 seed 42 as its candidate, and this draft
+records a null candidate sha256. The reason is the rights audit. Every model before 11.3.0 trained on
+`nz-charities-register`, and `mwops release rights-audit` refused each release while one shipped. The v8.10.0 recipe
+draws that source at weight 0, and the audit exits 0 for the new card.
+
+The development read under this draft, against 11.2.0 on `heldout-dev-v0.8.22`, is `insufficient_evidence`: 13 of 16
+checks pass, the objective reads −0.0017 [−0.0045, +0.0012], and the `postal_unit` loss reads 0.0146 [−0.0003, +0.0296]
+(`/mnt/mw/models/arms/v8100/reads/verdict-dev-v14.json`). The confirmation read didn't run. The promotion check
+`v9.0.0-base` passed 18 of 18 floors, with `fr.postcode` at its floor of 98.8.
+
+The losses reported in the 11.3.0 model card are the ones the development rows show. A region written after the town
+without a comma reads correctly on 138 of 297 IT post-office-box rows (11.2.0: 233), 459 of 518 AU `gleif-lei` rows
+(494) and 9 of 150 UY rows (25), and `POB <n>` splits into a box word and a street on 24 rows. Five v8.x arms read
+122, 254, 132, 233 and 138 of the IT rows, so the IT drop is within the spread between seeds. Published artifact:
+`@mailwoman/neural-weights-en-us@11.3.0`, `model.onnx` md5 `bc7cafce5540f4f2c26908e74604908c` (#3431).
