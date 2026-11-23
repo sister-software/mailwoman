@@ -15,9 +15,9 @@
  *   frozen with it (`evaluation-groups.run.ts --datasets`), which sends its groups to test.
  *   The next cycle's confirmation collection is then frozen from those rows.
  *
- *   The draw is stated in groups: `groupsPerCountry` groups per country and row kind,
- *   the lowest `hash(group, seed)` first, from train rows only (`stageTrainRows`:
- *   a split attribute's `val` and `test` ids and a manifest deletion's ids are left out).
+ *   The draw is stated in groups: `groupsPerCountry` groups per country and row kind, in the countries
+ *   a release reads (`countries`), the lowest `hash(group, seed)` first, from train rows only
+ *   (`stageTrainRows`: a split attribute's `val` and `test` ids and a manifest deletion's ids are left out).
  *   A group is eligible when none of its rows is held out, when no excluded collection
  *   holds it, and when no training receipt requires it (`required-groups`).
  *
@@ -25,6 +25,7 @@
  *   and the collection kind `reserve`.
  */
 
+import type { CountrySet } from "@mailwoman/codex/country/sets"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
@@ -65,6 +66,13 @@ export interface ReserveDrawInput {
 	 * Groups drawn per country and row kind.
 	 */
 	groupsPerCountry: number
+	/**
+	 * The countries the reserve draws from: those a release reads.
+	 *
+	 * A fixed group count per country takes most of a small country's train rows,
+	 * so a draw over every country empties the sources of the countries no release reads.
+	 */
+	countries: CountrySet
 	seed: number | null
 	limits?: DuckDBLimits
 	/**
@@ -147,6 +155,9 @@ export async function sampleReserveRows(input: ReserveDrawInput): Promise<{
 
 	if (!files.length) throw new Error(`${input.manifest} lists no files`)
 
+	if (!input.countries.size) throw new Error("a reserve draws from at least one country")
+
+	const countries = [...input.countries].toSorted()
 	const deletions = manifest.deletions ?? []
 	const exclusions = input.exclusions ?? []
 	const required = input.required ?? null
@@ -190,7 +201,8 @@ export async function sampleReserveRows(input: ReserveDrawInput): Promise<{
 			deletions,
 			`coalesce(nullif(country, ''), 'ZZ') AS country, ${gazetteer} AS gazetteer, ${group} AS g`,
 			input.limits,
-			`${group} NOT IN (SELECT k FROM excluded_groups)`
+			`${group} NOT IN (SELECT k FROM excluded_groups) AND ` +
+				`coalesce(nullif(country, ''), 'ZZ') IN (${countries.map(quote).join(", ")})`
 		)
 
 		input.onProgress?.("train groups", index + 1, files.length)
@@ -312,6 +324,7 @@ export async function sampleReserveRows(input: ReserveDrawInput): Promise<{
 			seed: input.seed,
 			order: `${order} per country and row kind, over train groups no held-out row, excluded collection or receipt holds`,
 			reserveGroups: cells,
+			reserveCountries: countries,
 			...(against ? { excludes: against } : {}),
 			...(readSets.length ? { excludesRead: readSets } : {}),
 			...(skipped ? { requiredTrainingGroups: skipped } : {}),

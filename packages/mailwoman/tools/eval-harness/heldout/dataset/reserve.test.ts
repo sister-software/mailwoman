@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { countriesDeclaredBy } from "@mailwoman/codex/country/sets"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -30,6 +31,8 @@ describe("sampleReserveRows", () => {
 					...ids.map((id) => `('Main', ${SPANS}, 'NZ', 'oa-nz', '${id}', NULL)`),
 					...ids.map((id) => `('MAIN', ${SPANS}, 'NZ', 'oa-nz', '${id}+case-upper', '${id}')`),
 					`('Taupo', ${SPANS}, 'NZ', 'rendered-prominent-places', 'rendered-prominent-places-aa', 'wof-admin-5')`,
+					// No release reads TV, so its one source keeps its only row.
+					`('Vaiaku', ${SPANS}, 'TV', 'osm-tv', 't1', NULL)`,
 				].join(", ")}) t(${COLUMNS})) TO '${train}' (FORMAT PARQUET)`
 			)
 
@@ -54,8 +57,11 @@ describe("sampleReserveRows", () => {
 			manifest
 		)
 
+		const countries = countriesDeclaredBy("the test's release", ["NZ"])
+
 		const sample = await sampleReserveRows({
 			manifest,
+			countries,
 			groupsPerCountry: 20,
 			seed: 3,
 			exclusions: [{ datasetID: "confirm", version: "v", groups: ["a0"] }],
@@ -69,8 +75,9 @@ describe("sampleReserveRows", () => {
 		expect(sample.rows).toHaveLength(22)
 		expect(sample.rule.reserveGroups).toEqual([{ country: "NZ", kind: "address", groups: 11 }])
 		expect(sample.rule.requiredTrainingGroups?.byCountry).toEqual({ NZ: 1 })
+		expect(sample.rule.reserveCountries).toEqual(["NZ"])
 
-		const few = await sampleReserveRows({ manifest, groupsPerCountry: 3, seed: 3 })
+		const few = await sampleReserveRows({ manifest, countries, groupsPerCountry: 3, seed: 3 })
 
 		expect(new Set(few.rows.map((row) => row.group)).size).toBe(3)
 		expect(few.rows.every((row) => row.group !== "h1")).toBe(true)

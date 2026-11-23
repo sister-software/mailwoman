@@ -118,7 +118,14 @@ shape (no WOF region for the shape, or a GeoNames-fallback score that failed its
 doesn't fail the receipt, and the report lists it with its reasons. A cell with a writable decile-1 place that
 misses its target fails. The report lists every failing form, and lists under each failing cell the writable
 decile-1 places that have no expected draws, required or not, because a place outside the selection counts toward the share but never
-toward presence. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
+toward presence. A place the corpus holds out by design counts toward neither: every one of its groups is on the
+evaluation-group list or the validation list that the corpus manifest records under `evaluation_groups`. A place
+can't be required in training and frozen for grading at once. `readHeldOutByDesign` in `audits/prominent/records.ts` reads both lists, refuses one
+whose sha256 isn't the manifest's, takes each listed group's WOF record, and keeps a record that has no train row in
+any of its groups. That pass reads every train file's ids: 322 s over v0.8.22's 1,104 files. The report's
+`held_out_by_design` gives the places and lists by country, and `not_required` counts them as
+`held-out-by-design`. A held-out place has no form and no population in its demand cell, so decile 1's
+population share is measured over the places training can read. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
 held-out freeze and the validation quota skip. A sub-locality's pair with its parent is required as `locality` and `region` when the
 places table marks it `postal_pair` (`isPostalLocalityPair` in `@mailwoman/gazetteer/tools/pipeline/pair/postal-children`),
 and as `dependent_locality` and `locality` otherwise. The draws are what the config's sampler reads in one epoch. A row's
