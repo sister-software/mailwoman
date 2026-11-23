@@ -13,6 +13,19 @@ import { collectRepoContext } from "#repo-health/index"
 const ADAPTERS = "packages/corpus/lib/adapters"
 
 describe("findPrefixGroups", () => {
+	test("a known hyphenated name is one word, and a longer name that starts with it nests under it", () => {
+		const labels = "packages/neural/lib/labels"
+
+		const groups = findPrefixGroups([
+			`${labels}/street/key.ts`,
+			`${labels}/street-prefix/particle.ts`,
+			`${labels}/house-number-forms.ts`,
+			`${labels}/house-number-ranges.ts`,
+		])
+
+		expect(groups.map((group) => group.prefix)).toEqual(["house-number"])
+	})
+
 	test("groups three siblings and leaves a pair alone", () => {
 		const groups = findPrefixGroups([
 			`${ADAPTERS}/state-hi-schools/adapter.ts`,

@@ -28,8 +28,18 @@
  *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository.
  *   `fixtures/.../whosonfirst-data-admin-fr/` is an upstream repository.
  *   This check doesn't arrange either external repository.
+ *
+ *   A hyphen inside a known name is part of the name. {@link KNOWN_NAMES} holds each name
+ *   the repository spells with a hyphen, such as the component tag `house-number`.
+ *
+ *   A child whose whole name is in the set is one word and joins no family through that hyphen.
+ *   `house-number-forms.ts` still belongs under `house-number/`.
+ *
+ *   `labels/street-prefix/` therefore stays beside `labels/street/`, and
+ *   `sub-venue-lexicon.ts` belongs under `sub-venue/`, never under `sub/venue/`.
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 
 import { DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -44,6 +54,21 @@ const CHECK_ID = "prefix-directories"
 const GROUP_THRESHOLD = 2
 
 const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
+
+/**
+ * Each word the repository spells with a hyphen.
+ *
+ * Every component tag of more than one word is here, read from the codex.
+ * `sub-venue` is a corpus recipe and the tier of its lexicon.
+ *
+ * `non-native` is the script order that the corpus tools measure.
+ */
+const KNOWN_NAMES: ReadonlySet<string> = new Set([
+	...COMPONENT_TAGS.filter((tag) => tag.includes("_")).map((tag) => tag.replaceAll("_", "-")),
+	"sub-venue",
+	"non-native",
+])
+
 const SOURCE_FILE = /\.tsx?$/u
 const TEST_FILE = /\.(?:test|spec)\.tsx?$/u
 
@@ -131,6 +156,29 @@ function directoryChildren(
 	return new Map([...children].map(([directory, bucket]) => [directory, withCompanions([...bucket.values()])]))
 }
 
+/**
+ * The prefix a name shares with its family, or null when the name is one word.
+ *
+ * The prefix is the name's first word.
+ * The longest {@link KNOWN_NAMES} entry the name starts with is that word,
+ * so `street-prefix-particle-table` reads `street-prefix-particle` before `street-prefix`.
+ *
+ * A name the set holds whole, with zero segments after it, is one word.
+ */
+function familyPrefixOf(stem: string): string | null {
+	if (KNOWN_NAMES.has(stem)) return null
+
+	const segments = stem.split("-")
+
+	for (let length = segments.length - 1; length > 1; length--) {
+		const leading = segments.slice(0, length).join("-")
+
+		if (KNOWN_NAMES.has(leading)) return leading
+	}
+
+	return PREFIXED.exec(stem)?.groups?.prefix ?? null
+}
+
 function memberStem(member: PrefixMember): string {
 	return member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
 }
@@ -173,7 +221,7 @@ export function findPrefixGroups(
 
 			stems.set(stem, member)
 
-			const prefix = PREFIXED.exec(stem)?.groups?.prefix
+			const prefix = familyPrefixOf(stem)
 
 			if (!prefix) continue
 

@@ -148,7 +148,10 @@ convention requires those subpaths, and the sibling file of each directory. Ever
 a directory whose title states its role: the artifact it reads, as `candidate/` does, or the step it
 performs, as `ranking/` does. A new module goes into the directory of its role, and a role with no
 directory yet gets one. A directory holds one role. When its description would need "and", it is two
-directories.
+directories. A hyphen inside a known name stays in the directory's title: a component tag such as
+`house-number/` or `street-prefix/`, and a name such as `sub-venue/`. The `prefix-directories` check
+holds those names in one set and reads each as one segment, so it never asks for `sub/venue/`, and
+`house-number-forms.ts` still belongs under `house-number/`.
 
 Use the established shared implementation before adding a local helper. `mailwoman/prefer-home` and
 the `private-name-shadows-export` repository check report repeated implementation shapes and private
