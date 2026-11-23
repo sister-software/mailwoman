@@ -11,7 +11,7 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { relative } from "path-ts"
 
 import {

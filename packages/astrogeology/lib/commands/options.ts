@@ -8,8 +8,8 @@
  *   No module a command imports may be another command.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { BODIES, type BuildableBodyID } from "#bodies"
 

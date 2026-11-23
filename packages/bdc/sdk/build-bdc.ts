@@ -4,7 +4,6 @@
 import { readFileRange } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertTierMatchesLicense,
 	createLayerCoverageTable,
@@ -15,6 +14,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { FRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"

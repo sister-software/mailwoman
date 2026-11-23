@@ -15,11 +15,10 @@
  *   when the first is absent. One OpenStreetMap artifact scoped to four countries is selected for each of them.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo, makeDirectories, removePath, writeLocalBuffer } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	artifactSetID,
 	ArtifactFormat,
@@ -27,6 +26,7 @@ import {
 	type SelectionEntry,
 	ServingRole,
 } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import {
 	ADDRESS_POINT_COLUMNS,
@@ -36,11 +36,14 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address"
 import { deserializeFST, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
+import {
+	normalizeLocalityForKey,
+	normalizeStreetForKeyLocale,
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
-import { normalizeLocalityForKey, normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ServiceRegistry } from "async-init"
 import type { PathBuilder, PathBuilderLike } from "path-ts"

@@ -10,10 +10,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { encodeTrainingGrant, verifyTrainingGrant } from "@mailwoman/core/license"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { TRAINING_AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import { trainingAdmission } from "@mailwoman/license/product/entitlement"
 import {

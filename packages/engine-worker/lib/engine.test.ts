@@ -3,7 +3,7 @@
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { describe, expect, test, vi } from "vitest"
 

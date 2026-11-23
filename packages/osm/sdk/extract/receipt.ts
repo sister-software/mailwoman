@@ -12,9 +12,9 @@
  *   reads it back and checks the file still has the bytes the receipt recorded.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
 import { isoDate } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 

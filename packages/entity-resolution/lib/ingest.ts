@@ -7,7 +7,7 @@
  * The caller injects geocoding, so this package never imports the neural parser, resolver, or extracts.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import type { PathBuilderLike } from "path-ts"

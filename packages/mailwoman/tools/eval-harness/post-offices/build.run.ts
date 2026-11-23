@@ -12,8 +12,8 @@
  */
 
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { STRUCTURE_SOURCES } from "@mailwoman/corpus/structures/sources"
 import { PathBuilder } from "path-ts"
 

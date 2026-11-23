@@ -10,7 +10,7 @@
 
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { Box, Text } from "ink"
 
 import { type CommandComponent, type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"

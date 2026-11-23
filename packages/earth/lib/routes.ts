@@ -7,7 +7,7 @@
  * a not-found view rather than the geocoder and a stale link fails visibly.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
 import { wrapLongitude } from "@mailwoman/spatial/position"
 

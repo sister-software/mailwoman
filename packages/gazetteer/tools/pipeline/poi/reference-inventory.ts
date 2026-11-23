@@ -17,7 +17,7 @@
  *   A numeric literal could read another class's rows under this class's name.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

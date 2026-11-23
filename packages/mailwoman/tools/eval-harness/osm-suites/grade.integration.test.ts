@@ -7,7 +7,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, it } from "vitest"

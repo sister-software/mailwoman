@@ -15,8 +15,8 @@
  *   `--volume-root` defaults to the training volume's `corpus/versioned`, where the manifest's paths point.
  */
 
-import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 
 import { buildCJKOverlay, CN_UNITS_SOURCE, OVERLAY_JP_SOURCE, OVERLAY_JP_VERSION } from "#cjk/overlay"
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"

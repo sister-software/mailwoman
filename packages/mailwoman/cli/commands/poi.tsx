@@ -31,9 +31,9 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { prettyJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { Text } from "ink"
 

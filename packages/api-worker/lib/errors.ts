@@ -9,7 +9,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 /**
  * A JSON error response, `{ "error": <message> }`, with `status`.

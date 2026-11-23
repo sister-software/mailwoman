@@ -31,8 +31,8 @@
 
 import type { ClassificationRecord } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { percentile } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { allRows, mean } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -42,7 +42,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 import { collectResolved, mostSpecific } from "#tools/eval-harness/oa/resolver/tree-hits"
-import { v0RecordToTree } from "#tools/eval-harness/v0-tree-adapter"
+import { v0RecordToTree } from "#tools/eval-harness/parity/v0-tree-adapter"
 /**
  * Percentage-point collision reduction the split must deliver to be judged effective.
  */

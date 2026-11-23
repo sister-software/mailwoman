@@ -9,7 +9,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { HTTPStatusError, type SourceManifest } from "#tools/fetch/download/network"

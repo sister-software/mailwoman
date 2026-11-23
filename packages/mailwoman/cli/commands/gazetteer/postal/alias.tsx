@@ -23,8 +23,8 @@
  *   imported dynamically inside the build.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { dirname } from "path-ts"
 
@@ -109,7 +109,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		kdb.exec("PRAGMA journal_mode = WAL;")
 		// The shared builder creates the exact table the reader and tests use,
 		// so this producer cannot drift from postal-city-alias-schema.ts.
-		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
+		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/labels/locality")
 
 		await createPostalCityAliasTable(kdb)
 

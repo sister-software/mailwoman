@@ -15,7 +15,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { alignAndWrite, type CSVRecord, readCSVRecords, readTuples } from "#recipes/scaffold"

@@ -10,7 +10,8 @@
  */
 
 import { isCountryToken } from "@mailwoman/codex/country"
-import { streetTypeWordTestFor } from "@mailwoman/codex/street/type"
+import { streetTypeWordTestFor } from "@mailwoman/codex/labels/street/type"
+import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/asset/postcode-prefix-files"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type AnchorRegionLookupLike,
@@ -21,13 +22,12 @@ import {
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
-import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/postcode-prefix-files"
-import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
+import { createAnchorRegionLookup } from "@mailwoman/neural/labels/postcode/anchor/regions"
 import { isStreetAffix } from "@mailwoman/neural/prior/fst"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import type { PathBuilderLike } from "path-ts"
 
 /**

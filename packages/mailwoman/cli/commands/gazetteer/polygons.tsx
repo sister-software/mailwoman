@@ -28,15 +28,15 @@
  *   US town polygons live in that placetype.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
@@ -195,7 +195,7 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
 			polygonSchema: import("@mailwoman/resolver-wof-sqlite/schema/polygon"),
-			json: import("@mailwoman/core/json"),
+			json: import("@mailwoman/core/values/json"),
 		})
 
 		const out = options.out

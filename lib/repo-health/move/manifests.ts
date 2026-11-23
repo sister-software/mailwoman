@@ -12,7 +12,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import type { ManifestRewrite } from "#repo-health/move/types"

@@ -11,8 +11,8 @@
  *   128 KiB window, so memory stays fixed whatever the member's size.
  */
 
+import { memoizeResettable } from "#async/memoize"
 import { readLocalBuffer } from "#fs/readers"
-import { memoizeResettable } from "#memoize"
 
 /**
  * The location of the committed `wasm/deflate64.wasm`, resolved from this module.

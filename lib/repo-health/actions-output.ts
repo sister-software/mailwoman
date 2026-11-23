@@ -8,8 +8,8 @@
 import { liveEnv } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
-import { git, trackedFiles } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { git, trackedFiles } from "@mailwoman/core/repo/git"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 

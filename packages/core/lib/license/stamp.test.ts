@@ -4,7 +4,6 @@
 import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { describe, expect, it } from "vitest"
 
-import { stringifyJSON } from "#json"
 import {
 	buildEngineStamp,
 	encodeLicenseKey,
@@ -14,6 +13,7 @@ import {
 	licensePageURL,
 	verifyLicenseKey,
 } from "#license"
+import { stringifyJSON } from "#values/json"
 
 const EXPRESSION = "AGPL-3.0-only OR LicenseRef-Commercial"
 const pair = await generateLicenseSigningKeyPair()

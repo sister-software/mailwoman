@@ -8,9 +8,9 @@
  *   ascending within the file, so a hand-appended row at the bottom cannot change what the corpus is.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

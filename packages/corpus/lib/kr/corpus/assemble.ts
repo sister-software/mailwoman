@@ -15,13 +15,13 @@ import { currentSourcePath, snapshotSourcePath } from "@mailwoman/core/data-root
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { pySum } from "@mailwoman/core/numeric"
-import { runFileSync } from "@mailwoman/core/process"
-import { SeededRandom } from "@mailwoman/core/random"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { pySum } from "@mailwoman/core/math/numeric"
+import { SeededRandom } from "@mailwoman/core/math/random"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
+import { runFileSync } from "@mailwoman/core/scripting/process"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {

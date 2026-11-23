@@ -9,7 +9,7 @@
  *   O on the connector and B-/I-intersection_b (the signal it currently lacks).
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"

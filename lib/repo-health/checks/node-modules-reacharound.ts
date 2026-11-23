@@ -108,7 +108,7 @@ const ALLOWED: Record<string, string> = {
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
 	// of the launcher and binary from an installed layout can be tested.
-	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
+	"packages/core/lib/repo/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	"packages/core/lib/module/package-command.test.ts":
 		"builds nested fixture installs independently of package executable resolution",
 	"packages/corpus/lib/build/code-hash.ts": "resolves installed package directories for dependency graph hashing",
@@ -130,7 +130,7 @@ const ALLOWED: Record<string, string> = {
 		"builds a scratch tree's node_modules directory and link for the status reader under test",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":
 		"records source snippets containing install paths as inputs to the checker",
-	"lib/dev-mcp/routed-mailwoman-arm.test.ts":
+	"lib/dev-mcp/arms/routed-mailwoman-arm.test.ts":
 		"records candidate package paths in mocked weights results rather than resolving installed dependencies",
 	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s
 	// project context, addressing no package-owned path by hand.

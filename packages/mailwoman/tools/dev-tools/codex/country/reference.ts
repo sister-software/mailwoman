@@ -8,9 +8,9 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 

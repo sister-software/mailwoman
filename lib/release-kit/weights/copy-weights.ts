@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/asset/postcode-prefix-files"
 import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -12,15 +13,14 @@ import {
 	stagingSiblingPath,
 } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
-import { spawnProcessSync } from "@mailwoman/core/process"
 import {
 	type PairIndexInputs,
 	type ReleaseConfig,
 	readReleaseConfig,
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
-} from "@mailwoman/core/release-config"
+} from "@mailwoman/core/repo/release-config"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst/freshness"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"

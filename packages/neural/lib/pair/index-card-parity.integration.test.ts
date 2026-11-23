@@ -13,8 +13,8 @@
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, test } from "vitest"
 
 /**

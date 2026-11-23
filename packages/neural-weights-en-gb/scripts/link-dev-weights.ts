@@ -34,7 +34,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,

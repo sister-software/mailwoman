@@ -9,7 +9,7 @@
  *   The build registers no service worker and writes no deployment record.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 

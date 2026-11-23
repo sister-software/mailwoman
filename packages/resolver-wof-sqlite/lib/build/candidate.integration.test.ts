@@ -13,8 +13,8 @@ import { stageCountryDisplayNames } from "#candidate/country-display-names"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
+import { normalizeLocalityForKey } from "#labels/street"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street"
 
 let scratch: TemporaryDirectory
 

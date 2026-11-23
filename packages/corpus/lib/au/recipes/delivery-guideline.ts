@@ -13,7 +13,7 @@
  */
 
 import { AU_DELIVERY_GUIDELINE_RULES, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
 import {

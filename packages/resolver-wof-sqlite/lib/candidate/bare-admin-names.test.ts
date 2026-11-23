@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { stageBareAdminNames } from "#candidate/bare-admin-names"
 import type { PlaceAttrs } from "#candidate/place-attrs"
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 const place = (name: string, cid: number, pop: number | null): PlaceAttrs => ({
 	cid,

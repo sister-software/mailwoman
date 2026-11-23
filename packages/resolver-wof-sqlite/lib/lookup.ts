@@ -6,8 +6,8 @@
  * Kysely-typed query layer where the queries are non-trivial and raw SQL where they're not.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import { postcodeRetryForms } from "@mailwoman/codex/postal/retry-forms"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
+import { postcodeRetryForms } from "@mailwoman/codex/labels/postcode/retry-forms"
 import type { Ancestor } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -37,6 +37,7 @@ import {
 } from "#fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { fetchSearchRows, type RawSearchRow } from "#fts/search-fetch"
+import type { WOFPostalCityAliasLookup } from "#labels/locality/postal-city/alias/lookup"
 import {
 	pickExtractForPlacetype,
 	pickExtractsForPlacetype,
@@ -45,7 +46,6 @@ import {
 	type ExtractConfig,
 } from "#lookup/extracts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
-import type { WOFPostalCityAliasLookup } from "#postal/city/alias/lookup"
 import { cfNormalize, softNameScore } from "#ranking/name-score"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking/weights"
 import type { WOFDatabase } from "#schema"

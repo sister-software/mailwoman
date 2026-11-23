@@ -6,7 +6,7 @@ import { isStreetSuffixToken } from "@mailwoman/codex/us/street/suffix"
 import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit/designator"
 import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { QueryShapeTokensView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
-import { isRegionAbbreviationToken } from "@mailwoman/recognizer/region-abbreviation"
+import { isRegionAbbreviationToken } from "@mailwoman/recognizer/labels/region/region-abbreviation"
 
 import {
 	isAllDigit,

@@ -6,13 +6,13 @@
  *   the licensed replacement for the GeoNames `GB_full` rows in `postalcode-geonames-tail.db`.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { type CodePointParseStats, createCodePointParseStats, readCodePointCSV } from "@mailwoman/spatial/gb/codepoint"
@@ -28,8 +28,8 @@ import {
 	removeStagingArtifacts,
 	UNKNOWN_PROVENANCE,
 	vacuumDatabaseInto,
-} from "#tools/pipeline/database-lifecycle"
-import type { BuildFTSResult } from "#tools/pipeline/fts"
+} from "#tools/pipeline/database/database-lifecycle"
+import type { BuildFTSResult } from "#tools/pipeline/database/fts"
 import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
@@ -40,8 +40,8 @@ import {
 	downloadCodePointOpen,
 	extractCodePointOpen,
 } from "#tools/pipeline/gb/codepoint"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { createDatabaseMetaTable, writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The year the attribution block names, taken from OS's own `copyright date` rather than the build clock,

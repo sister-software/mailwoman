@@ -20,14 +20,14 @@
  *   - The builder version, this package's `version`.
  */
 
+import { createHash, sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead, workingTreeStatus } from "@mailwoman/core/git"
-import { createHash, sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { isPresent } from "@mailwoman/core/objects"
+import { gitHead, workingTreeStatus } from "@mailwoman/core/repo/git"
+import { canonicalJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 import { AsyncSequence } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

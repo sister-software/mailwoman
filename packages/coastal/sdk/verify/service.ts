@@ -6,7 +6,7 @@
  */
 
 import { createOGCFeaturesBBoxReader, type OGCFeature } from "@mailwoman/core/api"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
 import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"

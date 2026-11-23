@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest"
 
 import { deOrderEval } from "#tools/eval-harness/de/order-eval"
 import { demoCascadeSmoke } from "#tools/eval-harness/demo/cascade/smoke"
-import { externalArenas } from "#tools/eval-harness/external-arenas"
+import { externalArenas } from "#tools/eval-harness/evaluation/external-arenas"
 import { frParseRecall } from "#tools/eval-harness/fr/parse-recall"
 import { perLocaleF1 } from "#tools/eval-harness/per/locale-f1"
 import { renderLines } from "#tools/eval-harness/promotion/eval"

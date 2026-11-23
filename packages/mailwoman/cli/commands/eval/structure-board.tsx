@@ -51,7 +51,7 @@ export const spec = {
 const EvalStructureBoard = harnessCommand(
 	spec,
 	async (options) => {
-		const { runStructureBoard } = await import("#tools/eval-harness/structure-board")
+		const { runStructureBoard } = await import("#tools/eval-harness/board/structure")
 
 		return (
 			await runStructureBoard({

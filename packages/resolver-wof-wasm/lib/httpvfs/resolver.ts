@@ -1,19 +1,19 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/memoize"
-import { isPresent } from "@mailwoman/core/objects"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { populationScoreUnmeasured, referentialFromPopulation } from "@mailwoman/core/resolver"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import {
 	rankByPrimaryPreference,
 	type RankedRow,
 	RERANK_FETCH,
 } from "@mailwoman/resolver-wof-sqlite/ranking/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/ranking/proximity-rerank"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 
 import type { MailwomanLookupLike } from "#browser-cascade"
 import { type RangeDatabase, tableExists } from "#httpvfs/database"

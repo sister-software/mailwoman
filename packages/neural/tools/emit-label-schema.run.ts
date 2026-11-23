@@ -13,10 +13,10 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { buildLabelSchema, type LabelSchema } from "#labels/schema"
 import { readAddressSystemsReference } from "#tools/address-system-registry"

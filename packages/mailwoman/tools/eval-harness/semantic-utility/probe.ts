@@ -5,7 +5,7 @@
  *   Defines the frozen semantic-utility probe and audits its decision criteria.
  */
 
-import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
+import { canonicalJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { type CaseGrade, gradeCase, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
@@ -15,7 +15,7 @@ import {
 	duplicateRowIDProblems,
 	loadFrozenDefinition,
 	preregistrationPath,
-} from "#tools/eval-harness/preregistration"
+} from "#tools/eval-harness/preregistration/artifacts"
 
 /**
  * Result shapes derived from `PipelineResult.path` and `POIQueryResult.type`.

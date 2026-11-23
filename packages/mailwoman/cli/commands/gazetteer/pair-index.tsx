@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
@@ -174,8 +174,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			pair: import("@mailwoman/neural/pair"),
 			pair2: import("@mailwoman/gazetteer/tools/pipeline/pair"),
 			spliterator: import("spliterator"),
-			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/borough-pairs"),
-			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs"),
+			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/pair/borough-pairs"),
+			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/fr/lieudit-pairs"),
 		})
 
 		const country = options.country.toLowerCase()

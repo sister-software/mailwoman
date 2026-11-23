@@ -12,7 +12,7 @@ import {
 	type AddressName,
 	type AddressRecord,
 } from "@mailwoman/resolver-wof-sqlite/address/record"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
 import { bareMunicipalityName } from "#address-records/legal-forms"

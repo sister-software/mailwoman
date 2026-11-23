@@ -7,7 +7,7 @@
  *   and the parse trace while those packages stay dynamic imports on the load path.
  */
 
-import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
+import type { LoadLedgerSnapshot } from "@mailwoman/core/asset/load-ledger"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
 import type { SoftFeatureChannel } from "@mailwoman/neural/channels/soft-features"
 import type { TokenizedPiece } from "@mailwoman/neural/input/tokenizer"

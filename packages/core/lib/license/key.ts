@@ -19,6 +19,7 @@ import {
 	LicenseKeyPayloadSchema,
 	type LicenseKeyVerification,
 	licenseExpiryInstant,
+	type ProductTokenParts,
 	type ProductTokenPrefix,
 	type ProductTokenVerification,
 	schemaIssue,
@@ -39,7 +40,7 @@ import {
 	signEd25519,
 	verifyEd25519,
 } from "#crypto/ed25519"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 /**
  * An Ed25519 signing key pair with both keys PEM-encoded.
@@ -106,24 +107,49 @@ export async function encodeTrainingGrant(payload: TrainingGrantPayload, private
 const STRICT_UTF8 = new TextDecoder("utf-8", { fatal: true })
 
 /**
- * The payload JSON of a token part, or the reason it couldn't be read:
- * invalid base64url, invalid UTF-8, or invalid JSON.
+ * A token read as far as its signature: its parts and its validated payload, or the reason it's malformed.
  */
-function payloadJSON(part: string): { value: unknown } | { reason: string } {
+type ProductTokenReading<P> = { parts: ProductTokenParts; payload: P } | { reason: string }
+
+/**
+ * Reads a token of one prefix without checking its signature.
+ *
+ * It checks the three parts, the payload's base64url, UTF-8 and JSON, and the payload schema, in that order.
+ * The first step that fails gives the reason.
+ */
+function readProductToken<P>(token: string, prefix: ProductTokenPrefix, schema: z.ZodType<P>): ProductTokenReading<P> {
+	const parts = splitProductToken(token)
+
+	if ("reason" in parts) {
+		return parts
+	}
+
+	if (parts.prefix !== prefix) {
+		return { reason: `a ${parts.prefix} token, not a ${prefix} token` }
+	}
+
 	let text: string
 
 	try {
-		text = STRICT_UTF8.decode(fromBase64URL(part))
+		text = STRICT_UTF8.decode(fromBase64URL(parts.payload))
 	} catch {
 		return { reason: "payload unreadable: not base64url-encoded UTF-8" }
 	}
 
+	let value: unknown
+
 	try {
 		// oxlint-disable-next-line no-restricted-properties -- `parseJSONStrict` wraps the error and loses the reason the fixtures record.
-		return { value: JSON.parse(text) }
+		value = JSON.parse(text)
 	} catch {
 		return { reason: "payload unreadable: not JSON" }
 	}
+
+	const parsed = schema.safeParse(value)
+
+	return parsed.success
+		? { parts, payload: parsed.data }
+		: { reason: `payload unreadable: ${schemaIssue(parsed.error)}` }
 }
 
 /**
@@ -131,17 +157,9 @@ function payloadJSON(part: string): { value: unknown } | { reason: string } {
  * Use the result only for display.
  */
 export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | null {
-	const parts = splitProductToken(token)
+	const reading = readProductToken(token, LICENSE_KEY_PREFIX, LicenseKeyPayloadSchema)
 
-	if ("reason" in parts || parts.prefix !== LICENSE_KEY_PREFIX) return null
-
-	const json = payloadJSON(parts.payload)
-
-	if ("reason" in json) return null
-
-	const parsed = LicenseKeyPayloadSchema.safeParse(json.value)
-
-	return parsed.success ? parsed.data : null
+	return "payload" in reading ? reading.payload : null
 }
 
 async function verifyProductToken<P extends { kid: string; expires?: string | null }>(
@@ -150,23 +168,13 @@ async function verifyProductToken<P extends { kid: string; expires?: string | nu
 	schema: z.ZodType<P>,
 	options: { trustedKeys: Readonly<Record<string, string>>; now?: Date }
 ): Promise<ProductTokenVerification<P>> {
-	const parts = splitProductToken(token)
+	const reading = readProductToken(token, prefix, schema)
 
-	if ("reason" in parts) return { status: "invalid", reason: parts.reason }
-
-	if (parts.prefix !== prefix) {
-		return { status: "invalid", reason: `a ${parts.prefix} token, not a ${prefix} token` }
+	if ("reason" in reading) {
+		return { status: "invalid", reason: reading.reason }
 	}
 
-	const json = payloadJSON(parts.payload)
-
-	if ("reason" in json) return { status: "invalid", reason: json.reason }
-
-	const parsed = schema.safeParse(json.value)
-
-	if (!parsed.success) return { status: "invalid", reason: `payload unreadable: ${schemaIssue(parsed.error)}` }
-
-	const payload = parsed.data
+	const { parts, payload } = reading
 	const publicKeyPEM = options.trustedKeys[payload.kid]
 
 	if (!publicKeyPEM) {
@@ -187,13 +195,10 @@ async function verifyProductToken<P extends { kid: string; expires?: string | nu
 		return { status: "invalid", reason: `signature does not verify under key id ${payload.kid}` }
 	}
 
-	const now = options.now ?? new Date()
+	const expires = payload.expires
+	const expired = expires != null && licenseExpiryInstant(expires) < (options.now ?? new Date())
 
-	if (payload.expires && licenseExpiryInstant(payload.expires) < now) {
-		return { status: "expired", kid: payload.kid, payload }
-	}
-
-	return { status: "valid", kid: payload.kid, payload }
+	return { status: expired ? "expired" : "valid", kid: payload.kid, payload }
 }
 
 /**

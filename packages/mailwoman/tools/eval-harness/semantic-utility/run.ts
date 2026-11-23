@@ -24,10 +24,10 @@
  *   Each firing is recorded beside its row with its provenance.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
-import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -38,7 +38,7 @@ import {
 } from "#observations"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
 import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
-import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
+import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration/artifacts"
 import {
 	computeProbeCounts,
 	decideProbe,

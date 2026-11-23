@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { renderAUPoBox, renderNZPoBox } from "#recipes/po/box/cedex/au-nz"
 import { renderCaEn, renderCaFr } from "#recipes/po/box/cedex/ca"

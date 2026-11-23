@@ -6,12 +6,12 @@
  *   A replaced source's base files are dropped.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { basename, dirname, normalize, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "#parquet/duckdb"

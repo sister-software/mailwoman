@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp } from "@mailwoman/core/license"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { expect, test } from "vitest"
 
 import {

@@ -9,9 +9,8 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
+import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/labels/placetype-map"
 import { collectNodes, isShapeExcludedPostcode, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
-import { isPresent } from "@mailwoman/core/objects"
 import {
 	type DefaultCountry,
 	hardCountryOf,
@@ -23,6 +22,7 @@ import {
 	type ResolverBackend,
 	resolveSwitches,
 } from "@mailwoman/core/resolver"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 
 import {

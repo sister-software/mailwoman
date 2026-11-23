@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { runProcess, type ProcessResult } from "@mailwoman/core/process"
+import { runProcess, type ProcessResult } from "@mailwoman/core/scripting/process"
 
 /**
  * Exit status a shell reports for a command it cannot find.

@@ -5,15 +5,15 @@
  *   Emits an OpenAddresses per-source run as address records for the address layer's key tables.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { AddressNameForm, collectAddressNames, type AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import {
 	canonicalizeRouteKey,
 	normalizeHouseNumberForKey,
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, JSONSpliterator } from "spliterator"
 

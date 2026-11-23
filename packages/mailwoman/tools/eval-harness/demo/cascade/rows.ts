@@ -7,7 +7,7 @@
  *   It lives apart from `smoke.ts` so tests can load it without the model or the hot database.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 /**

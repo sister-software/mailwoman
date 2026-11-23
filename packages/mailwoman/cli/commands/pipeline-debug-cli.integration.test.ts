@@ -12,10 +12,10 @@
  *   (the pipeline falls back to the rule-only path when neural weights are absent + emits a tree from that).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, test } from "vitest"
 
 import { mailwomanCLIPath } from "#package/metadata"

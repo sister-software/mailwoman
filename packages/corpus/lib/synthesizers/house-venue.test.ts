@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { WRITTEN_LAYOUTS } from "@mailwoman/codex/address/layouts"
-import { makeLcg } from "@mailwoman/core/random"
+import { makeLcg } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "#synthesizers/house-venue"

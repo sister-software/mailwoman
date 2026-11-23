@@ -9,7 +9,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it, vi } from "vitest"
 
 import {

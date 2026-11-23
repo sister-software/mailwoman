@@ -6,7 +6,7 @@
  *   country's name. The names come from the runtime's ICU region data through `Intl.DisplayNames`.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import React, { Fragment } from "react"
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" })

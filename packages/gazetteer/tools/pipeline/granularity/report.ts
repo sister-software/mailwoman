@@ -11,10 +11,10 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
-import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#tools/pipeline/defaults"
 import { LADDER, type CountryGranularity, bottomsOutAt } from "#tools/pipeline/granularity"
+import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 /**
  * Which build path supplied a country's rows, derived from the artifact (synthetic id ranges)

@@ -16,9 +16,9 @@
 import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { isGLBLandmark, type Landmark } from "#landmarks"
 import { convertLandmarkModel } from "#sdk/landmarks"

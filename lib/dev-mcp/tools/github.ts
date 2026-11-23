@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { currentBranch } from "@mailwoman/core/git"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
+import { currentBranch } from "@mailwoman/core/repo/git"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
@@ -24,7 +24,7 @@ import {
 } from "#dev-mcp/github"
 import { mergePullRequest, recordPullRequestCompletion } from "#dev-mcp/github/merge"
 import { assertCIComplete, trackedCIMarkerPaths, type TrackedCI } from "#dev-mcp/hooks/ci-completion"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 const REPO = "sister-software/mailwoman"
 

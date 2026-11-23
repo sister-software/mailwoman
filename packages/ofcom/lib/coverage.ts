@@ -23,7 +23,7 @@
 
 import { checkRecordCount, headerColumnIndex } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { basename, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 

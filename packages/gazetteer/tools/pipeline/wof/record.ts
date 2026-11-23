@@ -18,9 +18,9 @@
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { pythonJSONString } from "@mailwoman/core/strings/python-json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { wofGeometryJSON } from "#tools/pipeline/wof/slim"

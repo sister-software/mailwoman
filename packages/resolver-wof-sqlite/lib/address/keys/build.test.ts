@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "@sister.software/h3"
@@ -13,7 +13,7 @@ import { ADDRESS_LAYER_COVERAGE_RESOLUTION, type AddressLayerManifest, buildAddr
 import { addressPostcodeKey } from "#address/keys/postcode"
 import type { AddressDetailDatabase, AddressLookupDatabase } from "#address/keys/schema"
 import { AddressNameForm, type AddressRecord } from "#address/record"
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function record(overrides: Partial<AddressRecord> & Pick<AddressRecord, "number" | "streetRaw">): AddressRecord {
 	const streetKey = normalizeStreetForKey(overrides.streetRaw)

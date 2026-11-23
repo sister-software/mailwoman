@@ -11,7 +11,7 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
-import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
@@ -36,7 +36,7 @@ import {
 	loadAbsenceProbeDefinition,
 } from "#tools/eval-harness/absence-observation/probe"
 import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
-import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
+import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration/artifacts"
 
 export type AbsenceArtifactIdentity = PreregisteredArtifactIdentity
 

@@ -11,8 +11,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 
+import { md5Hex, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalBuffer, writeLocalJSONFileAtomically, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
 import {
 	type ArtifactManifest,
 	ArtifactFormat,
@@ -31,11 +31,11 @@ import {
 	type AddressPointDatabase,
 	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address"
-import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import {
 	createStreetSegmentTable,
 	type StreetSegmentDatabase,
-} from "@mailwoman/resolver-wof-sqlite/street/segment-schema"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/segment-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, relative } from "path-ts"
 

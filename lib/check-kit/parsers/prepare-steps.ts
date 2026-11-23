@@ -14,7 +14,7 @@
  * Its first line starts with the error's class name.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 
 import { checkOutputLines } from "#check-kit/output-lines"
 import { MAX_ERROR_LINES, type ParsedCheckOutput, ParsedSource, unparsed } from "#check-kit/parsed"

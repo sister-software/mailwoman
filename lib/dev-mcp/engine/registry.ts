@@ -5,10 +5,10 @@
  *   Caches geocode sessions by effective configuration and source fingerprint.
  */
 
+import { md5File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { md5File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type ChannelPins, SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import {
 	type CapitalTier,
@@ -18,11 +18,11 @@ import {
 	type GeocodeSessionOptions,
 	SessionOptionSource,
 } from "mailwoman/geocode"
-import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/switch-pin"
+import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import type { PathBuilderLike } from "path-ts"
 
-import { missingWeightsCacheArtifacts } from "#dev-mcp/eval-report"
-import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
+import { missingWeightsCacheArtifacts } from "#dev-mcp/runs/eval-report"
 
 /**
  * The engine configuration in CLI snake_case keys.

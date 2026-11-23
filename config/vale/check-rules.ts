@@ -50,11 +50,11 @@
  *   regression fails loudly instead of silently drifting.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runProcess } from "@mailwoman/core/process"
+import { valeCommand } from "@mailwoman/core/repo/vale"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { failScript } from "@mailwoman/core/scripting/utils"
-import { valeCommand } from "@mailwoman/core/vale"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 /**
  * One Vale alert, as emitted by `--output=JSON`.

@@ -8,7 +8,7 @@
  *   A model-independent fast-path input also runs through the compiled CLI.
  */
 
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 

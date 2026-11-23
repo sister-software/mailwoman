@@ -13,8 +13,8 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { Box, Text } from "ink"
 
 import {

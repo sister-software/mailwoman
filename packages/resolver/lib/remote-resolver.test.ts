@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, test, vi } from "vitest"
 
 import { RemoteResolver, serializableResolveOpts } from "#remote-resolver"

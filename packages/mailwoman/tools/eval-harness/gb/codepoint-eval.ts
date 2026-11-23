@@ -13,7 +13,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { osgb36ToWGS84 } from "@mailwoman/spatial/osgb36"

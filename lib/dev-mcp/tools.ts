@@ -8,8 +8,8 @@
  * Absence is reported as absence — no line here fills in a value the pipeline didn't produce.
  */
 
-import { buildSpawnTools } from "#dev-mcp/spawn-tools"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import { buildSpawnTools } from "#dev-mcp/process/spawn-tools"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 import { arcTool } from "#dev-mcp/tools/arc"
 import { benchTool } from "#dev-mcp/tools/bench"
 import { censusTool } from "#dev-mcp/tools/census"
@@ -42,7 +42,7 @@ import { symbolTool } from "#dev-mcp/tools/symbol"
 import { traceTool } from "#dev-mcp/tools/trace"
 import { vocabTool } from "#dev-mcp/tools/vocab"
 
-export type { DevTool, DevToolDeps, Provenance } from "#dev-mcp/tool-kit"
+export type { DevTool, DevToolDeps, Provenance } from "#dev-mcp/result/tool-kit"
 export { githubTools } from "#dev-mcp/tools/github"
 
 /**

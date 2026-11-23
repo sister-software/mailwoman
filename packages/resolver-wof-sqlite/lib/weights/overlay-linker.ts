@@ -9,6 +9,8 @@
  *   and a call to `materializeDevOverlay`.
  */
 
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/asset/postcode-prefix-files"
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
@@ -20,12 +22,10 @@ import {
 	replaceFileAtomically,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, repoRootPathBuilder, workspacePathBuilder } from "@mailwoman/core/paths"
-import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
-import { spawnProcessSync } from "@mailwoman/core/process"
-import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
+import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/repo/release-config"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

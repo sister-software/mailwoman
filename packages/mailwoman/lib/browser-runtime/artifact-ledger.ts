@@ -12,7 +12,7 @@ import {
 	type LedgerEntry,
 	type LoadLedgerSnapshot,
 	SERVED_FROM_HEADER,
-} from "@mailwoman/core/load-ledger"
+} from "@mailwoman/core/asset/load-ledger"
 
 import { type BytesReceived, fetchWithRetry, urlOfFetchInput, subscribeNetworkWaits } from "#browser-runtime/fetch"
 

@@ -24,8 +24,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 

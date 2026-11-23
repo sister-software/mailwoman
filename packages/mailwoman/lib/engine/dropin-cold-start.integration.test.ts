@@ -4,11 +4,11 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath } from "@mailwoman/core/paths"
-import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
+import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
 

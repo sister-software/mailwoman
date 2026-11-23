@@ -11,12 +11,12 @@
  *   Usage: `node packages/core/tools/build-deflate64-wasm.run.ts [--check]`
  */
 
+import { sha256File } from "#crypto/hash"
 import { statPath } from "#fs/readers/stat"
 import { replaceFileAtomically } from "#fs/writers"
-import { sha256File } from "#hash"
 import { repoRootPath, workspacePath } from "#paths"
-import { runFile } from "#process"
 import { parseArguments } from "#scripting/arguments"
+import { runFile } from "#scripting/process"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 

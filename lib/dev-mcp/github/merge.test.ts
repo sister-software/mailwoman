@@ -7,12 +7,12 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it } from "vitest"
 
 import type { RunGitHub } from "#dev-mcp/github"
 import { recordPullRequestCompletion } from "#dev-mcp/github/merge"
-import { JobRegistry } from "#dev-mcp/jobs"
+import { JobRegistry } from "#dev-mcp/process/jobs"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { githubTools } from "#dev-mcp/tools"
 

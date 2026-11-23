@@ -23,7 +23,7 @@ import { parseArgs } from "node:util"
 
 import { withBrowserPage } from "@mailwoman/browser"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { Page } from "playwright"
 
 // oxlint-disable-next-line sister-software/no-process-globals

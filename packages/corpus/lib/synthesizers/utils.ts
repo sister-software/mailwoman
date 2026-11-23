@@ -13,9 +13,9 @@ import {
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
-import { isPresent } from "@mailwoman/core/objects"
-import { mulberry32, sample } from "@mailwoman/core/random"
+import { mulberry32, sample } from "@mailwoman/core/math/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { matchCase } from "spliterator"
 

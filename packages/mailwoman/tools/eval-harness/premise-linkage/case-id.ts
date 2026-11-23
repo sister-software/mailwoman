@@ -15,7 +15,7 @@
  *   That's the linkage the identifier prevents.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 
 /**
  * Hex characters kept from the digest.

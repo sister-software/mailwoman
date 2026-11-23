@@ -29,7 +29,7 @@
 import { usUnitIdentifier } from "@mailwoman/codex/us/unit/designator"
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { addressLayerFiles } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import { addressPointStacksSQL } from "@mailwoman/resolver-wof-sqlite/address/stack"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

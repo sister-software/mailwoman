@@ -16,11 +16,11 @@
  *   the same commit with the same manifests produce the same plan regardless of where they live.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/repo/git"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { releaseWorkspaces } from "#release-kit/release/stage"

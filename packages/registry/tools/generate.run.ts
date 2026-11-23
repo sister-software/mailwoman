@@ -16,15 +16,15 @@
  *   `--check` compiles without writing and exits non-zero when a generated module or manifest differs.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 
 import { artifactModulePath } from "#tools/artifact-path"
 import { type NormalizedSubtags, SUBTAG_TABLES, type SubtagTable, subtagTableRows } from "#tools/language-subtags"

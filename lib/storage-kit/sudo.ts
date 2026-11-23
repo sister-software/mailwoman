@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { realPath } from "@mailwoman/core/fs/readers/stat"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 
 /**
  * Whether the current process holds root.

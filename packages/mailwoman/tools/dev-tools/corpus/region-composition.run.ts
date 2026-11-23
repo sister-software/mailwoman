@@ -8,8 +8,8 @@
 import { US_STATE_ABBREVIATIONS, lookupUSState } from "@mailwoman/codex/us/state"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { componentAtIndexSQL } from "@mailwoman/corpus/parquet/span-sql"
 
 import { openMixture, readMixtureFiles } from "#tools/dev-tools/corpus/mixture"

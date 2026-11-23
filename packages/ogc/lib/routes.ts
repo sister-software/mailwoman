@@ -12,10 +12,10 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { APIErrorSchema, emitOpenAPIDocuments, errorResponse, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { MAX_ADDRESS_LENGTH } from "@mailwoman/api/input-limits"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { LayerTerms } from "@mailwoman/core/layers/provenance"
 import { wofIDFromPlaceID } from "@mailwoman/core/resolver"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { Context } from "hono"
 
 import { type OGCBBox, parseBBox, searchBoxContains } from "#bbox"

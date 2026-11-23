@@ -20,11 +20,11 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { basename, dirname } from "path-ts"
 
 import { openParquetRowStream } from "#parquet/streams"

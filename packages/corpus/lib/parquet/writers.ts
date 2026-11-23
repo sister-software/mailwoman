@@ -31,6 +31,7 @@
  *   SHA-256, the digest computed by re-reading the file once after close — cheap against the cost of writing it.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
@@ -43,9 +44,8 @@ import {
 	writeLocalBuffer,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { Field, Int32, Int64, List, Null, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"

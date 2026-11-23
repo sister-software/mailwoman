@@ -19,8 +19,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { TextSpliterator } from "spliterator"
 

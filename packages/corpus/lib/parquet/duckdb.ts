@@ -9,7 +9,7 @@
  *   or write Parquet through DuckDB. A consumer that only needs the schema types never loads it.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 
 /**
  * An open DuckDB connection, re-exported so consumers of {@link openDuckDB} can name

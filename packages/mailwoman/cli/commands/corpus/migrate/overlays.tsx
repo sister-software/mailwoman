@@ -11,7 +11,7 @@
  *   Pass the migrated files to `mailwoman corpus overlay-manifest` to assemble the new corpus.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

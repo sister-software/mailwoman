@@ -29,8 +29,8 @@ import {
 	type BuiltArtifact,
 	ServingRole,
 } from "@mailwoman/core/layers"
-import { runFile } from "@mailwoman/core/process"
-import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 

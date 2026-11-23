@@ -6,8 +6,8 @@
  */
 
 import type { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { ServingRole } from "@mailwoman/core/layers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"

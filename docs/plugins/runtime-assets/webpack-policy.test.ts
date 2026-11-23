@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { bundleAliases, configureRuntimeWebpack } from "@mailwoman/docs/plugins/runtime-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/runtime-assets/workspace/aliases"
 import { resolvePath } from "path-ts"
@@ -17,10 +17,10 @@ const docsDir = resolvePackagePath("@mailwoman/docs")
  * Directory subpaths whose barrel re-exports a Node-only sibling.
  * The demo mustn't import those barrels whole.
  *
- * `@mailwoman/resolver-wof-sqlite/fst` exports `fst/freshness`, and `/street` exports
- * `street/morphology-fst-loader`; both reach `@mailwoman/core/fs`, and the package
+ * `@mailwoman/resolver-wof-sqlite/fst` exports `fst/freshness`, and `/labels/street` exports
+ * `labels/street/morphology/fst/loader`; both reach `@mailwoman/core/fs`, and the package
  * declares no `sideEffects`, so webpack cannot shake them out of the client bundle.
- * Enter through the leaf instead — `fst/deserialize-web`, `fst/autocomplete`, `street/normalize`.
+ * Enter through the leaf instead — `fst/deserialize-web`, `fst/autocomplete`, `labels/street/normalize`.
  *
  * This is a cheap stand-in for a five-minute `docusaurus build`, which is otherwise
  * the only thing that catches the class.
@@ -28,7 +28,7 @@ const docsDir = resolvePackagePath("@mailwoman/docs")
  * onto the barrels and produced 27 `'x' is not exported from 'node:fs/promises'`
  * errors in CI — green unit suite, green typecheck, red build.
  */
-const NODE_BACKED_BARRELS = ["@mailwoman/resolver-wof-sqlite/fst", "@mailwoman/resolver-wof-sqlite/street"]
+const NODE_BACKED_BARRELS = ["@mailwoman/resolver-wof-sqlite/fst", "@mailwoman/resolver-wof-sqlite/labels/street"]
 
 function browserSources(directory: string): AsyncIterable<string> {
 	return Globerator.files(["ts", "tsx"], { cwd: directory, absolute: true })

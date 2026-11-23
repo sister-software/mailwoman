@@ -3,7 +3,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { parseAnchorLookup } from "@mailwoman/neural/channels/anchor-inference"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights/channels"
@@ -30,6 +30,7 @@ import {
 	type LookupResult,
 	type LookupRow,
 } from "#dev-mcp/lookup"
+import { syntheticIDNote } from "#dev-mcp/lookup/place-id-provenance"
 import {
 	type CandidateDelta,
 	diffCandidateRows,
@@ -41,7 +42,6 @@ import {
 	type PostcodeAnchorResolver,
 	type WOFExtract,
 } from "#dev-mcp/lookup/sources"
-import { syntheticIDNote } from "#dev-mcp/place-id-provenance"
 
 /**
  * A candidate lookup against two artifacts, with the per-query differences.

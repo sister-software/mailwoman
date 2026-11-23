@@ -18,10 +18,10 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { SeededRandom } from "@mailwoman/core/random"
-import { countInto } from "@mailwoman/core/stats"
+import { SeededRandom } from "@mailwoman/core/math/random"
+import { countInto } from "@mailwoman/core/math/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import {

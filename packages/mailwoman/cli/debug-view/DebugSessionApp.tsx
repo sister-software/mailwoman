@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { clamp } from "@mailwoman/core/numeric"
+import { clamp } from "@mailwoman/core/math/numeric"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useWindowSize, type Key } from "ink"

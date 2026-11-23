@@ -27,7 +27,7 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { ingestWOF, type IngestWOFResult } from "#tools/pipeline/admin/ingest-wof"
-import { buildFTS } from "#tools/pipeline/fts"
+import { buildFTS } from "#tools/pipeline/database/fts"
 import { type CentroidFillResult, fillPostcodeCentroids } from "#tools/pipeline/postcode/centroid-fills"
 import {
 	fillGeonamesPlaceholders,

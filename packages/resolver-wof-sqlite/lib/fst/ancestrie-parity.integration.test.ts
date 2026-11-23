@@ -12,7 +12,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import type { AutocompleteOpts, AutocompleteResult, AutocompleteSuggestion, PlaceEntry, PlacetypeID } from "#fst"

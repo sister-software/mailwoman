@@ -3,8 +3,8 @@
 
 import { gzip } from "@mailwoman/core/fs/compression"
 import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { normalizeStreetForKeyLocale, parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { normalizeStreetForKeyLocale, parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { CSVSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

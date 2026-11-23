@@ -22,13 +22,13 @@
  *   ```
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, weightsOverlayRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights/overlay-linker"
 import { relative, resolvePath, resolvePathBuilder } from "path-ts"
 

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { createHash } from "@mailwoman/core/hash"
+import { createHash } from "@mailwoman/core/crypto/hash"
 import { createUnionFind } from "@mailwoman/core/utils"
 
 import { toFRN, type FRN } from "#frn"

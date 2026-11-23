@@ -23,13 +23,13 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { median } from "@mailwoman/core/stats"
+import { median } from "@mailwoman/core/math/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DatabaseClient, type SQLInputValue, type StatementSync } from "@mailwoman/sqlite/client"
 import { isAbsolute, relative, resolvePath } from "path-ts"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 1000

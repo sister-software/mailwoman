@@ -51,10 +51,10 @@
  *   is refused for `verified_unseen`, because the ancestry's corpora are unrecorded.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"

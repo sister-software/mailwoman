@@ -11,7 +11,7 @@
 import { diffGeocode, type GeocodeArm, type GeocodeRun, renderGeocodeDiff } from "mailwoman/geocode"
 import { z } from "zod"
 
-import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/tool-kit"
+import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/result/tool-kit"
 
 /**
  * One arm of the comparison, read off a run; `tree` hangs off the run rather than the result

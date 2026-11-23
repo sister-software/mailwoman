@@ -13,8 +13,8 @@
  *   product doesn't finish at gazetteer scale.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"

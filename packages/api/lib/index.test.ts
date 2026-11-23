@@ -4,8 +4,8 @@
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { beforeEach, expect, test } from "vitest"
 
 import {

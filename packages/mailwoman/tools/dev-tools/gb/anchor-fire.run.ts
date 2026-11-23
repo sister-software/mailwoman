@@ -19,10 +19,10 @@ import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 // `parse` applies this transformation by default.
 // These mustn't drift from `parse`, so this repo-local diagnostic imports the same modules.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { anchorLookupFromPostcodes } from "@mailwoman/neural/channels/anchor-inference"
-import { collectMatches } from "@mailwoman/neural/postcode"
+import { collectMatches } from "@mailwoman/neural/labels/postcode"
 import { normalizeInputCase } from "@mailwoman/normalize/case"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { JSONSpliterator } from "spliterator"

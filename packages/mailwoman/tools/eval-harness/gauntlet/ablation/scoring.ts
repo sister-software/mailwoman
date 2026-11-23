@@ -6,7 +6,7 @@
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { tierRank, UNCONSTRAINED_RUNG } from "#ablation/expectation"

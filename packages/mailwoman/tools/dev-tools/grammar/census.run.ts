@@ -12,7 +12,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/prior/fst"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { resolveCandidateDBPath } from "#engine/resolver-backend"

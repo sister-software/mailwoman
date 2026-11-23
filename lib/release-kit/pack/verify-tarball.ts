@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

@@ -5,8 +5,8 @@
  * Builds the US address layer from the NAD, Overture and OpenAddresses sources the register admits.
  */
 
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
-import { allKeyed } from "@mailwoman/core/promises"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
@@ -95,7 +95,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			dataRoot: import("@mailwoman/core/data-root"),
 			readers: import("@mailwoman/core/fs/readers"),
 			paths: import("@mailwoman/core/paths"),
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
 			nad: import("@mailwoman/corpus/us/tools/fetch/nad"),
 			layer: import("@mailwoman/corpus/us/address-records/layer"),
 			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),

@@ -232,10 +232,10 @@
 			"node": "./lib/utils/sleep.ts",
 			"default": "./out/utils/sleep.js"
 		},
-		"./workers": {
-			"types": "./out/workers.d.ts",
-			"node": "./lib/workers.ts",
-			"default": "./out/workers.js"
+		"./scripting/workers": {
+			"types": "./out/scripting/workers.d.ts",
+			"node": "./lib/scripting/workers.ts",
+			"default": "./out/scripting/workers.js"
 		},
 		"./utils/events": {
 			"types": "./out/utils/events.d.ts",
@@ -252,20 +252,20 @@
 			"node": "./lib/module/*.ts",
 			"default": "./out/module/*.js"
 		},
-		"./git": {
-			"types": "./out/git.d.ts",
-			"node": "./lib/git.ts",
-			"default": "./out/git.js"
+		"./repo/git": {
+			"types": "./out/repo/git.d.ts",
+			"node": "./lib/repo/git.ts",
+			"default": "./out/repo/git.js"
 		},
-		"./vale": {
-			"types": "./out/vale.d.ts",
-			"node": "./lib/vale.ts",
-			"default": "./out/vale.js"
+		"./repo/vale": {
+			"types": "./out/repo/vale.d.ts",
+			"node": "./lib/repo/vale.ts",
+			"default": "./out/repo/vale.js"
 		},
-		"./process": {
-			"types": "./out/process.d.ts",
-			"node": "./lib/process.ts",
-			"default": "./out/process.js"
+		"./scripting/process": {
+			"types": "./out/scripting/process.d.ts",
+			"node": "./lib/scripting/process.ts",
+			"default": "./out/scripting/process.js"
 		},
 		"./scripting": {
 			"types": "./out/scripting.d.ts",
@@ -292,15 +292,15 @@
 			"node": "./lib/scripting/utils.ts",
 			"default": "./out/scripting/utils.js"
 		},
-		"./objects": {
-			"types": "./out/objects.d.ts",
-			"node": "./lib/objects.ts",
-			"default": "./out/objects.js"
+		"./values/objects": {
+			"types": "./out/values/objects.d.ts",
+			"node": "./lib/values/objects.ts",
+			"default": "./out/values/objects.js"
 		},
-		"./identical": {
-			"types": "./out/identical.d.ts",
-			"node": "./lib/identical.ts",
-			"default": "./out/identical.js"
+		"./values/identical": {
+			"types": "./out/values/identical.d.ts",
+			"node": "./lib/values/identical.ts",
+			"default": "./out/values/identical.js"
 		},
 		"./locale": {
 			"types": "./out/locale.d.ts",
@@ -357,10 +357,10 @@
 			"node": "./lib/errors/schema.ts",
 			"default": "./out/errors/schema.js"
 		},
-		"./routing": {
-			"types": "./out/routing.d.ts",
-			"node": "./lib/routing.ts",
-			"default": "./out/routing.js"
+		"./network/routing": {
+			"types": "./out/network/routing.d.ts",
+			"node": "./lib/network/routing.ts",
+			"default": "./out/network/routing.js"
 		},
 		"./network/*": {
 			"types": "./out/network/*.d.ts",
@@ -372,10 +372,10 @@
 			"node": "./lib/strings/*.ts",
 			"default": "./out/strings/*.js"
 		},
-		"./trust-policies": {
-			"types": "./out/trust-policies.d.ts",
-			"node": "./lib/trust-policies.ts",
-			"default": "./out/trust-policies.js"
+		"./html/trust-policies": {
+			"types": "./out/html/trust-policies.d.ts",
+			"node": "./lib/html/trust-policies.ts",
+			"default": "./out/html/trust-policies.js"
 		},
 		"./errors/schema": {
 			"types": "./out/errors/schema.d.ts",
@@ -557,35 +557,35 @@
 			"node": "./lib/types/mapping.ts",
 			"default": "./out/types/mapping.js"
 		},
-		"./random": {
-			"types": "./out/random.d.ts",
-			"node": "./lib/random.ts",
-			"default": "./out/random.js"
+		"./math/random": {
+			"types": "./out/math/random.d.ts",
+			"node": "./lib/math/random.ts",
+			"default": "./out/math/random.js"
 		},
-		"./numeric": {
-			"types": "./out/numeric.d.ts",
-			"node": "./lib/numeric.ts",
-			"default": "./out/numeric.js"
+		"./math/numeric": {
+			"types": "./out/math/numeric.d.ts",
+			"node": "./lib/math/numeric.ts",
+			"default": "./out/math/numeric.js"
 		},
 		"./paths": {
 			"types": "./out/paths.d.ts",
 			"node": "./lib/paths.ts",
 			"default": "./out/paths.js"
 		},
-		"./release-config": {
-			"types": "./out/release-config.d.ts",
-			"node": "./lib/release-config.ts",
-			"default": "./out/release-config.js"
+		"./repo/release-config": {
+			"types": "./out/repo/release-config.d.ts",
+			"node": "./lib/repo/release-config.ts",
+			"default": "./out/repo/release-config.js"
 		},
-		"./scope-config": {
-			"types": "./out/scope-config.d.ts",
-			"node": "./lib/scope-config.ts",
-			"default": "./out/scope-config.js"
+		"./repo/scope-config": {
+			"types": "./out/repo/scope-config.d.ts",
+			"node": "./lib/repo/scope-config.ts",
+			"default": "./out/repo/scope-config.js"
 		},
-		"./workspaces": {
-			"types": "./out/workspaces.d.ts",
-			"node": "./lib/workspaces.ts",
-			"default": "./out/workspaces.js"
+		"./repo/workspaces": {
+			"types": "./out/repo/workspaces.d.ts",
+			"node": "./lib/repo/workspaces.ts",
+			"default": "./out/repo/workspaces.js"
 		},
 		"./data-root": {
 			"types": "./out/data-root.d.ts",
@@ -602,15 +602,15 @@
 			"node": "./lib/asset/paths.ts",
 			"default": "./out/asset/paths.js"
 		},
-		"./postcode-prefix-files": {
-			"types": "./out/postcode-prefix-files.d.ts",
-			"node": "./lib/postcode-prefix-files.ts",
-			"default": "./out/postcode-prefix-files.js"
+		"./asset/postcode-prefix-files": {
+			"types": "./out/asset/postcode-prefix-files.d.ts",
+			"node": "./lib/asset/postcode-prefix-files.ts",
+			"default": "./out/asset/postcode-prefix-files.js"
 		},
-		"./overture-pins": {
-			"types": "./out/overture-pins.d.ts",
-			"node": "./lib/overture-pins.ts",
-			"default": "./out/overture-pins.js"
+		"./asset/overture-pins": {
+			"types": "./out/asset/overture-pins.d.ts",
+			"node": "./lib/asset/overture-pins.ts",
+			"default": "./out/asset/overture-pins.js"
 		},
 		"./crypto/base64url": {
 			"types": "./out/crypto/base64url.d.ts",
@@ -627,50 +627,50 @@
 			"node": "./lib/crypto/ed25519.ts",
 			"default": "./out/crypto/ed25519.js"
 		},
-		"./json": {
-			"types": "./out/json.d.ts",
-			"node": "./lib/json.ts",
-			"default": "./out/json.js"
+		"./values/json": {
+			"types": "./out/values/json.d.ts",
+			"node": "./lib/values/json.ts",
+			"default": "./out/values/json.js"
 		},
-		"./spdx-header": {
-			"types": "./out/spdx-header.d.ts",
-			"node": "./lib/spdx-header.ts",
-			"default": "./out/spdx-header.js"
+		"./repo/spdx-header": {
+			"types": "./out/repo/spdx-header.d.ts",
+			"node": "./lib/repo/spdx-header.ts",
+			"default": "./out/repo/spdx-header.js"
 		},
-		"./binary-frame": {
-			"types": "./out/binary-frame.d.ts",
-			"node": "./lib/binary-frame.ts",
-			"default": "./out/binary-frame.js"
+		"./asset/binary-frame": {
+			"types": "./out/asset/binary-frame.d.ts",
+			"node": "./lib/asset/binary-frame.ts",
+			"default": "./out/asset/binary-frame.js"
 		},
-		"./hash": {
-			"types": "./out/hash.d.ts",
-			"node": "./lib/hash.ts",
-			"default": "./out/hash.js"
+		"./crypto/hash": {
+			"types": "./out/crypto/hash.d.ts",
+			"node": "./lib/crypto/hash.ts",
+			"default": "./out/crypto/hash.js"
 		},
-		"./promises": {
-			"types": "./out/promises.d.ts",
-			"node": "./lib/promises.ts",
-			"default": "./out/promises.js"
+		"./async/promises": {
+			"types": "./out/async/promises.d.ts",
+			"node": "./lib/async/promises.ts",
+			"default": "./out/async/promises.js"
 		},
-		"./abort": {
-			"types": "./out/abort.d.ts",
-			"node": "./lib/abort.ts",
-			"default": "./out/abort.js"
+		"./async/abort": {
+			"types": "./out/async/abort.d.ts",
+			"node": "./lib/async/abort.ts",
+			"default": "./out/async/abort.js"
 		},
-		"./load-ledger": {
-			"types": "./out/load-ledger.d.ts",
-			"node": "./lib/load-ledger.ts",
-			"default": "./out/load-ledger.js"
+		"./asset/load-ledger": {
+			"types": "./out/asset/load-ledger.d.ts",
+			"node": "./lib/asset/load-ledger.ts",
+			"default": "./out/asset/load-ledger.js"
 		},
-		"./memoize": {
-			"types": "./out/memoize.d.ts",
-			"node": "./lib/memoize.ts",
-			"default": "./out/memoize.js"
+		"./async/memoize": {
+			"types": "./out/async/memoize.d.ts",
+			"node": "./lib/async/memoize.ts",
+			"default": "./out/async/memoize.js"
 		},
-		"./stats": {
-			"types": "./out/stats.d.ts",
-			"node": "./lib/stats.ts",
-			"default": "./out/stats.js"
+		"./math/stats": {
+			"types": "./out/math/stats.d.ts",
+			"node": "./lib/math/stats.ts",
+			"default": "./out/math/stats.js"
 		},
 		"./html/tables": {
 			"types": "./out/html/tables.d.ts",

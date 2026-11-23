@@ -14,12 +14,12 @@
  *   Usage: `node packages/registry/tools/build-wasm.run.ts [--check]`
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { replaceFileAtomically } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 

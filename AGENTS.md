@@ -2,7 +2,7 @@
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
 The `packages/` directory also contains 88 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-90 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+90 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/repo/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
 Sixty-nine workspaces publish to npm. `.release-it.json` defines that set, and the twenty-one others are
@@ -152,7 +152,10 @@ convention requires those subpaths, and the sibling file of each directory. Ever
 a directory whose title states its role: the artifact it reads, as `candidate/` does, or the step it
 performs, as `ranking/` does. A new module goes into the directory of its role, and a role with no
 directory yet gets one. A directory holds one role. When its description would need "and", it is two
-directories.
+directories. A hyphen inside a known name stays in the directory's title: a component tag such as
+`house-number/` or `street-prefix/`, and a name such as `sub-venue/`. The `prefix-directories` check
+holds those names in one set and reads each as one segment, so it never asks for `sub/venue/`, and
+`house-number-forms.ts` still belongs under `house-number/`.
 
 Use the established shared implementation before adding a local helper. `mailwoman/prefer-home` and
 the `private-name-shadows-export` repository check report repeated implementation shapes and private
@@ -181,7 +184,7 @@ comparison against a country literal. Before writing a branch for US, GB or anot
 look for the source that covers every country: Who's On First admin names and abbreviations, the
 Overture places file, the codex country tables. A finding about a few countries is a hypothesis about
 a global distribution. Before adding a row to a per-country table such as
-`COUNTRY_PLACETYPE_OVERRIDES` in `packages/codex/lib/placetype-map.ts`, compute the same statistic for
+`COUNTRY_PLACETYPE_OVERRIDES` in `packages/codex/lib/labels/placetype-map.ts`, compute the same statistic for
 every country and print the distribution. When the countries that looked anomalous sit inside a
 populated mode, the rule is wrong rather than the countries. A census drawn from where the data is
 densest encodes that region's structure as the norm.

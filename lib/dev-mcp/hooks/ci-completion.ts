@@ -21,10 +21,10 @@
 import { readLocalJSONFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { resolveCheckout } from "#dev-mcp/github"

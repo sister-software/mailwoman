@@ -5,7 +5,7 @@
  *   Generic in-process timing metrics over string-keyed tiers and a bounded recent-latency reservoir.
  */
 
-import { percentileSorted } from "@mailwoman/core/stats"
+import { percentileSorted } from "@mailwoman/core/math/stats"
 import { z } from "zod"
 
 /**

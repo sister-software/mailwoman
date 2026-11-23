@@ -18,8 +18,8 @@
  *   `heldout/dataset/evaluation-groups.run.ts`. Its sha256 joins the split policy hash.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 
 import { recordIDOf } from "#adapters/record-id"

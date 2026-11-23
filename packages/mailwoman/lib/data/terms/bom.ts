@@ -31,7 +31,7 @@
  *   component with no license field reads as unlicensed rather than as unrecorded.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { isMixedLicenseExpression } from "@mailwoman/license/mixed"
 
 import { Provenance, type InventoryEntry, type InventoryReport } from "#data/catalog/inventory"

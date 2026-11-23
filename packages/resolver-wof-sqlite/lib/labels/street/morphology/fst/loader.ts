@@ -1,0 +1,115 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Runtime loader for the street-morphology FST.
+ *
+ *   The sealed artifact (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`)
+ *   is the one resolution ladder every node call site shares.
+ *
+ *   1. An explicit `artifactPath`, e.g. the weights-package sibling surfaced
+ *      by `NeuralAddressClassifier.streetMorphologyPath`.
+ *      When given, it is the only artifact probed.
+ *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
+ *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over
+ *      `@mailwoman/dictionaries`' libpostal `street_types.txt` files, kept
+ *      so a missing artifact degrades to a per-process build instead of a crash.
+ *
+ *   A present-but-unreadable artifact reports through `onWarn` and falls through to the build rung.
+ *   Browsers cannot take the fallback because they have no filesystem API.
+ *
+ *   They deserialize the same artifact through `fst-deserialize-web.ts` (see the docs demo loader).
+ */
+
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
+
+import type { FSTMatcher } from "#fst/matcher"
+import { deserializeFST, readFSTProvenance } from "#fst/serialize"
+import type { FSTProvenance } from "#fst/types"
+import { buildStreetMorphologyFST } from "#labels/street/morphology/fst/builder"
+import { wofDatabasePath } from "#paths"
+
+/**
+ * The sealed artifact's canonical filename, identical in the data-root staging dir
+ * and as a weights-package sibling.
+ */
+export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
+
+/**
+ * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
+ */
+export function defaultStreetMorphologyArtifactPath(): PathBuilder {
+	return wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME)
+}
+
+export interface LoadStreetMorphologyFSTOpts {
+	/**
+	 * Explicit artifact path (e.g. A weights-package sibling).
+	 *
+	 * When given, it is the only artifact probed.
+	 * A missing or unreadable artifact degrades straight to the dictionary build, never a throw.
+	 */
+	artifactPath?: PathBuilderLike
+	/**
+	 * Dictionaries dir for the build fallback.
+	 *
+	 * @defaultValue the libpostal dictionaries `@mailwoman/dictionaries` ships.
+	 */
+	dictionariesDir?: PathBuilderLike
+	/**
+	 * Unreadable-artifact diagnostics.
+	 *
+	 * @defaultValue silent (the caller owns its warn channel).
+	 */
+	onWarn?: (message: string) => void
+}
+
+export interface LoadedStreetMorphologyFST {
+	matcher: FSTMatcher
+	/**
+	 * Which rung produced the matcher: a sealed-artifact deserialize, or the per-process dictionary build.
+	 */
+	source: "artifact" | "built"
+	/**
+	 * The artifact path when `source === "artifact"`.
+	 */
+	path: PathBuilderLike | null
+	/**
+	 * Build provenance, read from the artifact trailer or copied from the fallback build.
+	 */
+	provenance: FSTProvenance | null
+}
+
+/**
+ * Load the street-morphology matcher: sealed artifact first, per-process
+ * dictionary build as the degrade path.
+ */
+export async function loadStreetMorphologyFST(
+	opts: LoadStreetMorphologyFSTOpts = {}
+): Promise<LoadedStreetMorphologyFST> {
+	const warn = opts.onWarn ?? (() => {})
+	const artifactPath = opts.artifactPath ?? defaultStreetMorphologyArtifactPath()
+
+	if (await pathExists(artifactPath)) {
+		try {
+			const buf = await readLocalBuffer(artifactPath)
+			const matcher = deserializeFST(buf)
+			const provenance = readFSTProvenance(buf)
+
+			return { matcher, source: "artifact", path: artifactPath, provenance }
+		} catch (error) {
+			warn(
+				`street-morphology artifact at ${artifactPath} unreadable (${(error as Error).message}) — falling back to the dictionary build`
+			)
+		}
+	}
+
+	const built = await buildStreetMorphologyFST({
+		dictionariesDir: (opts.dictionariesDir ?? resourceDictionaryPath("libpostal")).toString(),
+	})
+
+	return { matcher: built.matcher, source: "built", path: null, provenance: built.provenance }
+}

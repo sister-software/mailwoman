@@ -44,7 +44,7 @@
  */
 
 import { readCheckedWFSFeatureCount, type APIClient, type ReadWFSFeatureCountOptions } from "@mailwoman/core/api"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"

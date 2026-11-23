@@ -6,8 +6,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
+import { normalizeLocalityForKey } from "#labels/street"
 import { createPOIStagingTables, createPOITable, type POIDatabase } from "#poi"
-import { normalizeLocalityForKey } from "#street"
 
 function openMemory(): { raw: DatabaseClient<POIDatabase>; kdb: DatabaseClient<POIDatabase> } {
 	const raw = DatabaseClient.temp<POIDatabase>()

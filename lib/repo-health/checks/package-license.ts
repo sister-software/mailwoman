@@ -22,7 +22,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { assertAdmissibleLicenseExpression } from "@mailwoman/license/obligations"
 import { resolvePath } from "path-ts"
 

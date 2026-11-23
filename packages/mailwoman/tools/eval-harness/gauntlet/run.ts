@@ -32,7 +32,7 @@ import {
 import { runHoldoutLayer } from "#tools/eval-harness/gauntlet/holdout"
 import { runMetamorphicLayer } from "#tools/eval-harness/gauntlet/metamorphic"
 import { type GauntletLayerOptions, runRegressionLayer } from "#tools/eval-harness/gauntlet/regression"
-import type { SwitchPin } from "#tools/eval-harness/switch-pin"
+import type { SwitchPin } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * The Gauntlet layers.

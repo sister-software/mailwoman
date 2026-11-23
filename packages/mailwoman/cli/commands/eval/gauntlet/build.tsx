@@ -10,7 +10,7 @@
  *     (`cases/<cc>/*.jsonl` → `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 

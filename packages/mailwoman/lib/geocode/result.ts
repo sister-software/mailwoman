@@ -4,11 +4,11 @@
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeCandidate, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
-import { isPresent } from "@mailwoman/core/objects"
 import { landmarkPlaceID, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 

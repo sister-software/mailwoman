@@ -25,7 +25,7 @@
  *   Chunks run sequentially against the file, so the build has one writer and requires no locking.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	addCoverageCells,
 	encodeRings,

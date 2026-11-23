@@ -10,7 +10,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * Resolves the committed table from the `@mailwoman/codex` package root, so the path

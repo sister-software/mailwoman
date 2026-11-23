@@ -31,10 +31,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

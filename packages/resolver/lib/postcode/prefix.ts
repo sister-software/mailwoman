@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { postcodePrefixAt, postcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
+import { postcodePrefixAt, postcodePrefixLevel } from "@mailwoman/codex/labels/postcode/prefix"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 

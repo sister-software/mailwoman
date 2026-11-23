@@ -13,8 +13,8 @@
  *   The rule is found by its description, so a rerun replaces it in place.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import { DATA_CLIENT_HEADER } from "#data/published/remote"
 import { $private } from "#env"

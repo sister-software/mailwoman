@@ -78,7 +78,7 @@ import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 
 import { UnsupportedCountryError } from "#adapters/errors"

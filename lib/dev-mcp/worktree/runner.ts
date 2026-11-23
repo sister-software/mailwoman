@@ -9,7 +9,7 @@
 
 import type { ArmRunner, WorktreeArm } from "#dev-mcp/arms"
 import { type EffectiveConfig, type EngineRegistryLike, resolveConfig } from "#dev-mcp/engine/registry"
-import type { ResolvedInputSet } from "#dev-mcp/input-sets"
+import type { ResolvedInputSet } from "#dev-mcp/runs/input-sets"
 import { runWorktreeArm } from "#dev-mcp/worktree/arm"
 
 /**

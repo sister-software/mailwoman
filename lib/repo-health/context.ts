@@ -13,8 +13,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { trackedFiles } from "@mailwoman/core/repo/git"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
 import ts from "typescript"
@@ -24,7 +24,7 @@ import type { RepoContext } from "#repo-health/check"
 /**
  * A `RepoContext` for the checkout at `repoRoot`.
  *
- * The file listing is `trackedFiles` from `@mailwoman/core/git` directly.
+ * The file listing is `trackedFiles` from `@mailwoman/core/repo/git` directly.
  * A wrapper here that returned that call unchanged would be a second public name for one function.
  * `export-name-affix` reports it.
  *

@@ -13,15 +13,15 @@
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwoman/core/layers"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "#tools/pipeline/postcode/geonames/tail"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 let root: TemporaryDirectory
 let postalDir: PathBuilder

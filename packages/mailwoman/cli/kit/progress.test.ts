@@ -10,11 +10,11 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { type ProcessProgress, runFile } from "@mailwoman/core/process"
+import { type ProcessProgress, runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { expect, test } from "vitest"
 
 import { describeProgressStep, type ProgressStep, TransferProgress } from "#cli-kit"

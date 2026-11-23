@@ -8,9 +8,9 @@
 
 import { z } from "zod"
 
-import { runCensus } from "#dev-mcp/census"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import { runCensus } from "#dev-mcp/measure/census"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const censusTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_census",

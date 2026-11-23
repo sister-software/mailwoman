@@ -3,7 +3,7 @@
 
 import { cfRequestToGeoFeature } from "@mailwoman/api-worker/cloudflare/geo"
 import { ResourceError } from "@mailwoman/core/errors"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { Context } from "hono"
 
 import type { TileWorkerHono } from "#caching"

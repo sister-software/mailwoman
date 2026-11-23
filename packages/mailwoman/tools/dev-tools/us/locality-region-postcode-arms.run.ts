@@ -39,20 +39,20 @@
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street/suffix"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { QueryKind } from "@mailwoman/core/pipeline"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/repo/git"
 import { cliArguments, parseArguments, scriptEntryPath } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
-import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coord-panel"
+import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coordinate/panel"
 import { buildGauntletDeps, type GauntletDepsOptions } from "#tools/eval-harness/gauntlet/harness"
-import { readWeightsIdentity } from "#tools/eval-harness/preregistration"
+import { readWeightsIdentity } from "#tools/eval-harness/preregistration/artifacts"
 
 const { values } = parseArguments({
 	options: {

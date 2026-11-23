@@ -5,7 +5,7 @@
  *   The street tier's per-region extracts, opened by byte ranges for situs and interpolation reads.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import { NATIONAL_STREET_SLUGS, streetExtractURL } from "mailwoman/browser-runtime/resources"
 
@@ -48,7 +48,7 @@ export async function openStreetLookups(slug: string, sqliteRuntimeBaseURL: stri
 	} = await allKeyed({
 		database: import("#runtime/range-database"),
 		street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
-		locale: import("@mailwoman/resolver-wof-sqlite/street/locale"),
+		locale: import("@mailwoman/resolver-wof-sqlite/labels/street/locale"),
 	})
 
 	if (NATIONAL_STREET_SLUGS.has(slug)) {

@@ -12,10 +12,10 @@
  *   exact once the corpus is split by the current table.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
 import { $public } from "#env"

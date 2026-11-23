@@ -14,7 +14,7 @@ import type { Tagged } from "type-fest"
 
 import { readPackageJSON } from "#module/resolve-from"
 import { OutDirectoryName } from "#paths"
-import { readWorkspaceDirectories } from "#workspaces"
+import { readWorkspaceDirectories } from "#repo/workspaces"
 
 /**
  * A package name proven to occur in the root manifest's expanded workspace set.

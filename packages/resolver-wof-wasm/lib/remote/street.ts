@@ -14,7 +14,7 @@ import type {
 	StreetTableHit,
 	StreetTableLookup,
 	StreetTableQuery,
-} from "@mailwoman/resolver-wof-sqlite/street/table"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/table"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**

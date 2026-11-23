@@ -16,8 +16,8 @@ import {
 	type IntervalLabel,
 } from "#candidate/ancestors/schema"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
+import { normalizeLocalityForKey } from "#labels/street"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street"
 
 const GERMANY = 100
 const THURINGEN = 101

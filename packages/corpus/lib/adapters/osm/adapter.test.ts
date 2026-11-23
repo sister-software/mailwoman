@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"

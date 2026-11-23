@@ -16,10 +16,10 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
-import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { FetchSummary, SourceManifest } from "#tools/fetch/download"

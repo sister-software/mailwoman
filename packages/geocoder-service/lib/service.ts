@@ -5,7 +5,7 @@
  * @file Chooses which geocoder provider answers each query.
  */
 
-import { AbortKind, abortKindOf } from "@mailwoman/core/abort"
+import { AbortKind, abortKindOf } from "@mailwoman/core/async/abort"
 import { type ConnectivityReading, offlineReason, offlineResourceError } from "@mailwoman/core/network/connectivity"
 
 import type { GeocoderProvider, ProviderPlacement } from "#provider"

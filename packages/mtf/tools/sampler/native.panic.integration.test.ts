@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { workspacePath } from "@mailwoman/core/paths"
-import { runFile, spawnProcessSync } from "@mailwoman/core/process"
+import { runFile, spawnProcessSync } from "@mailwoman/core/scripting/process"
 import { expect, test } from "vitest"
 
 /**

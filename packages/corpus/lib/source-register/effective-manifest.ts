@@ -21,9 +21,9 @@
  *   and the config omits is excluded by construction. The record reports that exclusion instead of a zero draw.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
 import type { PathBuilder } from "path-ts"
 

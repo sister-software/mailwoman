@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

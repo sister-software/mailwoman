@@ -12,8 +12,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { readSourceLock } from "#sdk/fetch"
 import { pinnedSourceFile, SOURCES } from "#sdk/sources"

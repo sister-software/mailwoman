@@ -9,13 +9,13 @@
  *   That value is absent from the corpus's situs source table, so no training recipe reads these rows.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	streetLocaleForCountry,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 
 /**
  * The farthest, in degrees, a street segment's vertex may lie from a point

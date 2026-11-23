@@ -18,7 +18,7 @@
  *   required since Chromium began restricting software WebGL behind it) route GL through
  *   the bundled SwiftShader software rasterizer so the map mounts a real canvas offscreen.
  *   The MapCanvas test still guards the GL surface (asserts the component tree, canvas only if present)
- *   so it can't flake if a future Chromium drops software GL — see `map/MapCanvas.test.tsx`.
+ *   so it can't flake if a future Chromium drops software GL — see `map/canvas/MapCanvas.test.tsx`.
  */
 
 import react from "@vitejs/plugin-react"

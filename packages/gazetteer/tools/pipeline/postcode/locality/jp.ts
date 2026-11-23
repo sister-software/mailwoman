@@ -35,7 +35,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound } from "@mailwoman/core/math/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
@@ -49,7 +49,7 @@ import {
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
 } from "#locality-postcode-schema"
-import { finalizeSealedBuild } from "#tools/pipeline/database-lifecycle"
+import { finalizeSealedBuild } from "#tools/pipeline/database/database-lifecycle"
 import { geonamesPostalRows } from "#tools/pipeline/postcode/geonames/postal"
 import { writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
 import { ProximityGrid } from "#tools/pipeline/postcode/locality/base"

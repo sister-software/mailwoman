@@ -8,17 +8,17 @@
  */
 
 import { us } from "@mailwoman/codex"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { AnchorSpanMode } from "@mailwoman/neural/channels/anchor-inference"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/schema/place-importance"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { LookupRow } from "#dev-mcp/lookup"
-import { type PlaceIDProvenance, placeIDProvenance } from "#dev-mcp/place-id-provenance"
+import { type PlaceIDProvenance, placeIDProvenance } from "#dev-mcp/lookup/place-id-provenance"
 
 /**
  * Each probe reports the total match count separately.

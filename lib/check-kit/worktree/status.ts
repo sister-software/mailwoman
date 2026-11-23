@@ -16,13 +16,13 @@
 import { resolveEnvFile } from "@mailwoman/core/env/env-file"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { commitsAheadBehind, currentBranch, git, gitHead, trackedFiles } from "@mailwoman/core/git"
 import { type CheckoutLocality, NodeModulesState, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
-import { runFile } from "@mailwoman/core/process"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { commitsAheadBehind, currentBranch, git, gitHead, trackedFiles } from "@mailwoman/core/repo/git"
+import { readReleaseConfig } from "@mailwoman/core/repo/release-config"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
-import { checkSpawnedTreeFreshness } from "#dev-mcp/compiled-tree"
+import { checkSpawnedTreeFreshness } from "#dev-mcp/process/compiled-tree"
 import { copyWeightsTargets } from "#release-kit/weights/copy-weights"
 import {
 	readWeightsMaterialization,

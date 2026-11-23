@@ -9,7 +9,7 @@
  * before Vitest wrote it, and a log downloaded from GitHub Actions.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { relative } from "path-ts"
 
 import { checkOutputLines } from "#check-kit/output-lines"

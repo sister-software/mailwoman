@@ -13,7 +13,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { Box, Text } from "ink"
 import { useState } from "react"
 

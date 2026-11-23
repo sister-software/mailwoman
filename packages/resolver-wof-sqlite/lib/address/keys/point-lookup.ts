@@ -6,9 +6,9 @@
  *   `lookup.db` through `AddressKeyLookup`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/memoize"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { type LatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 
 import {

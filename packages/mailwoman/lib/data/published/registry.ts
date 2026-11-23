@@ -13,7 +13,6 @@
  *   bundle as an entry. The installation planner reads entries only.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	type ArtifactID,
 	type ArtifactScope,
@@ -28,8 +27,9 @@ import {
 	selectionScopesOf,
 	ServingRole,
 } from "@mailwoman/core/layers"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
-import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
+import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 
 import { bundleArtifactRole, bundleArtifactSubdivision, BUNDLES, type DataBundle } from "#data/published/bundles"
 

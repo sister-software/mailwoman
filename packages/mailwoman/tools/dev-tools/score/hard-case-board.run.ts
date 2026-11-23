@@ -9,9 +9,9 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
@@ -23,7 +23,7 @@ import { TextSpliterator } from "spliterator"
 
 import { createResolverBackend, existingWOFDatabasePaths } from "#engine/resolver-backend"
 import { createRuntimePipeline, registerRuntimePipelineServices } from "#engine/runtime-pipeline"
-import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/hard-case-board"
+import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/board/hard-case"
 import { collectResolved, mostSpecific, type Resolved } from "#tools/eval-harness/oa/resolver/tree-hits"
 
 const { values } = parseArguments({

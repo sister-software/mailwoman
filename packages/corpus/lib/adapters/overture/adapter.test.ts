@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent, writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 

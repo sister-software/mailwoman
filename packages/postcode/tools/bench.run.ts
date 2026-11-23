@@ -26,10 +26,10 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { gitHead } from "@mailwoman/core/git"
-import { prettyJSON } from "@mailwoman/core/json"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuModel } from "@mailwoman/core/utils/system"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { createRecognizer } from "@mailwoman/recognizer"
 import { coordinates } from "@mailwoman/recognizer/coordinates"
 import { defineFamily } from "@mailwoman/recognizer/family"

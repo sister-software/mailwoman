@@ -51,8 +51,8 @@
  */
 
 import type { OGCFeature } from "@mailwoman/core/api"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { OutsideCoverageRow } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	nearestRingEdgeMetres,
 	pointInEncodedRings,

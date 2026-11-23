@@ -8,7 +8,6 @@
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
 	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
@@ -25,6 +24,7 @@ import {
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { M2_PER_KM2 } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

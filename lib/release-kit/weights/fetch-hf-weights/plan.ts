@@ -4,10 +4,10 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { trackedFiles } from "@mailwoman/core/git"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isPresent } from "@mailwoman/core/objects"
-import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
+import { trackedFiles } from "@mailwoman/core/repo/git"
+import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/repo/release-config"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { $private } from "#release-kit/env"

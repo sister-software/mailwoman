@@ -12,9 +12,9 @@
  *   decides each row, so a change to either writes a new attribute file rather than relabeling an old one.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 
 import { moduleGraphHash } from "#build/code-hash"
 import type { ShapeSupplyEntry, SplitRetention } from "#utils/retention"

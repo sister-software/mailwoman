@@ -5,7 +5,7 @@
  * @file The resolver that gives a POI query's anchor its coordinates, as `mailwoman poi` and the POI board build it.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 
 import { createResolverBackend, resolvePOIResolverPaths } from "#engine/resolver-backend"

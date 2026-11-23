@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest"
 
 import type { AddressRecord } from "#address/record"
 import { OUTSIDE_SUBDIVISION, openSubdivisionBoundsCheck } from "#address/subdivision-bounds"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function at(subdivision: string | null, lat: number, lon: number): AddressRecord {
 	return {

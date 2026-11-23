@@ -11,8 +11,8 @@
  *   Both databases are opened read-only.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import {
 	type CommandSpec,

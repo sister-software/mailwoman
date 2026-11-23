@@ -37,8 +37,8 @@ import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
-} from "@mailwoman/gazetteer/tools/pipeline/defaults"
-import { addCountry, removeCountry } from "@mailwoman/gazetteer/tools/pipeline/recipe-edit"
+} from "@mailwoman/gazetteer/tools/pipeline/recipe/defaults"
+import { addCountry, removeCountry } from "@mailwoman/gazetteer/tools/pipeline/recipe/recipe-edit"
 import { auditReposRoot, clonedCountries, reposSentence } from "@mailwoman/gazetteer/tools/pipeline/repos/audit"
 import { wofExtractPathsByName } from "@mailwoman/resolver-wof-sqlite/paths"
 
@@ -218,7 +218,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			// `--write` edits the working tree and stops there — it doesn't stage, commit
 			// or build, so the change stays a diff a person reviews.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
-				const defaultsPath = repoRootPath("packages", "mailwoman", "tools", "gazetteer-pipeline", "defaults.ts")
+				const defaultsPath = repoRootPath("packages", "gazetteer", "tools", "pipeline", "recipe", "defaults.ts")
 				let source = await readLocalTextFile(defaultsPath)
 				const applied: string[] = []
 

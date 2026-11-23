@@ -6,8 +6,8 @@
  *   packages/filer/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { analyzeReferenceDocument } from "./oracle.ts"
 

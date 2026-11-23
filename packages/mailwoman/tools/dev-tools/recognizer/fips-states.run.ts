@@ -20,9 +20,9 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { AdminLevel1Code } from "@mailwoman/tiger/state"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })

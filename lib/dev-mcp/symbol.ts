@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { runFileSync } from "@mailwoman/core/process"
+import { runFileSync } from "@mailwoman/core/scripting/process"
 import type { PathBuilderLike } from "path-ts"
 /**
  *   Finds existing declarations of a function name across the monorepo.

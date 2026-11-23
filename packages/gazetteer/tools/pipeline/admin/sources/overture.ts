@@ -17,8 +17,8 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { simpleSHA3 } from "@mailwoman/core/crypto"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 // These imports are type-only because the package is an optional peer that callers load lazily.
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/schema/overture-match"

@@ -13,8 +13,8 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { RenderedRowIDs } from "#adapters/record-id"

@@ -18,7 +18,7 @@
  */
 
 import { NZ_UNIT_TYPE_RULES } from "@mailwoman/codex/nz"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { titleCase } from "spliterator/casing"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"

@@ -14,8 +14,8 @@
  *   so a diagnosis names it instead of grading it as a model failure.
  */
 
-import { expandPlacetypeFilter, placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { expandPlacetypeFilter, placetypeMapForCountry } from "@mailwoman/codex/labels/placetype-map"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**

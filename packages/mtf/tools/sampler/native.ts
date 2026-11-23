@@ -16,7 +16,7 @@
  */
 
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { platformName as platform } from "@mailwoman/core/utils/system"
 
 /**

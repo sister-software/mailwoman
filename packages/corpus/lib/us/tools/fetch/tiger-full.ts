@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 /**
  * Fetch the full TIGER 2024 addrfeat dataset for all US counties from
  * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files use the
@@ -21,7 +22,6 @@ import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { assertSnapshotWritable, writeSnapshot } from "@mailwoman/core/fs/snapshot"
 import { makeDirectories, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { PathBuilder } from "path-ts"

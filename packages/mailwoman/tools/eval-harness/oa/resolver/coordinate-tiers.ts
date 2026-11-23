@@ -6,11 +6,11 @@
  *   the admin centroid and the street-level point.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { TextSpliterator } from "spliterator"
 
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
@@ -28,7 +28,7 @@ export interface PostcodeCentroidLookup extends Disposable {
 /**
  * The postcode-anchor extractor, loaded dynamically because the anchor rows are opt-in.
  */
-export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode").extractPostcodeAnchors
+export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/labels/postcode").extractPostcodeAnchors
 
 /**
  * Wire up the coordinate tiers this run grades, from the flags that select them.
@@ -119,7 +119,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		postcodeLookup = new WOFPostcodeLookup(databases)
-		extractAnchors = (await import("@mailwoman/neural/postcode")).extractPostcodeAnchors
+		extractAnchors = (await import("@mailwoman/neural/labels/postcode")).extractPostcodeAnchors
 	}
 
 	return {

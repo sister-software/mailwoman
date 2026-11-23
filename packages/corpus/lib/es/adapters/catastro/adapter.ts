@@ -85,7 +85,7 @@
 
 import { decodeByteStream } from "@mailwoman/core/fs/streams"
 import type { MarkupElement } from "@mailwoman/core/html/elements"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

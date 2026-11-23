@@ -8,7 +8,7 @@
 import { componentsPresentIn } from "@mailwoman/codex/address/format"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

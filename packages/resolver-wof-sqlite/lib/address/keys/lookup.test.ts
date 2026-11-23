@@ -10,7 +10,7 @@ import { buildAddressLayer } from "#address/keys/build"
 import { localAddressStatementRunner } from "#address/keys/local-runner"
 import { AddressKeyLookup } from "#address/keys/lookup"
 import { AddressNameForm, type AddressRecord } from "#address/record"
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function record(
 	number: string,

@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { POSTCODE_PREFIX_FILE_GLOB, postcodePrefixScopeOf } from "@mailwoman/core/asset/postcode-prefix-files"
 import { cacheRootPathBuilder, databaseRootPath, dataRootPath, weightsOverlayPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { POSTCODE_PREFIX_FILE_GLOB, postcodePrefixScopeOf } from "@mailwoman/core/postcode-prefix-files"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

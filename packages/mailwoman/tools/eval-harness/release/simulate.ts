@@ -32,7 +32,7 @@
  *   it either on the same rows (`confirmation: "same"`) or on freshly drawn rows (`"fresh"`).
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 
 import { evaluateReleaseSpec, type PairedRow, ReleaseOutcome } from "#tools/eval-harness/release/evaluate"
 import {

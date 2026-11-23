@@ -24,7 +24,7 @@
  *   Downstream code couldn't distinguish it from the region the caller meant.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 

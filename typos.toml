@@ -393,7 +393,6 @@ extend-glob = [
 	"street-type.ts",
 	"register.test.ts",
 	"locale.test.ts",
-	"house-number-repetition.ts",
 	"repetition.ts",
 	"repetition.test.ts",
 ]
@@ -535,7 +534,7 @@ extend-glob = ["capture-recapture*.ts", "unit-ablation.run.ts"]
 extend-identifiers = { metres = "metres" }
 
 [type.wilson-interval]
-extend-glob = ["span-board.ts", "power.ts", "build.test.ts"]
+extend-glob = ["span.ts", "power.ts", "build.test.ts"]
 extend-identifiers = { centre = "centre" }
 
 # Type globs match basenames. These files quote placetypes in diagrams, output, or adapters.

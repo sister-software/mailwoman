@@ -17,8 +17,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { BUILTIN_ADAPTERS } from "@mailwoman/corpus/adapters"
 import { createUnitSplitter } from "@mailwoman/corpus/adapters/street/unit"
 import { tryReadDefaultRegionNames } from "@mailwoman/corpus/build/region-names"

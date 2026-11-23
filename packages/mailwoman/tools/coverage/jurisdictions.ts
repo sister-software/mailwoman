@@ -21,7 +21,7 @@ import { LicenseAction } from "@mailwoman/license/actions"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname, type PathBuilderLike } from "path-ts"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
 
 import { readAdmittedCountries, readBoardCoverage } from "#tools/coverage/census"
 import {

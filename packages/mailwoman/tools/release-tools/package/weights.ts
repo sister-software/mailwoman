@@ -15,8 +15,8 @@
  */
 
 import { copyFileTo, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON, parseJSONStrict } from "@mailwoman/core/json"
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
+import { orderedJSON, parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	bioLabelsOf,
 	DEFAULT_LABEL_SET,

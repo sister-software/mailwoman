@@ -24,8 +24,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackageCommand } from "@mailwoman/core/module/package-command"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFileSync } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFileSync } from "@mailwoman/core/scripting/process"
 
 import { describeMixedAddressLayer, localLayerFileReader, type MixedLayerSource } from "#data/terms/mixed-layer"
 

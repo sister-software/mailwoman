@@ -5,9 +5,9 @@
  * Builds a state or national address-point database from Overture or OpenAddresses.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"
@@ -214,11 +214,11 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// Both imports are dynamic so the published CLI doesn't require these optional dependencies.
 		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
 
 		try {
 			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 		} catch {
 			throw new CommandError(
 				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."
@@ -502,7 +502,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			layers: { LayerFreshnessPolicy, LayerTier },
 			paths: { repoRootPath },
 		} = await allKeyed({
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
 			layers: import("@mailwoman/core/layers"),
 			paths: import("@mailwoman/core/paths"),
 		})

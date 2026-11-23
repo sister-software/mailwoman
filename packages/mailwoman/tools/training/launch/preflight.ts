@@ -12,12 +12,12 @@
  *   so the audits and the training read the same corpus.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 

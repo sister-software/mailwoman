@@ -12,11 +12,11 @@
  */
 
 import type { AnyFamily, Rejected, Unvalidated, Validated } from "#family"
-import { offsetMap } from "#offsets"
 import { ErrorCode, MAX_FAMILIES, PREFIX_STATUSES, PREFIX_WORDS, RECORD_WORDS, Status } from "#runtime/abi"
 import { RecognizerArtifactError, RecognizerError } from "#runtime/errors"
+import { offsetMap } from "#runtime/offsets"
 import { type Instance, trapped } from "#runtime/state"
-import type { Trace, TraceSpan } from "#trace"
+import type { Trace, TraceSpan } from "#runtime/trace"
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder("utf-8", { fatal: true })

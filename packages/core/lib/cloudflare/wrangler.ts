@@ -11,10 +11,10 @@
 import { resolvePath } from "path-ts"
 
 import { statPath } from "#fs/readers/stat"
-import { parseJSONStrict } from "#json"
 import { resolvePackageDirectory } from "#module/resolvers"
-import { isPresent } from "#objects"
-import { runFile } from "#process"
+import { runFile } from "#scripting/process"
+import { parseJSONStrict } from "#values/json"
+import { isPresent } from "#values/objects"
 
 /**
  * The largest object `wrangler r2 object put` accepts.

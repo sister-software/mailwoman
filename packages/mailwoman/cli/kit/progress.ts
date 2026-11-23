@@ -8,7 +8,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import type { ProcessProgress } from "@mailwoman/core/process"
+import type { ProcessProgress } from "@mailwoman/core/scripting/process"
 import { TypedEventTarget } from "@mailwoman/core/utils/events"
 import { Box, Text, useStderr, useStdout } from "ink"
 import { createElement as h, useCallback, useState } from "react"

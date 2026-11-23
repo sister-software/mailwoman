@@ -9,9 +9,9 @@ import { fromBase64URL, utf8Text } from "#crypto/base64url"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { temporaryDirectory } from "#fs/temporary"
 import { copyFileTo, removePath, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { parseJSONStrict } from "#json"
 import { bindArtifacts, encodeProvenanceManifest, verifyProvenanceManifest } from "#license/provenance"
 import { resolvePackagePath } from "#module/resolvers"
+import { parseJSONStrict } from "#values/json"
 
 interface ProvenanceFixtures {
 	trusted_provenance_keys: Record<string, string>

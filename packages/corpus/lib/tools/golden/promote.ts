@@ -33,10 +33,10 @@
 
 import { layoutForCountry, layoutPrintsPostcodeBeforeLocality } from "@mailwoman/codex/address/layouts"
 import { matchCountry } from "@mailwoman/codex/country"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"

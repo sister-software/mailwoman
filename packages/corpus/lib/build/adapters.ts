@@ -6,10 +6,10 @@
  *   previous build finished.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 
 import type { BuildStage } from "#build/types"

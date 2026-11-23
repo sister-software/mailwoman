@@ -17,9 +17,9 @@
  *   A change that makes the new version current also moves `release/current-spec.ts`.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { CURRENT_RELEASE_SPEC, releaseSpecPath } from "#tools/eval-harness/release/current-spec"

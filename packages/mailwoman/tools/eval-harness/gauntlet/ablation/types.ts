@@ -3,7 +3,7 @@
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
 
 import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#ablation/grades"
 

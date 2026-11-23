@@ -10,8 +10,8 @@
  *   Defaults to the canonical `candidate-global.db`.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
-import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { allKeyed } from "@mailwoman/core/async/promises"
+import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/recipe/defaults"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

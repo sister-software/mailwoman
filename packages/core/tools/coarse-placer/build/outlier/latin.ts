@@ -26,11 +26,11 @@
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { OVERTURE_ADDRESSES_RELEASE } from "#asset/overture-pins"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { snapshotSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
-import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#tools/coarse-placer/outlier-rows"
 import { defaultDataDir } from "#tools/coarse-placer/paths"
 

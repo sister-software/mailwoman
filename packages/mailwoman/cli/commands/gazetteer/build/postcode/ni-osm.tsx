@@ -22,7 +22,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import {
 	type CommandSpec,

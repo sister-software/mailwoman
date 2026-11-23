@@ -11,7 +11,7 @@
 import { createBasemapStyle, isBasemapLanguage, isBasemapStyleName } from "@mailwoman/cartographer/base/standalone"
 import { PROTOMAPS_PLANET_TILESET_NAME } from "@mailwoman/core/asset-names"
 import { ResourceError } from "@mailwoman/core/errors"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { Context } from "hono"
 
 import { cacheResponse, type TileWorkerHono } from "#caching"

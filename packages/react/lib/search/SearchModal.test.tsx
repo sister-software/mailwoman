@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { SearchModal } from "@mailwoman/react/search/SearchModal"
 import type { SearchResponse } from "@mailwoman/react/search/types"
 import { expect, test, vi } from "vitest"

@@ -19,15 +19,15 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { runFileSync } from "@mailwoman/core/process"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { runFileSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { FINGERPRINTED_WORKSPACES } from "#dev-mcp/tree-fingerprint"
+import { FINGERPRINTED_WORKSPACES } from "#dev-mcp/process/tree-fingerprint"
 
 /**
  * The `ref` value that selects the current working tree, including uncommitted edits.

@@ -56,8 +56,8 @@ describe("summarizeRuntimeReads", () => {
 
 	it("reads only the checkout's git metadata for a commit query, and the whole tree for a listing", () => {
 		const stamp = summarize(`
-			import { gitHead } from "@mailwoman/core/git"
-			import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+			import { gitHead } from "@mailwoman/core/repo/git"
+			import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 			import { repoRootPath } from "@mailwoman/core/paths"
 
 			const commit = await gitHead(repoRootPath(), { short: true })
@@ -68,7 +68,7 @@ describe("summarizeRuntimeReads", () => {
 		expect(readsAnyOf(stamp!, ["packages/postcode/lib/shapes.ts"], [])).toBe(false)
 
 		const listing = summarize(`
-			import { dirtyTrackedFiles } from "@mailwoman/core/git"
+			import { dirtyTrackedFiles } from "@mailwoman/core/repo/git"
 			import { repoRootPath } from "@mailwoman/core/paths"
 
 			const dirty = await dirtyTrackedFiles(repoRootPath())
@@ -82,9 +82,9 @@ describe("summarizeRuntimeReads", () => {
 			"loads a module by a computed specifier"
 		)
 
-		expect(summarize('import { runFile } from "@mailwoman/core/process"\nawait runFile("node", [])')?.unbounded).toBe(
-			"runs node"
-		)
+		expect(
+			summarize('import { runFile } from "@mailwoman/core/scripting/process"\nawait runFile("node", [])')?.unbounded
+		).toBe("runs node")
 	})
 
 	it("leaves a test unbounded for a raw builtin or an unresolved read, and library code bounded by its callers", () => {
@@ -93,13 +93,13 @@ describe("summarizeRuntimeReads", () => {
 		const read =
 			'import { readLocalTextFile } from "@mailwoman/core/fs/readers"\nexport const load = (path) => readLocalTextFile(path)'
 
-		const git = 'import { runFile } from "@mailwoman/core/process"\nawait runFile("git", ["status"])'
+		const git = 'import { runFile } from "@mailwoman/core/scripting/process"\nawait runFile("git", ["status"])'
 
 		expect(summarize(raw, TEST)?.unbounded).toBe("imports node:fs")
 		expect(summarize(read, TEST)?.unbounded).toBe("reads path")
 
 		const callerScript =
-			'import { spawnProcess } from "@mailwoman/core/process"\nexport const run = (script) => spawnProcess(process.execPath, [script])'
+			'import { spawnProcess } from "@mailwoman/core/scripting/process"\nexport const run = (script) => spawnProcess(process.execPath, [script])'
 
 		expect(summarize(raw)).toBeNull()
 		expect(summarize(read)).toBeNull()

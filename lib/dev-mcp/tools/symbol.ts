@@ -17,13 +17,13 @@
  *   names share no substring with the query.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 import { searchDeclarations } from "#dev-mcp/symbol"
 import { loadPurposeIndex, searchPurpose } from "#dev-mcp/symbol/purpose"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
 
 /**
  * What the sweep doesn't read.

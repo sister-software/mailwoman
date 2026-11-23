@@ -6,7 +6,7 @@
  *   block, an operation's thrown error as an `isError` result rather than a dropped connection.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 

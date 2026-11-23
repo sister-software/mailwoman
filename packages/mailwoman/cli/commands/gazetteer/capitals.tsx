@@ -10,7 +10,7 @@
  *   Output: data/gazetteer/capitals-v1.json (small, committed, provenance-tracked).
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -38,7 +38,7 @@ const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 			dataRoot: { dataRootPath },
 			paths: { repoRootPathBuilder },
 		} = await allKeyed({
-			capitals: import("@mailwoman/gazetteer/tools/pipeline/capitals"),
+			capitals: import("@mailwoman/gazetteer/tools/pipeline/admin/capitals"),
 			dataRoot: import("@mailwoman/core/data-root"),
 			paths: import("@mailwoman/core/paths"),
 		})

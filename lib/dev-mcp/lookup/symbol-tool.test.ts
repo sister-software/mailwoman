@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
-import type { JobRegistry } from "#dev-mcp/jobs"
+import type { JobRegistry } from "#dev-mcp/process/jobs"
 import { buildToolTable } from "#dev-mcp/tools"
 
 /**
@@ -41,7 +41,7 @@ describe("mwdev_symbol", () => {
 
 		const files = result.findings.flatMap((finding) => finding.sites.map((site) => site.file))
 
-		expect(files).toContain("packages/core/lib/stats.ts")
+		expect(files).toContain("packages/core/lib/math/stats.ts")
 	})
 
 	it("counts names and sites separately, because one name can have several homes", async () => {

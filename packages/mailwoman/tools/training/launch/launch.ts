@@ -19,7 +19,7 @@
  *   after it need only the run key.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import type { EntitlementAdmission } from "@mailwoman/license/product/entitlement"
 
 import {

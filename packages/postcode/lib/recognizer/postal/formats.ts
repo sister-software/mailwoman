@@ -16,7 +16,7 @@
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country/population"
 import { type CountrySet, countriesDeclaredBy, hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
-import { poBoxSpans } from "@mailwoman/recognizer/po-box"
+import { poBoxSpans } from "@mailwoman/recognizer/labels/po-box/po-box"
 import type { KnownFormatHit, TokenClass } from "@mailwoman/recognizer/types"
 
 import { postcodeSyntaxCountries } from "#country-formats"

@@ -40,13 +40,13 @@
  *       [--batch-size 128] [--seed 43] [--set data.key=value] [--report <json>]
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
 import { applyOverrides, loadTrainingConfig, recordedConfigPath, rerootToHost } from "../config.ts"

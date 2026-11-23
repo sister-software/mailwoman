@@ -5,7 +5,7 @@ import { PipelineExplorer } from "@mailwoman/react/pipeline/PipelineExplorer"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makePipelineRuntime } from "#map/fake-runtime"
+import { makePipelineRuntime } from "#map/geocoder/fake-runtime"
 
 import { renderComponent } from "../../test/render.tsx"
 

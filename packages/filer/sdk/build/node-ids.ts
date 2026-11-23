@@ -11,7 +11,7 @@
  *   A blank `valid_from` reads as valid since forever. A non-ISO value matches no row.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { FilerIdentifierType } from "#schema"
 import { assertISODate } from "#sdk/guards"

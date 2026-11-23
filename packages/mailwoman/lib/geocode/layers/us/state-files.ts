@@ -15,7 +15,7 @@
 
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/core/resolver"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"

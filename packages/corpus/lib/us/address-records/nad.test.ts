@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { isPresent } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

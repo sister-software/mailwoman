@@ -18,8 +18,8 @@
 import type { APIClient } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
-import type { ReleaseConfig } from "@mailwoman/core/release-config"
+import type { ReleaseConfig } from "@mailwoman/core/repo/release-config"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { RegisterTermsBasis, type RegisterRowTerms } from "@mailwoman/corpus/source-register/terms"
 import {
 	readUSAddressSourceTerms,

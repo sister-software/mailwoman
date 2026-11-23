@@ -11,7 +11,7 @@
    fire on the wrong span. This produces a US postcode shape by construction. */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches defines the

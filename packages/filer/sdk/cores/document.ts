@@ -6,7 +6,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { isFRN, type FRN } from "#frn"
 import { parseCORESRegistration, type CORESRegistration } from "#sdk/cores/registration"

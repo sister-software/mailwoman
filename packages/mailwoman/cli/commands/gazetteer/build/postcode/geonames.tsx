@@ -12,7 +12,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "@mailwoman/gazetteer/tools/pipeline/recipe/defaults"
 
 import {
 	type CommandSpec,

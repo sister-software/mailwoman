@@ -14,7 +14,7 @@
 
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

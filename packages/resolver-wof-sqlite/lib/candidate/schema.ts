@@ -5,8 +5,8 @@ import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "#candidate/ancestors/schema"
 import type { CapitalTable } from "#candidate/capital-schema"
+import type { NameKey } from "#labels/street/normalize"
 import type { OvertureWOFMatchTable } from "#schema/overture-match"
-import type { NameKey } from "#street/normalize"
 
 /**
  * One candidate row.

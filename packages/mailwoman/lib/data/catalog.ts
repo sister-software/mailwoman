@@ -27,7 +27,6 @@ import type { Dirent } from "@mailwoman/core/fs/readers"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
-import { JSONParseError } from "@mailwoman/core/json"
 import {
 	type ActiveSelection,
 	ACTIVE_SELECTION_FORMAT,
@@ -50,6 +49,7 @@ import {
 	UnreadableArtifactError,
 	UnreadableReason,
 } from "@mailwoman/core/layers"
+import { JSONParseError } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

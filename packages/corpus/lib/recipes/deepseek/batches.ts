@@ -10,13 +10,13 @@
  *   invalidates every checkpoint on disk.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { pyRound, pySum } from "@mailwoman/core/numeric"
+import { pyRound, pySum } from "@mailwoman/core/math/numeric"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { splitLines } from "@mailwoman/core/strings/unicode"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 
 import {

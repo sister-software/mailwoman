@@ -9,8 +9,8 @@
  *   Each loader answers an absent layer with `null` or an empty dependency set.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import type { LayerCatalog } from "#data/catalog"
@@ -174,7 +174,7 @@ export async function loadForkEntityDeps(
 
 	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
-		import("@mailwoman/resolver-wof-sqlite/street"),
+		import("@mailwoman/resolver-wof-sqlite/labels/street"),
 		import("#poi/venue-head-fit"),
 	])
 

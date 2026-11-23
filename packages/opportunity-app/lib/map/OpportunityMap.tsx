@@ -20,7 +20,7 @@
 
 import type { EntityID } from "@mailwoman/dossier"
 import { type SegmentPath, SegmentStatus } from "@mailwoman/opportunity-map"
-import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/MapCanvas"
+import { MapCanvas, type MapCanvasStyle } from "@mailwoman/react/map/canvas/MapCanvas"
 import { type ReactNode, useMemo, useState } from "react"
 import { Layer, Marker, Source } from "react-map-gl/maplibre"
 

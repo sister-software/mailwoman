@@ -21,8 +21,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { appliedRow } from "mailwoman/cli/debug-view/trace-rows"
@@ -37,21 +37,21 @@ import {
 } from "mailwoman/tools/eval-harness/gauntlet/reachability"
 import { OVERLAY_LOCALE_BY_COUNTRY, routeCountry } from "mailwoman/tools/eval-harness/gauntlet/routing"
 
+import { runConstraintAccountForArgs } from "#dev-mcp/diagnose/constraints"
 import {
 	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	runCounterfactuals,
 	type CounterfactualTarget,
 	type RowCounterfactuals,
-} from "#dev-mcp/counterfactual"
-import { runConstraintAccountForArgs } from "#dev-mcp/diagnose/constraints"
+} from "#dev-mcp/diagnose/counterfactual"
+import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#dev-mcp/diagnose/evidence"
 import { gradeExpectation, type ExpectationReading } from "#dev-mcp/diagnose/expectation"
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#dev-mcp/evidence"
-import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#dev-mcp/input-sets"
 import { openSealedArtifact } from "#dev-mcp/lookup"
-import { describeObservedRate } from "#dev-mcp/power"
-import { inputSetProvenance, provenanceFor } from "#dev-mcp/tool-kit"
+import { describeObservedRate } from "#dev-mcp/result/power"
+import { inputSetProvenance, provenanceFor } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#dev-mcp/runs/input-sets"
 
 export { expectationCase, type ExpectationReading } from "#dev-mcp/diagnose/expectation"
 

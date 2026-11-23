@@ -9,7 +9,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import type { MultiPolygonRings } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

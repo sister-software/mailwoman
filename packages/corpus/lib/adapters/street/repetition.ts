@@ -10,13 +10,13 @@
  *   labels `20 bis` as the house number and `RUE LOUIS PHILIPPE` as the street,
  *   and this module gives a one-line source that labeling.
  *
- *   The words and the countries come from `@mailwoman/codex/house-number-repetition`.
+ *   The words and the countries come from `@mailwoman/codex/labels/house-number/repetition`.
  *
  *   It runs after the shared split rather than inside it.
  *   The split's other callers read no country, and they keep their output.
  */
 
-import { houseNumberRepetitionIndexes } from "@mailwoman/codex/house-number-repetition"
+import { houseNumberRepetitionIndexes } from "@mailwoman/codex/labels/house-number/repetition"
 
 import type { SplitStreetLine } from "#adapters/street/line"
 

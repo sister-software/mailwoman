@@ -16,7 +16,7 @@
  */
 
 import type { DecoderSettings } from "#geocode/core"
-import type { SwitchPin } from "#tools/eval-harness/switch-pin"
+import type { SwitchPin } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * The decoder settings an arm may pin.

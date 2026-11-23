@@ -12,8 +12,8 @@
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { CandidateDatabase } from "#candidate/schema"
+import { type NameKey, withArabicLetterVariantsFolded } from "#labels/street/normalize"
 import { hasTable } from "#sqlite-utils"
-import { type NameKey, withArabicLetterVariantsFolded } from "#street/normalize"
 
 /**
  * The table that lists the folds applied to the artifact's `name_key` column, one row per fold.

@@ -137,7 +137,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { streamMarkupElements } from "@mailwoman/core/html/elements"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"

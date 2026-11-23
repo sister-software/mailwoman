@@ -9,7 +9,7 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { addressPointDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"

@@ -19,9 +19,9 @@ import {
 	removePath,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFileSync, spawnProcess } from "@mailwoman/core/scripting/process"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
 import { replaceTaskBlock } from "#dev-mcp/github"

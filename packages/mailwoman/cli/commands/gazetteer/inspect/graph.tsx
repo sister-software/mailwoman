@@ -13,9 +13,9 @@
 
 import { Spinner } from "@inkjs/ui"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import type { PlacetypeRole } from "@mailwoman/gazetteer"
 import { PlacetypeRoles } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import { Box, Text } from "ink"

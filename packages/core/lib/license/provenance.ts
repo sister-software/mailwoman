@@ -31,9 +31,9 @@ import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { fromBase64URL, toBase64URL, utf8Bytes } from "#crypto/base64url"
 import { ED25519_SIGNATURE_BYTES, signEd25519, verifyEd25519 } from "#crypto/ed25519"
+import { sha256Hex } from "#crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "#fs/readers"
-import { sha256Hex } from "#hash"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 /**
  * A provenance signing key: its key ID and its PKCS8 private half.

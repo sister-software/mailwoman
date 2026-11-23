@@ -18,10 +18,10 @@
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
-import { prettyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"

@@ -26,8 +26,8 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import type { MachineEffect, StateMachine } from "@mailwoman/core/state-machine"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
 

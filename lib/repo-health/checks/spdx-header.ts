@@ -6,11 +6,11 @@
  *
  * Oxlint's `mailwoman/spdx-header` rule covers JavaScript and TypeScript, using the parser's comment ranges.
  * This check covers the tracked files oxlint never reads: Rust, Java, C++, CSS and shell.
- * Both decide through `@mailwoman/core/spdx-header`.
+ * Both decide through `@mailwoman/core/repo/spdx-header`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { isScriptSourcePath, sourceHeaderProblem, sourceHeaderSyntax } from "@mailwoman/core/spdx-header"
+import { isScriptSourcePath, sourceHeaderProblem, sourceHeaderSyntax } from "@mailwoman/core/repo/spdx-header"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -18,7 +18,7 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-healt
 /**
  * The command that rewrites every failing file.
  */
-const FIX_COMMAND = "node packages/mailwoman/tools/dev-tools/spdx-header.run.ts"
+const FIX_COMMAND = "node packages/mailwoman/tools/dev-tools/repository/spdx-header.run.ts"
 
 /**
  * The `spdx-header` check.

@@ -6,7 +6,7 @@
  * and markers deliberately skip the label collision bitmap so a requested marker always wins the cell.
  */
 
-import { clamp } from "@mailwoman/core/numeric"
+import { clamp } from "@mailwoman/core/math/numeric"
 
 import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "#frame"
 import {

@@ -10,7 +10,7 @@ import { type AddressLayerAttribution, writeAddressLayerAttribution } from "#add
 import { buildAddressLayer } from "#address/keys/build"
 import { addressLayerFiles } from "#address/keys/layout"
 import type { AddressRecord } from "#address/record"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function record(source: string, authority: string | null, number: string): AddressRecord {
 	const streetKey = normalizeStreetForKey("Main Street")

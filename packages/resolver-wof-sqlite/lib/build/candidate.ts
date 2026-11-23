@@ -5,8 +5,8 @@ import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
 import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -33,8 +33,8 @@ import {
 	type CandidateDatabase,
 	POSTCODE_PLACETYPE,
 } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Options for {@link buildCandidateTable}.

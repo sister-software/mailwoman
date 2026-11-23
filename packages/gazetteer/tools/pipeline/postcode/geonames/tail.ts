@@ -7,14 +7,14 @@
  *   reproducing the frozen artifact's ingest order so its ids stay comparable.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { md5File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -24,17 +24,17 @@ import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { UNDECLARED_INPUT_LICENSE } from "#tools/pipeline/candidate-manifest"
 import {
 	applyStagingPragmas,
 	buildDatabaseFTS,
 	freezeStagingDatabase,
 	removeStagingArtifacts,
 	vacuumDatabaseInto,
-} from "#tools/pipeline/database-lifecycle"
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
-import type { BuildFTSResult } from "#tools/pipeline/fts"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+} from "#tools/pipeline/database/database-lifecycle"
+import type { BuildFTSResult } from "#tools/pipeline/database/fts"
+import { UNDECLARED_INPUT_LICENSE } from "#tools/pipeline/manifest/candidate-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 /**
  * The terms the artifact's `layer_manifest` records for a given country list,

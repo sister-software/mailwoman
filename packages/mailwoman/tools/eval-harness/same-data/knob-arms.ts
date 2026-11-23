@@ -10,8 +10,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * The JSON value type a knob arm may set for an option.

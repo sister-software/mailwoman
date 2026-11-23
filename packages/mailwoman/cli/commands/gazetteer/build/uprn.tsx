@@ -14,8 +14,8 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -49,8 +49,8 @@ const GazetteerBuildUPRN: CommandComponent<typeof spec> = ({ options }) => {
 			uprnLayer: { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE },
 		} = await allKeyed({
 			paths: import("@mailwoman/core/paths"),
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
-			uprnLayer: import("@mailwoman/gazetteer/tools/pipeline/uprn-layer"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
+			uprnLayer: import("@mailwoman/gazetteer/tools/pipeline/gb/uprn-layer"),
 		})
 
 		const result = await buildUPRNLayer({

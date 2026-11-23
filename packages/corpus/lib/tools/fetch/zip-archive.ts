@@ -18,8 +18,8 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import type { PathBuilderLike } from "path-ts"
 
 /**

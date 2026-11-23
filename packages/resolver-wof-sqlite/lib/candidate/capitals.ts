@@ -20,7 +20,7 @@
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * Capital status of one candidate: national capital, admin-1 seat, or neither.

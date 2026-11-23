@@ -15,7 +15,6 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { resolvedInput } from "#dev-mcp/input-sets"
 import {
 	ComponentAggregate,
 	decodeReliabilitySample,
@@ -23,6 +22,7 @@ import {
 	type EngineLike,
 	type GeocodeRunLike,
 } from "#dev-mcp/reliability/surfaces"
+import { resolvedInput } from "#dev-mcp/runs/input-sets"
 
 function token(label: string, confidence: number): DecoderToken {
 	return { piece: "x", start: 0, end: 1, label: label as DecoderToken["label"], confidence }

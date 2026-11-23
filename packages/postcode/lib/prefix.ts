@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readFramedHeader, writeFramedHeader } from "@mailwoman/core/binary-frame"
+import { readFramedHeader, writeFramedHeader } from "@mailwoman/core/asset/binary-frame"
 import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/core/resolver"
 
 import { dequantizeCoordinate, LAT_Q, LON_Q, quantizeCoordinate } from "#binary-resolver"

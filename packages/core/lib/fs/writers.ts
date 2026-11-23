@@ -27,7 +27,7 @@ import { createNewlineWriter } from "spliterator"
 
 import type { Stats } from "#fs/readers"
 import { statPath } from "#fs/readers/stat"
-import { prettyJSON, stringifyJSON, type StringifiedJSON } from "#json"
+import { prettyJSON, stringifyJSON, type StringifiedJSON } from "#values/json"
 
 // #region Directories
 

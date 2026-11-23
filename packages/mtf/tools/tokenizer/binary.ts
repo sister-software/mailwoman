@@ -19,10 +19,10 @@
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { git, gitHead } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { git, gitHead } from "@mailwoman/core/repo/git"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 /**
  * The SentencePiece release every tokenizer is trained with, and the commit its tag names.

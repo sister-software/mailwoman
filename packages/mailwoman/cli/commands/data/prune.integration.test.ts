@@ -9,7 +9,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { ServingRole } from "@mailwoman/core/layers"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 

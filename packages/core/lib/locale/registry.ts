@@ -11,8 +11,8 @@
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 
-import { stringifyJSON } from "#json"
 import type { LocaleProfile, LocaleRegistry } from "#locale/locale"
+import { stringifyJSON } from "#values/json"
 
 const COMPONENT_TAG_SET = new Set<ComponentTag>(COMPONENT_TAGS)
 

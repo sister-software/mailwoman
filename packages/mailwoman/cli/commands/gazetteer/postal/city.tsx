@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 
@@ -51,7 +51,7 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 			street: { normalizeLocalityForKey },
 		} = await allKeyed({
 			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
-			street: import("@mailwoman/resolver-wof-sqlite/street"),
+			street: import("@mailwoman/resolver-wof-sqlite/labels/street"),
 		})
 
 		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)

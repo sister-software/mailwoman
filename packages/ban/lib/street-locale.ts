@@ -4,13 +4,13 @@
 /**
  *   The countries the BAN rooftop build has an extract for, and the street locale each folds under.
  *
- *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`,
+ *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/labels/street`,
  *   which the reader also calls.
  *   This module stays apart from `region-database-provider.ts`, which opens the
  *   SQLite lookup, so the locale can be tested without a database.
  */
 
-import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/labels/street"
 
 // country-branch: BAN is France's register, so this package's extract list holds one country.
 // The built extracts' own manifests would replace the list.

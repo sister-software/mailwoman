@@ -17,7 +17,7 @@ import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 
 import { createUnfoldedEvalClassifier, perTagRates, scorePerTagCounts } from "#tools/eval-harness/per/tag-f1"
-import { productionPriorOptions } from "#tools/eval-harness/production-priors"
+import { productionPriorOptions } from "#tools/eval-harness/rig/production-priors"
 import type { ScoreAffixOptions } from "#tools/eval-harness/score/affix"
 
 /**

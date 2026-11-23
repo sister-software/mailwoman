@@ -10,8 +10,8 @@
  * lockstep with `StreetInterpolator`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/memoize"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -20,7 +20,7 @@ import {
 	streetKeyRulesOf,
 	type StreetLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 
 import { type RangeDatabase, tableExists } from "#httpvfs/database"

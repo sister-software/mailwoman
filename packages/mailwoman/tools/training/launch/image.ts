@@ -17,10 +17,10 @@
  *   file the bundle holds, so a later launch with the same sources reuses it.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { workingTreeFiles } from "@mailwoman/core/git"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { workingTreeFiles } from "@mailwoman/core/repo/git"
 
 /**
  * The libtorch version `tch` 0.26.0 links (`torch-sys`'s `TORCH_VERSION`).

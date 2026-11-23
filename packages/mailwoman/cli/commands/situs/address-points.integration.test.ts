@@ -11,7 +11,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readLayerManifest } from "@mailwoman/core/layers"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { isSealed } from "@mailwoman/sqlite/sealed/db"

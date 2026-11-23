@@ -19,8 +19,8 @@
  *   the synthesis call order exactly, so `--seed N` reproduces the legacy run byte-for-byte.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { recipeSourceID, requireRegister, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"

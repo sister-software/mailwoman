@@ -10,7 +10,7 @@
 
 import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
 import { ResourceError } from "@mailwoman/core/errors"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { Context } from "hono"
 import { TileType } from "pmtiles"
 

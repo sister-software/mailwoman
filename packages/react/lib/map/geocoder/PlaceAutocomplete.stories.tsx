@@ -1,0 +1,52 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import type { Meta, StoryObj } from "@storybook/react-vite"
+import { useState } from "react"
+
+import { FAKE_SUGGESTIONS } from "#map/geocoder/fake-runtime"
+
+import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
+
+const meta: Meta<typeof PlaceAutocomplete> = { title: "Map/Panels/PlaceAutocomplete", component: PlaceAutocomplete }
+export default meta
+
+type Story = StoryObj<typeof PlaceAutocomplete>
+
+/**
+ * Three fake suggestions, the first highlighted and moved by hover.
+ */
+export const WithSuggestions: Story = {
+	render: () => {
+		const [active, setActive] = useState(0)
+
+		return (
+			<PlaceAutocomplete
+				suggestions={FAKE_SUGGESTIONS}
+				activeIndex={active}
+				onPick={() => {}}
+				onHover={setActive}
+				listboxID="story-suggest"
+				optionID={(i) => `story-suggest-${i}`}
+			/>
+		)
+	},
+}
+
+/**
+ * No suggestions → the listbox renders no options.
+ */
+export const Empty: Story = {
+	render: () => (
+		<>
+			<p style={{ opacity: 0.6 }}>(no suggestions → listbox hidden)</p>
+			<PlaceAutocomplete
+				suggestions={[]}
+				activeIndex={-1}
+				onPick={() => {}}
+				listboxID="story-suggest"
+				optionID={(i) => `story-suggest-${i}`}
+			/>
+		</>
+	),
+}

@@ -9,8 +9,8 @@ const mocks = vi.hoisted(() => ({ resolveCommand: vi.fn(), run: vi.fn() }))
 
 vi.mock("@mailwoman/core/module/package-command", () => ({ resolvePackageCommand: mocks.resolveCommand }))
 
-vi.mock("@mailwoman/core/process", async (importOriginal) => ({
-	...(await importOriginal<typeof import("@mailwoman/core/process")>()),
+vi.mock("@mailwoman/core/scripting/process", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@mailwoman/core/scripting/process")>()),
 	runFile: mocks.run,
 }))
 

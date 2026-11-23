@@ -29,7 +29,7 @@ export const spec = {
 const EvalBarePostcode = harnessCommand(
 	spec,
 	async (options) => {
-		const { runBarePostcodeCapability } = await import("#tools/eval-harness/bare-postcode-capability")
+		const { runBarePostcodeCapability } = await import("#tools/eval-harness/capability/bare-postcode")
 
 		return runBarePostcodeCapability({ weightsCacheRoot: options.weightsCache, label: options.label })
 	},

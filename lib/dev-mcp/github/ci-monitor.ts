@@ -6,8 +6,8 @@
  *   Waits for GitHub to attach checks to a pull request, then watches them to completion.
  */
 
-import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isProcessError, runFile, type ProcessOutput } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
 const CHECK_DISCOVERY_ATTEMPTS = 60

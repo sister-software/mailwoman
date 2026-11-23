@@ -14,13 +14,13 @@
  *   [--spm-train <path>]`
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
-import { sha256File } from "@mailwoman/core/hash"
-import { prettyJSON } from "@mailwoman/core/json"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { spmTrainBinary } from "../binary.ts"

@@ -25,6 +25,7 @@
  *   back into its page, then lints the rewritten pages.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -33,14 +34,13 @@ import {
 	writeLocalJSONFileAtomically,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { git } from "@mailwoman/core/git"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackageCommand } from "@mailwoman/core/module/package-command"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isProcessError, runFile } from "@mailwoman/core/process"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { git } from "@mailwoman/core/repo/git"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, prettyJSON } from "@mailwoman/core/values/json"
 import { dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

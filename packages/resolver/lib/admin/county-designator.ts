@@ -9,7 +9,7 @@
  *   `subregion` to the WOF `county` placetype, and the county's row stores the same name.
  */
 
-import { countyDesignatorsFor, countyNameWithoutDesignator } from "@mailwoman/codex/county-designators"
+import { countyDesignatorsFor, countyNameWithoutDesignator } from "@mailwoman/codex/designators/county"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 /**

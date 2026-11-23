@@ -15,6 +15,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 import type { AnchorSpanMode } from "#channels/anchor-inference"
+import { collectMatches } from "#labels/postcode/repair"
 import type { PairEdge, PairIndexLike } from "#pair/index/resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
@@ -33,7 +34,6 @@ import {
 	WINDOW_MAX_WORDS,
 } from "#pair/prior-windows"
 import type { PlacetypeCensusLike } from "#placetype/census"
-import { collectMatches } from "#postcode/repair"
 import { groupPiecesIntoWords, type WordGroup } from "#prior/fst"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior/matrix"
 import type { TokenLike } from "#prior/query-shape"

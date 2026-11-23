@@ -28,7 +28,7 @@
  *   on first use, and adds the ones inside the box.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type LatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 import { sql } from "kysely"

@@ -11,11 +11,11 @@ import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/cl
 import type { ReactNode } from "react"
 import type { LayerSpecification, MapInstance, SourceSpecification } from "react-map-gl/maplibre"
 
-import type { LngLat, ResolvedMapPlace } from "#map/place-render"
+import type { LngLat, ResolvedMapPlace } from "#map/overlays/place-render"
 import type { PipelineRuntime } from "#pipeline/types"
 
-import type { MapCanvasStyle } from "./MapCanvas.tsx"
-import type { MapContextMenuPoint } from "./MapContextMenu.tsx"
+import type { MapCanvasStyle } from "./canvas/MapCanvas.tsx"
+import type { MapContextMenuPoint } from "./pick/MapContextMenu.tsx"
 
 /**
  * An alias for {@link LngLat}.

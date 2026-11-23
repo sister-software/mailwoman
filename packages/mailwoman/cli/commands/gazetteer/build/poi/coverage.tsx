@@ -21,11 +21,11 @@
  *   is a Derived Database under ODbL and we ship the builder rather than the bytes.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
-import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"

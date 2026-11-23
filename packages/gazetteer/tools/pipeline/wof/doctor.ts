@@ -20,8 +20,8 @@
  */
 
 import { readFileRange, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { streamTrackedFiles } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { streamTrackedFiles } from "@mailwoman/core/repo/git"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import { parallelMap, TextSpliterator } from "spliterator"
 

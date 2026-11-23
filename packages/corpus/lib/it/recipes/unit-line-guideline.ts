@@ -15,7 +15,7 @@
  */
 
 import { IT_UNIT_LINE_RULES } from "@mailwoman/codex/it"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { titleCase } from "spliterator/casing"
 
 import { IT_CASELLA_POSTALE_GUIDELINE_LEG } from "#it/recipes/casella-postale-guideline"

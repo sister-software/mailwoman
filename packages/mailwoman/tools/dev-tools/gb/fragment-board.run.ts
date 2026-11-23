@@ -33,16 +33,16 @@
  */
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#tools/dev-tools/register-board"
+import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#tools/dev-tools/board/registers"
 
 const { values } = parseArguments({
 	options: {

@@ -8,8 +8,8 @@
  *   Every other removal must be explained by a hierarchy re-scope or a full fetch window.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * Mutually exclusive explanations for a candidate's movement between the two tables.

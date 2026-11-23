@@ -32,7 +32,7 @@ The registry entry is read from the published bundle list, `BUNDLES` in
 `packages/mailwoman/lib/data/published/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
 role, its scope (a country, or an ISO 3166-2 subdivision such as `US-DC`), its role schema version
 and, for a street-keyed role, the street-key normalization it was keyed with
-(`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/street/normalize.ts`, version `1`).
+(`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/labels/street/normalize.ts`, version `1`).
 A registry size is an estimate until a transfer measures it.
 
 A manifest validates an artifact and never selects it. A file activates only when `active.json`
@@ -267,7 +267,7 @@ Still on their conventional paths, with the reason:
   fork-entity probe searches it with `poi.db` and the rail-station database.
 - The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
   `@mailwoman/neural`, which reads no data-root records.
-- The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
+- The promotion battery's priors (`tools/eval-harness/rig/production-priors.ts`) take a classifier without a
   data root, and read the files beside its weights.
 - A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
   for that country needs a locale scope the selection doesn't have.

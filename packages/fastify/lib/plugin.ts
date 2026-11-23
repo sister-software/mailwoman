@@ -29,9 +29,9 @@ import { ParseAddressQueryOperation } from "@mailwoman/api/operations/parse/addr
 import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/health"
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
 import { reportSupport } from "@mailwoman/api/support"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import type { AddressTree, decodeAsTuples } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import {

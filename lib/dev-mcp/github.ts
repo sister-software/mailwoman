@@ -6,9 +6,9 @@
  */
 
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { gitCommonDirectory, workingTreeRoot } from "@mailwoman/core/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { gitCommonDirectory, workingTreeRoot } from "@mailwoman/core/repo/git"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { isAbsolute, PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

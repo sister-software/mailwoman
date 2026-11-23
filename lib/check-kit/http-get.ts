@@ -27,10 +27,10 @@ import { BlockList, isIP } from "node:net"
 
 import { APIClient } from "@mailwoman/core/api"
 import type { Readable } from "@mailwoman/core/fs/streams"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { silentLogger } from "@mailwoman/core/logging"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 
-import { readPath } from "#dev-mcp/tally"
+import { readPath } from "#dev-mcp/result/tally"
 
 /**
  * The body bytes a request reads when the caller gives no cap.

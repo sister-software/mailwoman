@@ -8,16 +8,16 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#tools/eval-harness/parity-corpus"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#tools/eval-harness/parity/corpus"
 
 /**
  * Sets the largest token count in the short-query bucket.

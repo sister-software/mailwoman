@@ -8,8 +8,8 @@
 
 import { z } from "zod"
 
-import { listDataDirectories } from "#dev-mcp/data-directories"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import { listDataDirectories } from "#dev-mcp/holdings/data-directories"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 export const directoriesTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_directories",

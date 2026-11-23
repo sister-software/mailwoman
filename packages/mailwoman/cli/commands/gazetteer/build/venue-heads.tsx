@@ -8,8 +8,8 @@
  *   `--fetch` first copies the Overture release's place names to the data root.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { allKeyed } from "@mailwoman/core/promises"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 

@@ -13,8 +13,8 @@
  *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 

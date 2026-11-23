@@ -1,0 +1,41 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { describe, expect, it } from "vitest"
+
+import { clamp, pyFixed, pyFloat, pyRound, pySum } from "#math/numeric"
+
+describe("pySum", () => {
+	// The expectations are CPython 3.12's `sum()` of the same lists.
+	it("compensates as CPython 3.12's float sum does", () => {
+		expect(pySum(Array.from({ length: 10 }, () => 0.1))).toBe(1)
+		expect(pySum([1e16, 1, -1e16])).toBe(1)
+		expect(pySum([0.1, 0.2, 0.3])).toBe(0.6)
+	})
+})
+
+describe("clamp", () => {
+	it("keeps a value inside the closed interval", () => {
+		expect(clamp(5, 0, 10)).toBe(5)
+		expect(clamp(-1, 0, 10)).toBe(0)
+		expect(clamp(11, 0, 10)).toBe(10)
+		expect(clamp(0, 0, 0)).toBe(0)
+	})
+})
+
+describe("python compatibility", () => {
+	it("pyRound rounds half to even, like python's round()", () => {
+		expect(pyRound(2.5)).toBe(2)
+		expect(pyRound(3.5)).toBe(4)
+	})
+
+	it("pyFloat rejects what python's float() rejects", () => {
+		expect(pyFloat("3.14")).toBe(3.14)
+		expect(pyFloat("not-a-number")).toBeNull()
+	})
+
+	it("pyFixed formats like python's format(x, 'f')", () => {
+		expect(pyFixed(1.5, 1)).toBe("1.5")
+		expect(pyFixed(1, 2)).toBe("1.00")
+	})
+})

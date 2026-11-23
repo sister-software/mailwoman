@@ -25,7 +25,7 @@
  *   That's the correct failure rather than a convenience.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 

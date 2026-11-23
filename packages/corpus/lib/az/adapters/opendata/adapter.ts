@@ -42,7 +42,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { UnsupportedCountryError } from "#adapters/errors"

@@ -20,9 +20,9 @@
  *   That write updates the row for one caller, and only that caller sends.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { encodeLicenseKey } from "@mailwoman/core/license/key"
 import { applyStep } from "@mailwoman/core/state-machine"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import { calendarDateUTC, plusDays } from "@mailwoman/license/product/dates"
 import type { LicenseKeyPayload } from "@mailwoman/license/product/token"

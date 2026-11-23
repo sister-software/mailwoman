@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
+import type { PlacetypeMap } from "@mailwoman/codex/labels/placetype-map"
 import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
 	type DefaultCountry,

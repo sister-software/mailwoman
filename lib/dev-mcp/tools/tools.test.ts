@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { JobRegistry } from "#dev-mcp/jobs"
+import { JobRegistry } from "#dev-mcp/process/jobs"
 import { stubEngine as buildEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { buildToolTable, type DevTool } from "#dev-mcp/tools"
 

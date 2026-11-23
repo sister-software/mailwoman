@@ -13,8 +13,8 @@
  * @see {@link https://business.poste.it/business/files/1476488640071/posta-registrata-caratteristiche-standard-invii.pdf Poste Italiane, Caratteristiche standard degli invii – Posta Registrata (PRS.INDES.STA.1)}
  */
 
+import type { PostalUnitGuidelineRule, PostalUnitKind } from "#designators/guideline"
 import { IT_POSTA_REGISTRATA_CITATION, IT_POSTA_REGISTRATA_COLUMN_TRANSCRIPTION } from "#it/casella-postale"
-import type { PostalUnitGuidelineRule, PostalUnitKind } from "#postal/guideline"
 
 const LINE_THREE_QUOTE = "3° riga: facoltativa per informazioni aggiuntive sull’edificio (scala, piano, interno)"
 

@@ -9,7 +9,7 @@
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
 import { z } from "zod"
 
-import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/tool-kit"
+import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/result/tool-kit"
 
 export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 	name: "mwdev_diff_parse",

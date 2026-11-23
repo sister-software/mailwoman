@@ -9,9 +9,9 @@
 
 import { z } from "zod"
 
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 /**
  * Build the `mwdev_inputs` tool definition.

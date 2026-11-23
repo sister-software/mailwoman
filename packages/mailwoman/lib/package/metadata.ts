@@ -5,8 +5,8 @@
  * @file Reads this package's own manifest: its version, engines floor and license, and the path of its command-line entry.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 export interface CommandArgumentMetadata {
 	name: string

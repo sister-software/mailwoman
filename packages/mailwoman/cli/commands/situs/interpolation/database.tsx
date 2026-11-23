@@ -1,16 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -126,7 +126,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			interpCalibration: { INTERP_RADIUS_CALIBRATION },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
-			json: import("@mailwoman/core/json"),
+			json: import("@mailwoman/core/values/json"),
 			interpCalibration: import("#street/interp-calibration"),
 		})
 
@@ -149,12 +149,12 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
 		// Both packages load dynamically because the published CLI doesn't depend on them.
-		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
+		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
 
 		try {
-			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
+			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/labels/street")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 		} catch {
 			throw new CommandError(
 				"situs interpolation-database requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."

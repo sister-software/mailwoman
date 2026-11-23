@@ -16,8 +16,8 @@
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
 import { walkNodes } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport, AdminCoherenceVerdict } from "@mailwoman/core/geocode"
-import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/lookup/region-keys"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/labels/region"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { FORMER_DIVISION } from "@mailwoman/resolver/admin/former-division"
 
 /**

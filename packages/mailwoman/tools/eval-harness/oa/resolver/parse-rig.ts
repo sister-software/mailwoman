@@ -6,15 +6,15 @@
  *   backend and the parse/resolve options pinned by the flags.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { ScorerOverrides } from "@mailwoman/neural/classifier/scorer"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { buildLocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"
 import type { LookupCensus } from "#tools/eval-harness/oa/resolver/profile"
-import { productionPriorOptions } from "#tools/eval-harness/production-priors"
-import { switchPinEntry } from "#tools/eval-harness/switch-pin"
+import { productionPriorOptions } from "#tools/eval-harness/rig/production-priors"
+import { switchPinEntry } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * Assembles the scorer, gazetteer-backed resolver and per-call option bags used

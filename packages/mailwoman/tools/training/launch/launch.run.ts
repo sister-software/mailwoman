@@ -39,11 +39,11 @@ import { readLocalBuffer, tryReadLocalJSONFile } from "@mailwoman/core/fs/reader
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { sleep } from "@mailwoman/core/utils/sleep"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildResolvedTrainingConfig } from "@mailwoman/corpus/training/config/resolved"
 import { resolvePath } from "path-ts"
 

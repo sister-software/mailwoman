@@ -22,13 +22,13 @@
  *   Every service that reads the selection needs it, so the selection lease is released last.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import type { RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import {
 	createToken,
 	optional,

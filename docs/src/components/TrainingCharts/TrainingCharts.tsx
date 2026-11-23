@@ -18,7 +18,7 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LoadingIndicator } from "@mailwoman/react"
 
 import "@mailwoman/react/styles.css"

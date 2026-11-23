@@ -14,10 +14,10 @@
  */
 
 import { isLatinScriptText } from "@mailwoman/codex/address/format"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { $public } from "@mailwoman/corpus/env"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type {

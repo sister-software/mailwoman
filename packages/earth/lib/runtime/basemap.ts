@@ -6,10 +6,10 @@
  * `@mailwoman/react/map`'s declarative overlays.
  *
  * No code here touches React.
- * The resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
+ * The resolved-place geometry math lives in `@mailwoman/react/map/overlays/geometry`.
  */
 
-import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
+import type { PlaceGeometry } from "@mailwoman/react/map/overlays/geometry"
 
 /**
  * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`;

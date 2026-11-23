@@ -7,10 +7,10 @@
  *   and the aria wiring are the Earth geocoder's rather than a second copy.
  */
 
-import { MapSearchBar } from "@mailwoman/react/map/MapSearchBar"
-import { PlaceAutocomplete } from "@mailwoman/react/map/PlaceAutocomplete"
+import { MapSearchBar } from "@mailwoman/react/map/chrome/MapSearchBar"
+import { PlaceAutocomplete } from "@mailwoman/react/map/geocoder/PlaceAutocomplete"
+import { usePlaceAutocomplete } from "@mailwoman/react/map/geocoder/usePlaceAutocomplete"
 import type { Suggestion } from "@mailwoman/react/map/types"
-import { usePlaceAutocomplete } from "@mailwoman/react/map/usePlaceAutocomplete"
 import { useCallback, useRef, useState } from "react"
 
 import type { PlanetarySearch, SearchHit } from "#search"

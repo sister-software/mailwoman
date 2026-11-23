@@ -11,7 +11,7 @@
  */
 
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { pointInMultiPolygon, type MultiPolygonRings } from "@mailwoman/spatial/geometries/polygon"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"

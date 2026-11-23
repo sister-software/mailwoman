@@ -12,7 +12,7 @@
  *   because a flag value is visible in the process table to every user on the host.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { Box, Text } from "ink"
 
 import {

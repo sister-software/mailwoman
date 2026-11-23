@@ -5,7 +5,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { readReleaseConfig } from "@mailwoman/core/repo/release-config"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {

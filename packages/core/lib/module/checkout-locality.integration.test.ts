@@ -16,10 +16,10 @@
 import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo, createSymbolicLink, removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

@@ -46,13 +46,13 @@
  * @see {@link https://www.nacion.com/viva/periodista-de-argentina-expone-el-enigma-de-las/7UZ7CNFW3JCOHANZJAIF7MFKRY/story/ La Nación, direcciones en Costa Rica}
  */
 
-import { ES_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	designatorRowsFromLevels,
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { ES_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/nicEn.pdf"
 const KUNC = "https://www.kunc.org/2014-08-16/navigating-nicaragua-a-lesson-in-getting-lost"

@@ -8,7 +8,7 @@
  */
 
 import type { MapContextMenuPoint, MapContextMenuRowProps } from "@mailwoman/react/map"
-import { MapContextMenuRow } from "@mailwoman/react/map/MapContextMenu"
+import { MapContextMenuRow } from "@mailwoman/react/map/pick/MapContextMenu"
 import type React from "react"
 import { useEffect, useState } from "react"
 

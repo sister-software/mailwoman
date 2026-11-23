@@ -47,7 +47,7 @@ describe("the index over this repository", () => {
 	it("covers a file sitting directly in a workspace lib/, not only a nested one", () => {
 		const files = new Set(entries.map((entry) => entry.file))
 
-		expect(files.has("packages/core/lib/stats.ts")).toBe(true)
+		expect(files.has("packages/core/lib/math/stats.ts")).toBe(true)
 		expect(files.has("packages/spatial/lib/distance.ts")).toBe(true)
 		expect(files.has("packages/core/lib/module/resolve-from.ts")).toBe(true)
 	})
@@ -55,7 +55,7 @@ describe("the index over this repository", () => {
 	it("indexes exported declarations only, with the sentence that introduces each", () => {
 		const percentile = entries.find((entry) => entry.name === "percentile")
 
-		expect(percentile?.file).toBe("packages/core/lib/stats.ts")
+		expect(percentile?.file).toBe("packages/core/lib/math/stats.ts")
 		expect(percentile?.sentence).toContain("nearest-rank percentile")
 	})
 })

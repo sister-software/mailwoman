@@ -7,7 +7,7 @@
  *   API lists, and the short key a dashboard template link takes.
  */
 
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 const DASHBOARD = "https://dash.cloudflare.com/"
 

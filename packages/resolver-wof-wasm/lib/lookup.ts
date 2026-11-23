@@ -18,7 +18,7 @@
  * implementation of each rather than a convention.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only).
 // The shared alias-bag parser and query fold keep this backend byte-identical to Node's exact tier.

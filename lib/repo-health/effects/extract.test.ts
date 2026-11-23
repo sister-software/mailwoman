@@ -433,7 +433,7 @@ describe("extractEffectEdges", () => {
 
 	it("records a child process and a fetch as their own edge kinds", () => {
 		const found = edges(`
-			import { runFile } from "@mailwoman/core/process"
+			import { runFile } from "@mailwoman/core/scripting/process"
 
 			await runFile("git", ["status"])
 			await fetch("https://example.invalid/data.json")

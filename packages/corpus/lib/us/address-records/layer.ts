@@ -17,7 +17,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
-import { forkProcess } from "@mailwoman/core/process"
+import { forkProcess } from "@mailwoman/core/scripting/process"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { LayerSourceExclusion } from "@mailwoman/license/admission"
 import {
@@ -42,7 +42,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/address/subdivision-bounds"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { dirname, resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"

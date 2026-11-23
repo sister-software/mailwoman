@@ -6,12 +6,12 @@
  *   parses and validations, as `fixtures/builders/deepseek/deepseek-reference.json` recorded them. No request is made.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON, orderedJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import {

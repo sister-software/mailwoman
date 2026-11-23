@@ -25,8 +25,8 @@
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { runProcess } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { runProcess } from "@mailwoman/core/scripting/process"
 
 /**
  * A transport that puts one local file at `bucket/key`.

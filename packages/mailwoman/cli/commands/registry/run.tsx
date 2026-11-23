@@ -13,13 +13,13 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { tryParsingJSON, prettyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/entity-resolution"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"

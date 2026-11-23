@@ -12,8 +12,8 @@
  *   Rows that share a `rowRef` must form one chain whose finest query is the committed corpus row.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import {

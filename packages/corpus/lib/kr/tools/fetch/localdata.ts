@@ -33,10 +33,10 @@
  *   optionally with `--categories general_restaurants,rest_cafes`.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
 import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"

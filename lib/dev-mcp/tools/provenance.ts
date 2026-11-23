@@ -8,8 +8,8 @@
 
 import { z } from "zod"
 
-import { runProvenance } from "#dev-mcp/provenance"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import { runProvenance } from "#dev-mcp/holdings/provenance"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 export const provenanceTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_provenance",

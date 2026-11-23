@@ -20,9 +20,9 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { PathBuilder } from "path-ts"
 
@@ -72,7 +72,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			utils: import("@mailwoman/core/utils"),
 			fstPrior: import("@mailwoman/neural/prior/fst"),
 			placetype: import("@mailwoman/neural/placetype"),
-			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/placetype-census"),
+			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/granularity/placetype-census"),
 		})
 
 		const country = options.country.toLowerCase()

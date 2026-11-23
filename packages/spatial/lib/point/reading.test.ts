@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { HandlerMap, KindsOf } from "@mailwoman/recognizer"
 import { CoordinatesKind, coordinates } from "@mailwoman/recognizer/coordinates"
 import { IdentifiersKind, identifiers } from "@mailwoman/recognizer/identifiers"

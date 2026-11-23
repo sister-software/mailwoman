@@ -22,8 +22,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON, orderedJSON } from "@mailwoman/core/values/json"
 import { actionOperations, actionPurposes, LicenseAction } from "@mailwoman/license/actions"
 import {
 	LicenseReviewState,

@@ -10,11 +10,11 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { z } from "zod"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
-import { describeObservedRate } from "#dev-mcp/power"
-import { tallyPaths } from "#dev-mcp/tally"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } from "#dev-mcp/tool-kit"
+import { describeObservedRate } from "#dev-mcp/result/power"
+import { tallyPaths } from "#dev-mcp/result/tally"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 /**
  * The per-row fields `mwdev_run` can emit, in emission order, so a projected row keeps

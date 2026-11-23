@@ -6,14 +6,14 @@
  *   with `section.key=value` overrides and the volume paths re-rooted to their host copies.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPlainObject } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import { parsePythonYAML, type PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"

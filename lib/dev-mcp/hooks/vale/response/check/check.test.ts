@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 const HOOK_PATH = fileURLToPath(import.meta.resolve("#dev-mcp/hooks/vale/response/check"))

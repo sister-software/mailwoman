@@ -16,10 +16,10 @@
  * a holdout to a built corpus would leak rows the model already trained on.
  */
 
+import { createHash } from "@mailwoman/core/crypto/hash"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
-import { createHash } from "@mailwoman/core/hash"
-import { spawnProcess } from "@mailwoman/core/process"
+import { spawnProcess } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { compactPostcode } from "@mailwoman/postcode/display-form"

@@ -11,10 +11,10 @@
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
 import { censusTrees, type InterfaceRow } from "#dev-mcp/interface/census"
-import { describeObservedRate } from "#dev-mcp/power"
-import { provenanceFor } from "#dev-mcp/tool-kit"
+import { describeObservedRate } from "#dev-mcp/result/power"
+import { provenanceFor } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 export async function runInterfaceCensus(
 	registry: EngineRegistryLike,

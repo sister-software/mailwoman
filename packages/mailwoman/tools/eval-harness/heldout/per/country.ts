@@ -19,13 +19,13 @@
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
-import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street/convention"
+import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/labels/street/convention"
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"

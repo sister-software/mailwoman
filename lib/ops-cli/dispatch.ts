@@ -23,12 +23,12 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { filesAtRef, renamesSince } from "@mailwoman/core/git"
-import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { describeCheckoutLeak, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
-import { isPresent } from "@mailwoman/core/objects"
+import { filesAtRef, renamesSince } from "@mailwoman/core/repo/git"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
 import { parseArguments, type ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"
+import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { resolvePath } from "path-ts"
 

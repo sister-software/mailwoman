@@ -12,7 +12,7 @@
  */
 
 import type { APIClient } from "#api/APIClient"
-import { parseJSONArray, stringifyJSON } from "#json"
+import { parseJSONArray, stringifyJSON } from "#values/json"
 
 /**
  * The CKAN catalogue API base URL.

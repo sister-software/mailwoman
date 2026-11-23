@@ -24,7 +24,7 @@
  *   Chunks run one at a time against that file, so no writers overlap.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	addCoverageCells,
 	encodeRings,

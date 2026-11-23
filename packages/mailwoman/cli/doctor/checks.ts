@@ -6,10 +6,10 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { chooseLicenseBranch, docsSiteURL } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { ObligationClass } from "@mailwoman/license/mixed"
 import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
 import { isSelfServicePayload, type LicenseKeyVerification } from "@mailwoman/license/product/token"

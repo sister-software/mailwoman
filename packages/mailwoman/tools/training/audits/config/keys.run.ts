@@ -13,7 +13,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { workingTreeFiles } from "@mailwoman/core/git"
+import { workingTreeFiles } from "@mailwoman/core/repo/git"
 import { readTrainingConfigText, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import { parsePythonYAML } from "@mailwoman/corpus/training/config/python-yaml"
 import { CONFIG_SECTION } from "@mailwoman/corpus/training/config/schema"

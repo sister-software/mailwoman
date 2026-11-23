@@ -19,8 +19,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { isPlainObject } from "@mailwoman/core/objects"
 import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

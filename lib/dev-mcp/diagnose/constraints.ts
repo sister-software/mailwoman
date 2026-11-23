@@ -16,11 +16,11 @@
  */
 
 import { buildAddressTree, groupTuplesByTag } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { DecodeSpanExplanation, DecodeTerm, DecodeTermValues } from "@mailwoman/neural/decode/explanation"
 import type { FSTMatcherLike } from "@mailwoman/neural/prior/fst"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { loadParsePriors } from "mailwoman/geocode/parse-priors"
 import { spansFromBIO, type CensusSpan } from "mailwoman/tools/eval-harness/grammar/census"
 import {
@@ -35,7 +35,7 @@ import {
 } from "mailwoman/tools/eval-harness/heldout/per/country"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 /**
  * One row the account parses.

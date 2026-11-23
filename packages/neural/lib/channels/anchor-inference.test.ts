@@ -8,7 +8,7 @@
  *
  *   The pinned vectors fail if the TypeScript implementation drifts.
  */
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { PostcodeBinaryLookup, serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { describe, expect, it } from "vitest"
 

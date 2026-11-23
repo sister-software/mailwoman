@@ -18,7 +18,7 @@
  *   attribution required. commercial use, derivatives and redistribution permitted.
  */
 
-import { completeFromRegister } from "#register-completion"
+import { completeFromRegister } from "#names/register-completion"
 
 /**
  * One second-tier unit under its first-tier region, both as the register writes them.

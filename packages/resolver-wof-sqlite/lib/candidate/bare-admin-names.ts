@@ -8,7 +8,7 @@
 import { bareAdminName } from "@mailwoman/codex/country/bare-admin-names"
 
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * Stages an alias row under the bare form of every place name a country writes with an admin-unit suffix.

@@ -8,8 +8,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { SeededRandom } from "@mailwoman/core/math/random"
 import { repoRootPath } from "@mailwoman/core/paths"
-import type { SeededRandom } from "@mailwoman/core/random"
 import { capitalize, splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 

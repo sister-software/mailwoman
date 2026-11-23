@@ -5,10 +5,10 @@
  * Tests for `md5FileWithSidecar`, the shared dev-weights freshness sidecar.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

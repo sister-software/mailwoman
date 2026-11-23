@@ -9,8 +9,8 @@
 import { directoryHasEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { SeededRandom } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import {

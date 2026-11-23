@@ -14,9 +14,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { build, type Plugin } from "esbuild"
 import { resolvePath, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

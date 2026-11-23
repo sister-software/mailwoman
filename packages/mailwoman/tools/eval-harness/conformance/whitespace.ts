@@ -8,8 +8,8 @@
  *   The space inside a structured postcode such as `SW1A 1AA` is never rewritten.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/postcode/systems"
 
 import {

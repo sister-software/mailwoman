@@ -7,7 +7,7 @@
  */
 
 import { stubFetchingBodies } from "@mailwoman/core/api/test-transport"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import {

@@ -9,11 +9,11 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { ServingRole } from "@mailwoman/core/layers"
-import { runFile } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import {

@@ -7,7 +7,7 @@
  *   before the loader chunk resolves, and still advances the step labels in order.
  */
 
-import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
+import type { LoadLedgerSnapshot } from "@mailwoman/core/asset/load-ledger"
 import { afterAll, afterEach, describe, expect, test, vi } from "vitest"
 
 const { classifierLoad, fstLoad, morphologyLoad } = vi.hoisted(() => ({

@@ -25,15 +25,15 @@ import type { LicenseKeyPayload, TrainingGrantPayload } from "@mailwoman/license
 
 import { toBase64URL, utf8Bytes } from "#crypto/base64url"
 import { signEd25519 } from "#crypto/ed25519"
+import { sha256Hex } from "#crypto/hash"
 import { readLocalJSONFile, readLocalTextFile } from "#fs/readers"
 import { pathExists } from "#fs/readers/stat"
 import { writeLocalTextFile } from "#fs/writers"
-import { sha256Hex } from "#hash"
-import { prettyJSON, stringifyJSON } from "#json"
 import { encodeLicenseKey, encodeTrainingGrant } from "#license/key"
 import { encodeProvenanceManifest } from "#license/provenance"
 import { resolvePackagePath } from "#module/resolvers"
 import { parseArguments } from "#scripting/arguments"
+import { prettyJSON, stringifyJSON } from "#values/json"
 
 interface FixtureKey {
 	kid: string

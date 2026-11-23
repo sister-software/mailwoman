@@ -7,8 +7,8 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { createWOFRecordStoreTables, type WOFRecordStoreDatabase } from "@mailwoman/gazetteer/whosonfirst/record-store"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"

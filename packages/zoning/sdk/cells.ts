@@ -176,7 +176,7 @@ export class ZoningCellIndex {
 			candidatesPerCell: {
 				mean: touched ? total / touched : 0,
 				// Nearest-rank p90 over candidate counts.
-				// This matches `@mailwoman/core/stats`.
+				// This matches `@mailwoman/core/math/stats`.
 				p90: counts.length ? counts[Math.min(counts.length - 1, Math.ceil(0.9 * counts.length) - 1)]! : 0,
 				max,
 			},

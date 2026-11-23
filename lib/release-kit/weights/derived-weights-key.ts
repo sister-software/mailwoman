@@ -8,10 +8,10 @@
  *   produces new artifacts rather than letting the store serve old ones under the old key.
  */
 
+import { createHash } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
-import { createHash } from "@mailwoman/core/hash"
 import { type NamedPath, repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"
@@ -30,12 +30,12 @@ import { Globerator } from "spliterator/node/fs"
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
-	"packages/gazetteer/tools/pipeline/borough-pairs.ts",
-	"packages/gazetteer/tools/pipeline/lieudit-pairs.ts",
+	"packages/gazetteer/tools/pipeline/pair/borough-pairs.ts",
+	"packages/gazetteer/tools/pipeline/fr/lieudit-pairs.ts",
 	"packages/mailwoman/cli/commands/gazetteer/pair-index.tsx",
 	"packages/mailwoman/cli/commands/gazetteer/postcode/binary.tsx",
-	"packages/gazetteer/out/tools/pipeline/borough-pairs.js",
-	"packages/gazetteer/out/tools/pipeline/lieudit-pairs.js",
+	"packages/gazetteer/out/tools/pipeline/pair/borough-pairs.js",
+	"packages/gazetteer/out/tools/pipeline/fr/lieudit-pairs.js",
 	"packages/mailwoman/out/cli/commands/gazetteer/pair-index.js",
 	"packages/mailwoman/out/cli/commands/gazetteer/postcode/binary.js",
 ]

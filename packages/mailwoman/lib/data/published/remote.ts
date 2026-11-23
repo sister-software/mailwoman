@@ -6,7 +6,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { readMailwomanVersion } from "#package/metadata"
 

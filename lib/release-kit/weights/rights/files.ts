@@ -13,7 +13,7 @@
  *   `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
-import { isIdentical } from "@mailwoman/core/identical"
+import { isIdentical } from "@mailwoman/core/values/identical"
 import type { RequiredAttribution } from "@mailwoman/corpus/source-register"
 import { AGREEMENT_VERSION, agreementPath } from "@mailwoman/license/product/agreement"
 

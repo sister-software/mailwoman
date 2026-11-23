@@ -173,7 +173,7 @@ recipe's rows cannot outvote a base corpus that contradicts them. The affix sour
 releases competing with ~467M base rows that labeled the same surfaces the other way (≥1,000:1
 effective gradient mass). Every weight and architecture change failed because the mixing ratio
 determined the outcome. First audit what the base corpus contains for your tag's surfaces
-(`packages/mailwoman/tools/dev-tools/audit-affix-misses.run.ts` is the template, with per-row miss
+(`packages/mailwoman/tools/dev-tools/evaluation/audit-affix-misses.run.ts` is the template, with per-row miss
 classification and an absorption check). If the base contradicts the recipe output, fix it with a
 relabel pass that makes the mix agree. A bigger weight doesn't fix it. A related result, measured on
 v4.3.0: relabeling one boundary loosens its neighbors, so pre-register watches on the adjacent
@@ -237,12 +237,12 @@ Run the battery for _every_ candidate, regardless of what you changed. This is w
 
 | Check               | Command                                                                                                      | Bar                                                  |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Per-locale floors   | `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts` (US/FR, `--tokenizer`)                             | within 1pp, fp32-to-fp32                             |
+| Per-locale floors   | `packages/mailwoman/tools/dev-tools/evaluation/per-locale-f1.run.ts` (US/FR, `--tokenizer`)                  | within 1pp, fp32-to-fp32                             |
 | German native order | `packages/mailwoman/tools/dev-tools/de/order-eval.run.ts`                                                    | NO-REGRESSION                                        |
 | Unit retention      | unit-real designators eval                                                                                   | ≥ 88                                                 |
 | Affix split         | `packages/mailwoman/tools/dev-tools/score/affix.run.ts` (not `per-locale-f1` — its fold can't see the split) | hold the spec's floors                               |
 | Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                                                         | presets stable                                       |
-| Geographic accuracy | `packages/mailwoman/tools/dev-tools/heldout-geography-eval.run.ts`                                           | region-match + coord p50/p90 + PIP hold              |
+| Geographic accuracy | `packages/mailwoman/tools/dev-tools/evaluation/heldout-geography.run.ts`                                     | region-match + coord p50/p90 + PIP hold              |
 | Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                                                      | no new drift, xfails tracked                         |
 | Autocomplete ladder | `mailwoman eval autocomplete --country <CC>` (#2154)                                                         | report-only: first-hit rung, churn, latency per band |
 
@@ -473,7 +473,7 @@ resolver mechanism ships.
   kanji-keyed table cannot key (a kana-register surface) whose prediction equals the gold span. It is reported but is
   never part of the check. Score the arm you're replacing with the same scorer in the same run. If the scorer is
   patched between two reads, the comparison measures the scorer change.
-- **The served read.** `packages/mailwoman/tools/dev-tools/served-board-resolve.run.ts` geocodes board rows through the
+- **The served read.** `packages/mailwoman/tools/dev-tools/coordinate/served-board-resolve.run.ts` geocodes board rows through the
   installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point, under
   the `--locale` and `--board` it is given. The parse board and the served board answer different questions. Read a
   resolver change on the served board. `SCOPE.mdx` claims a locale only when a coordinate-graded eval exists for it,

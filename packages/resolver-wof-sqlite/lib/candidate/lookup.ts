@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
 import {
 	type Ancestor,
@@ -27,13 +27,16 @@ import { readGazetteerCoverageManifest } from "#candidate/coverage-manifest"
 import { CANDIDATE_FTS_TABLE } from "#candidate/fts"
 import { candidateQueryKeyFold } from "#candidate/key-fold"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate/schema"
-import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#lookup/region-keys"
+import {
+	POSTAL_CITY_CANDIDATE_TABLE,
+	type PostalCityCandidateTable,
+} from "#labels/locality/postal-city/candidate-schema"
+import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#labels/region"
+import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#labels/street/normalize"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
-import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal/city/candidate-schema"
 import { rankByPrimaryPreference, type RankedRow, regionAliasMargin, RERANK_FETCH } from "#ranking/primary-preference"
 import { applyProximityRerank } from "#ranking/proximity-rerank"
 import { hasColumn, hasTable } from "#sqlite-utils"
-import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street/normalize"
 
 /**
  * Where a {@link WOFCandidateTableLookup} reads from

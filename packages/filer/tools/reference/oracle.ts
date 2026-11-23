@@ -10,7 +10,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { canonicalizeOrganizationName } from "@mailwoman/record/organization"
 import render from "dom-serializer"
 import { isTag, type AnyNode, type Element } from "domhandler"

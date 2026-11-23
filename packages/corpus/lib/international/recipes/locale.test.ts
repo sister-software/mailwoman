@@ -9,8 +9,8 @@
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

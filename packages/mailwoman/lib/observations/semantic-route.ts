@@ -14,8 +14,8 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,

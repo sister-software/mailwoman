@@ -14,7 +14,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { dirname, type PathBuilder } from "path-ts"
 

@@ -11,7 +11,7 @@
  *   Ported from the Python builders' `countries/kr/corpora/rows.py`.
  */
 
-import type { SeededRandom } from "@mailwoman/core/random"
+import type { SeededRandom } from "@mailwoman/core/math/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 

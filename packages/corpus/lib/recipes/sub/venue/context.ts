@@ -6,8 +6,8 @@
  */
 
 import { currentSourcePath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "#international/recipes/locale"

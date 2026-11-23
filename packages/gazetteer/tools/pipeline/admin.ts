@@ -8,14 +8,14 @@
  *
  *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it.
  *   On success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`,
- *   a log rather than a recipe. The recipe is `../defaults.ts`).
+ *   a log rather than a recipe. The recipe is `recipe/defaults.ts`).
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { createPhaseClock, formatPhaseTimings, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -31,19 +31,19 @@ import { ingestWOF, type IngestWOFResult } from "#tools/pipeline/admin/ingest-wo
 import { fingerprintAdminInputs } from "#tools/pipeline/admin/inputs"
 import { createGeoNamesAnchorLookup } from "#tools/pipeline/admin/label-point-adjudicator"
 import { adminLayerManifest, type IngestCounts } from "#tools/pipeline/admin/manifest"
+import { checkOvertureRelease } from "#tools/pipeline/admin/overture-release"
 import { addGeonamesPlaces, type AddGeonamesPlacesResult } from "#tools/pipeline/admin/sources/geonames"
 import { ingestOvertureDivisions } from "#tools/pipeline/admin/sources/overture"
 import { buildWOFPlaceIndex, type UnmatchedPlace } from "#tools/pipeline/admin/sources/wof-match"
+import { buildFTS, type BuildFTSResult } from "#tools/pipeline/database/fts"
+import { buildSHA, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
+import { DEFAULT_RELEASE as DEFAULT_OVERTURE_RELEASE } from "#tools/pipeline/poi/defaults"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	geonamesAdminGapCountries,
-} from "#tools/pipeline/defaults"
-import { buildFTS, type BuildFTSResult } from "#tools/pipeline/fts"
-import { checkOvertureRelease } from "#tools/pipeline/overture-release"
-import { DEFAULT_RELEASE as DEFAULT_OVERTURE_RELEASE } from "#tools/pipeline/poi/defaults"
-import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+} from "#tools/pipeline/recipe/defaults"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "#tools/pipeline/verify"
 
 export interface BuildAdminOptions {

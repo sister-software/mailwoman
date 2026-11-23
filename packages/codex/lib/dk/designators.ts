@@ -11,8 +11,8 @@
  * @see {@link https://en.wiktionary.org/wiki/nær Wiktionary: nær}
  */
 
-import { DA_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#designators/concepts"
+import { DA_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 /**
  * The designator rows for Denmark, each carrying the published list it was read from.

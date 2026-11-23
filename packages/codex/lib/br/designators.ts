@@ -26,13 +26,13 @@
  * @see {@link https://en.wiktionary.org/wiki/mim Wiktionary, mim}
  */
 
-import { PT_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	designatorRowsFromLevels,
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { PT_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/braEn.pdf"
 

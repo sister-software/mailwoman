@@ -20,9 +20,9 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { relative, resolvePath } from "path-ts"
 
 /**

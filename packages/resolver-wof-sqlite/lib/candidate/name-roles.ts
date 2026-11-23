@@ -12,8 +12,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { isOwnNameVariant } from "#candidate/own-name"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Key-count threshold for the gloss anomaly detector.

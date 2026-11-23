@@ -12,7 +12,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import ts from "typescript"
@@ -470,7 +470,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"packages/codex/lib/gb/designators.ts",
 		"an airport gate is a numbered unit an address states: `Gate 12, Terminal 2, Manchester Airport`",
 	],
-	["packages/codex/lib/designator-tables.test.ts", "the test quotes that board address verbatim"],
+	["packages/codex/lib/designators/tables.test.ts", "the test quotes that board address verbatim"],
 	[
 		"packages/mailwoman/tools/eval-harness/famous-places/",
 		"the famous-places fixture and its builder's title list carry landmarks' real names: Brandenburg Gate",
@@ -521,7 +521,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/osm/sdk/extract/subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/osm/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
 	["packages/osm/sdk/extract/subvenue/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
-	["packages/neural/lib/venue/structure.ts", "venue structure names the physical gate"],
+	["packages/neural/lib/labels/venue/structure.ts", "venue structure names the physical gate"],
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],
@@ -543,8 +543,8 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"packages/mailwoman/lib/poi/venue-structure-confounds.integration.test.ts",
 		"venue confounds name the physical gate",
 	],
-	["packages/codex/lib/level-semantics.ts", "GATEPLAN is Norwegian for street level"],
-	["packages/codex/lib/level-semantics.test.ts", "GATEPLAN is Norwegian for street level"],
+	["packages/codex/lib/designators/level-semantics.ts", "GATEPLAN is Norwegian for street level"],
+	["packages/codex/lib/designators/level-semantics.test.ts", "GATEPLAN is Norwegian for street level"],
 	["packages/activity-lexicon/", "activity phrases name real-world actions"],
 	["packages/poi-taxonomy/", "category names come from Overture verbatim"],
 	["packages/geographic-model/", "world concepts name real-world things"],
@@ -578,7 +578,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[
 		"docs/engineering/reference/wof-osm-placetype-map.mdx",
-		"the placetype map quotes OSM's aeroway tag values verbatim, as packages/neural/lib/venue/structure.ts does",
+		"the placetype map quotes OSM's aeroway tag values verbatim, as packages/neural/lib/labels/venue/structure.ts does",
 	],
 	[
 		"config/vale/.vale-code-census.ini",

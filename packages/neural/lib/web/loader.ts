@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { startEarly } from "@mailwoman/core/async/promises"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
-import { startEarly } from "@mailwoman/core/promises"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 
@@ -23,10 +23,10 @@ import { EmbeddingTable, httpEmbeddingRangeReader } from "#embedding/rows"
 import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#input/char-encoder"
 import { MailwomanTokenizer } from "#input/tokenizer"
 import { parseAddressSystemTable } from "#labels/address-system"
+import { createAnchorRegionLookup } from "#labels/postcode/anchor/regions"
 import { inferRequiredChannelsFromInputs } from "#onnx/feeds"
 import type { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
-import { createAnchorRegionLookup } from "#postcode/anchor/regions"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
 import { loadPairIndexes, resolvePairIndexCountry, resolvePairIndexForText } from "#web/pair-index"
 

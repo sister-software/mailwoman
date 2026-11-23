@@ -30,11 +30,6 @@
 			"node": "./tools/*.ts",
 			"default": "./out/tools/*.js"
 		},
-		"#postcode": {
-			"types": "./out/postcode.d.ts",
-			"node": "./lib/postcode.ts",
-			"default": "./out/postcode.js"
-		},
 		"#span": {
 			"types": "./out/span.d.ts",
 			"node": "./lib/span.ts",

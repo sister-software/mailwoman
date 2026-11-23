@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { sample } from "@mailwoman/core/math/random"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { sample } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { upperFirst } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"

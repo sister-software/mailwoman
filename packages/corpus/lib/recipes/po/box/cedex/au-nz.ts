@@ -3,7 +3,7 @@
 
 import { isAuDeliveryService } from "@mailwoman/codex/au"
 import { isNZDeliveryService } from "@mailwoman/codex/nz"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { makeAuNZPoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { AUTuple, NZTuple, Rendered } from "#recipes/po/box/cedex/types"

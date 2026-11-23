@@ -9,6 +9,7 @@ import {
 	writeLayerManifest,
 	type layerschemadatabase,
 } from "@mailwoman/core/layers"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import {
 	POILookup,
 	createPOIBrandIndex,
@@ -18,7 +19,6 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "@sister.software/h3"

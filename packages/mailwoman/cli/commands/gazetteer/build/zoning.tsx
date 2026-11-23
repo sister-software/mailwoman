@@ -17,9 +17,9 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 
 import {
 	type CommandSpec,

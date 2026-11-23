@@ -11,8 +11,8 @@
 import { z } from "zod"
 
 import { runParseCompare } from "#dev-mcp/parse/compare/report"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const parseCompareTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_parse_compare",

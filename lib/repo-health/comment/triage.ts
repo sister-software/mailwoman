@@ -5,8 +5,8 @@
  * @file A deterministic inventory of TypeScript source comments and conservative editorial review leads.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { relative, resolvePath, type PathBuilderLike } from "path-ts"
 import ts from "typescript"

@@ -16,15 +16,15 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, finished } from "@mailwoman/core/fs/streams"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
-import { ProcessTask } from "@mailwoman/core/process"
+import { gitHead } from "@mailwoman/core/repo/git"
+import { ProcessTask } from "@mailwoman/core/scripting/process"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import type { ParsedCheckOutput } from "#check-kit/parsed"
 import { parseVitestReport, parseVitestText } from "#check-kit/parsers/vitest"
 import { type CheckCommand, CheckReader } from "#check-kit/registry"
-import { computeTreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import { computeTreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
 
 /**
  * The directory a check's log goes to when no `--log-dir` is given.

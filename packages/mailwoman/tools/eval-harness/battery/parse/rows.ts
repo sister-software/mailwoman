@@ -10,7 +10,7 @@
 
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator, parallelMapWorkers } from "spliterator"
 
 import type { DecoderSettings } from "#geocode/core"

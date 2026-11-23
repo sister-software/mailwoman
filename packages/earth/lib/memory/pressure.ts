@@ -15,7 +15,7 @@
  *   No device measurement has validated them yet.
  */
 
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
 
 /**
  * The estimate's levels.

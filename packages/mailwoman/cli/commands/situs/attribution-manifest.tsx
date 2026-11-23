@@ -23,8 +23,8 @@
  *   `situs publish` uploads it with the manifest.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { allRows } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

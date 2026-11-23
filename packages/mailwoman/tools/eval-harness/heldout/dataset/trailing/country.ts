@@ -16,7 +16,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { locateComponentSpans } from "@mailwoman/corpus/utils/align"
 
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"

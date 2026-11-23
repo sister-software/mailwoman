@@ -17,9 +17,9 @@
  * @see {@link https://en.wiktionary.org/wiki/next_to Wiktionary, next to}
  */
 
+import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#designators/concepts"
 import { NZ_DELIVERY_SERVICE_TYPES, type NZDeliveryServiceTypeName } from "#nz/delivery-service"
 import { NZ_UNIT_TYPE_RULES } from "#nz/unit-type"
-import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const HOW_TO_ADDRESS = "https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail"
 const ADV358 = "https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf"

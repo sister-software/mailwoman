@@ -6,10 +6,10 @@
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { makeLcg } from "@mailwoman/core/random"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { makeLcg } from "@mailwoman/core/math/random"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { block, gbtScore, trainGBT, type GBTOpts, type TermFrequencyTable } from "@mailwoman/match"
 import { dirname } from "path-ts"
 

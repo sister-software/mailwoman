@@ -19,7 +19,7 @@
  *   The postcode area provides the geographic signal.
  */
 
-import { foldName } from "#normalize"
+import { foldName } from "#names/normalize"
 
 /**
  * Per-country record: ISO 3166-2:GB code (sans `GB-` prefix) + English name.

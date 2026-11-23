@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	crossingsStatement,
 	streetsInPlacesStatement,
@@ -12,7 +12,7 @@ import {
 	type StreetTableHit,
 	type StreetTableLookup,
 	type StreetTableQuery,
-} from "@mailwoman/resolver-wof-sqlite/street/table"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/table"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { RangeDatabase } from "#httpvfs/database"

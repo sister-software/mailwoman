@@ -36,15 +36,15 @@
  */
 
 import { hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
-import { isPresent } from "@mailwoman/core/objects"
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs/gnis"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import {
 	normalizeLocalityForKey,
 	withoutApostropheLikeMarks,
 	type NameKey,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { CensusGazetteerEntry } from "@mailwoman/tiger/sdk/gazetteer"

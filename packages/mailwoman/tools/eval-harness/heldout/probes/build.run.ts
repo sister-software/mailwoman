@@ -16,8 +16,8 @@
  *   Audit both sets with `heldout/dataset/overlap.run.ts --match-text` before reading a score from them.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { poBoxCedexRecipe } from "@mailwoman/corpus/recipes/po/box/cedex/recipe"
 import {
 	generatePostalGuidelineRows,

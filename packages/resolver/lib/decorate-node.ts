@@ -7,8 +7,8 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { isPresent } from "@mailwoman/core/objects"
 import { EMPTY_PLACE_FIELDS, type ResolvedPlace, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 

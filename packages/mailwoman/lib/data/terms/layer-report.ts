@@ -11,9 +11,9 @@
  *   An unread database states no license, and the report never reads that as a database without obligations.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerTerms, resolveLayerTerms, type SourceLocator } from "@mailwoman/core/layers/provenance"
 import { licenseTextURL } from "@mailwoman/core/license/text-url"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { licenseIdentifiers, summarizeLicense } from "@mailwoman/license/obligations"
 
 import { type InventoryEntry, type InventoryReport, type LayerManifest, Provenance } from "#data/catalog/inventory"

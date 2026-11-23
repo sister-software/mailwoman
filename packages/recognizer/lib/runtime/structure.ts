@@ -16,7 +16,6 @@
 
 import type { BCP47 } from "@mailwoman/registry/types"
 
-import { offsetMap } from "#offsets"
 import {
 	ErrorCode,
 	HitKind,
@@ -28,6 +27,7 @@ import {
 } from "#runtime/abi"
 import { stageText } from "#runtime/engine"
 import { RecognizerError } from "#runtime/errors"
+import { offsetMap } from "#runtime/offsets"
 import { type Instance, trapped } from "#runtime/state"
 import type {
 	CharacterClass,

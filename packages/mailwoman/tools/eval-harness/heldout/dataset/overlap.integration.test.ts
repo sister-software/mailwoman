@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { writeParquetFile } from "@mailwoman/corpus/parquet/writers"

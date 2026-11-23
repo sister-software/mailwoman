@@ -14,7 +14,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { movedAwayPaths } from "@mailwoman/core/git"
+import { movedAwayPaths } from "@mailwoman/core/repo/git"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 

@@ -6,8 +6,8 @@
  */
 
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
-import { designatorTableFor } from "@mailwoman/codex/designator-tables"
-import { DESIGNATOR_CLASS, foldDesignatorSpelling } from "@mailwoman/codex/postal/designator"
+import { DESIGNATOR_CLASS, foldDesignatorSpelling } from "@mailwoman/codex/designators/concepts"
+import { designatorTableFor } from "@mailwoman/codex/designators/tables"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"

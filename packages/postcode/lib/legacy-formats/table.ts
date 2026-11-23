@@ -26,7 +26,7 @@
  *   A token's hits come out in this order, and `locale-hint` takes the first unambiguous hit.
  */
 
-import type { POBoxLeaders } from "@mailwoman/recognizer/po-box"
+import type { POBoxLeaders } from "@mailwoman/recognizer/labels/po-box/po-box"
 
 /**
  * One structural postcode format.

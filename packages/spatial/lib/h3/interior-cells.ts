@@ -6,7 +6,7 @@
  *   a cell must have its whole `gridDisk(cell, 1)` and all six boundary vertices inside the outline.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { cellToBoundary, gridDisk, polygonToCells, type H3Cell } from "@sister.software/h3"
 
 import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings } from "#geometries/polygon"

@@ -5,8 +5,8 @@
  * @file A bounded streaming shuffle over the rows headed for parquet, so a row-group is a sample of its source.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
-import { mulberry32, shuffleWith } from "@mailwoman/core/random"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import { mulberry32, shuffleWith } from "@mailwoman/core/math/random"
 
 /**
  * Rows held in memory while shuffling, when the caller identifies no window.

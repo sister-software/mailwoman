@@ -14,8 +14,8 @@
  *   Invoke via `mailwoman corpus fetch hrsa --out-root <path>`.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"

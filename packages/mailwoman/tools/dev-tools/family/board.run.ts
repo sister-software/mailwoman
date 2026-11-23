@@ -11,8 +11,8 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/board/grade-seed-cases"
 import { FAMILY_ROWS, type FamilyRow, type PlaceLookup, type TargetFamily } from "#tools/dev-tools/family/board-rows"
-import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/grade-seed-cases"
 import { CASES_DIR } from "#tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "#tools/eval-harness/gauntlet/cases/seed-case"
 

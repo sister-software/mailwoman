@@ -10,7 +10,7 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * Options for {@linkcode geocodeFirstSurface}.

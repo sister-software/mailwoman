@@ -6,14 +6,14 @@
  * from a seeded draw of Overture rows.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
 import { snapshotSourcePath } from "@mailwoman/core/data-root"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate, mulberry32 } from "@mailwoman/core/utils"
 import { isBuildingName, renderSGRegister, type SGRegister } from "@mailwoman/corpus/sg/recipes/register"
 import { PathBuilder } from "path-ts"
 
-import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/grade-seed-cases"
+import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/board/grade-seed-cases"
 import { CASES_DIR } from "#tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "#tools/eval-harness/gauntlet/cases/seed-case"
 

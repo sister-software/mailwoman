@@ -18,8 +18,8 @@
  *   --in <file.parquet> --out <sidecar.parquet> [--country ES --country BE --country PL] [--dry-run]
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { findReversedRows, writeNativeRows, writeSourceIDSidecar } from "./deletions.ts"
 

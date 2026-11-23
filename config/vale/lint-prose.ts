@@ -9,13 +9,13 @@
 /// <reference types="node" />
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { GitClient, workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
+import { GitClient, workingTreeFiles } from "@mailwoman/core/repo/git"
+import { type ValeCommand, valeCommand } from "@mailwoman/core/repo/vale"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
+import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/scripting/process"
 import { availableParallelism } from "@mailwoman/core/utils/system"
-import { type ValeCommand, valeCommand } from "@mailwoman/core/vale"
 import { chunks } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
