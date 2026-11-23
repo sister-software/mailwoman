@@ -6,7 +6,7 @@
  *   from the compiled CLI help tree.
  *
  *   The command runs offline.
- *   The `tools/dev-tools/man-page.integration.test.ts` freshness test fails on drift.
+ *   The `tools/dev-tools/generate/man-page.integration.test.ts` freshness test fails on drift.
  *
  *   The pre-commit hook runs this command when a commit touches the command surface.
  */
@@ -25,7 +25,7 @@ export const spec = {
 
 const DevGenerateManPage = () => {
 	const state = useCommandTask(async () => {
-		const { generateManPage } = await import("#tools/dev-tools/man-page")
+		const { generateManPage } = await import("#tools/dev-tools/generate/man-page")
 
 		return generateManPage(reportToStderr)
 	})

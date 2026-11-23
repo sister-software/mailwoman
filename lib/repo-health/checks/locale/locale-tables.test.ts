@@ -135,10 +135,13 @@ describe("localeTablesCheck", () => {
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
 				// The ladder resolves an FST by path and returns no FST when the file is absent.
-				"packages/mailwoman/tools/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
-					["US", "en-us"],
-					["KR", "ko-kr"],
-				]),
+				"packages/mailwoman/tools/eval-harness/evaluation/autocomplete-ladder.ts": objectTable(
+					"FST_LOCALE_BY_COUNTRY",
+					[
+						["US", "en-us"],
+						["KR", "ko-kr"],
+					]
+				),
 			},
 		})
 

@@ -28,7 +28,7 @@ import {
 	type StratumFillCensus,
 	type StratumResult,
 	uniqueNameEligible,
-} from "#tools/eval-harness/panel-fill"
+} from "#tools/eval-harness/preregistration/panel-fill"
 import {
 	bandFor,
 	type ProminenceBand,

@@ -44,7 +44,7 @@ export const spec = {
 const EvalMaskRegression = harnessCommand(
 	spec,
 	async (options) => {
-		const { maskRegressionCheck } = await import("#tools/eval-harness/mask-regression")
+		const { maskRegressionCheck } = await import("#tools/eval-harness/capability/mask-regression")
 
 		return (await maskRegressionCheck(options)).pass
 	},

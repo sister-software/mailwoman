@@ -38,7 +38,7 @@ import {
 } from "#observations"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardResult } from "#tools/eval-harness/poi/board"
 import { createPOIBoardPipeline, type POIBoardOptions } from "#tools/eval-harness/poi/board/runtime"
-import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration"
+import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#tools/eval-harness/preregistration/artifacts"
 import {
 	computeProbeCounts,
 	decideProbe,

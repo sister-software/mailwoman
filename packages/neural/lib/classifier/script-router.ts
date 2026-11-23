@@ -58,7 +58,7 @@ export function carriesFamilySegment(shape: Pick<QueryShape, "tokenClasses" | "s
  * Routes like {@linkcode routeFamilyForText}, then tries a leading run of a
  * family's script when that router abstains.
  *
- * This experimental router is used only for measurement by `route-census.run.ts`.
+ * This experimental router is used only for measurement by `dev-tools/census/route.run.ts`.
  * Because it runs only on an abstention, it can add routes and never changes an existing one.
  */
 export function routeFamilyWithLeadingRun(

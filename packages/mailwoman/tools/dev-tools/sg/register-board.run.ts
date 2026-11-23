@@ -13,7 +13,7 @@ import { isoDate, mulberry32 } from "@mailwoman/core/utils"
 import { isBuildingName, renderSGRegister, type SGRegister } from "@mailwoman/corpus/sg/recipes/register"
 import { PathBuilder } from "path-ts"
 
-import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/grade-seed-cases"
+import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#tools/dev-tools/board/grade-seed-cases"
 import { CASES_DIR } from "#tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "#tools/eval-harness/gauntlet/cases/seed-case"
 

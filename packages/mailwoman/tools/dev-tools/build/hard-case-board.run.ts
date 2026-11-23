@@ -26,7 +26,7 @@ import { JSONSpliterator } from "spliterator"
 import { FRAGMENT_ROWS } from "#tools/dev-tools/hard-case-board/rows"
 import { TOPONYM_ROWS } from "#tools/dev-tools/hard-case-board/rows/toponym"
 import { SWEEP_ROWS } from "#tools/dev-tools/hard-case-board/sweep-rows"
-import { canonicalizeHardCase, type HardCase, HARD_CASE_BOARD_PATH } from "#tools/eval-harness/hard-case-board"
+import { canonicalizeHardCase, type HardCase, HARD_CASE_BOARD_PATH } from "#tools/eval-harness/board/hard-case"
 
 const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_CASE_BOARD_PATH

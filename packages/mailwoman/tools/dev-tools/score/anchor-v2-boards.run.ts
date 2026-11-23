@@ -19,8 +19,8 @@ import {
 	register,
 	type Register,
 	reportBoard,
-} from "#tools/dev-tools/register-board"
-import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#tools/eval-harness/parity-corpus"
+} from "#tools/dev-tools/board/registers"
+import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#tools/eval-harness/parity/corpus"
 
 const { values } = parseArguments({
 	options: {
@@ -158,7 +158,8 @@ if (board === "gb") {
 
 				// The gold `street` contains the whole street name.
 				// The model emits a family of tags.
-				// `parity-corpus.ts` compares the assembled family, so a bare tag-to-tag comparison misses.
+				// `eval-harness/parity/corpus.ts` compares the assembled family,
+				// so a bare tag-to-tag comparison misses.
 				const emitted =
 					tag === "street" ? STREET_FAMILY_TAGS.flatMap((t) => byTag.get(t) ?? []) : (byTag.get(tag) ?? [])
 

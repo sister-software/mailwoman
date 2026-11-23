@@ -60,7 +60,7 @@ it states.
 2. Cite the record that attests it, in one of the four classes above, and quote the text it rests on.
 3. Write the note a future reviewer would need to decide whether the entry still belongs.
 4. Run the phrase-collision census
-   (`node packages/mailwoman/tools/dev-tools/activity-phrase-collision-census.run.ts --db <poi.db>`) and
+   (`node packages/mailwoman/tools/dev-tools/census/activity-phrase-collision.run.ts --db <poi.db>`) and
    commit the refreshed report. A new phrase whose subject a name or category lexicon already claims
    never reaches an activity route at all, and the census is where that's visible.
 5. Bump `version`.

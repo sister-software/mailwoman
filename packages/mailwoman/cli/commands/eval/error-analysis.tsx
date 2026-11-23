@@ -43,7 +43,7 @@ export const spec = {
 const EvalErrorAnalysis = harnessCommand(
 	spec,
 	async (options) => {
-		const { evalErrorAnalysis } = await import("#tools/eval-harness/error-analysis")
+		const { evalErrorAnalysis } = await import("#tools/eval-harness/evaluation/error-analysis")
 
 		return evalErrorAnalysis(options)
 	},

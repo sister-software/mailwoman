@@ -42,7 +42,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 import { collectResolved, mostSpecific } from "#tools/eval-harness/oa/resolver/tree-hits"
-import { v0RecordToTree } from "#tools/eval-harness/v0-tree-adapter"
+import { v0RecordToTree } from "#tools/eval-harness/parity/v0-tree-adapter"
 /**
  * Percentage-point collision reduction the split must deliver to be judged effective.
  */

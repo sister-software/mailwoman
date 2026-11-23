@@ -23,7 +23,7 @@ import { TextSpliterator } from "spliterator"
 
 import { createResolverBackend, existingWOFDatabasePaths } from "#engine/resolver-backend"
 import { createRuntimePipeline, registerRuntimePipelineServices } from "#engine/runtime-pipeline"
-import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/hard-case-board"
+import { type HardCase, loadHardCaseBoard } from "#tools/eval-harness/board/hard-case"
 import { collectResolved, mostSpecific, type Resolved } from "#tools/eval-harness/oa/resolver/tree-hits"
 
 const { values } = parseArguments({

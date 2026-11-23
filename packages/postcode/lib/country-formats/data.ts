@@ -4,7 +4,7 @@
 /**
  * @generated
  *
- *   generated — run `node packages/mailwoman/tools/dev-tools/postcode/country-formats.ts` to refresh. Do not edit by hand.
+ *   generated — run `node packages/mailwoman/tools/dev-tools/labels/postcode/country-formats.ts` to refresh. Do not edit by hand.
  *
  *   One postcode format per country that libaddressinput states one for: its `zip` pattern, the country-code
  *   prefix its `fmt` prints ahead of the postcode, and whether its `fmt` prints the postcode before or after the

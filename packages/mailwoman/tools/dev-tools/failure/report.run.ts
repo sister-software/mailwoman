@@ -17,7 +17,7 @@ import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#tools/eval-harness/parity-corpus"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#tools/eval-harness/parity/corpus"
 
 /**
  * Sets the largest token count in the short-query bucket.

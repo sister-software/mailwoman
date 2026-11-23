@@ -23,7 +23,7 @@
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
-import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/rig/switch-pin"
 
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 

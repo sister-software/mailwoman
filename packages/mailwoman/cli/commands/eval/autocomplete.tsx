@@ -39,7 +39,8 @@ export const spec = {
 const EvalAutocomplete = harnessCommand(
 	spec,
 	async (options) => {
-		const { printAutocompleteLadder, runAutocompleteLadder } = await import("#tools/eval-harness/autocomplete-ladder")
+		const { printAutocompleteLadder, runAutocompleteLadder } =
+			await import("#tools/eval-harness/evaluation/autocomplete-ladder")
 
 		const report = await runAutocompleteLadder({
 			country: options.country,

@@ -15,7 +15,7 @@ import {
 	duplicateRowIDProblems,
 	loadFrozenDefinition,
 	preregistrationPath,
-} from "#tools/eval-harness/preregistration"
+} from "#tools/eval-harness/preregistration/artifacts"
 
 /**
  * Result shapes derived from `PipelineResult.path` and `POIQueryResult.type`.

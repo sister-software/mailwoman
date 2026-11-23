@@ -103,7 +103,7 @@ becomes a street span.
 `validateTree` in `packages/core/lib/decoder/validate-tree.ts` lists `street_prefix` and
 `street_suffix` in `STRICT_DEPENDENTS`. It reports a stranded-dependent violation when neither has
 a `street` anywhere in the tree. Its only caller is the dev harness
-(`packages/mailwoman/tools/dev-tools/harness-neural.run.ts`), so a production parse can return a
+(`packages/mailwoman/tools/dev-tools/evaluation/harness-neural.run.ts`), so a production parse can return a
 stranded affix to the caller.
 
 ## Open questions

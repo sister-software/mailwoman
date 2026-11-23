@@ -14,7 +14,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 } from "@mailwoman/core/random"
-import { ladderRungs } from "mailwoman/tools/eval-harness/autocomplete-ladder"
+import { ladderRungs } from "mailwoman/tools/eval-harness/evaluation/autocomplete-ladder"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/tools/eval-harness/gauntlet/holdout"
@@ -723,7 +723,7 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 	const path = repoRootPath(PARITY_FIXTURES_RELATIVE_PATH)
 	const raw = await readCorpus(path, "parity corpus")
 
-	// This matches the filter in `parity-corpus.ts`.
+	// This matches the filter in `eval-harness/parity/corpus.ts`.
 	// Dropped rows and rows without `expect` cannot pass, so counting them would inflate the denominator.
 	const all = raw.filter((row) => !(row as { dropped?: boolean }).dropped && row.expect)
 	const tombstones = raw.length - all.length

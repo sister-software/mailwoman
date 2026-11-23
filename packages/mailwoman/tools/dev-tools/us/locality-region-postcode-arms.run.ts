@@ -50,9 +50,9 @@ import { cliArguments, parseArguments, scriptEntryPath } from "@mailwoman/core/s
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 
-import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coord-panel"
+import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coordinate/panel"
 import { buildGauntletDeps, type GauntletDepsOptions } from "#tools/eval-harness/gauntlet/harness"
-import { readWeightsIdentity } from "#tools/eval-harness/preregistration"
+import { readWeightsIdentity } from "#tools/eval-harness/preregistration/artifacts"
 
 const { values } = parseArguments({
 	options: {

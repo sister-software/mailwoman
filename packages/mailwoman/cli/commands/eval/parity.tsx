@@ -13,7 +13,7 @@
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"
-import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * Largest disagreement sample that keeps parity output reviewable.
@@ -57,7 +57,7 @@ export const spec = {
 const EvalParity = harnessCommand(
 	spec,
 	async (options) => {
-		const { runParityEval } = await import("#tools/eval-harness/parity-corpus")
+		const { runParityEval } = await import("#tools/eval-harness/parity/corpus")
 
 		return (
 			await runParityEval({

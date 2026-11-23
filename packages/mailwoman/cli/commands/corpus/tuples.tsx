@@ -8,7 +8,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
-import { suffixTail } from "#tools/dev-tools/coord-panel"
+import { suffixTail } from "#tools/dev-tools/coordinate/panel"
 
 /**
  * Classifies a locality name as a suffix tail, a multi-word name or a single-word name.

@@ -37,7 +37,7 @@ export const spec = {
 
 const DevGenerateTraceFixture: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
-		const { generateTraceFixture } = await import("#tools/dev-tools/generate-trace-fixture")
+		const { generateTraceFixture } = await import("#tools/dev-tools/generate/trace-fixture")
 
 		return generateTraceFixture({ text: args[0] }, reportToStderr)
 	})

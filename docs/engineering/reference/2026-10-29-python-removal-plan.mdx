@@ -133,7 +133,7 @@ directories. `packages/corpus/lib/source-register/corpus-inputs.ts` (source admi
 with `packages/mtf/lib` for Node and browsers. `packages/neural/lib` (ONNX runner, viterbi, soft features, char
 encoder). `packages/mailwoman/tools/eval-harness` (gauntlet, heldout, promotion, release, score, specs) and the
 `mailwoman eval check` command. `packages/core/lib/decoder/calibration.ts`.
-`packages/mailwoman/tools/dev-tools/launch-detached.run.ts`. `packages/sentencepiece-wasm/build.sh`, which builds
+`packages/mailwoman/tools/dev-tools/host/launch-detached.run.ts`. `packages/sentencepiece-wasm/build.sh`, which builds
 google/sentencepiece at tag `v0.2.2` from source with CMake. `packages/corpus/lib/{jp,kr,tw}` hold adapters and
 fetchers only (`jp/adapters/wof-admin`, `kr/adapters/{juso,localdata}`, `{jp,kr,tw}/tools/fetch`). The assemblers
 exist only in Python.
@@ -1215,7 +1215,7 @@ launcher land: `export/onnx.py`, `graph.py` and `wrappers.py` (`cli/commands/smo
 
 Caller checklist: `launch/*` ← operator commands in `corpus-python/launch/AGENTS.md`,
 `lib/dev-mcp/hooks/bash/write/rules.ts` (the `uv run modal run` guidance, lines 189–249, **observed**),
-`packages/mailwoman/tools/dev-tools/launch-detached.run.ts`, `.claude/skills/training-arc/SKILL.md`.
+`packages/mailwoman/tools/dev-tools/host/launch-detached.run.ts`, `.claude/skills/training-arc/SKILL.md`.
 
 - Build `packages/mailwoman/tools/training/launch/` on the result of F4. The image is defined once in TS, and
   `lib/repo-health/checks/training-toolchain-pins.ts` keeps its pins equal to `packages/trainer/Cargo.toml` and
@@ -1324,7 +1324,7 @@ config unchanged: `--fresh` would clear that run's checkpoints, and without it t
 from them.
 
 ```sh
-node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python \
+node packages/mailwoman/tools/dev-tools/host/launch-detached.run.ts --log <file> --cwd corpus-python \
   -- uv run --extra dev modal run -d -m launch.train_remote --trainer rust --gpu A100-40GB \
   --config $MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml --fresh
 ```

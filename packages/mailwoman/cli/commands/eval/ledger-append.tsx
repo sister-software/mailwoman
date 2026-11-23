@@ -53,7 +53,7 @@ export const spec = {
 const EvalLedgerAppend = harnessCommand(
 	spec,
 	async (options) => {
-		const { ledgerAppend } = await import("#tools/eval-harness/ledger-append")
+		const { ledgerAppend } = await import("#tools/eval-harness/ledger/append")
 
 		return ledgerAppend(options)
 	},

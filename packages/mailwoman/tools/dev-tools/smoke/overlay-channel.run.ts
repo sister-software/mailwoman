@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Smoke-test that declared channels feed real input (ROAD_TO_V9 §1 A2/A4).
+ *
+ *   This catches a channel that resolves and loads but emits only zeros.
+ *   The script loads weights via `loadFromWeights` and rebuilds soft features for one input.
+ *   It reports per-channel non-zero coverage.
+ *
+ *   `--cache-root` checks a package-shaped
+ *   candidate: `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`.
+ *   If omitted, it checks the installed workspace package.
+ *
+ *   Usage: node packages/mailwoman/tools/dev-tools/smoke/overlay-channel.run.ts
+ *   --locale en-gb [--cache-root <dir>]
+ */
+
+import { stringifyJSON } from "@mailwoman/core/json"
+import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { buildSoftFeatures } from "@mailwoman/neural/channels/soft-features"
+import { DEFAULT_TOGGLE } from "@mailwoman/neural/classifier/options"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { normalizeInputCase } from "@mailwoman/normalize/case"
+
+const { values } = parseArguments({
+	options: {
+		locale: { type: "string", default: "en-gb" },
+		"cache-root": { type: "string" },
+		text: { type: "string", default: "10 Downing Street, Shoreditch, London, SW1A 2AA" },
+		"case-normalization": { type: "string", default: DEFAULT_CASE_NORMALIZATION },
+	},
+})
+
+const locale = values.locale!
+const cacheRoot = values["cache-root"]
+const resolved = await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+
+console.log(`locale            ${locale}`)
+console.log(`source            ${resolved.source}`)
+console.log(`card              ${resolved.modelCardPath}`)
+console.log(`anchor            ${resolved.anchorLookupPath?.path ?? "(none)"}`)
+console.log(`streetType        ${resolved.streetTypeLexiconPath ?? "(none)"}`)
+console.log(`localitySurface   ${resolved.localitySurfaceLexiconPath ?? "(none)"}`)
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+const cfg = classifier.config
+
+const caseNormalization = caseNormalizationOf(values["case-normalization"])
+const text = caseNormalization === "title-case" ? normalizeInputCase(values.text!) : values.text!
+const pieces = cfg.tokenizer!.encode(text).pieces
+
+const channels = buildSoftFeatures(text, pieces, {
+	...(cfg.postcodeAnchorLookup ? { postcodeAnchorLookup: cfg.postcodeAnchorLookup } : {}),
+	...(cfg.postcodeAnchorSpanMode ? { postcodeAnchorSpanMode: cfg.postcodeAnchorSpanMode } : {}),
+	...(cfg.gazetteerLexicon ? { gazetteerLexicon: cfg.gazetteerLexicon } : {}),
+	...(cfg.countryLexicon ? { countryLexicon: cfg.countryLexicon } : {}),
+	...(cfg.streetTypeLexicon ? { streetTypeLexicon: cfg.streetTypeLexicon } : {}),
+	...(cfg.localitySurfaceLexicon ? { localitySurfaceLexicon: cfg.localitySurfaceLexicon } : {}),
+	suppressGazetteerNearPostcode: cfg.suppressGazetteerNearPostcode ?? DEFAULT_TOGGLE,
+})
+
+console.log(`\ninput (caseNormalization=${caseNormalization})  ${stringifyJSON(text)}`)
+console.log(`pieces            ${pieces.length}`)
+console.log(`spanMode          ${stringifyJSON(cfg.postcodeAnchorSpanMode ?? null)}`)
+console.log("\nchannel           lexicon?  pieces with a non-zero clue")
+
+for (const name of ["anchor", "gazetteer", "country", "streetType", "localitySurface"] as const) {
+	const channel = channels[name]
+
+	if (!channel) {
+		console.log(`${name.padEnd(18)} NO        — channel not constructed (source absent)`)
+
+		continue
+	}
+
+	const fed = channel.features.filter((row) => row.some((v) => v !== 0)).length
+
+	console.log(`${name.padEnd(18)} yes       ${fed}/${pieces.length}${fed === 0 ? "   <-- RESOLVED BUT SILENT" : ""}`)
+}

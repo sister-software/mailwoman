@@ -23,7 +23,7 @@ import { canonicalJSON } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
-import { definitionContentHash } from "#tools/eval-harness/preregistration"
+import { definitionContentHash } from "#tools/eval-harness/preregistration/artifacts"
 
 /**
  * The row interface's version.

@@ -18,7 +18,7 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-healt
 /**
  * The command that rewrites every failing file.
  */
-const FIX_COMMAND = "node packages/mailwoman/tools/dev-tools/spdx-header.run.ts"
+const FIX_COMMAND = "node packages/mailwoman/tools/dev-tools/repository/spdx-header.run.ts"
 
 /**
  * The `spdx-header` check.

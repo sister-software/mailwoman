@@ -19,7 +19,7 @@ import {
 	duplicateRowIDProblems,
 	loadFrozenDefinition,
 	preregistrationPath,
-} from "#tools/eval-harness/preregistration"
+} from "#tools/eval-harness/preregistration/artifacts"
 
 /**
  * Expected result for one registered row.

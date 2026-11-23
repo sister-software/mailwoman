@@ -60,7 +60,7 @@ export const spec = {
 const EvalOracleK = harnessCommand(
 	spec,
 	async (options) => {
-		const { runOracleK } = await import("#tools/eval-harness/oracle-k")
+		const { runOracleK } = await import("#tools/eval-harness/evaluation/oracle-k")
 
 		return (
 			await runOracleK({

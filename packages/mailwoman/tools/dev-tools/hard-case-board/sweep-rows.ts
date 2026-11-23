@@ -5,7 +5,7 @@
  * Lists the hard-case board rows copied from regression cases instead of written by hand.
  */
 
-import type { HardCaseClass } from "#tools/eval-harness/hard-case-board"
+import type { HardCaseClass } from "#tools/eval-harness/board/hard-case"
 
 /**
  * Lists regression cases that the hard-case board copies.

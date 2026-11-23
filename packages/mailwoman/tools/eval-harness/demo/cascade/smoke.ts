@@ -17,7 +17,7 @@
  *   Usage (after `yarn compile`):
  *
  *   ```
- *   node packages/mailwoman/tools/dev-tools/demo-cascade-smoke.run.ts \
+ *   node packages/mailwoman/tools/dev-tools/smoke/demo-cascade.run.ts \
  *   [--stage-dir <release-dir>] [--db <wof-hot.db>] [--model <onnx>] \
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
  *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \
@@ -59,7 +59,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { parseSmokeRows, type SmokeRow } from "#tools/eval-harness/demo/cascade/rows"
-import { resolveWOFHotDB, wofHotStageDir } from "#tools/eval-harness/wof-hot-db"
+import { resolveWOFHotDB, wofHotStageDir } from "#tools/eval-harness/rig/wof-hot-db"
 
 /**
  * Options for {@linkcode demoCascadeSmoke}, one field per flag the check used to serialize into argv.

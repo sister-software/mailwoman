@@ -29,7 +29,7 @@
  *   Every entry's `note` is the row's justification and ends up verbatim in the emitted board.
  */
 
-import type { HardCaseClass } from "#tools/eval-harness/hard-case-board"
+import type { HardCaseClass } from "#tools/eval-harness/board/hard-case"
 
 /**
  * A curated row before its numbers are filled in.

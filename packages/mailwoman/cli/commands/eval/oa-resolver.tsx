@@ -10,7 +10,7 @@
  */
 
 import { booleanOption, type CommandSpec, harnessCommand } from "#cli-kit"
-import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/switch-pin"
+import { SWITCH_PIN_CHOICES } from "#tools/eval-harness/rig/switch-pin"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
