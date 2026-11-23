@@ -17,10 +17,12 @@ Mailwoman's own dual license, its key, its stamp and the branch an installation 
 
 | Module        | What it answers                                                                                   |
 | ------------- | ------------------------------------------------------------------------------------------------- |
-| `decision`    | A reviewer's license decision, the permission it records per operation, and its audit             |
+| `decision`    | A reviewer's license decision, the permission it records per operation and purpose, and its audit |
 | `operations`  | The acts this repository performs on an address source                                            |
-| `actions`     | The action table: the operations each build or release performs on a source                       |
+| `actions`     | The action table: the operations each build or release performs on a source, and its purposes     |
 | `tree`        | The go/no-go decision tree: whether an action may proceed over a set of sources, and what it owes |
+| `quote`       | Whether a source's rows may be quoted in published text, and the helper that prints a row         |
+| `reservation` | A source held out of every training corpus for evaluation                                         |
 | `obligations` | The obligations of an SPDX expression's identifiers, and whether a manifest may record it         |
 | `expression`  | The one linear reader of an SPDX expression's terms                                               |
 | `record`      | A license string read as an expression, a credit, mentions and obligations                        |
@@ -48,13 +50,25 @@ answer.sources[0].problems // ['license "example-license" is not declared in the
 ```
 
 The tree reads each source through seven nodes in order: `registered`, `review-state`, `reservation`,
-`operations`, `purpose`, `basis-floor` and `obligations`. The first node a source doesn't pass stops it.
+`operations`, `purpose`, `basis-floor` and `obligations`. The first node a source doesn't pass stops it,
+except that `purpose` reads after `operations` either way, so the answer lists every unpermitted reading.
 The `obligations` node collects what the source owes and has no refusal edge, so an obligation, an
 indemnity included, never refuses an action. The `reservation` node refuses an action that requires
 `train` over a source reserved for evaluation (`@mailwoman/license/reservation`), quoting the
 reservation's reason. A register records a reservation by choice on the source, and lifts it by filling
-`lifted`. A reservation by terms is computed for a decision that refuses `train`, and only when the
-request sets `reservedByTerms`. The answer carries each step's node, outcome and quote,
-and the register's content digest.
+`lifted`. A reservation by terms is computed for a decision that permits `evaluate` and refuses `train`.
+The answer carries each step's node, outcome and quote, and the register's content digest.
+
+The operations are named by what leaves this repository's hands: `fetch`, `extract`, `transform`,
+`evaluate`, `train`, `distribute-rows`, `answer-queries`, `distribute-derived`, `distribute-model` and
+`sublicense`, which no action performs. The `purpose` node reads two purposes beside them. Every action
+is `commercial-use`, because Mailwoman is sold under `LicenseRef-Commercial`, and an offering under those
+terms adds `sale`. A decision records a default reading per purpose in `purposes`, and a reading that
+differs for one operation in `purposeExceptions`.
+
+Each source's answer also carries `quotable`, which holds when its decision permits `distribute-rows`.
+Text that will be published, such as a receipt, a document or an error message, prints a row through
+`quoteRow` from `@mailwoman/license/quote`, which prints the row's id in place of a row that isn't
+quotable.
 
 The summary is a debugging aid and gives no legal advice.

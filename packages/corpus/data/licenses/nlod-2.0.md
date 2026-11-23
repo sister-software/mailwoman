@@ -34,7 +34,7 @@ sub-license or transfer this licence.
 ```
 
 "For any purpose and in all contexts" reaches commercial use. The last sentence is the one to read
-before any commercial-sublicense reading: the licensee may not sub-license the grant itself.
+before any `sale` or `sublicense` reading: the licensee may not sub-license the grant itself.
 
 ## The exemptions
 

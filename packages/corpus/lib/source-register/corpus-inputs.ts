@@ -24,16 +24,19 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
+import { actionOperations, actionPurposes, LicenseAction } from "@mailwoman/license/actions"
 import {
 	LicenseReviewState,
 	OperationPermission,
 	permissionFor,
+	purposeFor,
 	type LicenseDecision,
+	type OperationDecision,
+	type UsePurpose,
 } from "@mailwoman/license/decision"
 import { SourceOperation } from "@mailwoman/license/operations"
 import { refusingReservation, reservationProblem } from "@mailwoman/license/reservation"
-import { evaluateLicense, DecisionVerdict } from "@mailwoman/license/tree"
+import { evaluateLicense, DecisionVerdict, type LicenseRequest } from "@mailwoman/license/tree"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
@@ -253,9 +256,10 @@ export interface SourceRightsGap {
 	 */
 	state: LicenseDecision["state"] | null
 	/**
-	 * The operations the decision doesn't permit.
+	 * The operations the decision doesn't permit, then, for an elected decision,
+	 * the purposes it doesn't permit them for.
 	 */
-	missing: SourceOperation[]
+	missing: Array<SourceOperation | UsePurpose>
 	because: string
 	/**
 	 * Present when the register source is reserved for evaluation.
@@ -277,16 +281,18 @@ export interface SourceRightsGap {
  * the same id is read against what that corpus's rows were built from.
  * A build or training check omits it and reads today's inputs.
  *
- * `operations` defaults to the `train` action's.
- * A release check passes the operations releasing a model trained on the rows performs.
+ * `request` defaults to the `train` action with no offering.
+ * A release check passes the model release and the license expression its package offers.
  */
 export function sourceRightsGaps(
 	source: string,
 	inputs: CorpusSourceInputs,
 	register: AddressSourceRegister,
 	corpusVersion?: string,
-	operations: readonly SourceOperation[] = actionOperations(LicenseAction.Train, null)
+	request: Pick<LicenseRequest, "action" | "offering"> = { action: LicenseAction.Train, offering: null }
 ): SourceRightsGap[] {
+	const operations = actionOperations(request.action)
+	const purposes = actionPurposes(request.action, request.offering)
 	const resolved = inputs.resolve(source)
 
 	if (!resolved) {
@@ -343,10 +349,20 @@ export function sourceRightsGaps(
 			continue
 		}
 
-		const readings = operations.map((operation) => ({
-			operation,
-			reading: permissionFor(decision, operation),
-		}))
+		const readings: Array<{ term: SourceOperation | UsePurpose; reading: OperationDecision }> = [
+			...operations.map((operation) => ({ term: operation, reading: permissionFor(decision, operation) })),
+			// A purpose is missing when any operation reads it unpermitted,
+			// and the first such reading gives the reason.
+			// Only an elected decision reads purposes.
+			// A gap under any other decision lists its unpermitted operations.
+			...(decision.state === LicenseReviewState.Elected ? purposes : []).flatMap((purpose) => {
+				const unpermitted = operations
+					.map((operation) => purposeFor(decision, operation, purpose).reading)
+					.find((reading) => reading.permission !== OperationPermission.Permitted)
+
+				return unpermitted ? [{ term: purpose, reading: unpermitted }] : []
+			}),
+		]
 
 		const missing = readings.filter(({ reading }) => reading.permission !== OperationPermission.Permitted)
 
@@ -357,7 +373,7 @@ export function sourceRightsGaps(
 			registerSource: row.sourceID,
 			licenseID: decision.licenseID,
 			state: decision.state,
-			missing: missing.map(({ operation }) => operation),
+			missing: missing.map(({ term }) => term),
 			because:
 				decision.state === LicenseReviewState.Refused
 					? `the decision is refused: ${decision.refusedBecause}`
@@ -434,7 +450,7 @@ export class SourceRightsError extends Error {
 						"\nThe operator lifts a reservation by filling its `lifted` entry in " +
 						"packages/corpus/data/source-resolutions.json."
 				: `${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
-						`lack an elected decision permitting ${actionOperations(LicenseAction.Train, null).join(" and ")}:\n  ` +
+						`lack an elected decision permitting ${actionOperations(LicenseAction.Train).join(" and ")}:\n  ` +
 						gaps.map(describeSourceRightsGap).join("\n  ") +
 						"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
 						`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +

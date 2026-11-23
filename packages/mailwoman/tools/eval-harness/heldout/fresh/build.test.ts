@@ -53,13 +53,13 @@ describe("evaluationSourceProblems", () => {
 		issue: 1,
 	}
 
-	const register = (recorded?: SourceReservation) => {
-		const permitted: OperationDecision = {
-			permission: OperationPermission.Permitted,
-			basis: PermissionBasis.PublisherGrant,
-			because: "x",
-		}
+	const permitted: OperationDecision = {
+		permission: OperationPermission.Permitted,
+		basis: PermissionBasis.PublisherGrant,
+		because: "x",
+	}
 
+	const register = (recorded?: SourceReservation, training: OperationDecision = permitted) => {
 		const decision: ElectedLicense = {
 			licenseID: "lic",
 			state: LicenseReviewState.Elected,
@@ -70,8 +70,10 @@ describe("evaluationSourceProblems", () => {
 				fetch: permitted,
 				extract: permitted,
 				transform: permitted,
-				train: permitted,
+				evaluate: permitted,
+				train: training,
 			},
+			purposes: { "commercial-use": permitted },
 		}
 
 		return {
@@ -82,6 +84,12 @@ describe("evaluationSourceProblems", () => {
 
 	it("admits a reserved source no training manifest read, whatever its decision says of training", () => {
 		expect(evaluationSourceProblems(source, register(reservation), new Map())).toEqual([])
+	})
+
+	it("admits a source its terms reserve: evaluate permitted and train refused", () => {
+		const refused = { permission: OperationPermission.Refused, because: "no model training" }
+
+		expect(evaluationSourceProblems(source, register(undefined, refused), new Map())).toEqual([])
 	})
 
 	it("refuses an unreserved source, a lifted reservation, and a source a training manifest read", () => {

@@ -186,6 +186,21 @@ Licence Ouverte name adaptation explicitly. A bespoke government terms page may 
 omission decides the election. Record the gap in `$notElected`, which is a different record from an
 absent statement and from a reservation of rights.
 
+An elected decision records a reading per operation (`SourceOperation` in `@mailwoman/license/operations`)
+and a reading per purpose (`UsePurpose` in `@mailwoman/license/decision`) beside them. The operations are
+named by what leaves this repository's hands: `distribute-rows` for a file the rows can be read back from,
+`answer-queries` for values sent one request at a time, `distribute-derived` for an artifact the rows can't
+be recovered from, and `distribute-model` for trained weights. `evaluate` scores a model and lets only
+aggregate scores leave. A grant that permits `train` permits `evaluate`, and one that permits
+`distribute-rows` permits the two lesser outputs, except that a share-alike grant needs its own
+`distribute-derived` reading. Record each such reading in the decision rather than leaving it implied.
+Every act this repository performs is `commercial-use`, and evaluating a commercially sold model is one,
+so a noncommercial clause refuses `commercial-use`. A delivered result offered under
+`LicenseRef-Commercial` is also a `sale`, which a `will not sell` clause refuses. A decision records its
+default reading per purpose in `purposes`, and a reading that differs for one operation in
+`purposeExceptions`. Text that will be published quotes a row only when its decision permits
+`distribute-rows`, through `quoteRow` in `@mailwoman/license/quote`.
+
 When a state's register is elected, read the publisher's own per-area download list (BAN's department
 directory, Geonorge's area codelist, Finland's `municipality_number` column) before closing the row,
 because a dependency with its own ISO 3166-1 code may already be covered under the license held. A

@@ -9,12 +9,16 @@
  *
  *   1. `registered`: the register declares the source's decision, or the source reads `unknown`.
  *   2. `review-state`: an unchecked decision reads `unknown`, and a refused one `no-go`.
- *   3. `reservation`: a source reserved for evaluation (`#reservation`) reads `no-go` for an action
- *      that requires `train`, quoting the reservation's reason. A source the register's source list
- *      lacks reads `unknown`, because whether it is reserved can't be read.
+ *   3. `reservation`: a source reserved for evaluation (`#reservation`), by choice or by its terms
+ *      permitting `evaluate` and refusing `train`, reads `no-go` for an action that requires `train`,
+ *      quoting the reservation's reason. A source the register's source list lacks reads `unknown`,
+ *      because whether it is reserved can't be read.
  *   4. `operations`: each operation the action requires, in table order.
  *      A refusal reads `no-go`, and an unreviewed operation `unknown`.
- *   5. `purpose`: a placeholder that passes.
+ *   5. `purpose`: each purpose the action performs its operations for (`actionPurposes` in `#actions`),
+ *      read for each operation, and decided the same way. The node reads after an operation that didn't
+ *      pass as well, so the answer lists every unpermitted reading, and a source stops after it when
+ *      either node didn't pass.
  *   6. `basis-floor`: an action may require every permission to rest on one basis.
  *   7. `obligations`: collects what the source owes. The node has no refusal edge.
  *
@@ -25,7 +29,7 @@
  *   so the request with the register's content digest fixes it.
  */
 
-import { type ActionRule, actionOperations, LICENSE_ACTIONS, type LicenseAction } from "#actions"
+import { type ActionRule, actionOperations, actionPurposes, LICENSE_ACTIONS, type LicenseAction } from "#actions"
 import {
 	type LicenseDecision,
 	LicenseReviewState,
@@ -33,12 +37,15 @@ import {
 	OperationPermission,
 	operationReadingProblem,
 	permissionFor,
+	purposeFor,
 	undeclaredLicenseProblem,
 	unelectedLicenseProblem,
 	unelectedReadingReason,
+	type UsePurpose,
 } from "#decision"
 import { type LicenseObligation, summarizeLicense } from "#obligations"
 import type { SourceOperation } from "#operations"
+import { rowsQuotable } from "#quote"
 import {
 	activeReservation,
 	refusingReservation,
@@ -100,12 +107,6 @@ export interface LicenseRequest {
 	 */
 	offering: string | null
 	sources: readonly LicenseRequestSource[]
-	/**
-	 * Whether a source whose decision refuses `train` reads as reserved for evaluation by its terms.
-	 *
-	 * TODO(PR 4 of #3343's plan): the `evaluate` operation replaces this flag.
-	 */
-	reservedByTerms?: boolean
 }
 
 /**
@@ -139,9 +140,13 @@ export interface DecisionStep {
 	node: DecisionNode
 	outcome: DecisionVerdict
 	/**
-	 * The operation an `operations` or `basis-floor` step read.
+	 * The operation an `operations`, `purpose` or `basis-floor` step read.
 	 */
 	operation?: SourceOperation
+	/**
+	 * The purpose a `purpose` step read.
+	 */
+	purpose?: UsePurpose
 	/**
 	 * The publisher's words the step rests on, when the decision records them.
 	 */
@@ -184,6 +189,12 @@ export interface SourceAnswer {
 	 * Every reason the source isn't `go`, in node order.
 	 */
 	problems: string[]
+	/**
+	 * Whether the source's rows may be quoted verbatim in published text, whatever the action's verdict.
+	 *
+	 * `rowsQuotable` in `#quote` reads it, and `quoteRow` prints a row by it.
+	 */
+	quotable: boolean
 }
 
 /**
@@ -272,18 +283,19 @@ function walkSource(
 	action: LicenseAction,
 	rule: ActionRule,
 	operations: readonly SourceOperation[],
-	reservedByTerms: boolean
+	purposes: readonly UsePurpose[]
 ): SourceWalk {
 	const { source, licenseID } = request
 	const path: DecisionStep[] = []
 	const problems: string[] = []
+	const quotable = rowsQuotable(decision)
 
 	const step = (entry: Omit<DecisionStep, "source">) => {
 		path.push({ source, ...entry })
 	}
 
 	const stop = (verdict: DecisionVerdict): SourceWalk => ({
-		answer: { source, licenseID, verdict, problems },
+		answer: { source, licenseID, verdict, problems, quotable },
 		path,
 		owed: [],
 	})
@@ -326,7 +338,7 @@ function walkSource(
 		return stop(DecisionVerdict.Unknown)
 	}
 
-	const refusing = refusingReservation(listed.reservation, decision, operations, { reservedByTerms })
+	const refusing = refusingReservation(listed.reservation, decision, operations)
 
 	if (refusing) {
 		const problem = reservationProblem(source, refusing)
@@ -341,11 +353,7 @@ function walkSource(
 		node: DecisionNode.Reservation,
 		outcome: DecisionVerdict.Go,
 		quote: null,
-		because: reservationPassReason(
-			listed.reservation,
-			activeReservation(listed.reservation, decision, { reservedByTerms }),
-			action
-		),
+		because: reservationPassReason(listed.reservation, activeReservation(listed.reservation, decision), action),
 	})
 
 	const outcomes = new Set<DecisionVerdict>()
@@ -362,11 +370,29 @@ function walkSource(
 		}
 	}
 
+	// A purpose read from the decision's defaults is one reading for every operation,
+	// so its problem is listed once.
+	const purposeProblems = new Set<string>()
+
+	for (const purpose of purposes) {
+		for (const operation of operations) {
+			const { reading, label } = purposeFor(decision, operation, purpose)
+			const outcome = readingOutcome(reading.permission)
+
+			step({ node: DecisionNode.Purpose, operation, purpose, outcome, quote: null, because: reading.because })
+			outcomes.add(outcome)
+
+			if (outcome !== DecisionVerdict.Go) {
+				purposeProblems.add(operationReadingProblem(label, reading))
+			}
+		}
+	}
+
+	problems.push(...purposeProblems)
+
 	if (outcomes.has(DecisionVerdict.NoGo)) return stop(DecisionVerdict.NoGo)
 
 	if (outcomes.has(DecisionVerdict.Unknown)) return stop(DecisionVerdict.Unknown)
-
-	step({ node: DecisionNode.Purpose, outcome: DecisionVerdict.Go, quote: null, because: "no purpose is read" })
 
 	const floor = rule.basisFloor
 
@@ -400,7 +426,7 @@ function walkSource(
 		because: `${owed.length} obligation(s) owed`,
 	})
 
-	return { answer: { source, licenseID, verdict: DecisionVerdict.Go, problems }, path, owed }
+	return { answer: { source, licenseID, verdict: DecisionVerdict.Go, problems, quotable }, path, owed }
 }
 
 function compareSources(left: LicenseRequestSource, right: LicenseRequestSource): number {
@@ -418,7 +444,8 @@ function compareSources(left: LicenseRequestSource, right: LicenseRequestSource)
  */
 export function evaluateLicense(request: LicenseRequest, register: LicenseRegister): LicenseAnswer {
 	const rule = LICENSE_ACTIONS[request.action]
-	const operations = actionOperations(request.action, request.offering)
+	const operations = actionOperations(request.action)
+	const purposes = actionPurposes(request.action, request.offering)
 
 	const walks = request.sources.toSorted(compareSources).map((source) =>
 		walkSource(
@@ -428,7 +455,7 @@ export function evaluateLicense(request: LicenseRequest, register: LicenseRegist
 			request.action,
 			rule,
 			operations,
-			request.reservedByTerms === true
+			purposes
 		)
 	)
 

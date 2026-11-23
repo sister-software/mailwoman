@@ -18,7 +18,7 @@ import {
 const VERSION = "2026-11-13"
 
 const redistribute = (basis: "publisher-grant" | "other-documented") => ({
-	"redistribute-data": { permission: "permitted" as const, basis, because: "Read." },
+	"distribute-rows": { permission: "permitted" as const, basis, because: "Read." },
 })
 
 const LICENSES: LicenseDecision[] = [

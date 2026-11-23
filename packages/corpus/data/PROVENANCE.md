@@ -65,8 +65,9 @@ with the publisher's words, for the others.
 `found: "site-terms-not-applied"` records a reading where the dataset's metadata states no terms and the
 publisher's website states site-wide terms that the decision doesn't read as the dataset's grant. Oneida and
 Waukesha counties in Wisconsin read that way. A noncommercial site policy over the site that leads to the file
-refuses `redistribute-data` and leaves `transform` and `train` permitted, as on those two rows and on St.
-Mary's County, Maryland, whose file the policy's own site serves.
+refuses `distribute-rows` and leaves `transform` and `train` permitted, as on those two rows and on St.
+Mary's County, Maryland, whose file the policy's own site serves. Their `commercial-use` purpose reads permitted,
+carried from those operation readings, and states that the clause hasn't been re-read for that purpose.
 
 Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw
 listing, the Taoyuan City Government's portal page or the Keelung City Government's site-wide open-data
@@ -86,7 +87,7 @@ the CSV's path, so a rebuilt Hawaii database maps to the four county rows.
 Each of the 1,993 `openaddresses:<member>` runs read on 2026-11-21 and the six Alaska runs read on 2026-11-22
 maps to its publisher's row, the row whose `access` names the run (#3260, #3269, #3293). The US address layer build, `situs address-points` and the county
 address-point builder admit a source only when every row its value maps to permits fetch, extract and
-redistribute-data.
+distribute-rows.
 
 ## `corpus-source-inputs.json` — which register sources each corpus source reads (#2643)
 
