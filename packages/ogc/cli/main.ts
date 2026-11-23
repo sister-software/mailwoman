@@ -197,8 +197,9 @@ interface PostcodeItems {
 }
 
 /**
- * Read whether the gazetteer `/search` resolves against holds postcode places, and open the
- * candidate gazetteer as the `postcodes` collection's item source when the operator asked for items.
+ * Check whether the gazetteer that `/search` uses holds postcode places.
+ *
+ * When the operator enables items, open a candidate gazetteer as the `postcodes` collection's item source.
  *
  * The candidate gazetteer holds the postcode places when the server resolves against it.
  * Otherwise they come from the WOF databases it opened.

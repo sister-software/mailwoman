@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A Workbox plugin that lets a page's `cache: "reload"` or `cache: "no-store"` request
- *   pass a cache-first route's stored copy and reach the network.
+ *   A Workbox plugin lets a page's `cache: "reload"` or `cache: "no-store"` request
+ *   bypass a cache-first route's stored copy and reach the network.
  *
  *   A cache-first strategy otherwise ignores a request's cache mode, so a page that
  *   retries a file after a bad copy was stored would be handed the same bytes again.

@@ -4,7 +4,7 @@
 /**
  *   The absent-verdict and explicit-scope cases are the interface.
  *
- *   An absent verdict stays unknown. and an explicit caller scope is never second-guessed here.
+ *   An absent verdict stays unknown, and an explicit caller scope is never second-guessed here.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

@@ -13,7 +13,7 @@ import { TextSpliterator } from "spliterator"
  *   the bare surname (the `theiconic/name-parser` pattern) so the matcher can compare
  *   `Vega` independent of `de la` — sources that drop or vary the particle still match.
  *
- *   Scope + honesty (per the name-canonicalization research pass):
+ *   Scope and limitations (per the name-canonicalization research pass):
  *
  *   - Western / romanized names only.
  *     Cultural given-family order variation (East-Asian family-first) and transliteration
@@ -22,8 +22,8 @@ import { TextSpliterator } from "spliterator"
  *     it is lossy and gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in
  *     the matcher as a fuzzy agreement level rather than a destructive rewrite.
  *     We only _extract_ a parenthetical/quoted nickname.
- *   - A CRF parser (probablepeople) is the gold-standard reference but too
- *     heavy to port. this positional parser covers the documented hard cases
+ *   - A CRF parser (probablepeople) is the reference parser but too heavy to port.
+ *     This positional parser covers the documented hard cases
  *     (inversion, particles, generational + professional suffixes) without a model.
  */
 

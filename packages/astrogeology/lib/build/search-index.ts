@@ -8,8 +8,8 @@
  *   The trie stores no ancestry (nomenclature has no containment graph).
  *   It gives the app a prefix walk over names with the feature's id and position as payload.
  *
- *   The tokenizer lives in `#search/tokens`, the platform-free half an app
- *   bundles. the build calls the same one.
+ *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles.
+ *   The build calls the same one.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie"

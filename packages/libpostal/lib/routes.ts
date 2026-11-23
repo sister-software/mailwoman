@@ -194,7 +194,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 
 		try {
 			const raw = c.req.raw.body ? await c.req.raw.text() : ""
-			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for types only. a runtime import would be a new dependency.
+			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for types only. A runtime import would be a new dependency.
 			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
 
 			if (typeof parsed === "object" && parsed) {

@@ -84,7 +84,7 @@ export const DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The hazard there's unknown.
+	 * The hazard is unknown.
 	 * Never report it as low.
 	 */
 	"outside_authority_footprint",
@@ -128,10 +128,12 @@ export interface AuthorityDesignationRouteOptions {
 /**
  * Builds the route against one sealed layer.
  *
- * The reader's constructor throws when a manifest refers to a different layer. an
- * empty coverage table or a missing footprint row.
- * Without that check, the layer would never fire.
- * Its silence would look like an unmapped region.
+ * The constructor checks the manifest's layer identifier, the extent table's
+ * footprint rows, and the coverage table's entries.
+ * It throws if the identifier differs, the extent table lacks exactly one footprint row,
+ * or the coverage table is empty.
+ *
+ * Without these checks, the layer might never fire, and its silence would look like an unmapped region.
  */
 export function createAuthorityDesignationRoute(options: AuthorityDesignationRouteOptions): AuthorityDesignationRoute {
 	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })

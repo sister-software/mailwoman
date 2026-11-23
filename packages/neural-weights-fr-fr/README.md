@@ -131,7 +131,7 @@ card records the full corpus + recipe provenance.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there's unmeasured.
+  and their quality remains unmeasured.
 
 ## Attribution
 

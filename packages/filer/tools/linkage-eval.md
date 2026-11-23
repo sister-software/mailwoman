@@ -11,11 +11,11 @@ Two builds run over the same authored corpus:
 - `control` keeps the disclosures. It must score perfectly, proving that the harness reads a surface the truth can reach.
 
 Truth groups registrants whose holding-company names canonicalize to the same value using the builder's `mintFamilyID`
-rule. The scored unit is the registrant rather than the FRN: FRNs sharing one `bdc_provider_id` are one legal entity and
-mustn't appear as conflicting truth identities.
+rule. The scored unit is the registrant rather than the FRN. FRNs sharing one `bdc_provider_id` represent one legal entity,
+so the truth groups them together.
 
-Management-company families are excluded from truth and prediction. Operational control isn't ownership, that field isn't
-withheld, and allowing it to answer an ownership question would leak information from outside the experiment. The
+Management-company families are excluded from truth and prediction. Operational control differs from ownership. The
+corpus retains this field. This field would leak information from outside the experiment if used to answer an ownership question. The
 corpus contains a shared-management-company pair so this exclusion is exercised rather than theoretical.
 
 The authored cases, input projections, and truth construction live in `linkage-corpus.ts`. `linkage-eval.ts` owns only

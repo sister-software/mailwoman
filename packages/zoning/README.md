@@ -85,7 +85,7 @@ level that no row in the data uses yet.
 
 ## Three measured source behaviors a builder has to know
 
-### Hole roles come from ring ORIENTATION, and clockwise is the exterior
+### Hole roles come from ring orientation, and clockwise is the exterior
 
 This is the inverse of RFC 7946's convention, and it is the one property of this source that silently produces
 a well-formed wrong answer. These figures cover the whole national export (85,330 features, 93,483 rings):

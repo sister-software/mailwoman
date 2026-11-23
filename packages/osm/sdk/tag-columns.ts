@@ -8,13 +8,13 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
  */
 
 /**
- * Tag keys gdal's `osmconf.ini` promotes to real OGR fields, per layer: a promoted key is a bare column
+ * Tag keys GDAL's `osmconf.ini` promotes to real OGR fields, per layer: a promoted key is a bare column
  * and is removed from that layer's `other_tags` hstore, so an hstore lookup answers NULL for it.
  */
 export type PromotedKeysByLayer = Readonly<Record<string, ReadonlySet<string>>>
 
 /**
- * Ogrsql column aliases can't contain `:` — launder it the same way gdal's own
+ * OGRSQL column aliases cannot contain `:` — launder it the same way GDAL's own
  * `attribute_name_laundering` would (`tower:type` -> `tower_type`).
  */
 export function tagAlias(key: string): string {
@@ -59,7 +59,7 @@ export interface TagRuleLike {
  * Throws if any rule in `rules` includes a key or value outside {@link SAFE_TAG_TOKEN}, called at
  * the top of each SQL builder so a hostile rule table is refused before any string concatenation.
  *
- * `label` names the refusing builder in the error.
+ * `label` names the builder that rejects the rule in the error.
  */
 export function assertSafeTagRules(rules: readonly TagRuleLike[], label: string): void {
 	for (const rule of rules) {

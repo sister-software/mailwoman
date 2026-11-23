@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Engine interface + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
- *   lives here. the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
+ *   Engine interface and the `ComponentTag` → libpostal-label mapping. Libpostal-specific knowledge
+ *   lives here. The engine yields raw Mailwoman matches (a `ComponentTag` classification plus covered
  *   text) and {@link toLibpostalComponents} serializes them to libpostal's ordered `[{label,
  *   value}]` shape.
  */

@@ -6,8 +6,9 @@
  * (`decodeSegmentationsKBest`), the pick policy (`pickByStreetEvidence`),
  * and an injected street-name index (`StreetLocalityEvidence`).
  *
- * Three properties make it golden-safe: the rerank fires only on an anchorless
- * fragment, the class it was measured on.
+ * Three properties make it golden-safe.
+ * The rerank fires only on an anchorless fragment from the input class used in measurement.
+ *
  * The winning segmentation's street tokens are spliced into the argmax tree rather than replacing it,
  * because the span head decodes locality/region/postcode far worse than the BIO argmax head.
  *

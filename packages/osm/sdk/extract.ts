@@ -3,17 +3,20 @@
 
 /**
  *   Stream rooftop address records out of a Geofabrik `.osm.pbf` extract via gdal/ogr2ogr —
- *   the same external-geo-CLI pattern `@mailwoman/tiger` uses for shapefiles. gdal's
- *   OSM driver resolves node and way/polygon geometries for us, so a building tagged
+ *   the same external-geo-CLI pattern `@mailwoman/tiger` uses for shapefiles.
+ *
+ *   GDAL's OSM driver resolves node and way/polygon geometries for us, so a building tagged
  *   with `addr:housenumber` (the dominant DE shape) becomes a point via its centroid —
  *   we don't hit the pure-JS "ways need a node-location cache" wall.
  *
- *   Address tags live in the driver's `other_tags` hstore. we pull them with ogrsql `hstore_get_value`
- *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers.
+ *   Address tags live in the driver's `other_tags` hstore.
+ *   We pull them with ogrsql `hstore_get_value` over the `points` (nodes)
+ *   and `multipolygons` (building ways/relations) layers.
  *   `addr:interpolation` ways are intentionally not read here.
  *
- *   The rooftop tier is point-first. explicit interpolation is a separate,
- *   confidence-restricted tier (never synthesize a number line from scattered points).
+ *   The rooftop tier is point-first.
+ *   Explicit interpolation is a separate, confidence-restricted tier
+ *   (never synthesize a number line from scattered points).
  */
 
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
@@ -29,7 +32,9 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point has no street tag (the association gap. Counted rather than written).
+	 * `addr:street` — null when the point has no street tag.
+	 *
+	 * The extractor counts this association gap rather than writing it.
 	 */
 	street: string | null
 	postcode: string | null

@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The selected feature as a definition list: what the archive records about it,
- *   in the archive's own terms, with the source identifier.
+ * The selected feature as a definition list: what the archive records about it,
+ * in the archive's own terms, with the source identifier.
  *
- *   Semantic html so a screen reader gets the same record a sighted reader does.
+ * Semantic HTML gives a screen reader the same record that a sighted reader sees.
  *
- *   It appears in `<MapSheet>` and doesn't create a separate panel.
- *   The glass, the position beside the control column, the phone treatment
- *   and the close button were all copied here once.
+ * `FeaturePanel` renders inside `<MapSheet>`, so it uses the same glass,
+ * control-column position, mobile treatment and close button.
+ * Changes to the shared material update the panel's layout.
  *
- *   A copy of a material drifts from it the first time the material changes.
  */
 
 import { MapSheet } from "@mailwoman/react/map/chrome/MapSheet"

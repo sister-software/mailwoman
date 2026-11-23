@@ -37,9 +37,10 @@ import {
 const recognizer = createRecognizer([postal])
 
 /**
- * Whether libaddressinput states a postcode syntax for `countryCode`.
+ * Returns whether libaddressinput states a postcode syntax for `countryCode`.
  *
- * It is false for a country the dataset records no postcode system for, as for the United Arab Emirates.
+ * The result is false when the dataset records no postcode system for the country,
+ * as for the United Arab Emirates.
  */
 export function statesPostcodeSyntax(countryCode: string): boolean {
 	return Object.hasOwn(COUNTRY_POSTCODE_FORMAT_SOURCES, countryCode.toUpperCase())
@@ -104,7 +105,8 @@ export function hasPostcodeForm(text: string, countryCode: string): boolean {
 }
 
 /**
- * The postcode in `value` when the whole value has `countryCode`'s form, else null.
+ * Returns the postcode in `value` when the whole value has `countryCode`'s form.
+ * Otherwise, it returns `null`.
  *
  * The country-code prefix the layout prints (`MD-` in `MD-2001`) is removed from the value,
  * because the layout prints it again around the postcode component.

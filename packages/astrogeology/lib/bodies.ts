@@ -39,7 +39,7 @@ const metresPerDegree = (radiusKm: number): number => (2 * Math.PI * radiusKm * 
  * The two bodies the pipeline builds, keyed by id.
  *
  * The reference bodies, control networks and longitude conventions are the ones
- * the usgs nomenclature shapefiles declare.
+ * the USGS nomenclature shapefiles declare.
  * The radii come from `@mailwoman/spatial`, so a distance on either body scales
  * by the same number the app measures with.
  */

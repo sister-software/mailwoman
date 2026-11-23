@@ -15,13 +15,13 @@ sidecar, `ANALYZE`, an integrity check, and `VACUUM`).
 The convention store is queried **on demand** — one indexed lookup per WOF id, memoized — rather than
 paged into runtime memory as a growing dictionary. That's deliberate: it's the counter to the pattern
 where a geocoder accretes giant in-memory dictionaries with no provenance, then blacklists of poison
-entries so the 99% case keeps resolving (trivia that reads as maturity and is really the
-architecture conceding it can't generalize). Two rules fall out of that and are enforced here:
+entries so the common case keeps resolving. That pattern indicates that the strategy or model
+needs correction. Two rules follow from this design and are enforced here:
 
 - **Every row stores `source` provenance** — where it came from / why it exists. (We don't store a
   literal "weight"; the point is that what each entry is responsible for stays _visible_ and
   accountable rather than that there's a numeric column.)
-- **A convention that references a strategy this build doesn't register is rejected at BUILD time, loudly**
+- **A convention that references a strategy this build doesn't register is rejected during the build**
   (and, defensively, surfaced as a one-time `console.warn` at dispatch rather than silently skipped).
 - A convention that starts needing a **blacklist of poison entries** is a signal to fix the strategy
   or the model rather than to grow the list.

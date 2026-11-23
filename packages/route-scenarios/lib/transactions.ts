@@ -87,7 +87,7 @@ export interface TransactionRow {
 	calendarMonth: string
 	baseCashFlow: MinorUnits
 	/**
-	 * Construction the case doesn't pay, such as a leased segment's lines.
+	 * Construction costs the case doesn't pay, such as a leased segment's lines.
 	 */
 	avoidedConstruction: MinorUnits
 	/**

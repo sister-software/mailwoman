@@ -10,8 +10,8 @@
  *   They're the verbatim stdout of the system `ogr2ogr` (gdal 3.8.4) run against
  *   `fixtures/subvenue.osm` with the SQL {@link buildSubVenueSQL} produces, captured 2026-08-04.
  *
- *   That's what makes the decoder test meaningful: it decodes bytes gdal emitted,
- *   including the per-layer promoted/hstore split that the module docstring turns on.
+ *   The decoder test is meaningful because it decodes bytes GDAL emitted, including the
+ *   per-layer promoted/hstore split that the module docstring turns on.
  *
  *   Reproduce the capture with:
  *
@@ -42,8 +42,7 @@ test("parseOSMHstore: decodes GDAL's quoted-pair rendering", () => {
 })
 
 test("parseOSMHstore: a comma INSIDE a value does not split the pair", () => {
-	// The reason this is a scanner and not a `.split(",")`.
-	// Real OSM names can contain commas.
+	// A scanner is required because real OSM names can contain commas.
 	expect(parseOSMHstore(`"name"=>"Terminal 1, Departures","aeroway"=>"terminal"`)).toEqual({
 		name: "Terminal 1, Departures",
 		aeroway: "terminal",

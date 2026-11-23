@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The recognizer the pipeline reads, `computeQueryShape` of `@mailwoman/postcode/recognizer/query-shape`,
- *   against the frozen output of the legacy classifier: the six structural fields and `knownFormats`
- *   on every case of `@mailwoman/recognizer`'s fixture, then the family's own contracts.
+ *   The test compares the recognizer the pipeline reads, `computeQueryShape` from
+ *   `@mailwoman/postcode/recognizer/query-shape`, with the frozen output of the legacy classifier.
+ *
+ *   It checks the six structural fields and `knownFormats` on every case of
+ *   `@mailwoman/recognizer`'s fixture, then checks the family's own contracts.
  *
  *   The fixture's cases include the golden inputs, the legacy behaviors that look accidental,
  *   generated inputs dense in postcode shapes and PO box leaders, and gauntlet inputs.

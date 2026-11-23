@@ -12,7 +12,8 @@
  *   Therefore, the guard needs no committed helper.
  *
  *   It runs against the compiled CLI (`out/cli/main.js`) because that's what ships
- *   and what the bin points at. the suite skips when the tree hasn't been built.
+ *   and what the bin points at.
+ *   The suite skips when the tree hasn't been built.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

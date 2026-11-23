@@ -19,11 +19,13 @@ export interface PairwiseGroupingScore {
 	 */
 	truePositivePairs: number
 	/**
-	 * Pairs the prediction puts together that the truth partition doesn't.
+	 * False positive pairs are pairs that the prediction puts together
+	 * while the truth partition separates them.
 	 */
 	falsePositivePairs: number
 	/**
-	 * Pairs the truth partition puts together that the prediction doesn't.
+	 * False negative pairs are pairs that the truth partition puts together
+	 * while the prediction separates them.
 	 */
 	falseNegativePairs: number
 	/**

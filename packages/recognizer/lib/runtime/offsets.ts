@@ -56,8 +56,9 @@ let scratch = new Int32Array(256)
 /**
  * Builds the map for `text`, whose UTF-8 encoding is `byteLength` bytes.
  *
- * Text whose encoding is as long as the text itself is ASCII, because every other
- * codepoint takes more bytes than code units, and its offsets are equal.
+ * A text whose encoding is as long as the text itself contains only ASCII,
+ * because every other codepoint takes more bytes than code units.
+ * Its byte and code-unit offsets are equal.
  * The map for other text costs one pass over the text.
  *
  * The map is valid until the next call of this function.

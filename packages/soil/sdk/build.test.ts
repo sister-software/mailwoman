@@ -4,7 +4,7 @@
 /**
  *   The fixture rung: a real sealed artifact from hand-built geometry, then read back.
  *
- *   these are the only place three OF the four absences can be exercised.
+ *   These fixtures are the only place where three of the four absences can be exercised.
  *   Every Iowa survey area is fully digitized, so `notcom`, `notpub` and access-denied map
  *   units never appear in the live build — which means the fixture is what pins `nodata_share`,
  *   and what proves a `notcom` polygon doesn't arrive as a low capability class.

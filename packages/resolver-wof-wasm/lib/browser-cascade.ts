@@ -51,7 +51,7 @@ export interface MailwomanLookupLike {
 			lon: number
 			score: number
 			/**
-			 * True when the candidate's name, abbreviation, or an alias exactly matched
+			 * Whether the candidate's name, abbreviation, or an alias exactly matched
 			 * the query rather than partially.
 			 */
 			exactMatch?: boolean | null

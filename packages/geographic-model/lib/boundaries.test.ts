@@ -5,10 +5,11 @@
  *   The two constraints the boundary record (`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`)
  *   hands this package that are checkable before any ontology record exists.
  *
- *   Both are written to keep failing on a violation as the package grows, rather than to
- *   describe today's empty state: the first reads `@mailwoman/core`'s manifest, so it answers
- *   the same question after the schema and the compiler land. the second reads whatever the
- *   public entry point exports, so a later ordering API trips it on the commit that adds it.
+ *   Both are written to keep failing on a violation as the package grows, rather than
+ *   to describe today's empty state: the first reads `@mailwoman/core`'s manifest,
+ *   so it answers the same question after the schema and the compiler land.
+ *   The second reads whatever the public entry point exports, so a later ordering
+ *   API trips it on the commit that adds it.
  */
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"

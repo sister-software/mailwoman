@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's iana timezone.
+ *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's IANA timezone.
  *
  *   ```sh
  *   mailwoman-timezone build --geojson combined-with-oceans.json --out timezone.db

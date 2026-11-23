@@ -3,10 +3,12 @@
 
 /**
  *   The whole build chain over tiny fixtures with no network: five Moon rows through
- *   normalization, ndjson, tippecanoe and the metadata block. a synthetic DEM through
- *   the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *   normalization, ndjson, tippecanoe and the metadata block.
  *
- *   The tools (`tippecanoe`, `pmtiles`, gdal) are the lab's. a missing one fails with its name in the error.
+ *   A synthetic DEM passes through the terrarium encode, the MBTiles writer, overviews and PMTiles.
+ *
+ *   The tools (`tippecanoe`, `pmtiles`, gdal) are the lab's.
+ *   A missing tool fails with its name in the error.
  *
  *   `fixtures/dem-fixture.tif` was written once with gdal's Python bindings:
  *   1024×512 Int16 over the whole globe in epsg:4326, deflate-compressed,

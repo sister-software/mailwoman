@@ -7,7 +7,7 @@
  *   the search artifact and the manifest under a versioned prefix on the public bucket,
  *   then fetch each public URL and report its status.
  *
- *   the version is part OF the KEY so a republish never overwrites an artifact a
+ *   the version is part of the key so a republish never overwrites an artifact a
  *   deployed app pins: the manifest's build date compacted to `yyyymmdd` plus the first
  *   eight hex characters of a SHA-256 over every output's checksum.
  */

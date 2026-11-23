@@ -9,8 +9,9 @@
  *   The extractor matches features against an and/or tag-rule table and yields
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
- *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two
- *   differences are the predicate (telecom tags rather than `addr:housenumber`) and the match
+ *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly.
+ *
+ *   The two differences are the predicate (telecom tags rather than `addr:housenumber`) and the match
  *   fan-out (a feature can only satisfy the first rule in table order — `man_made` appears as a
  *   key in four rules and `telecom` in two. Every rule sharing a key requires a different value,
  *   so a real feature has one value per key, can satisfy at most one rule regardless of table order).
@@ -18,9 +19,9 @@
  *   Tag disjunctions/conjunctions live here rather than in the taxonomy (decision 2):
  *   `CategoryRecord.osmTag` is a single scalar the Overpass emitter consumes
  *   (`poi-taxonomy/overpass.ts` hard-splits on one `=`), so a disjunction across two tags
- *   (telephone exchange) or a conjunction with a qualifier tag (street cabinet, comms mast) can't
- *   live there. {@link OSMPOITagRule.all} is a conjunction of `[key, value]` pairs. a disjunction
- *   is expressed as multiple rules sharing a `categoryID` — see {@link TELECOM_TAG_RULES}.
+ *   (telephone exchange) or a conjunction with a qualifier tag (street cabinet, comms mast)
+ *   can't live there. {@link OSMPOITagRule.all} is a conjunction of `[key, value]` pairs.
+ *   A disjunction is expressed as multiple rules sharing a `categoryID` — see {@link TELECOM_TAG_RULES}.
  *
  *   Promoted vs. hstore tag columns: gdal's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini` on this box)
  *   promotes a different key list per layer to real OGR fields — selected as bare columns —
@@ -31,8 +32,8 @@
  *   exactly as `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} stores both lists,
  *   because reading a promoted key through `hstore_get_value` returns NULL for every
  *   feature of that layer — a silent empty result rather than an error.
- *   A custom `OSM_CONFIG_FILE` that un-promotes a key on either list would break the
- *   bare-column assumption. not a concern for the shipped default.
+ *   A custom `OSM_CONFIG_FILE` that un-promotes a key on either list would break the bare-column assumption.
+ *   That's not a concern for the shipped default.
  *
  *   `POISourceRow` is declared here and the `mailwoman` gazetteer pipeline imports it:
  *   `@mailwoman/osm` is a dependency OF the top-level `mailwoman` package,

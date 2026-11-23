@@ -4,10 +4,11 @@
 /**
  * @file Questions asked of `sqlite_master`.
  *
- *   its own subpath on purpose — do not fold this into the package barrel. `@mailwoman/sqlite`'s root export
- *   reaches `node:sqlite`, and the docs demo bundles this package for the browser. importing the barrel to
- *   ask whether a table exists dragged the builtin into that graph. The split is what keeps these three
- *   pure-SQL questions reachable from a bundled consumer.
+ *   This module has its own subpath on purpose. Do not fold it into the package barrel. The
+ *   `@mailwoman/sqlite` root export reaches `node:sqlite`, and the docs demo bundles this package for
+ *   the browser. A consumer that imports the barrel to ask whether a table exists would pull the
+ *   builtin into that graph. The separate subpath keeps these three pure-SQL questions reachable from
+ *   a bundled consumer.
  */
 
 import type { DatabaseClient } from "#client"

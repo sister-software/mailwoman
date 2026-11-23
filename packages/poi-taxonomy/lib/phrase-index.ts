@@ -6,8 +6,8 @@
  *   (`lookup-core.ts` for categories, `brands-lookup-core.ts` for brands),
  *   plus the deterministic string order their tie-breaks share.
  *
- *   Zero node imports, so it stays bundler-safe.
- *   Not exported via a subpath of its own.
+ *   It imports no Node modules, so it stays bundler-safe.
+ *   The package doesn't export it through a subpath of its own.
  */
 
 /**

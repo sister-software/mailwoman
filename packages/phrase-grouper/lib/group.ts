@@ -11,7 +11,7 @@
  *   The reconciler (Stage 5) selects the best non-overlapping subset.
  *
  *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase
- *   grouper for the design rationale. and `phrase-grouper/rules.ts` for per-rule documentation.
+ *   grouper for the design rationale and `phrase-grouper/rules.ts` for per-rule documentation.
  */
 
 import type { LocaleHint, PhraseProposal } from "@mailwoman/core/pipeline"

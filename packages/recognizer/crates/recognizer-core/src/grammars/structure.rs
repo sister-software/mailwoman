@@ -8,7 +8,8 @@
 //!
 //! The legacy tokenizer skips whitespace, punctuation and connectors where a token could start, and starts a token at
 //! any other character. The first character's class decides what the token may contain, and the token runs until
-//! whitespace, punctuation, or a character its first character's class does not admit. Connectors stay inside it.
+//! whitespace, punctuation, or a character that the first character's class does not admit. Connectors stay inside the
+//! token.
 //!
 //! * A Latin letter or a digit starts a token that continues over Latin letters, digits and connectors.
 //! * A CJK, Cyrillic or Arabic character starts a token that continues over its own class and connectors.
@@ -19,7 +20,7 @@
 //! characters is one `token.skip` piece.
 //!
 //! The class of a token and its script are not regular: a script is the majority of the codepoints' scripts, with a tie
-//! decided by which appeared first. The engine's structure pass computes both for each token from the tables in
+//! decided by the first script to appear. The engine's structure pass computes both for each token from the tables in
 //! `charset`, which also build this grammar's classes.
 //!
 //! # Segments

@@ -10,8 +10,8 @@
  *   the package renders them, react-map-gl owns the add/remove lifecycle.
  *
  *   Each overlay's `visible` flag flips the layers' `visibility` layout property —
- *   the declarative control a layer-toggle control drives in a later phase. node-import safety:
- *   imports `react-map-gl/maplibre` — reachable only via `@mailwoman/react/map`.
+ *   the declarative control a layer-toggle control drives in a later phase.
+ *   Node-import safety: imports `react-map-gl/maplibre` — reachable only via `@mailwoman/react/map`.
  */
 
 import { Fragment, type ReactNode } from "react"

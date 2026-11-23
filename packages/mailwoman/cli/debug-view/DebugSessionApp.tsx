@@ -330,8 +330,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			if (!resources || phase === "busy" || !query) return
 
 			setPhase("busy")
-			// The previous attempt's failure is stale the moment a new one starts. leaving it
-			// up through the busy window reads as if this query had already failed.
+			// A previous error belongs to the earlier query.
+			// Clear it before the new query runs, so the busy screen doesn't imply
+			// that the new query already failed.
 			setErrorNote(null)
 
 			const requestID = ++runRequestRef.current

@@ -51,13 +51,14 @@ export interface LoadSlimOpts {
 }
 
 /**
- * Loads + opens the slim WOF DB.
+ * Loads and opens the slim WOF database.
  *
  * Returns `{ db, sqlite3 }`.
  * `db` is the open Database; `sqlite3` is the runtime handle
  * (in case the caller wants to call other OO1 APIs on it).
  *
- * Caller is responsible for disposing the returned database with {@link disposeSlimWOFDatabase} when done.
+ * The caller must dispose of the returned database with {@link disposeSlimWOFDatabase}
+ * when it is no longer needed.
  */
 export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source

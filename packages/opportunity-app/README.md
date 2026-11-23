@@ -1,11 +1,11 @@
 # `@mailwoman/opportunity-app`
 
-The interactive surface of the building and shared-route opportunity map in
+The interactive surface of the building and shared-route opportunity map described in
 [#2289](https://github.com/sister-software/mailwoman/issues/2289). It draws the building, route and district
-collections that `@mailwoman/opportunity-map` computes for the synthetic Example District, recalculates a selection
-of buildings through `selectionEconomics` under eight scenario controls, and links the selection to its dossier parts
-and to its cost and value report. The application is private and isn't deployed: it has no `wrangler.toml`, no
-deploy target and no service worker. Every position, route path and economic input it shows is synthetic.
+collections that `@mailwoman/opportunity-map` computes for the synthetic Example District. It recalculates a selection
+of buildings through `selectionEconomics` under eight scenario controls and links the selection to its dossier parts
+and its cost and value report. The application is private and isn't deployed. It has no `wrangler.toml`, deploy target
+or service worker. Every position, route path and economic input it shows is synthetic.
 
 ## Commands
 

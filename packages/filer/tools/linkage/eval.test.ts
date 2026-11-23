@@ -63,7 +63,8 @@ const MANAGEMENT_FAMILY_ID = "management_company_name:timberline management"
 const INJECTED_FAMILY_ID = "cik:0001234567"
 
 /**
- * The eval run that the tests share, because each run builds two databases.
+ * The tests share one eval run.
+ * Each run builds two databases.
  */
 let cached: Promise<FilerLinkageEvalResult> | null = null
 

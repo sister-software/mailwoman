@@ -5,7 +5,7 @@
  *   The postcode spans of a line, from the `postal` family.
  *
  *   This is the one finder of postcode-shaped spans.
- *   The serving side reads it here.
+ *   The serving side reads those spans here.
  *
  *   The training encoder reads the same artifact through `recognizer-core` in
  *   `packages/mtf/crates/mtf-channels/src/finders.rs`, with the same order and the same reduction.
@@ -14,7 +14,7 @@
  *   `postalSpans` in `./recognizer/postal/readers.ts` states the order of the candidates,
  *   and the family's definition states the case rule: every shape matches either case.
  *
- *   The engine loads on the first call.
+ *   The engine loads when the function receives its first call.
  */
 
 import type { CountrySet } from "@mailwoman/codex/country/sets"

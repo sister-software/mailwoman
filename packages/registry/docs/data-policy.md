@@ -6,8 +6,8 @@ source update moves through the repository.
 
 ## Profiles
 
-A profile is a set of pinned sources with an identifier such as `open-2026-11`. An artifact's header states its profile, and every
-predicate in this package answers for one profile. The built profile is `open-2026-11`.
+A profile is a set of pinned sources with an identifier such as `open-2026-11`. An artifact's header states
+its profile, and every predicate in this package answers for one profile. The built profile is `open-2026-11`.
 
 | Profile             | Sources                                                | Where                                |
 | ------------------- | ------------------------------------------------------ | ------------------------------------ |
@@ -28,7 +28,7 @@ marker the server stated, and the publisher's statement of terms with the page i
 | OurAirports                | "All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use." (https://ourairports.com/data/)                                          | yes     |
 | UN Statistics Division M49 | "personal, non-commercial use, without any right to resell or redistribute them or to compile or create derivative works therefrom" (https://www.un.org/en/about-us/terms-of-use) | no      |
 
-The UN crosswalk is recorded under `$notElected` in the lock. The repository's rule
+The lock records the UN crosswalk under `$notElected`. The repository's rule
 (`packages/corpus/AGENTS.md`, "License election") is that a grant enumerates its rights and an omission
 is neither permission nor prohibition. Here the terms refuse redistribution and derivative works in their
 own words, so the source stays unpinned and the compiler reads the two elected sources only.
@@ -51,8 +51,8 @@ pinned bytes. At the pinned publication:
   when the code is a current alpha-2 entry, `source-extension` for a code such as `XK`, `unstated` when
   the column is empty. The `airport-located-in-country` relation holds only the first kind.
 
-A miss means `not-found-in-snapshot`: the source holds no such code. It isn't a claim that the issuing
-authority never assigned it.
+A miss means `not-found-in-snapshot`: the source holds no such code. It doesn't claim that the issuing
+authority never assigned the code.
 
 OurAirports and Wikidata disagree on the country list in a way the coverage declaration records rather
 than hides: OurAirports lists `XK`, `XP` and `ZZ`, which are not ISO codes, and lists no entry for `AX`,

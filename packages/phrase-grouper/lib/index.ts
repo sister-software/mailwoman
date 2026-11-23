@@ -11,9 +11,9 @@
  *
  *   Stage 5 consumes the proposals as boundary candidates for joint decoding.
  *
- *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation,
- *   capitalization, hyphenation, format-shape repetition) — never place-name dictionaries.
- *   v0.5.0 ships the rule-based v1. learned 1-2M-param span proposer reserved for v0.5.1.
+ *   The rules use only universal structural cues (proximity, punctuation, capitalization,
+ *   hyphenation, format-shape repetition) — never place-name dictionaries. v0.5.0 ships
+ *   the rule-based v1, and a learned 1-2M-parameter span proposer is reserved for v0.5.1.
  *
  *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase
  *   grouper for the design rationale and `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx`

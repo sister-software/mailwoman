@@ -3,9 +3,9 @@
 
 /**
  * Environment variables name the WOF SQLite artifacts this resolver opens
- * and the development weights the overlay
- *   linker materializes.
- *   CLI flags (`--resolve-db`, …) override these at the call site.
+ * and the development weights overlay that the linker materializes.
+ *
+ * CLI flags (`--resolve-db`, …) override these values at the call site.
  */
 
 import { $public as corePublic, liveEnv } from "@mailwoman/core/env"

@@ -97,7 +97,8 @@ export const TIER_SCOPE_PREFIX = "tier:"
 /**
  * The schema of a platform license key payload.
  *
- * A field it doesn't define is dropped, and the Rust verifier ignores it too.
+ * The schema drops fields it doesn't define.
+ * The Rust verifier ignores those fields too.
  */
 export const LicenseKeyPayloadSchema = z.object({
 	/**
@@ -203,7 +204,8 @@ export const TRAINING_GRANT_ID_PATTERN = /^mtg_[0-9a-f]{24}$/u
 /**
  * The schema of a commercial training grant payload.
  *
- * A field it doesn't define is dropped, and the Rust verifier ignores it too.
+ * The schema drops fields it doesn't define.
+ * The Rust verifier ignores those fields too.
  */
 export const TrainingGrantPayloadSchema = z.object({
 	v: z.literal(1),

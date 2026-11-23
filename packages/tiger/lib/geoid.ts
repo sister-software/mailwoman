@@ -203,7 +203,7 @@ export type FIPSCongressionalDistrictCode = Tagged<string, "FIPSConressionalDist
 // #region GeoID Parsing Setup
 
 /**
- * A part of a GeoID to it's respective name.
+ * A part of a GeoID and its corresponding name.
  *
  * @internal
  */

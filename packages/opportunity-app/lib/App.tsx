@@ -5,8 +5,8 @@
  *   The opportunity map application.
  *
  *   It holds three pieces of state: the selected buildings, the applied control values and the map scale.
- *   Every value on the page comes from one `opportunityView` of the Example
- *   District for those values and that selection.
+ *   Every value on the page comes from one `opportunityView` of the Example District,
+ *   using those control values and that selection.
  *
  *   The keyboard path runs in document order: the scale control, the building list, the clear button,
  *   the map, the figures and their evidence links, the scenario controls, and the evidence itself.

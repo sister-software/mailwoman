@@ -5,7 +5,8 @@
  *   One nomenclature feature as represented in every artifact: east-positive longitude
  *   in −180..180, latitude in −90..90, the stable id from the source's feature link.
  *
- *   The schema is the interface between the build and the app. a value outside it never leaves the build.
+ *   The schema is the interface between the build and the app.
+ *   A value outside it never leaves the build.
  */
 
 import { z } from "zod"

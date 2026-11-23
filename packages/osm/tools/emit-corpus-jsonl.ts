@@ -97,8 +97,8 @@ async function readOutline(path: string): Promise<(lon: number, lat: number) => 
 }
 
 const own = values.within ? await readOutline(values.within) : null
-// A neighbor's outline can be drawn more finely than the country's own, so a point inside
-// a neighbor is refused even where a coarse own outline also contains it.
+// A neighbor's outline can be more precise than the country's own, so reject a point
+// inside a neighbor even when the coarser own outline also contains it.
 const neighbors = await Promise.all((values.without ?? []).map(readOutline))
 
 const within =
@@ -137,8 +137,8 @@ const stats = await writeOSMCorpusJSONL(pbf, out, {
 	dependentLocalityOf: namerFor(dependentLevels),
 })
 
-// The sidecar is the first stage of the acquisition funnel: what the PBF held and what the
-// extract wrote, beside the receipts that identify the PBF's bytes and the outline used.
+// The sidecar records what the PBF held and what the extract wrote.
+// It sits beside the receipts that identify the PBF's bytes and the outline used.
 await writeLocalJSONFile(
 	{
 		pbf,

@@ -5,7 +5,7 @@
  *   `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]` — the whole chain
  *   for one body over its locked sources: rows → features → ndjson → tippecanoe → metadata.
  *
- *   DEM → hillshade → metadata. the search artifact. the manifest.
+ *   DEM → hillshade → metadata, plus the search artifact and the manifest.
  *   Refuses when the lock lacks a source: the build reads pins, never the network.
  */
 

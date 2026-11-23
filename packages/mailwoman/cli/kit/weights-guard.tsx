@@ -4,17 +4,19 @@
 /**
  *   The CLI weights guard (plan 3): wraps model-requiring commands the way a router AuthGuard wraps routes.
  *
- *   Probes weight resolution. when weights are absent on an interactive stdin, offers a
- *   one-keystroke download into the user weights cache (`~/.cache/mailwoman/weights`).
+ *   Probes weight resolution.
+ *   When weights are absent on an interactive stdin, it offers a one-keystroke download
+ *   into the user weights cache (`~/.cache/mailwoman/weights`).
+ *
  *   The user's `npm install` populates that npm prefix with their integrity, proxy and registry settings.
  *
  *   Results handed to the render prop:
  *
  *   - `"neural"` — weights resolve (pre-existing, or downloaded by this guard); render the real command.
- *   - `"declined"` — the user said no, the download failed, or `--degraded` was
- *     passed. the caller renders its degraded (encoder-less) mode.
- *   - `"unavailable"` — weights absent + non-interactive stdin and no flag. the caller
- *     keeps its legacy fallback chain (pre-v7 behavior interface).
+ *   - `"declined"` — the user said no, the download failed, or `--degraded` was passed.
+ *     The caller renders its degraded (encoder-less) mode.
+ *   - `"unavailable"` — weights are absent, stdin is non-interactive, and no flag was set.
+ *     The caller keeps its legacy fallback chain (pre-v7 behavior interface).
  *
  *   Installs `@latest` rather than pinning the CLI version.
  *   A lookup of `mailwoman/package.json` from A lookup of `mailwoman/package.json` from

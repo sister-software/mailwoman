@@ -124,8 +124,8 @@ export function createOSMAddressPointsRecipe(recipeOptions: OSMRecipeOptions = {
 				continue
 			}
 
-			// The request's `--region` is used when it holds the country.
-			// Otherwise the policy's first region is the country's own extract.
+			// Use the request's `--region` value when supplied.
+			// Otherwise, use the policy's first region as the country's own extract.
 			const region = named ?? regionOf(policy.regions[0]!)
 
 			if (!region) {
@@ -168,7 +168,8 @@ export function createOSMAddressPointsRecipe(recipeOptions: OSMRecipeOptions = {
 					locate: { field: "gjDownloadURL" },
 					md5Sidecar: false,
 					fileName: `${iso3}-ADM0.geojson`,
-					// geoBoundaries states a license per boundary, in the metadata the download URL is read from.
+					// geoBoundaries states a license per boundary.
+					// The metadata supplies the download URL.
 					license: "LicenseRef-geoBoundaries-per-boundary",
 				})
 

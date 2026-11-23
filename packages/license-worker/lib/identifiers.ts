@@ -55,7 +55,8 @@ export function newRefreshSecret(): string {
 }
 
 /**
- * The stored form of a refresh secret: the plaintext is shown once and compared by digest after.
+ * The stored form of a refresh secret.
+ * The plaintext is shown once, then compared by digest.
  */
 export async function secretDigest(text: string): Promise<string> {
 	// Copy the bytes into a plain ArrayBuffer.

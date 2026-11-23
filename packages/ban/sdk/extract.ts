@@ -11,11 +11,12 @@
  *   We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
  *   `.csv.gz` inputs are transparently gunzipped.
  *
- *   The columns are located BY name off the header row (never by fixed position)
+ *   The columns are located by name from the header row rather than by fixed position,
  *   so a future BAN schema addition can't silently shift the tuple.
  *   Values contain no embedded `;` (the dumps are uniform-arity — verified 23 fields
- *   across every département), so a plain split is both correct and fast. a literal `"`
- *   inside a field (rare) is kept verbatim, never treated as a CSV quote wrapper.
+ *   across every département), so a plain split is correct and fast.
+ *
+ *   A literal `"` inside a field (rare) is kept verbatim, never treated as a CSV quote wrapper.
  *
  *   Also reads `nom_ld` ("nom du lieu-dit"), the hamlet/place name filled on 6.94% of rows nationally —
  *   surfaced as {@link BANAddrRecord.lieuDit}, cleaned of the survey-documented junk/dup patterns
@@ -145,8 +146,7 @@ const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
  *
  * Of the 6.94% of BAN rows carrying a `nom_ld` value, ~6.6% of those are junk
  * or an exact duplicate of the commune name.
- * This filters them out so only the clean ~93.4% (~1.69M rows nationally)
- * survive to {@link BANAddrRecord.lieuDit}.
+ * This filter keeps the clean ~93.4% (~1.69M rows nationally) for {@link BANAddrRecord.lieuDit}.
  * Exported for testing.
  */
 export function cleanLieuDit(raw: string | null, commune: string | null): string | null {
@@ -219,8 +219,9 @@ export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGene
 		const street = row.nom_voie
 
 		if (!numero || !street) continue
-		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point — .
-		// Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
+		// `Number("")` returns finite zero.
+		// The non-empty coordinate check prevents an empty value from producing a bogus (0,0) point.
+		// The finite check catches other invalid values.
 		const lonStr = row.lon
 		const latStr = row.lat
 

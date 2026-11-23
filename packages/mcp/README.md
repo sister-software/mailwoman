@@ -1,6 +1,6 @@
 # @mailwoman/mcp
 
-An **MCP server** exposing [Mailwoman](https://mailwoman.post)'s parse/geocode/POI toolset to agents over stdio — no HTTP endpoint, just a subprocess an MCP client launches.
+An **MCP server** exposes [Mailwoman](https://mailwoman.post)'s parse, geocode and POI tools to agents over stdio. It has no HTTP endpoint. An MCP client launches it as a subprocess.
 
 ## Tools
 
@@ -16,9 +16,9 @@ An **MCP server** exposing [Mailwoman](https://mailwoman.post)'s parse/geocode/P
 | `mailwoman_filer_lookup`         | Reads the FCC filer identity crosswalk from a `filer.db` layer               | No                            |
 | `mailwoman_filer_family`         | Reads a corporate family's membership from a `filer.db` layer                | No                            |
 
-The four model-backed tools load the `en-US` weights and open a resolver on the first call that needs them rather than at
-startup. With neither `$MAILWOMAN_CANDIDATE_DB` nor a WOF distribution on the data root, that first call answers with
-the `mailwoman data pull candidate` fix instead of an internal resolver error.
+The server loads the `en-US` weights and opens a resolver when a model-backed tool first needs them. It doesn't
+load these resources at startup. If neither `$MAILWOMAN_CANDIDATE_DB` nor a WOF distribution exists on the data root,
+that first call returns the `mailwoman data pull candidate` fix instead of an internal resolver error.
 
 ## Config
 

@@ -40,12 +40,12 @@ interpretCountryOrAirportCode("AUS")
 canonicalSpelling(" aus ") // { value: "AUS", trimmed: true, uppercased: true }
 ```
 
-Every predicate is strict: canonical case and length, membership in the built profile. `canonicalSpelling`
-is the explicit step that trims and upper-cases, and it reports what it did. A miss means
+Every predicate requires canonical case and length, as well as membership in the built profile.
+`canonicalSpelling` is the explicit step that trims and upper-cases, and it reports what it did. A miss means
 `not-found-in-snapshot`: the source holds no such code, and the issuing authority may still have assigned
 it. `inspectArtifact` reads an artifact's profile, sources and coverage.
 
-Each subpath retains its own artifact and no other. `iso3166/alpha2` loads an 85-byte bitset;
+Each subpath retains only the artifact it needs. `iso3166/alpha2` loads an 85-byte bitset;
 `overlap/country-airport`'s `isCountryAirportCollision` loads the 2,197-byte collision bitset;
 `interpretCountryOrAirportCode` loads the two record artifacts (51 KB and 1.1 MB). The root entry
 re-exports the subpaths and decodes an artifact at its first call.

@@ -120,7 +120,7 @@ export interface StreetTableAnswer {
 	 */
 	alternatives: StreetTableHit[]
 	/**
-	 * True when the address states a postcode and no street of this name lies within reach of its point.
+	 * Whether the address states a postcode and no street of this name lies within reach of its point.
 	 */
 	postcodeDisagrees: boolean
 }

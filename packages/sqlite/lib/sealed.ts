@@ -27,9 +27,10 @@ import { assertUnsealedForWrite } from "#sealed/db"
  * Builders set `write: true` when working on UNsealed staging.
  * A sealed file raises `SealedArtifactError`.
  *
- * Together with `new DatabaseClient(path)` this is the whole set of ways a connection comes into being.
+ * Together with `new DatabaseClient(path)`, this function is one of the two
+ * ways a connection comes into being.
  * `DatabaseSync` is constructed in exactly one place, inside `DatabaseClient`,
- * so no caller holds a raw handle and no database ends up described by two schemas.
+ * so callers never hold a raw handle and no database is described by two schemas.
  */
 export async function openBuiltClient<DB = Database>(
 	path: PathBuilderLike,

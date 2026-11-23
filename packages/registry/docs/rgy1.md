@@ -1,10 +1,10 @@
 # RGY1: the registry artifact layout
 
-RGY1 is the binary container `@mailwoman/registry` ships its lookup tables in. This document is the
-normative layout. The Rust writer in `crates/registry-build`, the Rust reader in `crates/registry-core`
-and the TypeScript reader in `lib/rgy1/reader.ts` follow it, and `lib/rgy1/layout.test.ts` walks the
-committed fixture artifacts with its own byte reader against `test/fixtures/layout.json`, so agreement
-between the writer and a reader is never the only check.
+RGY1 is the binary container that `@mailwoman/registry` uses for its lookup tables. This document defines
+the normative layout. The Rust writer in `crates/registry-build`, the Rust reader in
+`crates/registry-core` and the TypeScript reader in `lib/rgy1/reader.ts` follow it. The independent byte
+reader in `lib/rgy1/layout.test.ts` walks the committed fixture artifacts against
+`test/fixtures/layout.json`, so the writer and a reader agreeing is never the only check.
 
 RGY1 is inspired by PIX1 (`docs/engineering/reference/pix1.ksy`) and shares no bytes with it. PIX1 sorts
 tuples by UTF-16 code units. RGY1 orders every table by a numeric key computed from the code's spelling, so

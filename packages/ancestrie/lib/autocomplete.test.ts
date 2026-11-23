@@ -3,7 +3,7 @@
 
 /**
  *   Tests partial last-token completion, complete-token shadowing, per-branch caps,
- *   deduplication, containment chains.
+ *   deduplication and containment chains.
  *   It also tests the robustness interface.
  */
 

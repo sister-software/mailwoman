@@ -122,8 +122,8 @@ const UNCACHED_ROUTES = new Set([CITY_MODEL_ROUTE, LANDMARK_MODEL_ROUTE])
 /**
  * The tile Worker's routes in match order, as path and handler.
  *
- * The order is the one the Worker has always matched in.
- * No two paths overlap, so every request matches one route whatever the order.
+ * The Worker evaluates these route matchers in this order.
+ * Their paths are disjoint, so reordering them leaves each matching request with the same handler.
  *
  * A new path that overlaps an earlier one needs a test that pins which route wins.
  */

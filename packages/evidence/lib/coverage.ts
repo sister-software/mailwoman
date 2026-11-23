@@ -48,9 +48,11 @@ export type CoverageBasis = z.infer<typeof CoverageBasisSchema>
 /**
  * Whether a coverage reading can support an exclusion.
  *
- * Absence is only supportable from a designated or surveyed basis (presence is supportable from any),
- * so callers building negative evidence must check this rather than `completeness` by itself
- * or an exclusion fires identically on a surveyed empty cell and on one we never surveyed.
+ * Absence is supportable only from a designated or surveyed basis.
+ * Presence is supportable from any basis.
+ *
+ * Callers building negative evidence must check this rather than `completeness` by itself.
+ * Otherwise, an exclusion would fire identically for a surveyed empty cell and for one we never surveyed.
  */
 export function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed

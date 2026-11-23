@@ -5,7 +5,7 @@
  *   Compares two weights caches staged by `stage.run.ts`.
  *
  *   The tool prints each cache's file and symlink counts, every relative path whose
- *   md5 differs or which only one cache holds, and the base package card's version,
+ *   md5 differs or that only one cache holds, and the base package card's version,
  *   corpus version and declared `model.onnx` md5.
  *   A symlink is hashed through its target, so a linked cache and a copied
  *   cache of the same files compare equal.

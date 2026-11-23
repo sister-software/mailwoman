@@ -4,8 +4,8 @@
 /**
  *   The country sets the coarse-placer dataset is drawn from.
  *
- *   `build-dataset.ts` samples them. the outlier builders consult them to keep
- *   in-map countries out of the `other` pool.
+ *   `build-dataset.ts` samples them.
+ *   The outlier builders consult them to keep in-map countries out of the `other` pool.
  *
  *   Every set is read from {@linkcode COARSE_CLASSES}, the model's label map,
  *   through the source each class's rows are drawn from.

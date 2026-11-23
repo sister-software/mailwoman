@@ -22,8 +22,8 @@ import type { FloodDatabase } from "#schema"
  * This product's Zone-1-as-absence design relies on that reading.
  * An artifact that answered `unknown` everywhere outside polygons would pass a polygon-only sample.
  *
- * The stride discipline — keys chosen before any geometry is read, deterministic
- * rather than random — is `strideSampleInteriorPoints`'s.
+ * `strideSampleInteriorPoints` chooses keys before reading geometry.
+ * This ordering makes the sample deterministic rather than random.
  */
 export function sampleAgreementPoints(
 	databasePath: PathBuilderLike,

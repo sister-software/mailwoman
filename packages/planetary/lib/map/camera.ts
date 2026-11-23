@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the camera goes when a feature is selected.
+ * Where the camera goes when a feature is selected.
  *
- *   The zoom is the inverse of the pipeline's declutter rule: a feature first
- *   appears at the zoom that its diameter determines.
- *   The camera lands one or two levels past that so the selected label is on
- *   screen with its neighbors rather than by itself.
+ * The zoom is the inverse of the pipeline's declutter rule: a feature first
+ * appears at the zoom that its diameter determines.
+ * The camera lands one or two levels past that depth so the selected label is on
+ * screen with its neighbors rather than by itself.
  */
 
 /**

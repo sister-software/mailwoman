@@ -36,7 +36,7 @@ await download.saveAs(destination)
 
 `withBrowserPage(options, callback)` handles a single-page session and returns
 `{ result, consoleErrors }`. It awaits the callback before closing the context and browser,
-including when the callback rejects. `createBrowserSession` also accepts `launchOptions`
+even when the callback rejects. `createBrowserSession` also accepts `launchOptions`
 and a `cdpEndpoint` for connecting to an existing Chromium instance. A CDP connection creates
 a separate context. It doesn't use the existing browser's logged-in tabs.
 

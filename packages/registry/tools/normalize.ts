@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Turns the pinned sources into the reviewable normalized JSON the compiler reads.
+ *   Turns the pinned sources into the normalized JSON that the compiler reads and reviewers can inspect.
  *
  *   Every record keeps the source's own identity (`entityID`), the code as the
  *   source spells it, and the source's status words.

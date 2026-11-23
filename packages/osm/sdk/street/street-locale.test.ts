@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build/probe consistency is the only interface the locale normalizer must hold:
- *   the OSM `addr:street` tag and the parser's `street` constituent must fold to the same key.
+ *   Build/probe consistency is the interface the locale normalizer must hold: the OSM
+ *   `addr:street` tag and the parser's `street` constituent must fold to the same key.
  *
  *   These cases lock the FR/DE/NL folding (and the Paris acceptance key)
  *   so a future tweak can't silently desync the two sides.
@@ -17,7 +17,7 @@ import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale
 test("fr: the Paris acceptance address keys consistently", () => {
 	const key = normalizeStreetForKeyLocale("Rue du Chevaleret", streetLocaleForOSMCountry("fr"))
 	expect(key).toBe("rue du chevaleret")
-	// however a downstream source spells it, it folds to the same key
+	// A downstream source may spell it differently, but it folds to the same key.
 	expect(normalizeStreetForKeyLocale("rue du chevaleret", streetLocaleForOSMCountry("fr"))).toBe(key)
 })
 
@@ -43,7 +43,7 @@ test("de: glued -str(.) / -straße all fold to -strasse", () => {
 	expect(normalizeStreetForKeyLocale("Lindenstr.", streetLocaleForOSMCountry("de"))).toBe(k)
 	expect(normalizeStreetForKeyLocale("Lindenstr", streetLocaleForOSMCountry("de"))).toBe(k)
 	expect(normalizeStreetForKeyLocale("lindenstrasse", streetLocaleForOSMCountry("de"))).toBe(k)
-	// a non-str name is untouched
+	// A name without the `str` suffix remains unchanged.
 	expect(normalizeStreetForKeyLocale("Marienplatz", streetLocaleForOSMCountry("de"))).toBe("marienplatz")
 })
 

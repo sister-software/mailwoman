@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tile Worker's response cache: Cloudflare's per-colo cache, keyed by request URL.
+ *   The tile Worker's response cache uses Cloudflare's per-colo cache, keyed by request URL.
  *
- *   Every route checks it before its handler runs, and the routes that serve
- *   immutable content store their responses in it.
+ *   The app checks the cache before each route handler runs.
+ *   Routes that serve immutable content store their responses in the cache.
  */
 
 import type { Context, MiddlewareHandler } from "hono"

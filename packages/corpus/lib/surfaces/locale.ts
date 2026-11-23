@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Render real address tuples into locale-specific surface strings.
+ * Renders real address tuples into locale-specific surface strings.
  *
  *   Public address registers supply inputs such as OA, HM Land Registry and CNIG.
  *   LINZ-derived extracts also supply inputs.
  *
- *   The module applies OpenCage templates to choose ordering and punctuation by country.
+ * The module applies OpenCage templates to choose ordering and punctuation by country.
  *
  *   Keep the emitted source ids stable: they're persisted in built corpora
  *   and referenced by training configs.

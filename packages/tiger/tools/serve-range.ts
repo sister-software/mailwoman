@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Minimal static file server that honors http Range requests (206) — Python's `http.server` doesn't .
+ *   This module provides a minimal static file server that honors HTTP Range responses (206).
+ *   Python's `http.server` doesn't honor those requests.
  *
  *   PMTiles reads via Range, so this server cannot serve it.
  *   Used to preview/render a local `.pmtiles` tileset
  *   (e.g. the race-dot map, via `mailwoman tiger race-dots-map --serve`).
  *
- *   Not for production. the deployed tiles go through the tile worker.
+ *   This server isn't intended for production.
+ *   Deployed tiles go through the tile worker.
  *
  *   Internal helper module — no standalone command.
  */
@@ -60,7 +62,8 @@ const TYPES: Record<string, string> = {
  * Serve `dir` over localhost with http Range support.
  *
  * Resolves once the server is listening.
- * The caller owns the lifetime (dispose it to stop. Commands typically hold the process open instead).
+ * The caller owns the lifetime and can dispose it to stop the server.
+ * Commands typically hold the process open instead.
  */
 export async function serveWithRangeSupport(
 	options: ServeRangeOptions = {},

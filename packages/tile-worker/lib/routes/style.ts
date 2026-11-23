@@ -23,7 +23,8 @@ import { CloudflareWorkerPMTiles } from "#protomaps"
 export const STYLE_FILE = "[a-z\\-]+\\.json"
 
 /**
- * Serves the style the request's `style` segment selects, labeled in the `lang` query parameter's language.
+ * Serves the style that the request identifies in its `style` segment.
+ * The `lang` query parameter sets the label language.
  */
 export async function serveBasemapStyle(c: Context<TileWorkerHono>): Promise<Response> {
 	const style = (c.req.param("style") ?? "").slice(0, -".json".length)

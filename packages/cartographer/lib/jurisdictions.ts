@@ -4,7 +4,7 @@
 /**
  *   Jurisdiction coverage overlays rendered from the `mailwoman coverage jurisdictions`
  *   tile set: one Natural Earth map unit per jurisdiction, filled by what the training
- *   run drew from it, the address sources the register holds for it, its address system,
+ *   run drew from it, the address sources recorded for it, its address system,
  *   or the variety of address shapes among its drawn rows.
  *
  *   Each fill is a default-off layer.

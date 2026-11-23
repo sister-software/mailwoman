@@ -1,11 +1,10 @@
 # @mailwoman/license
 
-This package decides, records and reports the rights of the third-party data sources Mailwoman reads. It holds
+This package decides, records and reports the rights of the third-party data sources Mailwoman reads. It defines
 the license-decision shape every register uses, the operations a decision permits, the obligations an SPDX
-expression imposes, the reading of a license string into separate facts, and the policies a corpus build or a
-data layer applies to them.
+expression imposes, the facts extracted from a license string, and the policies a corpus build or data layer applies.
 
-Public library whose one runtime dependency is zod. Install with `npm install @mailwoman/license`.
+This public library has one runtime dependency, `zod`. Install it with `npm install @mailwoman/license`.
 
 It holds no source register. The address-source register is data in `@mailwoman/corpus`, and the structure register is
 in `@mailwoman/structures`. A caller reads its register and passes the decisions in.
@@ -65,23 +64,24 @@ answer.sources[0].problems // ['license "example-license" is not declared in the
 ```
 
 The tree reads each source through seven nodes in order: `registered`, `review-state`, `reservation`,
-`operations`, `purpose`, `basis-floor` and `obligations`. The first node a source doesn't pass stops it,
-except that `purpose` reads after `operations` either way, so the answer lists every unpermitted reading.
-The `obligations` node collects what the source owes and has no refusal edge, so an obligation, an
-indemnity included, never refuses an action. The `reservation` node refuses an action that requires
+`operations`, `purpose`, `basis-floor` and `obligations`. The first node a source doesn't pass stops it.
+The `purpose` node still reads after `operations`, so the answer lists every unpermitted reading.
+The `obligations` node collects what the source owes and has no refusal edge. An obligation, including an
+indemnity, never refuses an action. The `reservation` node refuses an action that requires
 `train` over a source reserved for evaluation (`@mailwoman/license/reservation`), quoting the
 reservation's reason. A register records a reservation by choice on the source, and lifts it by filling
 `lifted`. A reservation by terms is computed for a decision that permits `evaluate` and refuses `train`.
-The answer carries each step's node, outcome and quote, and the register's content digest.
+The answer lists each step's node, outcome and quote. It also includes the register's content digest.
 
-The operations are named by what leaves this repository's hands: `fetch`, `extract`, `transform`,
+The operation identifiers describe what leaves this repository: `fetch`, `extract`, `transform`,
 `evaluate`, `train`, `distribute-rows`, `answer-queries`, `distribute-derived`, `distribute-model` and
-`sublicense`, which no action performs. The `purpose` node reads two purposes beside them. Every action
-is `commercial-use`, because Mailwoman is sold under `LicenseRef-Commercial`, and an offering under those
-terms adds `sale`. A decision records a default reading per purpose in `purposes`, and a reading that
+`sublicense`. The package defines no action for `sublicense`. The `purpose` node reads two purpose values
+alongside the operation. Every action records `commercial-use` as its purpose because Mailwoman is sold
+under `LicenseRef-Commercial`. An offering under those terms also adds `sale`. A decision records a
+default reading per purpose in `purposes`, and a reading that
 differs for one operation in `purposeExceptions`.
 
-Each source's answer also carries `quotable`, which holds when its decision permits `distribute-rows`.
+The `quotable` field is true when a source's decision permits `distribute-rows`.
 Text that will be published, such as a receipt, a document or an error message, prints a row through
 `quoteRow` from `@mailwoman/license/quote`, which prints the row's id in place of a row that isn't
 quotable.

@@ -7,7 +7,7 @@ changes. The resolver gains rooftop precision across France from the authoritati
 (26M addresses) instead of the sparse community fallback (OSM-FR, ~1.1M points).
 
 This package is the French counterpart of the 50-state US situs layer (#1012). It addresses the measured
-FR rooftop gap. Commune resolution was already ~99% @25 km, but @1 km sat at ~37% and stayed _flat_ from
+FR rooftop gap. Commune resolution was already ~99% at 25 km, but at 1 km it sat at ~37% and stayed _flat_ from
 clean to messy input. That flatness indicates a coverage ceiling rather than a parse problem, and BAN
 supplies the missing coverage.
 

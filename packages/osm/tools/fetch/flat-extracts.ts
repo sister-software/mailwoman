@@ -17,7 +17,7 @@
  *
  *   Each file's region comes from its receipt, then from a `--region <leaf>=<path>` the
  *   caller states, then from the one region in `geofabrikRegions()` with that leaf.
- *   A file whose region none of these settles is reported and not moved.
+ *   The planner reports and doesn't move a file when none of these sources settles its region.
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
@@ -180,7 +180,7 @@ export async function planFlatExtractMove(
 		})
 	}
 
-	// Two flat files that land in one vintage would make the second write refuse, so both are blocked.
+	// Two flat files in one vintage would make the second write fail, so the planner blocks both.
 	const byTarget = new Map<string, FlatExtractMove[]>()
 
 	for (const move of moves) {

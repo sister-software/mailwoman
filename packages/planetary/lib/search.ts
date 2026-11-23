@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Search over the pipeline's ancestrie artifact: one prefix walk over the
- *   feature names, tokenized by the same
- *   function the build used, so a query and an entry never disagree on what a token is.
+ * Searches the pipeline's ancestrie artifact with one prefix walk over the feature names.
+ *
+ * It uses the same tokenization function as the build, so a query and an entry agree on each token.
  */
 
 import { Ancestrie } from "@mailwoman/ancestrie"

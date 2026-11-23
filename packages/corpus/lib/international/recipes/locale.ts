@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Samples real address tuples for one country and renders them in the country's native order.
+ * Samples real address tuples for one country and renders them in the country's native order.
  *
- *   It emits aligned rows.
- *   The recipe samples and renders with separate seeded generators.
+ * It emits aligned rows.
+ * The recipe samples and renders with separate seeded generators.
  *
  *   The postcode on the far side of the locality is the training-time
  *   `postcode_move` augmentation's job (#2750).

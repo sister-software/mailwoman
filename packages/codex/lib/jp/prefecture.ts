@@ -16,8 +16,8 @@
  *   - 都 (to, "metropolis") — exactly **1**: Tokyo (東京都).
  *     The capital's special form.
  *   - 道 (dō, "circuit") — exactly **1**: Hokkaido (北海道).
- *     A historical term. the name already ends in 道, so Hokkaido is written
- *     and indexed whole, never stripped to "北海".
+ *     A historical term.
+ *     The name already ends in 道, so Hokkaido is written and indexed whole, never stripped to "北海".
  *   - 府 (fu, "urban prefecture") — exactly **2**: Osaka (大阪府) and Kyoto (京都府).
  *     The old imperial capital region.
  *   - 県 (ken, "prefecture") — the remaining **43**.

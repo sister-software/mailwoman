@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The Nominatim engine interface + wire types the router delegates to.
+ *   The Nominatim engine interface and wire types that the router delegates to.
  *
  *   The resolved-address → {@link NominatimResult} formatter
  *   (`toNominatimResult`, `toFeatureCollection`, `nominatimResultToSchemaOrg`) lives in `format.ts`.
@@ -68,7 +68,7 @@ export interface NominatimResult {
  */
 export interface NominatimResultExtension {
 	/**
-	 * The register row behind the coordinate, its provenance stamp verbatim.
+	 * The register row that supplied the coordinate, with its provenance stamp verbatim.
 	 *
 	 * `openstreetmap:<cc>` names a row from an OpenStreetMap layer the operator built and attached.
 	 */

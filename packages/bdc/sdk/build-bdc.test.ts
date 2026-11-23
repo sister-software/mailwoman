@@ -537,7 +537,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		]
 	}
 
-	it("picks the LATER-filed FRN as the lossy bdc_provider.frn pick (decision 6), while filer.db still holds BOTH edges", async () => {
+	it("picks the later-filed FRN as the lossy bdc_provider.frn value (decision 6), while filer.db still holds both edges", async () => {
 		using filerDB = openFilerMemory()
 		await seedTwoFRNFixture(filerDB)
 

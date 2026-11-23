@@ -20,7 +20,7 @@
  *
  *   Caveat from the literature: EM can land in a local optimum when the true match rate
  *   is very low — seed from sensible `m`/`u` (the model's existing levels do this)
- *   and sanity- check that the recovered `m` exceeds `u` on the top agreement level.
+ *   and sanity-check that the recovered `m` exceeds `u` on the top agreement level.
  */
 
 import type { Comparison, FellegiSunterModel } from "#fellegi-sunter"

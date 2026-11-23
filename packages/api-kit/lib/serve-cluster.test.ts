@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `serveNode` under a cluster worker, the shape `mailwoman serve` runs in.
+ *   This test runs `serveNode` under a cluster worker, the shape `mailwoman serve` runs in.
  *
  *   The in-process test in `index.test.ts` never exercises Node's cluster child.
  *   That child calls `server.address()` on the listening server.

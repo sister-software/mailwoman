@@ -3,7 +3,7 @@
 
 /**
  *   The bare-toponym street-miss fallback, split from `geocode-core.ts`
- *   (the max-lines cap. the geocode file holds the cascade, this one holds the retry).
+ *   (the max-lines cap. The geocode file holds the cascade. This one holds the retry).
  *   Interface in {@link applyStreetMissFallback}.
  */
 

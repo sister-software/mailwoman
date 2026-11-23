@@ -3,7 +3,9 @@
 
 /**
  *   `QueryInput` — the labeled text field for the POI explorer.
- *   Controlled. presentational only.
+ *
+ *   Controlled.
+ *   Presentational only.
  */
 
 import type { ReactNode } from "react"

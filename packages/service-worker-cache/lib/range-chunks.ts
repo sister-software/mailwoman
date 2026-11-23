@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A Workbox route handler that stores byte-range responses of immutable,
- *   versioned files in Cache Storage, one entry per requested range.
+ *   A Workbox route handler stores byte-range responses of immutable, versioned
+ *   files in Cache Storage, with one entry per requested range.
  *
  *   The Cache API rejects a 206 response, so each chunk is stored as a 200 under a synthetic
  *   per-range URL, with the original `Content-Range` in a header, and rebuilt into a 206 on a hit.
@@ -18,7 +18,7 @@
  *   as a cache that bypassed the range did for a 2.88 GB gazetteer database.
  *   The reader issues its reads as synchronous XHR.
  *
- *   A synchronous XHR buffers that body in full before the reader can see its status.
+ *   A synchronous XHR buffers that body in full before the reader sees its status.
  *
  *   The handler therefore cancels such a body, refetches once with `cache: "no-store"`, and answers a
  *   second whole-file response with a bodiless 502 marked by {@linkcode RANGE_REFUSED_HEADER}.

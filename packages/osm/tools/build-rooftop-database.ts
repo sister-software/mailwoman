@@ -69,7 +69,7 @@ if (!country || !extract) {
 const { pbf } = extract
 
 if (!(await pathExists(pbf))) throw new Error(`PBF not found: ${pbf}`)
-// Throws for an unsupported country, so the build fails loud and never keys with the wrong normalizer.
+// `streetLocaleForOSMCountry` rejects unsupported countries before the build uses that locale to form street keys.
 streetLocaleForOSMCountry(country)
 
 const slug = values.slug?.toLowerCase() || country
@@ -91,8 +91,9 @@ for (const line of osmLicenseNotice(output)) {
 	console.error(`[osm] ${line}`)
 }
 
-// Hashed before the build starts, so a file that changed since its receipt stops the build
-// before it spends an hour on bytes the manifest would misidentify.
+// `readExtractProvenance` hashes the PBF before the build starts.
+// The check stops the build from spending an hour processing bytes that no longer
+// match the receipt and that the manifest would misidentify.
 const provenance = await readExtractProvenance(pbf, { sourceURL: values["source-url"] })
 
 console.error(`[osm] extract ${provenance.sourceURL} sha256 ${provenance.sourceSHA256}`)

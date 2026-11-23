@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The app's routes, read from `location.pathname` with no router.
+ * The app's routes come from `location.pathname`.
+ * The app doesn't use a router.
  *
- *   A path the app doesn't know is a not-found view, so a stale link fails visibly
- *   rather than showing the globe.
+ * An unknown path produces a not-found view, so a stale link fails visibly rather than showing the globe.
  */
 
 import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"

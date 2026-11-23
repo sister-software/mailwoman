@@ -84,8 +84,7 @@ synthetic board, because no real NZ venue-name source exists on disk yet (issue
   input.
 - **All-caps input degrades** the admin tags, because training used mixed case.
   `@mailwoman/neural`'s `normalizeCase` option recovers detected all-caps ASCII.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there's unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) use byte-fallback tokens. Their parse quality remains unmeasured.
 
 ## Attribution
 

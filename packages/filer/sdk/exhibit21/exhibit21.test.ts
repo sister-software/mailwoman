@@ -45,7 +45,7 @@ describe("parseExhibit21 — fabrication audit: malformed input recovered WITHOU
 		})
 	})
 
-	it("C1b: a row with NO </td> at all still yields both cells — not silently dropped as empty-row cruft", () => {
+	it("C1b: a row with no </td> at all still yields both cells — not silently dropped as empty-row cruft", () => {
 		const html = "<table><tr><td>Acme<td>Delaware</tr></table>"
 
 		expect(parseExhibit21(html)).toEqual({
@@ -179,7 +179,7 @@ describe("parseExhibit21 — header-mapped columns and the indented corporate tr
 		})
 	})
 
-	it("a blank name column with NO column before the jurisdiction still abstains — there is nothing to read", () => {
+	it("a blank name column with no column before the jurisdiction still abstains — there is nothing to read", () => {
 		const html =
 			"<table>" +
 			"<tr><td>Name of Subsidiary</td><td>Jurisdiction of Incorporation</td><td>% of Ownership</td></tr>" +
@@ -241,7 +241,7 @@ describe("parseExhibit21 — plain-text variant", () => {
 		})
 	})
 
-	it("does NOT split on 2+ commas — a legal name may itself contain one — and keeps the whole line as the name", () => {
+	it("does not split on 2+ commas — a legal name may itself contain one — and keeps the whole line as the name", () => {
 		const text = "Acme Fiber, LLC, Delaware\n"
 
 		const result = parseExhibit21(text)

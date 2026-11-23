@@ -18,7 +18,7 @@ import { banLayer, forkEntityProbe, observationRoutes, osmLayer, regionDatabases
  *
  * The server consults the national open register (BAN) and then the OpenStreetMap tier,
  * as the Photon and Nominatim servers do.
- * It leaves national Overture out, so each collection it lists is one its `/search` reads.
+ * It leaves national Overture out, so `/search` reads every collection it lists.
  */
 const OGC_LAYERS: readonly LayerContribution[] = [
 	banLayer,

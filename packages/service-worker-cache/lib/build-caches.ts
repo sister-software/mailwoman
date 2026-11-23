@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Runtime cache names, and the cleanup a worker runs on activation.
+ *   Runtime cache names and the cleanup a worker runs on activation.
  *
  *   A cache of the build's own files takes the name `<prefix><role>-<build>`,
  *   because a file there may keep its URL while its bytes change between builds.
  *
- *   A cache of versioned data, such as release files or range chunks, takes the name
- *   `<prefix><role>`, with no build, so a deploy keeps it.
- *   Its entries leave through a release prune message or an entry cap rather than through a deploy.
+ *   A cache of versioned data, such as release files or range chunks,
+ *   takes the name `<prefix><role>` without a build.
+ *   A deploy therefore keeps that cache.
+ *
+ *   Its entries leave through a release prune message or an entry cap.
  *
  *   {@linkcode deleteOtherBuildCaches} on activation deletes every other cache under the prefix.
  *   That covers an earlier build's caches, including data caches that an earlier

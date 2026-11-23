@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the BAN rooftop address-point database from département CSV files.
+ *   Build the BAN rooftop address-point database from département CSV files.
  *
- *   The output is a separate sealed database.
- *   The OSM extract remains unchanged.
- *   Street keys use the same normalizer as the lookup side.
+ *   The command writes a separate sealed database and leaves the OSM extract unchanged.
+ *   It uses the same normalizer for street keys as the lookup side.
  *
  *   Examples:
  *     node packages/ban/tools/build/address-point-database.ts \
@@ -66,7 +65,7 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// Reject unsupported countries rather than selecting an incompatible normalizer.
+	// Reject unsupported countries before selecting a normalizer for another locale.
 	streetLocaleForBANCountry(country)
 	const csvDir = resolvePath(values["csv-dir"] ?? currentSourcePath("ban"))
 
@@ -95,7 +94,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		if (!m) continue
 		const dept = m[1]!
 
-		// Aggregate files duplicate the département rows.
+		// Aggregate files repeat the département rows, so the reader skips them.
 		if (dept === "merged" || dept === "france") continue
 
 		if (wanted && !wanted.has(dept.toLowerCase())) continue
@@ -208,7 +207,7 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Only a full build writes the attribution record.
+	// A full build writes the attribution record.
 	// A `--depts` build is a throwaway check.
 	if (!args.depts) {
 		const attributionPath = banDatabasePath("ATTRIBUTION.json")

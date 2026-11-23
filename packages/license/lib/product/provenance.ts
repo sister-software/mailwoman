@@ -65,7 +65,7 @@ const SHA256 = z.string().regex(/^[0-9a-f]{64}$/u, "expected 64 lowercase hex di
 const Instant = z.iso.datetime({ offset: false })
 
 /**
- * The grant claims a training record stores: everything the verifier read except the holder's name.
+ * The training record stores every claim the verifier read from the grant except the holder's name.
  */
 export const RecordedGrantSchema = z.object({
 	grant: z.string().min(1),

@@ -189,8 +189,8 @@ export default function Pricing(): ReactNode {
 							Free keys for open work
 						</Heading>
 						<p>
-							A declared key admits the paid tiers without changing the terms: the AGPL still applies, and the notice
-							says so. Each route is one command. Read the <Link to="/license">license terms</Link> and the{" "}
+							A declared key admits the paid tiers without changing the terms. The AGPL still applies, as the notice
+							states. Each route is one command. Read the <Link to="/license">license terms</Link> and the{" "}
 							<a href="https://github.com/sister-software/mailwoman/blob/v11.0.0/CITATION.cff">citation file</a> for
 							published attribution details.
 						</p>

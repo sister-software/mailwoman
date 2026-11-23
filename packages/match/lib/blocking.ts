@@ -11,12 +11,13 @@
  *   place land in the same spatial cell regardless of how their address strings
  *   are spelled, so geography is the primary block.
  *
- *   A {@link BlockingKey} maps a record to zero or more string keys. records
- *   sharing any key become candidates.
+ *   A {@link BlockingKey} maps a record to zero or more string keys.
+ *   Records sharing any key become candidates.
+ *
  *   Keys compose as a _union_ (the standard multi-pass approach — high recall from cheap rules):
  *   block on the spatial cell, canonical key, or postcode.
  *
- *   A pair caught by any rule is scored. {@link conjunction} builds the and-style key
+ *   A pair caught by any rule is scored. {@link conjunction} builds the conjunctive key
  *   Geo-ER uses (`name-cell and geo-cell`) when a single rule is too loose.
  *
  *   Recall is the priority.

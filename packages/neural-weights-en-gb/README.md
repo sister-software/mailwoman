@@ -130,8 +130,7 @@ output is byte-stable when calibration is omitted.
   restricted to GB: it structurally cannot fire on non-GB input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there's unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) use byte-fallback tokens. Their parse quality remains unmeasured.
 
 ## Attribution
 

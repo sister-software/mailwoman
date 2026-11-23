@@ -20,8 +20,8 @@ const SOLID: PolygonLiteral = {
 }
 
 test("polygonToOSMFilter: emits the exterior ring as Overpass 'lat lon' pairs (NOT GeoJSON lon,lat)", () => {
-	// GeoJSON positions are [lon, lat]; Overpass wants "lat lon".
-	// This swap is the foot-gun.
+	// GeoJSON positions are [lon, lat], but Overpass expects "lat lon".
+	// Keep this coordinate-order conversion explicit.
 	expect(polygonToOSMFilter(SOLID)).toBe("poly:'0 100 0 101 1 101 1 100 0 100'")
 	expect(polygonToOSMFilter({ type: "Point" })).toBe("") // non-polygon → empty
 })

@@ -30,9 +30,9 @@ export const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 /**
  * Single-token US state/territory names, derived from the codex roster.
  *
- * Single-token scope is deliberate: the non-tail region-name penalty below reads one token at a
- * time. and a multi-word name ("New York", "North Carolina") can never match a single token —
- * deriving only the single-token names keeps the set equal to what the check can ever see.
+ * Single-token scope is deliberate: the non-tail region-name penalty below reads one token at a time.
+ * A multi-word name ("New York", "North Carolina") can never match a single token,
+ * so deriving only the single-token names keeps the set equal to what the check can ever see.
  */
 export const US_REGION_NAMES: ReadonlySet<string> = new Set(
 	US_STATE_NAMES.filter((name) => !name.includes(" ")).map((name) => name.toLowerCase())

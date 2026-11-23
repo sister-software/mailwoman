@@ -50,8 +50,9 @@
  *
  *   DAG canonicalization: an entry may declare multiple parents.
  *   The interval forest spans the primary parent only — `parentIDs[0]` —
- *   so `contains`/`descendantsOf` answer over that single tree. the full parent
- *   list is stored in the parent table and surfaced verbatim.
+ *   so `contains`/`descendantsOf` answer over that single tree.
+ *
+ *   The full parent list is stored in the parent table and surfaced verbatim.
  *
  *   A primary parent id that identifies no entry in the build makes its child a
  *   forest root (the declared id is still stored).

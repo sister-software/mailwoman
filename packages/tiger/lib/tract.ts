@@ -7,20 +7,21 @@ import type { TIGERProperty, TIGERPropertyRecord } from "#constants"
 import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "#geoid"
 
 /**
- * @title tiger Tract
+ * @title TIGER Tract
  * @public
  */
 export interface TIGERTract extends ParsedGeoIDTractLevel {
 	/**
-	 * The GeoID of the tabulated block.
+	 * The GeoID that identifies the tract.
 	 *
 	 * @title Geo ID
 	 */
 	GEOID: FIPSTractGeoID
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a
-	 * multi-polygon for blocks with holes, or islands.
+	 * The tract's geometry is typically a polygon.
+	 *
+	 * It may be a multipolygon when the tract contains holes or islands.
 	 *
 	 * @title Geometry
 	 */
@@ -28,7 +29,7 @@ export interface TIGERTract extends ParsedGeoIDTractLevel {
 }
 
 /**
- * Properties of a Census Tract.
+ * Properties recorded for a Census tract.
  */
 export type TIGERTractProperties = Pick<
 	TIGERPropertyRecord<FIPSTractGeoID>,
@@ -45,6 +46,6 @@ export type TIGERTractProperties = Pick<
 >
 
 /**
- * A geographci feature representing a Census Tract.
+ * A GeoJSON feature that represents a Census tract.
  */
 export type TIGERTractFeature = GeoFeature<MultiPolygonLiteral, TIGERTractProperties>

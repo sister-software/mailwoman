@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   An opportunity dossier holds sourced claims over parcels, buildings, entrances and units,
- *   projected for an explicit as-of date with every unresolved question and the record that
- *   would resolve it, and the competing explanations for each failed availability check.
+ *   An opportunity dossier records sourced claims about parcels, buildings, entrances and units.
+ *
+ *   It projects those claims for an explicit as-of date, records each unresolved question and the
+ *   record that would resolve it, and gives competing explanations for each failed availability check.
  *
  *   Sourced memberships decide which building a layer reading attaches to,
  *   and sourced positions locate each building.

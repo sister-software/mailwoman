@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   This file contains types and utilities for working with geographic positions.
+ *   This module contains types and utilities for geographic positions.
  */
 
 /// <reference types="google.maps" />

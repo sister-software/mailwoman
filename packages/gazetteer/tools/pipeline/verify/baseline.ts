@@ -4,7 +4,7 @@
 /**
  *   The committed node-census baseline for `verifyAdmin`.
  *
- *   update deliberately.
+ *   Update this file deliberately.
  *   Regenerate with `generateBaseline` (verify.ts) against a verified-good DB.
  *
  *   Re-apply the required-restore unions and review the diff like code.

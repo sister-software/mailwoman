@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The page-to-worker messages that report and clear the worker's runtime caches by role,
- *   so a page never opens a cache by its build-specific name.
+ *   The page-to-worker messages report and clear the worker's runtime caches by role.
+ *
+ *   A page therefore never opens a cache by its build-specific name.
  *
  *   The page sends a request over a `MessageChannel`, and the worker answers on the channel's port.
  */
@@ -36,8 +37,9 @@ export type CacheControlReply =
 	| { action: "error"; error: string }
 
 /**
- * The part of Cache Storage the worker's answer uses: `CacheStorage` satisfies it,
- * and so does a test's in-memory store.
+ * The part of Cache Storage used by the worker's answer.
+ *
+ * `CacheStorage` satisfies it, as does a test's in-memory store.
  */
 export interface CacheControlStorage {
 	has(cacheName: string): Promise<boolean>
@@ -58,7 +60,7 @@ export function isCacheControlMessage(data: unknown): data is CacheControlReques
 /**
  * The worker's answer to `request`, given the cache name each role maps to.
  *
- * A role the map doesn't hold is skipped, so a page can't name a cache outside the worker's own.
+ * The worker skips a role absent from the map, so a page cannot name a cache outside the worker's own.
  * A cache that was never opened reports zero entries.
  */
 export async function answerCacheControl(

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The body's app: the host check first, then the route, so a production host serving
- *   the other body's build renders the error on its first load.
+ * The body's app checks the host before the route.
  *
- *   A click pushes `/feature/<id>` and the browser's back button closes it.
+ * A production host serving the other body's build therefore renders the error on its first load.
+ *
+ * A click pushes `/feature/<id>`, and the browser's back button closes it.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -162,7 +163,7 @@ export function App() {
 				/>
 			</div>
 
-			{/* Every floating control in one column, so no control lands on top of anything else. */}
+			{/* Every floating control stays in one column, so controls do not overlap. */}
 			<MapControlStack label="Map controls">
 				<MapControlGroup>
 					<MapControlButton

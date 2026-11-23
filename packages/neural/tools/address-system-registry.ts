@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The committed address-system registry: the id of every distinct component order in
- *   `@mailwoman/codex`'s layouts, and the system of each country in each script it has a layout for.
+ *   The committed address-system registry records the id of every distinct component order in
+ *   `@mailwoman/codex`'s layouts and the system assigned to each country and script with a layout.
  *
  *   The address-system head has one output per id, so ids are append-only.
  *   `mailwoman dev generate address-systems` derives the registry from codex's layouts,
@@ -58,7 +58,7 @@ export async function readAddressSystemRegistry(path = ADDRESS_SYSTEMS_PATH): Pr
 }
 
 /**
- * The committed registry's systems, as the label schema references them.
+ * Reads the committed registry's systems in the form the label schema references.
  *
  * @throws When the registry hasn't been generated.
  */

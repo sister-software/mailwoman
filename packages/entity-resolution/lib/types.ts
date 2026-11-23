@@ -72,7 +72,8 @@ export interface ResolvedEntity {
 	 */
 	coordinate: { latitude: number; longitude: number } | null
 	/**
-	 * Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a singleton.
+	 * Weakest within-cluster link weight in bits, measuring the least-supported
+	 * link in the cluster; `null` for a singleton.
 	 */
 	cohesion: number | null
 }

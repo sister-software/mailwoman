@@ -97,7 +97,8 @@ export interface DepthSampleRequest {
 	positions: ReadonlyArray<readonly [number, number]>
 	/**
 	 * True when the positions are points whose surroundings should be searched.
-	 * A line's vertices are read as they're.
+	 *
+	 * A line's vertices are read individually without widening their surroundings.
 	 */
 	window: boolean
 	kind: UnderseaDepthKind

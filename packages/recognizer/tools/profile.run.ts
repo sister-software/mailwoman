@@ -12,7 +12,7 @@
  *   The difference is the residue.
  *
  *   The residue is the cache and allocation interactions of the stages running together.
- *   Most of it is garbage collection of the objects a call returns.
+ *   Garbage collection of the objects a call returns accounts for most of the residue.
  *
  *   An isolated loop over reused objects doesn't pay that cost.
  *   The closure and property reads between the stages add the rest.

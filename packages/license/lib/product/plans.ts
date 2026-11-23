@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The published platform plans: their codes, billing intervals and prices, and the grace period
- *   a purchased key runs past its paid period.
+ * @file The published platform plans: their codes, billing intervals, prices, and the grace period
+ *   a purchased key remains valid after its paid period.
  *
  *   The license worker's provisioner sends these prices to Stripe and the site prints them, so a card
  *   can never advertise a number the checkout doesn't charge. The Stripe object IDs for each plan stay in

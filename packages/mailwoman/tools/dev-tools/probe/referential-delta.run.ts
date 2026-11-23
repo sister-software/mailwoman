@@ -2,19 +2,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   the D-rule measurement for ROAD_TO_V9 §2 R1's resolver half.
+ *   This tool measures the D-rule prediction for ROAD_TO_V9 §2 R1's resolver half.
  *
  *   §2 R1 predicts a resolver delta of zero.
  *   Today's resolver already ranks namesakes by population.
  *
  *   The split only names that key `referential`, and `referentialFromPopulation` is
  *   a monotone transform of population — so the order cannot move.
- *   Predicted isn't measured.
+ *   The prediction hasn't been measured.
  *
  *   This probe measures it, on the live gazetteer, in the one regime where the prediction could fail.
  *
- *   where IT could fail.
- *   That's the full probe.
+ *   This is the regime where the prediction could fail, so the probe measures it directly.
  *
  *   `referentialFromPopulation` is `min(1, log2(1 + pop/1000) / 14)`: strictly increasing
  *   up to `REFERENTIAL_SATURATION_POPULATION` (16,383,000) and clamped to 1.0 above it.
@@ -29,12 +28,13 @@
  *   A claim about the saturated tail is exactly the kind of claim AGENTS.md directs
  *   us to spend one command on rather than reason about.
  *
- *   two measurements:
+ *   The probe performs two measurements:
  *
  *   1. **Gazetteer census** — every place at or above saturation plus every
  *      name-colliding pair where both bearers clear it.
- *      The second number is the population of cases where the tiebreak is required. if
- *      it is zero the tiebreak is insurance, if it isn't, it is a bug fix.
+ *      The second number is the population of cases where the tiebreak is required.
+ *      If a zero count makes the tiebreak precautionary.
+ *      A nonzero count means it prevents a real ordering change.
  *   2. **Live query replay** — every board query plus the namesake families,
  *      run through the real `findPlace`, with the returned candidate list re-sorted
  *      under both the pre-split key and `compareReferential`.

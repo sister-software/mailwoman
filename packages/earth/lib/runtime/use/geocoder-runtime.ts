@@ -170,8 +170,8 @@ export interface GeocoderRuntimeOptions {
 }
 
 /**
- * The releases-manifest fetch the entry module starts before React mounts,
- * taken by the first manifest load.
+ * The entry module starts this releases-manifest fetch before React mounts.
+ * The first manifest load takes this promise.
  */
 let earlyManifest: Promise<ReleasesManifest | null> | null = null
 
@@ -228,8 +228,8 @@ function basemapTileJSONURL(config: EarthConfig): URL {
 }
 
 /**
- * The TileJSON of the separate buildings tileset `?buildings=` asks for, or `null`
- * to draw the footprints from the basemap's own `buildings` layer.
+ * The TileJSON of the separate buildings tileset that `?buildings=` asks for,
+ * or `null` to draw the footprints from the basemap's own `buildings` layer.
  */
 function buildingsTileJSONURL(config: EarthConfig): URL | null {
 	const name = pageTilesetParam("buildings")

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds one country's OSM rooftop address-point database from a Geofabrik `.osm.pbf` extract,
+ *   Build one country's OSM rooftop address-point database from a Geofabrik `.osm.pbf` extract
  *   on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address/point/spine-schema`).
  *
  *   The existing `AddressPointSqliteLookup` reads it with zero changes.
@@ -193,9 +193,9 @@ export async function buildRooftopDatabase(options: RooftopBuildOptions): Promis
 				counts.recovered++
 			}
 
-			// Per-surface locale routing.
+			// Route each surface through its locale.
 			// A French-lead surface folds under the fr rules regardless of the country default,
-			// and the probe side routes with the same shared function.
+			// and the probe side uses the same shared function.
 			const streetNorms = [
 				...new Set(
 					streetNameForms(street)
@@ -215,7 +215,7 @@ export async function buildRooftopDatabase(options: RooftopBuildOptions): Promis
 			const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, ADDRESS_POINT_H3_RESOLUTION))
 			const locality = rec.suburb ?? rec.city
 
-			// A bilingual street gets one row per language form, each keyed on that form,
+			// A bilingual street gets one row per language form, keyed on that form,
 			// so a query in either language reaches the same rooftop.
 			// `street_raw` keeps the mapped value on every row.
 			for (const streetNorm of streetNorms) {
@@ -282,8 +282,7 @@ export async function buildRooftopDatabase(options: RooftopBuildOptions): Promis
 		throw error
 	}
 
-	// Build-on-copy.
-	// The freshly-built extract is swapped into place only after the build completes.
+	// Build on a copy and swap the freshly built extract into place only after the build completes.
 	await swapDatabaseIntoPlace(tmp, options.output)
 	await sealDatabase(options.output)
 

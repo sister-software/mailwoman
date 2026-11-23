@@ -7,7 +7,7 @@
 
 <h1 align="center">@mailwoman/codex</h1>
 
-<p align="center"><strong>A postal address formatter, and the per-country reference data behind it.</strong></p>
+<p align="center"><strong>A postal address formatter and the per-country reference data behind it.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@mailwoman/codex"><img alt="npm version" src="https://img.shields.io/npm/v/@mailwoman/codex?color=ff00b0&label=npm"></a>
@@ -163,10 +163,10 @@ models for are hand-authored and checked against real addresses on a committed b
 > A node that renders no output removes itself, and its connector goes with it.
 
 A connector between two slots needs a rendered slot on each side. A connector at a line's edge
-has only one side, so it binds to the single slot it touches. That's how Japan's 〒 disappears
-with an absent postcode while an interior space doesn't. When several connectors survive in a
-row, the strongest one wins. Punctuation outranks whitespace, so `Calle Mayor, 12` keeps its
-comma when the street suffix is absent.
+has only one side, so it binds to the single slot it touches. Japan's 〒 therefore disappears
+with an absent postcode while an interior space remains. When several connectors survive in a
+row, the strongest one wins. Punctuation outranks whitespace. As a result, `Calle Mayor, 12`
+keeps its comma when the street suffix is absent.
 
 This package authors four things that libaddressinput doesn't model, each based on a
 measurement: the street line's spelling (183 countries space-join the number and the name, and

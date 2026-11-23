@@ -41,9 +41,10 @@ export interface UsePOISearchOptions {
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to
-	 * false. enable it only for a server-side backend, since fetching every row for
-	 * a brand over an HTTP range-request database is too slow.
+	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to false.
+	 *
+	 * Enable it only for a server-side backend, since fetching every row for a brand
+	 * over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 

@@ -17,8 +17,8 @@
  *   4. Assemble the deepest place's ancestor chain through the same walk forward
  *      resolution uses, so consumers get a symmetric tree.
  *
- *   Reverse quality is country-dependent, because polygon coverage is.
- *   `containment` records this per result.
+ *   Reverse quality depends on each country's polygon coverage.
+ *   The `containment` field records whether each result used a polygon or an approximate centroid fallback.
  */
 
 import { allRows } from "@mailwoman/core/utils"

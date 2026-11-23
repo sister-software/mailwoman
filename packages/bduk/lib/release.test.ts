@@ -374,7 +374,7 @@ describe("parseBDUKRelease refusals", () => {
 
 describe("readBDUKReleaseDirectory", () => {
 	/**
-	 * Splits the fixture's rows between two files that take a region's file names.
+	 * Splits the fixture's rows between two files that each take a region's file names.
 	 */
 	async function regionDirectory(text: string) {
 		const scratch = await temporaryDirectory("bduk-release-")

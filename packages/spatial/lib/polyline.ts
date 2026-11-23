@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Position along a polyline, by arc length.
+ *   This module finds a position along a polyline by arc length.
  *
- *   This is what house-number interpolation stands on: given a street segment's geometry
- *   and how far along its house-number range an address sits, it answers where that's on the ground.
+ *   House-number interpolation supplies a street segment's geometry and an address's
+ *   fraction along the segment's house-number range.
+ *   This module returns the corresponding position on the ground.
+ *
  *   The node reader (`resolver-wof-sqlite/labels/street/interpolation.ts`)
- *   and the browser twin (`resolver-wof-wasm/httpvfs/street.ts`) both call it:
- *   the geometry never differs between them, only the I/O around it does.
+ *   and the browser reader (`resolver-wof-wasm/httpvfs/street.ts`) both call it,
+ *   so they share the geometry calculation while their surrounding I/O differs.
  */
 
 import { centralAngle, EARTH_RADII } from "#distance"

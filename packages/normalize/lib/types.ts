@@ -85,7 +85,7 @@ export interface NormalizeOpts {
 	 * `keep` leaves it in place for a classifier whose vocabulary includes it.
 	 *
 	 * The character-path CJK model was trained with the mark in front of every postcode.
-	 * and without it misreads the prefecture boundary (`885-0061 宮崎県都城市…` → prefecture `崎県都`).
+	 * Without the mark, it misreads `885-0061 宮崎県都城市…` and identifies the prefecture as `崎県都`.
 	 */
 	postalMark?: "strip" | "keep"
 }

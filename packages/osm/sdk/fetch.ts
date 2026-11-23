@@ -5,7 +5,7 @@
  *   Geofabrik extract URLs and a streaming downloader for per-country and sub-region
  *   `.osm.pbf` files — the bytes are ODbL OpenStreetMap data, see `osm/readme.md`.
  *
- *   RAW `fetch` is deliberate: `agents.md` requires HTTP clients to use `APIClient`,
+ *   The raw `fetch` call is deliberate: `agents.md` requires HTTP clients to use `APIClient`,
  *   whose pacing, retry and response caching save requests and time on small repeated API calls.
  *   A multi-gigabyte body streamed straight to disk moves in a single pass,
  *   where pacing and retry add overhead.

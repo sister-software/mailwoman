@@ -17,7 +17,8 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
  */
 
 /**
- * Center longitude when `--lon` is omitted — the world view mapscii opens on.
+ * Center longitude when `--lon` is omitted.
+ * The world view opens at this longitude.
  */
 const DEFAULT_LON = 0
 
@@ -67,8 +68,8 @@ export interface BrowseArgs {
 	/**
 	 * Integer zoom level.
 	 *
-	 * The renderer draws whole tile-pyramid levels, so a fractional flag value is rounded here
-	 * rather than preserved as a lie through the viewport.
+	 * The renderer draws whole tile-pyramid levels, so the parser rounds fractional
+	 * flag values before passing them to the viewport.
 	 */
 	zoom: number
 }

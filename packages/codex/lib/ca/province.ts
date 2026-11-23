@@ -98,7 +98,7 @@ export const CA_PROVINCE_NAME_TO_CODE: ReadonlyMap<string, CanadianProvinceCode>
 /**
  * Resolve a Canadian province/territory surface form
  * (ISO code, English name, or French name, accents optional) to its ISO code.
- * Null if unknown.
+ * Returns `null` when the input is unknown.
  */
 export function lookupCanadianProvince(input: string | null): CanadianProvinceCode | null {
 	if (!input || typeof input !== "string") return null

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Identifies the body for this build.
+ * Identifies the body for this build.
  *
- *   The build compiles this value into the client.
- *   A running app doesn't read configuration to identify its body.
+ * The build compiles this value into the client.
+ * A running app doesn't read configuration to identify its body.
  *
- *   A production host serving the wrong body's build fails at startup instead of showing the other world.
+ * A production host serving the wrong body's build fails at startup instead of showing the other world.
  */
 
 /**
@@ -53,7 +53,8 @@ export function bodyForHostname(hostname: string): PlanetaryBody | null {
  * Any other host may serve either body.
  * The check fires only for the two production hostnames.
  *
- * The error identifies both sides so the message identifies the misconfigured project without other context.
+ * The error includes the host's expected body and the build's body.
+ * The message identifies the misconfigured project without other context.
  */
 export function assertHostMatchesBody(hostname: string, body: PlanetaryBody): void {
 	const expected = bodyForHostname(hostname)

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Turn one authority polygon into the H3 cells that summarize it, done once at build time
- *   so the runtime probes structure instead of geometry.
+ *   This module turns one authority polygon into H3 cells at build time.
+ *
+ *   Runtime queries then inspect the cell structure instead of reading the geometry.
  */
 
 import {
@@ -309,8 +310,7 @@ export function featureCellRows(cells: FeatureCells): Array<{
 		const short = shortCellToInt(cell)
 
 		// A cell cannot be both for one polygon.
-		// This subtraction is belt and braces against a compaction that produced a
-		// parent the partial set also names.
+		// This subtraction handles a compaction that produced a parent the partial set also names.
 		if (wholeShort.has(short)) continue
 
 		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })

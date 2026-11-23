@@ -26,7 +26,7 @@ const DATED_VINTAGE = /^\d{4}-\d{2}-\d{2}$/u
 /**
  * The vintage a `Last-Modified` header dates, such as `2026-10-16` for `Fri, 16 Oct 2026 23:56:31 GMT`.
  *
- * @throws When the header isn't a date.
+ * @throws when the header isn't a date.
  */
 export function geofabrikVintage(lastModified: string): string {
 	const date = new Date(lastModified)
@@ -71,7 +71,7 @@ export interface ResolvedGeofabrikExtract {
 /**
  * The extract of `region` in `vintage`, or in its newest vintage when `vintage` isn't given.
  *
- * @throws When the stated vintage holds no extract, or the region has no vintage, naming the directory read.
+ * @throws when the stated vintage holds no extract or the region has no vintage, naming the directory read.
  */
 export async function resolveGeofabrikExtract(
 	region: string,

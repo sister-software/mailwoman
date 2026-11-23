@@ -98,7 +98,8 @@ export interface CanCompleteOptions {
 const recognizer = createRecognizer([postal])
 
 /**
- * Whether a prefix status means some suffix, the empty one included, makes the text a match.
+ * Returns whether a prefix status means that some suffix, including the empty
+ * suffix, makes the text a match.
  */
 function canCompleteStatus(status: PrefixStatus | undefined): boolean {
 	return status === "viable" || status === "accepted" || status === "accepted_and_extendable"
@@ -131,7 +132,7 @@ function syntaxCanComplete(
 const sortedPrefixes = new WeakMap<PostcodePrefixIndexLookup, readonly string[]>()
 
 /**
- * The index of the first entry of sorted `values` not less than `key`.
+ * Returns the index of the first entry in sorted `values` that's not less than `key`.
  */
 function lowerBound(values: readonly string[], key: string): number {
 	let lo = 0

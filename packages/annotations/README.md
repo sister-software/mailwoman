@@ -25,6 +25,6 @@ it owns; `composeAnnotators` runs them concurrently and merges, skipping any tha
 `toOpenCage()` and `toNative()`, render the set at the API edge. One schema, two shapes (the hybrid
 decision).
 
-Recipe packages: coordinate formats live in [`@mailwoman/spatial`](../spatial), country reference in
-[`@mailwoman/codex`](../codex), and the data-backed lookups ship standalone
-([`@mailwoman/timezone-lookup`](../timezone-lookup), [`@mailwoman/un-locode-lookup`](../un-locode-lookup)).
+Recipe packages provide coordinate formats through [`@mailwoman/spatial`](../spatial) and country reference through
+[`@mailwoman/codex`](../codex). The data-backed lookups ship as standalone packages
+([`@mailwoman/timezone-lookup`](../timezone-lookup) and [`@mailwoman/un-locode-lookup`](../un-locode-lookup)).

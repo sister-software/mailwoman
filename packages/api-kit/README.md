@@ -1,6 +1,6 @@
 # @mailwoman/api-kit
 
-This package provides [Mailwoman](https://mailwoman.post)'s HTTP plumbing: a node `serve` wrapper and
+This package provides [Mailwoman](https://mailwoman.post)'s HTTP plumbing: a Node `serve` wrapper and
 OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](../libpostal),
 [`@mailwoman/photon`](../photon), [`@mailwoman/nominatim`](../nominatim)).
 
@@ -17,7 +17,7 @@ attachOpenAPIDocs(app, { title: "my-api", version: "1.0.0" })
 serveNode({ fetch: app.fetch, port: 8081, hostname: "0.0.0.0" })
 ```
 
-`serveNode` is the one place a node HTTP listener gets created — surface packages stay web-standard
+`serveNode` is the one place a Node HTTP listener gets created — surface packages stay web-standard
 (`fetch`-shaped apps only), so deploying one to an edge runtime needs no changes to it.
 
 ## Canonicalize ahead of the validators
@@ -38,6 +38,6 @@ than either choice.
 ## OpenAPI
 
 `attachOpenAPIDocs` mounts a document endpoint (default `/openapi.json`) that's always derived from the
-app's route table — never handwritten. It serves OpenAPI 3.1. Need the 3.0.3 flavor too (client generators
-that lag behind 3.1)? `emitOpenAPIDocuments(app, info)` returns both `{ v31, v30 }` from the same route
-table, for build artifacts or parity tests.
+app's route table — never handwritten. It serves OpenAPI 3.1. If you need the 3.0.3 flavor for client
+generators that lag behind 3.1, `emitOpenAPIDocuments(app, info)` returns both `{ v31, v30 }` from the same
+route table for build artifacts or parity tests.

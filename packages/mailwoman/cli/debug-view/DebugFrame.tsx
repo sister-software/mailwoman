@@ -199,7 +199,7 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 }
 
 /**
- * The demo's confidence tiers, matched so a component that reads green in the browser reads green here.
+ * The demo's confidence tiers use the same colors in the browser and in this terminal view.
  */
 const HIGH_CONFIDENCE_MIN = 0.8
 const MID_CONFIDENCE_MIN = 0.5

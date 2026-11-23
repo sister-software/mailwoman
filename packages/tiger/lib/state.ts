@@ -667,8 +667,8 @@ export interface TIGERState {
 	[GeoIDPart.State]: AdminLevel1Code
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a
-	 * multi-polygon for blocks with holes, or islands.
+	 * The geometry of the state, typically a polygon, but it may be a multipolygon
+	 * for states with holes or islands.
 	 *
 	 * @title Geometry
 	 */

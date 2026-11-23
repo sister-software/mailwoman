@@ -104,7 +104,7 @@ export type WOFPrefix = typeof WOFPrefix
 /**
  * A raw JSON representation of a placetype definition.
  *
- * This identical to the {@linkcode PlacetypeDefinition} however, each key is prefixed with "wof:"
+ * This is identical to the {@linkcode PlacetypeDefinition}, except that each key is prefixed with "wof:".
  */
 export type PlacetypeDefinitionInit = {
 	[K in keyof PlacetypeDefinition as `${WOFPrefix}${K}`]: PlacetypeDefinition[K]

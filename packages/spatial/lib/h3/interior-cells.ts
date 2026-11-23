@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Turn an outline into the H3 cell set a coverage claim may be keyed to, conservatively:
- *   a cell must have its whole `gridDisk(cell, 1)` and all six boundary vertices inside the outline.
+ *   This module turns an outline into the H3 cell set used by a coverage claim.
+ *
+ *   It admits a cell only when its whole `gridDisk(cell, 1)` and all six boundary
+ *   vertices lie inside the outline.
  */
 
 import { stringifyJSON } from "@mailwoman/core/values/json"

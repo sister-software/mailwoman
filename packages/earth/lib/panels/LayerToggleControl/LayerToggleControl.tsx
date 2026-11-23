@@ -17,8 +17,7 @@ import type { MapInstance } from "react-map-gl/maplibre"
 import styles from "./styles.module.css"
 
 /**
- * The groups, matched against a layer ID's last `/` segment, so `planet.v4/crosswalks`
- * matches as `crosswalks`.
+ * The groups match a layer ID's last `/` segment, so `planet.v4/crosswalks` matches the `crosswalks` group.
  *
  * Order matters: first match wins, so labels go first or road-label / earth-label /
  * address-label get pulled into the Roads / Landuse buckets.

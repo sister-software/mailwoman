@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   GeoJSON Geometry Entry Point
+ *   This module exports the GeoJSON geometry types and utilities.
  */
 
 export * from "#geometries/collection"

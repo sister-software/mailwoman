@@ -84,8 +84,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
-			// Forward the client's viewport as a proximity bias, a soft re-rank the resolver
-			// folds into candidate scoring, only when both coords are present.
+			// Forward the client's viewport as a proximity bias and apply a soft re-rank that
+			// the resolver folds into candidate scoring, only when both coordinates are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
 			const result = await geocode(query, bias)

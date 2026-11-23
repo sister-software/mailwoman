@@ -9,8 +9,10 @@
  *   The `mailwoman` package builds the stamp and passes it as an option.
  *
  *   App factories (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) remain engine-agnostic.
- *   Each app supplies its stamp. mustn't import `mailwoman`; the bin (`lib/cli.ts`)
- *   is the wiring layer that resolves the stamp and passes it in.
+ *   Each app supplies its stamp.
+ *
+ *   The app mustn't import `mailwoman`; the bin (`lib/cli.ts`) is the wiring
+ *   layer that resolves the stamp and passes it in.
  */
 
 import type { EngineStamp } from "@mailwoman/core/license"

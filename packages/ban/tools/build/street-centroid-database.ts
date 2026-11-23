@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds the street-centroid database (`street-centroids-<cc>.db`) from the
+ *   Build the street-centroid database (`street-centroids-<cc>.db`) from the
  *   sealed BAN address-point database.
  *
  *   Each row holds one street, postcode and commune with its centroid, bounding box and point count.
@@ -83,8 +83,7 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// This call throws for an unsupported country.
-	// The caller would then select incorrect street keys.
+	// This call rejects an unsupported country before the caller can select incorrect street keys.
 	streetLocaleForBANCountry(country)
 	const source = resolvePath(values.source ?? banDatabasePath(`address-points-${country}.db`))
 
@@ -127,8 +126,8 @@ async function main(): Promise<void> {
 	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
 	// SQLite passes the argument as `unknown`.
-	// The value is `locality_norm`, which the schema declares a `NameKey`, so the cast restores the brand.
-	// A second normalization pass could change the key.
+	// The value is `locality_norm`, which the schema declares a `NameKey`; the cast restores
+	// that brand without applying a second normalization pass that could change the key.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
@@ -145,8 +144,8 @@ async function main(): Promise<void> {
 			`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		// The point count weights the reader's average across groups.
-		// The SELECT list runs `ban_base_commune` once per group instead of once per point.
+		// The point count weights the reader's average across groups, and the SELECT list
+		// runs `ban_base_commune` once per group instead of once per point.
 		const agg = src.prepare(
 			`SELECT street_norm,
 			        postcode,
@@ -194,7 +193,7 @@ async function main(): Promise<void> {
 				source,
 				args.release,
 				// The rerank folds the model's street with the same function, so the two keys compare.
-				// Some CSV rows contain stray quotes.
+				// The quote removal handles CSV rows that contain stray quotes.
 				foldStreetSurface(row.street_raw.replaceAll('"', ""))
 			)
 

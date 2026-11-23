@@ -8,7 +8,7 @@
  * It is the only place the classifier turns a fired rule into something a caller reads.
  *
  * Three of the four intent kinds can raise their marker here from the string by itself.
- * The fourth, Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
+ * The fourth, Stage 2.5, cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
  *
  * Its trigger is the dominance margin of the resolved candidate list.
  * `mailwoman/geocode/intent/markers.ts` raises it after the resolve against `DECISIVE_MARGIN_LOG10`.
@@ -31,8 +31,8 @@ export interface IntentMarkerContext {
 	/**
 	 * The subject match the classifier's one lexicon scan of `input` produced, when a POI lexicon was wired.
 	 *
-	 * `null` or absent means no `poi_category` marker can be built, consistent
-	 * with the kind not firing without a lexicon.
+	 * `null` or an absent value means that the kind cannot build a `poi_category` marker
+	 * because it requires a lexicon.
 	 */
 	poiSubject?: POISubjectMatch | null
 	locale?: string

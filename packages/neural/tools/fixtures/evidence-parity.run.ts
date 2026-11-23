@@ -196,7 +196,7 @@ const fixture = {
 	cases,
 }
 
-// JSON has one number form, so each float placeholder is written out as its Python literal after serializing.
+// JSON has one number form, so serialization writes each float placeholder as its Python literal.
 const text = prettyJSON(fixture, true, 1).replaceAll(/"\\u0000([^"]*)"/g, "$1")
 
 await writeLocalTextFile(text, out)

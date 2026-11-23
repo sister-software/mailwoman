@@ -7,11 +7,11 @@
  *   `Biggin Hill,United Kingdom` reaches stage 2 as `Biggin Hill, United Kingdom`.
  *   Tight commas are a common typing pattern.
  *
- *   The tokenizer is the first stage that reads them differently.
+ *   The tokenizer reads the two forms differently.
  *   Without a space, it combines `,United` into one piece.
  *
- *   The segmenter still splits the input.
- *   The decoder then labels the combined piece as a street or locality, though it is neither.
+ *   The segmenter still splits the input, but the decoder can label the combined
+ *   piece as a street or locality even though it is neither.
  *
  *   A letter or a digit after the comma triggers the insertion, with one exception: a comma
  *   with a digit on both sides is a numeric separator (`12,5`, `1,000`) and is left as typed.

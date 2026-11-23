@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the files `gazetteer overture-ingest` derives from an Overture release live.
+ * Returns the directory where `gazetteer overture-ingest` stores files derived from an Overture release.
  */
 
 import { assertVintage, dataRootPath } from "@mailwoman/core/data-root"

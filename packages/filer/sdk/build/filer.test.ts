@@ -503,7 +503,7 @@ describe("buildFilerDatabase", () => {
 			await expect(pathExists(`${out}.prev`)).resolves.toBe(false)
 		})
 
-		it("two DIFFERENT classification values under the same key/source/vintage both survive (not collapsed by the stage PK)", async () => {
+		it("two different classification values under the same key/source/vintage both survive (not collapsed by the stage PK)", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -898,7 +898,7 @@ describe("buildFilerDatabase", () => {
 			expect(manifest.source).toBe("edgar-exhibit-21")
 		})
 
-		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the family row is what the rollup reads, so one without the other is invisible", async () => {
+		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes both an inferred filer_edge and a filer_family row — the family row is what the rollup reads, so one without the other is invisible", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -953,7 +953,7 @@ describe("buildFilerDatabase", () => {
 			})
 		})
 
-		it("Abstains (neither inferred edge nor family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
+		it("abstains (neither inferred edge nor family row) when the subsidiary name matches two different FRNs — a genuine name collision, never picked arbitrarily", async () => {
 			await using scratch = await temporaryDirectory("filer-build-")
 			const out = scratch.path("filer.db")
 
@@ -1030,7 +1030,7 @@ describe("buildFilerDatabase", () => {
 				await expect(scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).resolves.toBe(0.75)
 			})
 
-			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
+			it("raw names differing in legal designation score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
 				await expect(scoreFor("American Broadband LLC", "American Broadband, Inc.")).resolves.toBe(0.5)
 			})
 
@@ -1044,7 +1044,7 @@ describe("buildFilerDatabase", () => {
 				expect(new Set([identical, normalized, designation]).size).toBe(3)
 			})
 
-			it("evidence records BOTH raw spellings, so a reader can see what the score is grading", async () => {
+			it("evidence records both raw spellings, so a reader can see what the score is grading", async () => {
 				await using scratch = await temporaryDirectory("filer-build-")
 				const out = scratch.path("filer.db")
 

@@ -64,8 +64,7 @@ await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("#lookup")
 
 /**
- * Seed a minimal on-disk WOF fixture (schema and one place) without the FTS index.
- * Writable.
+ * Seed a writable, minimal on-disk WOF fixture (schema and one place) without the FTS index.
  */
 function seedFixture(path: PathBuilder): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

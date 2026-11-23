@@ -6,7 +6,9 @@
  *   compiled range worker and the `@sqlite.org/sqlite-wasm` runtime it imports,
  *   all loaded at run time by URL, so no bundler ever sees them.
  *
- *   Node-side, a build step, never the browser.
+ *   A Node-side build step stages these assets.
+ *   The browser only loads them.
+ *
  *   `syncArtifact` is the idempotent copy every staged asset goes through: a byte-identical
  *   destination remains unchanged so a dev server watching it sees no change.
  */
@@ -29,7 +31,7 @@ import { RANGE_WORKER_FILE, SQLITE_RUNTIME_MODULE_FILE } from "#httpvfs/database
  *
  * @param label - For logging
  *
- * @returns True if the file was copied
+ * @returns Whether the file was copied
  */
 export async function syncArtifact(
 	sourcePath: PathBuilderLike,

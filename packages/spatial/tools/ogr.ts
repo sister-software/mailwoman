@@ -5,7 +5,7 @@
  *   What an OGR-readable source declares about itself, read before any feature is —
  *   the identity check every polygon-layer ingest opens with.
  *
- *   OGR is build tooling, never A serve dependency (scope invariant 6).
+ *   OGR is build tooling, never a serving dependency (scope invariant 6).
  *   The check refuses a source whose declared authority code isn't the one the ingest was written for,
  *   because reading one projection's coordinates as another's is silent — and it runs the
  *   datum-transformation guard even where no shift is needed, because skipping it on the reasoning

@@ -9,9 +9,10 @@
  *   (`us` accepts `\d{5}(-\d{4})?`, `ca` accepts `A1A 1A1`, `jp` accepts `NNN-nnnn`, …);
  *   this is the single place that asks all of them at once and collects the matches.
  *
- *   It is the one shared answer to "which systems can this shape be", consumed by the
- *   postcode anchor to narrow which systems' street vocabularies it checks.
- *   Callers depend on this pure function, never on each other.
+ *   This function provides the shared answer to "which systems can this shape be".
+ *   The postcode anchor consumes that answer to narrow the street vocabularies it checks.
+ *
+ *   Callers depend on this pure function rather than on one another.
  *
  *   This is a shape test rather than a gazetteer-membership test: a bare `68161` matches the US,
  *   German, French, Spanish and Italian 5-digit shapes, so it returns `["us", "de", "fr", "es", "it"]`
@@ -61,9 +62,11 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system]) => system)
 
 /**
- * Every address system whose own postcode shape accepts `postcode`, empty
- * when none recognizes it (a bare `27`, a 7-digit run); O(number of systems),
- * run only on the few postcode-shaped spans an address contains.
+ * Every address system whose own postcode shape accepts `postcode`.
+ *
+ * The result is empty when no system recognizes it, as for a bare `27` or a 7-digit run.
+ * The function takes O(number of systems) time and runs only on the few
+ * postcode-shaped spans an address contains.
  */
 export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
 	if (typeof postcode !== "string" || !postcode) return []
@@ -158,9 +161,10 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | nu
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 
 /**
- * True when this country's area-grade postcode outranks its locality.
+ * Returns true when this country's area-grade postcode outranks its locality.
  *
- * An absent or unknown country gives false, so the locality-first convention is what an unscoped query gets.
+ * An absent or unknown country returns false.
+ * An unscoped query therefore uses the locality-first convention.
  */
 export function areaPostcodeLeadsLocality(country: string | null): boolean {
 	return country != null && AREA_POSTCODE_FINER_THAN_LOCALITY.has(country.trim().toUpperCase())

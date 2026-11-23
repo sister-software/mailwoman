@@ -210,14 +210,14 @@ function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
 describe("branded identifiers", () => {
 	it("refuses a relation identifier where a concept identifier belongs", () => {
 		const relationID = toRelationID("affords")
-		// @ts-expect-error a RelationID is not a ConceptID. the brands exist to make this assignment fail.
+		// @ts-expect-error a RelationID is not a ConceptID. The brands exist to make this assignment fail.
 		const conceptID: ConceptID = relationID
 
 		expect(conceptID).toBe("affords")
 	})
 
 	it("refuses a plain string where a branded identifier belongs", () => {
-		// @ts-expect-error an unbranded string is not a ConceptID. conversion goes through toConceptID.
+		// @ts-expect-error an unbranded string is not a ConceptID. Conversion goes through toConceptID.
 		const conceptID: ConceptID = "pharmacy"
 
 		expect(conceptID).toBe("pharmacy")

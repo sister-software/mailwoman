@@ -33,8 +33,7 @@ interface VariantAliasBase {
 	/**
 	 * Free-form regional refinement within the locale (e.g. "NYC", "Kansai", "Quebec").
 	 *
-	 * Not used for matching today.
-	 * Informational.
+	 * The lookup ignores this field today, so it is informational.
 	 *
 	 * A future enhancement could combine this with a coarse geolocation signal to further disambiguate.
 	 */

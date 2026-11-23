@@ -22,7 +22,7 @@ const TERRARIUM_MAX_ZOOM = 15
  * filling a miss from the AWS bucket.
  *
  * The bucket answers over HTTP/1.1 with no `Cache-Control`, so a browser opens a
- * connection per few tiles and revalidates on revisit.
+ * connection for every few tiles and revalidates on revisit.
  * Served here, the tiles share the basemap's HTTP/2 connection and edge cache.
  *
  * A tile's content at a z/x/y never changes, so the edge and the browser keep it for a year.

@@ -27,7 +27,7 @@ pattern at cell grain.
 Both come from one acquisition, one aggregation, and one set of provenance rows, so the two consumers
 cannot disagree about the ground.
 
-## Four absences are recorded, and one positive negative
+## Four absence states and one rating that precludes cultivation
 
 The layer never represents an absence with a small number. A consumer can tell apart five readings:
 

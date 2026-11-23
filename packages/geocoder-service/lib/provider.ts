@@ -14,8 +14,8 @@ export const ProviderPlacement = {
 	 */
 	Remote: "remote",
 	/**
-	 * The engine runs on the device from assets it has already loaded,
-	 * so a query needs no network once they're.
+	 * The engine runs on the device from assets it has already loaded, so a query
+	 * needs no network once those assets are loaded.
 	 */
 	Local: "local",
 } as const

@@ -55,8 +55,7 @@ export function resolveActivityPhraseLocale(
 }
 
 /**
- * Everything wrong with a lexicon that can be established without leaving this
- * package, one message per problem.
+ * This function returns one message for each lexicon problem it can detect without external artifacts.
  *
  * A consumer with the referenced artifacts must check attestations this package cannot verify.
  * Those checks verify three facts.

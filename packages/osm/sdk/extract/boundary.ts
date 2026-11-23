@@ -13,9 +13,9 @@
  *   asserts survey over whatever the rectangle overhangs.
  *   A country/region extract is clipped to a polygon rather than a rectangle.
  *
- *   `bboxCoverageCells` in the POI pipeline is correct for the rectangular
- *   extracts it was written for. an administrative region needs its own outline
- *   or the cells along its edge claim coverage the source never had.
+ *   `bboxCoverageCells` in the POI pipeline is correct for the rectangular extracts it was written for.
+ *   An administrative region needs its own outline or the cells along its edge
+ *   claim coverage the source never had.
  *
  *   The extractor rejects multiple matches because `name` isn't unique in OSM even within one admin level.
  *   Silently taking the first row would key a completeness claim to whichever

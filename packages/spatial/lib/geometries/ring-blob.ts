@@ -294,7 +294,7 @@ export function assertRingsInsideExtent(
 }
 
 /**
- * One stored polygon's bounding box and geometry, as every polygon layer's truth table stores them.
+ * One stored polygon's bounding box and geometry, as stored in each polygon layer's row.
  */
 export interface EncodedArea {
 	min_lat: number

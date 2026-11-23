@@ -31,7 +31,7 @@ export const LIBPOSTAL_STOPWORD_SUPPLEMENT: Readonly<Record<string, readonly str
  * The lowercased single-word stopwords libpostal lists for `language`, such as `the`
  * and `a` in English or `la` and `des` in French, with {@link LIBPOSTAL_STOPWORD_SUPPLEMENT}.
  *
- * A language libpostal has no stopword file for returns only its supplement.
+ * If libpostal has no stopword file for a language, this function returns only that language's supplement.
  */
 export async function readLibPostalSingleWordStopwords(language: string): Promise<ReadonlySet<string>> {
 	const path = resourceDictionaryPathBuilder("libpostal", language, "stopwords.txt")

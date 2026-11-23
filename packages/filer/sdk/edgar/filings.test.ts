@@ -131,7 +131,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 		}
 	})
 
-	it("reports ONE candidate for a registrant filed under several share classes", () => {
+	it("reports one candidate for a registrant filed under several share classes", () => {
 		const shareClasses: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },
@@ -170,7 +170,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 		expect(candidates[0]?.ticker).toBe("LBRDK")
 	})
 
-	it("does NOT report a candidate that merely canonicalizes to a DIFFERENT string, however close", () => {
+	it("does not report a candidate that merely canonicalizes to a different string, however close", () => {
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0003333333")!, ticker: "ACME", title: "Acme Corporation" },
 			{ cik: toCIK("0004444444")!, ticker: "ZZZZ", title: "Zzyzx Unrelated Holdings" },
@@ -339,7 +339,7 @@ describe("Exhibit 21 document discovery", () => {
 		}
 	})
 
-	it("does NOT mistake EX-2, EX-210 or EX-23 for an Exhibit 21", () => {
+	it("does not mistake EX-2, EX-210 or EX-23 for an Exhibit 21", () => {
 		for (const type of ["EX-2", "EX-2.1", "EX-210", "EX-23", "EX-21A"]) {
 			const html = `&lt;DOCUMENT&gt;\n&lt;TYPE&gt;${type}\n&lt;FILENAME&gt;x.htm\n&lt;/DOCUMENT&gt;`
 

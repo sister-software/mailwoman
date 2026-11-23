@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The pure half of `mailwoman setup`: which tiers the asked countries have,
+ *   The pure half of `mailwoman setup` reports which tiers the requested countries have,
  *   and the lines the non-interactive run prints.
  *
  *   The Ink command in `cli/commands/setup.tsx` draws these and adds the prompts.

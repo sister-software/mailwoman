@@ -18,11 +18,13 @@
  *   rather than the scan, so N concurrent inserts is where the wall-clock saving comes from.
  *   Sequentialise via `--concurrency 1`.
  *
- *   Each per-state child owns its own DB's atomic write. this driver only spawns
- *   children (skipping complete databases) and writes the small `attribution.json`
- *   manifest incrementally — so there's no national-DB temp-then-rename here,
+ *   Each per-state child owns its own DB's atomic write.
+ *   This driver only spawns children (skipping complete databases) and writes the small
+ *   `attribution.json` manifest incrementally — so there's no national-DB temp-then-rename here,
  *   the large-artifact atomicity lives one level down in the database builder.
- *   Progress streams to stderr. the final summary lands on stdout.
+ *
+ *   Progress streams to stderr.
+ *   The final summary lands on stdout.
  *
  *   licensing: each child admits an Overture dataset only on its register decisions, the
  *   admission the US address layer applies, and `--[no-]exclude-unread-sources` passes through.

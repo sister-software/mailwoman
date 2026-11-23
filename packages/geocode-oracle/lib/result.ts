@@ -28,7 +28,8 @@ export const OracleProvider = {
 	/**
 	 * US Census Bureau geocoder (`geocoding.geo.census.gov`).
 	 *
-	 * US only, free, tiger-derived.
+	 * Coverage is limited to the US.
+	 * The service is free and uses TIGER-derived data.
 	 */
 	Census: "census",
 } as const

@@ -34,7 +34,7 @@ export const NominatimAddressDetailsSchema = z
 	.openapi("NominatimAddressDetails")
 
 /**
- * The register row behind a house-grade result's coordinate, under the result's `mailwoman` block.
+ * The register row that supplied a house-grade result's coordinate, under the result's `mailwoman` block.
  */
 const NominatimCoordinateSourceSchema = z
 	.object({

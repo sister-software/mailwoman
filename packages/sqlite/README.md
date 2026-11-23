@@ -1,6 +1,6 @@
 # @mailwoman/sqlite
 
-This package provides typed Kysely connections backed by Node.js SQLite and helpers for building and opening read-only database artifacts.
+This package provides typed Kysely connections backed by Node.js SQLite. It also provides helpers for building and opening read-only database artifacts.
 
 Public library. Install with `npm install @mailwoman/sqlite`.
 

@@ -44,7 +44,7 @@ if (!values.out || (!values.all && !values.city?.length)) {
 }
 
 /**
- * Files downloaded and converted at once.
+ * The number of files downloaded and converted at once.
  */
 const CONCURRENCY = 16
 

@@ -33,7 +33,7 @@ export type ServiceFeature = OGCFeature<{ flood_zone?: string }>
  * The reader is a function.
  * Tests can exercise the check's logic without a live client.
  *
- * The comparison's value is that it decides which of three results a point gets.
+ * The comparison decides which of three results a point receives.
  *
  * An HTTP client would let tests observe these decisions only in a live run.
  * A scripted reader lets tests pin each decision. {@link createEAServiceReader}

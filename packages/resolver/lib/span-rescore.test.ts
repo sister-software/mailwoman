@@ -293,7 +293,7 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.postcodeVerified).toBe(false)
 	})
 
-	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
+	it("prefers the longest exact match (a specific name beats its own prefix)", async () => {
 		const raw = "Tomaszów Mazowiecki"
 		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", thresholdKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
@@ -301,14 +301,14 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.postcodeVerified).toBe(false)
 	})
 
-	it(": returns a sub-span that drops a NAME word, flagged as dropping the name", async () => {
+	it("returns a sub-span that drops a name word and marks the name as incomplete", async () => {
 		const hit = await findRescoreCandidate("Fort Worth", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.place.id).toBe(60)
 		expect(hit?.dropsName).toBe(true)
 	})
 
-	it(": a whole-input span drops no word of the name", async () => {
+	it("leaves every name word in a whole-input span", async () => {
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.dropsName).toBe(false)
@@ -403,7 +403,7 @@ describe("findRescoreCandidate", () => {
 		})
 	})
 
-	it(": a sub-span whose remainder is a subdivision code keeps every word of the name", async () => {
+	it("keeps every name word when the remainder is a subdivision code", async () => {
 		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.text).toBe("Sammamish")
@@ -411,14 +411,14 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.dropsName).toBe(false)
 	})
 
-	it(": a sub-span whose remainder is a number keeps every word of the name", async () => {
+	it("keeps every name word when the remainder is a number", async () => {
 		const hit = await findRescoreCandidate("86-300 Grudziądz", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.place.id).toBe(1)
 		expect(hit?.dropsName).toBe(false)
 	})
 
-	it(": a sub-span whose remainder the PARSE read as a street keeps every word of the name", async () => {
+	it("keeps every name word when the parser read the remainder as a street", async () => {
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
 		const roots: AddressNode[] = [

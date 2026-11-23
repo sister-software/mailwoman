@@ -206,7 +206,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		expect(hit?.alternatives.map((a) => a.country)).toContain("US")
 	})
 
-	it("does NOT fire when a postcode qualifies the query (the hard filter stands)", async () => {
+	it("does not fire when a postcode qualifies the query (the hard filter remains active)", async () => {
 		// A postcode is knowledge rather than a locale guess and has already picked the country.
 		const raw = "Berlin 54923"
 
@@ -233,7 +233,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		expect(hit?.place.country).toBe("US")
 	})
 
-	it("does NOT fire when the span is only PART of the raw input", async () => {
+	it("does not fire when the span covers only part of the raw input", async () => {
 		// A partial span isn't a bare toponym: 'Weimar Thüringen' keeps the DE-scoped 'Weimar' probe.
 		const raw = "Weimar Thüringen"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
@@ -638,7 +638,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBeUndefined()
 	})
 
-	it("stays inside an EXPLICIT country scope — the race cannot promote a foreign country row", async () => {
+	it("stays inside an explicit country scope and cannot promote a foreign country row", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"), {
 			defaultCountry: { country: "US", source: "caller" },
 		})
@@ -655,7 +655,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("DE")
 	})
 
-	it("keeps an EXPLICIT scope supreme on country-tagged nodes (byte-stable legacy behavior)", async () => {
+	it("keeps an explicit scope supreme on country-tagged nodes (byte-stable legacy behavior)", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("country", "Germany"), {
 			defaultCountry: { country: "us", source: "caller" },
 		})
@@ -750,7 +750,7 @@ describe("bare-region dominance (#1650)", () => {
 		roots: [node({ tag: "locality", value, start: 0, end: value.length, confidence: 0.9 })],
 	})
 
-	it("promotes a DOMINANT region namesake over a hamlet (bare Georgia → the 11M state)", async () => {
+	it("promotes a dominant region namesake over a hamlet (bare Georgia → the 11M state)", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bare("Georgia"))
 		const root = out.roots[0]!
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The package sets its casing policy rather than borrowing language rules.
+ *   The package sets its casing policy rather than borrowing language-specific rules.
  *
  *   The primitives (`titleCase`, `isUpperCase`, `isLowerCase`, `matchCase`,
  *   `sentenceCase`) live in `spliterator`.

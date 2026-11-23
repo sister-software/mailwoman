@@ -26,7 +26,7 @@ export interface MailwomanFastifyOptions {
 	/**
 	 * Supply a pre-built pipeline to skip model and gazetteer loading.
 	 *
-	 * Parse, geocode and POI then all read this pipeline, and the gazetteer paths below are ignored.
+	 * Parse, geocode, and POI calls all read this pipeline, and the gazetteer paths below are ignored.
 	 */
 	pipeline?: InjectedPipeline
 	/**

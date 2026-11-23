@@ -51,7 +51,7 @@ describe("decorateNode and the unlocated sentinel", () => {
 		expect(isResolvedWithCoord(n)).toBe(true)
 	})
 
-	it("leaves the coordinate ABSENT for a 0,0 place, and still identifies it", () => {
+	it("leaves the coordinate absent for a 0,0 place while still identifying it", () => {
 		const n = node()
 
 		decorateNode(n, place({ lat: 0, lon: 0 }), [])

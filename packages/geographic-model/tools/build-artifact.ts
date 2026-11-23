@@ -18,8 +18,9 @@ import { loadGeographicModelDirectory } from "#load"
 import { packagedModelPaths } from "#packaged"
 
 /**
- * The command that rewrites the committed artifact, quoted by the freshness test's
- * failure message so a reader who trips it is told what to run.
+ * The command that rewrites the committed artifact.
+ *
+ * The freshness test quotes it in its failure message so the required repair is explicit.
  */
 export const REGENERATE_ARTIFACT_COMMAND =
 	"node packages/geographic-model/tools/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json"

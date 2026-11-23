@@ -277,7 +277,7 @@ export async function buildCandidate(
 	// Each contributing database's own tier decides whether its rows may enter
 	// a gazetteer that could be published.
 	// A database that states no tier is reported rather than refused.
-	// Its undeclared grant refuses publication of the whole.
+	// Its undeclared grant refuses publication of the entire candidate.
 	const inputTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readInputTerms(path)))
 
 	const refusing = inputsRefusingPublication(inputTerms)
@@ -405,7 +405,7 @@ export interface PublishOptions {
 	 */
 	version: string
 	/**
-	 * A staging dir.
+	 * Directory used to stage the publication.
 	 *
 	 * The candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
 	 */

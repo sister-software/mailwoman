@@ -105,7 +105,7 @@ describe("recaseUniform", () => {
 		expect(recaseUniform("6050 KNOLOGY WAY ATTN: REGULATORY")).toBe("6050 KNOLOGY WAY ATTN: REGULATORY")
 	})
 
-	it("is a display tidy, NOT a matching normalizer — it does not fold designations", () => {
+	it("is a display tidy, not a matching normalizer — it does not fold designations", () => {
 		expect(recaseUniform("ARVIG ENTERPRISES INC")).not.toBe(recaseUniform("Arvig Enterprises, Inc."))
 	})
 

@@ -67,7 +67,7 @@ describe("corroborateCIK — pins", () => {
 		expect(corroborateCIK(cik("0001514416"), null, { pinnedCIKs }).basis).toBe(CIKCorroborationBasis.Pinned)
 	})
 
-	it("does not admit a DIFFERENT CIK just because some pin exists", () => {
+	it("does not admit a different CIK just because some pin exists", () => {
 		const pinnedCIKs = new Set([cik("0001514416")])
 
 		expect(corroborateCIK(cik("0001034760"), "7373", { pinnedCIKs }).corroborated).toBe(false)

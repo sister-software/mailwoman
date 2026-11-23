@@ -31,8 +31,8 @@ export interface EngineWorkerEnv {
 }
 
 /**
- * The engine stamp the API attaches to every response, for the `mailwoman`
- * package version this Worker bundles.
+ * The engine stamp that the API attaches to every response identifies the
+ * `mailwoman` package version bundled by this Worker.
  */
 const ENGINE_STAMP = buildEngineStamp({ version: mailwomanPackage.version, expression: mailwomanPackage.license })
 

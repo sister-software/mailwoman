@@ -41,7 +41,7 @@ const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 - [`@mailwoman/match`](../match) — uses H3 cells for geo-first record blocking
 - [`@mailwoman/address-id`](../address-id) — uses H3 for stable address primary keys
 - [`@mailwoman/core`](../core) — consumes spatial types
-- [`@mailwoman/codex/country`](../codex/country) — ISO 3166-1 country codes and names.
+- [`@mailwoman/codex/country`](../codex/country) — ISO 3166-1 country codes and names
 
 ## License
 

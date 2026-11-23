@@ -12,13 +12,14 @@
  * Others write the number across two columns. {@linkcode composeHouseNumber} joins those.
  * Every adapter facing either shape uses these, so an edge case fixed here is fixed for all of them.
  *
- * Which of the two split functions a country takes is `STREET_ORDERS` in
- * `packages/mailwoman/tools/dev-tools/codex/street-orders.ts`, whose values reach
- * the generated layouts `@mailwoman/codex/address/layouts` serves.
+ * `STREET_ORDERS` in `packages/mailwoman/tools/dev-tools/codex/street-orders.ts`
+ * selects the split function for each country.
+ * Its values reach the generated layouts served by `@mailwoman/codex/address/layouts`.
  */
 
 /**
- * A leading house number on a US-style street line, then whitespace, then the rest.
+ * This pattern matches a leading house number on a US-style street line,
+ * followed by whitespace and the rest.
  *
  * The number is digits, or a grid number with a directional letter before
  * or inside it (Wisconsin's `N8722`, Illinois' `40W514`).
@@ -47,7 +48,7 @@ export const HOUSE_NUMBER_PREFIX = /^((?:[NSEW]\d+|\d+(?:[NSEW]\d+)?)(?: ?- ?\d+
 const SPELLED_GRID_NUMBER = /^((?:North|South|East|West) \d+) +(\S+ +\S.*)$/i
 
 /**
- * A street line split into its house number and the remainder.
+ * This interface represents a street line split into its house number and remainder.
  */
 export interface SplitStreetLine {
 	house_number?: string

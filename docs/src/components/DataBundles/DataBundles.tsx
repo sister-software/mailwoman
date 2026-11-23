@@ -144,11 +144,11 @@ export const ServedBundlesTable: React.FC = () => {
 				</tbody>
 			</table>
 			<p>
-				Measured <time dateTime={data.measuredAt}>{date}</time> against <code>{data.bucket}</code>. Served is the{" "}
-				<code>content-length</code> the bucket reported. Tier and expression are read from each artifact&apos;s own{" "}
-				<code>layer_manifest</code> on a host holding the published file, and unmeasured means no such host ran the
-				snapshot. The database license is the license on the database as a whole, which ODbL grants separately from
-				rights in the contents, and it is unmeasured until an artifact records one.
+				Measured <time dateTime={data.measuredAt}>{date}</time> against <code>{data.bucket}</code>. The bucket&apos;s
+				reported <code>content-length</code> is the served size. Each artifact&apos;s <code>layer_manifest</code>{" "}
+				supplies its tier and expression. The snapshot marks them unmeasured when no host holding the published file ran
+				it. The database license is the license on the database as a whole, which ODbL grants separately from rights in
+				the contents, and it is unmeasured until an artifact records one.
 			</p>
 		</>
 	)

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `CandidatePicker` — the ranked list of alternate gazetteer candidates. clicking one selects it.
+ *   `CandidatePicker` — the ranked list of alternate gazetteer candidates.
+ *   The user selects a candidate by clicking it.
  *
- *   Presentational. the selected index is owned by the caller (the pipeline hook).
+ *   Presentational.
+ *   The selected index is owned by the caller (the pipeline hook).
  *
  *   The row shows the rank rather than the score.
  *   `ResolvedPlaceView.score` is implementation-defined.

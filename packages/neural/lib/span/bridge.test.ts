@@ -4,9 +4,9 @@
 /**
  *   Interface tests for punctuation-gap span bridging (the v4.4.0 corrective).
  *
- *   Essential properties: dotted fragments merge through their punctuation O-tokens.
- *   space-only gaps never merge (the Saint-Albans guard). different tags never merge.
- *   the merged confidence is the minimum of the fragments.
+ *   The test checks that dotted fragments merge through their punctuation O-tokens,
+ *   space-only gaps remain separate (the Saint-Albans guard), and different tags remain separate.
+ *   The merged confidence is the minimum of the fragments.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"

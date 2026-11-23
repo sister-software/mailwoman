@@ -123,8 +123,8 @@ export interface VerifyZoningResult {
 /**
  * Point identifiers for locations outside this product's publication area.
  *
- * Each is a place rather than a bare pair of numbers: a coordinate a reader a
- * coordinate without a reference source cannot be checked.
+ * Each entry identifies a place rather than providing a bare pair of numbers.
+ * A reader cannot check a coordinate without a reference source.
  *
  * The check requires points from two populations.
  * The Donegal points are the case this layer's coverage posture exists for.
@@ -304,13 +304,13 @@ async function readServiceContainment(
 			nearest = distance
 		}
 
-		// the service'S rings GET the same role resolution the ingest gave the archive'S.
+		// The service's rings get the same role resolution that the ingest gave the archive's rings.
 		// The publisher uses one convention on both channels, so reading this side as nested
 		// GeoJSON would answer "inside" for a point in a hole and report the artifact as
 		// wrong at exactly the locations the hole handling exists for.
 		const resolved = resolveRingRoles(raw, `service feature near ${latitude},${longitude}`)
 
-		// encoded and RE-read rather than RAY-cast directly, deliberately: the artifact answers
+		// Encode and re-read the rings rather than ray-casting directly: the artifact answers
 		// through `pointInEncodedRings`, and running the service's geometry through a different
 		// predicate would compare two answers that were never asked the same question.
 		if (pointInEncodedRings(encodeRings(resolved.polygons), longitude, latitude)) {

@@ -2,24 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Decision 6 layer-absent guards — kept out of `cli.ts` in their own importable module
- *   so the branching itself has direct unit coverage (`layer-guards.test.ts`), beyond "the
- *   tool handler passes an abstain through" (`tools.test.ts`'s stub-level dispatch tests).
+ *   This module contains the Decision 6 guards for absent layers.
+ *
+ *   It stays separate from `cli.ts` so the branching has direct unit coverage
+ *   (`layer-guards.test.ts`) in addition to the stub-level dispatch tests in `tools.test.ts`.
  *
  *   `cli.ts` top-level-`await`s a real stdio transport connection at import time,
- *   so IT can't be imported by vitest.
- *   These three functions have no such dependency (pure existence-check + open, or a thrown Error),
- *   so they live here and `cli.ts` just calls them.
+ *   Vitest cannot import `cli.ts` because of that top-level await.
+ *   These functions only check for a path, open a database, or throw an `Error`,
+ *   so they have no transport dependency.
+ *   They live here, and `cli.ts` calls them.
  *
  *   - `openBDCDatabaseIfPresent` / `openPlausibilityPOIDeps` — `mailwoman_plausibility_check`'s
- *     `bdcDB`/`poi` deps (`PlausibilityDeps`) are each optional, so a missing/absent path degrades to
- *     `undefined`, which `plausibilityCheck` (`@mailwoman/bdc`) already turns into a typed abstain
- *     evidence entry (`{type:"abstain", reason:"requires_bdc_layer"|"requires_build_local_layer"}`) —
- *     never a raw sqlite throw.
+ *     `bdcDB`/`poi` dependencies (`PlausibilityDeps`) are optional.
+ *     A missing path therefore becomes `undefined`, which `plausibilityCheck`
+ *     (`@mailwoman/bdc`) turns into a typed abstain evidence entry
+ *     (`{type:"abstain", reason:"requires_bdc_layer"|"requires_build_local_layer"}`),
+ *     rather than a raw sqlite throw.
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db
  *     unconditionally (no optional-dep abstain shape exists for that tool),
- *     so a missing file becomes one friendly thrown `Error` naming the layer
- *     instead of the raw `node:sqlite` "unable to open database file" message.
+ *     so a missing file produces one friendly `Error` naming the layer instead of the
+ *     raw `node:sqlite` "unable to open database file" message.
  *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the same pairing, for filer.db.
  *     `mailwoman_filer_lookup` requires filer.db unconditionally
  *     (mirrors `mailwoman_bdc_filing_landscape`'s own "requires the layer" discipline —

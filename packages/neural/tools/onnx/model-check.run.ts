@@ -11,8 +11,8 @@
  *   This tool runs each feed through the graph on the CPU provider with the runner's session
  *   options and reports the largest absolute difference per output against `--tolerance`.
  *
- *   It is the export's check against the model that `verify_parity` runs against
- *   torch in the Python exporter.
+ *   This tool checks the export against the model that `verify_parity` compares
+ *   with Torch in the Python exporter.
  *
  *   Usage: `node packages/neural/tools/onnx/model-check.run.ts --model <model.onnx> --feeds <feeds.json>
  *   [--tolerance 1e-4] [--threads 4] [--out <receipt.json>]`

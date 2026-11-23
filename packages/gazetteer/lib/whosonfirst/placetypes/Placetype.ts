@@ -127,7 +127,8 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting less specific (i.e. Bigger or higher) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they're not sequential, only unique.
+	 * Placetype IDs identify each placetype.
+	 * The comparator orders placetypes by hierarchy.
 	 */
 	static comparatorAsc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -144,7 +145,8 @@ export class Placetype implements Disposable {
 	/**
 	 * Compare two placetypes, sorting more specific (i.e. Smaller or lower) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they're not sequential, only unique.
+	 * Placetype IDs identify each placetype.
+	 * The comparator orders placetypes by hierarchy.
 	 */
 	static comparatorDesc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {

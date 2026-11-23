@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The search box: a combobox over the loaded artifact through the shared
- *   autocomplete hook and listbox, so the keyboard interface (arrows, Enter, Escape)
- *   and the aria wiring are the Earth geocoder's rather than a second copy.
+ * The search box is a combobox over the loaded artifact.
+ *
+ * It uses the shared autocomplete hook and listbox, so the keyboard interface (arrows, Enter, Escape)
+ * and ARIA wiring match the Earth geocoder instead of creating a second copy.
  */
 
 import { MapSearchBar } from "@mailwoman/react/map/chrome/MapSearchBar"
@@ -54,7 +55,10 @@ export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 
 	return (
 		<div className="search-box">
-			{/* `type="search"` brings its own clear button. a second cross beside it is two controls for one job. */}
+			{/*
+			 * `type="search"` brings its own clear button.
+			 * A second cross beside it would duplicate that control.
+			 */}
 			<MapSearchBar label="Search named features" leading={<span aria-hidden="true">⌕</span>}>
 				<input
 					{...autocomplete.inputProps}

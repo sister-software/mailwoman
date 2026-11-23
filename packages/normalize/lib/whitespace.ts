@@ -6,15 +6,15 @@
  *   space at every run length so a lone tab normalizes exactly as a doubled one does.
  *
  *   Newlines (`\n`/`\r`) are preserved because QueryShape's segmentation grammar
- *   reads one as a segment separator on a par with a comma.
- *   It reads a raw tab the same way, so folding every tab here keeps a tab-separated
- *   export from re-segmenting the query.
+ *   reads each one as a segment separator, like a comma.
+ *   The grammar reads a raw tab the same way, so folding every tab here keeps a
+ *   tab-separated export from re-segmenting the query.
  *
  *   The trailing trim drops trailing sentence-punctuation noise, since a trailing full stop, comma,
  *   semicolon or colon glues onto the last token and drops the street tier (`address_point` to `admin`).
  *   The function trims trailing punctuation only.
  *
- *   It uses a conservative set because leading punctuation and quotes or brackets can be meaningful.
+ *   It uses a conservative set because leading punctuation, quotes, and brackets can be meaningful.
  *
  *   Offset-map-correct via the same substring step as the whitespace trim, so span alignment survives.
  */
@@ -27,8 +27,8 @@ const ANY_SPACE = /[ \t\n\r]/
  * The function trims trailing noise from the input, including whitespace
  * and the sentence punctuation a user commonly appends.
  *
- * It applies to the trailing end only because a leading token is required.
- * and excludes quotes, brackets and parentheses.
+ * It applies only to the trailing end because a leading token is required,
+ * and it excludes quotes, brackets, and parentheses.
  */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 

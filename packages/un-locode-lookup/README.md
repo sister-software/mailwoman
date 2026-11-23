@@ -1,8 +1,8 @@
 # @mailwoman/un-locode-lookup
 
-Place → **UN/LOCODE** (the UNECE Code for Trade and Transport Locations — `US NYC`, `NL RTM`). Look up
-by country + place name, or by nearest coordinate. `node:sqlite` over the UNECE code list. An
-[`@mailwoman/annotations`](../annotations) `Annotator`.
+This package maps places to **UN/LOCODE** (the UNECE Code for Trade and Transport Locations — `US NYC`,
+`NL RTM`). It looks up entries by country and place name or by nearest coordinate. It uses `node:sqlite`
+over the UNECE code list and provides an [`@mailwoman/annotations`](../annotations) `Annotator`.
 
 ## Build the DB
 

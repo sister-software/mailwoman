@@ -96,7 +96,7 @@ describe("parseForm499Notes — never infers", () => {
 		expect(lifecycle.notes).toEqual(["Some future template the FCC has not written yet."])
 	})
 
-	it("does NOT keyword-sniff — a sentence merely containing a template's words is unrecognized", () => {
+	it("does not keyword-sniff — a sentence merely containing a template's words is unrecognized", () => {
 		const lifecycle = parseForm499Notes([
 			"This company sold assets to another party and may have gone out of business.",
 		])

@@ -6,8 +6,10 @@
  *   against a candidate model, checks every number against an eval spec interface
  *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`.
  *
- *   Exit 0 = every floor met and the mask-regression lock held. exit 1 = any
- *   miss. exit 2 = usage / lore-guard refusal.
+ *   Exit 0 means every floor was met and the mask-regression lock was held.
+ *   Exit 1 means a floor was missed.
+ *
+ *   Exit 2 means usage or lore-guard refusal.
  *   On `pass` it prints the pre-filled `eval ledger-append` command.
  *
  *   The module narrates everything (provenance, battery legs, verdict lines).

@@ -131,7 +131,7 @@ describe("createBDCClient: credential fail-fast", () => {
 		expect(() => createBDCClient()).toThrow(/broadbandmap\.fcc\.gov/)
 	})
 
-	it("throws when only ONE half of the pair is present", () => {
+	it("throws when only one half of the pair is present", () => {
 		expect(() => createBDCClient({ username: USERNAME })).toThrow(/credentials/i)
 		expect(() => createBDCClient({ apiKey: API_KEY })).toThrow(/credentials/i)
 	})
@@ -169,7 +169,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 		)
 	})
 
-	it("APPENDS the path to the base rather than RESOLVING it, so no path can redirect the credentials off-host", async () => {
+	it("appends the path to the base rather than resolving it, so no path can redirect the credentials off-host", async () => {
 		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to
 		// another origin and send the `username`/`hash_value` pair there.
 		// Concatenation cannot, because the host is already fixed by the time the path is appended.
@@ -184,7 +184,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 		}
 	})
 
-	it("returns the response body UN-unwrapped, envelope intact", async () => {
+	it("returns the response body unwrapped, with its envelope intact", async () => {
 		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data` themselves.
 		// A client that unwrapped would silently break every call site's response type.
 		const transport = bdcTransport([{ body: { data: [{ as_of_date: "2024-12-31" }] } }])
@@ -245,7 +245,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 		expect(maxCountInSlidingWindow(arrivals, 60_000)).toBeLessThanOrEqual(BDC_DEFAULT_REQUESTS_PER_MINUTE)
 	})
 
-	it("throttles the BINARY path too — caching is off there, the rate budget is not", async () => {
+	it("throttles the binary path too because caching is off there but the rate budget still applies", async () => {
 		const clock = createFakeClock()
 		const transport = bdcTransport([{ body: Buffer.from("zip-bytes") }])
 		const client = clientFor(transport, { clock })
@@ -256,7 +256,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 		expect(clock.sleepCalls).toEqual([DEFAULT_INTERVAL_MS])
 	})
 
-	it("does not throttle a cache HIT — six seconds saved per hit is the point of caching here", async () => {
+	it("does not throttle a cache hit because caching saves six seconds per hit", async () => {
 		const REPEATS = 4
 
 		const clock = createFakeClock()
@@ -379,7 +379,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		expect(transport.calls).toHaveLength(1)
 	})
 
-	it("persists to disk, so a SEPARATE client instance over the same cacheDir hits it too", async () => {
+	it("persists to disk so a separate client instance using the same cacheDir also hits it", async () => {
 		await clientFor(bdcTransport([{ body: { data: [1] } }])).get(path)
 
 		const second = bdcTransport([{ body: { data: ["SHOULD-NOT-BE-FETCHED"] } }])
@@ -425,7 +425,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		expect(transport.calls).toHaveLength(1)
 	})
 
-	it("treats URLs differing only by query string as DISTINCT entries", async () => {
+	it("treats URLs differing only by query string as distinct entries", async () => {
 		const transport = bdcTransport([{ body: { data: ["ca"] } }, { body: { data: ["ny"] } }])
 		const client = clientFor(transport)
 
@@ -462,7 +462,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		expect(fixed.calls).toHaveLength(1)
 	})
 
-	it("bypasses BOTH the read and the write when a caller passes skipCache", async () => {
+	it("bypasses both the read and the write when a caller passes skipCache", async () => {
 		const transport = bdcTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
 		const client = clientFor(transport)
 
@@ -473,7 +473,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		await expect(Globerator.from("*", { cwd: cacheDir }).toArray()).resolves.toHaveLength(0)
 	})
 
-	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
+	it("de-dupes concurrent misses for the same URL onto a single in-flight request", async () => {
 		const transport = bdcTransport([{ body: { data: [1] } }])
 		const client = clientFor(transport)
 
@@ -530,7 +530,7 @@ describe("createBDCClient: the binary download path", () => {
 		expect([...new Uint8Array(result)]).toEqual([...bytes])
 	})
 
-	it("copies out of a POOLED buffer rather than handing over its neighbors' bytes", async () => {
+	it("copies out of a pooled buffer rather than handing over its neighbors' bytes", async () => {
 		// Node pools small `Buffer.allocUnsafe` allocations.
 		// A short body arrives as a view at a non-zero `byteOffset` into a shared 8 KiB backing store.
 		// The caller would receive the whole pool if this code returned `.buffer` directly.

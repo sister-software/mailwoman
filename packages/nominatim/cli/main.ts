@@ -83,7 +83,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "8080" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive cors is on by default (browser geocoder clients need it).
+			// Permissive CORS is on by default (browser geocoder clients need it).
 			// `--no-cors` turns it off for deployments where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
@@ -129,7 +129,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const annotate = composeAnnotators(annotators)
 
 	// Read once at boot from the artifacts themselves, so this describes what the
-	// endpoint serves from for as long as it serves.
+	// endpoint serves for as long as it runs.
 	// Every artifact appears, including one carrying no manifest.
 	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
 

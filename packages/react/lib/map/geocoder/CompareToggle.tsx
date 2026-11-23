@@ -27,8 +27,8 @@ export interface CompareToggleProps {
 /**
  * Renders the compare checkbox.
  *
- * In compare mode, it also renders the version selector. and no control at all
- * when fewer than two versions exist.
+ * In compare mode, it also renders the version selector.
+ * In the default mode, it renders no control at all when fewer than two versions exist.
  */
 export function CompareToggle({
 	versions,

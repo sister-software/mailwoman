@@ -1,9 +1,9 @@
 # @mailwoman/timezone-lookup
 
-Coordinate → IANA timezone, server-side. Point-in-polygon over
+This package maps coordinates to IANA timezones on the server. It runs point-in-polygon lookups over
 [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder) polygons in a
-`node:sqlite` DB. The UTC offset comes from `Intl` (no tz-database dependency). An
-[`@mailwoman/annotations`](../annotations) `Annotator`.
+`node:sqlite` database. The UTC offset comes from `Intl`, with no tz-database dependency. The package
+also provides an [`@mailwoman/annotations`](../annotations) `Annotator`.
 
 ## Build the DB
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A corpus adapter over an evaluation source's record reader.
+ * A corpus adapter over an evaluation source's record reader.
  *
  *   The adapter and the evaluation source read the publisher's file through one function,
  *   so a fix to the reader reaches both.

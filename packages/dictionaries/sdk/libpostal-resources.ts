@@ -52,7 +52,7 @@ const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 async function sortFileInPlace(path: PathBuilder): Promise<void> {
 	const text = await readLocalTextFile(path)
 	const hadTrailingNewline = text.endsWith("\n")
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident. the largest libpostal dictionary is 409 KB.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident. The largest libpostal dictionary is 409 KB.
 	const lines = text.split("\n")
 
 	// Drop the empty element produced by a trailing newline so it isn't re-sorted as a blank line.

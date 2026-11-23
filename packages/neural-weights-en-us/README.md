@@ -186,12 +186,11 @@ inference.
   `@mailwoman/neural`'s `normalizeCase` opt title-cases detected all-caps ASCII
   input before the model and recovers it. Output is byte-stable for mixed-case / non-ASCII
   input, because the option leaves that input untouched.
-- **Coverage rather than precision, is the frontier** for the assembled coordinate:
+- **Coverage rather than precision is the frontier** for the assembled coordinate:
   where local rooftop/interpolation data is absent the coordinate is the
   admin-centroid (legitimately tens of km from an edge address); the parse isn't
   the bottleneck.
-- **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there's unmeasured.
+- **Non-Latin scripts** (CJK, Cyrillic) use byte-fallback tokens. Their parse quality remains unmeasured.
 
 ## Attribution
 
