@@ -102,11 +102,11 @@ zones, points at its index because that's its only cell-keyed table.
 
 A consumer must account for two consequences.
 
-**The declared `resolution` is the index's target, and each stored row records its own
-resolution.** The whole tier is compacted toward parent cells (`compactCells`). A polygon whose
-bounding box would overrun h3's allocator at the target resolution is indexed at a coarser one. As
-a result, `flood_zone_cell.resolution` is stored per row, and a probe walks its own `cellToParent`
-chain over every resolution in the table. A reader that probed only the manifest's resolution would
+**Probe every resolution stored in the index.** The manifest declares the target resolution.
+`compactCells` compacts the tier toward parent cells. A polygon whose bounding box would overrun
+h3's allocator at the target resolution is indexed at a coarser one. Each row records its actual
+resolution in `flood_zone_cell.resolution`. A probe walks its own `cellToParent` chain over every
+resolution in the table. A reader that probed only the manifest's resolution would
 treat every row at another resolution as absent. This interface is designed to prevent that false
 negative.
 
@@ -122,10 +122,10 @@ one from another.
 The failure is in h3 and not in the EA flood layer it was measured on, so every polygon builder can
 hit it.
 
-**h3's WASM heap cannot be reset from JavaScript, and when it is exhausted, it returns a null pointer.**
-`polygonToCellsExperimental` sizes its output buffer with `_calloc`. A failing `_calloc` returns
-a null pointer (address zero), and in WASM, address zero is ordinary writable memory. The call therefore reports
-success, and the reader returns an array of zeros. An exhausted allocator answers "no cells"
+**JavaScript cannot reset h3's WASM heap.** `polygonToCellsExperimental` sizes its output buffer
+with `_calloc`. When the heap is exhausted, `_calloc` returns a null pointer (address zero).
+WASM treats address zero as ordinary writable memory, so the call reports success. The reader then
+returns an array of zeros. An exhausted allocator answers "no cells"
 instead of raising an error. h3-js frees every buffer it allocates, so the problem that builds up
 over millions of calls is heap fragmentation.
 
@@ -246,7 +246,7 @@ area, and that difference is exactly what a negative answer reports.
 ## The manifest — `layer_manifest`
 
 `layer_manifest` is a single-row table that holds the layer's identity, provenance, and licensing.
-The `name` column is the primary key, and the writer inserts exactly one row.
+The writer inserts exactly one row with `name` as the primary key.
 `readLayerManifest` refuses a table that's empty or has multiple rows, so a layer with no identity,
 or with two, fails immediately instead of causing errors downstream.
 

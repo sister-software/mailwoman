@@ -123,8 +123,9 @@ choice of a short expiry: a grant runs at most 92 days, and the issuer renews it
 
 The trainer's license branch is compiled in. `trainer-cli` built with its `commercial` feature is the commercial
 trainer. `trainer train` and `trainer authorize` verify the grant in `MAILWOMAN_TRAINING_GRANT` against the embedded
-register. They do so before the corpus is read, a checkpoint is written or a GPU is initialized, and they exit 3 on a
-refusal. A build without the feature is the open-source trainer, which trains under AGPL-3.0-only and checks no grant.
+register. Both commands exit 3 if verification fails. Verification runs before the commands read the corpus,
+write a checkpoint or initialize a GPU. A build without the feature produces the open-source trainer.
+That trainer runs under AGPL-3.0-only without a grant check.
 No config value or flag turns the check off. A debug build also reads `MAILWOMAN_TRAINING_TRUST_FILE` and
 `MAILWOMAN_TRAINING_NOW` for the tests. The trainer image is a release build and reads neither.
 

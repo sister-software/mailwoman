@@ -37,8 +37,8 @@ the resolver no candidate to resolve, so it can't choose a reading for the class
 this work. Phase 4a measured this result. See the
 [Phase 4a verdict](../../records/evals/2026-07-16-phase4a-rerank-verdict.md).
 
-In both architectures, a component downstream of the model was asked for certainty that the
-model lacked, and it returned confidence without the evidence to support it.
+Both architectures asked a component downstream of the model to resolve the model's uncertainty.
+The component returned confidence scores without evidence for its choice.
 
 ## The two channels
 
@@ -164,8 +164,8 @@ a street," and a future consumer that did so would be reading the table above.
 ### Tier D: broad open data
 
 OSM has the best coverage available for gap analysis and for experiments that need breadth.
-Source quality, licensing, and attribution decide what can ship. `@mailwoman/osm` publishes as code,
-and each operator who opts in builds the ODbL database locally.
+Source quality, licensing, and attribution decide what can ship. The `@mailwoman/osm` package ships
+only code. Operators who opt in build the ODbL database locally.
 
 ## Train on phenomenon recipes
 
@@ -197,8 +197,8 @@ A change ships when board 1 stays at or above its floors **and** board 2 improve
 board is sufficient on its own.
 
 Two boards are needed for a concrete reason. The span-head work scored +23.8pp on its
-target class and roughly +0 net overall. A single blended number would report that as
-within noise, and it would hide both the +23.8pp gain and the classes that lost accuracy.
+target class and roughly +0 net overall. An aggregate report would describe the change as within
+noise and conceal both the +23.8pp gain and the losses in other classes.
 A 3/15 cell on a 63-row fixture has a 95% Wilson interval of 7–45%, which is too wide to
 be useful. The fragment board samples BAN at ~400 rows per class, so each targeted class
 gets a real error bar.

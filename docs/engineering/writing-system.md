@@ -2,8 +2,8 @@
 
 ## Purpose of this document
 
-Every published Mailwoman page is written against this document, and every rewrite task lists it as
-required reading alongside the template for the page's role. It exists so that an 85-page rewrite has one
+Every rewrite task lists this document and the template for the page's role as required reading.
+These rules apply to every published Mailwoman page. They give an 85-page rewrite one
 settled answer to register, terminology and structure instead of 85 improvised ones. The derivation is
 recorded below so a later editor can reopen a decision against the evidence rather than against taste.
 
@@ -63,8 +63,8 @@ Take: mechanism-first caveats with numbered thresholds a reader can compute agai
 per-language tabs against the identical URL, and legal and business content as siblings of the docs tree rather
 than nodes inside it. Refuse the missing term registry despite an overloaded multi-word concept (match quality is
 real, used across five endpoint pages, and never defined once). Refuse inconsistent compounding of a term used
-constantly. Refuse one flat sidebar for both read-once and look-up-repeatedly content. It holds Geocode Earth's 25 pages,
-and here it would have to hold 85.
+constantly. Refuse one flat sidebar for both read-once and look-up-repeatedly content. Geocode Earth
+puts 25 pages in that sidebar. The same design would put 85 Mailwoman pages in one list.
 
 ### Jawg Maps
 

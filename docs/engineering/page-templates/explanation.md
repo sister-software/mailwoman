@@ -27,8 +27,7 @@ role: explanation
 
 ## Start here
 
-Open with the question a reader arrived with, in their words, and answer it in the second paragraph rather
-than the last.
+Open with the reader's question in their own words. Answer it in the second paragraph.
 
 ## Exemplar paragraph
 

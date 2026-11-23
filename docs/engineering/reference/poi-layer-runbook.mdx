@@ -97,8 +97,8 @@ there (see the LIMIT note).
 
 Fixture-level tests cannot catch source-schema drift or scale behavior. The first live builds
 caught three bugs (the country column, the CLI resolver gap, and a full-scale OOM) that 800+ green
-tests missed. End every poi.db-touching change with a live smoke build, and treat the first
-full-scale build as its own verification step: the 2026-07-19 four-country run died at Node's
+tests missed. End every change to `poi.db` with a live smoke build. Verify the first full-scale
+build separately. The 2026-07-19 four-country run died at Node's
 default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader materialized instead
 of streamed.
 

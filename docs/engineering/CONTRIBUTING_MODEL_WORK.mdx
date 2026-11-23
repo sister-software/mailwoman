@@ -28,7 +28,7 @@ before comparing two training arms. A comparison uses three instruments from it:
    as a comment in the training config before step 1 runs. If you cannot define the acceptance bar,
    you're not ready to train.
 2. **Never compare F1 across tokenizer versions.** A comparison is valid only with the same
-   tokenizer (`per-locale-f1.ts --tokenizer` enforces this, and the model card records the version).
+   tokenizer. `per-locale-f1.ts --tokenizer` enforces this requirement. The model card records the version.
 3. **Compare fp32-to-fp32.** Int8 is a release artifact and shouldn't be used to compare
    experiments.
 4. **Change one variable per run.** Prove each change on its own, then consolidate. A single 20k run that stacks corpus
@@ -254,8 +254,8 @@ behind it and the coverage matrix.
 The ship-config channels are part of the interface. A gaz-trained model is graded with
 `--gazetteer-lexicon` and `--suppress-gaz-near-postcode`, and (v4.3.0+) with `--conventions auto`.
 The eval spec declares these channels (`requires_gazetteer_lexicon`, `requires_conventions`), so the
-runner passes them to every scorer. A scorer invoked without the declared channels grades the model
-without inputs it was trained to use, and it produces numbers that look real. This zero-fill error
+runner passes them to every scorer. A scorer invoked without the declared channels still reports scores
+even though the model received zeros in place of inputs it was trained to use. This zero-fill error
 has already affected the country leg and the first affix audit.
 
 A channel that never trained leaves a trace in the exported graph. Each evidence channel's token
@@ -476,8 +476,8 @@ resolver mechanism ships.
 - **The served read.** `packages/mailwoman/tools/dev-tools/coordinate/served-board-resolve.run.ts` geocodes board rows through the
   installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point, under
   the `--locale` and `--board` it is given. The parse board and the served board answer different questions. Read a
-  resolver change on the served board. `SCOPE.mdx` claims a locale only when a coordinate-graded eval exists for it,
-  and the served board is the eval that satisfies that rule.
+  resolver change on the served board. That board supplies the coordinate evaluation that `SCOPE.mdx`
+  requires before claiming support for a locale.
 - **The release check here.** Only the character model emits the JP tags, so a resolver mechanism keyed on them cannot reach a
   Latin row by construction. Run the check anyway: `mwdev_compare` over the full regression board, origin/main against
   the working tree, before the mechanism ships.

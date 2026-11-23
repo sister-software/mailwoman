@@ -8,8 +8,8 @@ Mailwoman's CLI uses an explicit lazy router. The router imports only the select
 
 ## Command shape
 
-`mailwoman/cli.ts` is the small process entry. It applies process-wide settings, reads arguments through
-`@mailwoman/core/scripting/arguments`, and asks `mailwoman/cli-native/router.ts` for an explicitly registered command.
+`mailwoman/cli.ts` starts by applying process-wide settings. It reads arguments through
+`@mailwoman/core/scripting/arguments` before asking `mailwoman/cli-native/router.ts` for an explicitly registered command.
 The router holds only a summary, an optional routing predicate, and a dynamic loader:
 
 ```ts

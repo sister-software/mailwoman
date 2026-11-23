@@ -10,8 +10,8 @@ tags:
 
 This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
 resolves, with their schemas, column mappings, and join keys. They're real public compliance and reporting
-datasets. Each dataset repeats entities, and the datasets share no entity key. The matcher
-deduplicates records within datasets and links records across them. Consumers interpret any correlations they find
+datasets. The matcher deduplicates repeated entities within each dataset. It links records across datasets
+that have no shared entity key. Consumers interpret any correlations they find
 through those links.
 
 The data lives in `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`, which is persistent storage rather than `/tmp`.

@@ -25,8 +25,8 @@ interface Evidence {
 }
 ```
 
-[`StreetNameEvidenceProvider`](./registry-backed-structured-prediction.mdx) is the shape done right:
-`exists` answers "is there evidence", and `confidence` answers "how much".
+[`StreetNameEvidenceProvider`](./registry-backed-structured-prediction.mdx) uses two fields.
+`exists` reports whether the provider found evidence. `confidence` reports its strength.
 
 Re-encoding the domain doesn't fix it. A proposal to move `importance` to `[-1, 1]` with `0` as
 the default and `-1` as "unknown" was considered and rejected against the data: it still collapses

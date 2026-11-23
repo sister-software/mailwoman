@@ -15,10 +15,10 @@ The training loader turns each sampled corpus row into the tensors one step read
 mask, label ids, and the soft-feed channels. The channels are the postcode anchor, gazetteer, country,
 street type, locality surface and code unit. The encoder is `packages/mtf/crates/mtf-channels` (#2870) and the
 sampler `packages/mtf/crates/mtf-sampler` (#2874 Phase 3). The Rust trainer (`packages/trainer/crates/trainer-loop`)
-links both crates, and the TypeScript tools reach them through the `mtf-node` addon. Every sampling stage draws from
-one generator, `mtf-sampler/src/pyrandom.rs`, which reproduces CPython 3.12's `random.Random`, and each stage draws
-where the stage of the deleted Python loader drew, so a seed selects the rows that loader selected, with one
-departure: the spread read of a row-limited train epoch (below), which the Python loader never had.
+links both crates. The TypeScript tools reach them through the `mtf-node` addon. Every sampling stage
+draws from the same generator, `mtf-sampler/src/pyrandom.rs`, which reproduces CPython 3.12's
+`random.Random`. Each stage draws at the point where the former Python loader drew. The same seed
+therefore selects the same rows, except in a row-limited train epoch that spreads its reads across groups.
 
 The Rust encoder and the Rust sampler each reproduced the tensors of the deleted Python loader byte for byte (see
 Parity procedure) until the spread read changed which rows a row-limited train epoch draws. The encoder still does.
@@ -87,9 +87,9 @@ character path encodes `char_ids` int64 `[B, S, W]`, and `attention_mask`, `labe
 On the train split, `row_limit` is also the epoch length that sets each source's expected draws,
 `row_limit × weight / total weight`. A source expected to draw at least its row count, and every source of a stream
 with no limit, reads its pass file by file and row group by row group, as the Python loader did. A source expected
-to draw fewer, `fraction = expected / rows`, spreads its pass: its row groups across all its files are shuffled into
-one order, and each visit reads one group, takes `⌈fraction × group rows⌉` accepted rows from it, and moves to the
-next group. The fraction is first raised to `256 / the source's largest group rows` when it falls below, so every
+to draw fewer rows uses `fraction = expected / rows` and shuffles the row groups from all its files
+into one order. Each visit takes `⌈fraction × group rows⌉` accepted rows from one group before moving
+to the next group. The fraction is first raised to `256 / the source's largest group rows` when it falls below, so every
 group, a file's short last group included, gives the same fraction of its rows. A sweep over every group covers the
 epoch's expected draws, so every group contributes about its share. Each group's row order comes from a generator seeded by the pass seed and the group's index, so a later
 sweep rebuilds the order, continues from the recorded position, and the pass still reads each row once.
@@ -248,11 +248,11 @@ several shapes match appears once. A candidate that a connector separates from t
 The anchor painter walks the candidates in that order and keeps the first that the anchor table resolves among those
 that overlap, so a longer candidate the table lacks hides no code inside it. A Somali shape matches `VT 05401`, and
 that candidate hides no ZIP code.
-**The resolution rule.** Each candidate carries the countries of every shape that matches its range, from the
-definition. It resolves only when its anchor-table entry holds weight on at least one of those countries, and the
-posterior it paints holds only the weights on them. The painter doesn't renormalize beyond what it already does: the
-feature vector divides each weight by the total over the locale set, so the remaining weights renormalize as any
-posterior does, and an entry whose remaining countries fall outside the locale set paints zeros with its centroid. A
+**The resolution rule.** For each candidate, the encoder reads the countries from every shape in the
+definition that matches its range. The candidate resolves only when its anchor-table entry has weight
+for at least one of those countries. The resulting posterior includes only weights for those countries.
+As with any posterior, the feature vector divides each weight by the total over the locale set. An
+entry whose remaining countries all fall outside the locale set paints zeros with its centroid. A
 candidate with no accepted country is skipped and hides no other. The table's `111 09` entry holds FR and US only, and
 the three-and-two digit shapes belong to other countries, so the house number paints no anchor. A GB unit that fails the
 rule falls back to its outward district under the same rule. The serving side applies it in `anchoredPostcodeSpans`

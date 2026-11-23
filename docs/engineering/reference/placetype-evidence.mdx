@@ -209,10 +209,9 @@ explicit. Both apply generally:
   name only. The register uses that form for the parish, but an address reads `Pontypridd`. Strip
   the suffix instead of dropping the pair. A drop would have discarded 1,545 Welsh pairs.
 
-A pair index ships for every locale on the original wave 2–4 list. For those locales the blocker
-was packaging work, and the data was already available. The pair index only fires for the
-resolved locale's country, and an artifact inside another locale's package can never fire, so each
-locale needed its own **carrier package**: a ~6-file data-only overlay that declares `baseWeights`.
+A pair index ships for every locale on the original wave 2–4 list. The data was already available.
+Each locale needed its own package to make the index available for that locale's country. The
+**carrier package** is a data-only overlay of about six files that declares `baseWeights`.
 
 | locale |   pairs | source       | note                                                  |
 | ------ | ------: | ------------ | ----------------------------------------------------- |

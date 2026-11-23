@@ -125,9 +125,9 @@ and from the selection with eight queries and records an empty difference list.
    whose outputs are installed is reused.
 5. Validate and install each output like a download: manifest fields, reader compatibility, then one
    rename into `db/<role>/<sha256>/`. The installation's origin is `built` with the recipe and build id.
-6. Activate with `--activate`. Each artifact joins its country's entry after the sources that entry
-   already lists from other providers, and replaces only sources of the same recipe, so a selected
-   national register stays first.
+6. Activate with `--activate`. Add each artifact to its country's entry after the sources already
+   listed from other providers. Because the activation replaces only sources of the same recipe,
+   a selected national register stays first.
 
 Each output's manifest records `recipe: "osm-address-points"`, the extract as `sources[0]` with its
 SHA-256, and a `derivation`: the policy name and version, the outline's SHA-256 when the build clipped,
@@ -142,10 +142,10 @@ transfers neither the extract nor an outline, and an activation keeps a national
 
 ## Replacement, concurrency and rollback
 
-`replaceActiveSelection` (`packages/mailwoman/lib/data/catalog.ts`) holds `.active.lock/`, reads the
-generation on disk, and refuses when it differs from the generation the plan read. It then validates
-the replacement completely, including every selected file's size against its manifest, writes the
-generation to `selections/`, and renames the new `active.json` into place. A failure at any step
+`replaceActiveSelection` (`packages/mailwoman/lib/data/catalog.ts`) holds `.active.lock/` while it checks
+that the generation on disk matches the one the plan read. It refuses a mismatch. Once it validates the
+replacement, including every selected file's size against its manifest, it writes the generation to
+`selections/` and renames the new `active.json` into place. A failure at any step
 leaves the previous `active.json` readable. `executeInstallation` holds `.install.lock/` for its whole
 run, so a second installer under the same data root refuses before any transfer.
 
@@ -259,8 +259,8 @@ generation (`LayerCatalog.read`) and pass it to every reader they open.
 
 Still on their conventional paths, with the reason:
 
-- The rail-station database stays beside the conventional `poi.db` path. No published bundle contains it,
-  so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+- The rail-station database stays beside the conventional `poi.db` path. The fork-entity probe opens
+  it where the station build writes it because no published bundle contains it for installation.
 - The structures database, `structures.db`, stays beside the conventional `poi.db` path for the same
   reason. `mailwoman gazetteer build structures` writes it there from every registered official list of
   public structures (post offices, schools, hospitals, emergency stations, government buildings), and the

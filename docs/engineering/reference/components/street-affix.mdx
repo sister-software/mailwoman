@@ -40,8 +40,8 @@ flowchart LR
 
 The weights package ships `street-type-lexicon-v3.json`, built by
 `mailwoman gazetteer build street-type-lexicon` from the codex's FR, US, GB, DE and CA tables. Each
-whitespace word is normalized and matched longest-first. Lowercase entries match case-insensitively,
-and uppercase code entries such as `AVE` match only when the input is already uppercase.
+whitespace word is normalized and matched longest-first. Lowercase entries match regardless of case.
+An uppercase code entry such as `AVE` requires uppercase input.
 
 The lexicon applies a digit guard. A match paints no evidence when any word in it, or the nearest
 non-empty word beside it, contains a digit. The guard keeps the channel from pulling a house number

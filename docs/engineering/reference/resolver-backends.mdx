@@ -131,8 +131,8 @@ mailwoman eval oa-resolver \
 
 ## What the candidate backend doesn't implement
 
-`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` doesn't
-implement it. Its public surface is `findPlace` and `close`. The published `candidate.db` holds a
+`WOFCandidateTableLookup` implements `findPlace` and `close`. It omits the optional
+`ResolverBackend.ancestors()` method. The published `candidate.db` holds a
 `candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup doesn't answer
 `ancestors()` from it. On the candidate backend, `includeAncestors` (default off) therefore leaves
 `metadata.ancestors` unset. The Nominatim and Photon drop-ins therefore cannot expose the

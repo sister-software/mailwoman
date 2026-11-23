@@ -24,7 +24,7 @@ head).
 
 An explicit rules engine handles every newly observed address format with a hand-written case.
 Every long-lived rules-based geocoder shows the maintenance cost of that approach. The rule base
-grows with each observed format, and each addition can break earlier rules. A pure sequence
+grows with each observed format. A rule for a new format can break an earlier rule. A pure sequence
 labeler takes the opposite approach. Its rules are implicit in the weights. That removes the case
 analysis but also removes the ability to read, test, or falsify any single rule.
 
@@ -57,12 +57,11 @@ The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Out
 - A BIO decode yields disjoint spans by construction, so the parse has no overlap-resolution step.
 
 `traceParse` itemizes this objective in `NeuralParseTrace.explanation`. For each decoded span it
-reports the highest-scoring reading that labels the span differently, and the margin to that reading
-split into the logits, each emission prior, the placetype-pair transition bonus, the conventions
-mask and the transitions. For each applied prior it reports what the prior added to the decoded
-reading and which labels change when only the prior is removed. The terms are the matrices the
-decoder summed, and the explanation refuses to report when they do not reproduce the decoder's
-emission matrix and path.
+reports the highest-scoring reading that labels the span differently. It breaks down the margin by
+logit, emission prior, placetype-pair transition bonus, conventions mask and transition. For each
+applied prior it reports what the prior added to the decoded reading and which labels change when
+only that prior is removed. The explanation uses the matrices the decoder summed. It refuses to
+report when those matrices fail to reproduce the decoder's emission matrix and path.
 
 **Consequence, provable from the form.** Every term has arity ≤ 2 over adjacent tokens, and the
 arity-2 terms are 0 or −∞ almost everywhere. Consider two parses that differ only in the label of

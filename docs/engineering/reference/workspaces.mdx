@@ -18,8 +18,8 @@ has to join. This page answers which workspace a piece of work belongs in.
 The eight `lib/*` entries belong to the private root package, `@mailwoman/universe`.
 
 `packages/trainer/` is a cargo workspace with no npm package, so the reader doesn't list it. It holds the Rust
-trainer crates (#2874), and `crates/trainer-export` is the ONNX export and int8 quantizer. The CI `rust` job runs
-their tests.
+trainer crates (#2874), including `crates/trainer-export` for ONNX export and int8 quantization. The CI `rust`
+job runs their tests.
 
 `packages/hrt/` is likewise a group of cargo crates with no npm package. It holds `hrt`, the Hilbert Rust Tiler, the Rust
 builder for the Earth basemap (#2902). Its crates are `hrt-pmtiles`, the PMTiles writer, and `hrt-e`, the

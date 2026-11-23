@@ -61,9 +61,9 @@ specification v7 could return `pass` on this data. It couldn't. The candidate ar
 comparison set for US, ES and IT was empty because the published model had trained on every row those countries
 hold in this corpus family.
 
-**P4. Measure once, cheaply, before acting, and publish the allocation.** A change to the split, the corpus or
-the recipe is measured on the CPU before it ships, and the measurement is an allocation report (section 4.5) a
-reader can inspect. A from-scratch training run is never the first measurement of a corpus change.
+**P4. Measure once on the CPU before shipping a change.** Publish the measurement in an allocation report
+(section 4.5) for each change to the split, corpus or recipe. A from-scratch training run is never the
+first measurement of a corpus change.
 
 **P5. One variable per run, a single control first, and three runs per arm before a change is judged.** On a new
 corpus, one unchanged-recipe control is trained and graded before any sweep. That control is a first
@@ -154,8 +154,8 @@ KG 8. None is a required country, and each is marked experimental for evaluation
 
 ### 4.4 Checks that run before a manifest exists
 
-Each check below belongs to the step that admits the corpus manifest: it runs once per corpus, on the real rows,
-and refuses to admit the manifest when it fails. Only the held-out span check runs there today, and section 10 gives
+The manifest admission step is designed to run each check below once per corpus on the corpus rows.
+A failed check prevents admission. Today that step runs the held-out span check. Section 10 gives
 the state of the others. The parquet writer stages its manifest as `MANIFEST.unchecked.json`.
 `admitParquetManifest` in `packages/corpus/lib/build/holdout-check.ts` runs the held-out span check over it,
 writes `HOLDOUT_CHECK.json` beside it with every finding, and moves it to `MANIFEST.json` only on a pass. A
@@ -229,8 +229,8 @@ Under the policy `splitForRow` decides each row by its group and the two lists:
    retention table keeps in training can't return a frozen group's variant to training. Development and
    confirmation groups both go to `test`, because the overlap audit reads `val` as training data, and a frozen row
    in `val` would read as `known_overlap`.
-2. A validation group goes to `val`. The trainer's validation loss, the validation-coverage audit and the
-   label-support audit read this split, and the trainer reads no other held-out split.
+2. A validation group goes to `val`. The validation-coverage and label-support audits read this split.
+   The trainer uses `val` to compute validation loss and reads no other held-out split.
 3. Every other row trains.
 
 **The validation quota.** `packages/mailwoman/tools/dev-tools/corpus/validation/quota.run.ts` chooses the validation groups from the corpus manifest the
