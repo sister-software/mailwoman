@@ -296,7 +296,16 @@ describe("fulfillment", () => {
 	})
 
 	it("signs the agreement version the Checkout Session carried, on the first token and on a renewal after the environment moved on; a session without one is refused", async () => {
-		const { env: worker, deps, kid, publicKeyPEM } = await fixture("7", { renewalInvoiceID: "in_7b" })
+		// The session was bought under the agreement checkout sold before the current one.
+		const {
+			env: worker,
+			deps,
+			kid,
+			publicKeyPEM,
+		} = await fixture("7", {
+			renewalInvoiceID: "in_7b",
+			agreementVersion: "commercial-2026-10",
+		})
 
 		await fulfilInvoice(worker, deps, "in_7")
 		await fulfilInvoice(worker, deps, "in_7b")

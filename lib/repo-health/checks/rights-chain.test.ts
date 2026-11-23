@@ -14,6 +14,8 @@ const DOCUMENTS: FixtureFiles = {
 	"CONTRIBUTING.md": GRANT,
 	"docs/src/pages/license.mdx": GRANT,
 	"docs/src/pages/license/terms/commercial-2026-10.mdx": GRANT,
+	"docs/src/pages/license/terms/commercial-2026-11.mdx": GRANT,
+	"docs/src/pages/license/terms/commercial-training-2026-11.mdx": GRANT,
 }
 
 describe("rightsChainCheck", () => {
