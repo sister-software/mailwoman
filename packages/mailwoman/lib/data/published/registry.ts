@@ -30,9 +30,6 @@ import {
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
-||||||| parent of d4c6ad109b (layout: `resolver-wof-sqlite/lib` groups its label modules under `labels/` (#3388))
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
-import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 
 import { bundleArtifactRole, bundleArtifactSubdivision, BUNDLES, type DataBundle } from "#data/published/bundles"
 

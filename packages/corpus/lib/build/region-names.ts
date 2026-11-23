@@ -13,13 +13,6 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { regionKeys } from "@mailwoman/resolver-wof-sqlite/labels/region"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-||||||| parent of d4c6ad109b (layout: `resolver-wof-sqlite/lib` groups its label modules under `labels/` (#3388))
-import { isPresent } from "@mailwoman/core/objects"
-import { regionKeys } from "@mailwoman/resolver-wof-sqlite/labels/region"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import {
 	normalizeLocalityForKey,
 	withArabicLetterVariantsFolded,
