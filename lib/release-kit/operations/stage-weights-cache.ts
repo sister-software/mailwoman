@@ -2,74 +2,89 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { OperationEffect } from "@mailwoman/core/scripting"
-import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { z } from "zod"
 
 import { defineOperation } from "#release-kit/operation"
-import { flag, flagDefaultOn, list, text } from "#release-kit/operations/inputs"
+import { flag, list, text } from "#release-kit/operations/inputs"
 import { stageWeightsCache } from "#release-kit/weights/stage-weights-cache"
 
+const StagedPackageSchema = z.object({
+	locale: z.string(),
+	packageDir: z.string(),
+	staged: z.array(z.string()),
+	omitted: z.array(z.string()),
+	modelSHA256: z.string(),
+	resolvedModelSHA256: z.string(),
+})
+
 /**
- * `release.stage-weights-cache` — writes inside the checkout or the data root.
+ * `release.stage-weights-cache` — writes the root it is given and reads the checkout and the data root.
  *
  * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const stageWeightsCacheOperation = defineOperation({
 	id: "release.stage-weights-cache",
 	description:
-		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it, and --dereference copies the bytes for a board-routed mwdev_compare arm.",
+		"Stage a weights root (--out) for grading: the family's graph package and every overlay, copied from the workspaces and the data-root overlay. --export <run>/export --recipe <config> stages a training export's graph with a card derived from the published one; --file [locale:]name=path, --omit [locale:]name and --card diverge it. Refuses a root missing a declared artifact or whose packages resolve another graph.",
 	effect: OperationEffect.LocalWrite,
 	options: {
 		out: { type: "string", short: "o" },
-		locale: { type: "string" },
-		from: { type: "string" },
+		family: { type: "string" },
+		locales: { type: "string" },
+		export: { type: "string" },
+		graph: { type: "string" },
+		recipe: { type: "string" },
+		"base-card": { type: "string" },
+		card: { type: "string" },
 		file: { type: "string" },
 		omit: { type: "string" },
-		card: { type: "string" },
-		clean: { type: "boolean" },
-		dereference: { type: "boolean" },
+		replace: { type: "boolean" },
 	},
 	inputSchema: z
 		.object({
 			out: z.string({ error: "--out <dir> is required" }),
-			locale: z.string().default(DEFAULT_WEIGHTS_LOCALE.toLowerCase()),
-			from: text,
+			family: text,
+			locales: list,
+			export: text,
+			graph: text,
+			recipe: text,
+			"base-card": text,
+			card: text,
 			file: list,
 			omit: list,
-			card: text,
-			clean: flagDefaultOn,
-			dereference: flag,
+			replace: flag,
 		})
 		.strict(),
 	outputSchema: z.object({
 		cacheRoot: z.string(),
-		packageDir: z.string(),
-		linked: z.number(),
-		staged: z.array(z.string()),
-		omitted: z.array(z.string()),
+		family: z.string(),
+		graph: z.object({ source: z.string(), md5: z.string(), sha256: z.string() }),
+		card: z.enum(["published", "derived", "given"]),
+		packages: z.array(StagedPackageSchema),
 	}),
 	run: async (input, context) => {
 		const report = await stageWeightsCache({
 			repoRoot: context.repoRoot,
 			out: input.out,
-			locale: input.locale,
-			...(input.from ? { from: input.from } : {}),
+			locales: input.locales,
 			file: input.file,
 			omit: input.omit,
-			...(input.card ? { card: input.card } : {}),
-			clean: input.clean,
-			dereference: input.dereference,
+			replace: input.replace,
 			log: context.log,
+			...(input.family ? { family: input.family } : {}),
+			...(input.export ? { exportDirectory: input.export } : {}),
+			...(input.graph ? { graph: input.graph } : {}),
+			...(input.recipe ? { recipe: input.recipe } : {}),
+			...(input["base-card"] ? { baseCard: input["base-card"] } : {}),
+			...(input.card ? { card: input.card } : {}),
 		})
 
 		// `outputSchema` serializes the report to JSON.
-		// That's the boundary where the two directory builders become strings.
-		// `stageWeightsCache` returns them intact so a library caller derives an artifact
-		// path from `packageDir` rather than rebuilding the cache layout.
+		// That's the boundary where the directory builders become strings.
 		return {
 			...report,
 			cacheRoot: report.cacheRoot.toString(),
-			packageDir: report.packageDir.toString(),
+			packages: report.packages.map((staged) => ({ ...staged, packageDir: staged.packageDir.toString() })),
 		}
 	},
 })

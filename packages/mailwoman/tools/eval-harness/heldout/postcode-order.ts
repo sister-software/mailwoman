@@ -139,7 +139,7 @@ export function scoreNonNativeOrderRows(
  */
 export interface ParsePostcodeOrderOptions {
 	/**
-	 * A package-shaped weights directory, such as a `stage-candidate-cache` root.
+	 * A package-shaped weights directory, such as a root `mwops release stage-weights-cache` writes.
 	 * It loads as production loads it.
 	 *
 	 * Absent, the shipped weights resolve as production resolves them.
