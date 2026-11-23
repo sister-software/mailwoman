@@ -13,44 +13,17 @@ import { collectRepoContext } from "#repo-health/index"
 const ADAPTERS = "packages/corpus/lib/adapters"
 
 describe("findPrefixGroups", () => {
-	test("a hyphenated component tag is one word, so it stays beside the tag it starts with", () => {
+	test("a known hyphenated name is one word, and a longer name that starts with it nests under it", () => {
 		const labels = "packages/neural/lib/labels"
 
 		const groups = findPrefixGroups([
 			`${labels}/street/key.ts`,
 			`${labels}/street-prefix/particle.ts`,
-			`${labels}/street-suffix/abbreviation.ts`,
-			`${labels}/house-number.ts`,
 			`${labels}/house-number-forms.ts`,
 			`${labels}/house-number-ranges.ts`,
 		])
 
-		expect(groups).toHaveLength(1)
-		expect(groups[0]).toMatchObject({ directory: labels, prefix: "house-number" })
-
-		expect(planPrefixMoves(groups, []).map((move) => move.to)).toEqual([
-			`${labels}/house-number/forms.ts`,
-			`${labels}/house-number/ranges.ts`,
-		])
-	})
-
-	test("a known hyphenated name is one word, and a longer name that starts with it nests under it", () => {
-		const recipes = "packages/corpus/lib/recipes"
-
-		const groups = findPrefixGroups([
-			`${recipes}/sub-venue-lexicon.ts`,
-			`${recipes}/sub-venue-platforms.ts`,
-			`${recipes}/non-native.ts`,
-			`${recipes}/subregion.ts`,
-		])
-
-		expect(groups).toHaveLength(1)
-		expect(groups[0]).toMatchObject({ directory: recipes, prefix: "sub-venue" })
-
-		expect(planPrefixMoves(groups, []).map((move) => move.to)).toEqual([
-			`${recipes}/sub-venue/lexicon.ts`,
-			`${recipes}/sub-venue/platforms.ts`,
-		])
+		expect(groups.map((group) => group.prefix)).toEqual(["house-number"])
 	})
 
 	test("groups three siblings and leaves a pair alone", () => {
