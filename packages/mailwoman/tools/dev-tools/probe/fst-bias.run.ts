@@ -11,7 +11,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
+import { collapseFSTBias } from "@mailwoman/neural/prior/fst"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilder } from "path-ts"

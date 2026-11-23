@@ -86,7 +86,7 @@ const BROWSER_EXTERNALS = [
  */
 const NEURAL_DYNAMIC_IMPORTS: readonly AllowedDynamicImport[] = [
 	{
-		file: /neural\/out\/tokenizer\.js$/u,
+		file: /neural\/out\/input\/tokenizer\.js$/u,
 		builtin: "node:fs/promises",
 		reason: "loadFromFile is Node-only; the import runs only when it is called",
 	},
@@ -135,7 +135,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/resolver"),
 	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/street"),
 	browserRow("@mailwoman/resolver-wof-wasm/httpvfs/poi"),
-	browserRow("@mailwoman/neural/viterbi"),
+	browserRow("@mailwoman/neural/decode/viterbi"),
 	browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/neural/web/loader", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS }),
 	browserRow("@mailwoman/cartographer/planetary"),

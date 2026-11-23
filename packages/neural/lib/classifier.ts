@@ -31,10 +31,9 @@ import { normalizeInputCase } from "@mailwoman/normalize/case"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import type { PathBuilderLike } from "path-ts"
 
-import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
-import { anchoredRegionIDs } from "#anchor-inference"
-import { countedPieces, decodeViterbi } from "#cardinality-filter"
-import { encodeCharUnits } from "#char-encoder"
+import { anchoredRegionIDs } from "#channels/anchor-inference"
+import { codeUnitChannel } from "#channels/code-unit-features"
+import { applyChannelPins, buildSoftFeatures, type SoftFeatures } from "#channels/soft-features"
 import type {
 	AddressSystemConventions,
 	NeuralAddressClassifierConfig,
@@ -45,27 +44,18 @@ import type {
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import { containmentCountry, fstForParse, parsePairPrior } from "#classifier/parse-country"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
-import { codeUnitChannel } from "#code-unit-features"
-import { explainDecode, type DecodeObjective, type EmissionPriorTerm } from "#decode-explanation"
-import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
-import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
-import type { InferFunction, InferCharsFunction } from "#ort-feeds"
-import type { PlacetypeCensusLike } from "#placetype/census"
-import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
-import { repairPostcodeLabels } from "#postcode/repair"
-import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
-import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#register-boundary-repair"
-import type { SemiCRFTransitions } from "#semi-markov-decode"
-import { applyChannelPins, buildSoftFeatures, type SoftFeatures } from "#soft-features"
-import { bridgePunctuationGaps } from "#span/bridge"
-import { buildSpanProposalPriors } from "#span/proposal-prior"
-import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
-import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
-import type { TokenizedPiece } from "#tokenizer"
-import { TRACE_PRIOR_KINDS } from "#trace"
-import type { DecodeOutput, NeuralParseTrace, TracePrior, TracePriorKind, TraceRepair, TraceRepairPass } from "#trace"
-import { repairUnitLabels } from "#unit-repair"
-import { buildVenueHeadEmissionPriors } from "#venue/head-prior"
+import { countedPieces, decodeViterbi } from "#decode/cardinality-filter"
+import { explainDecode, type DecodeObjective, type EmissionPriorTerm } from "#decode/explanation"
+import type { SemiCRFTransitions } from "#decode/semi-markov"
+import { TRACE_PRIOR_KINDS } from "#decode/trace"
+import type {
+	DecodeOutput,
+	NeuralParseTrace,
+	TracePrior,
+	TracePriorKind,
+	TraceRepair,
+	TraceRepairPass,
+} from "#decode/trace"
 import {
 	argmaxWithConfidence,
 	buildBIOEndMask,
@@ -73,9 +63,26 @@ import {
 	buildBIOTransitionMask,
 	pathMargins,
 	softmax,
-} from "#viterbi"
+} from "#decode/viterbi"
+import { enforceWordConsistency } from "#decode/word-consistency"
+import { encodeCharUnits } from "#input/char-encoder"
+import type { TokenizedPiece } from "#input/tokenizer"
+import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
+import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#labels/address-system"
+import type { InferFunction, InferCharsFunction } from "#onnx/feeds"
+import type { PlacetypeCensusLike } from "#placetype/census"
+import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
+import { repairPostcodeLabels } from "#postcode/repair"
+import { buildFSTEmissionPriors, isStreetAffix } from "#prior/fst"
+import { addEmissionMatrix, buildEmissionPriors } from "#prior/query-shape"
+import { buildStreetMorphologyEmissionPriors } from "#prior/street-morphology"
+import { repairJPMunicipalityLabels, repairKRSubregionLabels } from "#repair/register-boundary"
+import { repairUnitLabels } from "#repair/unit"
+import { bridgePunctuationGaps } from "#span/bridge"
+import { buildSpanProposalPriors } from "#span/proposal-prior"
+import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
+import { buildVenueHeadEmissionPriors } from "#venue/head-prior"
 import type { UnfedChannelReport } from "#weights/channels"
-import { enforceWordConsistency } from "#word-consistency"
 
 export type {
 	AddressSystemConventions,

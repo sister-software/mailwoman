@@ -7,8 +7,8 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
+import { createScorer } from "#classifier/scorer"
 import { $public } from "#env"
-import { createScorer } from "#scorer"
 
 const MODEL =
 	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")

@@ -27,8 +27,8 @@ import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/write
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { countedPieces, decodeWithCardinalityFilter } from "@mailwoman/neural/cardinality-filter"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "@mailwoman/neural/viterbi"
+import { countedPieces, decodeWithCardinalityFilter } from "@mailwoman/neural/decode/cardinality-filter"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "@mailwoman/neural/decode/viterbi"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

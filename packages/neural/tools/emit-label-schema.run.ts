@@ -18,7 +18,7 @@ import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { buildLabelSchema, type LabelSchema } from "#label-schema"
+import { buildLabelSchema, type LabelSchema } from "#labels/schema"
 import { readAddressSystemsReference } from "#tools/address-system-registry"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })

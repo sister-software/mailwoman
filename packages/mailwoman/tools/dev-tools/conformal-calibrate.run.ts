@@ -215,7 +215,7 @@ async function buildCascade(paths: {
 	} = await allKeyed({
 		neural: import("@mailwoman/neural"),
 		onnxRunner: import("@mailwoman/neural/onnx-runner"),
-		tokenizer: import("@mailwoman/neural/tokenizer"),
+		tokenizer: import("@mailwoman/neural/input/tokenizer"),
 	})
 
 	const modelCard = await readLocalJSONFile<{ labels: string[] }>(paths.modelCardPath)

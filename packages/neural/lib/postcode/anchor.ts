@@ -7,7 +7,7 @@ import { isStreetSuffixToken, isUSStateAbbreviation } from "@mailwoman/codex/us"
 import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 
-import type { AnchorSpanMode } from "#anchor-inference"
+import type { AnchorSpanMode } from "#channels/anchor-inference"
 import { collectMatches } from "#postcode/repair"
 
 /**

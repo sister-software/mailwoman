@@ -10,8 +10,8 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig, type NeuralRunner } from "#classifier"
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { STAGE2_BIO_LABELS } from "#labels"
-import { MailwomanTokenizer } from "#tokenizer"
 
 const TEXT = "Apt 4B, 12 Main Street, Springfield"
 

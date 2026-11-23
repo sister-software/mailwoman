@@ -10,8 +10,8 @@
 
 import { hasPostcodeForm, statesPostcodeSyntax } from "@mailwoman/postcode/country-formats"
 
-import type { WordGroup } from "#fst-prior"
-import type { TokenLike } from "#query-shape-prior"
+import type { WordGroup } from "#prior/fst"
+import type { TokenLike } from "#prior/query-shape"
 
 /**
  * P99 of the GB PPD `city` word-length distribution, where the observed register max was 5 words.

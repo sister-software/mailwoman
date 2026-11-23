@@ -38,7 +38,7 @@ import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 } from "@mailwoman/corpus/synthesizers/boundary-stress"
-import { createScorer } from "@mailwoman/neural/scorer"
+import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 const { values: args } = parseArguments({

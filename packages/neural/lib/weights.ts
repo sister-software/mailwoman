@@ -10,8 +10,8 @@ import { POSTCODE_PREFIX_FILE_GLOB, postcodePrefixScopeOf } from "@mailwoman/cor
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { scriptFamilyBase } from "#char-encoder"
-import type { EncoderDescriptor } from "#char-encoder"
+import { scriptFamilyBase } from "#input/char-encoder"
+import type { EncoderDescriptor } from "#input/char-encoder"
 import { PlacetypeCensusLookup } from "#placetype/census"
 import { packageHasBinaries, readEncoderFromModelCard, resolveCharVocab } from "#weights/channels"
 import { DEFAULT_WEIGHTS_LOCALE } from "#weights/families"

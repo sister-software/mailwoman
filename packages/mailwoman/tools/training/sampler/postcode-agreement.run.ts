@@ -37,7 +37,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
-import { anchorKey, anchoredPostcodeSpans, parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
+import { anchorKey, anchoredPostcodeSpans, parseAnchorLookup } from "@mailwoman/neural/channels/anchor-inference"
 import { collectMatches } from "@mailwoman/neural/postcode/repair"
 import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
 

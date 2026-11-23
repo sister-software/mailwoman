@@ -509,7 +509,7 @@ these updates in `main` before staging anything:
 3. In `neural-weights-en-us/model-card.json`, rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the promotion eval evidence), and `files_md5`. **State any regression that crosses the 2pp threshold** in the card itself. `requires` (the ship-config) is unchanged when the model reused the prior recipe.
 4. Regenerate the capabilities manifest. The fail-closed capabilities delta check reads it, and without a regeneration the generator's `$comment` names the wrong model. The generator **refuses to run if a `capabilities` block already exists**, so rewrite the card without that block first, then run:
    ```sh
-   yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
+   yarn compile   # the generator imports COMPILED @mailwoman/neural/classifier/scorer from out/
    node packages/mailwoman/out/cli/main.js eval capability-manifest \
      --model $MAILWOMAN_DATA_ROOT/.../model-v<NNN>-step-<step>-int8.onnx \
      --tokenizer $MAILWOMAN_DATA_ROOT/.../tokenizer.model \

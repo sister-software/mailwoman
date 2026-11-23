@@ -10,7 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { shapedKeyerObligationViolation } from "#anchor-inference"
+import { shapedKeyerObligationViolation } from "#channels/anchor-inference"
 import type { NeuralAddressClassifierConfig } from "#classifier/options"
 
 const { sessionCreateMock, constructed } = vi.hoisted(() => ({
@@ -34,8 +34,8 @@ vi.mock("onnxruntime-web/wasm", () => {
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-vi.mock("#tokenizer", async (importOriginal) => ({
-	...(await importOriginal<typeof import("#tokenizer")>()),
+vi.mock("#input/tokenizer", async (importOriginal) => ({
+	...(await importOriginal<typeof import("#input/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 

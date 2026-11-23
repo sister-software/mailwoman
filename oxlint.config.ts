@@ -100,7 +100,7 @@ const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
 	"packages/neural/lib/env.ts",
 	"packages/neural/lib/onnx/runner.ts",
-	"packages/neural/lib/scorer.ts",
+	"packages/neural/lib/classifier/scorer.ts",
 	"packages/neural/lib/weights.ts",
 	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
@@ -115,7 +115,7 @@ const NODE_TIER_NEURAL_FILES = [
 const NODE_ONLY_NEURAL_MODULES = [
 	"./onnx-runner.ts",
 	"./weights.ts",
-	"./scorer.ts",
+	"./classifier/scorer.ts",
 	"onnxruntime-node",
 	// `@mailwoman/core/env` imports Node builtins.
 	// The `node:*` pattern cannot detect that import.

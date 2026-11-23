@@ -12,9 +12,14 @@ import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { type AddressSystemTable, parseAddressSystemTable } from "#address-system"
-import { type AnchorLookup, type AnchorSpanMode, BinaryAnchorLookup, parseAnchorLookup } from "#anchor-inference"
-import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
+import {
+	type AnchorLookup,
+	type AnchorSpanMode,
+	BinaryAnchorLookup,
+	parseAnchorLookup,
+} from "#channels/anchor-inference"
+import { type EncoderDescriptor, encoderDescriptorFromCard } from "#input/char-encoder"
+import { type AddressSystemTable, parseAddressSystemTable } from "#labels/address-system"
 
 /**
  * The `requires` block of a `model-card.json`, which declares the channel

@@ -6,11 +6,11 @@
  * whether the placetype-pair index applies, and which gazetteer FST the parse reads.
  */
 
-import { confidentLocaleCountry } from "#address-system"
 import type { ParseOpts } from "#classifier/options"
-import type { FSTMatcherLike } from "#fst-prior"
+import { confidentLocaleCountry } from "#labels/address-system"
 import type { PairIndexLike } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
+import type { FSTMatcherLike } from "#prior/fst"
 
 /**
  * The country a parse's tree resolves containment for: the caller's stated country,

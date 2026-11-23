@@ -22,8 +22,8 @@ import {
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
 import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/postcode-prefix-files"
-import { isStreetAffix } from "@mailwoman/neural/fst-prior"
 import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
+import { isStreetAffix } from "@mailwoman/neural/prior/fst"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"

@@ -64,7 +64,7 @@ async function main() {
 		scorer: { createScorer },
 		resolverWofSqlite: { WOFSQLitePlaceLookup },
 	} = await allKeyed({
-		scorer: import("@mailwoman/neural/scorer"),
+		scorer: import("@mailwoman/neural/classifier/scorer"),
 		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 	})
 

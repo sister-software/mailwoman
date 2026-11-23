@@ -36,7 +36,7 @@ code nor only a tendency in the weights.
 ## 1. The grammar the shipped decoder uses
 
 The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Outside markers over
-`ComponentTag`). The decoder (`packages/neural/lib/viterbi.ts`) solves:
+`ComponentTag`). The decoder (`packages/neural/lib/decode/viterbi.ts`) solves:
 
 ```
 ŷ = argmax over y ∈ L_BIO of   Σₖ e(k, yₖ)  +  Σₖ M[yₖ₋₁][yₖ]
@@ -260,7 +260,7 @@ evidence can then raise the scores of parses it should rule out.
    gazetteer locality entry flips `Port of Spain`-class rows without retraining. The ablation can be
    expressed in the engine config, and it falsifies §4 if it fails.
 3. **FST maximal-match check**: answered on 2026-08-24 by reading `buildFSTEmissionPriors` in
-   `packages/neural/lib/fst-prior.ts`. The FST prior has no maximal-match preference. The walk
+   `packages/neural/lib/prior/fst.ts`. The FST prior has no maximal-match preference. The walk
    starts at every word position, applies bias at the first accepting state, and applies bias
    _again_ at every longer accepting extension from the same start. Nested and covering entries add
    up in the emission matrix, and no stage ranks, deduplicates, or suppresses overlapping spans.

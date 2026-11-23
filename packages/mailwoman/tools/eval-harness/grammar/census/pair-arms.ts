@@ -10,9 +10,7 @@
 
 import { bareBIOTag, type ComponentTag } from "@mailwoman/codex/component"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair/index/resolver"
-import { buildPlacetypePairPriors } from "@mailwoman/neural/placetype/pair-prior"
-import type { NeuralParseTrace } from "@mailwoman/neural/trace"
+import type { NeuralParseTrace } from "@mailwoman/neural/decode/trace"
 import {
 	buildBIOEndMask,
 	buildBIOStartMask,
@@ -20,7 +18,9 @@ import {
 	viterbi,
 	type ViterbiInput,
 	type ViterbiTransitionAdjustment,
-} from "@mailwoman/neural/viterbi"
+} from "@mailwoman/neural/decode/viterbi"
+import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair/index/resolver"
+import { buildPlacetypePairPriors } from "@mailwoman/neural/placetype/pair-prior"
 
 export type Matrix = number[][]
 

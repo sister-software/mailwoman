@@ -19,8 +19,8 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { SeededRandom } from "@mailwoman/core/random"
-import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
+import { normalizeFSTToken } from "@mailwoman/neural/prior/fst"
 
 /**
  * Child tag emitted by this arc.

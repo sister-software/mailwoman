@@ -17,9 +17,9 @@
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
-import { COUNTRY_FEATURE_DIM } from "#country-inference"
-import { GAZETTEER_FEATURE_DIM } from "#gazetteer-inference"
+import { ANCHOR_FEATURE_DIM } from "#channels/anchor-inference"
+import { COUNTRY_FEATURE_DIM } from "#channels/country-inference"
+import { GAZETTEER_FEATURE_DIM } from "#channels/gazetteer-inference"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 

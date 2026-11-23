@@ -68,7 +68,7 @@ where `"none"` is exactly "in no gazetteer". No code outside `anchor.ts` and its
 The audit of 2026-07-16 ranked this site the most expensive, on the grounds that `soft-features.ts`
 builds the model's anchor channel from this `confidence`. The code doesn't do that, and didn't in
 the commit that added this page (`3fe00349a`). `buildAnchorFeatures` in
-`packages/neural/lib/anchor-inference.ts` writes the channel's own per-piece `confidence`, `1` on a
+`packages/neural/lib/channels/anchor-inference.ts` writes the channel's own per-piece `confidence`, `1` on a
 postcode span the lookup holds and `0` on every other piece, and `soft-features.ts` passes that
 array on. `extractPostcodeAnchors`, which fills the field quoted above, has one caller outside
 tests, in `packages/mailwoman/tools/eval-harness/oa/resolver/coordinate-tiers.ts`. The double
@@ -76,7 +76,7 @@ meaning of `0` is in the type, and the model isn't fed it.
 
 ### 2. Gazetteer importance — no bit at all (#1142)
 
-`packages/neural/lib/fst-prior.ts`, as it read on 2026-07-16:
+`packages/neural/lib/prior/fst.ts`, as it read on 2026-07-16:
 
 ```ts
 const impBias = entry.importance * biasScale * maxBias

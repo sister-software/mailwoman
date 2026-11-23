@@ -6,7 +6,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { describe, expect, test } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
-import { MailwomanTokenizer } from "#tokenizer"
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { WebONNXRunner } from "#web/onnx-runner"
 import { resolveWeights } from "#weights"
 import { readLabelsFromModelCard } from "#weights/channels"

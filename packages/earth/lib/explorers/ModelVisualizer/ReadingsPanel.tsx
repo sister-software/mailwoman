@@ -11,8 +11,8 @@
  *   - Plausibility: whether the conventions mask applied and which repair passes changed which pieces.
  */
 
+import { softmax } from "@mailwoman/neural/decode/viterbi"
 import { tagOf } from "@mailwoman/neural/span"
-import { softmax } from "@mailwoman/neural/viterbi"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useMemo } from "react"
 

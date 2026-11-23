@@ -45,8 +45,8 @@ import {
 	parseAddressSystemConventions,
 	type Toggle,
 } from "@mailwoman/neural/classifier/options"
+import { MailwomanTokenizer } from "@mailwoman/neural/input/tokenizer"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"

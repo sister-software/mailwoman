@@ -9,8 +9,8 @@
 
 import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
-import type { SoftFeatureChannel } from "@mailwoman/neural/soft-features"
-import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
+import type { SoftFeatureChannel } from "@mailwoman/neural/channels/soft-features"
+import type { TokenizedPiece } from "@mailwoman/neural/input/tokenizer"
 
 export interface FSTMatcherLike {
 	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null

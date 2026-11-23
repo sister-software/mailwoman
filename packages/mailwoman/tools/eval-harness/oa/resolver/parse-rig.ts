@@ -7,7 +7,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { ScorerOverrides } from "@mailwoman/neural/classifier/scorer"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { buildLocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
@@ -47,7 +47,7 @@ export async function buildParseRig(
 	// (else createScorer's default /mnt pilot and the repo gazetteer lexicon).
 	// `--ablate-to-anchor` drops back to anchor-only (gazetteer and conventions off)
 	// for the before/after comparison.
-	const { createScorer } = await import("@mailwoman/neural/scorer")
+	const { createScorer } = await import("@mailwoman/neural/classifier/scorer")
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
 	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor="off"` through

@@ -8,7 +8,7 @@
  *   windows the trace exists to inform — inline numbers cost more than their reported value.
  */
 
-import type { NeuralParseTrace } from "@mailwoman/neural/trace"
+import type { NeuralParseTrace } from "@mailwoman/neural/decode/trace"
 import { describe, expect, it } from "vitest"
 
 import { slimParseTrace } from "#dev-mcp/tool-kit"

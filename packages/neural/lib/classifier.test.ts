@@ -12,11 +12,11 @@ import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"
-import { DECODE_TERMS, type DecodeTermValues } from "#decode-explanation"
+import { DECODE_TERMS, type DecodeTermValues } from "#decode/explanation"
+import type { NeuralParseTrace } from "#decode/trace"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "#decode/viterbi"
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { STAGE2_BIO_LABELS } from "#labels"
-import { MailwomanTokenizer } from "#tokenizer"
-import type { NeuralParseTrace } from "#trace"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "#viterbi"
 
 const ADDRESSES = [
 	"Apt 4B, 12 Main Street, Springfield",

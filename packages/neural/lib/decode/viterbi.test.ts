@@ -1,0 +1,433 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { mulberry32 } from "@mailwoman/core/random"
+import { describe, expect, it } from "vitest"
+
+import {
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
+	pathMargins,
+	perTokenArgmax,
+	softmax,
+	viterbi,
+	viterbiKBest,
+	viterbiPathTerms,
+} from "#decode/viterbi"
+
+const NEG_INF = -1e9
+const LABELS = ["O", "B-locality", "I-locality", "B-region", "I-region"] as const
+
+describe("buildBIOTransitionMask", () => {
+	it("permits O → anything except I-X", () => {
+		const mask = buildBIOTransitionMask(LABELS)
+		expect(mask[0]?.[0]).toBe(0) // O → O
+		expect(mask[0]?.[1]).toBe(0) // O → B-locality
+		expect(mask[0]?.[2]).toBe(NEG_INF) // O → I-locality (forbidden)
+		expect(mask[0]?.[3]).toBe(0) // O → B-region
+		expect(mask[0]?.[4]).toBe(NEG_INF) // O → I-region (forbidden)
+	})
+
+	it("permits B-X → I-X but forbids B-X → I-Y for different tags", () => {
+		const mask = buildBIOTransitionMask(LABELS)
+		// from = B-locality (idx 1)
+		expect(mask[1]?.[2]).toBe(0) // B-locality → I-locality
+		expect(mask[1]?.[4]).toBe(NEG_INF) // B-locality → I-region
+		expect(mask[1]?.[0]).toBe(0) // B-locality → O
+		expect(mask[1]?.[1]).toBe(0) // B-locality → B-locality
+	})
+
+	it("permits I-X → I-X", () => {
+		const mask = buildBIOTransitionMask(LABELS)
+		expect(mask[2]?.[2]).toBe(0) // I-locality → I-locality
+	})
+})
+
+describe("buildBIOStartMask", () => {
+	it("forbids starting on I-X", () => {
+		const start = buildBIOStartMask(LABELS)
+		expect(start[0]).toBe(0) // O
+		expect(start[1]).toBe(0) // B-locality
+		expect(start[2]).toBe(NEG_INF) // I-locality
+		expect(start[3]).toBe(0) // B-region
+		expect(start[4]).toBe(NEG_INF) // I-region
+	})
+})
+
+describe("viterbi — basic", () => {
+	it("returns empty path for empty input", () => {
+		const result = viterbi({ emissions: [], transitions: [] })
+		expect(result.path).toEqual([])
+	})
+
+	it("picks the obvious single-token best", () => {
+		// One timestep, B-locality has highest emission.
+		const result = viterbi({
+			emissions: [[-1, 5, -10, -10, -10]],
+			transitions: buildBIOTransitionMask(LABELS),
+		})
+
+		expect(result.path).toEqual([1]) // B-locality
+	})
+
+	it("prevents O → I-X (orphan-I sequence)", () => {
+		// Naive argmax would pick: O, I-locality (because emission for I-locality is highest at t=1)
+		// Viterbi with structural mask must pick something else valid.
+		const emissions = [
+			[5, -1, -10, -10, -10], // t=0: O wins
+			[-1, -1, 5, -10, -10], // t=1: I-locality wins naively, but invalid after O
+		]
+
+		const path = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+		}).path
+
+		// Verify no orphan-I.
+		for (let t = 1; t < path.length; t++) {
+			const cur = LABELS[path[t]!]!
+			const prev = LABELS[path[t - 1]!]!
+
+			if (cur.startsWith("I-")) {
+				const tag = cur.slice(2)
+				expect(prev === `B-${tag}` || prev === `I-${tag}`).toBe(true)
+			}
+		}
+	})
+
+	it("recovers the Saint Petersburg pattern (B-locality I-locality)", () => {
+		// emissions[0] = "Saint", uncertain between O and B-locality emissions[1] =
+		// "Petersburg", confident I-locality Naive argmax: O, I-locality (invalid) Viterbi:
+		// B-locality, I-locality (valid + globally best)
+		const emissions = [
+			[0.45, 0.4, 0.1, 0.05, 0], // O, B-loc, I-loc, B-reg, I-reg
+			[0.1, 0.2, 0.65, 0.05, 0],
+		]
+
+		const path = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+		}).path
+
+		expect(LABELS[path[0]!]).toBe("B-locality")
+		expect(LABELS[path[1]!]).toBe("I-locality")
+	})
+
+	it("falls back gracefully when emissions strongly contradict structural rules", () => {
+		// All emissions favor I-locality.
+		// Viterbi must still produce a structurally valid sequence.
+		const emissions = [
+			[0.01, 0.01, 0.97, 0.005, 0.005],
+			[0.01, 0.01, 0.97, 0.005, 0.005],
+		]
+
+		const path = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			endTransitions: buildBIOEndMask(LABELS),
+		}).path
+
+		// First label can't be I-locality (start mask forbids).
+		expect(LABELS[path[0]!]).not.toBe("I-locality")
+	})
+
+	it("agrees with argmax when transitions are all zero (no structural constraints)", () => {
+		const allZero = LABELS.map(() => LABELS.map(() => 0))
+
+		const emissions = [
+			[0.1, 0.5, 0.1, 0.2, 0.1],
+			[0.7, 0.05, 0.05, 0.1, 0.1],
+			[0.1, 0.1, 0.1, 0.6, 0.1],
+		]
+
+		const viterbiPath = viterbi({
+			emissions,
+			transitions: allZero,
+			startTransitions: LABELS.map(() => 0),
+			endTransitions: LABELS.map(() => 0),
+		}).path
+
+		const argmaxPath = perTokenArgmax(emissions)
+		expect(viterbiPath).toEqual(argmaxPath)
+	})
+})
+
+describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)", () => {
+	// The path-fusion lattice from the task-8 transition-level probe, miniaturized:
+	// a 3-token input where the fused run (B-locality → I-locality → I-locality) outscores
+	// the desired split (B-locality → B-region → O is irrelevant here, since the competing
+	// reading is B-region entered at t=1) by a margin smaller than the bonus.
+	// The emission at t=1 already favors B-region locally (4 > 3), yet the global path stays fused
+	// because switching costs the continuation at t=2 (I-region 0 vs I-locality 5).
+	// This is the exact mechanism the adjustment exists for.
+	const FUSION_EMISSIONS = [
+		[0, 6, NEG_INF, 0, NEG_INF], // t=0: B-locality 6
+		[0, 0, 3, 4, NEG_INF], // t=1: I-locality 3 vs B-region 4 — local win for B-region
+		[0, 0, 5, 0, 1], // t=2: I-locality 5 vs I-region 1 — the continuation toll
+	]
+
+	// Fused: 6 + 3 + 5 = 14.
+	// Split (B-loc, B-reg, I-reg): 6 + 4 + 1 = 11 — margin 3.
+
+	it("a bonus on the entry transition flips a fused path (before/after on the same lattice)", () => {
+		const base = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+		})
+
+		expect(base.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
+
+		const boosted = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			// +4 into B-region at t=1: split path 11 + 4 = 15 > 14 — flips.
+			transitionAdjustments: [{ timestep: 1, toLabel: 3, bonus: 4 }],
+		})
+
+		expect(boosted.path.map((k) => LABELS[k])).toEqual(["B-locality", "B-region", "I-region"])
+		expect(boosted.score).toBeCloseTo(15, 6)
+	})
+
+	it("a bonus below the fusion margin does NOT flip — the adjustment is additive, not a constraint", () => {
+		const under = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			transitionAdjustments: [{ timestep: 1, toLabel: 3, bonus: 2 }], // 11 + 2 = 13 < 14
+		})
+
+		expect(under.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
+	})
+
+	it("an adjustment at timestep 0 lands on the start transition", () => {
+		const emissions = [
+			[0, 3, NEG_INF, 1, NEG_INF], // B-locality 3 vs B-region 1
+			[5, 0, 0, 0, 0], // O everywhere after
+		]
+
+		const base = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+		})
+
+		expect(LABELS[base.path[0]!]).toBe("B-locality")
+
+		const boosted = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			transitionAdjustments: [{ timestep: 0, toLabel: 3, bonus: 3 }], // B-region 1 + 3 = 4 > 3
+		})
+
+		expect(LABELS[boosted.path[0]!]).toBe("B-region")
+	})
+
+	it("a bonus cannot resurrect a structurally forbidden transition (NEG_INF + bonus stays effectively -inf)", () => {
+		const emissions = [
+			[5, 0, NEG_INF, 0, NEG_INF], // t=0: O
+			[0, 0, 10, 0, 0], // t=1: I-locality wins on emissions — but O → I-locality is forbidden
+		]
+
+		const boosted = viterbi({
+			emissions,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			transitionAdjustments: [{ timestep: 1, toLabel: 2, bonus: 50 }],
+		})
+
+		// Whatever wins, it isn't an orphan I-locality after O.
+		expect(boosted.path.map((k) => LABELS[k])).not.toEqual(["O", "I-locality"])
+	})
+
+	it("duplicate adjustments on the same (timestep, toLabel) cell compose by max, not sum", () => {
+		const withDupes = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			// Two entries of 2 each: summed (4) would flip, max'd (2) mustn't.
+			transitionAdjustments: [
+				{ timestep: 1, toLabel: 3, bonus: 2 },
+				{ timestep: 1, toLabel: 3, bonus: 2 },
+			],
+		})
+
+		expect(withDupes.path.map((k) => LABELS[k])).toEqual(["B-locality", "I-locality", "I-locality"])
+	})
+
+	it("an empty adjustment list decodes byte-identically to omitting the field", () => {
+		const without = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+		})
+
+		const withEmpty = viterbi({
+			emissions: FUSION_EMISSIONS,
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: buildBIOStartMask(LABELS),
+			transitionAdjustments: [],
+		})
+
+		expect(withEmpty.path).toEqual(without.path)
+		expect(withEmpty.score).toBe(without.score)
+	})
+})
+
+describe("viterbiKBest", () => {
+	const random = mulberry32(2879)
+	const transitions = buildBIOTransitionMask(LABELS)
+	const startTransitions = buildBIOStartMask(LABELS)
+
+	const scoresFor = (length: number) =>
+		Array.from({ length }, () => Array.from({ length: LABELS.length }, () => Math.round(random() * 40) / 10 - 2))
+
+	const pathScore = (path: number[], emissions: number[][]) =>
+		path.reduce(
+			(sum, label, t) =>
+				sum + emissions[t]![label]! + (t ? transitions[path[t - 1]!]![label]! : startTransitions[label]!),
+			0
+		)
+
+	it("returns viterbi's path and score at k = 1, adjustments included", () => {
+		for (let trial = 0; trial < 50; trial++) {
+			const emissions = scoresFor(1 + (trial % 7))
+			const transitionAdjustments = [{ timestep: trial % 3, toLabel: trial % LABELS.length, bonus: 1.5 }]
+			const input = { emissions, transitions, startTransitions, transitionAdjustments }
+
+			expect(viterbiKBest(input, 1)).toEqual([viterbi(input)])
+		}
+	})
+
+	it("returns distinct paths in score order, equal to the brute-force top k", () => {
+		for (let trial = 0; trial < 20; trial++) {
+			const emissions = scoresFor(4)
+			const best = viterbiKBest({ emissions, transitions, startTransitions }, 20)
+			const all: number[] = []
+
+			for (let code = 0; code < LABELS.length ** 4; code++) {
+				const path = [0, 1, 2, 3].map((t) => Math.floor(code / LABELS.length ** t) % LABELS.length)
+				const score = pathScore(path, emissions)
+
+				if (score > NEG_INF / 2) {
+					all.push(score)
+				}
+			}
+
+			const expected = all.toSorted((a, b) => b - a).slice(0, 20)
+
+			expect(new Set(best.map((result) => result.path.join(","))).size).toBe(best.length)
+			expect(best.map((result) => result.score)).toEqual(best.map((result) => result.score).toSorted((a, b) => b - a))
+
+			for (const [index, result] of best.entries()) {
+				expect(result.score).toBeCloseTo(expected[index]!, 9)
+				expect(pathScore(result.path, emissions)).toBeCloseTo(result.score, 9)
+			}
+		}
+	})
+})
+
+describe("perTokenArgmax", () => {
+	it("picks the max per row", () => {
+		expect(perTokenArgmax([[0.1, 0.5, 0.4]])).toEqual([1])
+	})
+
+	it("handles ties by picking the first", () => {
+		expect(perTokenArgmax([[0.5, 0.5, 0]])).toEqual([0])
+	})
+})
+
+describe("softmax", () => {
+	it("produces probabilities summing to 1", () => {
+		const p = softmax([1, 2, 3])
+		const sum = p.reduce((a, b) => a + b, 0)
+		expect(sum).toBeCloseTo(1, 6)
+	})
+
+	it("is numerically stable on large logits", () => {
+		const p = softmax([1000, 1001, 1002])
+		const sum = p.reduce((a, b) => a + b, 0)
+		expect(sum).toBeCloseTo(1, 6)
+	})
+
+	it("preserves order", () => {
+		const p = softmax([1, 2, 3])
+		expect(p[0]).toBeLessThan(p[1]!)
+		expect(p[1]).toBeLessThan(p[2]!)
+	})
+})
+
+describe("pathMargins", () => {
+	it("measures each decoded label's lead over the best other label in its emission row", () => {
+		const emissions = [
+			[0.5, 4, 1],
+			[2, 0, 3],
+		]
+
+		expect(pathMargins(emissions, [1, 2])).toEqual([3, 1])
+	})
+
+	it("goes negative when the transition constraints chose a label the row's own scores rank lower", () => {
+		// Viterbi may keep `I-locality` after `B-locality` although `B-region` scores higher on the row.
+		const emissions = [[1, 5, 0, 2, 0]]
+
+		expect(pathMargins(emissions, [3])).toEqual([-3])
+	})
+
+	it("returns a zero margin for a single-label vocabulary and an empty list for an empty path", () => {
+		expect(pathMargins([[2.5]], [0])).toEqual([0])
+		expect(pathMargins([], [])).toEqual([])
+	})
+
+	it("reads the same rows the decoder read", () => {
+		const emissions = [
+			[0, 3, 0, 1, 0],
+			[0, 0, 4, 0, 0.5],
+		]
+
+		const { path } = viterbi({ emissions, transitions: buildBIOTransitionMask(LABELS) })
+
+		expect(path).toEqual([1, 2])
+		expect(pathMargins(emissions, path)).toEqual([2, 3.5])
+	})
+})
+
+describe("viterbiPathTerms", () => {
+	it("splits the decoded path's score into parts that sum to the score viterbi returns", () => {
+		const input = {
+			emissions: [
+				[1, 2, 0.5, 0, 0.25],
+				[0.5, 0.1, 3, 1, 0],
+				[2, 0, 0, 1.5, 1],
+			],
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: [0.1, 0.2, NEG_INF, 0.3, NEG_INF],
+			endTransitions: [0.5, 0, 0.25, 0, 0],
+			transitionAdjustments: [
+				{ timestep: 2, toLabel: 3, bonus: 0.5 },
+				// The larger of two bonuses on one cell applies, as in viterbi.
+				{ timestep: 2, toLabel: 3, bonus: 2 },
+			],
+		}
+
+		const { path, score } = viterbi(input)
+		const parts = viterbiPathTerms(input, path)
+
+		expect(LABELS[path[2]!]).toBe("B-region")
+		expect(parts.adjustments).toBe(2)
+		expect(parts.emissions + parts.transitions + parts.adjustments).toBeCloseTo(score, 12)
+	})
+
+	it("scores a path viterbi did not choose", () => {
+		const input = { emissions: [[1, 0, 0, 0, 0]], transitions: buildBIOTransitionMask(LABELS) }
+
+		expect(viterbiPathTerms(input, [3])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
+		expect(viterbiPathTerms(input, [])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
+	})
+})

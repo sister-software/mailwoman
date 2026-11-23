@@ -8,6 +8,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it, test } from "vitest"
 
+import { MailwomanTokenizer } from "#input/tokenizer"
 import { STAGE2_BIO_LABELS } from "#labels"
 import {
 	PairIndexLookup,
@@ -17,7 +18,6 @@ import {
 	type PairIndexLike,
 } from "#pair"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype"
-import { MailwomanTokenizer } from "#tokenizer"
 
 const LABELS = STAGE2_BIO_LABELS
 

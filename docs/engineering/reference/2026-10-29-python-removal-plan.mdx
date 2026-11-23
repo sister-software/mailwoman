@@ -227,7 +227,7 @@ how it is verified.
 Reference records use canonical JSON: UTF-8, keys sorted, whitespace limited to what the grammar requires,
 integers as JSON integers, floats as the shortest round-trip decimal (`Number.prototype.toString`, Python `repr`,
 Rust `ryu`), `null` for a missing field, strings as code points. Offsets are recorded as code-point offsets with an
-explicit `offset_unit: "code_point"` field. The serving side converts to UTF-16 in `packages/neural/lib/tokenizer.ts`,
+explicit `offset_unit: "code_point"` field. The serving side converts to UTF-16 in `packages/neural/lib/input/tokenizer.ts`,
 and that conversion is the one place the two units meet. A record stores the source revision, every input path with
 its SHA-256 and order, the config, runtime versions, emitted counts, output schema, and either the expected rows or
 arrays, so a mismatch report identifies the first differing row, field, tensor or element.
@@ -539,26 +539,26 @@ the sampler observer in Phase 3, so `exposure/report.py` is the last of this pha
 TypeScript port wrote its report from the same config, seed and row count. The draw counts are 200,000 rows, and
 `epoch_mixture` also ran the config's full 1,000,000-row epoch.
 
-| Python module                           | TypeScript port                                                     | Result                                                                                |
-| --------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `audits/epoch_mixture/` (200k, failing) | `packages/mailwoman/tools/training/audits/epoch/mixture.run.ts`     | byte-equal (137,562 bytes), same refusal message                                      |
-| `audits/epoch_mixture/` (1M epoch)      | the same                                                            | byte-equal (167,345 bytes); Python 399.8 s, TypeScript 60.7 s                         |
-| `audits/validation_coverage.py`         | `validation-coverage.run.ts`                                        | byte-equal (75,124 bytes)                                                             |
-| `audits/label_support.py`               | `label-support.run.ts`                                              | values equal; `rows_with_label` key order differs, see below                          |
-| `audits/opening_token.py`               | `opening-token.run.ts`                                              | byte-equal (76,979 bytes); Python 220.0 s, TypeScript 37.4 s                          |
-| `audits/region_code_token.py`           | `region-code-token.run.ts`                                          | byte-equal (45,357 bytes)                                                             |
-| `audits/comma_segment_number.py`        | `comma-segment-number.run.ts`                                       | byte-equal (349 bytes)                                                                |
-| `audits/suffix_feed.py`                 | `suffix-feed.run.ts`                                                | byte-equal (8,094 bytes) against `audit_feed` given the resolved weights, see below   |
-| `audits/config_keys.py`                 | `config-keys.run.ts`                                                | output equal over the 264 configs                                                     |
-| `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                    | receipt byte-equal. The TypeScript `verify` accepts the Python receipt                |
-| `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts` | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
-| `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                | output line equal on both tables                                                      |
-| `semantic_tags.py` (Phase 1)            | `packages/neural/lib/semantic-tags.ts`, schema `semantic_tags`      | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal. Python reader pinned     |
-| `exposure/cli.py`, replayed draws       | `packages/mailwoman/tools/training/exposure/exposure.run.ts`        | byte-equal (495,948 bytes) but `measured_at`; Python 209 s, TypeScript 43 s           |
-| `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                           | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
-| `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
-| `exposure/release_check.py`             | `release-check.run.ts`                                              | `preflight` and `completed` findings byte-equal, exit status equal                    |
-| `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed/script.run.ts`      | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
+| Python module                           | TypeScript port                                                       | Result                                                                                |
+| --------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `audits/epoch_mixture/` (200k, failing) | `packages/mailwoman/tools/training/audits/epoch/mixture.run.ts`       | byte-equal (137,562 bytes), same refusal message                                      |
+| `audits/epoch_mixture/` (1M epoch)      | the same                                                              | byte-equal (167,345 bytes); Python 399.8 s, TypeScript 60.7 s                         |
+| `audits/validation_coverage.py`         | `validation-coverage.run.ts`                                          | byte-equal (75,124 bytes)                                                             |
+| `audits/label_support.py`               | `label-support.run.ts`                                                | values equal; `rows_with_label` key order differs, see below                          |
+| `audits/opening_token.py`               | `opening-token.run.ts`                                                | byte-equal (76,979 bytes); Python 220.0 s, TypeScript 37.4 s                          |
+| `audits/region_code_token.py`           | `region-code-token.run.ts`                                            | byte-equal (45,357 bytes)                                                             |
+| `audits/comma_segment_number.py`        | `comma-segment-number.run.ts`                                         | byte-equal (349 bytes)                                                                |
+| `audits/suffix_feed.py`                 | `suffix-feed.run.ts`                                                  | byte-equal (8,094 bytes) against `audit_feed` given the resolved weights, see below   |
+| `audits/config_keys.py`                 | `config-keys.run.ts`                                                  | output equal over the 264 configs                                                     |
+| `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                      | receipt byte-equal. The TypeScript `verify` accepts the Python receipt                |
+| `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts`   | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
+| `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                  | output line equal on both tables                                                      |
+| `semantic_tags.py` (Phase 1)            | `packages/neural/lib/labels/semantic-tags.ts`, schema `semantic_tags` | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal. Python reader pinned     |
+| `exposure/cli.py`, replayed draws       | `packages/mailwoman/tools/training/exposure/exposure.run.ts`          | byte-equal (495,948 bytes) but `measured_at`; Python 209 s, TypeScript 43 s           |
+| `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                             | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
+| `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files   | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
+| `exposure/release_check.py`             | `release-check.run.ts`                                                | `preflight` and `completed` findings byte-equal, exit status equal                    |
+| `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed/script.run.ts`        | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
 
 **Records (observed 2026-10-30, lab host).** Each comparison above was rerun on both sides and recorded under
 `$MAILWOMAN_DATA_ROOT/audits/phase2-ports/<audit>/`. The Python side ran in a temporary `git worktree` at `ae90ae7a2`
@@ -606,7 +606,7 @@ Notes on the records:
 
 Classified differences (**decided**):
 
-- The semantic tag registry moved to `packages/neural/lib/semantic-tags.ts`, and `emit-label-schema.run.ts` writes
+- The semantic tag registry moved to `packages/neural/lib/labels/semantic-tags.ts`, and `emit-label-schema.run.ts` writes
   it to the label schema's `semantic_tags` section. The address systems stay defined by `@mailwoman/codex`'s
   layouts, with ids assigned by `mailwoman dev generate address-systems` in
   `corpus-python/src/mailwoman_train/address_systems.json`. That file stays where it is because training

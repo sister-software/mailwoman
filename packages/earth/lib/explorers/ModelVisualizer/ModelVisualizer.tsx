@@ -18,8 +18,8 @@
  *   from the runtime handle's trace hook.
  */
 
+import { softmax } from "@mailwoman/neural/decode/viterbi"
 import { tagOf } from "@mailwoman/neural/span"
-import { softmax } from "@mailwoman/neural/viterbi"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useMemo, useState } from "react"
 

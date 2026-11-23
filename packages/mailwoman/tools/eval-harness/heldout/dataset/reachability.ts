@@ -21,7 +21,7 @@
  */
 
 import { scriptFamilyForText } from "@mailwoman/neural/classifier/script-router"
-import type { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import type { MailwomanTokenizer } from "@mailwoman/neural/input/tokenizer"
 import { classifyCodepoint } from "@mailwoman/recognizer/charset"
 
 import { type HeldoutRow, heldoutRowID } from "#tools/eval-harness/heldout/per/country"

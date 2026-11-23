@@ -143,7 +143,7 @@ async function recordPhase(): Promise<void> {
 	} = await allKeyed({
 		definition: loadProminenceDefinition(),
 		weights: readWeightsIdentity({}),
-		scorer: import("@mailwoman/neural/scorer"),
+		scorer: import("@mailwoman/neural/classifier/scorer"),
 		resolver: import("@mailwoman/resolver-wof-sqlite"),
 	})
 

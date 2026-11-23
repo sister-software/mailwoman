@@ -9,7 +9,7 @@
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { findFSTAcceptedMatches, type FSTAcceptedMatch, type FSTMatcherLike } from "@mailwoman/neural/fst-prior"
+import { findFSTAcceptedMatches, type FSTAcceptedMatch, type FSTMatcherLike } from "@mailwoman/neural/prior/fst"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 

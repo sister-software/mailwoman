@@ -4,9 +4,9 @@
 import { describe, expect, it } from "vitest"
 
 import { fstForParse, parsePairPrior } from "#classifier/parse-country"
-import type { FSTMatcherLike } from "#fst-prior"
 import { LOCALE_COUNTRIES } from "#labels"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
+import type { FSTMatcherLike } from "#prior/fst"
 
 /**
  * Locale logits that read `country` at softmax probability near `probability`.

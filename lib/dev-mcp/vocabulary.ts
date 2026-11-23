@@ -146,7 +146,7 @@ export interface VocabularyOptions {
  * describes the tokenizer the runtime would load rather than a file someone typed a path to.
  */
 export async function runVocabulary(options: VocabularyOptions): Promise<VocabularyReport> {
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const { MailwomanTokenizer } = await import("@mailwoman/neural/input/tokenizer")
 
 	let tokenizerPath = options.tokenizerPath
 

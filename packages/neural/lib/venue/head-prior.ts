@@ -28,8 +28,8 @@
 
 import type { VenueHeadLexiconLike, VenueHeadPriorOpts } from "@mailwoman/core/pipeline"
 
-import { groupPiecesIntoWords, numberOpensSegment, wordsWithSegments, type SegmentWord } from "#fst-prior"
-import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
+import { groupPiecesIntoWords, numberOpensSegment, wordsWithSegments, type SegmentWord } from "#prior/fst"
+import { emptyPriorMatrix, labelColumnIndex } from "#prior/matrix"
 
 /**
  * The default multiplier on the lexicon's bias.

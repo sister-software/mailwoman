@@ -5,7 +5,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
-import { buildLabelSchema } from "#label-schema"
+import { buildLabelSchema } from "#labels/schema"
 import { readAddressSystemRegistry, readAddressSystemsReference } from "#tools/address-system-registry"
 
 describe("address-system registry", () => {

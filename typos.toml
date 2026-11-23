@@ -494,15 +494,7 @@ extend-glob = ["postal.generated.ts"]
 extend-identifiers = { PostalBa = "PostalBa", PostalPn = "PostalPn" }
 
 [type.coastal-fields]
-extend-glob = [
-	"build-coastal.ts",
-	"chunk.ts",
-	"ckan.ts",
-	"app.ts",
-	"street-morphology-prior.ts",
-	"triage.ts",
-	"cohesion.ts",
-]
+extend-glob = ["build-coastal.ts", "chunk.ts", "ckan.ts", "app.ts", "street-morphology.ts", "triage.ts", "cohesion.ts"]
 extend-identifiers = { defence = "defence", licences = "licences", fulfil = "fulfil", neighbour = "neighbour", neighbours = "neighbours" }
 
 [type.lexical-rules]

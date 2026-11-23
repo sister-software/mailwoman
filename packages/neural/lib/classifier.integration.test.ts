@@ -10,7 +10,7 @@ import { buildAddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it, vi } from "vitest"
 
 import { NeuralAddressClassifier } from "#classifier"
-import { DECODE_TERMS, type DecodeTermValues } from "#decode-explanation"
+import { DECODE_TERMS, type DecodeTermValues } from "#decode/explanation"
 
 import { MODEL_LOAD_TEST_TIMEOUT_MS, testModelAssets } from "../test/model-assets.ts"
 

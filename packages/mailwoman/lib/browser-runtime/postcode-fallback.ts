@@ -13,7 +13,7 @@
  */
 
 import { isPostcodeFormat, type KnownFormatHitView } from "@mailwoman/core/pipeline/types"
-import { BinaryAnchorLookup } from "@mailwoman/neural/anchor-inference"
+import { BinaryAnchorLookup } from "@mailwoman/neural/channels/anchor-inference"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 
 /**
