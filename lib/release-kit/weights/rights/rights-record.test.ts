@@ -16,7 +16,12 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-import { provenanceMatches, renderLicenseFile, renderProvenance } from "#release-kit/weights/rights/files"
+import {
+	carriedModelGraph,
+	provenanceMatches,
+	renderLicenseFile,
+	renderProvenance,
+} from "#release-kit/weights/rights/files"
 import {
 	readWeightsRightsRecords,
 	roleForArtifact,
@@ -36,6 +41,7 @@ async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: PathBuild
 
 	for (const fixture of fixtures) {
 		await makeDirectories(directory.path(fixture.workspace))
+
 		await writeLocalJSONFile(fixture.manifest, directory.path(fixture.workspace, "package.json"))
 
 		if (fixture.card) {
@@ -43,7 +49,10 @@ async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: PathBuild
 		}
 	}
 
-	return { root: directory.path, dispose: async () => void (await directory[Symbol.asyncDispose]()) }
+	return {
+		root: directory.path,
+		dispose: async () => void (await directory[Symbol.asyncDispose]()),
+	}
 }
 
 describe("usesStatedIn", () => {
@@ -90,8 +99,11 @@ describe("roleForArtifact", () => {
 		expect(roleForArtifact("char-vocab.json")).toBe("character-vocabulary")
 		expect(roleForArtifact("pair-index-gb.bin")).toBe("placetype-pair-index")
 		expect(roleForArtifact("postcode-us.bin")).toBe("postcode-binary")
+
 		expect(roleForArtifact("postcode-prefix-us.bin")).toBe("postcode-prefix-index")
+
 		expect(roleForArtifact("postcode-prefix-gb-esw.bin")).toBe("postcode-prefix-index")
+
 		expect(roleForArtifact("fst-en-gb.bin")).toBe("gazetteer-fst")
 		expect(roleForArtifact("street-type-lexicon-v3.json")).toBe("lexicon")
 		expect(roleForArtifact("calibration-per-locale.json")).toBe("calibration")
@@ -123,11 +135,13 @@ describe("readWeightsRightsRecords", () => {
 			// README.md documents the package, so it isn't an artifact whose provenance is in question.
 			// The glob isn't a literal entry at all.
 			expect(record!.artifacts.map((artifact) => artifact.path)).toEqual(["model.onnx", "fst-fixture.bin"])
+
 			expect(record!.artifacts.map((artifact) => artifact.digest)).toEqual(["recorded", "unrecorded"])
 
 			const document = renderProvenance(record!)
 
 			expect(document.unresolved.some((line) => line.includes("fst-fixture.bin"))).toBe(true)
+
 			expect(document.artifacts.find((artifact) => artifact.path === "fst-fixture.bin")?.md5).toBeNull()
 		} finally {
 			await tree.dispose()
@@ -150,9 +164,11 @@ describe("readWeightsRightsRecords", () => {
 
 		try {
 			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-fixture"])
+
 			const document = renderProvenance(record!)
 
 			expect(document.training_attribution.status).toBe("none-recorded-in-this-package")
+
 			expect(document.unresolved.some((line) => line.includes("records no training attribution"))).toBe(true)
 		} finally {
 			await tree.dispose()
@@ -169,7 +185,10 @@ describe("readWeightsRightsRecords", () => {
 					license: "AGPL-3.0-only OR LicenseRef-Commercial",
 					files: ["model.onnx"],
 				},
-				card: { version: "9.1.0", training: { corpus_version: "v0.0.0-fixture" } },
+				card: {
+					version: "9.1.0",
+					training: { corpus_version: "v0.0.0-fixture" },
+				},
 			},
 			{
 				workspace: "packages/neural-weights-overlay",
@@ -245,7 +264,9 @@ describe("readWeightsRightsRecords", () => {
 			const license = renderLicenseFile(graph!)
 
 			expect(license).toContain("## Attribution the training data requires")
+
 			expect(license).toContain(`- ${statement} (\`ODbL-1.0\`: osm-in, osm-ru)`)
+
 			expect(license).toContain("- `CC-BY-4.0`: gnaf")
 
 			expect(renderLicenseFile(overlay!)).toContain(
@@ -266,7 +287,10 @@ describe("readWeightsRightsRecords", () => {
 					license: "AGPL-3.0-only OR LicenseRef-Commercial",
 					files: ["model.onnx"],
 				},
-				card: { version: "1.2.3", training: { corpus_version: "v0.0.0-unrecorded" } },
+				card: {
+					version: "1.2.3",
+					training: { corpus_version: "v0.0.0-unrecorded" },
+				},
 			},
 		])
 
@@ -274,6 +298,7 @@ describe("readWeightsRightsRecords", () => {
 			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-fixture"])
 
 			expect(renderProvenance(record!).required_attributions).toBeNull()
+
 			expect(renderLicenseFile(record!)).toContain("No effective training manifest is committed for the corpus")
 		} finally {
 			await tree.dispose()
@@ -292,7 +317,9 @@ describe("readWeightsRightsRecords", () => {
 				},
 				card: {
 					version: "9.1.0",
-					training: { data_attribution: ["Some Registry (OGL v3.0): the rows this graph trained on."] },
+					training: {
+						data_attribution: ["Some Registry (OGL v3.0): the rows this graph trained on."],
+					},
 				},
 			},
 			{
@@ -321,16 +348,22 @@ describe("readWeightsRightsRecords", () => {
 			// The base's attribution uses a field that identifies its owner.
 			// The distinction that keeps a record from claiming the overlay's locale trained the encoder.
 			expect(overlay.attribution).toEqual([])
+
 			expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-graph")
+
 			expect(overlay.inherited?.packageVersion).toBe("10.0.0")
 			expect(overlay.inherited?.modelCardVersion).toBe("9.1.0")
+
 			expect(overlay.inherited?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])
+
 			expect(overlay.inherited?.unresolved).toBeNull()
 
 			const document = renderProvenance(overlay)
 
 			expect(document.training_attribution.status).toBe("none-recorded-in-this-package")
+
 			expect(document.inherited_lineage?.attribution).toHaveLength(1)
+
 			expect(document.inherited_lineage?.note).toContain("contributed none of these rows")
 
 			expect(records[0]!.inherited).toBeNull()
@@ -380,12 +413,15 @@ describe("readWeightsRightsRecords", () => {
 			])
 
 			expect(renderProvenance(graph!).data_access_offers).toEqual([offer])
+
 			expect(renderLicenseFile(graph!)).toContain("https://example.org/extract/MANIFEST.json")
 
 			// The overlay's own card records no offer.
 			// The offer it prints is the base's, under inherited_lineage.
 			expect(renderProvenance(overlay!).data_access_offers).toEqual([])
+
 			expect(renderProvenance(overlay!).inherited_lineage?.data_access_offers).toEqual([offer])
+
 			expect(renderLicenseFile(overlay!)).toContain("## Access to the training data")
 		} finally {
 			await tree.dispose()
@@ -402,7 +438,12 @@ describe("readWeightsRightsRecords", () => {
 					license: "AGPL-3.0-only OR LicenseRef-Commercial",
 					files: ["model.onnx"],
 				},
-				card: { version: "9.1.0", training: { data_access_offers: [{ license: "ODbL-1.0", sources: ["osm"] }] } },
+				card: {
+					version: "9.1.0",
+					training: {
+						data_access_offers: [{ license: "ODbL-1.0", sources: ["osm"] }],
+					},
+				},
 			},
 		])
 
@@ -425,7 +466,12 @@ describe("readWeightsRightsRecords", () => {
 					license: "AGPL-3.0-only OR LicenseRef-Commercial",
 					files: [],
 				},
-				card: { version: "9.1.0", training: { data_attribution: ["OpenStreetMap contributors (ODbL-1.0): rows."] } },
+				card: {
+					version: "9.1.0",
+					training: {
+						data_attribution: ["OpenStreetMap contributors (ODbL-1.0): rows."],
+					},
+				},
 			},
 			{
 				workspace: "packages/neural-weights-overlay",
@@ -436,7 +482,10 @@ describe("readWeightsRightsRecords", () => {
 					files: ["pair-index.bin"],
 					mailwoman: { baseWeights: "@mailwoman/neural-weights-graph" },
 				},
-				card: { version: "6.5.0", attribution: ["OpenStreetMap contributors (ODbL-1.0): through the base graph."] },
+				card: {
+					version: "6.5.0",
+					attribution: ["OpenStreetMap contributors (ODbL-1.0): through the base graph."],
+				},
 			},
 		])
 
@@ -477,7 +526,9 @@ describe("readWeightsRightsRecords", () => {
 			const [record] = await readWeightsRightsRecords(tree.root, ["packages/neural-weights-overlay"])
 
 			expect(record!.inherited?.attribution).toEqual([])
+
 			expect(record!.inherited?.unresolved).toMatch(/not among the packages read/)
+
 			expect(renderProvenance(record!).unresolved.some((line) => line.includes("could not be resolved"))).toBe(true)
 		} finally {
 			await tree.dispose()
@@ -579,7 +630,9 @@ describe("readWeightsRightsRecords", () => {
 				},
 				card: {
 					version: "9.1.0",
-					training: { data_attribution: ["Some Registry (OGL v3.0): the pair-index-gb.bin index."] },
+					training: {
+						data_attribution: ["Some Registry (OGL v3.0): the pair-index-gb.bin index."],
+					},
 				},
 			},
 			{
@@ -624,6 +677,7 @@ describe("the records this repository holds today", () => {
 
 		// The second entry is the OpenStreetMap credit the overlay owes through the base graph it decodes through.
 		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0, CC BY 4.0, CC BY 2.0", "ODbL-1.0"])
+
 		expect(gb?.attribution[0]?.text).toContain("pair-index-gb.bin")
 	})
 
@@ -641,15 +695,35 @@ describe("the records this repository holds today", () => {
 describe("provenanceMatches", () => {
 	it("compares the model graph only when the record and the committed file both read one", async () => {
 		const record = (await weightsRightsRecords(repoRootPath())).find((entry) => entry.modelGraph)!
-		const output = { name: "logits", type: "float32", shape: [1, "sequence", 33] }
+
+		const output = {
+			name: "logits",
+			type: "float32",
+			shape: [1, "sequence", 33],
+		}
 
 		const read = {
 			...record,
-			modelGraph: { format: "ONNX" as const, outputs: [output], textEmittingOutput: false, unreadable: null },
+			modelGraph: {
+				format: "ONNX" as const,
+				outputs: [output],
+				textEmittingOutput: false,
+				unreadable: null,
+			},
 		}
 
-		const readOther = { ...read, modelGraph: { ...read.modelGraph, outputs: [{ ...output, name: "other" }] } }
-		const unread = { ...read, modelGraph: { ...read.modelGraph, outputs: [], unreadable: "no file" } }
+		const readOther = {
+			...read,
+			modelGraph: {
+				...read.modelGraph,
+				outputs: [{ ...output, name: "other" }],
+			},
+		}
+
+		const unread = {
+			...read,
+			modelGraph: { ...read.modelGraph, outputs: [], unreadable: "no file" },
+		}
 
 		expect(provenanceMatches(renderProvenance(read), read)).toBe(true)
 		expect(provenanceMatches(renderProvenance(readOther), read)).toBe(false)
@@ -662,5 +736,49 @@ describe("provenanceMatches", () => {
 
 		// Every other field is still compared.
 		expect(provenanceMatches({ ...renderProvenance(read), package_version: "0.0.0" }, unread)).toBe(false)
+	})
+})
+
+describe("carriedModelGraph", () => {
+	it("keeps the committed graph across a version bump on a machine without the graph, and only for the same bytes", async () => {
+		const record = (await weightsRightsRecords(repoRootPath())).find((entry) =>
+			entry.artifacts.some((artifact) => artifact.path === "model.onnx" && artifact.md5)
+		)!
+
+		const output = {
+			name: "logits",
+			type: "float32",
+			shape: [1, "sequence", 33],
+		}
+
+		const read = {
+			...record,
+			modelGraph: {
+				format: "ONNX" as const,
+				outputs: [output],
+				textEmittingOutput: false,
+				unreadable: null,
+			},
+		}
+
+		const unread = {
+			...read,
+			packageVersion: "99.0.0",
+			modelGraph: { ...read.modelGraph, outputs: [], unreadable: "no file" },
+		}
+
+		const committed = renderProvenance(read)
+
+		expect(carriedModelGraph(committed, unread)).toEqual(committed.model_graph)
+		expect(carriedModelGraph(committed, read)).toBeNull()
+
+		const otherBytes = {
+			...unread,
+			artifacts: unread.artifacts.map((artifact) =>
+				artifact.path === "model.onnx" ? { ...artifact, md5: "0".repeat(32) } : artifact
+			),
+		}
+
+		expect(carriedModelGraph(committed, otherBytes)).toBeNull()
 	})
 })

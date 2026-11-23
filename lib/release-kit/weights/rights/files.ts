@@ -17,7 +17,7 @@ import { isIdentical } from "@mailwoman/core/values/identical"
 import type { RequiredAttribution } from "@mailwoman/corpus/source-register"
 import { AGREEMENT_VERSION, agreementPath } from "@mailwoman/license/product/agreement"
 
-import { describeModelGraph } from "#release-kit/weights/rights/model-graph"
+import { MODEL_GRAPH_FILE, describeModelGraph } from "#release-kit/weights/rights/model-graph"
 import { declaresOpenStreetMapAttribution } from "#release-kit/weights/rights/osm-ancestry"
 import type { AttributionRecord, DataAccessOffer, WeightsRightsRecord } from "#release-kit/weights/rights/record"
 
@@ -70,7 +70,12 @@ export interface ProvenanceDocument {
 		data_access_offers: DataAccessOfferEntry[]
 		unresolved: string | null
 	} | null
-	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
+	artifacts: Array<{
+		path: string
+		role: string
+		md5: string | null
+		digest: string
+	}>
 	/**
 	 * What this package's own model graph emits, read from the `.onnx` file at generation time.
 	 *
@@ -81,14 +86,22 @@ export interface ProvenanceDocument {
 	 */
 	model_graph: {
 		format: string
-		outputs: Array<{ name: string; type: string; shape: Array<number | string> }>
+		outputs: Array<{
+			name: string
+			type: string
+			shape: Array<number | string>
+		}>
 		text_emitting_output: boolean
 		summary: string
 		unreadable: string | null
 	} | null
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
-		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
+		entries: Array<{
+			text: string
+			license_named: string | null
+			uses: string[]
+		}>
 		/**
 		 * The number of entries that state each use.
 		 *
@@ -96,7 +109,11 @@ export interface ProvenanceDocument {
 		 */
 		by_use: Record<string, number>
 	}
-	attribution_recorded_in_another_package: Array<{ artifact: string; recorded_in: string; text: string }>
+	attribution_recorded_in_another_package: Array<{
+		artifact: string
+		recorded_in: string
+		text: string
+	}>
 	corpus_version: string | null
 	/**
 	 * Which of the corpus's sources one config's audited epoch drew from, read from the
@@ -120,7 +137,12 @@ export interface ProvenanceDocument {
 		/**
 		 * Sources the audited epoch drew rows from, with the rows it emitted for each after augmentation.
 		 */
-		drew: Array<{ source: string; license: string; corpus_rows: number; emitted_rows: number }>
+		drew: Array<{
+			source: string
+			license: string
+			corpus_rows: number
+			emitted_rows: number
+		}>
 		/**
 		 * Sources the corpus holds that the epoch drew no row from, with why.
 		 */
@@ -227,6 +249,7 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []
+
 	const undigested = record.artifacts.filter((artifact) => artifact.digest === "unrecorded")
 
 	if (undigested.length) {
@@ -553,6 +576,29 @@ export function provenanceMatches(committed: unknown, record: WeightsRightsRecor
 	if (!modelGraphUncompared(record) && !committedGraph?.unreadable) return isIdentical(committed, rendered)
 
 	return isIdentical({ ...committed, model_graph: null }, { ...rendered, model_graph: null })
+}
+
+/**
+ * The committed `model_graph` a rewrite keeps when this machine couldn't read the graph,
+ * or null when no committed graph applies.
+ *
+ * The committed description applies while the committed record lists the same `model.onnx`
+ * md5 as this record, because the description is read from those bytes.
+ * A release bumps `package_version` on a CI runner that holds no graph, and the
+ * rewrite keeps the description written where the graph was read.
+ */
+export function carriedModelGraph(committed: unknown, record: WeightsRightsRecord): ProvenanceDocument["model_graph"] {
+	if (!modelGraphUncompared(record) || committed == null || typeof committed !== "object") return null
+
+	const { artifacts, model_graph: graph } = committed as Partial<ProvenanceDocument>
+
+	const committedMD5 = artifacts?.find((artifact) => artifact.path === MODEL_GRAPH_FILE)?.md5
+
+	const recordMD5 = record.artifacts.find((artifact) => artifact.path === MODEL_GRAPH_FILE)?.md5
+
+	if (graph == null || committedMD5 == null || committedMD5 !== recordMD5) return null
+
+	return graph
 }
 
 /**
