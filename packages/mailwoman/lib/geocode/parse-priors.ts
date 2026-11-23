@@ -22,7 +22,7 @@ import {
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
-import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
+import { createAnchorRegionLookup } from "@mailwoman/neural/labels/postcode/anchor/regions"
 import { isStreetAffix } from "@mailwoman/neural/prior/fst"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"

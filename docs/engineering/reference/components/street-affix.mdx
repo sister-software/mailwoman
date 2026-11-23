@@ -33,7 +33,7 @@ flowchart LR
 | Street-type evidence channel | `street-type-lexicon-v3.json` in each weights package      | Marks a matched word as a street type in one feature bit the model reads at its input.                                   |
 | Admin FST damping            | `streetContextScale` in `packages/neural/lib/prior/fst.ts` | Multiplies a place-name match's admin bias by 0.25 when the match sits next to an affix or a house number.               |
 | Street-morphology prior      | `packages/neural/lib/prior/street-morphology.ts`           | Adds bias toward `street_prefix` and `street_suffix` on the affix, and toward `street` on the nearest word on each side. |
-| Venue-head prior             | `packages/neural/lib/venue/head-prior.ts`                  | Stops a venue head's bias from extending past an affix.                                                                  |
+| Venue-head prior             | `packages/neural/lib/prior/venue-head.ts`                  | Stops a venue head's bias from extending past an affix.                                                                  |
 | Street-miss fallback         | `packages/mailwoman/lib/street/miss-fallback.ts`           | Retries a one-word street span as a locality when the geocode returned a null coordinate and no fork was declared.       |
 
 ### The street-type evidence channel

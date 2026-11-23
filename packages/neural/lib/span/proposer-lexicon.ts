@@ -32,7 +32,7 @@ import {
 	STREET_FORMING_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_MODIFIERS,
-} from "#venue/structure"
+} from "#labels/venue/structure"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is descriptive rather than addressing

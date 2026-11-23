@@ -18,7 +18,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import type { TokenizedPiece } from "#input/tokenizer"
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
-import { collectMatches } from "#postcode/repair"
+import { collectMatches } from "#labels/postcode/repair"
 
 /**
  * Anchor feature width = posterior over the locale set + a 2-d centroid.
