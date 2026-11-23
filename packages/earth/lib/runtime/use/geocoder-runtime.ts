@@ -51,7 +51,7 @@ import type {
 	ResolvedMapPlace,
 	Suggestion,
 } from "@mailwoman/react/map"
-import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
+import type { PlaceGeometry } from "@mailwoman/react/map/overlays/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { resolvedSpanResults, runCascade, statedStreetScope } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { resolveStreet, type StreetResolution } from "@mailwoman/resolver-wof-wasm/httpvfs/street"

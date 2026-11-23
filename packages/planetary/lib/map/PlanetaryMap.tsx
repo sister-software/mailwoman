@@ -18,9 +18,9 @@ import {
 	PlanetaryLabelsLayerID,
 	PlanetarySelectionLayerID,
 } from "@mailwoman/cartographer/planetary"
-import { MapCanvas } from "@mailwoman/react/map/MapCanvas"
-import { prefersReducedMotion } from "@mailwoman/react/map/reduced-motion"
-import { ResultCamera } from "@mailwoman/react/map/ResultCamera"
+import { prefersReducedMotion } from "@mailwoman/react/map/camera/reduced-motion"
+import { ResultCamera } from "@mailwoman/react/map/camera/ResultCamera"
+import { MapCanvas } from "@mailwoman/react/map/canvas/MapCanvas"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl/maplibre"
 

@@ -6,8 +6,8 @@
  *   nowhere a visitor can see; `status` is the only thing the two paths may differ by.
  */
 
-import { AppIdentity } from "@mailwoman/react/map/AppIdentity"
-import { MapFooter } from "@mailwoman/react/map/MapFooter"
+import { AppIdentity } from "@mailwoman/react/map/chrome/AppIdentity"
+import { MapFooter } from "@mailwoman/react/map/chrome/MapFooter"
 import {
 	Basemap,
 	BASEMAP_INPUTS,

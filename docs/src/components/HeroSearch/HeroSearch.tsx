@@ -10,9 +10,9 @@
  */
 
 import "@mailwoman/react/styles.css"
-import { PlaceAutocomplete } from "@mailwoman/react/map/PlaceAutocomplete"
+import { PlaceAutocomplete } from "@mailwoman/react/map/geocoder/PlaceAutocomplete"
+import { usePlaceAutocomplete } from "@mailwoman/react/map/geocoder/usePlaceAutocomplete"
 import type { Suggestion } from "@mailwoman/react/map/types"
-import { usePlaceAutocomplete } from "@mailwoman/react/map/usePlaceAutocomplete"
 import {
 	openPlaceAutocompleteIndex,
 	type PlaceAutocompleteIndex,

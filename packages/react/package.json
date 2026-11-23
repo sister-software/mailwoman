@@ -84,10 +84,10 @@
 			"node": "./lib/search/SearchModal.tsx",
 			"default": "./out/search/SearchModal.js"
 		},
-		"./map/AppIdentity": {
-			"types": "./out/map/AppIdentity.d.ts",
-			"node": "./lib/map/AppIdentity.tsx",
-			"default": "./out/map/AppIdentity.js"
+		"./map/chrome/AppIdentity": {
+			"types": "./out/map/chrome/AppIdentity.d.ts",
+			"node": "./lib/map/chrome/AppIdentity.tsx",
+			"default": "./out/map/chrome/AppIdentity.js"
 		},
 		"./common/LoadingIndicator": {
 			"types": "./out/common/LoadingIndicator.d.ts",
@@ -99,80 +99,80 @@
 			"node": "./lib/common/PresetChips.tsx",
 			"default": "./out/common/PresetChips.js"
 		},
-		"./map/MapCanvas": {
-			"types": "./out/map/MapCanvas.d.ts",
-			"node": "./lib/map/MapCanvas.tsx",
-			"default": "./out/map/MapCanvas.js"
+		"./map/canvas/MapCanvas": {
+			"types": "./out/map/canvas/MapCanvas.d.ts",
+			"node": "./lib/map/canvas/MapCanvas.tsx",
+			"default": "./out/map/canvas/MapCanvas.js"
 		},
-		"./map/MapSearchBar": {
-			"types": "./out/map/MapSearchBar.d.ts",
-			"node": "./lib/map/MapSearchBar.tsx",
-			"default": "./out/map/MapSearchBar.js"
+		"./map/chrome/MapSearchBar": {
+			"types": "./out/map/chrome/MapSearchBar.d.ts",
+			"node": "./lib/map/chrome/MapSearchBar.tsx",
+			"default": "./out/map/chrome/MapSearchBar.js"
 		},
-		"./map/MapChipRow": {
-			"types": "./out/map/MapChipRow.d.ts",
-			"node": "./lib/map/MapChipRow.tsx",
-			"default": "./out/map/MapChipRow.js"
+		"./map/chrome/MapChipRow": {
+			"types": "./out/map/chrome/MapChipRow.d.ts",
+			"node": "./lib/map/chrome/MapChipRow.tsx",
+			"default": "./out/map/chrome/MapChipRow.js"
 		},
-		"./map/MapControlStack": {
-			"types": "./out/map/MapControlStack.d.ts",
-			"node": "./lib/map/MapControlStack.tsx",
-			"default": "./out/map/MapControlStack.js"
+		"./map/chrome/MapControlStack": {
+			"types": "./out/map/chrome/MapControlStack.d.ts",
+			"node": "./lib/map/chrome/MapControlStack.tsx",
+			"default": "./out/map/chrome/MapControlStack.js"
 		},
-		"./map/MapCompass": {
-			"types": "./out/map/MapCompass.d.ts",
-			"node": "./lib/map/MapCompass.tsx",
-			"default": "./out/map/MapCompass.js"
+		"./map/chrome/MapCompass": {
+			"types": "./out/map/chrome/MapCompass.d.ts",
+			"node": "./lib/map/chrome/MapCompass.tsx",
+			"default": "./out/map/chrome/MapCompass.js"
 		},
-		"./map/MapSheet": {
-			"types": "./out/map/MapSheet.d.ts",
-			"node": "./lib/map/MapSheet.tsx",
-			"default": "./out/map/MapSheet.js"
+		"./map/chrome/MapSheet": {
+			"types": "./out/map/chrome/MapSheet.d.ts",
+			"node": "./lib/map/chrome/MapSheet.tsx",
+			"default": "./out/map/chrome/MapSheet.js"
 		},
-		"./map/MapProgressBar": {
-			"types": "./out/map/MapProgressBar.d.ts",
-			"node": "./lib/map/MapProgressBar.tsx",
-			"default": "./out/map/MapProgressBar.js"
+		"./map/chrome/MapProgressBar": {
+			"types": "./out/map/chrome/MapProgressBar.d.ts",
+			"node": "./lib/map/chrome/MapProgressBar.tsx",
+			"default": "./out/map/chrome/MapProgressBar.js"
 		},
-		"./map/MapFooter": {
-			"types": "./out/map/MapFooter.d.ts",
-			"node": "./lib/map/MapFooter.tsx",
-			"default": "./out/map/MapFooter.js"
+		"./map/chrome/MapFooter": {
+			"types": "./out/map/chrome/MapFooter.d.ts",
+			"node": "./lib/map/chrome/MapFooter.tsx",
+			"default": "./out/map/chrome/MapFooter.js"
 		},
-		"./map/Geocoder": {
-			"types": "./out/map/Geocoder.d.ts",
-			"node": "./lib/map/Geocoder.tsx",
-			"default": "./out/map/Geocoder.js"
+		"./map/geocoder/Geocoder": {
+			"types": "./out/map/geocoder/Geocoder.d.ts",
+			"node": "./lib/map/geocoder/Geocoder.tsx",
+			"default": "./out/map/geocoder/Geocoder.js"
 		},
-		"./map/ResultCamera": {
-			"types": "./out/map/ResultCamera.d.ts",
-			"node": "./lib/map/ResultCamera.tsx",
-			"default": "./out/map/ResultCamera.js"
+		"./map/camera/ResultCamera": {
+			"types": "./out/map/camera/ResultCamera.d.ts",
+			"node": "./lib/map/camera/ResultCamera.tsx",
+			"default": "./out/map/camera/ResultCamera.js"
 		},
-		"./map/OverlayLayers": {
-			"types": "./out/map/OverlayLayers.d.ts",
-			"node": "./lib/map/OverlayLayers.tsx",
-			"default": "./out/map/OverlayLayers.js"
+		"./map/overlays/OverlayLayers": {
+			"types": "./out/map/overlays/OverlayLayers.d.ts",
+			"node": "./lib/map/overlays/OverlayLayers.tsx",
+			"default": "./out/map/overlays/OverlayLayers.js"
 		},
-		"./map/ResolvedPlaceLayers": {
-			"types": "./out/map/ResolvedPlaceLayers.d.ts",
-			"node": "./lib/map/ResolvedPlaceLayers.tsx",
-			"default": "./out/map/ResolvedPlaceLayers.js"
+		"./map/overlays/ResolvedPlaceLayers": {
+			"types": "./out/map/overlays/ResolvedPlaceLayers.d.ts",
+			"node": "./lib/map/overlays/ResolvedPlaceLayers.tsx",
+			"default": "./out/map/overlays/ResolvedPlaceLayers.js"
 		},
-		"./map/CompareToggle": {
-			"types": "./out/map/CompareToggle.d.ts",
-			"node": "./lib/map/CompareToggle.tsx",
-			"default": "./out/map/CompareToggle.js"
+		"./map/geocoder/CompareToggle": {
+			"types": "./out/map/geocoder/CompareToggle.d.ts",
+			"node": "./lib/map/geocoder/CompareToggle.tsx",
+			"default": "./out/map/geocoder/CompareToggle.js"
 		},
-		"./map/PlaceAutocomplete": {
-			"types": "./out/map/PlaceAutocomplete.d.ts",
-			"node": "./lib/map/PlaceAutocomplete.tsx",
-			"default": "./out/map/PlaceAutocomplete.js"
+		"./map/geocoder/PlaceAutocomplete": {
+			"types": "./out/map/geocoder/PlaceAutocomplete.d.ts",
+			"node": "./lib/map/geocoder/PlaceAutocomplete.tsx",
+			"default": "./out/map/geocoder/PlaceAutocomplete.js"
 		},
-		"./map/ResultPanel": {
-			"types": "./out/map/ResultPanel.d.ts",
-			"node": "./lib/map/ResultPanel.tsx",
-			"default": "./out/map/ResultPanel.js"
+		"./map/geocoder/ResultPanel": {
+			"types": "./out/map/geocoder/ResultPanel.d.ts",
+			"node": "./lib/map/geocoder/ResultPanel.tsx",
+			"default": "./out/map/geocoder/ResultPanel.js"
 		},
 		"./common/About": {
 			"types": "./out/common/About.d.ts",
@@ -199,10 +199,10 @@
 			"node": "./lib/pipeline/TreeView.tsx",
 			"default": "./out/pipeline/TreeView.js"
 		},
-		"./map/VersionPicker": {
-			"types": "./out/map/VersionPicker.d.ts",
-			"node": "./lib/map/VersionPicker.tsx",
-			"default": "./out/map/VersionPicker.js"
+		"./map/geocoder/VersionPicker": {
+			"types": "./out/map/geocoder/VersionPicker.d.ts",
+			"node": "./lib/map/geocoder/VersionPicker.tsx",
+			"default": "./out/map/geocoder/VersionPicker.js"
 		},
 		"./pipeline/ComponentTable": {
 			"types": "./out/pipeline/ComponentTable.d.ts",

@@ -5,7 +5,7 @@ import type { ConnectivityReading } from "@mailwoman/core/network/connectivity"
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { type GeocoderProvider, GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
 import type { GeocoderRuntime, MapBias } from "@mailwoman/react/map"
-import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
+import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/geocoder/fake-runtime"
 import { describe, expect, test, vi } from "vitest"
 
 import { DeviceTier, THREE_D_BUDGETS } from "#memory/device-tier"
