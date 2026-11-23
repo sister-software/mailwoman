@@ -44,14 +44,21 @@ Expect **zero rows to differ**. Anything else means the rig is noisy and no cand
 means anything. It costs one board run and it is the only thing separating _"the candidate is worse"_ from
 _"my harness is."_
 
-Stage it by dereferencing symlinks — a candidate directory that points back at the shipped artifacts grades
-the shipped model under the candidate's name:
+Stage both roots with `mwops release stage-weights-cache`, the one stager. It copies every package's declared
+artifacts into the root, links each overlay's `model.onnx` and `tokenizer.model` to the base package's inside the
+root, and refuses a root that lacks a declared artifact or whose packages resolve different graphs:
 
 ```sh
-for f in "$OVERLAY"/*; do cp -L "$f" "$CAND/$(basename "$f")"; done
-cp -f <candidate int8> "$CAND/model.onnx"
-md5sum "$CAND/model.onnx"     # MUST differ from the shipped md5
+# The published model, from the workspaces and the data-root overlay.
+yarn mwops release stage-weights-cache --out <shipped root>
+# A training export, with a card derived from the published card and the run's signed identity.
+yarn mwops release stage-weights-cache --out <candidate root> \
+  --export <run base>/export --recipe packages/corpus/data/training-configs/<config>.yaml
 ```
+
+The report prints the graph's sha256 and md5 and the sha256 each package resolves. The candidate's md5 must
+differ from the published card's `files_md5["model.onnx"]`, which the derived card keeps under
+`candidate.published_card`. `--file [locale:]name=path`, `--omit [locale:]name` and `--card` build an A/B arm.
 
 ## Step 2 — the PLACEBO run, once per BASE
 

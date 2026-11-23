@@ -100,6 +100,9 @@ When training completes, the supervisor exports the newest complete checkpoint w
 `use_char_embed` model. Each graph leaves with a `<graph>.provenance.json` that the provenance key signs as `managed`,
 and the supervisor commits the volume. A failed export stops the sandbox with the exporter's exit code, and `restart`
 finds the run complete and exports again. `fetch <run key>` copies `export/` with the rest of the run.
+`yarn mwops release stage-weights-cache --out <root> --export <out>/export --recipe <yaml>` stages the fetched
+export as a weights root for grading. It verifies the graph against its provenance manifest and derives the card
+from the published card, because the export writes no `model-card.json`.
 
 To renew the grant before 2027-02-22, run `mailwoman license grant-training --holder "Nirrius LLC, d/b/a Sister Software"
 --grant mtg_88553b5da439d4f8dc6c584a --expires <date within 92 days>`. Then replace the secret:
