@@ -111,3 +111,35 @@ export function parseHeldoutArm(label: string): HeldoutArm {
 
 	return { label, cacheRoot, pins }
 }
+
+/**
+ * Splits a comma-separated list of arm labels into the labels.
+ *
+ * A label's pins are also comma-separated, so a comma begins a new arm only when the text
+ * after it isn't a `<switch>=<value>` pin continuing an arm that already holds a `#`.
+ * `/a#x=on,y=off,/b` is two arms: `/a#x=on,y=off` and `/b`.
+ */
+export function splitHeldoutArms(value: string): string[] {
+	const arms: string[] = []
+
+	for (const entry of value.split(",").map((part) => part.trim())) {
+		if (!entry) continue
+
+		const previous = arms.at(-1)
+		const name = entry.split("=")[0]
+
+		const continuesPins =
+			typeof previous === "string" &&
+			previous.includes("#") &&
+			entry.includes("=") &&
+			HELDOUT_ARM_SWITCHES.includes(name as HeldoutArmSwitch)
+
+		if (continuesPins) {
+			arms[arms.length - 1] = `${previous},${entry}`
+		} else {
+			arms.push(entry)
+		}
+	}
+
+	return arms
+}
