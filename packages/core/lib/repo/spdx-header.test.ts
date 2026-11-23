@@ -7,7 +7,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { rewriteSourceHeader, SourceHeaderSyntax, sourceHeaderProblem, sourceHeaderSyntax } from "#spdx-header"
+import { rewriteSourceHeader, SourceHeaderSyntax, sourceHeaderProblem, sourceHeaderSyntax } from "#repo/spdx-header"
 
 const SLASH =
 	"// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors\n// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial\n"
@@ -135,7 +135,7 @@ describe("sourceHeaderSyntax", () => {
 	test("exempts generated and fixture paths", () => {
 		expect(sourceHeaderSyntax("packages/sentencepiece-wasm/sentencepiece.mjs")).toBeNull()
 		expect(sourceHeaderSyntax("config/vale/fixtures/clean.ts")).toBeNull()
-		expect(sourceHeaderSyntax("packages/core/lib/spdx-header.ts")).toBe(SourceHeaderSyntax.Slash)
+		expect(sourceHeaderSyntax("packages/core/lib/repo/spdx-header.ts")).toBe(SourceHeaderSyntax.Slash)
 		expect(sourceHeaderSyntax("docs/src/snippets/home.snippet.mts")).toBeNull()
 		expect(sourceHeaderSyntax("packages/core/lib/home.snippet.mts")).toBe(SourceHeaderSyntax.Slash)
 		expect(sourceHeaderSyntax("docs/plans/a.md")).toBeNull()

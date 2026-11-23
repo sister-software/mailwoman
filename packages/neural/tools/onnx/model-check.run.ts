@@ -18,11 +18,11 @@
  *   [--tolerance 1e-4] [--threads 4] [--out <receipt.json>]`
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import * as ort from "onnxruntime-node"
 
 const { values } = parseArguments({

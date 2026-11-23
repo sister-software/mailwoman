@@ -14,7 +14,7 @@
  *   Run `mailwoman gazetteer build admin` first.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 
 import {
 	type CommandSpec,

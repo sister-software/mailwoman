@@ -10,8 +10,8 @@
  *   The refusal prints the three routes to a token, so the operator who meets it knows what to do next.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { docsSiteURL, type LicenseKeyVerification, scopeAdmits } from "@mailwoman/core/license"
-import { allKeyed } from "@mailwoman/core/promises"
 
 import type { BundleArtifact, DataBundle } from "#data/published/bundles"
 

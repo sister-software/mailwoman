@@ -5,7 +5,6 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsXML, walkNodes } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type {
 	Ancestor,
@@ -15,6 +14,7 @@ import type {
 	ResolverBackend,
 	StreetCentroidLookup,
 } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, test, vi } from "vitest"
 
 import { createWOFResolver } from "#resolve"

@@ -18,9 +18,9 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 import { join } from "path-ts"
 

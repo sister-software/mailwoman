@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { makeLcg } from "@mailwoman/core/random"
+import { makeLcg } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import { synthesizeStreetRow } from "#us/synthesizers/street"

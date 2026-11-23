@@ -10,7 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { dirname, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

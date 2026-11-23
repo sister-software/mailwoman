@@ -14,7 +14,7 @@
  *   assigned in discovery order and are not stable across reboots.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 import { runHostCommand } from "#storage-kit/command"
 

@@ -15,7 +15,7 @@
  *   shorthand parsing. It reports an unknown kind by name.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"

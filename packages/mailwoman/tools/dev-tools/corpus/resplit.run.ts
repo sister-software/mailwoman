@@ -39,11 +39,11 @@
  *     # --limit-files 2 for a smoke run
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { localManifestFilePath, rerootBaseFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitRetention, SPLIT_ATTRIBUTE } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { evaluationGroupPolicyIdentity, readEvaluationGroupPolicy } from "@mailwoman/corpus/utils/validation-groups"

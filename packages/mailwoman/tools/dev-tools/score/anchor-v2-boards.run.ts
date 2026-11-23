@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"

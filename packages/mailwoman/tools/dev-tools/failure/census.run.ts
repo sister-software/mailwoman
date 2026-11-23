@@ -8,7 +8,7 @@ import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
  *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/failure/census.run.ts`
  */
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"

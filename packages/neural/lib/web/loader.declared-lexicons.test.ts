@@ -8,7 +8,7 @@
  *   The sibling defaults are a legacy fallback for bundles that predate the declarations.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))

@@ -32,9 +32,9 @@
  *   Neither option uses an atomic temp-swap.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"

@@ -8,7 +8,7 @@
  *   reaches the FTS5 parser as an operator, a column filter or a bare `*`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { type SearchRecord, TABLE_ROW_LEVEL } from "@mailwoman/react/search/types"
 
 import type { SearchDatabase } from "./database.ts"

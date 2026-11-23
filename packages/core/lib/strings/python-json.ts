@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 /**
  *   Python's one-line `json.dumps`, kept for the two hashes whose recorded
@@ -11,7 +11,8 @@ import { stringifyJSON } from "#json"
  *   the encoder-parity records store it, so a sampler change verifies against the 15 records.
  *   The DeepSeek transliteration batch id in `packages/corpus/lib/recipes/deepseek/batches.ts` hashes the
  *   seed ids as the first requested batches did, so a resumed run skips the batches already requested.
- *   New output uses `orderedJSON` from `@mailwoman/core/json`.
+ *
+ *   New output uses `orderedJSON` from `@mailwoman/core/values/json`.
  *
  *   {@linkcode pythonJSONString} also prints the strings of a Who's On First
  *   record (`@mailwoman/gazetteer/tools/pipeline/wof/record`).

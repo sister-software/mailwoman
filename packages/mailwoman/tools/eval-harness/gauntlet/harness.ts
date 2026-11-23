@@ -8,14 +8,14 @@
  *   The Gauntlet grades the assembled output — coordinate + tier — not raw parse F1.
  */
 
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { AdminCoherenceReport, GeocodeResult, VariantAliasExemption } from "@mailwoman/core/geocode"
-import { md5Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"

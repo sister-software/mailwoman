@@ -23,8 +23,8 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { judgeCommand } from "#dev-mcp/hooks/bash/write/rules"
 

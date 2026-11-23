@@ -18,8 +18,8 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
-import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
+import { isRegisteredWorkspace } from "@mailwoman/core/repo/workspaces"
 import { resolvePath } from "path-ts"
 
 export interface ScaffoldWeightsOverlayOptions {

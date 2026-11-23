@@ -10,7 +10,7 @@
  *   other half: one composer, so a later change to the layout moves one line.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * The directory name a corpus version is written under.

@@ -36,9 +36,9 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { type CaseNormalization, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import {
 	NeuralAddressClassifier,
 	parseAnchorLookup,

@@ -9,7 +9,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
 import { describe, expect, it } from "vitest"
 
 import { SYNC_SCRIPT } from "#tools/training/launch/sync"

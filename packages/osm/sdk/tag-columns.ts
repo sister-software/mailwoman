@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * @file How an OSM tag is read out of a gdal OSM-driver layer in ogrsql, shared by the POI and sub-venue extractors.

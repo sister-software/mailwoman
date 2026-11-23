@@ -29,8 +29,8 @@
  *   Run: mailwoman corpus recipe pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { componentsForOSMRow, sameName } from "#adapters/osm/adapter"
 import { OSM_LICENSE } from "#adapters/osm/license"

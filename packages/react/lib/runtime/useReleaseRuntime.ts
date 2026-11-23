@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
+import type { LoadLedgerSnapshot } from "@mailwoman/core/asset/load-ledger"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**

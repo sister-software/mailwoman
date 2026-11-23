@@ -24,9 +24,9 @@
  *   Each firing is recorded beside its row with its provenance.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { JSONSpliterator } from "spliterator"
 

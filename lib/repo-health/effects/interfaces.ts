@@ -173,7 +173,7 @@ const PROCESSES: readonly EffectInterface[] = ["spawnProcess", "runFile", "runFi
 }))
 
 /**
- * The git queries in `@mailwoman/core/git`, by the checkout path each one takes.
+ * The git queries in `@mailwoman/core/repo/git`, by the checkout path each one takes.
  *
  * A query of commit identity, a ref's tree or the history reads the repository's git metadata.
  * No tracked file holds that metadata, so the query reads the checkout path's own metadata only.
@@ -218,10 +218,10 @@ export const EFFECT_MODULES: ReadonlyMap<string, readonly EffectInterface[]> = n
 	["#fs/writers", FS_WRITERS],
 	["@mailwoman/core/fs/streams", FS_STREAMS],
 	["#fs/streams", FS_STREAMS],
-	["@mailwoman/core/process", PROCESSES],
-	["#process", PROCESSES],
-	["@mailwoman/core/git", GIT_QUERIES],
-	["#git", GIT_QUERIES],
+	["@mailwoman/core/scripting/process", PROCESSES],
+	["#scripting/process", PROCESSES],
+	["@mailwoman/core/repo/git", GIT_QUERIES],
+	["#repo/git", GIT_QUERIES],
 	["@mailwoman/gazetteer/tools/pipeline/stamp-manifest", BUILD_STAMPS],
 	["#tools/pipeline/stamp-manifest", BUILD_STAMPS],
 	["@mailwoman/sqlite", [...SQLITE_OPENERS, ...SQLITE_SEALS]],

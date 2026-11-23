@@ -9,7 +9,7 @@
  *   That value is absent from the corpus's situs source table, so no training recipe reads these rows.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

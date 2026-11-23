@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"

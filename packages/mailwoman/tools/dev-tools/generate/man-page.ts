@@ -20,7 +20,7 @@
 
 import { makeDirectories, toLinesText, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { dirname } from "path-ts"
 
 /**

@@ -15,8 +15,8 @@
  */
 
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { EVALUATION_SOURCES } from "@mailwoman/corpus/evaluation/sources"
 import { readCorpusSourceInputs } from "@mailwoman/corpus/source-register/corpus-inputs"
 import { readAddressSourceRegister } from "@mailwoman/corpus/source-register/register"

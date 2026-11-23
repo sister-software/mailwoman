@@ -8,7 +8,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { readCommands } from "./cli-schema.mts"

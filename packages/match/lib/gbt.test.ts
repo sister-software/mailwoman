@@ -16,7 +16,7 @@ import { buildThresholds, type GBT, gbtScore, trainGBT } from "#gbt"
  * a package that's otherwise pure comparator math.
  * Same trade recorded in nuts-lookup and timezone-lookup.
  *
- * See `makeLcg` in `@mailwoman/core/random` for the shared implementation.
+ * See `makeLcg` in `@mailwoman/core/math/random` for the shared implementation.
  */
 function lcg(seed: number): () => number {
 	let s = seed >>> 0

@@ -5,7 +5,7 @@
  * @file Centroid and tiger lookup utilities for BDC block geometry.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
 /**

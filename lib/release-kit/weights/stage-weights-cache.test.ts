@@ -11,7 +11,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { statLink } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

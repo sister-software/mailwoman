@@ -11,7 +11,7 @@
  */
 
 import { ADMIN_HIERARCHY_TAGS, type ComponentTag } from "@mailwoman/codex/component"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import type { TrainShapeCount } from "../train-shapes.ts"
 

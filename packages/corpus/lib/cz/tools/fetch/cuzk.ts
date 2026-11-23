@@ -60,11 +60,11 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { CZ_CUZK_ADAPTER_ID, CZ_CUZK_LICENSE } from "#cz/adapters/cuzk/adapter"

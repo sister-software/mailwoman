@@ -19,7 +19,7 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { processExists } from "@mailwoman/core/fs/lock"
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { ProcessTask, type ProcessResult } from "@mailwoman/core/process"
+import { ProcessTask, type ProcessResult } from "@mailwoman/core/scripting/process"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 

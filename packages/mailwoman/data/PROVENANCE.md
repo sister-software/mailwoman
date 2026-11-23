@@ -40,7 +40,7 @@ The builder reads three inputs, all under the data root and none committed:
 - `corpus/versioned/v0.5.0/corpus-v0.5.0/train/*.parquet`, sampled per country because a flat sample
   is 94% US and FR
 - `corpus/versioned/…/corpus-v0.9.2-multilocale-au/…/*.parquet`, for Australian rows
-- `overture/2026-06-17.0`, pinned as `OVERTURE_ADDRESSES_RELEASE` in `core/lib/overture-pins.ts`
+- `overture/2026-06-17.0`, pinned as `OVERTURE_ADDRESSES_RELEASE` in `core/lib/asset/overture-pins.ts`
 
 **Unrecorded, and the largest gap in this record:** which records trained the committed `weights.bin`.
 The builder reads a corpus version and the shipped artifact records no manifest, so the artifact

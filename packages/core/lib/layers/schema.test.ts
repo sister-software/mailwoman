@@ -6,9 +6,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
-import { stringifyJSON } from "#json"
 import { readLayerCoverage, writeLayerCoverage } from "#layers/manifest"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier, type layerschemadatabase } from "#layers/schema"
+import { stringifyJSON } from "#values/json"
 
 function openMemoryDB(): DatabaseClient<layerschemadatabase> {
 	return DatabaseClient.temp<layerschemadatabase>()

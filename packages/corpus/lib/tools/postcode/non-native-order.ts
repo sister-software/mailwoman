@@ -19,8 +19,8 @@
  *   A corpus-time renderer of the same order would mix it a second time at an unmeasured share.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { postcodePlacement } from "@mailwoman/postcode/country-formats"
 import type { PathBuilderLike } from "path-ts"
 

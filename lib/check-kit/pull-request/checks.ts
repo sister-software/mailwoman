@@ -13,8 +13,8 @@
  * so its zero checks are reported as their own condition with that reason rather than as passed.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { isProcessError } from "@mailwoman/core/process"
+import { isProcessError } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 import { type RunGitHub, runGitHub } from "#dev-mcp/github"
 

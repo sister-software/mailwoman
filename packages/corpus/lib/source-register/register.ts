@@ -5,10 +5,10 @@
  *   Reads and audits the address-source register.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { AssertedProposition } from "@mailwoman/evidence/status"
 import { LicenseAction } from "@mailwoman/license/actions"
 import { auditLicenseDecision, type LicenseDecision } from "@mailwoman/license/decision"

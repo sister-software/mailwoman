@@ -8,8 +8,8 @@
  *   the same derivation identity.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { LicensePolicy } from "@mailwoman/license/policy"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"

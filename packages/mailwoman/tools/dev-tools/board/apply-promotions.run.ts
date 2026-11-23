@@ -16,8 +16,8 @@
  *   <file> [--to pass] [--refuse-country de,es,gb,in,it,nz] [--dry-run]
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 

@@ -17,8 +17,8 @@ import type { PathBuilderLike } from "path-ts"
 import { type ClockLike, systemClock } from "#api/clock"
 import { readLocalTextFile, tryReadLocalJSONFile } from "#fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalJSONFile } from "#fs/writers"
-import { stringifyJSON } from "#json"
 import { hostName } from "#utils/system"
+import { stringifyJSON } from "#values/json"
 
 /**
  * What a lock directory records about the process holding it.

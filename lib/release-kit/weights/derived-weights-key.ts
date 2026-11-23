@@ -8,10 +8,10 @@
  *   produces new artifacts rather than letting the store serve old ones under the old key.
  */
 
+import { createHash } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
-import { createHash } from "@mailwoman/core/hash"
 import { type NamedPath, repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"

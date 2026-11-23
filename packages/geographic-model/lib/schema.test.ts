@@ -16,7 +16,7 @@
  * and a fixture copied into a second file is a fixture that drifts.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { toPOICategoryID } from "@mailwoman/poi-taxonomy/types"
 import { describe, expect, it } from "vitest"
 

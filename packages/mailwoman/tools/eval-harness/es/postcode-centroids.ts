@@ -6,8 +6,8 @@
  *   `WOFPostcodeLookup` queries the resulting database.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
 import { snapshotSourcePath } from "@mailwoman/core/data-root"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

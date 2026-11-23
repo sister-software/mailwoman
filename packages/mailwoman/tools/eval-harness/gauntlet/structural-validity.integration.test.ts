@@ -10,7 +10,7 @@
 import { validateTree } from "@mailwoman/core/decoder"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"

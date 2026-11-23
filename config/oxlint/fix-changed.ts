@@ -18,11 +18,11 @@
 /// <reference types="node" />
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { git } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { git } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 
 /**
  * The extensions oxlint lints.

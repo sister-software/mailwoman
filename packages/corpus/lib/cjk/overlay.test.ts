@@ -9,8 +9,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

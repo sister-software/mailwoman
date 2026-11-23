@@ -17,8 +17,8 @@
  * It also counts Northern Ireland explicitly because Code-Point Open omits it by product definition.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -10,8 +10,8 @@
  */
 
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PostcodeBinaryGroup, PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
 import type { PathBuilderLike } from "path-ts"

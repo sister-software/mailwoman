@@ -21,7 +21,7 @@
  */
 
 import { entryLeadsToDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { gitSync } from "@mailwoman/core/git"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

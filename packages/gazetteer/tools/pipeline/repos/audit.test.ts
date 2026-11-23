@@ -11,7 +11,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
+import { gitSync } from "@mailwoman/core/repo/git"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

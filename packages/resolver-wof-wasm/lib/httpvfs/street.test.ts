@@ -10,7 +10,7 @@
  *   Integration against real extracts is the docs site's street-tier browser spec.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

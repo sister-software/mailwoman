@@ -6,9 +6,9 @@
  * importing Node builtins only so the never-stale shim can load it apart from `worker.ts`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { type ChildProcess, forkProcess } from "@mailwoman/core/process"
+import { type ChildProcess, forkProcess } from "@mailwoman/core/scripting/process"
 import { once } from "@mailwoman/core/utils/events"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 /**

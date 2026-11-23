@@ -17,8 +17,8 @@
  *   record stays `null`.
  */
 
-import { sha256Hex } from "#hash"
-import { canonicalJSON, stringifyJSON } from "#json"
+import { sha256Hex } from "#crypto/hash"
+import { canonicalJSON, stringifyJSON } from "#values/json"
 
 const SHA256_HEX = /^[0-9a-f]{64}$/
 

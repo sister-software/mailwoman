@@ -21,11 +21,11 @@
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { mulberry32, shuffleWith } from "@mailwoman/core/math/random"
 import { workspacePath } from "@mailwoman/core/paths"
-import { mulberry32, shuffleWith } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuCount, cpuModel, totalMemoryBytes } from "@mailwoman/core/utils/system"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { decode3, KEY_SPACE_3 } from "#key"
 

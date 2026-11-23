@@ -12,8 +12,8 @@
  *     node packages/mailwoman/tools/dev-tools/corpus/support-index.run.ts --manifest <MANIFEST.json> --limit-files 2 --out <dir>
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildSupportIndex } from "@mailwoman/corpus/tools/support-index"
 
 const { values: args } = parseArguments({

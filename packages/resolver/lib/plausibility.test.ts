@@ -10,7 +10,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { readReleaseConfig } from "@mailwoman/core/repo/release-config"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 

@@ -26,10 +26,10 @@
  *   Per-locale progress goes to stderr.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { allRows } from "@mailwoman/core/utils"
 import type { GBGranularity } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

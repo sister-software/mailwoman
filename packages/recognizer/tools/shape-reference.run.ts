@@ -31,9 +31,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { type FormatConfig, format } from "oxfmt"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })

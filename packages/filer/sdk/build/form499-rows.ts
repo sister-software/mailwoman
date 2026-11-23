@@ -9,7 +9,7 @@
  *   Its abstention leaves `valid_to` open for some filers known to have ceased.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "#schema"

@@ -10,10 +10,10 @@
  *   die after writing any of them. The record is the last file a source's work writes.
  */
 
+import { type RecordedFile, sha256File } from "@mailwoman/core/crypto/hash"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { type RecordedFile, sha256File } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AlignTotalsRecord } from "#build/align/totals"

@@ -17,7 +17,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, test } from "vitest"
 

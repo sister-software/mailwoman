@@ -7,8 +7,8 @@
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralRunner } from "#classifier"

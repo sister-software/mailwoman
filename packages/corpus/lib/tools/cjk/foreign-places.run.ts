@@ -10,8 +10,8 @@
  *       --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-cjk-foreign-places-<date> [--force]
  */
 
-import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 
 import { buildForeignPlaces } from "#cjk/foreign-places"
 

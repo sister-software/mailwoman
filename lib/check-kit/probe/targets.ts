@@ -18,7 +18,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { basename, resolvePath } from "path-ts"
 
 /**

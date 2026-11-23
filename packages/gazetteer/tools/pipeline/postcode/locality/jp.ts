@@ -35,7 +35,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound } from "@mailwoman/core/math/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"

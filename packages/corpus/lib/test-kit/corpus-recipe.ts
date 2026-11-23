@@ -10,7 +10,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 
 import type { RecipeOptions } from "#recipes/scaffold"

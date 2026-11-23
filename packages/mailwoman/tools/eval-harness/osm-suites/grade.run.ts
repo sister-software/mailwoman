@@ -17,11 +17,11 @@
  *   convention, as the held-out grader scores it.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { resolvePath } from "path-ts"
 

@@ -26,8 +26,8 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#json"
-import { spawnProcess } from "#process"
+import { spawnProcess } from "#scripting/process"
+import { parseJSONStrict } from "#values/json"
 
 export interface RunChunkProcessOptions {
 	/**

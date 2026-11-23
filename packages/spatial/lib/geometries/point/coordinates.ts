@@ -10,7 +10,7 @@
 
 /// <reference types="google.maps" />
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 import { type GeoObjectLiteral, GeometryType } from "#objects"

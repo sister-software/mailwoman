@@ -14,7 +14,7 @@ import { decodeXML } from "entities"
 
 import type { APIClient } from "#api/APIClient"
 import { rootAttribute } from "#html/document"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 /**
  * The error an OGC `ServiceExceptionReport` becomes.

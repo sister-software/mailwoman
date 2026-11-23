@@ -11,8 +11,8 @@
  *   where pacing and retry add overhead.
  */
 
+import { createHash } from "@mailwoman/core/crypto/hash"
 import { movePath } from "@mailwoman/core/fs/writers"
-import { createHash } from "@mailwoman/core/hash"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { basename } from "path-ts"
 

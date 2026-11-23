@@ -13,9 +13,9 @@
  *   never loads a release never pays for them.
  */
 
+import { ArtifactRole } from "@mailwoman/core/asset/load-ledger"
 import type { CalibrationTable, Calibrator } from "@mailwoman/core/decoder/calibration"
 import { createCalibrator } from "@mailwoman/core/decoder/calibration"
-import { ArtifactRole } from "@mailwoman/core/load-ledger"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"

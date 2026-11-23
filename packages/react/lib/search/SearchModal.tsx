@@ -15,7 +15,7 @@
  *   `localStorage`; the modal renders the same without them.
  */
 
-import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
+import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/values/json"
 import {
 	type KeyboardEvent,
 	type MouseEvent,

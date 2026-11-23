@@ -14,8 +14,8 @@
  *   An abstention count an abstention would make a harness failure look like a resolver refusal.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
-import { percentileSorted } from "@mailwoman/core/stats"
+import { mulberry32 } from "@mailwoman/core/math/random"
+import { percentileSorted } from "@mailwoman/core/math/stats"
 
 import type { ArmRowResult } from "#tools/eval-harness/same-data/arms"
 import type { SameDataPanelRow } from "#tools/eval-harness/same-data/fixture"

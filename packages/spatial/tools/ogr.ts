@@ -12,8 +12,8 @@
  *   that a source needs no shift makes the guard fire on the day a source arrives that does.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 
 import { assertDatumTransformationAvailable } from "#projection/transform"
 

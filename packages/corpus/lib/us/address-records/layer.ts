@@ -17,7 +17,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
-import { forkProcess } from "@mailwoman/core/process"
+import { forkProcess } from "@mailwoman/core/scripting/process"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { LayerSourceExclusion } from "@mailwoman/license/admission"
 import {

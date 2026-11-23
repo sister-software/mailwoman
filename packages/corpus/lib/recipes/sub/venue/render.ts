@@ -8,7 +8,7 @@
 import { layoutForCountry } from "@mailwoman/codex/address/layouts"
 import { type ComponentDict, renderAddress } from "@mailwoman/codex/address/render"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import type { LocaleBaseTuple } from "#surfaces/locale"
 

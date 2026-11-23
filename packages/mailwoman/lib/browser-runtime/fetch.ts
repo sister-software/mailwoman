@@ -14,7 +14,7 @@
  *   A reader in a tunnel otherwise loses every attempt within seconds.
  */
 
-import { startEarly } from "@mailwoman/core/promises"
+import { startEarly } from "@mailwoman/core/async/promises"
 
 const ATTEMPTS = 3
 

@@ -11,7 +11,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePath, repoRootPathBuilder } from "@mailwoman/core/paths"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

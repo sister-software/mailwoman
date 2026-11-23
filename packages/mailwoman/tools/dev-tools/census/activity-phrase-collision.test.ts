@@ -14,8 +14,8 @@ import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, describe, expect, it } from "vitest"
 
 import {

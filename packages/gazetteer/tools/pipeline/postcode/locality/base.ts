@@ -32,11 +32,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound } from "@mailwoman/core/math/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate, isoSecondsUTC } from "@mailwoman/core/utils"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { geometryContains } from "@mailwoman/spatial/geometries/polygon"

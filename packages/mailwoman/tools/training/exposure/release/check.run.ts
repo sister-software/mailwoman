@@ -16,8 +16,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 
 import { claimFromArgument, completedRun, type ExposureForms, loadFloors, preflight, refused } from "./check.ts"
 

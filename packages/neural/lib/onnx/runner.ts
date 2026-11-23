@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { memoizeResettable } from "@mailwoman/core/memoize"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
 

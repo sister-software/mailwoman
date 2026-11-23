@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { readReleaseConfig, shippingLocales, weightsPackageByCountry } from "#release-config"
+import { readReleaseConfig, shippingLocales, weightsPackageByCountry } from "#repo/release-config"
 
 describe("shippingLocales", () => {
 	it("takes the Latin list and every character-path family's overlays", () => {

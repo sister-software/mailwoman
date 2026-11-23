@@ -28,12 +28,12 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

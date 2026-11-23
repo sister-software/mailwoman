@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { makeCaPostcode, makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { Rendered } from "#recipes/po/box/cedex/types"

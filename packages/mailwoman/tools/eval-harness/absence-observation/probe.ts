@@ -10,8 +10,8 @@
  *   Rows from every group let the probe detect a route that fires everywhere.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { ABSENCE_REFUSALS } from "#observations"
 import {

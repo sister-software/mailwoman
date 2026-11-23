@@ -9,8 +9,8 @@
  *   (origin URL, timestamp, byte count, sha256).
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { currentSourcePath } from "@mailwoman/core/data-root"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID } from "@mailwoman/corpus/tools/fetch"
 import type { FetchSummary } from "@mailwoman/corpus/tools/fetch/download/network"

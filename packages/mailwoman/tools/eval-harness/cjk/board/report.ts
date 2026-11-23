@@ -7,7 +7,7 @@
  *   The check line states the blended fraction and no other figure.
  */
 
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 

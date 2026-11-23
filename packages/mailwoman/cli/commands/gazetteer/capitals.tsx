@@ -10,7 +10,7 @@
  *   Output: data/gazetteer/capitals-v1.json (small, committed, provenance-tracked).
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

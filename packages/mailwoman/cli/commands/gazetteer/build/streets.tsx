@@ -7,9 +7,9 @@
  *   Sealed 0444.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { currentSourcePath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { StreetTableCounts } from "@mailwoman/gazetteer/tools/pipeline/streets"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"

@@ -11,7 +11,7 @@
 
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

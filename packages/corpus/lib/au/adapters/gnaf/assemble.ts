@@ -23,7 +23,7 @@
  * so the training corpus never overlaps the benchmark.
  */
 
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { titleCase, createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

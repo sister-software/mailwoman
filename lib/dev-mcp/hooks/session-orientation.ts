@@ -11,10 +11,10 @@
  *   The hook swallows every error so a failure never blocks a session from starting.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

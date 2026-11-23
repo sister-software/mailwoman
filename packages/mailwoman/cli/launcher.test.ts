@@ -13,7 +13,7 @@
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { runFile, runFileSync } from "@mailwoman/core/process"
+import { runFile, runFileSync } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, it } from "vitest"
 

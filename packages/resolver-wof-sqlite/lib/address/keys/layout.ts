@@ -10,10 +10,10 @@
  *   so code holds no list of countries or subdivisions.
  */
 
+import { type RecordedFile, sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { type RecordedFile, sha256File } from "@mailwoman/core/hash"
 import { relative, resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**

@@ -9,10 +9,10 @@
  *   The per-repository record cache (#3061 Phase 2) keys on the working tree as well.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { git, gitHead } from "@mailwoman/core/git"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
+import { git, gitHead } from "@mailwoman/core/repo/git"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**

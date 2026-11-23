@@ -4,7 +4,7 @@
 /**
  *   Promise helpers with no runtime dependency, so a launcher graph can import them.
  *
- *   `memoizeResettable` lives in `@mailwoman/core/memoize` because it depends on `async-init`.
+ *   `memoizeResettable` lives in `@mailwoman/core/async/memoize` because it depends on `async-init`.
  */
 
 /**

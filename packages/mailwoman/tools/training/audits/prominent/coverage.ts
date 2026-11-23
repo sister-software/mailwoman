@@ -50,9 +50,9 @@
  *   span check's half-the-median convention (HOLDOUT §4.4).
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import {
 	PLACE_BANDS,

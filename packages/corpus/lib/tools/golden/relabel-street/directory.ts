@@ -5,6 +5,7 @@
  * @file Rewrites a golden-set directory and renders its review deck.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -14,9 +15,8 @@ import {
 	writeLocalTextFile,
 	writeLocalJSONLFile,
 } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

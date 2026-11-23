@@ -51,7 +51,7 @@ import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { foldToken } from "@mailwoman/codex/normalize"
 import { postalTownPlacetypeForCountry } from "@mailwoman/codex/placetype-map"
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { WhosOnFirstPlacetype } from "@mailwoman/gazetteer/whosonfirst"
 
 import {

@@ -15,8 +15,8 @@
  *   It rewrites only the geometry line and the `wof:geomhash` value.
  */
 
-import { md5Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { md5Hex } from "@mailwoman/core/crypto/hash"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
 import { TextSpliterator } from "spliterator"

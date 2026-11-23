@@ -18,7 +18,7 @@
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { resolvePackageCommand, type PackageCommand } from "@mailwoman/core/module/package-command"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
 import { cpuCount } from "@mailwoman/core/utils/system"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countInto, formatPercent, median, mostCommon, percentile } from "#stats"
+import { countInto, formatPercent, median, mostCommon, percentile } from "#math/stats"
 
 describe("Counter forms", () => {
 	it("most_common breaks ties by first appearance", () => {

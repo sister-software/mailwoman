@@ -3,7 +3,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, test } from "vitest"
 
 import { loadGeocodeConfigFile } from "#geocode/options/config-file"

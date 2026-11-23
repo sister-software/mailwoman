@@ -9,8 +9,8 @@
  */
 
 import { APIClient, type APIClientConfig, isTransientResourceError } from "@mailwoman/core/api"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isRecordLike } from "@mailwoman/core/objects"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isRecordLike } from "@mailwoman/core/values/objects"
 import { type GeoFeatureCollection, isPointLiteral, isValidLatitude, isValidLongitude } from "@mailwoman/spatial"
 
 /**

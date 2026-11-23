@@ -41,7 +41,7 @@ import { matchSubdivisionIn } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import {

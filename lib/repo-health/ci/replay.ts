@@ -16,10 +16,10 @@
  *   so a commit's diff is selected against today's graph rather than the graph at that commit.
  */
 
-import { git, trackedFiles } from "@mailwoman/core/git"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { git, trackedFiles } from "@mailwoman/core/repo/git"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 import { z } from "zod"
 

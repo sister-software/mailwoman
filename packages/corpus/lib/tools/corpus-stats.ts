@@ -41,7 +41,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

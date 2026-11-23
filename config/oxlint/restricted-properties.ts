@@ -27,7 +27,7 @@ export const JSON_PARSE: RestrictedProperty = {
 	object: "JSON",
 	property: "parse",
 	message:
-		'Prefer `tryParsingJSON` from "@mailwoman/core/objects" — typed, non-throwing, explicit fallback. ' +
+		'Prefer `tryParsingJSON` from "@mailwoman/core/values/objects" — typed, non-throwing, explicit fallback. ' +
 		"If a throw on corrupt input is the interface here, import and use `parseJSONStrict` instead.",
 }
 
@@ -41,7 +41,7 @@ export const JSON_STRINGIFY: RestrictedProperty = {
 	object: "JSON",
 	property: "stringify",
 	message:
-		'Prefer `stringifyJSON` from "@mailwoman/core/json" for a compact line, or `prettyJSON` for the ' +
+		'Prefer `stringifyJSON` from "@mailwoman/core/values/json" for a compact line, or `prettyJSON` for the ' +
 		"tab-indented form with a trailing newline. Both return the branded `StringifiedJSON`, and " +
 		"`stringifyJSON` takes the key allowlist a replacer would have expressed.",
 }

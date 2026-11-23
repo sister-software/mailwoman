@@ -5,7 +5,7 @@ import { normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService } from "@mailwoman/codex/nz"
 import { isUSPoBoxDesignator, matchPOBox } from "@mailwoman/codex/us"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { CA_INTERIOR_LETTERS } from "#recipes/po/box/cedex/vocabulary"
 import { maybeNoisifyBoxNumber } from "#synthesizers/po-box"

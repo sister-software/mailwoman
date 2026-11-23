@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest"
 
 import { resolvePackagePath } from "#module/resolvers"
-import { spawnProcessSync } from "#process"
+import { spawnProcessSync } from "#scripting/process"
 
 const SCRIPT = `
 import { ConsoleLogger, createConsoleLogger } from "#logging"

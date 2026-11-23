@@ -7,7 +7,7 @@
  */
 
 import { toLinesText } from "@mailwoman/core/fs/writers"
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
 import { ABLATION_ABSENT } from "#ablation/expectation"
 import {

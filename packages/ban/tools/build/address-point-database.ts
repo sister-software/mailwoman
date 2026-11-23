@@ -17,12 +17,12 @@
  *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
-import { prettyJSON } from "@mailwoman/core/json"
 import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,

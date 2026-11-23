@@ -8,7 +8,7 @@
  *   that makes the rows useful as counter-distribution training data.
  */
 
-import { makeLcg } from "@mailwoman/core/random"
+import { makeLcg } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import {

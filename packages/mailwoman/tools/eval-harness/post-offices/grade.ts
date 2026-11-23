@@ -17,7 +17,7 @@
  *   A tag the row doesn't expect and the parse returns is a failure of that tag.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 import type { PipelineParse } from "#tools/eval-harness/pipeline-parse/worker"

@@ -22,8 +22,8 @@
 import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
 import { carriesShareAlike, LicenseResolution, readLicenseRecord } from "@mailwoman/license/record"
 
-import { stringifyJSON } from "#json"
 import { LayerTier } from "#layers/schema"
+import { stringifyJSON } from "#values/json"
 
 /**
  * Throws when a manifest's tier contradicts what its license expression establishes.

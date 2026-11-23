@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { AbortKind, AbortReason } from "@mailwoman/core/abort"
+import { AbortKind, AbortReason } from "@mailwoman/core/async/abort"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createRequestContext } from "@mailwoman/core/pipeline"
 import {

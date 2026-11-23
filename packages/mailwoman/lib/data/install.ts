@@ -16,6 +16,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { readFileHead } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -25,7 +26,6 @@ import {
 	removePathIfPresent,
 	writeLocalJSONFileAtomically,
 } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import {
 	type ActiveSelection,
 	type ArtifactManifest,

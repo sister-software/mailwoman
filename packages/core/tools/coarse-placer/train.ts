@@ -20,7 +20,7 @@ import { JSONSpliterator } from "spliterator"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
 import { logsumexp, softmaxInto } from "#coarse-placer/math"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { makeGlibcLcgInt32, shuffleWith } from "#random"
+import { makeGlibcLcgInt32, shuffleWith } from "#math/random"
 import { defaultDataDir, defaultModelDir } from "#tools/coarse-placer/paths"
 
 /**

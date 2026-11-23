@@ -23,10 +23,10 @@
  *   The confirmation set draws from what the development set left, so the two are disjoint by group.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"

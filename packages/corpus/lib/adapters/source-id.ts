@@ -16,7 +16,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 
 /**
  * The deterministic content-addressed source id for a row, keyed by its components.

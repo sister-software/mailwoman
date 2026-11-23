@@ -9,8 +9,8 @@
  * so rows are generated fresh from a tuple rather than by mutating a street row.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { makeLcg } from "@mailwoman/core/random"
+import { makeLcg } from "@mailwoman/core/math/random"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"

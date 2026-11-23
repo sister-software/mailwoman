@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
 import { realPath } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
-import { GitClient, type GitProgress, parseGitProgress, streamTrackedFiles, trackedFiles } from "#git"
+import { GitClient, type GitProgress, parseGitProgress, streamTrackedFiles, trackedFiles } from "#repo/git"
 
 const IDENTITY = ["-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture"]
 

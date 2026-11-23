@@ -10,7 +10,7 @@
  *   Not exported via a subpath of its own.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { createPhraseIndex } from "#phrase-index"
 import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "#types"

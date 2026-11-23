@@ -11,7 +11,7 @@
 
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { layoutAdminTail } from "#synthesizers/tail"
 import type { CanonicalRow } from "#types"

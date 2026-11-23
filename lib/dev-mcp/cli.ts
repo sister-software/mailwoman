@@ -6,10 +6,10 @@
  *   Runs the MCP stdio server that forwards tool calls to a restartable worker process.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js"

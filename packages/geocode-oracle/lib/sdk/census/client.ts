@@ -9,7 +9,7 @@ import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import type { OracleGeocodeResult } from "#result"

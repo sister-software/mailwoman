@@ -8,8 +8,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { GB_OS_OPEN_ADAPTER_ID } from "#gb/adapters/os-open/adapter"

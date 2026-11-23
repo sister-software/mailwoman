@@ -3,8 +3,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

@@ -6,13 +6,13 @@
  *   and a fake `sync`, which record their calls.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { isPresent } from "@mailwoman/core/objects"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { describe, expect, it } from "vitest"
 
 import {

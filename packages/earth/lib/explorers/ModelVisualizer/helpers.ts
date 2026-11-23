@@ -8,7 +8,7 @@
  *   Docusaurus themes (mid-lightness, alpha-scaled).
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { TraceTokenLike } from "mailwoman/browser-runtime/types"
 
 /**

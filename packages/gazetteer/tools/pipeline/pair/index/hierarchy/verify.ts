@@ -18,10 +18,10 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	KNOWN_SCHEMA_VERSION,
 	type PairIndexHeader,

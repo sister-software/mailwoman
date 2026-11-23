@@ -11,7 +11,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"

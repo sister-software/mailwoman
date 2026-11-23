@@ -4,8 +4,8 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { git, workingTreeRoot } from "@mailwoman/core/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { git, workingTreeRoot } from "@mailwoman/core/repo/git"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {

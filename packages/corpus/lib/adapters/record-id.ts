@@ -14,7 +14,7 @@
  *   still reads back as `<record>`.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 
 /**
  * The separator between a record's id and the per-row discriminator.

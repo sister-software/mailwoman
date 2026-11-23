@@ -15,7 +15,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 
 import { SourceRegister } from "#registers"
 import { type ClassRoots, ROAD_ROOTS, SETTLEMENT_ROOTS, SITE_ROOTS } from "#tools/fetch/wikidata/vital-places/classify"

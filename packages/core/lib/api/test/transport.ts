@@ -23,7 +23,7 @@
 import type { AxiosResponse } from "axios"
 
 import type { APIClient, APIClientConfig } from "#api/APIClient"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300

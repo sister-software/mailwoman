@@ -17,8 +17,8 @@
 
 import type { Classification } from "@mailwoman/core"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 

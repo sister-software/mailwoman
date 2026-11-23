@@ -4,7 +4,7 @@
 import type { APIClient } from "@mailwoman/core/api"
 import { stubFetchingBodies } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"

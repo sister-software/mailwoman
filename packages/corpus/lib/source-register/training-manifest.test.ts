@@ -10,7 +10,7 @@
  *   whatever its rows' `license` label reads.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	LicenseReviewState,
 	OperationPermission,

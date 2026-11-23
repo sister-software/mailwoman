@@ -12,8 +12,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { canComplete } from "#completion"

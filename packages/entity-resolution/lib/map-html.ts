@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeHTML } from "@mailwoman/core/strings/escape"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
 

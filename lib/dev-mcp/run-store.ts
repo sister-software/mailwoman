@@ -15,8 +15,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryReadLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

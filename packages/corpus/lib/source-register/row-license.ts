@@ -21,7 +21,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 
 import {

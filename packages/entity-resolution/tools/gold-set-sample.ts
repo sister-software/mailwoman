@@ -21,7 +21,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { jaccard } from "@mailwoman/match"
 
 import { colocatedDistinctPairs, scanColocatedProviders, stateOption } from "#tools/shared"

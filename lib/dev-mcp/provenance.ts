@@ -6,9 +6,9 @@
  * change what the next build ingests and a read-only answer is safe to ask at any moment.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PathBuilderLike } from "path-ts"
 
 interface ArtifactState {

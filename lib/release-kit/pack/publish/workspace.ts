@@ -47,7 +47,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
 import { $private, $public } from "#release-kit/env"

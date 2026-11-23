@@ -19,7 +19,7 @@
  *   may matter to it. A run stops at a comment between declarations, so the fix never deletes one.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { CreateRule, ESTree, Fix, Fixer } from "@oxlint/plugins"
 
 /**
@@ -125,11 +125,11 @@ export function keyFor(specifier: string, taken: Set<string>): string {
 }
 
 /**
- * The specifier this file imports `allKeyed` by: core's own `#promises` alias inside
- * `packages/core`, and the public subpath everywhere else.
+ * The specifier this file imports `allKeyed` by: core's own `#async/promises` alias
+ * inside `packages/core`, and the public subpath everywhere else.
  */
 function allKeyedSpecifier(filename: string): string {
-	return /(?:^|\/)packages\/core\//u.test(filename) ? "#promises" : "@mailwoman/core/promises"
+	return /(?:^|\/)packages\/core\//u.test(filename) ? "#async/promises" : "@mailwoman/core/async/promises"
 }
 
 function importsAllKeyed(program: ESTree.Program): boolean {
@@ -188,7 +188,7 @@ export const serialImportsRule: CreateRule = {
 		messages: {
 			serial:
 				"These {{count}} `await import()` declarations load one after another, and none depends on another. " +
-				"Load them together with `allKeyed` from `@mailwoman/core/promises`.",
+				"Load them together with `allKeyed` from `@mailwoman/core/async/promises`.",
 		},
 	},
 	create(context) {

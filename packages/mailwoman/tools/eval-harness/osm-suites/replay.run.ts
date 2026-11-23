@@ -23,9 +23,9 @@
 
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { countInto } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { countInto } from "@mailwoman/core/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	buildBIOEndMask,

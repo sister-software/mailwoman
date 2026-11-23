@@ -11,7 +11,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type { SeededRandom } from "@mailwoman/core/random"
+import type { SeededRandom } from "@mailwoman/core/math/random"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/schema"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { sql } from "kysely"

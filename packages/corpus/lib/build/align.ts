@@ -9,10 +9,10 @@
  *   build to resume at the next adapter without aligning earlier adapters again.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { truncateFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	createLicenseVerdictCache,
 	type LicensePolicy,

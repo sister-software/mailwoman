@@ -35,7 +35,7 @@ describe("manifest-targets", () => {
 			"packages/core/lib/utils/hash/index.ts",
 		])
 
-		expect(sourceCandidates("packages/core", "./out/stats.d.ts")[0]).toBe("packages/core/lib/stats.ts")
+		expect(sourceCandidates("packages/core", "./out/math/stats.d.ts")[0]).toBe("packages/core/lib/math/stats.ts")
 		expect(sourceCandidates("docs", "./out/plugins/x.js")[0]).toBe("docs/src/plugins/x.ts")
 		expect(sourceCandidates("packages/core", "./data/wof.json")).toEqual(["packages/core/data/wof.json"])
 	})
@@ -127,13 +127,13 @@ describe("manifest-targets", () => {
 
 		const withoutStats = {
 			...context,
-			trackedFiles: context.trackedFiles.filter((p) => p !== "packages/core/lib/stats.ts"),
+			trackedFiles: context.trackedFiles.filter((p) => p !== "packages/core/lib/math/stats.ts"),
 		}
 
 		const diagnostics = await manifestTargetsCheck.run(withoutStats)
 
-		expect(diagnostics.some((d) => d.file === "packages/core/package.json" && d.message.includes('"./stats"'))).toBe(
-			true
-		)
+		expect(
+			diagnostics.some((d) => d.file === "packages/core/package.json" && d.message.includes('"./math/stats"'))
+		).toBe(true)
 	})
 })

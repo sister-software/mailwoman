@@ -13,9 +13,9 @@
  *     node packages/osm/tools/fetch/country-outline.ts --iso3 RUS --iso3 CHN
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { osmDatabasePath } from "#paths"

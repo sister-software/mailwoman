@@ -8,10 +8,10 @@
  *   Each source reads the input its own fetch command wrote under the cache root's `sources/`.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { PathBuilder } from "path-ts"
 

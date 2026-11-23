@@ -14,8 +14,8 @@
  * returns an empty list marked as read, so a reader can tell the two apart.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { isProcessError } from "@mailwoman/core/process"
+import { isProcessError } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 import { PULL_REQUEST_REPO } from "#check-kit/pull-request/checks"
 import { type RunGitHub, runGitHub } from "#dev-mcp/github"

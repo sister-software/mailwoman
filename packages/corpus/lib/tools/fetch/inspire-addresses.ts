@@ -26,7 +26,7 @@
  */
 
 import { assertNoOGCServiceException, type APIClient } from "@mailwoman/core/api"
-import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
+import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/values/json"
 
 import { componentJoinKey } from "#inspire/address"
 import { WFS_VERSION } from "#tools/fetch/wfs-harvest"

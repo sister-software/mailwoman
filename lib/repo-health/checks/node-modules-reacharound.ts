@@ -108,7 +108,7 @@ const ALLOWED: Record<string, string> = {
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
 	// of the launcher and binary from an installed layout can be tested.
-	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
+	"packages/core/lib/repo/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	"packages/core/lib/module/package-command.test.ts":
 		"builds nested fixture installs independently of package executable resolution",
 	"packages/corpus/lib/build/code-hash.ts": "resolves installed package directories for dependency graph hashing",

@@ -10,8 +10,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { trackedFiles } from "@mailwoman/core/repo/git"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

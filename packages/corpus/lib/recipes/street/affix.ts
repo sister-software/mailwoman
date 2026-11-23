@@ -12,10 +12,10 @@ import {
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
 import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import { matchCase } from "spliterator"
 

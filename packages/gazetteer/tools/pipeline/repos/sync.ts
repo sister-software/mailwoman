@@ -23,7 +23,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { GitClient } from "@mailwoman/core/git"
+import { GitClient } from "@mailwoman/core/repo/git"
 import { dirname, type PathBuilderLike } from "path-ts"
 
 import { type ForkHost, type ForkUpdate, type RepoOrigin, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"

@@ -8,8 +8,8 @@
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 interface Expectation {

@@ -6,7 +6,7 @@
  *   as the Node loader and the scorer do, or a GB unit written with a space gets no anchor signal.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { serializePostcodeBinary } from "@mailwoman/postcode/binary-resolver"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 

@@ -19,8 +19,8 @@
  *   They're rendered in three natural orders so the model doesn't see one rigid template.
  *
  *   The seeded shuffle matches the Python original in distribution.
- *   It isn't bit-identical to CPython (see `@mailwoman/core/random`), so a set rebuilt
- *   here won't match one built by the retired script row for row.
+ *   It isn't bit-identical to CPython (see `@mailwoman/core/math/random`), so a set
+ *   rebuilt here won't match one built by the retired script row for row.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/build/oa-coord-golden.run.ts --country
  *   IT --zip $MAILWOMAN_CACHE_ROOT/sources/openaddresses/it__countrywide.zip --entry
@@ -32,10 +32,10 @@
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
-import { orderedJSON } from "@mailwoman/core/json"
-import { pyFloat } from "@mailwoman/core/numeric"
-import { SeededRandom } from "@mailwoman/core/random"
+import { pyFloat } from "@mailwoman/core/math/numeric"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { dirname } from "path-ts"
 import { titleCaseIfUpper, CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

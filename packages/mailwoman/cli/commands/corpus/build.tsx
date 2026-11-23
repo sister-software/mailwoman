@@ -15,7 +15,7 @@
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { BuildProfile, PriorOutput } from "@mailwoman/corpus/build/types"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
@@ -223,7 +223,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			inputs: { readBuildInputs },
 			license: { compileLicenseExcludes },
 		} = await allKeyed({
-			json: import("@mailwoman/core/json"),
+			json: import("@mailwoman/core/values/json"),
 			corpus: import("@mailwoman/corpus"),
 			budget: import("@mailwoman/corpus/build/budget"),
 			inputs: import("@mailwoman/corpus/build/inputs"),

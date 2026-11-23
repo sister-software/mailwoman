@@ -9,9 +9,9 @@
 
 import { APIClient, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"

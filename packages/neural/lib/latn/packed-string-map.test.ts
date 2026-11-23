@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { describe, expect, test } from "vitest"
 
 import { PackedStringMap } from "#latn/packed-string-map"

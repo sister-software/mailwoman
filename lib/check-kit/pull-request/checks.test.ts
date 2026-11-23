@@ -6,7 +6,7 @@
  * pending while `gh` exits 8, zero checks on a conflicting head, and no JSON at all.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { ChecksCondition, readPullRequestChecks } from "#check-kit/pull-request/checks"

@@ -12,8 +12,8 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import {

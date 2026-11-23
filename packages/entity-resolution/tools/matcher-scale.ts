@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { makeLcg } from "@mailwoman/core/random"
+import { makeLcg } from "@mailwoman/core/math/random"
 
 import { resolveEntities, type SourceRecord } from "#index"
 

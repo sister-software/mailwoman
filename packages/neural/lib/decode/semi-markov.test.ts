@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { makeGlibcLcgFloat64 } from "@mailwoman/core/random"
+import { makeGlibcLcgFloat64 } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import { decodeSegmentationsKBest, parseSemiCRFTransitions, type SemiCRFTransitions } from "#decode/semi-markov"

@@ -56,9 +56,9 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { heldoutArmDecoderSettings, parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"

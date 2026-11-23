@@ -9,11 +9,11 @@
 
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
+import { OVERTURE_ADDRESSES_RELEASE } from "#asset/overture-pins"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { dataRootPath, snapshotSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { makeDirectories, writeLocalJSONLFile } from "#fs/writers"
-import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
 import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#tools/coarse-placer/country-sets"
 import { defaultDataDir } from "#tools/coarse-placer/paths"
 

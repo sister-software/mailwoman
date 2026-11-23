@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_COVERAGE_FLOOR } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 

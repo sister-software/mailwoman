@@ -6,7 +6,7 @@
  */
 
 import { COMPONENT_TAGS } from "@mailwoman/codex/component"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"

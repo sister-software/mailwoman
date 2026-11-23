@@ -11,7 +11,7 @@
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"

@@ -12,8 +12,8 @@ import {
 	type USStreetSuffix,
 	NAME_PRONE_US_SUFFIXES,
 } from "@mailwoman/codex/us"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * The golden row fields that the relabeler reads.

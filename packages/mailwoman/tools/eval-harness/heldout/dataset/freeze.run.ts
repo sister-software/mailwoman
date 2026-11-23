@@ -31,8 +31,8 @@
  */
 
 import { countriesDeclaredBy, type CountrySet } from "@mailwoman/codex/country/sets"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 

@@ -12,15 +12,15 @@ import { serveNode } from "@mailwoman/api-kit"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
 	publishedLicenseKeys,
 } from "@mailwoman/core/license"
-import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
+import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 

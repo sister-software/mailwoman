@@ -14,11 +14,11 @@
  *   with the `.part` rename that keeps an interrupted download from presenting as a finished one.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isoDate, isoSeconds, streamToDisk } from "@mailwoman/core/utils"
 import { basename, dirname, extname, type PathBuilderLike } from "path-ts"

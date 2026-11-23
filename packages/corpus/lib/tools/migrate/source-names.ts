@@ -22,7 +22,7 @@
  *   re-encodes the file.
  */
 
-import { md5Hex } from "@mailwoman/core/hash"
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"

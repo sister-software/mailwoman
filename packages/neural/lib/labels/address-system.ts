@@ -9,7 +9,7 @@
 
 import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 import { isLatinScriptText } from "@mailwoman/codex/address/format"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { softmax } from "#decode/viterbi"
 import { LOCALE_COUNTRIES } from "#labels"

@@ -11,11 +11,11 @@
  *   The verify step recomputes the record against those outputs.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import type { BuildableBodyID } from "#bodies"

@@ -3,9 +3,13 @@
 
 import { describe, expect, it } from "vitest"
 
+import {
+	newestPostcodePrefixFiles,
+	postcodePrefixScopeOf,
+	shippedPostcodePrefixName,
+} from "#asset/postcode-prefix-files"
 import { temporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
-import { newestPostcodePrefixFiles, postcodePrefixScopeOf, shippedPostcodePrefixName } from "#postcode-prefix-files"
 
 describe("postcodePrefixScopeOf", () => {
 	it("reads the scope of a dated data-root file and of a shipped package file", () => {

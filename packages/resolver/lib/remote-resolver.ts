@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { GazetteerArtifactCoverage, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * Describes the `ResolveOpts` sent over the wire.

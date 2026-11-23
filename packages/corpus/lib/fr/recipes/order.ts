@@ -11,10 +11,10 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { currentSourcePath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"

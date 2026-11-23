@@ -10,7 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { GitClient, type GitProgress } from "@mailwoman/core/git"
+import { GitClient, type GitProgress } from "@mailwoman/core/repo/git"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 

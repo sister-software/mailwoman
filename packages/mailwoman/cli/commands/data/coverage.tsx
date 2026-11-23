@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 
 import {
 	type CommandSpec,
@@ -49,7 +49,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		} = await allKeyed({
 			census: import("#tools/coverage/census"),
 			paths: import("@mailwoman/core/paths"),
-			scopeConfig: import("@mailwoman/core/scope-config"),
+			scopeConfig: import("@mailwoman/core/repo/scope-config"),
 		})
 
 		const repoRoot = repoRootPath()

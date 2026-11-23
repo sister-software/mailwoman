@@ -11,8 +11,8 @@
  *   `predict` is injected, so the scoring runs without a model.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { countInto } from "@mailwoman/core/stats"
+import { countInto } from "@mailwoman/core/math/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { boardArcKm, decodeAllSpans, normalizeCentroidKey } from "#tools/eval-harness/cjk/board/decode"
 

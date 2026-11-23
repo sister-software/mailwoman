@@ -9,7 +9,7 @@
  *   whitespace a `▁`-prefixed piece consumes from its native span.
  */
 
-import { memoizeResettable } from "@mailwoman/core/memoize"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { MTFRuntime, mtfWASMURL, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
 import type { PathBuilderLike } from "path-ts"
 

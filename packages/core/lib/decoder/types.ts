@@ -8,7 +8,7 @@
 import { type BIOLabel, COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import { z } from "zod"
 
-import { isRecordLike } from "#objects"
+import { isRecordLike } from "#values/objects"
 
 /**
  * One token with its predicted label, confidence and offsets into the original input.

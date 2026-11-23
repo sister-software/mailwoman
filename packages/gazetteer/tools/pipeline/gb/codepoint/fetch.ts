@@ -6,10 +6,10 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { createHash, md5File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { createHash, md5File } from "@mailwoman/core/hash"
-import { prettyJSON } from "@mailwoman/core/json"
 import { streamToDisk } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { OS_DOWNLOADS_API_BASE, type OSDownload } from "@mailwoman/spatial/gb/os-downloads"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 

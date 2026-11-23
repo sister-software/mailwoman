@@ -13,12 +13,12 @@
 
 // ci-runner: mailwoman-data
 
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { md5Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { writePBF } from "@mailwoman/osm/tools/pbf-writer"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/core/pipeline/types"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { describe, expect, test } from "vitest"
 

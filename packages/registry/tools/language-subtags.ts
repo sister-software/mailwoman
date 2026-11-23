@@ -13,7 +13,7 @@
  *   variants, and the grandfathered and redundant whole tags.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { type SubtagRow, SubtagType } from "#types"
 

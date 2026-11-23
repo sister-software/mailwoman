@@ -40,8 +40,8 @@
  *   without this module hardcoding a resolution of its own.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, type CoverageCell, type layerschemahandle } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { POI_H3_RESOLUTION, type POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -14,7 +14,7 @@ import { tryReadLocalJSONFile } from "#fs/readers"
 import { pathExists } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "#fs/writers"
-import { spawnProcessSync } from "#process"
+import { spawnProcessSync } from "#scripting/process"
 import { hostName } from "#utils/system"
 
 /**

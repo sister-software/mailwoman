@@ -17,8 +17,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { NamedPath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { probeManifest } from "#data/catalog/inventory"
 

@@ -11,7 +11,7 @@
 
 import { walkNodes } from "@mailwoman/core/decoder"
 import type { CaseNormalization } from "@mailwoman/core/pipeline/types"
-import { workerThreadID, workerUserData } from "@mailwoman/core/workers"
+import { workerThreadID, workerUserData } from "@mailwoman/core/scripting/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { createRuntimePipeline } from "#engine/runtime-pipeline"

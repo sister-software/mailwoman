@@ -14,9 +14,9 @@
 
 import { Spinner } from "@inkjs/ui"
 import { publicAssetsURL, publicTilesURL } from "@mailwoman/core/asset-paths"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { $private, $public } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 import { publishTiles, uploadToBucket } from "mailwoman/tools/tiles/publish"

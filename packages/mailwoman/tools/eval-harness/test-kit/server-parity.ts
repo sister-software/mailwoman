@@ -9,9 +9,9 @@
  *   hands its geocoder to {@linkcode serverParityDifferences} and asserts on the rows that come back.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { sha256Hex } from "@mailwoman/core/hash"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 

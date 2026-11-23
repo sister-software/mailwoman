@@ -11,7 +11,7 @@
  */
 
 import type { Plugin } from "@docusaurus/types"
-import { md5Hex } from "@mailwoman/core/hash"
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 
 import { buildWorkspaceAliases } from "./workspace/aliases.ts"
 import { resolvePackageFile } from "./workspace/resolution.ts"

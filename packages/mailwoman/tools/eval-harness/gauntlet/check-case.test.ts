@@ -6,7 +6,7 @@
  *   query span, the confusion that would make the whole check decorative.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { checkCase, componentOf, isCoordinateIssue, scriptRenderings } from "#tools/eval-harness/gauntlet/check-case"

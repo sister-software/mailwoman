@@ -34,7 +34,7 @@ const ids = (changed: string[]) => selectDeployTargets(changed, CLOSURES, DIRS).
 
 describe("workspaceOfPath", () => {
 	it("names the workspace by the longest directory prefix, and null outside every workspace", () => {
-		expect(workspaceOfPath(DIRS, "packages/core/lib/git.ts")).toBe("@mailwoman/core")
+		expect(workspaceOfPath(DIRS, "packages/core/lib/repo/git.ts")).toBe("@mailwoman/core")
 		expect(workspaceOfPath(DIRS, "docs/src/pages/index.tsx")).toBe("@mailwoman/docs")
 		expect(workspaceOfPath(DIRS, "packages/corelike/lib/x.ts")).toBeNull()
 		expect(workspaceOfPath(DIRS, "hf-publish/README.md")).toBeNull()
@@ -50,7 +50,7 @@ describe("selectDeployTargets", () => {
 
 	it("a change in a shared dependency reaches every target whose closure carries it", () => {
 		expect(ids(["packages/react/lib/map/MapCanvas.tsx"])).toEqual(["earth", "moon", "mars"])
-		expect(ids(["packages/core/lib/git.ts"])).toEqual(["tiles", "license", "places", "earth", "moon", "mars"])
+		expect(ids(["packages/core/lib/repo/git.ts"])).toEqual(["tiles", "license", "places", "earth", "moon", "mars"])
 	})
 
 	it("root-owned source reaches the workspaces that import it", () => {

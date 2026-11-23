@@ -24,7 +24,6 @@ import { configRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	type DeclarationAnswer,
 	type DeclarationClaimAnswer,
@@ -61,6 +60,7 @@ import {
 import { repoRootPath } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { attributionReport, renderAttributionReport } from "#cli/native/commands/license/attribution"

@@ -9,8 +9,8 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { htmlToText } from "@mailwoman/core/html/text"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { parseExhibit21 } from "#sdk/exhibit21"

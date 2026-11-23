@@ -20,8 +20,8 @@
  *   [--url http://localhost:7771/?no-model] [--budget-mb 40]
  */
 
+import { percentile } from "@mailwoman/core/math/stats"
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { chromium } from "@playwright/test"
 
 const { values } = parseArguments({

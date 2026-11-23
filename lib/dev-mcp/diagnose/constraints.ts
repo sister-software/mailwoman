@@ -16,7 +16,7 @@
  */
 
 import { buildAddressTree, groupTuplesByTag } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { DecodeSpanExplanation, DecodeTerm, DecodeTermValues } from "@mailwoman/neural/decode/explanation"
 import type { FSTMatcherLike } from "@mailwoman/neural/prior/fst"

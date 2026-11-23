@@ -8,10 +8,10 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,

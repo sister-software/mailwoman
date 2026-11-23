@@ -10,9 +10,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isIdentical } from "@mailwoman/core/identical"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
+import { isIdentical } from "@mailwoman/core/values/identical"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { LocaleScopeMatch } from "@mailwoman/variant-aliases"
 import { resolveLocaleScope } from "@mailwoman/variant-aliases"
 

@@ -40,7 +40,7 @@
  */
 
 import { COMPONENT_TAGS } from "@mailwoman/codex/component"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 
 import { DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 import type { RepoFix } from "#repo-health/fix"

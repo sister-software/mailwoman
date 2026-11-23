@@ -10,8 +10,8 @@
  *   A change to a source, its elected grant, row count or recipe changes the digest.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
 import { SourceOperation } from "@mailwoman/license/operations"
 

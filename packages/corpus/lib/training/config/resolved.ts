@@ -7,8 +7,8 @@
  *   derived from it, and its source-rights admission.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import type { SourceRightsRecord } from "#source-register/corpus-inputs"

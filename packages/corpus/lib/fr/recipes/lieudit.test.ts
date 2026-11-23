@@ -12,7 +12,7 @@
 import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

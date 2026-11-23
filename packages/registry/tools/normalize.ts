@@ -12,9 +12,9 @@
  *   whether that string is an officially assigned ISO code, a source extension such as `XK`, or absent.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { pinnedSourceFile, type SourceDefinition, type SourceLock, SOURCES } from "#sdk/sources"

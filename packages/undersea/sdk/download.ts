@@ -13,8 +13,8 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 
 import {

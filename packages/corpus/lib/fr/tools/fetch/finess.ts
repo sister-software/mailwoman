@@ -36,12 +36,12 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { createHash, md5File, sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readFileHead, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { createHash, md5File, sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { FR_FINESS_ADAPTER_ID, FR_FINESS_ATTRIBUTION, FR_FINESS_LICENSE } from "#fr/adapters/finess/adapter"

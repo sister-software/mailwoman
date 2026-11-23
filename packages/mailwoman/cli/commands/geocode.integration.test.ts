@@ -8,9 +8,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	addressPointDatabasePath,
 	interpolationDatabasePath,

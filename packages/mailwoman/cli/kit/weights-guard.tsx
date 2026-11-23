@@ -25,7 +25,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { spawnProcess } from "@mailwoman/core/process"
+import { spawnProcess } from "@mailwoman/core/scripting/process"
 import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { Box, Text, useInput, useStdin } from "ink"

@@ -27,6 +27,7 @@ import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import { normalizeZIPCode } from "@mailwoman/codex/us/zipcode"
 import { APIClient } from "@mailwoman/core/api"
 import { arcGISFields, arcGISInteger, arcGISText, pageArcGISLayer, readArcGISJSON } from "@mailwoman/core/api/arcgis"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -37,9 +38,8 @@ import {
 	stagingSiblingPath,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"

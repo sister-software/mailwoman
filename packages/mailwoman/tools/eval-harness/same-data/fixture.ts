@@ -19,9 +19,9 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { canonicalJSON } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 
 import { definitionContentHash } from "#tools/eval-harness/preregistration/artifacts"
 

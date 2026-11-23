@@ -4,8 +4,8 @@
 /**
  *   Memoized async loads built on `async-init`'s `Service`.
  *
- *   This module sits apart from `@mailwoman/core/promises` so that the dependency-free
- *   promise helpers keep `async-init` off every graph that imports them,
+ *   This module sits apart from `@mailwoman/core/async/promises` so that the
+ *   dependency-free promise helpers keep `async-init` off every graph that imports them,
  *   among them the launcher path of `mailwoman --version`.
  */
 

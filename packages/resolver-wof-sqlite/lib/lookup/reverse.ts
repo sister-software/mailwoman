@@ -21,8 +21,8 @@
  *   `containment` records this per result.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { allRows } from "@mailwoman/core/utils"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { bboxAround } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

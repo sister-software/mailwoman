@@ -11,7 +11,7 @@
  *   Serialization stays Node-only because it is a build-time operation.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 
 import { BinaryFSTMatcher } from "#fst/binary-matcher"
 import { HEADER_SIZE, VERSION_WITH_METADATA } from "#fst/format"

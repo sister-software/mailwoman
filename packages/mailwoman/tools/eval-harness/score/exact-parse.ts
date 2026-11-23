@@ -53,7 +53,7 @@
 
 import { COMPONENT_TAGS, type ComponentTag, STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import type { StreetSpanConvention } from "@mailwoman/codex/street/convention"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * One component span with half-open `[start, end)` offsets into the row's raw text.

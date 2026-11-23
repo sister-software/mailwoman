@@ -6,13 +6,13 @@
  *   the licensed replacement for the GeoNames `GB_full` rows in `postalcode-geonames-tail.db`.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { type CodePointParseStats, createCodePointParseStats, readCodePointCSV } from "@mailwoman/spatial/gb/codepoint"

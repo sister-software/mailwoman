@@ -5,7 +5,7 @@
  * @file Parses the BDC provider-list CSV.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 

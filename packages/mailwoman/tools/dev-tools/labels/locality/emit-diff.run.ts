@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  *   Dump-and-read tool for a two-model locality comparison.
@@ -16,7 +17,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
-import { allKeyed } from "@mailwoman/core/promises"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 /**
  * @file The CN organizational-unit reader: the schema holds China's below-settlement ordinal chain as one

@@ -6,12 +6,12 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 
 import {

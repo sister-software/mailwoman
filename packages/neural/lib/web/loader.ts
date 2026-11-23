@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { startEarly } from "@mailwoman/core/async/promises"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
-import { startEarly } from "@mailwoman/core/promises"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 

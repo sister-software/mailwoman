@@ -20,9 +20,9 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
 import { componentsForOSMRow, OSM_ADAPTER_ID } from "@mailwoman/corpus/adapters/osm/adapter"
 import { stableSourceID } from "@mailwoman/corpus/adapters/source-id"
 import { alignRow } from "@mailwoman/corpus/utils/align"

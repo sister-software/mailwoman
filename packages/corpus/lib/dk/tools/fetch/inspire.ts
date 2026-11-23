@@ -44,11 +44,11 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
-import { sha256File } from "@mailwoman/core/hash"
 import { childElement, childElements, type MarkupElement, streamMarkupElements } from "@mailwoman/core/html/elements"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"

@@ -15,8 +15,8 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { isDirectory, open } from "#fs/readers/stat"
-import { parseJSONStrict } from "#json"
 import { compareByScalarValue } from "#strings/compare"
+import { parseJSONStrict } from "#values/json"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"

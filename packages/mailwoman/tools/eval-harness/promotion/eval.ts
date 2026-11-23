@@ -13,11 +13,11 @@
  *   Written `.md` artifacts match the prior child stdout capture byte for byte.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshness"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"

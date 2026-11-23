@@ -8,7 +8,7 @@
  *   That condition strips `.ts` and cannot read `.tsx`.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { createElement as h } from "react"
 import type * as React from "react"
 

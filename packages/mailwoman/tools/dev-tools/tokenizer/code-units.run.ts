@@ -12,8 +12,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { openCorpusRowStream } from "@mailwoman/corpus/parquet/corpus-rows"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { codeUnitPattern, segmentCodeUnits } from "@mailwoman/mtf/code-units"

@@ -12,8 +12,8 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
 import { NodeModulesState, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/values/json"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
 import { SwitchPinSchema } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import { resolvePath } from "path-ts"

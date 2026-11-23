@@ -16,8 +16,8 @@
  *       [--corpus-dir <dir>] [--window 100000] [--epoch 1] [--draws <n>]
  */
 
+import { median } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { median } from "@mailwoman/core/stats"
 import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
 
 import { loadTrainingConfig } from "../../config.ts"

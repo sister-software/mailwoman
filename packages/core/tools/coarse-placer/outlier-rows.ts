@@ -13,8 +13,8 @@
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { toLinesText } from "#fs/writers"
-import { stringifyJSON } from "#json"
-import { isPresent } from "#objects"
+import { stringifyJSON } from "#values/json"
+import { isPresent } from "#values/objects"
 
 /**
  * Shortest raw string kept as an outlier example.

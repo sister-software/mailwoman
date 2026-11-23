@@ -8,12 +8,12 @@
 
 import { dirname } from "node:path"
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"

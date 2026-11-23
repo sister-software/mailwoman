@@ -18,8 +18,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type Operation, OperationEffect, type OperationContext, operationDefiner } from "@mailwoman/core/scripting"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"
 import type { StreetTableDatabase } from "@mailwoman/resolver-wof-sqlite/street/table"

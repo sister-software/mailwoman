@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"

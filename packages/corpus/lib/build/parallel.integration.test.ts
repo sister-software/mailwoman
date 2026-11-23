@@ -11,14 +11,14 @@
  *   build still lands on the serial bytes.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, removePath, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { hostName } from "@mailwoman/core/utils/system"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

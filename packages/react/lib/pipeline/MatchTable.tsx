@@ -6,8 +6,8 @@
  *   Presentational.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentMatch } from "@mailwoman/core/pipeline/client-result"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { ReactNode } from "react"
 
 export interface MatchTableProps {

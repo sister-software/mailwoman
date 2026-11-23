@@ -6,7 +6,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"

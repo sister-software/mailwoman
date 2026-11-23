@@ -18,7 +18,7 @@
    source exists to teach against — and a renderer that produces well-formed addresses cannot express it. */
 
 import { componentsPresentIn } from "@mailwoman/codex/address/format"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"

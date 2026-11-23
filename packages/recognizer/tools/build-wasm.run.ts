@@ -35,13 +35,13 @@
  *   Usage: `node packages/recognizer/tools/build-wasm.run.ts [--check]`
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { replaceFileAtomically, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type FormatConfig, format } from "oxfmt"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })

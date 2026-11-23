@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	appliedRow,
 	channelsRow,

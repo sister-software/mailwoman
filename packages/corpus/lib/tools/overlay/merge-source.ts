@@ -9,7 +9,7 @@
  *   A shuffle across the inputs mixes each source's countries within each row group.
  */
 
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { mulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 

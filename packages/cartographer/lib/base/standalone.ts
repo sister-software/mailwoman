@@ -12,7 +12,7 @@
  *   a plain basemap, reads this style instead.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { StyleSpecification } from "@maplibre/maplibre-gl-style-spec"
 import { type Flavor, layers, namedFlavor } from "@protomaps/basemaps"
 

@@ -6,7 +6,7 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 /**

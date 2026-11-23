@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { orderedJSON, prettyJSON, stringifyJSON } from "#json"
+import { orderedJSON, prettyJSON, stringifyJSON } from "#values/json"
 
 const PLAIN = {
 	name: "Montréal",

@@ -4,7 +4,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"

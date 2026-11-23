@@ -11,11 +11,11 @@
  *   lists, so the GPU run checks it in milliseconds without hashing a parquet file.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { orderedJSON } from "@mailwoman/core/json"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 
 import { hostPath } from "#tools/training/sampler"

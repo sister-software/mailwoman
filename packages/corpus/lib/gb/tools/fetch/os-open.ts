@@ -17,10 +17,10 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { md5File, sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { md5File, sha256File } from "@mailwoman/core/hash"
 import { OS_DOWNLOADS_API_BASE, type OSDownload } from "@mailwoman/spatial/gb/os-downloads"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 

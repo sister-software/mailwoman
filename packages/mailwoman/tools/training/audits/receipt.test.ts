@@ -3,7 +3,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import { expect, test } from "vitest"
 

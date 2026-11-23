@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { changedFiles } from "@mailwoman/core/git"
+import { changedFiles } from "@mailwoman/core/repo/git"
 import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 

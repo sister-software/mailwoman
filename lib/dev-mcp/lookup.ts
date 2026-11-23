@@ -19,7 +19,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { collapseFSTBias } from "@mailwoman/neural/prior/fst"
 import { normalize } from "@mailwoman/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

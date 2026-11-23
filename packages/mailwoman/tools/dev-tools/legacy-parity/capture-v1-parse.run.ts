@@ -12,7 +12,7 @@
  *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/legacy-parity/capture-v1-parse.run.ts`
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"
 
 import { createServeEngine } from "#engine/api"

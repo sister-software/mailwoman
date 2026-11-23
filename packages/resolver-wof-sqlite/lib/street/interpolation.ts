@@ -7,8 +7,8 @@
  * and linear interpolation along the segment polyline.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
 import type { InterpolationLookup } from "@mailwoman/core/resolver"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

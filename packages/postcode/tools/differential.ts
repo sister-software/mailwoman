@@ -11,7 +11,7 @@
  *   `postcode_legacy` family, and `recognizer` mustn't import this package.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { createRecognizer } from "@mailwoman/recognizer"
 import { structure } from "@mailwoman/recognizer/structure"
 

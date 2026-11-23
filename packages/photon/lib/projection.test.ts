@@ -7,7 +7,7 @@
  */
 
 import { OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { photonForwardCollection, photonForwardProperties, type PhotonForwardInput } from "#projection"

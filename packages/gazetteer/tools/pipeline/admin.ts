@@ -11,11 +11,11 @@
  *   a log rather than a recipe. The recipe is `../defaults.ts`).
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { createPhaseClock, formatPhaseTimings, isoDate, type PhaseTiming } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

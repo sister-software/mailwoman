@@ -9,9 +9,9 @@
  *   Usage: `node packages/mailwoman/tools/dev-tools/repository/services-graph.run.ts [--locale en-US] [--json]`
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { createGeocodeSessionOptions, SessionOptionSource } from "#geocode/options"
 import { describeGeocodeServices } from "#geocode/session/services"

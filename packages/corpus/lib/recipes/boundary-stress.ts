@@ -10,8 +10,8 @@
  *   `synthesizeBoundaryStressRow` is imported directly here.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"

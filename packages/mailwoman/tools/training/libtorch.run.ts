@@ -13,12 +13,12 @@
  *     node packages/mailwoman/tools/training/libtorch.run.ts [--variant cpu | cu130] [--out <dir>]
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent, writeLocalBuffer } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
 import {

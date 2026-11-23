@@ -18,8 +18,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { isIdentical } from "@mailwoman/core/identical"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { isIdentical } from "@mailwoman/core/values/identical"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 /**

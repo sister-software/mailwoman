@@ -11,9 +11,9 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { US_STATE_CODES_READ_AS_COUNTRIES } from "@mailwoman/corpus/us/state-country-codes"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

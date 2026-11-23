@@ -8,14 +8,14 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
 import {
 	type ScopeConfig,
 	shippedTrainingConfig,
 	shippedTrainingConfigs,
-} from "@mailwoman/core/scope-config"
+} from "@mailwoman/core/repo/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"

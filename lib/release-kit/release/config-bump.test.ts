@@ -9,9 +9,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 

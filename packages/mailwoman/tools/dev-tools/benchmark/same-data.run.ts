@@ -9,13 +9,13 @@
  *   `replayBackend` raises when the recording has no answer.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
+import { gitHead } from "@mailwoman/core/repo/git"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"

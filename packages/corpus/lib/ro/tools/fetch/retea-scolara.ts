@@ -14,10 +14,10 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { RO_RETEA_SCOLARA_ADAPTER_ID, RO_RETEA_SCOLARA_LICENSE } from "#ro/adapters/retea-scolara/adapter"

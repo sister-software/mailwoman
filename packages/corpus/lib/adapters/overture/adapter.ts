@@ -10,9 +10,9 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"

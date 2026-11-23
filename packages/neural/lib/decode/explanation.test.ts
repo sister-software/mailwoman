@@ -7,7 +7,7 @@
  *   is the best reading that relabels the span.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import {

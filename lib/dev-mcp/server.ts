@@ -13,7 +13,7 @@
  *   The text block stays for clients that cannot read structured output.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 

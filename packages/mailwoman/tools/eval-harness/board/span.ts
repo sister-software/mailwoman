@@ -13,8 +13,8 @@
  */
 
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type CaseNormalization, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"

@@ -17,8 +17,8 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { groupTuplesByTag } from "@mailwoman/core"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 

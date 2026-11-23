@@ -3,7 +3,6 @@
 
 import { describe, expect, it } from "vitest"
 
-import { escapeHTML } from "#strings/escape"
 import {
 	escapeTrustPolicy,
 	sanitizeHTML,
@@ -11,7 +10,8 @@ import {
 	stripHTML,
 	stripHTMLToText,
 	stripHTMLTrustPolicy,
-} from "#trust-policies"
+} from "#html/trust-policies"
+import { escapeHTML } from "#strings/escape"
 
 describe("escapeHTML", () => {
 	it("renders markup as literal text", () => {

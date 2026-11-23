@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"
 

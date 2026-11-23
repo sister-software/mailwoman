@@ -42,10 +42,10 @@
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { ES_GIPUZKOA_ADAPTER_ID } from "#es/adapters/gipuzkoa/adapter"

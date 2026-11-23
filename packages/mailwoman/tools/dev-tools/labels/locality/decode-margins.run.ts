@@ -13,8 +13,8 @@
 
 import { matchSubdivisionIn } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { TextSpliterator } from "spliterator"
 
 import { readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coordinate/panel"

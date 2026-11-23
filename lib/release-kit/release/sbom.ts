@@ -49,9 +49,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { runFileSync } from "@mailwoman/core/process"
+import { runFileSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike, relative, resolvePathBuilder } from "path-ts"
 
 /**

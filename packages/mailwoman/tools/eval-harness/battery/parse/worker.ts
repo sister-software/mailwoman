@@ -10,7 +10,7 @@
  *   and returns each row's id with every parsed span in input order.
  */
 
-import { workerUserData } from "@mailwoman/core/workers"
+import { workerUserData } from "@mailwoman/core/scripting/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { type DecoderSettings, decoderSettingOptions } from "#geocode/core"

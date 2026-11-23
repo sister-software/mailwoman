@@ -19,7 +19,7 @@
  *   A check of only the iterated row would refuse rows whose actual gold is valid.
  */
 
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 /**

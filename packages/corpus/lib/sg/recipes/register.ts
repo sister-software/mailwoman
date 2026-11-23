@@ -6,8 +6,8 @@
  *   such as HDB block lines and `S(560123)` postcodes.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { titleCaseIfUpper } from "spliterator"
 
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"

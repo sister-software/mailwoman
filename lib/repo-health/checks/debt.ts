@@ -12,7 +12,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import ts from "typescript"

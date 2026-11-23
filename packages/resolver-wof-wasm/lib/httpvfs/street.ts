@@ -10,8 +10,8 @@
  * lockstep with `StreetInterpolator`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/memoize"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

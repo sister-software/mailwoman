@@ -8,7 +8,7 @@
  * Everything derived lands `curated: false`, because a derivation is a hypothesis a locale's own data confirms or kills.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import type { SubVenueSurface } from "#subvenue/table"
 

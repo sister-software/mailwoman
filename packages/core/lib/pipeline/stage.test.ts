@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from "vitest"
 
-import { AbortKind, AbortReason } from "#abort"
+import { AbortKind, AbortReason } from "#async/abort"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import {
 	createRequestContext,

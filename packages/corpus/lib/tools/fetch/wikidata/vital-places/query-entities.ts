@@ -16,8 +16,8 @@
  */
 
 import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { LatLon } from "@mailwoman/spatial/position"
 import type { PathBuilderLike } from "path-ts"
 

@@ -14,8 +14,8 @@
  *   Link the dev weights with `node neural-weights-en-us/scripts/link-dev-weights.ts` after `yarn compile`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
 

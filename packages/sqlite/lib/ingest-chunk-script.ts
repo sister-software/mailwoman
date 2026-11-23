@@ -12,8 +12,8 @@
  *   Progress goes to standard error.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument, type ParseArgsConfig } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { DatabaseClient } from "#client"
 

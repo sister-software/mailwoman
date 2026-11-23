@@ -30,7 +30,7 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { GeoPoint, type GeoPointInput, isGooglePlaceID } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"
 

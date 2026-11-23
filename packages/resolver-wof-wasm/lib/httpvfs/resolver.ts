@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/memoize"
-import { isPresent } from "@mailwoman/core/objects"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { populationScoreUnmeasured, referentialFromPopulation } from "@mailwoman/core/resolver"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import {
 	rankByPrimaryPreference,

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { makeLcg, mulberry32, SeededRandom } from "#random"
+import { makeLcg, mulberry32, SeededRandom } from "#math/random"
 
 describe("mulberry32", () => {
 	it("is a deterministic stream from one seed", () => {

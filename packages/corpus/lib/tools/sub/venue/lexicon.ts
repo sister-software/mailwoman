@@ -8,8 +8,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "#subvenue/harvest"

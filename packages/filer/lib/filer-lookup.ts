@@ -5,8 +5,8 @@
  * Identity crosswalk reader for filer identifiers.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { isFRN, type FRN } from "#frn"

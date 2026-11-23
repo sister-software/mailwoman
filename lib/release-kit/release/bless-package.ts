@@ -15,7 +15,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { type PackageJSONLike, readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { ProcessTask, runProcess } from "@mailwoman/core/process"
+import { ProcessTask, runProcess } from "@mailwoman/core/scripting/process"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 

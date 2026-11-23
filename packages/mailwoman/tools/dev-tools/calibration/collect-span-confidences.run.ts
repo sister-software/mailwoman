@@ -39,11 +39,11 @@
  *   --out data/eval/calibration/confidences.jsonl
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"

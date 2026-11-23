@@ -19,12 +19,10 @@
  *     node packages/ban/out/tools/build/street-centroid-database.js --country fr --out /tmp/sc-fr.db
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
-import { md5File } from "@mailwoman/core/hash"
-import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import {
 	assertTierMatchesLicense,
 	createLayerCoverageTable,
@@ -37,9 +35,11 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { tryParsingJSON, prettyJSON } from "@mailwoman/core/values/json"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import {

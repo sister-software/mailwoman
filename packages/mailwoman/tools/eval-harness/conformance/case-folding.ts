@@ -7,8 +7,8 @@
  *   It asserts that case-only variants of an address parse equivalently.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import {
 	auditCommonFixtureFields,

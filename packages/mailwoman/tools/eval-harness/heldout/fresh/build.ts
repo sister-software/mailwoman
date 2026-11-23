@@ -23,9 +23,9 @@
  *   by identity, group and folded text.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import type { EvaluationSource } from "@mailwoman/corpus/evaluation/source"
 import { allocate } from "@mailwoman/corpus/recipes/sub/venue"
 import type { AddressSourceRegister } from "@mailwoman/corpus/source-register/types"

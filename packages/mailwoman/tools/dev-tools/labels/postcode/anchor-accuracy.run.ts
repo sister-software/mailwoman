@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { percentile } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

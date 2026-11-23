@@ -28,10 +28,10 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { ClassificationRecord } from "@mailwoman/core/types"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	type AnchorLookup,
 	type GazetteerLexicon,

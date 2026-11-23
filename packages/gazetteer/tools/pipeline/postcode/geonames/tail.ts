@@ -7,14 +7,14 @@
  *   reproducing the frozen artifact's ingest order so its ids stay comparable.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { md5File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { isoDate } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

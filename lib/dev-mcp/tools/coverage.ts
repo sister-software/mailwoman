@@ -6,7 +6,7 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readScopeConfig } from "@mailwoman/core/scope-config"
+import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 import {
 	censusCoverage,
 	type CountryCoverage,

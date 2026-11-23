@@ -14,7 +14,7 @@
  *   What a run draws from it is the epoch-mixture audit's question.
  */
 
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
 import { weightedCountries, type WeightedCountries } from "@mailwoman/corpus/training/config/load"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"

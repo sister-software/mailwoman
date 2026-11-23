@@ -22,8 +22,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound } from "@mailwoman/core/math/numeric"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

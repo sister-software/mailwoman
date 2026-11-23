@@ -11,10 +11,10 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
 

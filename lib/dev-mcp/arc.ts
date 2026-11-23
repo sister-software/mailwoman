@@ -15,8 +15,8 @@
  *   The verdict decides release eligibility.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
 import { releaseArmModelPath } from "mailwoman/tools/eval-harness/release/arm"
 import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
 import { ReleaseOutcome } from "mailwoman/tools/eval-harness/release/evaluate"

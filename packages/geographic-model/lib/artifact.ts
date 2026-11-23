@@ -18,9 +18,9 @@
  *   Two builds of one document are byte-identical.
  */
 
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { isPlainObject } from "@mailwoman/core/objects"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 
 import type {
 	ConceptID,

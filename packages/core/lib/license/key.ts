@@ -16,7 +16,7 @@ import { fromBase64URL, toBase64URL, utf8Bytes, utf8Text } from "#crypto/base64u
 import { hexOf, sha256Bytes } from "#crypto/digest"
 import { generateEd25519KeyPair, publicKeyDER, signEd25519, verifyEd25519 } from "#crypto/ed25519"
 import { errorMessage } from "#errors/schema"
-import { parseJSONStrict, stringifyJSON } from "#json"
+import { parseJSONStrict, stringifyJSON } from "#values/json"
 
 /**
  * The token format's version prefix.

@@ -21,7 +21,7 @@
  *   that cannot accept any false drop keeps the `Set`.
  */
 
-import { md5Bytes } from "@mailwoman/core/hash"
+import { md5Bytes } from "@mailwoman/core/crypto/hash"
 
 /**
  * Words per slot: 128 bits of fingerprint.

@@ -23,8 +23,8 @@
  *   imported dynamically inside the build.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { dirname } from "path-ts"
 

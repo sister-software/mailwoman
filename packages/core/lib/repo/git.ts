@@ -26,7 +26,7 @@ import {
 	runFile,
 	runFileSync,
 	spawnProcess,
-} from "#process"
+} from "#scripting/process"
 import { TypedEventTarget } from "#utils/events"
 
 /**

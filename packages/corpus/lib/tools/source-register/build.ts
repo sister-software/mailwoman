@@ -11,7 +11,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	LicenseReviewState,
 	type ElectedLicense,

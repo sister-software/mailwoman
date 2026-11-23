@@ -6,14 +6,14 @@
  *   truth coverage and content hash.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { mulberry32 } from "@mailwoman/core/random"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { ladderRungs } from "mailwoman/tools/eval-harness/evaluation/autocomplete-ladder"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"

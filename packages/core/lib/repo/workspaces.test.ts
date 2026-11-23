@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "#fs/writers"
 import { repoRootPath } from "#paths"
-import { isRegisteredWorkspace, readWorkspaceDirectories, retiredWorkspaceDirectories } from "#workspaces"
+import { isRegisteredWorkspace, readWorkspaceDirectories, retiredWorkspaceDirectories } from "#repo/workspaces"
 
 async function scaffold(workspaces: string[], directories: string[], files: string[] = []) {
 	const scratch = await temporaryDirectory("mw-workspaces-")

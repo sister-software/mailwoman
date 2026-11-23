@@ -12,11 +12,11 @@
  *   the fixture writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
 
+import { md5Hex, md5File } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { setTimestamps, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5Hex, md5File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

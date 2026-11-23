@@ -65,12 +65,12 @@
  */
 
 import { APIClient, assertNoOGCServiceException } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { ES_CATASTRO_ADAPTER_ID, ES_CATASTRO_LICENSE } from "#es/adapters/catastro/adapter"

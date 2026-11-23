@@ -20,9 +20,9 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { PathBuilder } from "path-ts"
 

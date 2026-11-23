@@ -8,7 +8,7 @@
  *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "#dev-mcp/source-census"

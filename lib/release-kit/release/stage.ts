@@ -15,9 +15,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { GitClient } from "@mailwoman/core/git"
-import { ProcessTask } from "@mailwoman/core/process"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { GitClient } from "@mailwoman/core/repo/git"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { ProcessTask } from "@mailwoman/core/scripting/process"
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"

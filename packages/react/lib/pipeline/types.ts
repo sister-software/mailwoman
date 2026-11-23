@@ -8,7 +8,7 @@
  *   sqlite-wasm and node builtins out of this package's browser graph.
  */
 
-import type { LoadLedgerSnapshot } from "@mailwoman/core/load-ledger"
+import type { LoadLedgerSnapshot } from "@mailwoman/core/asset/load-ledger"
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 

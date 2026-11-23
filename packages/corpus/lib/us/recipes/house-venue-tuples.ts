@@ -6,7 +6,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import type { SeededRandom } from "@mailwoman/core/random"
+import type { SeededRandom } from "@mailwoman/core/math/random"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { capitalize, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { basename, type PathBuilderLike } from "path-ts"

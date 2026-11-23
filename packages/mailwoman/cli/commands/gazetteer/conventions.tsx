@@ -15,10 +15,10 @@
  *   so these errors surface at build time instead of at runtime.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 // `@mailwoman/resolver-wof-sqlite` is an optional peer dependency.
 // Runtime values from its root module are imported inside the command,
 // so loading the command list works without it.

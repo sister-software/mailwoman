@@ -7,7 +7,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { dirname } from "path-ts"
 
 import type { RepoContext } from "#repo-health/check"

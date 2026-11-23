@@ -109,26 +109,27 @@ own, that's another checkout. `@mailwoman/core/module/checkout-locality` compare
 the entry point's. A repository entry point calls `assertCheckoutLocality(import.meta.dirname)` before it
 loads the rest of its graph.
 
-`packages/core/lib/utils/repo.ts` counts upward from `import.meta.url`. The source `lib/` tree and the
+`packages/core/lib/paths.ts` counts upward from `import.meta.url`. The source `lib/` tree and the
 compiled `out/` tree have equal depth, so the same constants serve both. Preserve that equal-depth
-layout. The removed compiled-tree branch overshot `out/` in production.
+layout, and keep `paths.ts` at the root of `lib/`. The removed compiled-tree branch overshot `out/` in
+production.
 
 ## Shared implementations
 
 Check these homes before adding a helper:
 
-- `@mailwoman/core/random`: `mulberry32`, `makeLcg`, and `SeededRandom`. Prefer `mulberry32` for new
+- `@mailwoman/core/math/random`: `mulberry32`, `makeLcg`, and `SeededRandom`. Prefer `mulberry32` for new
   behavior; `makeLcg` retains streams embedded in corpus rows and evaluation splits.
-- `@mailwoman/core/stats`: `percentile`, `median`, and `formatPercent`. `percentile` accepts a value in
+- `@mailwoman/core/math/stats`: `percentile`, `median`, and `formatPercent`. `percentile` accepts a value in
   `[0, 100]`, not a fraction.
-- `@mailwoman/core/hash`: `sha256File`, `sha256Hex`, and `md5File`.
+- `@mailwoman/core/crypto/hash`: `sha256File`, `sha256Hex`, and `md5File`.
 - `@mailwoman/core/utils/time`: `isoDate`, `isoSeconds`, and `isoSecondsUTC`.
-- `@mailwoman/core/git`: `gitHead`, `currentBranch`, `dirtyTrackedFiles`, and `trackedFiles`.
+- `@mailwoman/core/repo/git`: `gitHead`, `currentBranch`, `dirtyTrackedFiles`, and `trackedFiles`.
 - `@mailwoman/core/fs/writers`: `changeMode` and `writePrivateTextFile`.
 - `@mailwoman/sqlite/sealed/db`: `swapDatabaseIntoPlace` and `sealDatabase`.
   `@mailwoman/sqlite/sealed` holds `openBuiltClient`, and `@mailwoman/sqlite/sealed/build` holds
   `buildSealedArtifact`.
-- `@mailwoman/core/release-config`: the typed `release.config.json` reader.
+- `@mailwoman/core/repo/release-config`: the typed `release.config.json` reader.
 - `@mailwoman/spatial`: geographic distance, polygon containment, and bounding-box helpers.
 - `packages/match/lib/comparators.ts`: string similarity functions.
 

@@ -20,8 +20,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { parseJSONStrict, prettyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import ts from "typescript"
 

@@ -12,8 +12,8 @@
  *   An absent country fails as one entry, never as the whole run.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"

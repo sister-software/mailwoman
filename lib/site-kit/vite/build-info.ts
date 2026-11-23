@@ -9,10 +9,10 @@
  *   Workers Builds checks out the commit it deploys.
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { Plugin } from "vite"
 
 import { renderBuildInfo } from "#site-kit/build-info"

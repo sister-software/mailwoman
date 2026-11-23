@@ -6,7 +6,7 @@
  *   `alignRow` aligner, so the gold boundary survives tokenization and BIO labeling.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import { describe, expect, it } from "vitest"
 
 import {

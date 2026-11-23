@@ -6,7 +6,7 @@
  *   The route never changes answer selection.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	ZoningLookup,
 	ZoningReadingKind,

@@ -12,10 +12,10 @@
  * (`ADM1H` through `ADM5H`, `PCLH`), which name the places that division contained.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
-import { sha256File } from "@mailwoman/core/hash"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"

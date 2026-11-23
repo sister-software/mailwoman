@@ -4,8 +4,8 @@
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

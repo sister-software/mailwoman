@@ -11,9 +11,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { type NameKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"

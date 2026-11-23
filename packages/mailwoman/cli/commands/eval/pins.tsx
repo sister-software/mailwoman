@@ -19,10 +19,10 @@
  *   admin-merge command calls it without Ink.
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runProcess } from "@mailwoman/core/process"
+import { gitHead } from "@mailwoman/core/repo/git"
+import { runProcess } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"

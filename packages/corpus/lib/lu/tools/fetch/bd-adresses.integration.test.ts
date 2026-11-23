@@ -11,8 +11,8 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { md5File } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
 import { BD_ADRESSES_REQUIRED_COLUMNS } from "#lu/adapters/bd-adresses/adapter"

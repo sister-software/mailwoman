@@ -20,7 +20,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { pyRound } from "@mailwoman/core/numeric"
+import { pyRound } from "@mailwoman/core/math/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 
 /**

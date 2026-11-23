@@ -11,7 +11,7 @@ import {
 	type ArtifactSource,
 	type LedgerEntry,
 	type LoadLedgerSnapshot,
-} from "@mailwoman/core/load-ledger"
+} from "@mailwoman/core/asset/load-ledger"
 import type { ReactNode } from "react"
 
 const SOURCE_LABELS: Readonly<Record<ArtifactSource, string>> = {

@@ -6,7 +6,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { dirname, relative, resolvePath, sep } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"

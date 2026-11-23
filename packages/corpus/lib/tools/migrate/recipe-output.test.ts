@@ -4,7 +4,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { migrateRecipeOutput, surfaceForSource } from "#tools/migrate/recipe-output"

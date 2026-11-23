@@ -9,7 +9,7 @@
  *   is the empty-registry messaging.
  */
 
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { spec as runSpec } from "mailwoman/commands/corpus/run"
 import { describe, expect, test, vi } from "vitest"

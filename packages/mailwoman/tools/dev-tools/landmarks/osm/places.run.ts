@@ -10,9 +10,9 @@
  */
 
 import { dataRootPath, databaseRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { createLayerManifestTable, LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	createLandmarkTables,
 	LANDMARK_NAME_COLUMNS,

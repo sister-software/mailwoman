@@ -32,8 +32,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { CARRIED_SOURCES, currentSourceName } from "@mailwoman/corpus/recipes/sources"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"

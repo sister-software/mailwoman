@@ -11,8 +11,8 @@
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
 

@@ -25,9 +25,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
+import { mulberry32, shuffleWith } from "@mailwoman/core/math/random"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { mulberry32, shuffleWith } from "@mailwoman/core/random"
 
 import { numpyInterp, numpyLinspace, numpyMean, stableArgsort } from "./numpy.ts"
 

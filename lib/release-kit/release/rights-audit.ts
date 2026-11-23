@@ -24,8 +24,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,

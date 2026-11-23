@@ -27,8 +27,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isPresent } from "@mailwoman/core/objects"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import ts from "typescript"

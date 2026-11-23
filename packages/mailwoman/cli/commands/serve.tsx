@@ -4,10 +4,10 @@
 import cluster, { type Worker } from "node:cluster"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { availableParallelism } from "@mailwoman/core/utils/system"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 // Default import rather than `* as process`.
 // The ESM namespace object for `node:process` only reflects the process object's own
 // properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`, `emit`)

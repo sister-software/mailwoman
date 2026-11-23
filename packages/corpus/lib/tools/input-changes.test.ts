@@ -6,7 +6,7 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
+import { gitSync } from "@mailwoman/core/repo/git"
 import type { PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 

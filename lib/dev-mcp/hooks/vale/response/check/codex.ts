@@ -36,7 +36,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { lintReply, renderVerdict } from "#dev-mcp/hooks/vale/check-core"
 

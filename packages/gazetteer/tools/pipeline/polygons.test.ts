@@ -3,7 +3,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"

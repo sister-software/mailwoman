@@ -17,8 +17,8 @@
 
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"
 import { isFileSync } from "@mailwoman/core/fs/readers/stat"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 
 /**

@@ -11,7 +11,7 @@
  * the published models' offering, so every action that delivers its result performs `sale`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LicenseAction } from "@mailwoman/license/actions"
 import {
 	LicenseReviewState,

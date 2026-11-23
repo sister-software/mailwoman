@@ -41,7 +41,7 @@
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"

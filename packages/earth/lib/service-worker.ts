@@ -44,7 +44,7 @@
 
 /// <reference lib="webworker" />
 
-import { SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
+import { SERVED_FROM_HEADER } from "@mailwoman/core/asset/load-ledger"
 import {
 	buildCacheName,
 	deleteOtherBuildCaches,

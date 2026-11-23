@@ -48,14 +48,14 @@
  *   This script only reads stamped metadata.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { allKeyed } from "@mailwoman/core/promises"
-import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
+import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/math/random"
+import { median } from "@mailwoman/core/math/stats"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"

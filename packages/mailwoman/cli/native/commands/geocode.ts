@@ -7,9 +7,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { type GeocodeResult, VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { EngineCoverage } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
 import { type GeocodeCommandOptions, resolveGeocodeCommandOptions } from "#cli/native/commands/geocode/options"

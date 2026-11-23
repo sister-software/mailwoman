@@ -21,8 +21,8 @@
 
 import { open } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { spawnProcess } from "@mailwoman/core/scripting/process"
 import { dirname } from "path-ts"
 
 const { values, positionals } = parseArguments({

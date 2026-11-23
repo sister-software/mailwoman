@@ -14,16 +14,16 @@
 
 // ci-runner: mailwoman-data
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalBuffer } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { artifactIDFromSHA256, ServingRole } from "@mailwoman/core/layers"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

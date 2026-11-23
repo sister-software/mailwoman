@@ -17,9 +17,9 @@
  *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"

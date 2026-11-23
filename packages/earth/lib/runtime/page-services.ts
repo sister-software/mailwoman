@@ -12,7 +12,7 @@
  *   The registry then closes that handle's worker, and the next read opens a new one.
  */
 
-import { AbortKind, AbortReason } from "@mailwoman/core/abort"
+import { AbortKind, AbortReason } from "@mailwoman/core/async/abort"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { createToken, ServiceRegistry, type ServiceToken } from "async-init"
 import { openCandidateTableLookup } from "mailwoman/browser-runtime/load-assets"

@@ -10,7 +10,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { TextSpliterator } from "spliterator"
 
 import { assertScorableEndpoint } from "#dev-mcp/external-arm"

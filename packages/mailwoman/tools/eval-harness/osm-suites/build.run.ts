@@ -21,9 +21,9 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

@@ -21,8 +21,8 @@
  *   tiger parquet files are rebuilt with the new adapter.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import { layoutAdminTail } from "#synthesizers/tail"
 import { tieredNumber } from "#synthesizers/utils"

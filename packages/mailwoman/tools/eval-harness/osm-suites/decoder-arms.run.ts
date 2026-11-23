@@ -24,8 +24,8 @@
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { countedPieces, decodeWithCardinalityFilter } from "@mailwoman/neural/decode/cardinality-filter"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, viterbi } from "@mailwoman/neural/decode/viterbi"

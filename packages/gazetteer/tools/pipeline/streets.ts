@@ -10,7 +10,7 @@
  *   The build holds the network in memory, and one country's source fits.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/polygon"

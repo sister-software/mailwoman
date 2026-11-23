@@ -180,16 +180,16 @@ export default {
 				"packages/core/lib/fs/**/*.ts",
 				// `identical.ts` wraps `isDeepStrictEqual` from `node:util`, `process.ts` wraps
 				// `node:child_process`, and `scripting/arguments.ts` wraps `parseArgs` from `node:util`.
-				"packages/core/lib/identical.ts",
-				"packages/core/lib/process.ts",
+				"packages/core/lib/values/identical.ts",
+				"packages/core/lib/scripting/process.ts",
 				"packages/core/lib/scripting/arguments.ts",
 				// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
 				// `node:crypto` and `node:module`.
 				"packages/core/lib/utils/system.ts",
 				"packages/core/lib/utils/sleep.ts",
 				"packages/core/lib/utils/events.ts",
-				"packages/core/lib/workers.ts",
-				"packages/core/lib/hash.ts",
+				"packages/core/lib/scripting/workers.ts",
+				"packages/core/lib/crypto/hash.ts",
 				"packages/core/lib/module/runtime.ts",
 				"packages/core/lib/crypto/**/*.ts",
 				// Corpus tests sit beside their modules and start local HTTP and TCP servers.
@@ -251,7 +251,7 @@ export default {
 		},
 		{
 			// This file holds the JSON wrappers that the rule recommends.
-			files: ["packages/core/lib/json.ts"],
+			files: ["packages/core/lib/values/json.ts"],
 			rules: {
 				"no-restricted-properties": restrictedPropertiesExcept(JSON_PARSE, JSON_STRINGIFY),
 			},
@@ -282,8 +282,8 @@ export default {
 			},
 		},
 		{
-			// `@mailwoman/core/git` is the module the raw-git rule points at.
-			files: ["packages/core/lib/git.ts"],
+			// `@mailwoman/core/repo/git` is the module the raw-git rule points at.
+			files: ["packages/core/lib/repo/git.ts"],
 			rules: {
 				"mailwoman/no-raw-git-spawn": "off",
 			},
@@ -301,8 +301,8 @@ export default {
 			// The plugin and its test spell out the same shapes.
 			files: [
 				"packages/core/lib/utils/time.ts",
-				"packages/core/lib/random.ts",
-				"packages/core/lib/git.ts",
+				"packages/core/lib/math/random.ts",
+				"packages/core/lib/repo/git.ts",
 				"packages/spatial/**/*.ts",
 				"oxlint.plugin.ts",
 				"oxlint.plugin.test.ts",
@@ -372,8 +372,8 @@ export default {
 						message:
 							"`@mailwoman/core` is the only package that reaches a Node builtin, and each has a home there: `node:fs` → " +
 							"`@mailwoman/core/fs/*` (`/temporary` for a scratch directory), `node:path` → `path-ts`, `node:url` → " +
-							"`import.meta.dirname` / `@mailwoman/core/module/file-url`, `node:child_process` → `@mailwoman/core/process`, " +
-							"`parseArgs` → `@mailwoman/core/scripting/arguments`, `node:crypto` → `@mailwoman/core/hash`, `node:os` → " +
+							"`import.meta.dirname` / `@mailwoman/core/module/file-url`, `node:child_process` → `@mailwoman/core/scripting/process`, " +
+							"`parseArgs` → `@mailwoman/core/scripting/arguments`, `node:crypto` → `@mailwoman/core/crypto/hash`, `node:os` → " +
 							"`@mailwoman/core/utils/system`, `node:timers/promises` → `@mailwoman/core/utils/sleep`, `node:events` → " +
 							"`@mailwoman/core/utils/events`, `node:stream` → `@mailwoman/core/fs/streams`, `node:zlib` → " +
 							"`@mailwoman/core/fs/compression`, `node:sqlite` → `@mailwoman/sqlite`.",
@@ -391,9 +391,9 @@ export default {
 					{
 						group: ["zx", "zx/*", "execa", "simple-git"],
 						message:
-							"Child processes go through `@mailwoman/core/process`: `runProcess` (pass `reject: false` to read a " +
+							"Child processes go through `@mailwoman/core/scripting/process`: `runProcess` (pass `reject: false` to read a " +
 							"non-zero exit), `ProcessTask` for line and progress events, and the `*Sync` functions for a synchronous " +
-							"caller. Git goes through `@mailwoman/core/git`.",
+							"caller. Git goes through `@mailwoman/core/repo/git`.",
 					},
 				],
 			},
@@ -404,8 +404,8 @@ export default {
 		"mailwoman/prefer-spliterator": "error",
 		// This rule reports a copy of a helper listed in `HELPER_HOMES` in `oxlint.plugin.ts`.
 		"mailwoman/prefer-home": "error",
-		// Direct `JSON.parse` calls should use `tryParsingJSON<T>` from `@mailwoman/core/objects`,
-		// which returns a typed result or a fallback.
+		// Direct `JSON.parse` calls should use `tryParsingJSON<T>` from
+		// `@mailwoman/core/values/objects`, which returns a typed result or a fallback.
 		// A site that must throw on corrupt input keeps `JSON.parse` behind a scoped disable.
 		// The wrapper returns the fallback for non-string input, so convert a buffer with `.toString()` first.
 		//

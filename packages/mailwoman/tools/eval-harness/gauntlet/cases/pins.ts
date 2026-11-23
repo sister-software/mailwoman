@@ -8,8 +8,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { ablationBoardID } from "#tools/eval-harness/gauntlet/ablation"

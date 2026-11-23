@@ -16,11 +16,11 @@
 
 import type { APIClient } from "@mailwoman/core/api"
 import { rangedResponseTotal } from "@mailwoman/core/api/content-range"
+import { md5File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
-import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
 import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
 import type { PathBuilder, PathBuilderLike } from "path-ts"

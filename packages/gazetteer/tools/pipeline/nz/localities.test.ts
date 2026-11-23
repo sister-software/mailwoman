@@ -8,10 +8,10 @@
  *   The artifact records its terms in `database_meta` and `layer_manifest`.
  */
 
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5Hex } from "@mailwoman/core/hash"
 import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwoman/core/layers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"

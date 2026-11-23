@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { clamp, pyFixed, pyFloat, pyRound, pySum } from "#numeric"
+import { clamp, pyFixed, pyFloat, pyRound, pySum } from "#math/numeric"
 
 describe("pySum", () => {
 	// The expectations are CPython 3.12's `sum()` of the same lists.

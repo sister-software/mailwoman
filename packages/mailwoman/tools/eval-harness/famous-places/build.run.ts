@@ -24,8 +24,8 @@ import { setTimeout as sleep } from "node:timers/promises"
 
 import { countrySurfaceForms } from "@mailwoman/codex/country/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow } from "#tools/eval-harness/famous-places/score"
 

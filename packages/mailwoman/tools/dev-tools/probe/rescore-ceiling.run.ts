@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  *   Rescore-ceiling probe: sizes how much of the unresolved tail a parse and resolve
@@ -25,9 +26,8 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  */
 import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
+import { percentile } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"

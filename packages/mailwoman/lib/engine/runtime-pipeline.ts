@@ -6,7 +6,7 @@
  * a classifier, and an optional resolver and POI stage into one parse function.
  */
 
-import { memoizeResettable } from "@mailwoman/core/memoize"
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import {
 	type AnchorRegionLookupLike,
 	type CaseNormalization,

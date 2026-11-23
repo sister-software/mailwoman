@@ -17,8 +17,8 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { basename, dirname, resolvePath } from "path-ts"
 import ts from "typescript"
 
