@@ -35,6 +35,17 @@ verifies a manifest and a provenance key never verifies a credential. `mailwoman
 a provenance key. The public half of each key goes into the register, and `mailwoman license register --write`
 regenerates the well-known file.
 
+### Keys in service
+
+| Key id         | Use        | Private half                                                                                                                                                                              |
+| -------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v9-e3d8105a`  | license    | the production license worker's `LICENSE_SIGNING_KEY_PEM` secret (`LICENSE_SIGNING_KID` in `packages/license-worker/wrangler.toml`)                                                       |
+| `v9-ecec29be`  | license    | `$MAILWOMAN_CONFIG_ROOT/license/signing-key.pem` on the lab host, which `mailwoman license issue` and `grant-training` sign with                                                          |
+| `p11-75b09012` | provenance | the Modal secret `mailwoman-provenance` (`MAILWOMAN_PROVENANCE_SIGNING_KEY`, `MAILWOMAN_PROVENANCE_SIGNING_KID`), and `$MAILWOMAN_CONFIG_ROOT/license/provenance-key.pem` on the lab host |
+
+A managed export attaches `mailwoman-provenance` to the sandbox or process that runs `trainer-export`, so the exporter
+reads the key from its environment. No other environment holds the provenance key.
+
 ## Token format
 
 A token is `<prefix>.<payload>.<signature>`, three parts separated by dots after surrounding whitespace is trimmed.

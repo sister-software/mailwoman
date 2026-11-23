@@ -15,5 +15,12 @@
 			"status": "active"
 		}
 	],
-	"provenance_keys": []
+	"provenance_keys": [
+		{
+			"kid": "p11-75b09012",
+			"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAX3xbuHE5mpy+HxElKd7uXd0hGc/+w4QxPMSFCN9fX9s=\n-----END PUBLIC KEY-----\n",
+			"majorVersions": [11],
+			"status": "active"
+		}
+	]
 }

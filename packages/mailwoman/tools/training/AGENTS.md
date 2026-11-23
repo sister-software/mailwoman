@@ -77,7 +77,10 @@ In the sandbox the supervisor runs `trainer authorize` after the device check an
 authorization refusal there, or an exit 3 from `trainer train` on a retry, refuses the run without a retry and leaves
 its checkpoints as committed. `restart` restarts a refused commercial run once the grant in the secret is renewed. Each
 run writes `TRAINING.json` beside its checkpoints, and `trainer-export` binds it into the model's signed provenance
-manifest. `docs/engineering/reference/product-license-tokens.mdx` specifies the grant, the record and the manifest.
+manifest. A managed export signs that manifest with the provenance key in the Modal secret `mailwoman-provenance`,
+which holds `MAILWOMAN_PROVENANCE_SIGNING_KEY` and `MAILWOMAN_PROVENANCE_SIGNING_KID` (`p11-75b09012`). Attach it to
+the sandbox or process that runs `trainer-export`. `docs/engineering/reference/product-license-tokens.mdx` specifies
+the grant, the record and the manifest, and lists the keys in service.
 Without `--commercial` the launch runs the open-source trainer, which checks no grant and records `AGPL-3.0-only`.
 
 ### The lifecycle checks
