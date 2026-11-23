@@ -8,19 +8,20 @@ owner: evaluation
 # Release requirements v14 draft, the 11.2.0 comparator and a pending confirmation role
 
 Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v14.json`
-exists beside v13, and `release/current-spec.ts` still names v13. Its confirmation pins name the two collections
-section 7 records, frozen on 2026-11-22. It is registered when a candidate passes the development role, as v12 and
-v13 were. No model has read a v14 role.
+exists beside v13, and `release/current-spec.ts` still names v13. Its confirmation pins name the three collections
+section 8 records, drawn on 2026-11-22 from rows no corpus holds. They replace `heldout-confirm-v0.8.22` of section 7,
+which held too few eligible groups to decide a release and was read by no model. The specification is registered when
+a candidate passes the development role, as v12 and v13 were. No model has read a v14 role.
 
 ## 1. What changes
 
-| Field                  | v13                                                                                       | v14 draft                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `identities.published` | 10.8.0, `0bbb3385…e4a4`, corpus `v0.8.18-retention-overlay`                               | 11.2.0, `d51bb0ef…12b39f`, corpus `v0.8.21-retention-overlay`               |
-| `identities.candidate` | v8.9.0 seed 42, `d51bb0ef…12b39f`                                                         | empty                                                                       |
-| development            | `heldout-dev-v0.8.18`, `heldout-dev-v0.8.19-probes-r2`, `heldout-dev-v0.8.21`             | unchanged                                                                   |
-| confirmation           | `heldout-confirm-v0.8.20`, `heldout-confirm-v0.8.18-in`, `heldout-confirm-v0.8.20-probes` | `heldout-confirm-v0.8.22@pending`, `heldout-confirm-v0.8.22-probes@pending` |
-| `identities.dataset`   | the three v13 confirmation collections                                                    | the two pending pins                                                        |
+| Field                  | v13                                                                                       | v14 draft                                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `identities.published` | 10.8.0, `0bbb3385…e4a4`, corpus `v0.8.18-retention-overlay`                               | 11.2.0, `d51bb0ef…12b39f`, corpus `v0.8.21-retention-overlay`                                                     |
+| `identities.candidate` | v8.9.0 seed 42, `d51bb0ef…12b39f`                                                         | empty                                                                                                             |
+| development            | `heldout-dev-v0.8.18`, `heldout-dev-v0.8.19-probes-r2`, `heldout-dev-v0.8.21`             | unchanged                                                                                                         |
+| confirmation           | `heldout-confirm-v0.8.20`, `heldout-confirm-v0.8.18-in`, `heldout-confirm-v0.8.20-probes` | `heldout-confirm-v0.8.22b`, `heldout-confirm-v0.8.22b-capabilities`, `heldout-confirm-v0.8.22-probes` (section 8) |
+| `identities.dataset`   | the three v13 confirmation collections                                                    | the same three pins                                                                                               |
 
 Every requirement, the objective, the statistics, the provenance admission, the scorer and the inference rule are
 v13's. The published sha256 is observed: `npm pack @mailwoman/neural-weights-en-us@11.2.0` on 2026-11-20 gives a
@@ -263,3 +264,99 @@ place's WOF record as `base_source_id`, so it shares the group of that record's 
 the groups of 123 of the recipe's 16,425 places, and the validation quota chose 16 more, so the re-split sends their
 rows out of train. On the v8.10.0 config the receipt covers 20,584 of 20,947 required forms and fails 11 of 813
 demand cells. Coherence passes.
+
+## 8. The draw of `heldout-confirm-v0.8.22b` from rows outside every corpus
+
+Decided by the operator on 2026-11-22: the confirmation role is drawn from source rows no corpus holds, reversing the
+2026-11-18 stop on a newer-snapshot draw (section 3). No corpus is rebuilt for it. Three collections make up the role:
+
+| Collection                                               |  Rows | Rows sha256 | What it holds                                    |
+| -------------------------------------------------------- | ----: | ----------- | ------------------------------------------------ |
+| `heldout-confirm-v0.8.22b@35005b713649d486`              | 8,358 | `7c0a9dd9…` | the address rows of the nine objective countries |
+| `heldout-confirm-v0.8.22b-capabilities@6d55f1bee295a4ed` | 7,800 | `ae58924c…` | `spliced-sub-venue` and `spliced-country` rows   |
+| `heldout-confirm-v0.8.22-probes@cbbe8ed53c10e55d`        | 5,000 | `fc438185…` | the probe set of section 7, unchanged            |
+
+### 8.1 Sources
+
+| Country | Source                                                                        | Rows 11.2.0 didn't read                                                                                                            |
+| ------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| US      | NPPES weekly files `110226_110826` and `110926_111526`                        | NPIs absent from the `2026-11` monthly file, which v0.8.20-rebuild read (`builds/v0.8.20-rebuild/inputs.json`)                     |
+| FR      | BAN export of 2026-11-17, metropolitan France and Corsica                     | ids absent from `corpus/staging/ban-france.csv`, the file v0.8.19-rebuild read                                                     |
+| ES      | `es-bizkaia`, `es-gipuzkoa`, `es-navarra`, reserved for evaluation by #3353   | the whole publication: no training manifest reads them, and `evaluationSourceProblems` returns no problem for any of the three     |
+| AU      | a 60,000-tuple sample of G-NAF May 2026 (`mailwoman gnaf assemble --n 60000`) | tuples outside the corpus's 149,969 `gnaf` rows                                                                                    |
+| IN      | Geofabrik India of 2026-11-22                                                 | objects with a house number that are new (2,538) or changed by id and version (1,187) against the 2026-10-02 extract `osm-in` read |
+| GB      | recipe `locale --country GB`, render seed 2242, 40,000 rows                   | a render no corpus holds, from the OS Open tuples behind `rendered-gb-os-open`                                                     |
+| DE      | recipe `german`, render seed 2241, 40,000 rows                                | a render no corpus holds; v0.8.22's `rendered-de` used seed 42                                                                     |
+| IT      | recipe `locale --country IT`, render seed 2244, 40,000 rows                   | a render of OpenAddresses `it/countrywide`, which no corpus renders                                                                |
+| NZ      | recipe `locale --country NZ`, render seed 2243, 40,000 rows                   | a render of OpenAddresses `nz/countrywide` (LINZ); v0.8.22 holds no `rendered-nz` file                                             |
+
+The capability collection renders `sub-venue` (seed 2245, 40,000 rows, the `house-venue-tuples-v6` skeletons the corpus
+file used) and `country-balanced` (seed 2246, 150,000 rows, so the head-of-file pool reaches past the 50,000-row corpus
+file's records). `po_box_cedex` and `postal_unit` read the probe set.
+
+### 8.2 Filters
+
+Each source's own adapter labels its rows as a build does, without augmentation (`heldout/snapshot/candidates.ts`
+where the adapter is a corpus source). Every row is then compared with every row of every split of the 1,110 data files
+that v0.8.21-retention-overlay and v0.8.22-retention-overlay list, by identity, group, folded text and address key, and
+a pool keeps one row per address key and folded text. A US row's key is `nadAddressKey`. Any other row keys by its
+country, postcode or locality, house number, street and unit, folded as `nadAddressKey` folds its parts, and a row with
+no house number or no street gives no key and is dropped, because it can't be compared by address. The scripts are in
+`/mnt/mw/audits/v14-confirm-b/scripts/` (`filter.ts`, `keys.ts`).
+
+| Country |      In | Identity or group |   Text | Address key | No key | Repeat | Older file |    Pool | Drawn |
+| ------- | ------: | ----------------: | -----: | ----------: | -----: | -----: | ---------: | ------: | ----: |
+| US      |  20,085 |                 0 |    237 |      14,651 |    162 |    248 |          8 |   4,779 | 1,000 |
+| FR      | 294,683 |                 0 | 46,168 |       1,350 |      0 |  1,112 |          – |  22,090 | 1,000 |
+| ES      | 120,000 |                 0 |     14 |         103 |  1,345 |    193 |          – | 118,345 | 1,000 |
+| AU      |  60,000 |               205 |      7 |         558 |      0 |     16 |          – |  59,214 | 1,000 |
+| IN      |   2,463 |               393 |      7 |          96 |  1,496 |    113 |          – |     358 |   358 |
+| GB      |  40,000 |            10,659 |      8 |       3,587 |  7,082 |    104 |          – |  18,560 | 1,000 |
+| DE      |  40,000 |             7,435 |     94 |       1,848 |  3,542 |    360 |          – |  26,721 | 1,000 |
+| IT      |  40,000 |                 0 |     29 |         216 |  7,778 |     97 |          – |  31,880 | 1,000 |
+| NZ      |  40,000 |                 0 |      7 |         248 |  7,321 |      6 |          – |  32,418 | 1,000 |
+
+US's address-key drops are earlier NPPES rows at the same practice address under another NPI (8,746), NAD (3,666, and
+4,387 matched a NAD row at all), USGS structures (1,356) and 883 rows of eight other sources. "Older file" is the address
+key of the `2026-11` monthly file's records sharing a ZIP Code and number with a candidate. DE's identity and group
+drops are seed-2241 rows of a record the seed-42 render also drew, and 1,284 of its address-key drops are seed-42 rows.
+BAN's new ids concentrate in re-addressed communes, so the pool keeps six rows a commune, lowest hash first, before the
+corpus comparison and two after: the cap drops 223,963 of FR's rows, and the address-key count is of the 48,384 the
+first cap kept. ES draws 40,000 rows of each source's 139,512, 68,744 and 180,941 before the comparison. The 339,671 NPIs
+the `2026-11` monthly file adds against `2026-05` are not a pool: 334,376 of the 338,312 labeled are corpus rows by
+identity and the other 3,936 by text, because v0.8.20 read that file.
+
+### 8.3 The freeze and the audits
+
+`freeze.run.ts --training-config v8.10.0-base-c6-90k-v0822-s42.yaml --per-country 1000` (address, seed 2251) and
+`--per-country 600` (capabilities, seed 2252), every frozen collection on the data root excluded. The skip of required
+training groups (7,764 prominent places) found none of its groups in either pool. A first freeze of the address
+collection without US and IN (`@1dd562cb1290167a`) was read by no model and moved to `superseded/`.
+
+`overlap.run.ts --match-text --match-address --duckdb-memory-gib 4 --duckdb-threads 4` against corpora
+v0.8.21-retention-overlay and v0.8.22-retention-overlay (manifest sha256 `7d871702…386b`, the second re-split, whose
+1,104 data files and their sha256s are the ones the filter compared), with training configs
+`v8.9.0-base-c6-90k-v0821-s42.yaml` (11.2.0) and `v8.10.0-base-c6-90k-v0822-s42.yaml` (the candidate), on 2026-11-22
+22:20–23:51 UTC. The provenance files sit beside each manifest as `<collection>.provenance-11.2.0-v8.10.0.json`.
+
+| Collection                              |  Rows | `verified_unseen` | `unseen_by_candidate` | `known_overlap` |
+| --------------------------------------- | ----: | ----------------: | --------------------: | --------------: |
+| `heldout-confirm-v0.8.22b`              | 8,358 |             8,358 |                     0 |               0 |
+| `heldout-confirm-v0.8.22b-capabilities` | 7,800 |             7,800 |                     0 |               0 |
+| `heldout-confirm-v0.8.22-probes`        | 5,000 |             5,000 |                     0 |               0 |
+
+Eligible groups per objective country, against the 75-group target and the 300-group aim: US, FR, GB, DE, ES, IT, AU
+and NZ 1,000 each, IN 358. The capability collection holds `venue_unit` 1,756 rows and `country_token` 6,044, and the
+probe set `po_box_cedex` 4,000 and `postal_unit` 1,000 (upper bound: the proof reads `postal_unit` without its tag
+selector). `evaluation-groups.v0.8.23.json` is `evaluation-groups.v0.8.22-reserve.json` with both new collections'
+groups. The reserve list is the one the second v0.8.22 re-split read (sha256 `654817a9…8854`, recorded in the v0.8.22
+manifest's `evaluation_groups`), so the next re-split keeps the new groups in test with every earlier one.
+
+### 8.4 The pass proof
+
+`release/pass/proof.run.ts --role confirmation` over the three collections and their audits against both corpora,
+under this specification with the pins above, read 21,158 rows in 21,158 groups, all `verified_unseen`. The arm at
+0.95 against the published 0.85 reads `pass` on every check, the objective at a difference of 0.098 (interval 0.087 to
+0.108). The arm at 0.85 against 0.85 reads `fail`, so the evaluator separates the two (exit 0, proven). No rows file was
+read and no model was scored. Before US and IN joined, the same proof against 11.2.0's audit read insufficient evidence
+on the first arm, because the objective requires every one of the nine countries.
