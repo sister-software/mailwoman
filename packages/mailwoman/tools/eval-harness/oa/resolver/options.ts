@@ -9,7 +9,7 @@ import type { CaseNormalization } from "@mailwoman/core/pipeline"
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
 import type { PathBuilderLike } from "path-ts"
 
-import type { SwitchPin } from "#tools/eval-harness/switch-pin"
+import type { SwitchPin } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * Options for {@linkcode oaResolverEval}.

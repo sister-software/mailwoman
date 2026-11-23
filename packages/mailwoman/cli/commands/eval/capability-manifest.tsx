@@ -39,7 +39,7 @@ export const spec = {
 
 // The generator prints the block on stdout and its diagnostics on stderr, so no `json`.
 const EvalCapabilityManifest = harnessCommand(spec, async (options) => {
-	const { generateCapabilityManifest } = await import("#tools/eval-harness/capability-manifest")
+	const { generateCapabilityManifest } = await import("#tools/eval-harness/capability/manifest")
 
 	return generateCapabilityManifest(options)
 })

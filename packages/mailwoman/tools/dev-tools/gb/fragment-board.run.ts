@@ -42,7 +42,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#tools/dev-tools/register-board"
+import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#tools/dev-tools/board/registers"
 
 const { values } = parseArguments({
 	options: {

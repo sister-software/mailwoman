@@ -25,6 +25,25 @@ lives in the directory of its role:
 - `diagnostics/` holds what a check or a server reports about the running process.
 - `package/` reads this package's own manifest.
 
+## Tools layout
+
+`tools/dev-tools/` and `tools/eval-harness/` hold zero modules directly. A tool lives in the directory of
+the step it performs, the label it studies, or the country it covers:
+
+- `tools/dev-tools/` steps: `board/` (gauntlet board upkeep), `census/` (report-only counts), `evaluation/`,
+  `benchmark/`, `smoke/`, `arenas/`, `probe/` (two-model probes), `calibration/`, `candidate-cache/`,
+  `coordinate/` (coordinate boards), `legacy-parity/`, `generate/`, `jurisdiction/`, `repository/`, `host/`,
+  `build/`, `score/`, `corpus/`, `codex/`, `data/`.
+- `tools/dev-tools/labels/<label>/` holds the tools about one `ComponentTag`, spelled as the tag with a
+  hyphen for an underscore: `labels/locality/`, `labels/postcode/`. A tool with both a step and a label
+  sits under its step, as `corpus/labels/street/` does.
+- `tools/dev-tools/<cc>/` holds one country's tools.
+- `tools/eval-harness/`: `board/` (the boards a run grades), `evaluation/` (one evaluation a command runs),
+  `rig/` (what a run is set up with), `capability/`, `parity/`, `preregistration/` and `ledger/`.
+
+A `*.run.ts` entry is started by its path, which the compiler never reads. After moving one, search
+`resolvePackagePath` calls, workflows, skills, `AGENTS.md` files and `docs/` for the old path.
+
 ## CLI commands
 
 The CLI runs as `node packages/mailwoman/out/cli/main.js` and never from source. Its Ink commands are

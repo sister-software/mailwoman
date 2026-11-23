@@ -231,7 +231,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
 		[
 			"the detached launcher itself",
-			`node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
+			`node packages/mailwoman/tools/dev-tools/host/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
 		],
 		["a release checksum", `sha256sum /tmp/package.tgz`],
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],

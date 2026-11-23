@@ -27,7 +27,7 @@ export const spec = {
 
 // `presetCompare` prints each parse on stdout, so no `json`.
 const EvalPresetCompare = harnessCommand(spec, async (options) => {
-	const { presetCompare } = await import("#tools/eval-harness/preset-compare")
+	const { presetCompare } = await import("#tools/eval-harness/evaluation/preset-compare")
 
 	return presetCompare(options)
 })

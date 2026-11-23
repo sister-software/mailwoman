@@ -1,0 +1,128 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * Report-only retrieval-rescue census over the committed Gauntlet corpus.
+ * This isn't a release eval.
+ *
+ * One production-routed board pass with the shipped model.
+ * For each row: the delivered answer, the unconditional fork-entity probe
+ * (check 1 deliberately ignored, since that's the measurement), and the resolver's ranked
+ * alternates, classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
+ */
+
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+
+import { probeForkEntity } from "#geocode/result/fork-entity"
+import { loadForkEntityDeps } from "#geocode/session/layers"
+import {
+	classifyRescueRow,
+	type RescueRowReport,
+	summarizeRescue,
+} from "#tools/eval-harness/evaluation/retrieval-rescue-census"
+import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
+import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
+import { routeCountry } from "#tools/eval-harness/gauntlet/routing"
+
+const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
+
+const cases = await loadRegressionCases()
+const deps = await buildGauntletDeps()
+const probe = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
+
+if (!probe.deps.poiLookup) {
+	// The census's entity half is the point.
+	// A run without poi.db would silently degrade every rescue_available_entity row into no_rescue_on_hand.
+	// The partial-reader rule requires a failure instead.
+	throw new Error("retrieval-rescue census requires poi.db (loadForkEntityDeps returned no lookup)")
+}
+
+const reports: RescueRowReport[] = []
+
+for (const c of cases) {
+	const overlayCountry = routeCountry(c)
+
+	// The board runner's own opts recipe (regression.ts).
+	// The census must ride the production route.
+	const result = await deps.geocode(c.input, {
+		...(c.defaultCountry ? { defaultCountry: c.defaultCountry } : {}),
+		...(overlayCountry ? { caseCountry: overlayCountry } : {}),
+		...(c.locale ? { fuzzyCountryScope: c.locale.split("-")[1] } : {}),
+	})
+
+	const markers = result.intent_markers.map((m) => m.code)
+
+	// Unconditional: ask the entity layer whenever the fork marker rode, including
+	// when the incumbent resolved.
+	// The census measures what check 1 currently silences.
+	const hit =
+		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric
+			? probeForkEntity(c.input, {
+					lookup: probe.deps.poiLookup,
+					isStreetGeneric: probe.deps.isStreetGeneric,
+				})
+			: null
+
+	const graded = classifyRescueRow({
+		expectLat: c.expectLat ?? null,
+		expectLon: c.expectLon ?? null,
+		expectToleranceM: c.expectToleranceM ?? null,
+		lat: result.lat,
+		lon: result.lon,
+		entityFired: result.entity != null,
+		unconditionalEntityHit: hit ? { lat: hit.latitude, lon: hit.longitude } : null,
+		alternateCandidates: result.candidates.slice(1).map((cand) => ({ lat: cand.lat, lon: cand.lon })),
+	})
+
+	reports.push({
+		id: c.id,
+		input: c.input,
+		country: c.country || null,
+		markers,
+		classification: graded.classification,
+		deliveredKm: graded.deliveredKm === null ? null : Number(graded.deliveredKm.toFixed(3)),
+		rescueRank: graded.rescueRank,
+		checkProtects: graded.checkProtects,
+	})
+}
+
+probe.handle?.[Symbol.dispose]()
+deps[Symbol.dispose]()
+
+const summary = summarizeRescue(reports)
+
+console.log("=== retrieval-rescue census ===")
+console.log(prettyJSON(summary, false))
+
+for (const cls of ["rescue_available_entity", "rescue_available_rank", "rescue_available_both"] as const) {
+	const rows = reports.filter((r) => r.classification === cls)
+
+	if (!rows.length) continue
+
+	console.log(`\n${cls}:`)
+
+	for (const r of rows) {
+		console.log(
+			`  ${r.id}  "${r.input}"${r.rescueRank ? `  rank ${r.rescueRank}` : ""}  delivered ${r.deliveredKm ?? "∅"} km off`
+		)
+	}
+}
+
+const checkRows = reports.filter((r) => r.checkProtects)
+
+if (checkRows.length) {
+	console.log("\ncheck_protects (correct today, at risk under a loosened check):")
+
+	for (const r of checkRows) {
+		console.log(`  ${r.id}  "${r.input}"`)
+	}
+}
+
+if (values["out-json"]) {
+	await writeLocalJSONFile({ summary, rows: reports }, values["out-json"])
+
+	console.log(`\nwrote ${values["out-json"]}`)
+}

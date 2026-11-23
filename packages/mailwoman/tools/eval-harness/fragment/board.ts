@@ -5,7 +5,7 @@
  *   The locale fragment board: targeted failure classes with confidence intervals.
  *
  *   This is the second of the two standing boards, the first being the global parity
- *   floor (`parity-corpus.ts`, broad, "do no harm").
+ *   floor (`parity/corpus.ts`, broad, "do no harm").
  *
  *   A change ships when board 1 holds and board 2 moves.
  *   Neither board gives a verdict by itself.
@@ -44,7 +44,7 @@ import {
 	type SpanBoardFixture,
 	type SpanBoardOptions,
 	type SpanBoardResult,
-} from "#tools/eval-harness/span-board"
+} from "#tools/eval-harness/board/span"
 
 /**
  * Fixture set backing the fragment board, with bare-street and partial-address probes.

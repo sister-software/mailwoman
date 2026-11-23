@@ -50,7 +50,7 @@ import {
 import { loadForkEntityDeps } from "#geocode/session/layers"
 import { poiTaxonomyLookup } from "#poi/intent"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
-import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/switch-pin"
+import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/rig/switch-pin"
 
 export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>

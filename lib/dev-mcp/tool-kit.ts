@@ -17,7 +17,7 @@ import {
 } from "mailwoman/cli/debug-view/trace-rows"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { DECODE_TRACE_FAULT } from "mailwoman/geocode/stages"
-import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import { z } from "zod"
 
 import type { Engine, EngineRegistryLike } from "#dev-mcp/engine/registry"

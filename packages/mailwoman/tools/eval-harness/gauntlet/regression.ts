@@ -53,7 +53,7 @@ import {
 } from "#tools/eval-harness/gauntlet/reachability"
 import { routeCountry } from "#tools/eval-harness/gauntlet/routing"
 import type { GauntletDatabase } from "#tools/eval-harness/gauntlet/schema"
-import { pinnedSwitch } from "#tools/eval-harness/switch-pin"
+import { pinnedSwitch } from "#tools/eval-harness/rig/switch-pin"
 
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.

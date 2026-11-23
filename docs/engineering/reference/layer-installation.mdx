@@ -267,7 +267,7 @@ Still on their conventional paths, with the reason:
   fork-entity probe searches it with `poi.db` and the rail-station database.
 - The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
   `@mailwoman/neural`, which reads no data-root records.
-- The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
+- The promotion battery's priors (`tools/eval-harness/rig/production-priors.ts`) take a classifier without a
   data root, and read the files beside its weights.
 - A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
   for that country needs a locale scope the selection doesn't have.

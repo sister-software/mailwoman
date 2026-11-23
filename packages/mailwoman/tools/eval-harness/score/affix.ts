@@ -24,7 +24,7 @@ import {
 	perTagRates,
 	scorePerTagCounts,
 } from "#tools/eval-harness/per/tag-f1"
-import { productionPriorOptions } from "#tools/eval-harness/production-priors"
+import { productionPriorOptions } from "#tools/eval-harness/rig/production-priors"
 
 /**
  * Options for {@linkcode scoreAffix}.

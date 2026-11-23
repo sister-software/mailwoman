@@ -36,7 +36,7 @@ import {
 	type StratumFillCensus,
 	type StratumResult,
 	uniqueNameEligible,
-} from "#tools/eval-harness/panel-fill"
+} from "#tools/eval-harness/preregistration/panel-fill"
 import type { SameDataBenchmarkDefinition } from "#tools/eval-harness/same-data/definition"
 import type { SameDataPanelRow } from "#tools/eval-harness/same-data/fixture"
 

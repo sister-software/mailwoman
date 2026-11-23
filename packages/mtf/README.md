@@ -117,7 +117,7 @@ The CJK family uses a character encoder and no SentencePiece model.
 - `packages/neural/lib/input/tokenizer.ts` (`MailwomanTokenizer`)
 - `packages/neural/lib/input/native-offsets.integration.test.ts`
 - `packages/neural/lib/web/browser-slo.integration.test.ts`
-- `packages/mailwoman/tools/dev-tools/man-page.ts`
+- `packages/mailwoman/tools/dev-tools/generate/man-page.ts`
 
 ### Current runtime cost
 

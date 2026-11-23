@@ -10,7 +10,11 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"
-import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#tools/eval-harness/preregistration"
+import {
+	definitionContentHash,
+	loadFrozenDefinition,
+	preregistrationPath,
+} from "#tools/eval-harness/preregistration/artifacts"
 
 /**
  * Instruments that produce registered measurements.

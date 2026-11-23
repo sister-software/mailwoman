@@ -18,7 +18,7 @@ import {
 	type GeocodeSessionOptions,
 	SessionOptionSource,
 } from "mailwoman/geocode"
-import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/switch-pin"
+import { pinnedSwitch, type SwitchPin } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import type { PathBuilderLike } from "path-ts"
 
 import { missingWeightsCacheArtifacts } from "#dev-mcp/eval-report"

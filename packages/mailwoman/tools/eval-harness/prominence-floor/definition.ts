@@ -13,7 +13,7 @@ import {
 	preregistrationPath,
 	samplingProblems,
 	withheldFieldProblems,
-} from "#tools/eval-harness/preregistration"
+} from "#tools/eval-harness/preregistration/artifacts"
 import { WITHHELD_CANDIDATE_FIELDS } from "#tools/eval-harness/same-data/fixture"
 
 /**

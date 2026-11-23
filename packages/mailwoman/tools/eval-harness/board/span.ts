@@ -1,0 +1,310 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   This module provides the shared frame for digit and fragment boards.
+ *
+ *   It loads JSONL fixtures and parses every row with the production configuration.
+ *   It tallies results per class and prints Wilson-interval rates with miss samples.
+ *
+ *   Each board owns grading and headers.
+ *   It also owns miss rendering.
+ *   The shared frame keeps remaining behavior consistent.
+ */
+
+import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { type CaseNormalization, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
+import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
+import { JSONSpliterator } from "spliterator"
+
+import { flattenNodes } from "#tools/eval-harness/board/flatten-nodes"
+
+/**
+ * Production parse configuration.
+ *
+ * The query-shape prior runs on every production parse path, including `classifyStage` and `geocode-core`.
+ *
+ * See baselines.json $config.
+ */
+export function productionParseOptions(input: string): {
+	postcodeRepair: true
+	queryShape: ReturnType<typeof computeQueryShape>
+	enforceWordConsistency: typeof WORD_CONSISTENCY_SHIP_DEFAULT
+} {
+	return {
+		postcodeRepair: true,
+		queryShape: computeQueryShape(input),
+		enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+	}
+}
+
+/**
+ * Wilson score interval, the reason the boards exist.
+ *
+ * The normal approximation collapses at the extremes
+ * (it reports a negative lower bound on 0/400. It reports a zero-width interval on 400/400.)
+ * Wilson stays inside [0,1] and stays sane on the small, skewed cells that fragment classes produce.
+ */
+export function wilson(successes: number, total: number, z = 1.96): { low: number; high: number } {
+	if (total === 0) return { low: 0, high: 0 }
+	const p = successes / total
+	const z2 = z * z
+	const denom = 1 + z2 / total
+	const centre = p + z2 / (2 * total)
+	const spread = z * Math.sqrt((p * (1 - p)) / total + z2 / (4 * total * total))
+
+	return { low: Math.max(0, (centre - spread) / denom), high: Math.min(1, (centre + spread) / denom) }
+}
+
+/**
+ * The fields every span-board fixture includes.
+ */
+export interface SpanBoardFixture {
+	id: string
+	klass: string
+	input: string
+	expect: Record<string, string[]>
+	surface: string | null
+	source: string
+	/**
+	 * The minimal pair the row belongs to.
+	 *
+	 * A board with paired rows also reports, per class, the share of pairs whose rows all passed,
+	 * since a parser that labels both sides of a pair the same way passes half the rows.
+	 */
+	pair?: string
+	/**
+	 * The structure cell the row was drawn from.
+	 *
+	 * A board with cells also reports each cell's rate, since rows of one cell share
+	 * a structure and are not independent evidence.
+	 */
+	cell?: string
+}
+
+/**
+ * Joins the values of every node with the given tag in input order.
+ */
+export function tagText(nodes: ReadonlyArray<{ tag: string; value: string; start: number }>, tag: string): string {
+	return nodes
+		.filter((n) => n.tag === tag)
+		.toSorted((a, b) => a.start - b.start)
+		.map((n) => n.value)
+		.join(" ")
+}
+
+export interface SpanBoardOptions {
+	locale?: string
+	weightsCacheRoot?: string
+	fixturesPath?: string
+	/**
+	 * Restrict to one class (e.g. `bare-street`) for a fast iteration loop.
+	 */
+	klass?: string
+	/**
+	 * A JSONL file that receives one `{id, klass, pair, cell, ok, got, confidence}` line per graded row.
+	 *
+	 * `confidence` is the lowest confidence among the parse's spans, or `null` for a parse
+	 * with no span, so a reader can compare the parser's confidence with the row's outcome.
+	 */
+	rowsOut?: string
+	/**
+	 * How the parser treats the input's case.
+	 * Omitted, the library default applies.
+	 */
+	caseNormalization?: CaseNormalization
+}
+
+export interface SpanBoardResult {
+	exitCode: number
+}
+
+export interface SpanBoardSpec<Fixture extends SpanBoardFixture> {
+	/**
+	 * Name used in the no-fixtures refusal (`"digit board"`).
+	 */
+	name: string
+	defaultFixturesPath: string
+	/**
+	 * Grade one fixture from the parse's flattened nodes.
+	 *
+	 * The result states whether the assertion held.
+	 * It also records the value in the scored slot for the miss sample.
+	 */
+	grade: (fixture: Fixture, nodes: ReturnType<typeof flattenNodes>) => { ok: boolean; got: string }
+	headerLines: (fixtureCount: number) => string[]
+	describeWant: (fixture: Fixture) => string
+	missSampleSize: number
+}
+
+export async function runSpanBoard<Fixture extends SpanBoardFixture>(
+	spec: SpanBoardSpec<Fixture>,
+	options: SpanBoardOptions = {}
+): Promise<SpanBoardResult> {
+	const fixtures = JSONSpliterator.fromAsync<Fixture>(options.fixturesPath ?? spec.defaultFixturesPath).filter(
+		(fixture) => !options.klass || fixture.klass === options.klass
+	)
+
+	const classifier = await NeuralAddressClassifier.loadFromWeights({
+		locale: options.locale ?? DEFAULT_WEIGHTS_LOCALE,
+		cacheRoot: options.weightsCacheRoot,
+	})
+
+	const tally = new Map<string, { hit: number; total: number; misses: Array<Fixture & { got: string }> }>()
+	const pairs = new Map<string, boolean>()
+	const cells = new Map<string, { hit: number; total: number }>()
+
+	const graded: Array<{
+		id: string
+		klass: string
+		pair?: string
+		cell?: string
+		ok: boolean
+		got: string
+		confidence: number | null
+	}> = []
+
+	let fixtureCount = 0
+
+	for await (const fixture of fixtures) {
+		fixtureCount++
+
+		const tree = await classifier.parse(fixture.input, {
+			...productionParseOptions(fixture.input),
+			...(options.caseNormalization ? { caseNormalization: options.caseNormalization } : {}),
+		})
+
+		const nodes = flattenNodes(tree.roots)
+		const { ok, got } = spec.grade(fixture, nodes)
+		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
+
+		if (options.rowsOut) {
+			const confidences = nodes.map((n) => n.confidence).filter((c) => typeof c === "number")
+
+			graded.push({
+				id: fixture.id,
+				klass: fixture.klass,
+				pair: fixture.pair,
+				cell: fixture.cell,
+				ok,
+				got,
+				confidence: confidences.length ? Math.min(...confidences) : null,
+			})
+		}
+
+		if (fixture.pair) {
+			const key = `${fixture.klass}\u0000${fixture.pair}`
+
+			pairs.set(key, (pairs.get(key) ?? true) && ok)
+		}
+
+		if (fixture.cell) {
+			const cell = cells.get(fixture.cell) ?? { hit: 0, total: 0 }
+
+			cell.total++
+
+			if (ok) {
+				cell.hit++
+			}
+
+			cells.set(fixture.cell, cell)
+		}
+
+		bucket.total++
+
+		if (ok) {
+			bucket.hit++
+		} else {
+			bucket.misses.push({ ...fixture, got })
+		}
+
+		tally.set(fixture.klass, bucket)
+	}
+
+	if (!fixtureCount) throw new Error(`${spec.name}: no fixtures matched (klass=${options.klass ?? "*"})`)
+
+	for (const line of spec.headerLines(fixtureCount)) {
+		console.log(line)
+	}
+
+	console.log(`  class                     n     rate    95% CI`)
+
+	let totalHit = 0
+	let totalN = 0
+
+	for (const [klass, bucket] of [...tally].toSorted()) {
+		totalHit += bucket.hit
+		totalN += bucket.total
+		const rate = bucket.hit / bucket.total
+		const ci = wilson(bucket.hit, bucket.total)
+
+		console.log(
+			`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${rate.toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
+		)
+	}
+
+	const overall = wilson(totalHit, totalN)
+
+	console.log(
+		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
+	)
+
+	if (options.rowsOut) {
+		await writeLocalJSONLFile(graded, options.rowsOut)
+	}
+
+	if (cells.size) {
+		console.log(`\n  cells`)
+
+		for (const [cell, bucket] of [...cells].toSorted()) {
+			const ci = wilson(bucket.hit, bucket.total)
+
+			console.log(
+				`  ${cell.padEnd(56)} ${String(bucket.total).padStart(4)}   ${(bucket.hit / bucket.total).toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
+			)
+		}
+	}
+
+	if (pairs.size) {
+		const byClass = new Map<string, { hit: number; total: number }>()
+
+		for (const [key, ok] of pairs) {
+			const klass = key.slice(0, key.indexOf("\u0000"))
+			const bucket = byClass.get(klass) ?? { hit: 0, total: 0 }
+
+			bucket.total++
+
+			if (ok) {
+				bucket.hit++
+			}
+
+			byClass.set(klass, bucket)
+		}
+
+		console.log(`\n  pairs (every row of the pair passed)`)
+
+		for (const [klass, bucket] of [...byClass].toSorted()) {
+			const ci = wilson(bucket.hit, bucket.total)
+
+			console.log(
+				`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${(bucket.hit / bucket.total).toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
+			)
+		}
+	}
+
+	for (const [klass, bucket] of [...tally].toSorted()) {
+		if (!bucket.misses.length) continue
+
+		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first ${spec.missSampleSize}) ---`)
+
+		for (const miss of bucket.misses.slice(0, spec.missSampleSize)) {
+			console.log(`    ${stringifyJSON(miss.input)}`)
+			console.log(`        want=${stringifyJSON(spec.describeWant(miss))}  got=${stringifyJSON(miss.got)}`)
+		}
+	}
+
+	return { exitCode: 0 }
+}

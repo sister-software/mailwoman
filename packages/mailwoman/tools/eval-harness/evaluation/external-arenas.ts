@@ -1,0 +1,211 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Run the three unbiased capability arenas through harness-neural.
+ *
+ *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage),
+ *   so it over-represents that lineage's cases.
+ *   These three arenas come from outside it and together map the capability surface:
+ *
+ *   1. Libpostal, the statistical parser's hand-curated adversarial cases (clean, canonical)
+ *   2. Perturbation, golden v0.1.2 with rule-defeating transforms (noisy, degraded)
+ *   3. Postal-standards, postal-authority example addresses with edge formats by class
+ *      (military APO/FPO, PO-box variety, secondary-unit, intl)
+ *
+ *   All three are scored with --postcode-repair.
+ *
+ *   Usage (default shipped weights): node packages/mailwoman/tools/dev-tools/arenas/external.run.ts
+ *   Against a specific model (e.g. a fresh v0.7.2 export): model=/path/model.int8.onnx
+ *   tokenizer=/path/tokenizer.model\
+ *   modelcard=/path/model-card.json node packages/mailwoman/tools/dev-tools/arenas/external.run.ts
+ *
+ *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail)
+ *   and, for the postal arena, a breakdown by edge_class.
+ *   Run `yarn compile` first, since the harness resolves
+ *   @mailwoman/neural to its compiled out/ tree.
+ *
+ *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process
+ *   (when the spec floors `arena.perturb`) and captures `${report}${reportError}` into
+ *   `<out-dir>/arenas.md`, the file the verdict assembler column-reads for `arena.perturb`.
+ *   A throw here produced the child's non-zero exit.
+ *   The check still aborts on that error.
+ *
+ *   Scope note (de-shell): the three inner probes this still spawns as child
+ *   processes are `build/perturb-golden.run.ts`, `evaluation/harness-neural.run.ts`
+ *   (three times) and `arenas/summarize.run.ts`.
+ *   These probes live in `tools/dev-tools/` and run as child processes.
+ *   De-shelling them is a separate job.
+ */
+
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
+import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { runProcess } from "@mailwoman/core/process"
+import { type AddressSystemConventions, DEFAULT_TOGGLE, type Toggle } from "@mailwoman/neural/classifier/options"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
+
+/**
+ * The three child processes, located from the package root so the same file
+ * resolves from the source tree and from `out/`.
+ */
+const PERTURB_GOLDEN_PATH = resolvePackagePath("mailwoman", "tools", "dev-tools", "build", "perturb-golden.run.ts")
+const HARNESS_NEURAL_PATH = resolvePackagePath("mailwoman", "tools", "dev-tools", "evaluation", "harness-neural.run.ts")
+const SUMMARIZE_ARENAS_PATH = resolvePackagePath("mailwoman", "tools", "dev-tools", "arenas", "summarize.run.ts")
+
+/**
+ * Options for {@linkcode externalArenas}, one field per flag the check used to serialize into argv.
+ */
+export interface ExternalArenasOptions {
+	/**
+	 * Where the staged arenas and their result JSON land.
+	 *
+	 * @defaultValue `/tmp/external-arenas`
+	 */
+	outDir?: PathBuilderLike
+	/**
+	 * Candidate ONNX.
+	 *
+	 * Omit to grade the default shipped weights.
+	 * When set, {@linkcode ExternalArenasOptions.tokenizer} and
+	 * {@linkcode ExternalArenasOptions.modelCard} become required.
+	 */
+	model?: string
+	tokenizer?: PathBuilderLike
+	modelCard?: string
+	/**
+	 * Gaz-trained models (v4.2.0+): feed the ship config, since zero-filled clues
+	 * depress country recall and fake an affix crash.
+	 */
+	gazetteerLexicon?: string
+	anchorLookup?: PathBuilderLike
+	/**
+	 * Conventions mask: `auto` for v4.3.0+ ship config.
+	 *
+	 * @defaultValue `"off"`
+	 */
+	conventions?: AddressSystemConventions
+	/**
+	 * Span bridge (v4.4.0 corrective).
+	 *
+	 * @defaultValue {@linkcode DEFAULT_TOGGLE}
+	 */
+	bridgePunctuationGaps?: Toggle
+}
+
+/**
+ * Run the three unbiased capability arenas.
+ *
+ * Narration splits across `report`/`reportError` the way the child process's stdout/stderr did,
+ * because the check concatenates them in that order into `arenas.md`.
+ *
+ * @throws On a failed inner probe, the in-process spelling of the non-zero exit the check treats as fatal.
+ */
+export async function externalArenas(
+	options: ExternalArenasOptions = {},
+	report: (line: string) => void = console.log,
+	reportError: (line: string) => void = console.error
+): Promise<void> {
+	// Each child's output is captured rather than echoed, and trimmed the way the bash `| tail` did.
+	const outDir = PathBuilder.from(options.outDir ?? tempRootPathBuilder("external-arenas"))
+	await makeDirectories(outDir)
+	const emptyTests = outDir("empty-tests").toString()
+	await makeDirectories(emptyTests)
+
+	// Model args: pass through if a model is set, else the harness uses its loadFromWeights() default.
+	const modelArgs: string[] = []
+	const model = options.model
+
+	if (model) {
+		const tokenizer = options.tokenizer
+		const modelCard = options.modelCard
+
+		if (!tokenizer || !modelCard) throw new Error("model is set → tokenizer and modelCard are required")
+		modelArgs.push("--model", model, "--tokenizer", tokenizer.toString(), "--model-card", modelCard)
+
+		if (options.gazetteerLexicon) {
+			modelArgs.push("--gazetteer-lexicon", options.gazetteerLexicon)
+		}
+
+		if (options.anchorLookup) {
+			modelArgs.push("--anchor-lookup", options.anchorLookup.toString())
+		}
+
+		modelArgs.push("--conventions", options.conventions ?? "off")
+
+		if ((options.bridgePunctuationGaps ?? DEFAULT_TOGGLE) === "on") {
+			modelArgs.push("--bridge-gaps")
+		}
+
+		report(`Model: ${model}`)
+	} else {
+		report("Model: (default shipped weights)")
+	}
+
+	// 1. (re)generate the perturbation arena from golden v0.1.2.
+	report("== regenerating perturbation arena ==")
+
+	const perturbed = await runProcess(process.execPath, [
+		PERTURB_GOLDEN_PATH,
+		"--golden",
+		"data/eval/golden/v0.1.2",
+		"--out",
+		outDir("perturb", "perturbed.jsonl").toString(),
+		"--per-file",
+		"60",
+	])
+
+	if (perturbed.stdout.trim()) {
+		report(perturbed.stdout.trimEnd())
+	}
+
+	if (perturbed.stderr.trim()) {
+		reportError(perturbed.stderr.trimEnd())
+	}
+
+	// Stage each arena in its own dir (harness loads all .jsonl in a --falsehoods dir).
+	await makeDirectories(outDir("libpostal"))
+	await makeDirectories(outDir("postal"))
+	await copyFileTo("data/eval/external/libpostal-cases.jsonl", outDir("libpostal", "libpostal-cases.jsonl"))
+	await copyFileTo("data/eval/external/postal-cases.jsonl", outDir("postal", "postal-cases.jsonl"))
+
+	const runArena = async (name: string): Promise<void> => {
+		report(`== arena: ${name} ==`)
+
+		const r = await runProcess(process.execPath, [
+			HARNESS_NEURAL_PATH,
+			"--tests",
+			emptyTests,
+			"--falsehoods",
+			outDir(name).toString(),
+			...modelArgs,
+			"--postcode-repair",
+			"--out-json",
+			outDir(`${name}.results.json`).toString(),
+		])
+
+		await writeLocalFile(r.stderr ? `${r.stderr}\n` : "", outDir(`${name}.stderr`))
+
+		report(TextSpliterator.from(r.stdout).toArray().slice(-40).join("\n"))
+	}
+
+	await runArena("libpostal")
+	await runArena("perturb")
+	await runArena("postal")
+
+	report("")
+	report("== arena summary + postal edge-class breakdown ==")
+
+	const summary = await runProcess(process.execPath, [
+		SUMMARIZE_ARENAS_PATH,
+		outDir.toString(),
+		"data/eval/external/postal-cases.jsonl",
+	])
+
+	report(summary.stdout.trimEnd())
+
+	if (summary.stderr.trim()) {
+		reportError(summary.stderr.trimEnd())
+	}
+}

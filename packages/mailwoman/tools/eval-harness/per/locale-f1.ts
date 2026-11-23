@@ -55,7 +55,7 @@ import { JSONSpliterator } from "spliterator"
 import { $public } from "#env"
 import { deriveGeocodeRegister } from "#geocode/core"
 import { normalizeComponent } from "#tools/eval-harness/per/tag-f1"
-import { productionPriorOptions } from "#tools/eval-harness/production-priors"
+import { productionPriorOptions } from "#tools/eval-harness/rig/production-priors"
 
 /**
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts`

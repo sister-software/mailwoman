@@ -15,7 +15,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
 import { NodeModulesState, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { listEvalSpecs } from "mailwoman/tools/eval-harness/promotion/eval"
-import { SwitchPinSchema } from "mailwoman/tools/eval-harness/switch-pin"
+import { SwitchPinSchema } from "mailwoman/tools/eval-harness/rig/switch-pin"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 

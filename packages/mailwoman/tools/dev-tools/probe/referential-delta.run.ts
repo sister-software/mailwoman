@@ -53,7 +53,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { existingWOFDatabasePaths } from "#engine/resolver-backend"
-import { loadHardCaseBoard } from "#tools/eval-harness/hard-case-board"
+import { loadHardCaseBoard } from "#tools/eval-harness/board/hard-case"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
 
