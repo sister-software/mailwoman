@@ -21,8 +21,8 @@ import { describe, expect, test } from "vitest"
 import { stampNameRoles } from "#candidate/name-roles"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import { CANDIDATE_COLUMNS, type CandidateDatabase, createCandidateStagingTables } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street"
 
 const CCODES = new Map([
 	["FR", 0],

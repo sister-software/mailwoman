@@ -21,7 +21,6 @@ import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	clusterStreetSegments,
 	createStreetSegmentIndexes,
@@ -29,7 +28,8 @@ import {
 	STREET_SEGMENT_COLUMNS,
 	STREET_SEGMENT_STAGE_TABLE,
 	type StreetSegmentDatabase,
-} from "@mailwoman/resolver-wof-sqlite/street/segment-schema"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/segment-schema"
+import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

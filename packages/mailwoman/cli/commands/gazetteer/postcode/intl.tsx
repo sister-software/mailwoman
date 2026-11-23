@@ -384,7 +384,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 
 		// `normalizeLocalityForKey` lives in the optional `@mailwoman/resolver-wof-sqlite` peer,
 		// so it is loaded dynamically to keep `mailwoman --help` from faulting when the peer is absent.
-		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
+		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
 

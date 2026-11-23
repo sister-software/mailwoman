@@ -3,7 +3,7 @@
 
 import type { Kysely } from "kysely"
 
-import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
+import type { NameKey, RouteKey, StreetKey } from "#labels/street/normalize"
 
 /**
  * One rooftop address point; `(street_norm, number)` within a `postcode`

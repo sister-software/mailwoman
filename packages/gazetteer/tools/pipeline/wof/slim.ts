@@ -17,7 +17,11 @@
 
 import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
+||||||| parent of d4c6ad109b (layout: `resolver-wof-sqlite/lib` groups its label modules under `labels/` (#3388))
+import { md5Hex } from "@mailwoman/core/hash"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
 import { TextSpliterator } from "spliterator"
 

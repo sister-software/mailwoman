@@ -51,7 +51,7 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 			street: { normalizeLocalityForKey },
 		} = await allKeyed({
 			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
-			street: import("@mailwoman/resolver-wof-sqlite/street"),
+			street: import("@mailwoman/resolver-wof-sqlite/labels/street"),
 		})
 
 		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)

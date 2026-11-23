@@ -11,6 +11,7 @@ import {
 	type CandidateTable,
 } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import {
 	createPOINameKeyIndex,
 	createPOISearchFTS,
@@ -20,7 +21,6 @@ import {
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/schema/place-importance"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"
-import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"
 

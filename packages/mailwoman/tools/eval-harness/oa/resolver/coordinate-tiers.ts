@@ -9,8 +9,8 @@
 import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
 import { TextSpliterator } from "spliterator"
 
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"

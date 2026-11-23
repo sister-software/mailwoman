@@ -13,7 +13,6 @@ import type { PathBuilderLike } from "path-ts"
 
 import { houseNumberForms } from "#address/number-forms"
 import type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
-import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
 	normalizeHouseNumberForKey,
 	type NameKey,
@@ -24,7 +23,8 @@ import {
 	streetLocaleForSurface,
 	stripArrondissement,
 	type StreetLocale,
-} from "#street/normalize"
+} from "#labels/street/normalize"
+import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 
 /**
  * The columns this lookup reads, typed from the shared {@link AddressPointTable}

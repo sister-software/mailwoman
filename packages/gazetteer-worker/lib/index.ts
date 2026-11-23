@@ -16,7 +16,7 @@
  */
 
 import type { LandmarkHit } from "@mailwoman/core/resolver"
-import type { CrossingHit, StreetTableArea, StreetTableHit } from "@mailwoman/resolver-wof-sqlite/street/table"
+import type { CrossingHit, StreetTableArea, StreetTableHit } from "@mailwoman/resolver-wof-sqlite/labels/street/table"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
 	LANDMARK_ROUTE,

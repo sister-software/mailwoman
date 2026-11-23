@@ -11,7 +11,7 @@
  *   A read clusters on the written name, so a range reader fetches one run of pages for each lookup.
  */
 
-import { normalizeStreetForKey } from "#street/normalize"
+import { normalizeStreetForKey } from "#labels/street/normalize"
 
 /**
  * One merged street: road links with one name, joined through a shared node.

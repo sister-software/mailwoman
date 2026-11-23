@@ -10,7 +10,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { describe, expect, it } from "vitest"
 
 import { addressPairSample, AddressPairStratum } from "#tools/address-pairs/sample"

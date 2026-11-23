@@ -27,7 +27,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools/fetch/geonames/dump"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**

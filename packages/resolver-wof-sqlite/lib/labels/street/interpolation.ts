@@ -13,10 +13,10 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { streetLocaleForCountry } from "#labels/street/locale"
+import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#labels/street/normalize"
+import type { StreetSegmentDatabase } from "#labels/street/segment-schema"
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
-import { streetLocaleForCountry } from "#street/locale"
-import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
-import type { StreetSegmentDatabase } from "#street/segment-schema"
 
 // country-branch: the segment databases are built from TIGER, the United States' street network.
 // A street locale passed by the provider that opens a database would replace the constant.

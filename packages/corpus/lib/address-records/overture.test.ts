@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { parseStreetLocale } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { describe, expect, it } from "vitest"
 
 import { createUnitSplitter } from "#adapters/street/unit"

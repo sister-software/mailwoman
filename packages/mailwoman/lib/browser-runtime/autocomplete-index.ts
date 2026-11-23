@@ -14,7 +14,11 @@
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
 import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { isPresent } from "@mailwoman/core/values/objects"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
+||||||| parent of d4c6ad109b (layout: `resolver-wof-sqlite/lib` groups its label modules under `labels/` (#3388))
+import { memoizeResettable } from "@mailwoman/core/memoize"
+import { isPresent } from "@mailwoman/core/objects"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { z } from "zod"
 
 import { fetchWithRetry } from "#browser-runtime/fetch"

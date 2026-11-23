@@ -4,14 +4,14 @@
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { describe, expect, it } from "vitest"
 
-import { streetLocaleForCountry } from "#street/locale"
+import { streetLocaleForCountry } from "#labels/street/locale"
 import {
 	normalizeStreetForKeyLocale,
 	parseStreetLocale,
 	STREET_LOCALES,
 	streetKeyRulesOf,
 	streetLocaleForSurface,
-} from "#street/normalize"
+} from "#labels/street/normalize"
 
 describe("streetLocaleForCountry", () => {
 	it("folds a single-language country under that language's locale", () => {

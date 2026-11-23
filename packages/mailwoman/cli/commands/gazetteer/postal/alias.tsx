@@ -109,7 +109,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		kdb.exec("PRAGMA journal_mode = WAL;")
 		// The shared builder creates the exact table the reader and tests use,
 		// so this producer cannot drift from postal-city-alias-schema.ts.
-		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
+		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/labels/locality")
 
 		await createPostalCityAliasTable(kdb)
 

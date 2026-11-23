@@ -17,7 +17,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { FormerDivisionLookup, FormerDivisionMatch } from "@mailwoman/core/resolver"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * The table's default location, `$MAILWOMAN_DATA_ROOT/gazetteer/former-divisions-v1.json`.

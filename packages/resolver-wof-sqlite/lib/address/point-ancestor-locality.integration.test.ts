@@ -16,8 +16,8 @@ import { describe, expect, test } from "vitest"
 
 import { AddressPointSqliteLookup } from "#address"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
+import { streetLocaleForCountry } from "#labels/street/locale"
 import { addressPointDatabasePath, wofDatabasePath } from "#paths"
-import { streetLocaleForCountry } from "#street/locale"
 
 const candidatePath = wofDatabasePath("candidate.db")
 const registerPath = addressPointDatabasePath("address-points-us-ny.db")

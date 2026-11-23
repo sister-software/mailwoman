@@ -27,16 +27,6 @@
 			"node": "./lib/fst.ts",
 			"default": "./out/fst.js"
 		},
-		"#street": {
-			"types": "./out/street.d.ts",
-			"node": "./lib/street.ts",
-			"default": "./out/street.js"
-		},
-		"#postal": {
-			"types": "./out/postal.d.ts",
-			"node": "./lib/postal.ts",
-			"default": "./out/postal.js"
-		},
 		"#address": {
 			"types": "./out/address.d.ts",
 			"node": "./lib/address.ts",

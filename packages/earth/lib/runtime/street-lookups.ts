@@ -48,7 +48,7 @@ export async function openStreetLookups(slug: string, sqliteRuntimeBaseURL: stri
 	} = await allKeyed({
 		database: import("#runtime/range-database"),
 		street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
-		locale: import("@mailwoman/resolver-wof-sqlite/street/locale"),
+		locale: import("@mailwoman/resolver-wof-sqlite/labels/street/locale"),
 	})
 
 	if (NATIONAL_STREET_SLUGS.has(slug)) {

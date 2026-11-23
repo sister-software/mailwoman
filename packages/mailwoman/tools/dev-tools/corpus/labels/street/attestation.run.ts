@@ -45,7 +45,7 @@ import {
 	normalizeStreetForKeyLocale,
 	parseStreetLocale,
 	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { Globerator } from "spliterator/node/fs"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
@@ -70,8 +70,8 @@ const wanted = new Set(
 /**
  * The street-normalization locale this measurement folds a country's streets under.
  *
- * `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street` answers the
- * same question for every country and every build.
+ * `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/labels/street` answers
+ * the same question for every country and every build.
  * This table lists the countries the measurement has been checked against, with that function's
  * answer for each, except that it spells the United States `en`, which keys a street as `us` does.
  *

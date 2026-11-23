@@ -15,7 +15,7 @@ import { cloudflareTest } from "@cloudflare/vitest-plugin"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
-import { STREET_TABLE_DDL } from "@mailwoman/resolver-wof-sqlite/street/table"
+import { STREET_TABLE_DDL } from "@mailwoman/resolver-wof-sqlite/labels/street/table"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { defineConfig } from "vitest/config"
 

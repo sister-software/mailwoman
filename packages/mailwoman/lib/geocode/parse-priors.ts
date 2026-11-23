@@ -27,7 +27,7 @@ import { isStreetAffix } from "@mailwoman/neural/prior/fst"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
 import { PostcodePrefixIndexLookup } from "@mailwoman/postcode/prefix"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import type { PathBuilderLike } from "path-ts"
 
 /**

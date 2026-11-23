@@ -15,7 +15,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	streetLocaleForCountry,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 
 /**
  * The farthest, in degrees, a street segment's vertex may lie from a point

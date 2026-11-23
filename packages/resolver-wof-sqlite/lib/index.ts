@@ -56,7 +56,7 @@ export {
 } from "#candidate/coverage-manifest"
 
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#candidate/coverage-manifest"
-export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street/name-lookup"
+export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#labels/street/name-lookup"
 
 export { type GeonamesIngestProgress, ingestGeonamesAliases, purgeGeonamesAliasRange } from "#geonames/aliases"
 
@@ -67,17 +67,20 @@ export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "#postal/city/alias/lookup"
+} from "#labels/locality/postal-city/alias/lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city/alias/schema"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#labels/locality/postal-city/alias/schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
-} from "#postal/city/candidate-schema"
+} from "#labels/locality/postal-city/candidate-schema"
 
-export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city/candidate-schema"
+export type {
+	PostalCityCandidateDatabase,
+	PostalCityCandidateTable,
+} from "#labels/locality/postal-city/candidate-schema"
 
 export {
 	ADDRESS_CONVENTION_TABLE,
@@ -126,17 +129,17 @@ export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
-} from "#street/centroid/schema"
+} from "#labels/street/centroid/schema"
 
-export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid/schema"
-export { StreetCentroidSqliteLookup } from "#street/centroid"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "#labels/street/centroid/schema"
+export { StreetCentroidSqliteLookup } from "#labels/street/centroid"
 
 export {
 	StreetInterpolator,
 	type InterpolatedHit,
 	type InterpolationMethod,
 	type InterpolationQuery,
-} from "#street/interpolation"
+} from "#labels/street/interpolation"
 
 export {
 	deriveSchemaName,

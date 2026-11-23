@@ -25,7 +25,7 @@
  * A `toLowerCase()` approximation silently moves rows from the reachability column into the coverage one.
  */
 
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { conventionCandidateDBPath } from "mailwoman/engine/resolver-backend"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"

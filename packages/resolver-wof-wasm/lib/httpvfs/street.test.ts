@@ -12,7 +12,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

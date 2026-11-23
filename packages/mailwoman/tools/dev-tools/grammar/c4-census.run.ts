@@ -13,7 +13,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"

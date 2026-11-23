@@ -8,7 +8,7 @@
 
 import type { Kysely } from "kysely"
 
-import type { NameKey, StreetKey } from "#street/normalize"
+import type { NameKey, StreetKey } from "#labels/street/normalize"
 
 /**
  * One row per street, postcode and commune.

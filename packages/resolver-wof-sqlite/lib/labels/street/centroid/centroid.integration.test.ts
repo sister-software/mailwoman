@@ -18,7 +18,7 @@ import {
 	normalizeLocalityForKey,
 	streetLocaleForCountry,
 	stripArrondissement,
-} from "#street"
+} from "#labels/street"
 
 interface Seed {
 	street_norm: string

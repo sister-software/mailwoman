@@ -168,7 +168,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	let fstStreetMorphology: FSTMatcher | null = null
 
 	if (options.streetMorphology) {
-		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
+		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
 

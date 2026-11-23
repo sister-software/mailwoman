@@ -67,7 +67,7 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 			} = await allKeyed({
 				sealed: import("@mailwoman/sqlite/sealed"),
 				paths: import("@mailwoman/resolver-wof-sqlite/paths"),
-				normalize: import("@mailwoman/resolver-wof-sqlite/street/normalize"),
+				normalize: import("@mailwoman/resolver-wof-sqlite/labels/street/normalize"),
 			})
 
 			type Database = import("@mailwoman/resolver-wof-sqlite/candidate/schema").CandidateDatabase

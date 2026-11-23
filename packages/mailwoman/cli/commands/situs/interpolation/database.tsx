@@ -9,8 +9,8 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { basename, dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -149,12 +149,12 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
 		// Both packages load dynamically because the published CLI doesn't depend on them.
-		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
+		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
 
 		try {
-			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
+			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/labels/street")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 		} catch {
 			throw new CommandError(
 				"situs interpolation-database requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."

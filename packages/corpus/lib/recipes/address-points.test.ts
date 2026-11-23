@@ -10,7 +10,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { SeededRandom } from "@mailwoman/core/math/random"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { type AddressPointDatabase, createAddressPointTable } from "@mailwoman/resolver-wof-sqlite/address/point/schema"
-import type { NameKey, RouteKey, StreetKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import type { NameKey, RouteKey, StreetKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

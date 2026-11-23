@@ -9,7 +9,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	streetLocaleForCountry,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

@@ -9,7 +9,7 @@
  *   so a future tweak can't silently desync the two sides.
  */
 
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { expect, test } from "vitest"
 
 import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale"

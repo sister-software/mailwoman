@@ -9,7 +9,7 @@
 
 import type { LandmarkHit, LandmarkKind } from "@mailwoman/core/resolver"
 
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * One way of writing one place.

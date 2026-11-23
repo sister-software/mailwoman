@@ -12,7 +12,7 @@ import {
 	type StreetTableHit,
 	type StreetTableLookup,
 	type StreetTableQuery,
-} from "@mailwoman/resolver-wof-sqlite/street/table"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/table"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { RangeDatabase } from "#httpvfs/database"

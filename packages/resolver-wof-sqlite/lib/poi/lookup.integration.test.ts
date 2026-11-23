@@ -23,6 +23,7 @@ import { cellToLatLng, gridRingUnsafe, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
+import { normalizeLocalityForKey } from "#labels/street"
 import {
 	POI_H3_RESOLUTION,
 	POILookup,
@@ -33,7 +34,6 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "#poi"
-import { normalizeLocalityForKey } from "#street"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 

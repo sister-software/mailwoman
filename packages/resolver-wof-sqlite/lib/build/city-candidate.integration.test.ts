@@ -9,8 +9,12 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "#build/candidate"
 import { WOFCandidateTableLookup } from "#candidate/lookup"
-import { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateDatabase } from "#postal"
-import { normalizeLocalityForKey } from "#street"
+import {
+	createPostalCityCandidateTable,
+	POSTAL_CITY_CANDIDATE_TABLE,
+	type PostalCityCandidateDatabase,
+} from "#labels/locality"
+import { normalizeLocalityForKey } from "#labels/street"
 
 let scratch: TemporaryDirectory
 let candidatePath: PathBuilder

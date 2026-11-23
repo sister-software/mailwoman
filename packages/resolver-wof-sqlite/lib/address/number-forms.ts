@@ -3,7 +3,7 @@
 
 import { isJoinedHouseNumber } from "@mailwoman/match/address-point"
 
-import { streetKeyRulesOf, type StreetLocale } from "#street/normalize"
+import { streetKeyRulesOf, type StreetLocale } from "#labels/street/normalize"
 
 /**
  * The forms a normalized house number is probed under, the written form first,

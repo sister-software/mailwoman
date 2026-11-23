@@ -174,7 +174,7 @@ export async function loadForkEntityDeps(
 
 	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
-		import("@mailwoman/resolver-wof-sqlite/street"),
+		import("@mailwoman/resolver-wof-sqlite/labels/street"),
 		import("#poi/venue-head-fit"),
 	])
 

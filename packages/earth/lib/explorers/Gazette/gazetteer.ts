@@ -9,7 +9,7 @@
  *   That one asks the trigram FTS index.
  */
 
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { RangeDatabase } from "@mailwoman/resolver-wof-wasm/httpvfs/database"
 import type { SQLValue } from "@mailwoman/resolver-wof-wasm/httpvfs/worker-protocol"
 import { adminGazetteerURL } from "mailwoman/browser-runtime/resources"

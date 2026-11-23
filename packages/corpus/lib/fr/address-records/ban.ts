@@ -18,7 +18,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeHouseNumberForKey,
 	normalizeStreetForKeyLocale,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
 import { rawTextDiscriminator } from "#adapters/record-id"

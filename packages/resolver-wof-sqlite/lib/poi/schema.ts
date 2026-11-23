@@ -22,7 +22,7 @@ import type { layerschemadatabase } from "@mailwoman/core/layers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
-import type { NameKey } from "#street/normalize"
+import type { NameKey } from "#labels/street/normalize"
 
 /**
  * One POI row.
