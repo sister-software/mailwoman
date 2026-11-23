@@ -545,7 +545,7 @@ export async function runAblationLayer(
 			}
 		}
 	} finally {
-		deps[Symbol.dispose]()
+		await deps[Symbol.asyncDispose]()
 		gazetteer[Symbol.dispose]()
 	}
 

@@ -14,6 +14,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
+import { collapseWhitespace } from "@mailwoman/normalize/whitespace"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 
@@ -129,12 +130,16 @@ const POSTCODE_ROUTE_CONFIDENCE = 0.9
  *
  * The segment check matters for mixed input, such as a Han address line followed by a Latin province.
  * A decision without a family records why the router abstained.
+ *
+ * The router reads the text with its inline whitespace collapsed, as the parse's normalizer collapses it.
+ * The shape's segmentation reads a raw tab as a separator, so an unfolded tab would split
+ * `Chinese\t口福羊汤` into a Han segment and route a Latin address that the same text with spaces doesn't.
  */
 export function routeFamilyForText(
 	text: string,
 	generation: QueryShapeGeneration = QueryShapeGeneration.Legacy
 ): RoutingDecision {
-	const shape = computeQueryShape(text, generation)
+	const shape = computeQueryShape(collapseWhitespace(text).text, generation)
 	const candidate = scoreByScript(shape)
 	const hinted = candidate ? scriptFamilyBase(candidate.locale) : null
 

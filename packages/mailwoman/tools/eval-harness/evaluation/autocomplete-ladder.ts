@@ -298,7 +298,7 @@ export async function runAutocompleteLadder(
 	const fstDir = options.fstDir ?? wofDatabasePath("fst-per-locale")
 	const adminDB = options.adminDB ?? wofDatabasePath("admin-global-priority.db")
 
-	using deps = await buildGauntletDeps(options)
+	await using deps = await buildGauntletDeps(options)
 	using admin = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
 	const matchers = new Map<string, FSTMatcher | null>()

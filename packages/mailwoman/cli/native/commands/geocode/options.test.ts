@@ -49,6 +49,7 @@ const COMPOSED_FLAGS: Record<string, string> = {
 const KEYS_WITHOUT_FLAG: Record<string, string> = {
 	weightsCacheRoot: "File-only: the command has no flag for a staged weights cache.",
 	poiVenueTier: "File-only: the command has no flag for the venue tier.",
+	spanRescoreWeakResolution: "File-only: an evaluation pins the span-rescore brake's reading; the command has no flag.",
 	trace: "Program-only: `--debug` turns tracing on for its own session.",
 	diagnoseUnreachable: "Program-only: it acts only under a trace.",
 }

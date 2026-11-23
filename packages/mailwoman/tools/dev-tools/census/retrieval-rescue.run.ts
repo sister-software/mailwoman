@@ -90,7 +90,7 @@ for (const c of cases) {
 }
 
 probe.handle?.[Symbol.dispose]()
-deps[Symbol.dispose]()
+await deps[Symbol.asyncDispose]()
 
 const summary = summarizeRescue(reports)
 

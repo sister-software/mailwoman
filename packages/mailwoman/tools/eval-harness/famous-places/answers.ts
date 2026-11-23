@@ -190,7 +190,7 @@ export async function scoreFamousPlaceAnswers(
 
 	const fixture = await JSONSpliterator.fromAsync<FamousPlaceRow>(file).toArray()
 
-	using deps = await buildGauntletDeps({
+	await using deps = await buildGauntletDeps({
 		...(options.weightsCacheRoot ? { weightsCacheRoot: options.weightsCacheRoot } : {}),
 		...(options.modelPath ? { modelPath: options.modelPath } : {}),
 	})

@@ -393,8 +393,8 @@ async function checkpoint(final: boolean): Promise<void> {
 	await writeLocalJSONLFile(receipts, `${outDir}/${label}-rows.jsonl`)
 }
 
-using deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
-using indexDeps = pairIndexCache ? await buildGauntletDeps({ weightsCacheRoot: pairIndexCache }) : null
+await using deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
+await using indexDeps = pairIndexCache ? await buildGauntletDeps({ weightsCacheRoot: pairIndexCache }) : null
 
 for await (const row of readDecodeCensusRows({
 	...(values.heldout ? { heldout: values.heldout } : {}),

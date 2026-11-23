@@ -199,6 +199,11 @@ export interface GeocodeRequestOptions {
 	defaultCountry?: string
 
 	/**
+	 * The country the typo-fuzzy tier scopes its matches to, in place of the country scope's country.
+	 */
+	fuzzyCountryScope?: string
+
+	/**
 	 * Cancels the request.
 	 *
 	 * The geocode rejects with the signal's reason before its next stage starts,
@@ -211,6 +216,24 @@ export interface GeocodeRequestOptions {
  * The services a session resolved for its data generation, as `resolveGenerationServices` returns them.
  */
 export type GeocodeSessionServices = Awaited<ReturnType<typeof resolveGenerationServices>>
+
+/**
+ * What a session's parse reads: its routed classifier, the loaded priors and the decoder settings.
+ */
+export type GeocodeSessionParseDeps = Pick<
+	GeocodeDeps,
+	| "normalizeInput"
+	| "caseNormalization"
+	| "inputMode"
+	| "fst"
+	| "streetMorphology"
+	| "streetMorphologyPrior"
+	| "anchorRegions"
+	| "venueHead"
+	| "venueHeadOpts"
+	| "channelPins"
+> &
+	GeocodeDecoderSettingDeps & { classifier: GeocodeSessionServices["routed"] }
 
 /**
  * The scope a session builds from.
@@ -289,6 +312,12 @@ export interface GeocodeSession extends AsyncDisposable {
 	 * A caller never disposes one.
 	 */
 	readonly services: Readonly<GeocodeSessionServices>
+
+	/**
+	 * The dependencies each geocode's parse reads, for a diagnostic that decodes
+	 * an input as the session would.
+	 */
+	readonly parseDeps: Readonly<GeocodeSessionParseDeps>
 	geocode(input: string, request?: GeocodeRequestOptions): Promise<GeocodeRun>
 
 	/**
@@ -435,11 +464,7 @@ export async function createGeocodeSession(
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
-	const formerDivisionLookup = options.formerDivisions
-		? await import("@mailwoman/resolver-wof-sqlite/lookup/former-divisions").then((module) =>
-				module.readFormerDivisionLookup(options.formerDivisionsTable)
-			)
-		: null
+	const formerDivisionLookup = services.formerDivisions
 
 	const databases: RegionDatabaseResolver =
 		explicitAddressPoints || explicitInterpolation
@@ -458,21 +483,7 @@ export async function createGeocodeSession(
 
 	const initTiming: PipelineTiming = { ...timings, total: initializedAt - initStartedAt }
 
-	const parseDeps: Pick<
-		GeocodeDeps,
-		| "classifier"
-		| "normalizeInput"
-		| "caseNormalization"
-		| "inputMode"
-		| "fst"
-		| "streetMorphology"
-		| "streetMorphologyPrior"
-		| "anchorRegions"
-		| "venueHead"
-		| "venueHeadOpts"
-		| "channelPins"
-	> &
-		GeocodeDecoderSettingDeps = {
+	const parseDeps: GeocodeSessionParseDeps = {
 		...decoderSettings,
 		classifier: routed,
 		...(fst ? { fst } : {}),
@@ -538,7 +549,7 @@ export async function createGeocodeSession(
 		// A request's country takes the place of the session's default country for this input.
 		const scopeOptions = request.defaultCountry ? { ...options, defaultCountry: request.defaultCountry } : options
 		const countryScope = routedAway && !scopeOptions.defaultCountry ? null : resolverDefaultCountry(scopeOptions)
-		const localeCountry = countryScope?.country ?? null
+		const fuzzyCountryScope = request.fuzzyCountryScope ?? countryScope?.country ?? null
 
 		const parentPlace = request.parentPlace ?? options.parentPlace
 
@@ -563,7 +574,7 @@ export async function createGeocodeSession(
 
 				...(capitalLevel ? { capitalLevel } : {}),
 
-				...(localeCountry ? { fuzzyCountryScope: localeCountry } : {}),
+				...(fuzzyCountryScope ? { fuzzyCountryScope } : {}),
 
 				postcodeCountryCoherence: options.postcodeCountryCoherence,
 				postcodeShapeCoherence: options.postcodeShapeCoherence,
@@ -584,6 +595,7 @@ export async function createGeocodeSession(
 				...forkEntityDeps,
 
 				poiVenueTier: options.poiVenueTier,
+				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 
 				...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
 
@@ -651,6 +663,7 @@ export async function createGeocodeSession(
 		initTiming,
 		unavailableLayers: unavailable,
 		services,
+		parseDeps,
 
 		artifacts: {
 			...(fst && priorArtifacts.fstPath ? { fstPath: priorArtifacts.fstPath } : {}),

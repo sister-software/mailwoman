@@ -242,7 +242,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	deps[Symbol.dispose]()
+	await deps[Symbol.asyncDispose]()
 
 	console.log(
 		`\n=== Gauntlet · regression (${counted - fails.length}/${counted} counted cases pass, ${tracked.length} tracked) ===`

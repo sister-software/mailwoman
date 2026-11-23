@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The worker pool behind `geocodeHeldoutRows` against the single-thread path,
- *   on the installed weights and the data root's gazetteer.
+ *   The worker pool behind `geocodeHeldoutRows` against the board's geocoder on the
+ *   calling thread, on the installed weights and the data root's gazetteer.
  *
- *   A row's outcome reads no other row's geocode, so the two paths must agree row for row.
+ *   Both build their sessions from one `gauntletBatchConfig`, and a row's outcome reads
+ *   no other row's geocode, so the two paths must agree row for row.
  *
  *   The guard asks the resolver for the model the loader opens, as the conformance suites do.
  */
@@ -16,9 +17,11 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
+import { buildGauntletDeps, PRODUCTION_RESOLVER_PINS } from "#tools/eval-harness/gauntlet/harness"
 import type { HeldoutArm } from "#tools/eval-harness/heldout/per/arm"
-import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
+import { type HeldoutRow, heldoutRowID } from "#tools/eval-harness/heldout/per/country"
 import { geocodeHeldoutRows } from "#tools/eval-harness/heldout/per/geocode"
+import { type HeldoutGeocodeOutcome, scoreGeocodeOutcome } from "#tools/eval-harness/heldout/per/geocode/outcome"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -89,13 +92,20 @@ const ROWS = [
 ]
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))("geocodeHeldoutRows", () => {
-	it("gives the same outcome for every row on a worker pool as on the calling thread", async () => {
+	it("gives each row the outcome the board's geocoder on the calling thread gives it", async () => {
 		const arm: HeldoutArm = { label: "installed", cacheRoot: repoRootPath(), pins: {} }
+		const pooled = await geocodeHeldoutRows(ROWS, arm, { workers: 2 })
 
-		const single = await geocodeHeldoutRows(ROWS, arm, { workers: 1 })
-		const pooled = await geocodeHeldoutRows(ROWS, arm, { workers: 3 })
+		await using deps = await buildGauntletDeps({ weightsCacheRoot: arm.cacheRoot, pins: PRODUCTION_RESOLVER_PINS })
+		const onThread = new Map<string, HeldoutGeocodeOutcome>()
+
+		for (const heldout of ROWS) {
+			const result = await deps.geocode(heldout.raw, heldout.country ? { caseCountry: heldout.country } : {})
+
+			onThread.set(heldoutRowID(heldout), scoreGeocodeOutcome(heldout, result))
+		}
 
 		expect(pooled.size).toBe(ROWS.length)
-		expect(Object.fromEntries(pooled)).toEqual(Object.fromEntries(single))
+		expect(Object.fromEntries(pooled)).toEqual(Object.fromEntries(onThread))
 	}, 600_000)
 })

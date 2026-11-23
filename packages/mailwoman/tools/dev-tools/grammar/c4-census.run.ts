@@ -88,7 +88,7 @@ try {
 		})
 	}
 } finally {
-	deps[Symbol.dispose]()
+	await deps[Symbol.asyncDispose]()
 }
 
 const boundaries = rows.flatMap((row) => row.boundaries)

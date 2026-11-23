@@ -187,7 +187,7 @@ async function compareMailwomanArms(
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	using arms = await prepareMailwomanArms(
+	await using arms = await prepareMailwomanArms(
 		registry,
 		set,
 		configA,

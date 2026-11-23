@@ -11,7 +11,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
-import { type DefaultCountrySource, ScopeStrength } from "@mailwoman/core/resolver"
+import { type DefaultCountrySource, ScopeStrength, type WeakResolutionReading } from "@mailwoman/core/resolver"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/prior/venue-head"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
@@ -186,6 +186,11 @@ export const GeocodeSessionOptionsSchema = z.strictObject({
 	 * affecting only the candidate backend and requiring the `name_role` column.
 	 */
 	variantAliasExemption: VariantAliasExemptionSchema.default("applied"),
+
+	/**
+	 * Which reading of a weak resolution lifts the span-rescore brake, or none for the shipped brake.
+	 */
+	spanRescoreWeakResolution: z.enum(["score", "containment", "either"] satisfies WeakResolutionReading[]).optional(),
 
 	/**
 	 * Whether coherent postcode and locality evidence overrides a country scope that disagrees with it.

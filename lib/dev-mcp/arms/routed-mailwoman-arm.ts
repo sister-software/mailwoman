@@ -84,7 +84,7 @@ interface RoutedMailwomanProvenance {
 	artifacts_by_locale: RoutedArtifactProvenance[]
 }
 
-export interface RoutedMailwomanArm extends Disposable {
+export interface RoutedMailwomanArm extends AsyncDisposable {
 	provenance: RoutedMailwomanProvenance
 	geocode(input: ResolvedInput): Promise<GauntletResult>
 }
@@ -225,7 +225,7 @@ export async function buildRoutedMailwomanArm(
 	inputs: readonly ResolvedInput[],
 	deps: RoutedMailwomanArmDeps = DEFAULT_DEPS
 ): Promise<RoutedMailwomanArm> {
-	using resources = new DisposableStack()
+	await using resources = new AsyncDisposableStack()
 	assertSupportedConfig(config)
 
 	const cacheRoot = config.weights_cache ?? null

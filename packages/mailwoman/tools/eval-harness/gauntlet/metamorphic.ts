@@ -343,7 +343,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	deps[Symbol.dispose]()
+	await deps[Symbol.asyncDispose]()
 
 	const newlyPassing = [
 		...[...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key)),

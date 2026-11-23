@@ -354,7 +354,7 @@ export function renderFanoutRow(row: Omit<FanoutRow, "rendered">): string {
 
 // #region Running
 
-interface PreparedArm extends Disposable {
+interface PreparedArm extends AsyncDisposable {
 	label: string
 	config: EngineConfig
 	/**
@@ -432,7 +432,7 @@ function prepareSessionArms(
 			},
 			// The registry owns the session.
 			// The released lease lets an evicted session close.
-			[Symbol.dispose]() {
+			async [Symbol.asyncDispose]() {
 				engine?.[Symbol.dispose]()
 				engine = null
 			},
@@ -462,7 +462,7 @@ async function prepareRoutedArms(
 			// A routed arm holds its own sessions, so it is open from the moment it is built.
 			open: async () => {},
 			geocode: (item) => arm.geocode(item),
-			[Symbol.dispose]: () => arm[Symbol.dispose](),
+			[Symbol.asyncDispose]: () => arm[Symbol.asyncDispose](),
 		})
 	}
 
@@ -535,7 +535,7 @@ export async function runFanout(
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 	const startedAt = Date.now()
 
-	using stack = new DisposableStack()
+	await using stack = new AsyncDisposableStack()
 
 	const { arms, warnings } =
 		executionPath === "board-routed"

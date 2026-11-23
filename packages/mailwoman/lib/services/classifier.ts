@@ -7,6 +7,7 @@
 
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
+import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import { createToken, type ServiceRegistry, type ServiceToken } from "async-init"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -43,6 +44,14 @@ export interface ClassifierServiceOptions {
 	 * When set, loading uses only that cache and fails when the locale's package is absent there.
 	 */
 	weightsCacheRoot?: string
+
+	/**
+	 * Whether to zero the gazetteer channel next to postcode-anchor hits,
+	 * `"declared"` (the model card's) by default.
+	 *
+	 * Another value is a declared ablation for an evaluation, never a shipping configuration.
+	 */
+	suppressGazetteerNearPostcode?: ModelCardToggle
 }
 
 /**
@@ -58,6 +67,9 @@ export function registerClassifierService(registry: ServiceRegistry, options: Cl
 					locale: options.locale,
 					...(options.dataRoot ? { overlayRoot: resolvePath(options.dataRoot, "weights") } : {}),
 					...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
+					...(options.suppressGazetteerNearPostcode
+						? { suppressGazetteerNearPostcode: options.suppressGazetteerNearPostcode }
+						: {}),
 				})
 			} catch (error) {
 				throw new CommandError(

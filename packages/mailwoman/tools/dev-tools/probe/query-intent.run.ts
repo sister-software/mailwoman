@@ -76,4 +76,4 @@ for (const query of board) {
 	)
 }
 
-deps[Symbol.dispose]()
+await deps[Symbol.asyncDispose]()
