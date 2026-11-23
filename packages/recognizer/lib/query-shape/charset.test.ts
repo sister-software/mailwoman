@@ -4,8 +4,8 @@
 import type { BCP47 } from "@mailwoman/registry/types"
 import { describe, expect, it } from "vitest"
 
-import { classifyCodepoint, classifyToken, classifyTokenScript, scriptForRange } from "#charset"
 import { createRecognizer } from "#index"
+import { classifyCodepoint, classifyToken, classifyTokenScript, scriptForRange } from "#query-shape/charset"
 import { structure } from "#structure"
 import { readFrozenFixture } from "#tools/frozen"
 

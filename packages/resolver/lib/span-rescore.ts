@@ -16,7 +16,7 @@ import {
 	type WeakResolutionReading,
 } from "@mailwoman/core/resolver"
 import { acceptPostcode } from "@mailwoman/postcode/country-formats"
-import { isRegionAbbreviationToken } from "@mailwoman/recognizer/region-abbreviation"
+import { isRegionAbbreviationToken } from "@mailwoman/recognizer/labels/region/region-abbreviation"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { partitionByContainment } from "#admin/containment"

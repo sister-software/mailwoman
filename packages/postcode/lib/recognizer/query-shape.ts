@@ -26,7 +26,7 @@
 import type { CountrySet } from "@mailwoman/codex/country/sets"
 import type { NormalizedInputLite } from "@mailwoman/core/pipeline/types"
 import { createRecognizer, type Recognizer } from "@mailwoman/recognizer"
-import { specifyStructure } from "@mailwoman/recognizer/script-run"
+import { specifyStructure } from "@mailwoman/recognizer/query-shape/script-run"
 import { structure } from "@mailwoman/recognizer/structure"
 import type { KnownFormatHit, StructureFields, TextSpan } from "@mailwoman/recognizer/types"
 

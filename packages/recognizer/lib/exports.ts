@@ -31,7 +31,7 @@ export {
 	type RecognizerResult,
 	type ShapePrefixStatus,
 	type TracedRecognizerResult,
-} from "#recognizer"
+} from "#runtime/recognizer"
 
 export type { PrefixStatus } from "#runtime/engine"
 
@@ -43,7 +43,7 @@ export {
 	type TraceSource,
 	type TraceSpan,
 	type TraceStep,
-} from "#trace"
+} from "#runtime/trace"
 
 export type {
 	AxisOrder,

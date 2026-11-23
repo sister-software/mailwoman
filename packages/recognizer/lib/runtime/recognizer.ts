@@ -16,7 +16,7 @@ import { loadFamily, type PrefixStatus, prefixStatuses, recognizeText, traceText
 import { RecognizerCompositionError } from "#runtime/errors"
 import { type Instance, ready } from "#runtime/state"
 import { type KnownFormatsBinding, structureFields } from "#runtime/structure"
-import type { Trace, TraceOptions } from "#trace"
+import type { Trace, TraceOptions } from "#runtime/trace"
 
 /**
  * Reads what a known-formats family's metadata holds for each of its shapes.
