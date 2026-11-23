@@ -199,10 +199,12 @@ The command prompts for the version (or pass `--patch` / `--minor` / `--major` /
 
 ## The SBOM and the data bill of materials (post-publish)
 
-The publish job writes the Software Bill of Materials for the released `mailwoman` package in both
+The `documents` job writes the Software Bill of Materials for the released `mailwoman` package in both
 open standards (SPDX 2.3 + CycloneDX 1.5) and the data bill of materials, and attaches all three files
-to the GitHub release. The generator reads the **published** tarball, so it runs after the publish loop
-and waits for the registry to serve the version. The job cannot commit to `main` under the branch
+to the GitHub release. The generator reads the **published** tarball, so the job runs after the publish
+job and waits for the registry to serve the version. It runs on the lab host's self-hosted runners,
+because the public bucket refuses the data bill of materials' manifest reads from a GitHub-hosted
+runner with 403 (#3439). The job cannot commit to `main` under the branch
 ruleset, so it opens a PR, `release/v<version>-sbom`, that commits the three files under
 `docs/static/sbom/` and merges when `test` passes. Until 11.0.0 a post-release docs PR committed them by
 hand. When the release matrix moved into the commit before the prepare dispatch, the post-release PR
@@ -225,7 +227,7 @@ and the script header explains the SPDX normalization.
 
 ## The container image (post-publish)
 
-Once the SBOM step has seen npm serve every release workspace, the publish job dispatches
+Once the SBOM step has seen npm serve every release workspace, the `documents` job dispatches
 `docker-publish.yml` with the release version. That workflow builds `ghcr.io/sister-software/mailwoman:<version>`
 from the published packages and moves `latest` to it. When npm holds a package past the SBOM step's wait,
 the job skips the dispatch and prints the command to run once the registry serves it:

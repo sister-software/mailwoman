@@ -194,8 +194,8 @@ jobs:
     permissions:
       contents: write # push the version tag + create the GitHub release
       id-token: write # npm Trusted Publishing (OIDC)
-      actions: write # dispatch the Docker publish and the Test workflow for the SBOM PR
-      pull-requests: write # open the auto-merging PR that commits the SBOMs under docs/static/sbom
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -317,9 +317,49 @@ jobs:
           fi
           echo "All workspaces published at v${{ steps.version.outputs.version }}."
 
+      - name: Report completed dry run
+        if: ${{ inputs.dry_run }}
+        run: | # shell
+          echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. The run created no tag, release or npm publish."
+
+  # The release documents, the SBOM PR and the Docker dispatch run on the lab host's runners. The data
+  # bill of materials reads the address-layer manifests from the public bucket, and the bucket answers a
+  # GitHub-hosted runner's request with 403 while it serves the same request from the lab host (#3439).
+  documents:
+    needs: publish
+    if: ${{ inputs.mode == 'publish' && !inputs.dry_run }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 30
+    permissions:
+      contents: write # attach the documents to the GitHub release and push the SBOM branch
+      actions: write # dispatch the Docker publish and the Test workflow for the SBOM PR
+      pull-requests: write # open the auto-merging PR that commits the SBOMs under docs/static/sbom
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile
+        run: yarn compile
+
       # The SBOM generator reads the published tarball from the registry, so it runs after the publish
-      # loop, and this job cannot commit to main, so both documents attach to the GitHub release. The
-      # docs copy under docs/static/sbom/ is committed by the post-release docs PR (RELEASING.md).
+      # job, and no job can push to main, so the documents attach to the GitHub release and the next
+      # step commits their docs copy through a PR.
       # npm can hold a fresh version in validation for some minutes, so the step waits for the
       # registry to serve it before packing.
       - name: Attach the SBOM and the data bill of materials to the GitHub release
@@ -330,7 +370,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.publish.outputs.version }}
         run: | # shell
           set -euo pipefail
           # `npm install` of the mailwoman tarball resolves every workspace it depends on, and npm can
@@ -372,7 +412,7 @@ jobs:
           # the step dispatches Test against the branch.
           GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           HAS_RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.publish.outputs.version }}
         run: | # shell
           set -euo pipefail
           BRANCH="release/v${VERSION}-sbom"
@@ -408,20 +448,15 @@ jobs:
         if: ${{ !inputs.dry_run && steps.sbom.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.publish.outputs.version }}
         run: gh workflow run docker-publish.yml --ref main -f tag="${VERSION}"
 
       - name: Report a skipped Docker image publish
         if: ${{ !inputs.dry_run && steps.sbom.outcome != 'success' }}
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.publish.outputs.version }}
         run: | # shell
-          echo "::warning::npm wasn't serving every package, so the Docker image wasn't built. Once it does, run: gh workflow run docker-publish.yml --ref main -f tag=${VERSION}"
-
-      - name: Report completed dry run
-        if: ${{ inputs.dry_run }}
-        run: | # shell
-          echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. The run created no tag, release or npm publish."
+          echo "::warning::npm wasn't serving every package, or the documents step failed, so the Docker image wasn't built. Once npm serves every package, run: gh workflow run docker-publish.yml --ref main -f tag=${VERSION}"
 
   # This job regenerates the Python and Rust API clients as workflow artifacts for inspection.
   # publish-clients.yml publishes them to their registries.
