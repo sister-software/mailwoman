@@ -4,7 +4,7 @@
 import { PostcodePrefixIndexLookup, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix"
 import { describe, expect, it } from "vitest"
 
-import { createAnchorRegionLookup, prefixForLevel } from "#postcode/anchor/regions"
+import { createAnchorRegionLookup, prefixForLevel } from "#labels/postcode/anchor/regions"
 
 const US = { placetype: "country", wofID: 85_633_793, name: "United States" }
 const VERMONT = { placetype: "region", wofID: 85_688_763, name: "Vermont" }

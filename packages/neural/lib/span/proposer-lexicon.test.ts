@@ -4,8 +4,8 @@
 import { proposeSpans } from "@mailwoman/core/pipeline/span-proposer"
 import { expect, test } from "vitest"
 
+import { VENUE_STRUCTURE_DESIGNATORS } from "#labels/venue/structure"
 import { buildCodexSpanLexicon } from "#span"
-import { VENUE_STRUCTURE_DESIGNATORS } from "#venue/structure"
 
 const unitPhrases = (text: string) =>
 	proposeSpans(text, buildCodexSpanLexicon())

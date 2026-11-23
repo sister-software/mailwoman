@@ -8,7 +8,7 @@ import type { PostcodePlace } from "@mailwoman/core/resolver"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 
 import type { AnchorSpanMode } from "#channels/anchor-inference"
-import { collectMatches } from "#postcode/repair"
+import { collectMatches } from "#labels/postcode/repair"
 
 /**
  * The postcode lookup that the anchor extractor needs from a gazetteer.

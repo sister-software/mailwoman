@@ -5,7 +5,7 @@ import type { BIOLabel } from "@mailwoman/codex/component"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { repairPostcodeLabels } from "#postcode"
+import { repairPostcodeLabels } from "#labels/postcode"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 1 }

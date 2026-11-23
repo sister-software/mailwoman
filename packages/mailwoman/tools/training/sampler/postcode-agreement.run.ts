@@ -38,7 +38,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
 import { anchorKey, anchoredPostcodeSpans, parseAnchorLookup } from "@mailwoman/neural/channels/anchor-inference"
-import { collectMatches } from "@mailwoman/neural/postcode/repair"
+import { collectMatches } from "@mailwoman/neural/labels/postcode/repair"
 import { findPostcodeSpans } from "@mailwoman/postcode/postal-spans"
 
 import { applyOverrides, loadTrainingConfig, rerootToHost } from "../config.ts"

@@ -11,7 +11,7 @@ import {
 	gbOutwardCode,
 	normalizePostcode,
 	type PostcodeResolver,
-} from "#postcode"
+} from "#labels/postcode"
 
 class FakeResolver implements PostcodeResolver {
 	readonly #map: Record<string, PostcodePlace[]>
