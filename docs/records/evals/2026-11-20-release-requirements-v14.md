@@ -355,8 +355,8 @@ recipe-joined build. The re-split (`--jobs 8`, 8,679 s) wrote MANIFEST.json sha2
 
 | Receipt                  | Result                                                                                                                               |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Prominent-place coverage | presence 20,910 of 20,910 forms; 808 of 811 demand cells meet their targets, none fails, 3 unwritable (FJ, GD, ID); coherence 0 rows |
-| Epoch mixture            | all 71 receipts; `former-divisions-exposure` 1,441 against 1,240, `prominent-places-exposure` 11,825 against 10,505                  |
+| Prominent-place coverage | presence 20,910 of 20,910 forms. 808 of 811 demand cells meet their targets, none fails, 3 unwritable (FJ, GD, ID). Coherence 0 rows |
+| Epoch mixture            | all 71 receipts. `former-divisions-exposure` 1,441 against 1,240, `prominent-places-exposure` 11,825 against 10,505                  |
 | Validation coverage      | all 21 floors                                                                                                                        |
 | Label support            | passes                                                                                                                               |
 
