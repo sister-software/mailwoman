@@ -89,7 +89,7 @@ interface PluginEngine extends AsyncDisposable {
  * Without one the plugin loads the weights and never reads a data root.
  */
 async function buildEngine(opts: MailwomanFastifyOptions): Promise<PluginEngine> {
-	const { createRuntimePipeline } = await import("mailwoman/runtime-pipeline")
+	const { createRuntimePipeline } = await import("mailwoman/engine/runtime-pipeline")
 	const poiQueryKind = opts.poiDatabasePath ? { poiDatabasePath: opts.poiDatabasePath } : ("extract" as const)
 
 	if (opts.candidateDatabasePath || opts.resolveDatabasePath) {

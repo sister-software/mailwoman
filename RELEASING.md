@@ -179,7 +179,7 @@ ships the union, so the pieces land in this order:
    route runs.
 4. Publish the first paid artifact to the bucket, list it in `PAID_ARTIFACTS` in
    `packages/license-worker/lib/artifacts/catalog.ts`, and mark its bundle `access: "licensed"` in
-   `packages/mailwoman/lib/data/bundles.ts` in the next release. A weights overlay that becomes paid
+   `packages/mailwoman/lib/data/published/bundles.ts` in the next release. A weights overlay that becomes paid
    leaves public npm at that release, and the releases already published stay published.
 
 ## Real release

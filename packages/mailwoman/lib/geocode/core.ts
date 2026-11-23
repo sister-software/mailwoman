@@ -54,14 +54,19 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { QueryShapeGeneration, queryShapeGenerationOf } from "@mailwoman/postcode/recognizer/rule-generation"
 
-import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import type { PlaceCountryFn } from "#default/placer"
-import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
-import { traceCollector } from "#geocode/derivation"
+import { coarserAnswerMarker, declaredAmbiguityMarker } from "#geocode/intent/markers"
+import { thingQueryRefusalMarkers } from "#geocode/intent/refusal"
+import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/layers/regions"
+import { type GeocodeSwitches, geocodeSwitches } from "#geocode/options/switches"
 import { parsePriorOptions } from "#geocode/parse-priors"
-import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
+import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#geocode/result/authoritative"
+import { traceCollector } from "#geocode/result/derivation"
+import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue } from "#geocode/result/fork-entity"
+import { applyPlusCodeOverride } from "#geocode/result/plus-code-override"
+import { inferredScopeYieldsOnMiss, ScopeWithheldReason } from "#geocode/scope/inferred"
 import {
 	countryScopeRecord,
 	countryScopeStage,
@@ -70,16 +75,11 @@ import {
 	postDecodeRepairStages,
 	rooftopResolveStage,
 } from "#geocode/stages"
-import { type GeocodeSwitches, geocodeSwitches } from "#geocode/switches"
 import { treePostcodeValue } from "#geocode/tree-reads"
-import { inferredScopeYieldsOnMiss, ScopeWithheldReason } from "#inferred-scope"
-import { thingQueryRefusalMarkers } from "#intent-refusal"
-import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
 // Observation-layer routes are imported from one barrel.
 import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations"
-import { applyPlusCodeOverride } from "#plus-code-override"
 import type { POIExecutorLookup } from "#poi/executor"
-import { coarserAnswerMarker, declaredAmbiguityMarker } from "#query-intent"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "#street/interp-calibration"
 import { applyStreetMissFallback } from "#street/miss-fallback"
 
 // Spatial layers are passed as one route bundle.

@@ -14,7 +14,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
 import { replaceActiveSelection } from "#data/catalog"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 

@@ -8,7 +8,7 @@
  *   so the four share one set of options.
  */
 
-import type { LayerContribution } from "#geocode/contributions"
+import type { LayerContribution } from "#geocode/layers/contributions"
 import { createGeocodeSessionOptions, type GeocodeSessionOptionsInput } from "#geocode/options"
 import { createGeocodeSession, type GeocodeSession } from "#geocode/session"
 

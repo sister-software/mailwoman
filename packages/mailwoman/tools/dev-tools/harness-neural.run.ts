@@ -54,7 +54,7 @@ import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 import ts from "typescript"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { normLoose } from "#tools/dev-tools/value-match"
 
 // #region Args

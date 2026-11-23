@@ -130,11 +130,6 @@
 			"node": "./out/cli/kit/weights-guard.js",
 			"default": "./out/cli/kit/weights-guard.js"
 		},
-		"#autocomplete-core": {
-			"types": "./out/autocomplete-core.d.ts",
-			"node": "./lib/autocomplete-core.ts",
-			"default": "./out/autocomplete-core.js"
-		},
 		"#commands/registry/run": {
 			"types": "./out/cli/commands/registry/run.d.ts",
 			"node": "./out/cli/commands/registry/run.js",

@@ -16,7 +16,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { BUNDLES } from "#data"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

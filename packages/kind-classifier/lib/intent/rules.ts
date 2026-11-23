@@ -232,7 +232,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 /**
  * `bare_toponym` rule: a single coherent place-name carrying no address grammar, feeding the
  * declared-ambiguity path without asserting which place — that's the resolver's question,
- * decided by the answer's dominance margin in `mailwoman/query-intent.ts`.
+ * decided by the answer's dominance margin in `mailwoman/geocode/intent/markers.ts`.
  */
 export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLike): number {
 	return bareNameWords(input, shape) ? BARE_TOPONYM_CONFIDENCE : 0

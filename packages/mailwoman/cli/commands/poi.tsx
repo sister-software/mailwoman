@@ -222,7 +222,7 @@ async function formatResult(result: POIQueryResult, options: Options): Promise<s
 }
 
 async function runPOI(input: string, options: Options, localeHint: { locale?: string }): Promise<string> {
-	const { createRuntimePipeline } = await import("#runtime-pipeline")
+	const { createRuntimePipeline } = await import("#engine/runtime-pipeline")
 
 	// An attempted-but-failed encoder load always reports its failure.
 	// Absent weights produce an install hint.

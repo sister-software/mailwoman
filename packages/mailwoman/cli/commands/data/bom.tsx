@@ -21,11 +21,11 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { resolvePath } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { buildDataBOM, dataBOMPath, type DataBOMMixedLayer, serializeDataBOM } from "#data/bom"
-import { takeInventory } from "#data/inventory"
-import { readPublishedBundlesSnapshot } from "#data/published-bundles"
-import { readInstallationState } from "#data/state"
-import { readMailwomanManifest } from "#metadata"
+import { takeInventory } from "#data/catalog/inventory"
+import { readInstallationState } from "#data/catalog/state"
+import { readPublishedBundlesSnapshot } from "#data/published/snapshot"
+import { buildDataBOM, dataBOMPath, type DataBOMMixedLayer, serializeDataBOM } from "#data/terms/bom"
+import { readMailwomanManifest } from "#package/metadata"
 
 export const description =
 	"Write the data bill of materials: one CycloneDX 1.5 component per artifact a release can deliver, " +
@@ -75,8 +75,8 @@ async function readMixedLayers(from: string, dataRoot: string) {
 	} = await allKeyed({
 		api: import("@mailwoman/core/api"),
 		releaseConfig: import("@mailwoman/core/release-config"),
-		remote: import("#data/remote"),
-		mixedLayer: import("#data/mixed-layer"),
+		remote: import("#data/published/remote"),
+		mixedLayer: import("#data/terms/mixed-layer"),
 	})
 
 	if (from !== "bucket" && from !== "data-root") {

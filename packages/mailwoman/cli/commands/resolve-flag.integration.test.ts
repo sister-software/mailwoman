@@ -10,7 +10,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, test } from "vitest"
 
 import { $public } from "#env"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

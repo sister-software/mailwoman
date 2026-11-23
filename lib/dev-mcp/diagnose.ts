@@ -26,8 +26,8 @@ import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { appliedRow } from "mailwoman/cli/debug-view/trace-rows"
+import { resolveCandidateDBPath } from "mailwoman/engine/resolver-backend"
 import type { GeocodeApplied } from "mailwoman/geocode"
-import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import {
 	candidateBandProbe,
 	type ComponentReachability,

@@ -14,7 +14,7 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
 
-import { type LayerManifest, probeManifest } from "#data/inventory"
+import { type LayerManifest, probeManifest } from "#data/catalog/inventory"
 import type { POIBoardResolverBackend } from "#tools/eval-harness/poi/board/runtime"
 
 /**

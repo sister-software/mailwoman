@@ -24,7 +24,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { JSONSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { fold } from "#tools/dev-tools/register-board"
 import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#tools/eval-harness/parity-corpus"
 

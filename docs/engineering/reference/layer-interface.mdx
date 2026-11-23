@@ -571,7 +571,7 @@ permits serving them, so the layer holds no refused or unread source. The table 
 link for this identifier points to this section. Each region's `ATTRIBUTION.json` lists that region's sources
 with the terms OpenAddresses records for each.
 
-Three outputs publish the per-source reading, all from one join in `packages/mailwoman/lib/data/mixed-layer.ts`
+Three outputs publish the per-source reading, all from one join in `packages/mailwoman/lib/data/terms/mixed-layer.ts`
 of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sources.json`:
 
 - The data bill of materials (`mailwoman data bom`) nests one component per source under the layer's component.
@@ -678,5 +678,5 @@ The remaining 26 state terms nowhere. `LicenseRef-Undeclared-Input` exists for t
 `layer_manifest` table), invalid (the table exists and `probeLayerManifest` refuses its contents) or
 unopenable. For a read manifest it states the license, the obligations `summarizeLicense` gives it, and each
 source with the location its owning package records. The owners' tables are joined in
-`packages/mailwoman/lib/data/source-locations.ts`, and `resolveLayerTerms` in `@mailwoman/core/layers/provenance`
+`packages/mailwoman/lib/data/terms/source-locations.ts`, and `resolveLayerTerms` in `@mailwoman/core/layers/provenance`
 turns manifests into license and source links for both the report and the OGC adapter.

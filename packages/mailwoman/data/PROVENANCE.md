@@ -3,7 +3,7 @@
 ## `published-bundles.json` — what the public bucket serves for each bundle
 
 Written by `node packages/mailwoman/tools/dev-tools/data/published-bundles.run.ts`, which sends a HEAD
-request for every artifact in `BUNDLES` (`lib/data/bundles.ts`) and records the `content-length` the
+request for every artifact in `BUNDLES` (`lib/data/published/bundles.ts`) and records the `content-length` the
 bucket reports, then reads the `layer_manifest` of the local copy under `$MAILWOMAN_DATA_ROOT` for its
 tier and flat license expression. The command generates the file. To change it, rerun the command and commit the
 result rather than editing it by hand.

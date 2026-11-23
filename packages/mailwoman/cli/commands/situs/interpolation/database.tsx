@@ -127,7 +127,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
 			json: import("@mailwoman/core/json"),
-			interpCalibration: import("#interp-calibration"),
+			interpCalibration: import("#street/interp-calibration"),
 		})
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {

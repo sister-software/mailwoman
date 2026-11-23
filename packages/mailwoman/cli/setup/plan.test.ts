@@ -16,8 +16,8 @@ import {
 	setupSummary,
 	tiersFor,
 } from "#cli/setup/plan"
-import { BUNDLES, type DataBundle } from "#data/bundles"
-import { planInstallation } from "#data/plan"
+import { planInstallation } from "#data/install/plan"
+import { BUNDLES, type DataBundle } from "#data/published/bundles"
 
 const candidate: DataBundle = {
 	name: "candidate",

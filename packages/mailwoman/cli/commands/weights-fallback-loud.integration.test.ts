@@ -13,7 +13,7 @@ import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { $public } from "#env"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

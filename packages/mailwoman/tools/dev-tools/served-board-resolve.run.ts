@@ -19,8 +19,8 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
 import { loadBundledPlaceCountry } from "#default/placer"
+import { createResolverBackend } from "#engine/resolver-backend"
 import { geocodeAddress } from "#geocode/core"
-import { createResolverBackend } from "#resolver-backend"
 
 interface BoardRow {
 	raw: string

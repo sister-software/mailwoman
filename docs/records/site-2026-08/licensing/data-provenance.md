@@ -54,7 +54,7 @@ places, 78.33%. The remaining 1,808,954 places, 21.67%, come from folds the expr
 Code-Point Open at 1,746,976 places under the Open Government License v3.0, GeoNames postal at 57,221, and
 the Northern Ireland OpenStreetMap fold at 4,757.
 
-`packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and records the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer when its `tier` or license expression forbids publication. That check catches this artifact.
+`packages/mailwoman/lib/data/published/bundles.ts` now names Overture Divisions among the bundle's publishers and records the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer when its `tier` or license expression forbids publication. That check catches this artifact.
 
 :::
 

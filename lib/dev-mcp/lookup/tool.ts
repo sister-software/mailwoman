@@ -15,7 +15,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { resolveImportanceOrRefusal } from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/schema/place-importance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
+import { resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/engine/resolver-backend"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"

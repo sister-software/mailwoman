@@ -15,7 +15,7 @@ import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
-import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-backend"
+import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#engine/resolver-backend"
 
 interface Pair {
 	postcode: string

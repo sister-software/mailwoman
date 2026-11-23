@@ -43,7 +43,7 @@ import {
 import { actionOperations, actionPurposes, LicenseAction } from "@mailwoman/license/actions"
 import type { UsePurpose } from "@mailwoman/license/decision"
 import type { SourceOperation } from "@mailwoman/license/operations"
-import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
+import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/terms/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#release-kit/weights/rights/files"

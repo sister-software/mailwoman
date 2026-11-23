@@ -21,7 +21,7 @@ import {
 	renderInkCommand,
 	runNativeCommand,
 } from "#cli/native/spec"
-import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/ceiling"
+import { ceilingCandidate, coverageSentence, installedBundleNames, precisionCeiling } from "#data/catalog/ceiling"
 import { GEOCODE_SESSION_DEFAULTS as defaults } from "#geocode/options"
 
 const debugSizePattern = /^\d+x\d+$/u

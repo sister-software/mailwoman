@@ -516,7 +516,7 @@ extend-glob = [
 	"input-robustness.mdx",
 	"writing-system.md",
 	"input.pty.integration.test.ts",
-	"inferred-scope.test.ts",
+	"inferred.test.ts",
 	"gauntlet-report.test.ts",
 	"attestation.run.ts",
 ]

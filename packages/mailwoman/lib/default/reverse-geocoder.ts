@@ -25,8 +25,8 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
 import { createToken, optional, type ServiceRegistry, type ServiceToken } from "async-init"
 
+import { existingWOFDatabasePaths } from "#engine/resolver-backend"
 import { $public } from "#env"
-import { existingWOFDatabasePaths } from "#resolver-backend"
 import { defineUnlessProvided } from "#services/define"
 import { registerResolverModuleService, ResolverModuleService } from "#services/resolver-module"
 

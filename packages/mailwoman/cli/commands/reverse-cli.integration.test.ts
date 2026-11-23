@@ -8,7 +8,7 @@ import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
 import { $public } from "#env"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

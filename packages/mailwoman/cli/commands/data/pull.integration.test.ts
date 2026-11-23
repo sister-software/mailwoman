@@ -30,9 +30,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
-import { BUNDLES } from "#data/bundles"
 import { LayerCatalog, readInstalledManifest } from "#data/catalog"
-import { mailwomanCLIPath } from "#metadata"
+import { BUNDLES } from "#data/published/bundles"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 import {
 	FIXTURE_DC_POINT,

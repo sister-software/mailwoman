@@ -22,7 +22,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { writePBF } from "@mailwoman/osm/tools/pbf-writer"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 import { FixtureRegistry } from "#test-kit/fixture-registry"
 

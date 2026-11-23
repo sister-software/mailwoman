@@ -12,7 +12,7 @@ import { toFRN, type FRN } from "@mailwoman/filer/frn"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { createRuntimePipeline, type RuntimePipeline } from "mailwoman/runtime-pipeline"
+import { createRuntimePipeline, type RuntimePipeline } from "mailwoman/engine/runtime-pipeline"
 
 import { closeCore, geocodeRunThroughCore, geocodeThroughCore, loadCore } from "#cli/core"
 import {

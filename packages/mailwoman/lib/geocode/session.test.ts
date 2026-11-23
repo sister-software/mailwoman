@@ -8,7 +8,7 @@ import { ServingRole } from "@mailwoman/core/layers"
 import { expect, test } from "vitest"
 
 import { replaceActiveSelection } from "#data/catalog"
-import { readLiveLeases } from "#data/retention"
+import { readLiveLeases } from "#data/install/retention"
 import { createGeocodeSessionOptions } from "#geocode/options"
 import { createGeocodeSession } from "#geocode/session"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"

@@ -10,7 +10,7 @@
 
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import { type DropInGeocoder, openDropInGeocoder } from "mailwoman/cli/kit/dropin"
-import type { LayerContribution } from "mailwoman/geocode/contributions"
+import type { LayerContribution } from "mailwoman/geocode/layers/contributions"
 import type { GeocodeRequestOptions } from "mailwoman/geocode/session"
 import { banLayer, forkEntityProbe, observationRoutes, osmLayer, regionDatabases } from "mailwoman/services/entry/node"
 

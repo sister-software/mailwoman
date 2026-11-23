@@ -17,7 +17,7 @@ import {
 	verifyConfiguredLicenseKey,
 } from "@mailwoman/core/license"
 
-import { readMailwomanManifest } from "#metadata"
+import { readMailwomanManifest } from "#package/metadata"
 
 export interface ResolvedEngineStamp {
 	stamp: EngineStamp

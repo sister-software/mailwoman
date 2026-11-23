@@ -6,7 +6,7 @@
  *   and no live session references, and delete them under `--yes`.
  *
  *   Without `--yes` it prints the plan and keeps every file.
- *   The retention policy is in `lib/data/retention.ts`.
+ *   The retention policy is in `lib/data/install/retention.ts`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -15,7 +15,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { DEFAULT_RETAINED_GENERATIONS, executePrune, planPrune } from "#data/retention"
+import { DEFAULT_RETAINED_GENERATIONS, executePrune, planPrune } from "#data/install/retention"
 
 /**
  * Native command-line interface consumed by the filesystem command router.

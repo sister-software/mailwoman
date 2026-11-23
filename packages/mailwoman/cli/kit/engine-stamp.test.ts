@@ -5,7 +5,7 @@ import { ExpressionOperator, licenseExpressionTerms } from "@mailwoman/license/e
 import { describe, expect, it } from "vitest"
 
 import { resolveEngineStamp } from "#cli/kit/engine-stamp"
-import { readMailwomanManifest } from "#metadata"
+import { readMailwomanManifest } from "#package/metadata"
 
 describe("resolveEngineStamp", () => {
 	it("stamps the package's own version and a branch of its own license expression", async () => {

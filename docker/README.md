@@ -8,7 +8,7 @@ kept out of the image and mounts at `/data`.
 The image is built from the repo-root [`Dockerfile`](../Dockerfile),
 [`docker/package.json`](./package.json) (the package set), and
 [`docker/server.ts`](./server.ts) (the entrypoint). Node runs the entrypoint as source. The entrypoint
-serves the engine `mailwoman serve` builds, `createServeEngine` from `mailwoman/api-engine`, with the
+serves the engine `mailwoman serve` builds, `createServeEngine` from `mailwoman/engine/api`, with the
 locale's country scope turned off, so a query from any country resolves in its own country. The
 `MAILWOMAN_VERSION` build argument sets the version of every package. CI publishes the image with
 [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml). The workflow passes the

@@ -1,0 +1,803 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup.
+ *
+ *   The savile row hijack guard is the required one: poi.db really does hold exactly
+ *   one poi whose name is `savile row`, and without check 2 the famous London street
+ *   would resolve to it — the board row `gb-fork-entity-savile-row-guard` tracks
+ *   the live behavior. this test is the blocking half.
+ */
+
+import type { AddressNode } from "@mailwoman/core/decoder"
+import { describe, expect, it } from "vitest"
+
+import {
+	applyEntityTiers,
+	nameDroppingRescoreToWithdraw,
+	probeForkEntity,
+	probeVenueNearAnchor,
+	probeVenueNearAnchorFolded,
+	repickLocalityByVenue,
+	venueAnchorRadiusM,
+	type ForkEntityProbeOpts,
+} from "#geocode/result/fork-entity"
+import type { POIExecutorLookup } from "#poi"
+
+/**
+ * A stub over fixed rows: FTS-ish name matching (case-folded substring), same hit shape as POILookup.
+ */
+function stubLookup(
+	rows: Array<{ name: string; categoryID?: string; lat: number; lon: number; country?: string; confidence?: number }>
+): POIExecutorLookup {
+	return {
+		search: (query) => {
+			const needle = (query.name ?? "").toLowerCase()
+
+			return rows
+				.filter((r) => r.name.toLowerCase().includes(needle.split(" ")[0] ?? needle))
+				.slice(0, query.limit ?? 10)
+				.map((r) => ({
+					name: r.name,
+					categoryID: r.categoryID ?? null,
+					brandWikidata: null,
+					latitude: r.lat,
+					longitude: r.lon,
+					country: r.country ?? "FR",
+					confidence: r.confidence ?? 0.9,
+					gersID: null,
+					distanceM: null,
+				}))
+		},
+	}
+}
+
+const NO_GENERICS: ForkEntityProbeOpts["isStreetGeneric"] = () => false
+
+/**
+ * The morphology stub the hijack guard uses.
+ * The real FST answers exactly this for these tokens.
+ */
+const REAL_GENERICS: ForkEntityProbeOpts["isStreetGeneric"] = (token) =>
+	["row", "straße", "via", "vía", "rue", "street", "parade"].includes(token)
+
+describe("repickLocalityByVenue (two towns of one name in a state, #3057)", () => {
+	// Anderson, Alabama: the resolver's pick (341 people) and the runner-up (255 people)
+	// where the post office stands.
+	const PICKED = { lat: 34.07121, lon: -85.92136 }
+	const RUNNER_UP = { name: "Anderson", placetype: "locality", country: "US", lat: 34.920591, lon: -87.269247 }
+
+	function roots(): AddressNode[] {
+		return [
+			{ tag: "venue", value: "Anderson Post Office", start: 0, end: 20, confidence: 0.9, children: [] },
+			{
+				tag: "locality",
+				value: "Anderson",
+				start: 22,
+				end: 30,
+				confidence: 0.9,
+				children: [],
+				...PICKED,
+				placeID: "wof:1125973425",
+				source: "resolver",
+				metadata: { resolver_name: "Anderson", resolver_country: "US" },
+				alternatives: [{ ...RUNNER_UP, id: 85_914_015, score: 1, exactMatch: true }],
+			},
+		]
+	}
+
+	const postOffice = { name: "Anderson Post Office", lat: 34.925339, lon: -87.268185, country: "US" }
+
+	it("moves the locality to the runner-up that has the venue nearby", () => {
+		const tree = roots()
+		const moved = repickLocalityByVenue(tree, { poiLookup: stubLookup([postOffice]), poiVenueTier: true })
+		const locality = tree[1]!
+
+		expect(moved).toBe(true)
+		expect(locality.placeID).toBe("wof:85914015")
+		expect(locality.lat).toBeCloseTo(RUNNER_UP.lat, 5)
+	})
+
+	it("keeps the pick when the venue is near it", () => {
+		const tree = roots()
+		const nearPick = { ...postOffice, lat: PICKED.lat, lon: PICKED.lon }
+
+		expect(repickLocalityByVenue(tree, { poiLookup: stubLookup([nearPick]), poiVenueTier: true })).toBe(false)
+		expect(tree[1]!.placeID).toBe("wof:1125973425")
+	})
+
+	it("keeps the pick when the venue tier is off", () => {
+		const tree = roots()
+
+		expect(repickLocalityByVenue(tree, { poiLookup: stubLookup([postOffice]), poiVenueTier: false })).toBe(false)
+		expect(tree[1]!.placeID).toBe("wof:1125973425")
+	})
+})
+
+describe("probeForkEntity", () => {
+	it("resolves the worldwide-unique exact-name entity (the COMER case)", () => {
+		const lookup = stubLookup([
+			{ name: "COMER parís.méxico", categoryID: "mexican_restaurant", lat: 48.87735, lon: 2.3516, confidence: 0.9888 },
+			{ name: "Comer Park", categoryID: "park", lat: 33.9, lon: -83.1, country: "US" },
+		])
+
+		const hit = probeForkEntity("COMER parís.méxico", { lookup, isStreetGeneric: NO_GENERICS })
+
+		expect(hit).not.toBeNull()
+		expect(hit!.categoryID).toBe("mexican_restaurant")
+		expect(hit!.latitude).toBeCloseTo(48.87735, 4)
+	})
+
+	it("THE HIJACK GUARD: a street-generic token stands the probe down even with a unique entity", () => {
+		// poi.db's real state: exactly one poi has the name 'savile row'.
+		// Without check 2 this would resolve.
+		const lookup = stubLookup([{ name: "Savile Row", categoryID: "clothing_store", lat: 51, lon: -2, country: "GB" }])
+
+		expect(probeForkEntity("Savile Row", { lookup, isStreetGeneric: REAL_GENERICS })).toBeNull()
+	})
+
+	it("abstains when no entity bears the exact name (FTS partials are not the entity)", () => {
+		const lookup = stubLookup([{ name: "Comer Park", categoryID: "park", lat: 33.9, lon: -83.1, country: "US" }])
+
+		expect(probeForkEntity("COMER parís.méxico", { lookup, isStreetGeneric: NO_GENERICS })).toBeNull()
+	})
+
+	it("abstains when two distinct entities share the name (no anchor to break the tie)", () => {
+		const lookup = stubLookup([
+			{ name: "La Terraza", lat: 48.87, lon: 2.35 },
+			{ name: "La Terraza", lat: 40.42, lon: -3.7, country: "ES" },
+		])
+
+		expect(probeForkEntity("La Terraza", { lookup, isStreetGeneric: NO_GENERICS })).toBeNull()
+	})
+
+	it("collapses duplicate rows of ONE physical venue and keeps the more confident row", () => {
+		// Two ingest rows ~60 m apart — one venue rather than two entities.
+		const lookup = stubLookup([
+			{ name: "La Terraza", lat: 48.8773, lon: 2.3516, confidence: 0.7 },
+			{ name: "La Terraza", lat: 48.8778, lon: 2.3519, confidence: 0.95 },
+		])
+
+		const hit = probeForkEntity("La Terraza", { lookup, isStreetGeneric: NO_GENERICS })
+
+		expect(hit).not.toBeNull()
+		expect(hit!.confidence).toBe(0.95)
+	})
+})
+
+describe("probeVenueNearAnchor (#1684's venue tier)", () => {
+	const LONDON = { lat: 51.5074, lon: -0.1278 }
+
+	it("answers the single exact-name entity near the anchor — local uniqueness, not worldwide", () => {
+		const lookup = stubLookup([
+			// The local bearer plus an entity with the same name in another city:
+			// the fork probe would abstain on this pair.
+			// The anchored probe mustn't, because the anchor separates them.
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
+		])
+
+		const hit = probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })
+
+		expect(hit?.latitude).toBeCloseTo(51.48223)
+		expect(hit?.country).toBe("GB")
+	})
+
+	it("abstains when TWO same-named entities sit inside the check — a metro-local ambiguity", () => {
+		const lookup = stubLookup([
+			{ name: "The Red Lion", lat: 51.51, lon: -0.12, country: "GB" },
+			{ name: "The Red Lion", lat: 51.52, lon: -0.2, country: "GB" },
+		])
+
+		expect(probeVenueNearAnchor("The Red Lion", LONDON, { lookup })).toBeNull()
+	})
+
+	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
+		// The board row: the walk answered "University of Chichester, Bognor Regis"
+		// to its unit postcode, 80 m from the campus.
+		// It is the only entity with the same name in the metro was the other campus, 9.87 km away.
+		// Under the locality reach that entity is locally unique and replaces a better answer.
+		const bognor = { lat: 50.7876, lon: -0.6717 }
+		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])
+
+		expect(probeVenueNearAnchor("University of Chichester", bognor, { lookup })?.country).toBe("GB")
+		expect(probeVenueNearAnchor("University of Chichester", { ...bognor, radiusM: 1000 }, { lookup })).toBeNull()
+		expect(probeVenueNearAnchorFolded("University of Chichester", { ...bognor, radiusM: 1000 }, { lookup })).toBeNull()
+	})
+
+	it("abstains when the only exact bearer is beyond the check — another city's venue never contests", () => {
+		const lookup = stubLookup([{ name: "Nine Elms Tavern", lat: 40.7, lon: -74, country: "US" }])
+
+		expect(probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })).toBeNull()
+	})
+
+	it("requires exact name-key equality — an FTS partial is not the venue", () => {
+		const lookup = stubLookup([{ name: "Nine Elms Tavern and Grill", lat: 51.48, lon: -0.13, country: "GB" }])
+
+		expect(probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })).toBeNull()
+	})
+
+	it("collapses duplicate rows of one physical venue before judging uniqueness", () => {
+		const lookup = stubLookup([
+			{ name: "Africa House", lat: 51.51691, lon: -0.11956, confidence: 0.95, country: "GB" },
+			{ name: "Africa House", lat: 51.51692, lon: -0.11957, confidence: 0.9, country: "GB" },
+		])
+
+		const hit = probeVenueNearAnchor("Africa House", LONDON, { lookup })
+
+		expect(hit?.confidence).toBe(0.95)
+	})
+})
+
+describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => {
+	const LONDON = { lat: 51.5074, lon: -0.1278 }
+	const ROCHESTER = { lat: 51.36, lon: 0.44 }
+
+	it("matches the query's decorated form against the row's differently-decorated one — the Mischicks class", () => {
+		const lookup = stubLookup([
+			{ name: "Mischicks Day Spa - St Andrews Lakes", lat: 51.35984, lon: 0.43781, country: "GB" },
+		])
+
+		const hit = probeVenueNearAnchorFolded("Mischicks Day Spa - St Andrews Lakes - Rochester, Kent", ROCHESTER, {
+			lookup,
+		})
+
+		expect(hit?.latitude).toBeCloseTo(51.35984)
+	})
+
+	it("never second-guesses an exact hit — the exact leg runs first", () => {
+		const lookup = stubLookup([
+			{ name: "Nine Elms Tavern", lat: 51.48223, lon: -0.13718, country: "GB", confidence: 0.99 },
+			// A folded-comparable decoy the second leg would also accept.
+			{ name: "Nine Elms Tavern - Riverside", lat: 51.49, lon: -0.14, country: "GB", confidence: 0.5 },
+		])
+
+		const hit = probeVenueNearAnchorFolded("Nine Elms Tavern", LONDON, { lookup })
+
+		expect(hit?.confidence).toBe(0.99)
+	})
+
+	it("drops a leading word when the rest names one venue near the anchor", () => {
+		const MANCHESTER = { lat: 53.4714, lon: -2.2448 }
+		const lookup = stubLookup([{ name: "Manchester Art Gallery", lat: 53.4786, lon: -2.2417, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The Manchester Art Gallery", MANCHESTER, { lookup })?.latitude).toBeCloseTo(
+			53.4786
+		)
+	})
+
+	it("refuses a remainder that holds a street-type word", () => {
+		const lookup = stubLookup([{ name: "Old Street", lat: 51.5257, lon: -0.0877, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("UTEA Old Street", LONDON, { lookup, isStreetGeneric: REAL_GENERICS })).toBeNull()
+	})
+
+	it("keeps the leading word when only one word would remain", () => {
+		const lookup = stubLookup([{ name: "Ivy", lat: 51.5121, lon: -0.1281, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The Ivy", LONDON, { lookup })).toBeNull()
+	})
+
+	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
+		// The query's decoration exists on no row (the exact leg abstains), and the folded
+		// head matches both metro branches — an ambiguity in the data.
+		// A query naming an existing branch verbatim is the exact leg's win rather than this leg's problem.
+		const lookup = stubLookup([
+			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },
+			{ name: "The North Face - Oxford Street", lat: 51.515, lon: -0.141, country: "GB" },
+		])
+
+		expect(probeVenueNearAnchorFolded("The North Face - Long Acre", LONDON, { lookup })).toBeNull()
+	})
+
+	it("refuses a one-token head — a bare article matches everything and means nothing", () => {
+		const lookup = stubLookup([{ name: "The - Bar", lat: 51.51, lon: -0.12, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The - Unrelated Qualifier", LONDON, { lookup })).toBeNull()
+	})
+
+	it("handles long decorations without regex backtracking", () => {
+		const lookup = stubLookup([])
+		const decoration = "x".repeat(100_000)
+
+		expect(probeVenueNearAnchorFolded(`Mischicks Day Spa - ${decoration}`, LONDON, { lookup })).toBeNull()
+	})
+})
+
+describe("venueAnchorRadiusM (the reach the anchor's grade allows)", () => {
+	const ANSWER = { lat: 50.7876, lon: -0.6717 }
+
+	function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
+		return { start: 0, end: 0, confidence: 1, children: [], ...partial }
+	}
+
+	it("tightens to 1 km when the answer IS a unit-grade postcode hit", () => {
+		const roots = [
+			node({ tag: "locality", value: "Bognor Regis", lat: 50.78, lon: -0.68 }),
+			node({ tag: "postcode", value: "PO21 1HR", ...ANSWER, metadata: { resolver_name: "PO21 1HR" } }),
+		]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(1000)
+	})
+
+	it("keeps the locality reach for an AREA-grade hit — an outward district is a centroid, not a door", () => {
+		const roots = [node({ tag: "postcode", value: "PO21", ...ANSWER, metadata: { resolver_name: "PO21" } })]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(30_000)
+	})
+
+	it("keeps the locality reach when the postcode node is not the answer — the locality centroid won", () => {
+		const roots = [
+			node({ tag: "locality", value: "Bognor Regis", ...ANSWER }),
+			node({ tag: "postcode", value: "PO21 1HR", lat: 50.79, lon: -0.67, metadata: { resolver_name: "PO21 1HR" } }),
+		]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(30_000)
+	})
+
+	it("keeps the locality reach with no postcode node at all", () => {
+		expect(venueAnchorRadiusM(ANSWER, [node({ tag: "locality", value: "Bognor Regis", ...ANSWER })])).toBe(30_000)
+	})
+})
+
+describe("applyEntityTiers for an unresolved input with no venue span", () => {
+	const station = stubLookup([
+		{ name: "渋谷駅", categoryID: "train_station", lat: 35.65808, lon: 139.7017647, country: "JP" },
+	])
+
+	const unresolvedLocality = (): Parameters<typeof applyEntityTiers>[0] => ({
+		lat: null,
+		lon: null,
+		resolution_tier: null,
+		countryCode: null,
+		venue: null,
+		entity: null,
+		admin_coherence: null,
+		locality: "渋谷駅",
+	})
+
+	it("answers the whole input from the one entity that holds its name", () => {
+		const result = unresolvedLocality()
+
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, isStreetGeneric: NO_GENERICS, poiVenueTier: true })
+
+		expect(result.lat).toBe(35.65808)
+		expect(result.entity?.name).toBe("渋谷駅")
+		expect(result.locality).toBe("渋谷駅")
+	})
+
+	it("leaves a bare street to the street parse even when a POI holds its name", () => {
+		const shop = stubLookup([{ name: "Rodeo Drive", categoryID: "shopping", lat: 34.07, lon: -118.4, country: "US" }])
+		const result = { ...unresolvedLocality(), locality: null, street: "Rodeo Drive" }
+
+		applyEntityTiers(result, [], "Rodeo Drive", [], {
+			poiLookup: shop,
+			isStreetGeneric: (token) => token === "drive",
+			poiVenueTier: true,
+		})
+
+		expect(result.lat).toBeNull()
+		expect(result.street).toBe("Rodeo Drive")
+	})
+
+	it("leaves the input unresolved when poiVenueTier is off", () => {
+		const result = unresolvedLocality()
+
+		applyEntityTiers(result, [], "渋谷駅", [], { poiLookup: station, isStreetGeneric: NO_GENERICS })
+
+		expect(result.lat).toBeNull()
+	})
+})
+
+describe("applyEntityTiers for a parsed venue with no coordinate", () => {
+	const unplaced = (venue: string): Parameters<typeof applyEntityTiers>[0] => ({
+		lat: null,
+		lon: null,
+		resolution_tier: null,
+		countryCode: null,
+		venue,
+		entity: null,
+		admin_coherence: null,
+	})
+
+	const palace = stubLookup([
+		{ name: "Buckingham Palace", categoryID: "park", lat: 51.500274, lon: -0.14507, country: "GB" },
+	])
+
+	it("places the venue through the exact-name probe when poiVenueTier is on", () => {
+		const result = unplaced("Buckingham Palace")
+
+		applyEntityTiers(result, [], "Buckingham Palace", [], {
+			poiLookup: palace,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBe(51.500274)
+		expect(result.entity?.name).toBe("Buckingham Palace")
+	})
+
+	it("leaves the result unplaced when poiVenueTier is off", () => {
+		const result = unplaced("Buckingham Palace")
+		applyEntityTiers(result, [], "Buckingham Palace", [], { poiLookup: palace, isStreetGeneric: NO_GENERICS })
+
+		expect(result.lat).toBeNull()
+	})
+
+	it("abstains when two entities share the venue name", () => {
+		const twoPalaces = stubLookup([
+			{ name: "Thai Palace", lat: 51.5, lon: -0.1, country: "GB" },
+			{ name: "Thai Palace", lat: 53.48, lon: -2.24, country: "GB" },
+		])
+
+		const result = unplaced("Thai Palace")
+
+		applyEntityTiers(result, [], "Thai Palace", [], {
+			poiLookup: twoPalaces,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.lat).toBeNull()
+	})
+
+	const twoTaverns = stubLookup([
+		{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
+		{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
+	])
+
+	it("leaves a worldwide-ambiguous name to the anchored refinement, which answers from an admin anchor", () => {
+		const bare = unplaced("Nine Elms Tavern")
+
+		applyEntityTiers(bare, [], "Nine Elms Tavern", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		// The anchor-free probe abstains on two bearers, and the refinement has no anchor to read.
+		expect(bare.lat).toBeNull()
+		expect(bare.resolution_tier).toBeNull()
+
+		const anchored = { ...unplaced("Nine Elms Tavern"), lat: 51.5074, lon: -0.1278, resolution_tier: "admin" }
+
+		applyEntityTiers(anchored, [], "Nine Elms Tavern, London", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		// A placed result skips the anchor-free probe.
+		// The refinement answers from the admin anchor.
+		expect(anchored.resolution_tier).toBe("venue")
+		expect(anchored.lat).toBeCloseTo(51.48223)
+		expect(anchored.entity?.country).toBe("GB")
+	})
+
+	it("refines a postcode-tier answer to the venue, as it does an admin one", () => {
+		const anchored = { ...unplaced("Nine Elms Tavern"), lat: 51.4801, lon: -0.1335, resolution_tier: "postcode" }
+
+		applyEntityTiers(anchored, [], "Nine Elms Tavern, London SW11 8AY", [], {
+			poiLookup: twoTaverns,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(anchored.resolution_tier).toBe("venue")
+		expect(anchored.lat).toBeCloseTo(51.48223)
+	})
+})
+
+describe("nameDroppingRescoreToWithdraw (a sub-span that drops a word of the name)", () => {
+	const MANCHESTER = { lat: 53.4794892, lon: -2.2451148 }
+
+	const rescued = (locality: string, dropsName: boolean): AddressNode => ({
+		tag: "locality",
+		value: locality,
+		start: 4,
+		end: 4 + locality.length,
+		confidence: 0.5,
+		children: [],
+		...MANCHESTER,
+		metadata: { span_rescore: true, rescore_drops_name: dropsName },
+	})
+
+	const answeredBy = (venue: string) => ({
+		...MANCHESTER,
+		resolution_tier: "admin" as string | null,
+		venue: venue as string | null,
+	})
+
+	const gallery = stubLookup([
+		{
+			name: "The Manchester Art Gallery",
+			categoryID: "art_gallery",
+			lat: 53.47859765,
+			lon: -2.24165836,
+			country: "GB",
+		},
+	])
+
+	it("keeps the locality when it scopes a venue that answers near it", () => {
+		const roots = [rescued("Manchester", true)]
+
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("The Manchester Art Gallery"), roots, {
+				poiLookup: gallery,
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
+
+		const result = {
+			...answeredBy("The Manchester Art Gallery"),
+			countryCode: "GB",
+			entity: null,
+			admin_coherence: null,
+		}
+
+		applyEntityTiers(result, [], "The Manchester Art Gallery", roots, {
+			poiLookup: gallery,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(53.47859765)
+	})
+
+	it("withdraws the locality when no venue answers near it, so the fork probe can read the whole input", () => {
+		const roots = [rescued("Manchester", true)]
+		const restaurant = stubLookup([{ name: "Manchester Grill", lat: 48.87, lon: 2.35, country: "FR" }])
+
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("Manchester Grill"), roots, {
+				poiLookup: restaurant,
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBe(roots[0])
+
+		// With the locality withdrawn the result has no coordinate, and the declared-fork probe answers.
+		const result = {
+			lat: null,
+			lon: null,
+			resolution_tier: null,
+			countryCode: null,
+			venue: "Manchester Grill",
+			entity: null,
+			admin_coherence: null,
+		}
+
+		applyEntityTiers(result, [{ code: "declared_fork" }], "Manchester Grill", [], {
+			poiLookup: restaurant,
+			isStreetGeneric: NO_GENERICS,
+		})
+
+		expect(result.lat).toBeCloseTo(48.87)
+	})
+
+	it("keeps a locality that drops no word of the name", () => {
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("Evergreen Cemetery"), [rescued("Manchester", false)], {
+				poiLookup: stubLookup([]),
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
+	})
+
+	it("keeps the locality when a later tier answered instead of it", () => {
+		const result = { ...answeredBy("Manchester Grill"), resolution_tier: "address_point" }
+
+		expect(
+			nameDroppingRescoreToWithdraw(result, [rescued("Manchester", true)], {
+				poiLookup: stubLookup([]),
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
+	})
+})
+
+describe("the Empire State Building pair (#2570)", () => {
+	const NEW_YORK = { lat: 40.7127281, lon: -74.0060152 }
+
+	// The poi.db rows of 2026-10-14: two exact rows 3.7 km apart, the Upper East Side
+	// row holding the higher confidence, four decorated rows beside the Midtown row,
+	// and the Brooklyn office the leading-word retry reaches through `State Building`.
+	const manhattan = stubLookup([
+		{
+			name: "Empire State Building",
+			categoryID: "historic_site",
+			lat: 40.7807201,
+			lon: -73.9608153,
+			country: "US",
+			confidence: 0.972,
+		},
+		{
+			name: "Empire State Building",
+			categoryID: "historic_site",
+			lat: 40.749143,
+			lon: -73.986621,
+			country: "US",
+			confidence: 0.951,
+		},
+		{
+			name: "Empire State Building - 102nd Floor",
+			categoryID: "historic_site",
+			lat: 40.7568177,
+			lon: -73.9858098,
+			country: "US",
+		},
+		{ name: "Virgo Business Centers at The Empire State Building", lat: 40.748463, lon: -73.985718, country: "US" },
+		{
+			name: "Hampton Inn Manhattan-35th Street and Empire State Building",
+			categoryID: "hotel",
+			lat: 40.7502467,
+			lon: -73.9864683,
+			country: "US",
+		},
+		{ name: "State Building", categoryID: "government_office", lat: 40.685626, lon: -73.97563, country: "US" },
+	])
+
+	it("picks the exact row the decorated rows sit beside over the more confident exact row, with no anchor", () => {
+		const hit = probeForkEntity("Empire State Building", { lookup: manhattan, isStreetGeneric: NO_GENERICS })
+
+		expect(hit?.latitude).toBeCloseTo(40.749143)
+		expect(hit?.confidence).toBe(0.951)
+	})
+
+	it("picks the corroborated exact row near the anchor rather than the partial-name row", () => {
+		const hit = probeVenueNearAnchorFolded("Empire State Building", NEW_YORK, {
+			lookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+		})
+
+		expect(hit?.name).toBe("Empire State Building")
+		expect(hit?.latitude).toBeCloseTo(40.749143)
+	})
+
+	it("abstains among exact rows with no decorated row beside either, and never falls through to a partial name", () => {
+		const bare = stubLookup([
+			{ name: "Empire State Building", lat: 40.7807201, lon: -73.9608153, country: "US" },
+			{ name: "Empire State Building", lat: 40.749143, lon: -73.986621, country: "US" },
+			{ name: "State Building", lat: 40.685626, lon: -73.97563, country: "US" },
+		])
+
+		expect(
+			probeVenueNearAnchorFolded("Empire State Building", NEW_YORK, { lookup: bare, isStreetGeneric: NO_GENERICS })
+		).toBeNull()
+
+		expect(probeForkEntity("Empire State Building", { lookup: bare, isStreetGeneric: NO_GENERICS })).toBeNull()
+	})
+
+	function placed(locality: string, lat: number, lon: number): AddressNode {
+		return { start: 0, end: locality.length, confidence: 0.7, children: [], tag: "locality", value: locality, lat, lon }
+	}
+
+	const adminAnswer = (locality: string, lat: number, lon: number) => ({
+		lat,
+		lon,
+		resolution_tier: "admin" as string | null,
+		countryCode: "US" as string | null,
+		venue: null as string | null,
+		entity: null,
+		admin_coherence: null,
+		locality: locality as string | null,
+		region: "Building" as string | null,
+		components: { locality, region: "Building" } as Record<string, string | undefined>,
+		hierarchy: [{ tag: "locality", name: locality }] as unknown[],
+	})
+
+	it("answers a bare landmark from the POI layer when the admin race matched its first word only", () => {
+		const result = adminAnswer("Empire", 37.644839, -120.902851)
+
+		// The morphology FST accepts `building` as a street type, and the fork
+		// probe's guard refuses the name for it.
+		// The landmark probe reads the name without that guard.
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: (token) => token === "building",
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(40.749143)
+		expect(result.venue).toBe("Empire State Building")
+		expect(result.locality).toBeNull()
+		expect(result.region).toBeNull()
+		expect(result.components).toEqual({ venue: "Empire State Building" })
+		expect(result.hierarchy).toEqual([])
+	})
+
+	it("answers from the POI layer when the parse reads the whole input as one venue", () => {
+		const result = { ...adminAnswer("Empire", 37.644839, -120.902851), venue: "Empire State Building" as string | null }
+
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(40.749143)
+		expect(result.locality).toBeNull()
+	})
+
+	it("leaves the near-anchor search to a venue span shorter than the input", () => {
+		const result = {
+			...adminAnswer("New York", 40.7127281, -74.0060152),
+			venue: "Empire State Building" as string | null,
+		}
+
+		applyEntityTiers(result, [], "Empire State Building, New York", [placed("New York", 40.7127281, -74.0060152)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.locality).toBe("New York")
+		expect(result.lat).toBeCloseTo(40.749143)
+	})
+
+	it("drops a row whose category disagrees with the name, and keeps the near-anchor answer open", () => {
+		const detroit = stubLookup([
+			{ name: "Detroit Metro Airport", categoryID: "travel_service", lat: 42.601546, lon: -83.430802, country: "US" },
+			{
+				name: "Detroit Metro Airport - Delta Mcnamara Terminal",
+				categoryID: "airport",
+				lat: 42.2103198,
+				lon: -83.3561039,
+				country: "US",
+			},
+		])
+
+		const result = { ...adminAnswer("Detroit", 42.398648, -83.164558), venue: "Detroit Metro Airport" as string | null }
+
+		applyEntityTiers(result, [], "Detroit Metro Airport", [placed("Detroit", 42.398648, -83.164558)], {
+			poiLookup: detroit,
+			isStreetGeneric: NO_GENERICS,
+			rowFitsVenueHead: (_name, categoryID) => categoryID === "airport",
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(42.2103198)
+		expect(result.locality).toBe("Detroit")
+	})
+
+	it("keeps an admin answer whose resolved node covers the whole input", () => {
+		const city = stubLookup([{ name: "Empire City", categoryID: "casino", lat: 40.9, lon: -73.86, country: "US" }])
+		const result = adminAnswer("Empire City", 41, -74)
+
+		applyEntityTiers(result, [], "Empire City", [placed("Empire City", 41, -74)], {
+			poiLookup: city,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("admin")
+		expect(result.locality).toBe("Empire City")
+	})
+
+	it("runs the bare-landmark probe for the landmark kind only", () => {
+		const result = adminAnswer("Empire", 37.644839, -120.902851)
+
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "locality_only",
+		})
+
+		expect(result.resolution_tier).toBe("admin")
+	})
+})

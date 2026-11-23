@@ -74,7 +74,7 @@ import {
 	stringValue,
 } from "#cli/native/spec"
 import { $public } from "#env"
-import { readMailwomanManifest } from "#metadata"
+import { readMailwomanManifest } from "#package/metadata"
 
 /**
  * The `license` command interface: one positional action and the options each action reads.

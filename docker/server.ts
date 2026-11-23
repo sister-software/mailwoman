@@ -15,9 +15,9 @@
 import { createMailwomanAPI } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { createServeEngine } from "mailwoman/api-engine"
+import { createServeEngine } from "mailwoman/engine/api"
+import { resolveCandidateDBPath } from "mailwoman/engine/resolver-backend"
 import { $public } from "mailwoman/env"
-import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 const PORT = 3000
 const HOST = "0.0.0.0"

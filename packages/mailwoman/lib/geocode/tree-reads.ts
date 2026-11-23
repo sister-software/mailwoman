@@ -5,9 +5,8 @@
  *   Reads the metadata stamps that resolver passes leave on a resolved tree's nodes.
  */
 
-import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
+import { type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 
 /**
  * Returns the uppercased first `resolver_country` stamp in the tree, or null when no node has one.
@@ -70,39 +69,4 @@ export function postcodeCountryScopeOf(tree: AddressTree): string | null {
  */
 export function treePostcodeValue(tree: AddressTree): string | null {
 	return firstNodeWhere(tree.roots, (node) => node.tag === "postcode")?.value ?? null
-}
-
-/**
- * Retags the tree's only valued node as `postcode` when its value is an unambiguous postcode.
- *
- * The model sometimes tags a bare postcode such as `N7 0BT` as a street.
- * The resolver then finds no coordinate.
- * The retag applies only when all of these hold:
- *
- * - The tree has no `postcode` node.
- * - The node is the only node with a value.
- * - `countryFromPostcodeFormat` maps the value to a single country, as it does for GB, CA and IE formats.
- *
- * The function mutates the tree and returns it.
- */
-export function recognizeBarePostcode(tree: AddressTree): AddressTree {
-	const valued: AddressNode[] = []
-
-	for (const n of walkNodes(tree.roots)) {
-		if (n.tag === "postcode") return tree
-
-		if (n.value.trim()) {
-			valued.push(n)
-		}
-	}
-
-	if (valued.length !== 1) return tree
-	const only = valued[0]!
-
-	if (!countryFromPostcodeFormat(only.value)) return tree
-	only.tag = "postcode"
-
-	only.metadata = { ...only.metadata, bare_postcode_retag: true }
-
-	return tree
 }

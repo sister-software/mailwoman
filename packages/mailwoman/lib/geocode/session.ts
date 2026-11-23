@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A geocode session: the services `#geocode/services` builds for one set of options,
- *   and the operations that read them for each address.
+ *   A geocode session: the services `#geocode/session/services` builds for one set
+ *   of options, and the operations that read them for each address.
  *
  *   The CLI, the API server and the evaluation tools geocode through this one session.
  */
@@ -34,24 +34,24 @@ import { ServiceRegistry } from "async-init"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { resolverDefaultCountry } from "#country-scope"
-import type { LayerContribution } from "#geocode/contributions"
 import { geocodeAddress, parseForGeocode, type GeocodeDecoderSettingDeps, type GeocodeDeps } from "#geocode/core"
-import { shippedGazetteerFSTPath } from "#geocode/fst-layers"
+import type { LayerContribution } from "#geocode/layers/contributions"
+import { shippedGazetteerFSTPath } from "#geocode/layers/fst"
+import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/layers/regions"
 import { GEOCODE_DEFAULT_LOCALE, type GeocodeSessionOptions, type SessionOptionSource } from "#geocode/options"
 import { createCountryFSTLookup } from "#geocode/parse-priors"
-import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/regions"
+import { resolverDefaultCountry } from "#geocode/scope/country"
+import type { CountryScopeDecision } from "#geocode/scope/inferred"
 import {
 	registerGenerationServices,
 	registerProcessServices,
 	resolveGenerationServices,
 	unavailableLayers,
-} from "#geocode/services"
+} from "#geocode/session/services"
 import type { DecodeRecord, GeocodeStageRecord } from "#geocode/stages"
-import type { CountryScopeDecision } from "#inferred-scope"
-import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 import { recordServiceTimings, type ServiceTimings } from "#services/timings"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#street/interp-calibration"
 
 /**
  * The per-stage evidence behind one geocode, rendered by the `--debug` view

@@ -15,7 +15,7 @@ import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { resolveCandidateDBPath } from "#resolver-backend"
+import { resolveCandidateDBPath } from "#engine/resolver-backend"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
 import {

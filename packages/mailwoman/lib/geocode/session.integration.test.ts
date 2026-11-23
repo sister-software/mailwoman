@@ -13,8 +13,8 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
-import { localeToCountry } from "#country-scope"
 import { createGeocodeSessionOptions, GEOCODE_DEFAULT_LOCALE } from "#geocode/options"
+import { localeToCountry } from "#geocode/scope/country"
 import { createGeocodeSession, type GeocodeRequestOptions } from "#geocode/session"
 
 /**

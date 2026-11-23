@@ -14,8 +14,8 @@ import type { GeocodeRequestOptions } from "mailwoman/geocode/session"
 /**
  * A parse function a caller injects in place of the pipeline the plugin builds, such as a test double.
  *
- * It is the call signature of `RuntimePipeline` in `mailwoman/runtime-pipeline` without that
- * type's disposal: the caller owns an injected pipeline, and the plugin never closes it.
+ * It is the call signature of `RuntimePipeline` in `mailwoman/engine/runtime-pipeline` without
+ * that type's disposal: the caller owns an injected pipeline, and the plugin never closes it.
  */
 export type InjectedPipeline = (raw: string, opts?: PipelineOpts) => Promise<PipelineResult>
 

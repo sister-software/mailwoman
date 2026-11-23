@@ -12,8 +12,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { loadBundledPlaceCountry } from "mailwoman/default/placer"
+import { resolveCandidateDBPath } from "mailwoman/engine/resolver-backend"
 import { geocodeAddress } from "mailwoman/geocode"
-import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 // This file is served at /examples/mailwoman-server.mjs and runs in a reader's project, where
 // `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency. A raw read is

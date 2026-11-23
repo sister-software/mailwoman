@@ -16,7 +16,7 @@ import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { type LayerManifest, probeManifest } from "#data/inventory"
+import { type LayerManifest, probeManifest } from "#data/catalog/inventory"
 import { poiTaxonomyLookup } from "#poi/intent"
 
 /**

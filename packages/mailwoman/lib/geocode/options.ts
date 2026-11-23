@@ -17,8 +17,8 @@ import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
 import { z } from "zod"
 
-import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/switches"
-import type { CapitalTier } from "#resolver-backend"
+import type { CapitalTier } from "#engine/resolver-backend"
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/options/switches"
 
 /**
  * The locale a geocode parses under when the caller chooses none.
@@ -96,8 +96,8 @@ export const GeocodeSessionOptionsSchema = z.strictObject({
 	 * Whether the locale's country scopes the resolver.
 	 *
 	 * - `auto`: it filters unless the address shows evidence of another country.
-	 *   `decideCountryScope` in `#inferred-scope` states that evidence, and each run's
-	 *   `applied.countryScope.withheld` gives the reason when the scope yielded.
+	 *   `decideCountryScope` in `#geocode/scope/inferred` states that evidence, and each
+	 *   run's `applied.countryScope.withheld` gives the reason when the scope yielded.
 	 * - `locale`: it always filters, as `defaultCountry` set to the locale's country does.
 	 * - `none`: it never scopes.
 	 */

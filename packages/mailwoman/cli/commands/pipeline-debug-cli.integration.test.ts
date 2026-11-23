@@ -18,7 +18,7 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

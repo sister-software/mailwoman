@@ -19,7 +19,7 @@ import {
 import { describe, expect, test, vi } from "vitest"
 
 import { $public } from "#env"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 
 const CLI_PATH = await mailwomanCLIPath()

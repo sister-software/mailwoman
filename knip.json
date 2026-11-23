@@ -53,7 +53,7 @@
 				"cli/commands/**/*.tsx",
 				"cli/kit/weights-guard.tsx",
 				"tools/**/*.ts",
-				"lib/geocode/worker.ts",
+				"lib/geocode/batch/worker.ts",
 				"lib/test-fixtures/**/*"
 			],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]

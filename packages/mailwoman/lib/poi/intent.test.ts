@@ -14,6 +14,7 @@ import { ServiceRegistry } from "async-init"
 import { describe, expect, it, vi } from "vitest"
 
 import { registerReverseGeocoderService, ReverseGeocoderService } from "#default"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import {
 	bindCountryScope,
 	createPOIIntentStage,
@@ -21,7 +22,6 @@ import {
 	createStopwordPOIPhraseLookup,
 	poiTaxonomyLookup,
 } from "#poi"
-import { createRuntimePipeline } from "#runtime-pipeline"
 
 const LOCALE: LocaleHint = {
 	locale: "en-US",

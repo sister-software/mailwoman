@@ -5,19 +5,19 @@
  *   The data layers a geocode session composes on Node, one contribution per layer.
  *
  *   A new layer adds its contribution here and to {@link NODE_LAYER_CONTRIBUTIONS}.
- *   The session and `#geocode/services` read the list and import no layer opener themselves.
+ *   The session and `#geocode/session/services` read the list and import no layer opener themselves.
  */
 
 import { createToken, type ServiceToken } from "async-init"
 import { resolvePath } from "path-ts"
 
-import { openBANRegionDatabases } from "#geocode/ban-layers"
-import type { LayerContribution, NationalDatabaseSource } from "#geocode/contributions"
-import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import { createRegionDatabaseProvider } from "#geocode/regions"
-import { GenerationServices } from "#geocode/services"
+import { openBANRegionDatabases } from "#geocode/layers/ban"
+import type { LayerContribution, NationalDatabaseSource } from "#geocode/layers/contributions"
+import { OvertureNationalDatabaseProvider } from "#geocode/layers/national-overture"
+import { openOSMRegionDatabases } from "#geocode/layers/osm"
+import { createRegionDatabaseProvider } from "#geocode/layers/regions"
 import { loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
+import { GenerationServices } from "#geocode/session/services"
 import { defineUnlessProvided } from "#services/define"
 import { ResolverModuleService } from "#services/resolver-module"
 

@@ -2,7 +2,7 @@
 title: Node library API
 description: Look up Mailwoman 11.0.0 library imports, parse and geocode calls, options, return types, and errors.
 role: reference
-source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/parser.ts, packages/mailwoman/lib/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/stream.ts, packages/entity-resolution/lib/geocode-handler.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
+source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/engine/parser.ts, packages/mailwoman/lib/engine/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/batch/stream.ts, packages/entity-resolution/lib/geocode-handler.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
 verified-with: mailwoman v11.0.0
 ---
 
@@ -14,13 +14,13 @@ This page describes the principal Node library calls. A parser from `createParse
 
 ## Imports
 
-| Import                       | Public entry points covered here                                                         |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| `mailwoman`                  | `createParser`, the tree readers below, and the `AddressNode` and `PipelineResult` types |
-| `mailwoman/runtime-pipeline` | `createRuntimePipeline`                                                                  |
-| `mailwoman/geocode`          | `parseForGeocode`, `geocodeAddress`, `geocodeStream`, `createRegionDatabaseProvider`     |
-| `@mailwoman/neural`          | `NeuralAddressClassifier`                                                                |
-| `@mailwoman/core/decoder`    | `createCalibrator`                                                                       |
+| Import                              | Public entry points covered here                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| `mailwoman`                         | `createParser`, the tree readers below, and the `AddressNode` and `PipelineResult` types |
+| `mailwoman/engine/runtime-pipeline` | `createRuntimePipeline`                                                                  |
+| `mailwoman/geocode`                 | `parseForGeocode`, `geocodeAddress`, `geocodeStream`, `createRegionDatabaseProvider`     |
+| `@mailwoman/neural`                 | `NeuralAddressClassifier`                                                                |
+| `@mailwoman/core/decoder`           | `createCalibrator`                                                                       |
 
 The `mailwoman` package installs the classifier and the en-US model, so a parse needs no other package.
 
@@ -78,7 +78,7 @@ interface RuntimePipeline extends AsyncDisposable {
 function createRuntimePipeline(opts?: CreateRuntimePipelineOpts, scope?: { parent?: ServiceRegistry }): RuntimePipeline
 ```
 
-`mailwoman/runtime-pipeline` exports the factory that `createParser` builds on. Use it to supply your own classifier, a resolver, or a POI database. The factory returns a parse function synchronously. The returned function runs the async pipeline.
+`mailwoman/engine/runtime-pipeline` exports the factory that `createParser` builds on. Use it to supply your own classifier, a resolver, or a POI database. The factory returns a parse function synchronously. The returned function runs the async pipeline.
 
 The pipeline owns what it loads for an `auto` stage: the bundled coarse placer, the street index and the POI database. It loads each on the first call and closes it when the pipeline is disposed, so hold a pipeline with `await using` or call its `Symbol.asyncDispose` after the last parse. A process holds no shared copy of these. A caller that builds several pipelines calls `registerRuntimePipelineServices(registry)` on one `ServiceRegistry` from `async-init` and passes `{ parent: registry }` to each, so the registry loads each default once and closes it at its own disposal. An omitted classifier leaves the structural stages available, but a neural classifier is required for a labeled parse. The pipeline can add resolved places to the tree when `resolver` is supplied.
 

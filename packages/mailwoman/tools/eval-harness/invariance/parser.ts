@@ -11,7 +11,7 @@ import { createScorer } from "@mailwoman/neural/classifier/scorer"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { resolvePath } from "path-ts"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 
 /**
  * Per-call parser options.

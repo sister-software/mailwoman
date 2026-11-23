@@ -82,7 +82,7 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 			writers: import("@mailwoman/core/fs/writers"),
 			layout: import("@mailwoman/resolver-wof-sqlite/address/keys/layout"),
 			attributionLedger: import("@mailwoman/resolver-wof-sqlite/address/keys/attribution"),
-			mixedLayer: import("#data/mixed-layer"),
+			mixedLayer: import("#data/terms/mixed-layer"),
 			publicBucket: import("@mailwoman/gazetteer/tools/publish/public-bucket"),
 			pathTs: import("path-ts"),
 			sleep: import("@mailwoman/core/utils/sleep"),

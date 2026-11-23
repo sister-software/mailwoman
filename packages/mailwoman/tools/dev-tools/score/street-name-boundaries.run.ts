@@ -18,7 +18,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { ServiceRegistry } from "async-init"
 
-import { createRuntimePipeline, registerRuntimePipelineServices } from "#runtime-pipeline"
+import { createRuntimePipeline, registerRuntimePipelineServices } from "#engine/runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { overlayLocale, routeCountry } from "#tools/eval-harness/gauntlet/routing"
 

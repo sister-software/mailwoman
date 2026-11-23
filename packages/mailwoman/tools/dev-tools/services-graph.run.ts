@@ -14,7 +14,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { createGeocodeSessionOptions, SessionOptionSource } from "#geocode/options"
-import { describeGeocodeServices } from "#geocode/services"
+import { describeGeocodeServices } from "#geocode/session/services"
 import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
 
 async function main(): Promise<void> {

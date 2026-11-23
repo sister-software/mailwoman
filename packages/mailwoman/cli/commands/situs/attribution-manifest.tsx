@@ -73,7 +73,7 @@ async function writeLayerNotice(version: string): Promise<string[]> {
 	const [{ dataRootPath }, { writeLocalTextFile }, mixed] = await Promise.all([
 		import("@mailwoman/core/data-root"),
 		import("@mailwoman/core/fs/writers"),
-		import("#data/mixed-layer"),
+		import("#data/terms/mixed-layer"),
 	])
 
 	const root = dataRootPath("db")

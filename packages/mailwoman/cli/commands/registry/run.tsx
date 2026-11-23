@@ -35,7 +35,7 @@ import {
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { resolverDefaultCountry } from "#country-scope"
+import { resolverDefaultCountry } from "#geocode/scope/country"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -129,7 +129,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	} = await allKeyed({
 		options: import("#geocode/options"),
 		session: import("#geocode/session"),
-		ingest: import("#geocode/ingest"),
+		ingest: import("#geocode/batch/ingest"),
 		layers: import("#services/entry/node"),
 	})
 
@@ -212,7 +212,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 
 		const [{ geocodeAddress }, { createRegionDatabaseProvider }] = await Promise.all([
 			import("#geocode/core"),
-			import("#geocode/regions"),
+			import("#geocode/layers/regions"),
 		])
 
 		const wof = flags.wof || wofDatabasePath("admin-global-priority.db")

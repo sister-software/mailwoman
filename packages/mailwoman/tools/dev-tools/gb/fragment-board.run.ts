@@ -40,8 +40,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { deriveGeocodeRegister } from "#geocode/core"
-import { createRuntimePipeline } from "#runtime-pipeline"
 import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#tools/dev-tools/register-board"
 
 const { values } = parseArguments({

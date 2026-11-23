@@ -120,7 +120,7 @@ only the real checkpoint shows it.
 
 ## Worker threads
 
-[`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/stream.ts)
+[`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/batch/stream.ts)
 moves work across a thread boundary. It is an async iterator over a `spliterator` worker pool. Each worker builds its
 own classifier and lookups, and results are yielded in completion order.
 

@@ -27,7 +27,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { describeMixedAddressLayer, localLayerFileReader, type MixedLayerSource } from "#data/mixed-layer"
+import { describeMixedAddressLayer, localLayerFileReader, type MixedLayerSource } from "#data/terms/mixed-layer"
 
 const { values } = parseArguments({
 	options: { "layer-version": { type: "string" }, root: { type: "string" }, check: { type: "boolean" } },

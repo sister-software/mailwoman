@@ -4,13 +4,13 @@
 /**
  *   The CycloneDX `data` component of a published basemap archive, built from the structure-source register.
  *
- *   The release data BOM in `mailwoman/data/bom` lists what a mailwoman release delivers.
+ *   The release data BOM in `mailwoman/data/terms/bom` lists what a mailwoman release delivers.
  *   A basemap archive is served to the map, so its component is built here, in the same shape,
  *   from the register entries of the sources the archive was built from.
  */
 
 import { electedTermsLabel } from "@mailwoman/license/decision"
-import type { DataBOMComponent } from "mailwoman/data/bom"
+import type { DataBOMComponent } from "mailwoman/data/terms/bom"
 
 import { BASEMAP_INPUTS, type Basemap } from "#basemaps"
 import { STRUCTURE_SOURCE_REGISTER } from "#register"

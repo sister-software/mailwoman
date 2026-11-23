@@ -33,11 +33,12 @@ import type {
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 
-import { postcodeCountryScopeOf, recognizeBarePostcode, resolvedCountryOf } from "#geocode/tree-reads"
-import { type CountryScopeDecision, type CountryScopeEvidence, decideCountryScope } from "#inferred-scope"
-import { repairPostcodeContradiction } from "#postcode-repair"
-import { recognizeUSRegions } from "#region-recognition"
-import { repairStrandedAffix } from "#stranded-affix-repair"
+import { recognizeBarePostcode } from "#geocode/rewrites/bare-postcode"
+import { repairPostcodeContradiction } from "#geocode/rewrites/postcode-repair"
+import { repairStrandedAffix } from "#geocode/rewrites/stranded-affix-repair"
+import { recognizeUSRegions } from "#geocode/rewrites/us/region-recognition"
+import { type CountryScopeDecision, type CountryScopeEvidence, decideCountryScope } from "#geocode/scope/inferred"
+import { postcodeCountryScopeOf, resolvedCountryOf } from "#geocode/tree-reads"
 
 /**
  * The identifier of each stage the geocode path adds to the parse pipeline's.

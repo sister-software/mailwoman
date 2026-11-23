@@ -17,7 +17,7 @@ import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { isSealed } from "@mailwoman/sqlite/sealed/db"
 import { describe, expect, test, vi } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 
 vi.setConfig({ testTimeout: 180_000 })

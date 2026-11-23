@@ -10,7 +10,7 @@ import { walkNodes } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { parsePipelineRows, workerThroughput } from "#tools/eval-harness/pipeline-parse/rows"
 
 const ROWS = [
