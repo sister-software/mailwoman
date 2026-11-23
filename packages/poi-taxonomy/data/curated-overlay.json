@@ -179,6 +179,14 @@
 			"source": "overture"
 		},
 		{
+			"id": "seaport",
+			"label": "Seaport",
+			"hierarchy": ["travel", "seaport"],
+			"basicLabel": "Seaport",
+			"osmTag": "landuse=port",
+			"source": "mailwoman"
+		},
+		{
 			"id": "fire_hydrant",
 			"label": "Fire hydrant",
 			"hierarchy": ["infrastructure", "fire_hydrant"],

@@ -63,6 +63,7 @@ const sources = [
 	"geonames-postal",
 	"hrsa",
 	"imls-pls",
+	"nga-wpi",
 	"nppes",
 	"openaddresses",
 	"ourairports",
@@ -283,6 +284,8 @@ const FETCHERS = {
 	hrsa: async (base) => (await import("@mailwoman/corpus/us/tools/fetch/hrsa")).fetchHRSA(base, reportToStderr),
 	"imls-pls": async (base) =>
 		(await import("@mailwoman/corpus/us/tools/fetch/imls-pls")).fetchIMLSPLS(base, reportToStderr),
+	"nga-wpi": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/nga-wpi")).fetchNGAWPI(base, reportToStderr),
 	nppes: async (base) => (await import("@mailwoman/corpus/us/tools/fetch/nppes")).fetchNPPES(base, reportToStderr),
 	openaddresses: async (base, options) => {
 		const { openaddresses, readers } = await allKeyed({

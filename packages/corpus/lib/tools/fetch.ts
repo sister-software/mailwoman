@@ -50,6 +50,7 @@ import { fetchGCISTW } from "#tw/tools/fetch/gcis"
 import { fetchHRSA } from "#us/tools/fetch/hrsa"
 import { fetchIMLSPLS } from "#us/tools/fetch/imls-pls"
 import { fetchNAD } from "#us/tools/fetch/nad"
+import { fetchNGAWPI } from "#us/tools/fetch/nga-wpi"
 import { fetchNPPES } from "#us/tools/fetch/nppes"
 import { fetchStateHISchools } from "#us/tools/fetch/state/hi-schools"
 import { fetchStateSources } from "#us/tools/fetch/state/sources"
@@ -98,6 +99,7 @@ export const FETCH_SOURCES = {
 	hrsa: fetchHRSA,
 	"imls-pls": fetchIMLSPLS,
 	nppes: fetchNPPES,
+	"nga-wpi": fetchNGAWPI,
 	openaddresses: fetchOpenAddresses,
 	ourairports: fetchOurAirports,
 	vlaanderen: fetchVlaanderenAD,

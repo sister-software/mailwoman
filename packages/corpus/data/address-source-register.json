@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "3efdcfab263121c5599f7af9b9d8cf12c0c069b4241f49d0066da5da5114cec0",
+	"contentDigest": "214e11b87d6d85aaa395ae81aceeb582f81932cb2c7ad67e20884cc3f9cc847c",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -4270,6 +4270,93 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to tw-mixed-regulatory-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "NGA claims no copyright or other intellectual property right in the nautical products posted on msi.nga.mil for public use (Commercial Use Warning); work of the United States Government under 17 U.S.C. § 105",
+			"termsVersion": "Maritime Safety Information portal content as captured on 2026-09-29",
+			"retrievedCopy": "internal/strategy/rights-receipts/nga-wpi-2026-11-23/",
+			"retrievedAt": "2026-11-23",
+			"reading": {
+				"url": "https://msi.nga.mil/commercial-use",
+				"found": "terms",
+				"quote": "The websites https://www.nga.mil and https://msi.nga.mil are the official US Government sources for NGA digital format nautical products, information and data. The full text of current publications will be maintained on these websites and will be available for all users to download. NGA claims no copyright or other intellectual property right in the nautical products posted on this website for public use."
+			},
+			"obligations": [
+				{
+					"obligation": "notice_pass_through",
+					"strength": "required",
+					"quote": "All non-Agency published products, information or data which include the NGA, NIMA or DMA name, seal or initials or otherwise express or imply any association with NGA, NIMA or DMA shall contain the following disclaimer: Disclaimer This reproduction, partial or complete, of any National Geospatial-Intelligence Agency (NGA), National Imagery andMapping Agency (NIMA) or Defense Mapping Agency (DMA) product, information or data is not approved, authorized or endorsed by the Secretary of Defense, the Director of National Intelligence, the Director, NGA or any other element of the US Government. The US Government and NGA accept no liability for the accuracy or quality of this reproduction or the use of any NGA, NIMA or DMA products, information or data.\"",
+					"text": "This reproduction, partial or complete, of any National Geospatial-Intelligence Agency (NGA), National Imagery and Mapping Agency (NIMA) or Defense Mapping Agency (DMA) product, information or data is not approved, authorized or endorsed by the Secretary of Defense, the Director of National Intelligence, the Director, NGA or any other element of the US Government. The US Government and NGA accept no liability for the accuracy or quality of this reproduction or the use of any NGA, NIMA or DMA products, information or data.",
+					"because": "The structures layer credits the World Port Index to NGA by name, so the condition applies to every artifact that carries the rows. The text corrects the publisher's `andMapping` to `and Mapping`."
+				},
+				{
+					"obligation": "indemnity",
+					"strength": "required",
+					"quote": "The user agrees to hold harmless the United States National Geospatial-Intelligence Agency."
+				}
+			],
+			"electedBecause": "NGA publishes the World Port Index (Pub. 150) on its Maritime Safety Information portal, which calls `UpdatedPub150.csv` the official version of the content and updates it monthly. The portal answered HTTP 503 with a maintenance page on 2026-11-23, so its own statements were read from the content API that renders its pages, captured by the Wayback Machine on 2026-09-29 (`https://msi.nga.mil/api/pageContent`, 91,249 bytes, sha256 `5616fcd9489ed56990fddda85f715de059cea213a663725d0223f5472c6d9fe2`). Its `Commercial Use Warning` states `NGA claims no copyright or other intellectual property right in the nautical products posted on this website for public use`, quoted under `reading`. That is NGA's own statement, and it agrees with 17 U.S.C. § 105, which leaves a work of the United States Government without copyright. The same page bars using NGA's name, seal or initials to imply endorsement without written permission (10 U.S.C. § 425), and requires a disclaimer on any non-agency product that names NGA or implies an association with it; the structures layer credits NGA by name, so that disclaimer is a required notice, recorded under `obligations` and carried in the layer's attribution. The `Legal Disclaimer & Security Policy` page states `The user agrees to hold harmless the United States National Geospatial-Intelligence Agency`, an indemnity that allocates liability and restricts no use (`packages/corpus/lib/us/AGENTS.md`). The index takes contributions from users through NGA's WPI GeoForm, which NGA reviews before publishing, and the published rows are port names, points and harbor characteristics: facts, which US copyright excludes (Feist), in a list NGA claims no right in. The www.nga.mil privacy page's statement that its information `may be distributed or copied unless otherwise specified` covers the agency's site rather than the portal, so it is recorded in the receipt and not relied on. No corpus source reads the list; the structures layer is its only reader.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The Commercial Use Warning states that current publications `will be available for all users to download`, and NGA claims no copyright in them."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "NGA claims no copyright or other intellectual property right in the products posted for public use, so reading the columns out of the CSV is unreserved."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same statement leaves no right that adaptation would need, and 17 U.S.C. § 105 leaves the work without copyright."
+				},
+				"evaluate": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `train` permission: scoring a model on the rows fits no weight and only aggregate scores leave, so the grant that permits training on the rows permits evaluating on them."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "NGA claims no right that fitting a model would need, and the page's only conditions govern the use of NGA's name and the disclaimer a product carries."
+				},
+				"distribute-rows": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page sets `Conditions for Reproduction, Use or Sale of NGA Nautical Products`, which permit reproduction on the condition that a product naming NGA carries the disclaimer recorded under `obligations`."
+				},
+				"answer-queries": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `distribute-rows` permission: answering one request at a time releases less of the rows than a file they can be read back from, under the same terms."
+				},
+				"distribute-derived": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `distribute-rows` permission: an artifact the rows can't be recovered from releases less of them than a file they can be read back from, under the same terms."
+				},
+				"distribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "NGA claims no right in the products, so a model fitted on the rows is this repository's own work; a model card that names NGA carries the disclaimer."
+				}
+			},
+			"purposes": {
+				"commercial-use": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page is titled a Commercial Use Warning and sets the conditions for `Reproduction, Use or Sale` of NGA products, so commercial use is contemplated and conditioned rather than refused."
+				},
+				"sale": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The same conditions name `Sale` of NGA products and require only the disclaimer and no implied endorsement."
+				}
+			},
+			"licenseID": "unchecked-access-free-us-national-geospatial-intelligence-agency-nga"
 		},
 		{
 			"licenseID": "unchecked-access-free-us-us-business-legal-1",
@@ -97784,6 +97871,22 @@
 			"note": "No corpus source reads this list. `$MAILWOMAN_DATA_ROOT/un-locode/un-locode.db`, built from it by `@mailwoman/un-locode-lookup`, feeds the UN_LOCODE annotation of the `nominatim` command. Each entry has a country, a three-character location code, a name, a subdivision, an eight-position function classifier (port, rail, road, airport, postal exchange, multimodal, fixed transport, border crossing) and, on most entries, coordinates in degrees and minutes. The terms read on 2026-11-23 limit use to personal, non-commercial use; the decision records each reading."
 		},
 		{
+			"sourceID": "us-transport-2",
+			"iso2": "US",
+			"sector": "transport",
+			"name": "World Port Index (NGA Pub. 150), UpdatedPub150.csv",
+			"status": "verified-authority",
+			"asserts": ["observation"],
+			"authorityBasis": "NGA's Maritime Safety Office compiles the World Port Index from its Sailing Directions and charts and from contributions it reviews, and publishes it on the Maritime Safety Information portal",
+			"geometry": "present",
+			"license": "unchecked-access-free-us-national-geospatial-intelligence-agency-nga",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "CSV from the portal's publications download endpoint, or the same CSV zipped as `apology_objects/WPI.zip` while the portal is under maintenance, no key",
+			"publisher": "National Geospatial-Intelligence Agency (NGA)",
+			"sourceURL": "https://msi.nga.mil/Publications/WPI",
+			"note": "No corpus source reads this list. The structures layer reads it as `nga-world-port-index`: 3,809 ports in 193 countries in the 2026-11-23 pull (archive dated 2026-11-20), each with a World Port Index number, a name, a GENC country name, a point and over a hundred harbor characteristics. No row has a street address."
+		},
+		{
 			"sourceID": "ca-transport-1",
 			"iso2": "CA",
 			"sector": "transport",
@@ -97797,7 +97900,7 @@
 			"access": "CSV files at https://davidmegginson.github.io/ourairports-data/, to which `ourairports.com/data/*.csv` redirects, no key",
 			"publisher": "OurAirports",
 			"sourceURL": "https://ourairports.com/data/",
-			"note": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), and `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada."
+			"note": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc, and the structures layer reads `airports.csv` as `ourairports`: 72,676 open airports, heliports, seaplane bases and balloon ports in the 2026-11-23 pull, with closed sites and 23 rows under codes ISO 3166-1 doesn't assign (XK, XP, ZZ) left out. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada."
 		},
 		{
 			"sourceID": "es-health-1",

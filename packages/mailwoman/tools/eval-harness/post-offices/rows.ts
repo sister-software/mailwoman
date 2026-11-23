@@ -18,7 +18,12 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import type { StructureProvenance, StructureRecord, StructureSource } from "@mailwoman/corpus/structures/source"
+import {
+	type StructureProvenance,
+	type StructureRecord,
+	type StructureSource,
+	structureRecordCountry,
+} from "@mailwoman/corpus/structures/source"
 
 import { renderHeldoutRow } from "#tools/eval-harness/heldout/dataset/render"
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -92,7 +97,7 @@ export function postOfficeSuiteRows(
 
 	for (const [form, components] of forms) {
 		const rendered = renderHeldoutRow(components, {
-			country: source.country,
+			country: structureRecordCountry(source, record),
 			source: source.id,
 			sourceID: `${record.id}#${form}`,
 			// The record's forms resample together.

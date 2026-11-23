@@ -1,5 +1,5 @@
 {
-	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. A row a corpus source reads records `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. A row whose terms were read when it was added records the access label `Free` instead. Among them are publications no corpus source reads: Poste Maroc's and 4-72's post-office lists, whose share-alike grants the share-alike-free license policy refuses; UN/LOCODE, which `@mailwoman/un-locode-lookup` builds a lookup from; and OurAirports, which `@mailwoman/registry` compiles its airport codes from. Each records that outcome in its decision. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
+	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. A row a corpus source reads records `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. A row whose terms were read when it was added records the access label `Free` instead. Among them are publications no corpus source reads: Poste Maroc's and 4-72's post-office lists, whose share-alike grants the share-alike-free license policy refuses; UN/LOCODE, which `@mailwoman/un-locode-lookup` builds a lookup from; OurAirports, which `@mailwoman/registry` compiles its airport codes from and the structures layer reads; and NGA's World Port Index, which the structures layer reads. Each records that outcome in its decision. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
 	"rows": [
 		{
 			"iso2": "GB",
@@ -2552,6 +2552,21 @@
 			"origin": "2026-11-23_rights_review"
 		},
 		{
+			"iso2": "US",
+			"sector": "transport",
+			"source": "World Port Index (NGA Pub. 150), UpdatedPub150.csv",
+			"owner": "National Geospatial-Intelligence Agency (NGA)",
+			"role": "OBSERVATION",
+			"authority_basis": "NGA's Maritime Safety Office compiles the World Port Index from its Sailing Directions and charts and from contributions it reviews, and publishes it on the Maritime Safety Information portal",
+			"access": "CSV from the portal's publications download endpoint, or the same CSV zipped as `apology_objects/WPI.zip` while the portal is under maintenance, no key",
+			"license": "Free",
+			"geometry": "Y",
+			"status": "VERIFIED_AUTHORITY",
+			"source_url": "https://msi.nga.mil/Publications/WPI",
+			"notes": "No corpus source reads this list. The structures layer reads it as `nga-world-port-index`: 3,809 ports in 193 countries in the 2026-11-23 pull (archive dated 2026-11-20), each with a World Port Index number, a name, a GENC country name, a point and over a hundred harbor characteristics. No row has a street address.",
+			"origin": "2026-11-23_rights_review"
+		},
+		{
 			"iso2": "CA",
 			"sector": "transport",
 			"source": "OurAirports open data downloads (airports.csv, runways.csv, countries.csv, regions.csv)",
@@ -2563,7 +2578,7 @@
 			"geometry": "Y",
 			"status": "VERIFIED_AUTHORITY",
 			"source_url": "https://ourairports.com/data/",
-			"notes": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), and `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada.",
+			"notes": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc, and the structures layer reads `airports.csv` as `ourairports`: 72,676 open airports, heliports, seaplane bases and balloon ports in the 2026-11-23 pull, with closed sites and 23 rows under codes ISO 3166-1 doesn't assign (XK, XP, ZZ) left out. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada.",
 			"origin": "2026-11-23_rights_review"
 		},
 		{

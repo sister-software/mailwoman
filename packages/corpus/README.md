@@ -200,11 +200,13 @@ A new country's list joins with three pieces of work:
    `@mailwoman/poi-taxonomy` category (a post-office list files every record under
    `postOfficeCategoryID()`), its point or `null`, and its address as the components the parser labels
    (`house_number`, `street`, `unit`, `locality`, `region`, `postcode`), split by the country's own
-   rules, or `null`.
+   rules, or `null`. A list that spans countries, such as NGA's World Port Index or OurAirports, also
+   states each record's own ISO 3166-1 alpha-2 `country`.
 3. **The entry's terms**: the ISO 3166-1 alpha-2 country, the publisher, the attribution the layer
    credits, an SPDX identifier or a `LicenseRef-` this repository defines, the source's
    `address-source-register.json` row, and its provenance class. A postal operator's own facility list is
-   `postal-operator`. Another body's compilation, such as the USGS structures layer, is `mapping-agency`.
+   `postal-operator`. Another body's compilation, such as the USGS structures layer or the World Port
+   Index, is `mapping-agency`. A list volunteers edit, such as OurAirports, is `community`.
    The register row needs an elected decision before the list is registered, as for any corpus source.
 
 The layer's manifest states the conjunction of the contributing licenses and each source's input

@@ -474,15 +474,16 @@ the obligations table (`packages/license/lib/obligations.ts`, which `mailwoman d
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                         | Meaning                                                                                                                                                                                      | Obligations |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution |
-| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none        |
-| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution |
-| `LicenseRef-US-Mixed`                | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown     |
-| `LicenseRef-Undeclared-Input`        | a contributing database that declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the database out of the expression                                | unknown     |
-| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution |
-| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution |
+| `LicenseRef`                           | Meaning                                                                                                                                                                                      | Obligations |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `LicenseRef-Commercial`                | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                   | attribution |
+| `LicenseRef-USGov-Public-Domain`       | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                         | none        |
+| `LicenseRef-WhosOnFirst-Mixed`         | the Who's On First records, subject to the terms of the sources the WOF source list names. Its own text grants CC0 over "the format and structure", in those words, and requires a link back | attribution |
+| `LicenseRef-US-Mixed`                  | the US address layer: NAD, OpenAddresses runs and Overture's OpenAddresses rows, each under its publisher's own terms. No one document states them                                           | unknown     |
+| `LicenseRef-Undeclared-Input`          | a contributing database that declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the database out of the expression                                | unknown     |
+| `LicenseRef-INEGI-Terms`               | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution |
+| `LicenseRef-GEBCO-Operator-Election`   | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution |
+| `LicenseRef-OurAirports-Public-Domain` | OurAirports' data dumps, which its data page releases "to the Public Domain" without naming an instrument. It asks for credit and states that credit isn't required                          | none        |
 
 `LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
 publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only

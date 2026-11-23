@@ -19,8 +19,9 @@ the network.
 
 ## `curated-overlay.json` — mailwoman's hand-maintained overlay
 
-The 26 curated category records (curated hierarchies, `osmTag`s, `overtureCategories` rollups, and the 6
-`mailwoman-infra` street-furniture classes) plus the 54 synonym phrases. No other file defines the curated
+The 28 curated category records (curated hierarchies, `osmTag`s, `overtureCategories` rollups, the 6
+`mailwoman-infra` street-furniture classes, and `seaport`, which the Overture snapshot lacks and the
+structures layer files the World Port Index under) plus the 55 synonym phrases. No other file defines the curated
 layer, and the generator merges it over the Overture snapshot.
 
 ## `taxonomy.json` — the generated, committed merge
