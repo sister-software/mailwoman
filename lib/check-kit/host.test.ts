@@ -7,6 +7,7 @@
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { hostName } from "@mailwoman/core/utils/system"
@@ -85,6 +86,31 @@ describe("acquireHost", () => {
 		expect(acquired.lock).not.toBeNull()
 		expect(acquired.ciWait.expired).toBe(true)
 		expect(acquired.ciWait.waitedMs).toBe(60_000)
+	})
+
+	it("holds no lock while it waits for CI, and takes it once CI is idle", async () => {
+		await using scratch = await temporaryDirectory("host-test-")
+		const lockDir = scratch.path("host.lock").toString()
+		const clock = createFakeClock()
+		const readings = [BUSY, BUSY, IDLE]
+		const lockHeldAtRead: boolean[] = []
+
+		const acquired = await acquireHost({ check: "compile" }, 60 * 60_000, false, {
+			lockDir,
+			clock,
+			readCI: async () => {
+				lockHeldAtRead.push(await pathExists(lockDir))
+
+				return readings.shift()!
+			},
+		})
+
+		await using _lock = acquired.lock
+
+		expect(lockHeldAtRead).toEqual([false, false, false])
+		expect(acquired.lock).not.toBeNull()
+		expect(acquired.ciWait.expired).toBe(false)
+		expect(await pathExists(lockDir)).toBe(true)
 	})
 
 	it("refuses at once under --no-wait while another process holds the lock", async () => {

@@ -184,16 +184,18 @@ export interface HostAcquisition {
 }
 
 /**
- * Take the host lock and wait for CI to finish, within one shared bound.
+ * Wait for CI to finish, then take the host lock, within one shared bound.
  *
- * The lock is taken first and held through the CI wait, so a second checkout's
- * heavy check can't start between the two.
- * When the CI wait expires the check still runs, and the acquisition records that.
+ * The CI wait holds no lock, so a check waiting on CI blocks no other check.
+ * The lock serializes heavy checks: two checks that see CI finish together take it one after the other.
+ *
+ * When the CI wait expires the check still takes the lock and runs, and the acquisition records that.
+ * The lock wait gets what the CI wait left of the bound, and always one attempt.
  *
  * When CI can't be read the wait stops, because further reads are likely to fail
  * the same way, and the reading records the error.
  *
- * @param noWait Try the lock once and read CI once, without waiting on either.
+ * @param noWait Read CI once and try the lock once, without waiting on either.
  */
 export async function acquireHost(
 	detail: Record<string, unknown>,
@@ -209,11 +211,33 @@ export async function acquireHost(
 	let lastHolder: string | null = null
 	const lockDir = services.lockDir ?? hostLockPath()
 
+	const ciStartedAt = clock.now()
+	let reading = await readCI()
+
+	// Under --no-wait the bound is zero, so the first reading is the one recorded.
+	const boundMs = noWait ? 0 : maxWaitMs
+
+	while (reading.read && reading.runs.length) {
+		const remaining = boundMs - (clock.now() - startedAt)
+
+		if (remaining <= 0) break
+
+		log(`waiting for ${reading.runs.length} CI run(s): ${reading.runs.map((run) => run.workflow).join(", ")}`)
+		await clock.sleep(Math.min(CI_POLL_MS, remaining))
+		reading = await readCI()
+	}
+
+	const ciWait = {
+		waitedMs: clock.now() - ciStartedAt,
+		expired: reading.read && reading.runs.length > 0,
+		reading,
+	}
+
 	// The lock is a non-recursive `mkdir`, so its parent must exist first.
 	await makeDirectories(dirname(lockDir))
 
 	const waited = await waitForDirectoryLock(lockDir, {
-		maxWaitMs: noWait ? 0 : maxWaitMs,
+		maxWaitMs: Math.max(0, boundMs - (clock.now() - startedAt)),
 		pollMs: LOCK_POLL_MS,
 		clock,
 		detail,
@@ -240,33 +264,7 @@ export async function acquireHost(
 		staleReleased,
 	}
 
-	if (!waited.lock) return { lock: null, lockWait, ciWait: { waitedMs: 0, expired: false, reading: null } }
-
-	const ciStartedAt = clock.now()
-	let reading = await readCI()
-
-	// Under --no-wait the bound is zero, so the first reading is the one recorded.
-	const ciBoundMs = noWait ? 0 : maxWaitMs
-
-	while (reading.read && reading.runs.length) {
-		const remaining = ciBoundMs - (clock.now() - startedAt)
-
-		if (remaining <= 0) break
-
-		log(`waiting for ${reading.runs.length} CI run(s): ${reading.runs.map((run) => run.workflow).join(", ")}`)
-		await clock.sleep(Math.min(CI_POLL_MS, remaining))
-		reading = await readCI()
-	}
-
-	return {
-		lock: waited.lock,
-		lockWait,
-		ciWait: {
-			waitedMs: clock.now() - ciStartedAt,
-			expired: reading.read && reading.runs.length > 0,
-			reading,
-		},
-	}
+	return { lock: waited.lock ?? null, lockWait, ciWait }
 }
 
 /**
