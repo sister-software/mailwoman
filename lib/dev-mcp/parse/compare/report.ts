@@ -14,7 +14,6 @@
  */
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
 import {
 	diffSpans,
 	libpostalClient,
@@ -23,8 +22,9 @@ import {
 	SpanVerdict,
 	type ParseComparisonRow,
 } from "#dev-mcp/parse/compare"
-import { describeObservedRate } from "#dev-mcp/power"
-import { inputSetProvenance } from "#dev-mcp/tool-kit"
+import { describeObservedRate } from "#dev-mcp/result/power"
+import { inputSetProvenance } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 export async function runParseCompare(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const endpoint = args["endpoint"] as string | undefined

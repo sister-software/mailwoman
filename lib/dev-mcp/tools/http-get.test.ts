@@ -13,7 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import type { HTTPGetServices } from "#check-kit/http-get"
-import type { DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevToolDeps } from "#dev-mcp/result/tool-kit"
 import { httpGetTool } from "#dev-mcp/tools/http-get"
 
 /**

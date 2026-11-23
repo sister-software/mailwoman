@@ -9,8 +9,8 @@
 import { z } from "zod"
 
 import { COUNTERFACTUAL_FULL_RUN_MAX_ROWS, DIAGNOSE_SHAPES, runDiagnose } from "#dev-mcp/diagnose"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_diagnose",

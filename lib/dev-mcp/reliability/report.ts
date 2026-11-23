@@ -11,8 +11,6 @@
 import { resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"
-import { describeObservedRate, type Selection } from "#dev-mcp/power"
 import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#dev-mcp/reliability"
 import {
 	coarsePlacerReliabilitySample,
@@ -21,7 +19,9 @@ import {
 	UnassertedPolicy,
 	type SurfaceSample,
 } from "#dev-mcp/reliability/surfaces"
-import { provenanceFor } from "#dev-mcp/tool-kit"
+import { describeObservedRate, type Selection } from "#dev-mcp/result/power"
+import { provenanceFor } from "#dev-mcp/result/tool-kit"
+import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 /**
  * The confidence surfaces this tool can grade.

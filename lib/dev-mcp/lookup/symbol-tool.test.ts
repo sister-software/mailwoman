@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
-import type { JobRegistry } from "#dev-mcp/jobs"
+import type { JobRegistry } from "#dev-mcp/process/jobs"
 import { buildToolTable } from "#dev-mcp/tools"
 
 /**

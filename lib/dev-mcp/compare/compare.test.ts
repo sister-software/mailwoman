@@ -13,9 +13,9 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { ExternalArm } from "#dev-mcp/arms"
+import { ExternalGeocoderClient } from "#dev-mcp/arms/external-arm"
 import { runCompare } from "#dev-mcp/compare"
 import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
-import { ExternalGeocoderClient } from "#dev-mcp/external-arm"
 import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 /**

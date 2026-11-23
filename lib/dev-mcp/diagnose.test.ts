@@ -29,7 +29,7 @@ import {
 	type ExpectationReading,
 } from "#dev-mcp/diagnose"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { resolvedInput } from "#dev-mcp/input-sets"
+import { resolvedInput } from "#dev-mcp/runs/input-sets"
 import { stubEngine, stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 
 /**

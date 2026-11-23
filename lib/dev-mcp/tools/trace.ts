@@ -9,11 +9,17 @@
 
 import { z } from "zod"
 
+import { evidenceCensus } from "#dev-mcp/diagnose/evidence"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { evidenceCensus } from "#dev-mcp/evidence"
-import { resolveInputSet } from "#dev-mcp/input-sets"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, componentsOf, provenanceFor, renderTrace, slimParseTrace } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import {
+	ENGINE_CONFIG_SCHEMA,
+	componentsOf,
+	provenanceFor,
+	renderTrace,
+	slimParseTrace,
+} from "#dev-mcp/result/tool-kit"
+import { resolveInputSet } from "#dev-mcp/runs/input-sets"
 
 /**
  * Run the `mwdev_trace` tool, reporting per-stage evidence for a handful of inputs and no rate.

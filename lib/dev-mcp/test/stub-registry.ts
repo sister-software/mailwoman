@@ -9,7 +9,7 @@
 import type { GeocodeSession } from "mailwoman/geocode"
 
 import type { EffectiveConfig, EngineLease, EngineRegistryLike } from "#dev-mcp/engine/registry"
-import type { TreeFingerprint } from "#dev-mcp/tree-fingerprint"
+import type { TreeFingerprint } from "#dev-mcp/process/tree-fingerprint"
 
 /**
  * A fingerprint that never changes, so a test asserting on staleness controls it rather than the clock.

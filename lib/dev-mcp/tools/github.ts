@@ -24,7 +24,7 @@ import {
 } from "#dev-mcp/github"
 import { mergePullRequest, recordPullRequestCompletion } from "#dev-mcp/github/merge"
 import { assertCIComplete, trackedCIMarkerPaths, type TrackedCI } from "#dev-mcp/hooks/ci-completion"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 const REPO = "sister-software/mailwoman"
 

@@ -13,7 +13,7 @@
 import { z } from "zod"
 
 import { DEFAULT_MAX_BYTES, httpGet, type HTTPGetServices, MAX_MAX_BYTES } from "#check-kit/http-get"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * The tool's input.

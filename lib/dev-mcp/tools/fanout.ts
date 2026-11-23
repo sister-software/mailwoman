@@ -8,9 +8,9 @@
 
 import { z } from "zod"
 
-import { FANOUT_MAX_ARMS, runFanout } from "#dev-mcp/fanout"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import { FANOUT_MAX_ARMS, runFanout } from "#dev-mcp/measure/fanout"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 /**
  * Run the `mwdev_fanout` tool: one input set through several arms, one stability reading per row.

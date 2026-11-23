@@ -18,10 +18,10 @@
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
+import { type ExternalAnswer, ExternalEngine } from "#dev-mcp/arms/external-arm"
+import { OracleProviderName } from "#dev-mcp/arms/oracle-arm"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import { type ExternalAnswer, ExternalEngine } from "#dev-mcp/external-arm"
-import { OracleProviderName } from "#dev-mcp/oracle-arm"
-import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/tool-kit"
+import { ENGINE_CONFIG_SCHEMA } from "#dev-mcp/result/tool-kit"
 import { WORKING_TREE_REF } from "#dev-mcp/worktree/arm"
 
 /**

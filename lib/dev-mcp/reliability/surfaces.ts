@@ -14,8 +14,8 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { componentMatches } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 
-import type { ResolvedInput } from "#dev-mcp/input-sets"
 import type { Observation } from "#dev-mcp/reliability"
+import type { ResolvedInput } from "#dev-mcp/runs/input-sets"
 
 /**
  * What to do with a produced component the truth row never mentions; `exclude`

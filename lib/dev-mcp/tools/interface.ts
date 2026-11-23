@@ -10,8 +10,8 @@
 import { z } from "zod"
 
 import { runInterfaceCensus } from "#dev-mcp/interface/report"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 export const interfaceTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_interface",

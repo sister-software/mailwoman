@@ -10,7 +10,7 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import type { DevToolDeps } from "#dev-mcp/tool-kit"
+import type { DevToolDeps } from "#dev-mcp/result/tool-kit"
 import { sqlTool } from "#dev-mcp/tools/sql"
 
 interface SQLReply {

@@ -22,7 +22,7 @@ import { readReleaseConfig } from "@mailwoman/core/repo/release-config"
 import { runFile } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
-import { checkSpawnedTreeFreshness } from "#dev-mcp/compiled-tree"
+import { checkSpawnedTreeFreshness } from "#dev-mcp/process/compiled-tree"
 import { copyWeightsTargets } from "#release-kit/weights/copy-weights"
 import {
 	readWeightsMaterialization,

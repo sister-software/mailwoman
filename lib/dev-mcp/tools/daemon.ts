@@ -9,8 +9,8 @@
 
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { staleEngineMessage } from "#dev-mcp/tree-fingerprint"
+import { staleEngineMessage } from "#dev-mcp/process/tree-fingerprint"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * Build the `mwdev_daemon` tool definition.

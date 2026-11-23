@@ -11,8 +11,8 @@
 
 import { describe, expect, it } from "vitest"
 
+import type { ExternalAnswer } from "#dev-mcp/arms/external-arm"
 import { armsDiffered, tierDiffered } from "#dev-mcp/compare/helpers"
-import type { ExternalAnswer } from "#dev-mcp/external-arm"
 
 const ROOFTOP: ExternalAnswer = {
 	lat: 32.965477,

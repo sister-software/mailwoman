@@ -10,11 +10,11 @@
 
 import { z } from "zod"
 
-import { runConstraintCensus } from "#dev-mcp/constraint-census"
 import type { EngineConfig } from "#dev-mcp/engine/registry"
-import type { InputSetRef } from "#dev-mcp/input-sets"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import { runConstraintCensus } from "#dev-mcp/measure/constraint-census"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import type { InputSetRef } from "#dev-mcp/runs/input-sets"
 
 export const constraintsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_constraints",

@@ -8,9 +8,9 @@
 
 import { z } from "zod"
 
-import { runSupport } from "#dev-mcp/support"
-import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
-import { INPUT_SET_SCHEMA } from "#dev-mcp/tool-kit"
+import { runSupport } from "#dev-mcp/holdings/support"
+import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
 
 /**
  * Run the `mwdev_support` tool: each row's expected components against the corpus support index.
