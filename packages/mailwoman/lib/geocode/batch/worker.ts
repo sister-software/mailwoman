@@ -2,51 +2,44 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`).
+ * Runs inside a worker thread (spawned by `geocodeStream` or `geocodeInputs`
+ * via `spliterator.parallelMapWorkers`).
  *
- * Top-level code is per-worker init: it builds one geocode session from the serializable
- * `workerData.userData` config (paths + locale), the session `mailwoman geocode` builds.
- * Each dispatched record is geocoded by `makeGeocodeHandler`.
+ * Top-level code is per-worker init: it builds the routed geocode sessions of the serializable
+ * `workerData.userData` config (`#geocode/batch/config`), the sessions `mailwoman geocode` builds.
+ * The sessions live as long as the worker thread, and the pool terminates the thread.
  */
 
-import { workerData } from "node:worker_threads"
+import { workerUserData } from "@mailwoman/core/scripting/workers"
+import { makeGeocodeHandler, type SourceRecord } from "@mailwoman/entity-resolution"
 
-import { type ColumnMapping, makeGeocodeHandler } from "@mailwoman/entity-resolution"
-
+import { createBatchGeocodeSessions } from "#geocode/batch/config"
 import { ingestGeocoderOf } from "#geocode/batch/ingest"
-import type { GeocodeStreamConfig } from "#geocode/batch/stream"
-import { createGeocodeSessionOptions } from "#geocode/options"
-import { createGeocodeSession } from "#geocode/session"
-import { NODE_LAYER_CONTRIBUTIONS } from "#services/entry/node"
+import type { GeocodeBatchInput, GeocodeBatchOutput, GeocodeWorkerData } from "#geocode/batch/stream"
 
-const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
-	mapping: ColumnMapping
-	geocode: GeocodeStreamConfig
-}
+const data = workerUserData<GeocodeWorkerData>()
+const sessions = createBatchGeocodeSessions(data.geocode)
 
-// country-branch: a batch run that states no country resolves every row as a US address.
-// The commit that added the fallback recorded no reason, and the region of `cfg.locale` would replace it.
-const country = cfg.country ?? "US"
-
-// A row geocoded in bulk answers as the same row does through `mailwoman geocode`,
-// so the worker composes every layer that command composes.
-// The country is the caller's scope, and the coarse placer stays off beside it.
-// The session lives as long as the worker thread, and the pool terminates the thread.
-const session = await createGeocodeSession(
-	createGeocodeSessionOptions({
-		...(cfg.locale ? { locale: cfg.locale } : {}),
-		...(cfg.localeSource ? { localeSource: cfg.localeSource } : {}),
-		dataRoot: cfg.dataRoot,
-		resolveDB: cfg.wofDBPath,
-		defaultCountry: country,
-		placeCountry: false,
-	}),
-	{ layers: NODE_LAYER_CONTRIBUTIONS }
-)
+const handleRecord =
+	data.kind === "records"
+		? makeGeocodeHandler(ingestGeocoderOf(await sessions.sessionFor(), data.country ?? undefined), data.mapping)
+		: null
 
 /**
- * Per-item handler the worker pool invokes.
- *
- * Bound to this worker's geocoder and mapping at module load, so each item costs only the geocode itself.
+ * Per-item handler the worker pool invokes: a record under `geocodeStream`, an input under `geocodeInputs`.
  */
-export const handleItem = makeGeocodeHandler(ingestGeocoderOf(session, cfg.country), mapping)
+export async function handleItem(item: SourceRecord | GeocodeBatchInput): Promise<SourceRecord | GeocodeBatchOutput> {
+	if (handleRecord) return handleRecord(item as SourceRecord)
+
+	// The coordinator sends inputs to a worker it started with `kind: "inputs"`.
+	const { id, input, country, defaultCountry, fuzzyCountryScope } = item as GeocodeBatchInput
+	const route = { ...(country ? { country } : {}), ...(defaultCountry ? { defaultCountry } : {}) }
+
+	const run = await sessions.geocode(input, route, fuzzyCountryScope ? { fuzzyCountryScope } : {}).catch((error) => {
+		throw new Error(`geocoding ${id} failed: ${(error as Error).message}`, { cause: error })
+	})
+
+	const routedLocale = country ? data.geocode.localeByCountry?.[country.toUpperCase()] : undefined
+
+	return { id, result: run.result, baseOnly: !!routedLocale && sessions.unavailableLocales.has(routedLocale) }
+}

@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   A dropped resolver pin doesn't throw: it produces a check log identical to the unpinned one,
- *   so every hop from run options to geocode deps is pinned here rather than by running the check.
+ *   A dropped resolver pin doesn't throw: it produces a check log identical to the
+ *   unpinned one, so every hop from run options to the geocode session's options
+ *   is pinned here rather than by running the check.
  */
 
 import { describe, expect, it } from "vitest"
 
 import {
 	describeResolverPins,
+	gauntletBatchConfig,
 	type GauntletResolverPins,
 	PRODUCTION_RESOLVER_PINS,
-	resolverPinDeps,
+	resolverPinSessionOptions,
 } from "#tools/eval-harness/gauntlet/harness"
 import { layerDepsOptions } from "#tools/eval-harness/gauntlet/regression"
+import { OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
 import { runLayerOptions, runResolverPins } from "#tools/eval-harness/gauntlet/run"
 
 /**
@@ -27,36 +30,53 @@ function pinned(pins: Partial<GauntletResolverPins>): GauntletResolverPins {
 /**
  * The geocode deps a run's options reach after every hop.
  */
-function depsFromRun(options: Parameters<typeof runLayerOptions>[0]): ReturnType<typeof resolverPinDeps> {
-	return resolverPinDeps(layerDepsOptions(runLayerOptions(options)).pins ?? PRODUCTION_RESOLVER_PINS)
+function depsFromRun(options: Parameters<typeof runLayerOptions>[0]): ReturnType<typeof resolverPinSessionOptions> {
+	return resolverPinSessionOptions(layerDepsOptions(runLayerOptions(options)).pins ?? PRODUCTION_RESOLVER_PINS)
 }
 
-describe("resolverPinDeps — the pin set → geocodeAddress deps", () => {
-	it("maps an ON pin onto the geocode dep of the same name", () => {
-		expect(resolverPinDeps(pinned({ postcodeCountryCoherence: "on" }))).toEqual({ postcodeCountryCoherence: true })
+describe("resolverPinSessionOptions — the pin set → geocode session options", () => {
+	it("maps an ON pin onto the session option of the same name", () => {
+		expect(resolverPinSessionOptions(pinned({ postcodeCountryCoherence: "on" }))).toEqual({
+			postcodeCountryCoherence: true,
+		})
 	})
 
 	it("maps an OFF pin, so a caller can force the library default's opposite", () => {
-		expect(resolverPinDeps(pinned({ postcodeCountryCoherence: "off" }))).toEqual({ postcodeCountryCoherence: false })
+		expect(resolverPinSessionOptions(pinned({ postcodeCountryCoherence: "off" }))).toEqual({
+			postcodeCountryCoherence: false,
+		})
 	})
 
 	it("carries the venue-tier pin, ON and OFF, so the routed board can grade #1684's POI half", () => {
-		expect(resolverPinDeps(pinned({ poiVenueTier: "on" }))).toEqual({ poiVenueTier: true })
-		expect(resolverPinDeps(pinned({ poiVenueTier: "off" }))).toEqual({ poiVenueTier: false })
+		expect(resolverPinSessionOptions(pinned({ poiVenueTier: "on" }))).toEqual({ poiVenueTier: true })
+		expect(resolverPinSessionOptions(pinned({ poiVenueTier: "off" }))).toEqual({ poiVenueTier: false })
 	})
 
 	it("carries the dependent-locality containment pin, ON and OFF, so the board grades #2804's two arms", () => {
-		expect(resolverPinDeps(pinned({ dependentLocalityContainment: "on" }))).toEqual({
+		expect(resolverPinSessionOptions(pinned({ dependentLocalityContainment: "on" }))).toEqual({
 			dependentLocalityContainment: true,
 		})
 
-		expect(resolverPinDeps(pinned({ dependentLocalityContainment: "off" }))).toEqual({
+		expect(resolverPinSessionOptions(pinned({ dependentLocalityContainment: "off" }))).toEqual({
 			dependentLocalityContainment: false,
 		})
 	})
 
 	it("emits no dep for the production pin set — production defaults stay in force", () => {
-		expect(resolverPinDeps(PRODUCTION_RESOLVER_PINS)).toEqual({})
+		expect(resolverPinSessionOptions(PRODUCTION_RESOLVER_PINS)).toEqual({})
+	})
+})
+
+describe("gauntletBatchConfig — the options → the sessions' configuration", () => {
+	it("scopes no row by the locale's country and carries the pins as session options", () => {
+		const config = gauntletBatchConfig({ weightsCacheRoot: "/tmp/cache", pins: pinned({ formerDivisions: "off" }) })
+
+		expect(config.session).toEqual({ weightsCacheRoot: "/tmp/cache", countryScope: "none", formerDivisions: false })
+		expect(config.localeByCountry).toBe(OVERLAY_LOCALE_BY_COUNTRY)
+	})
+
+	it("routes no row to an overlay when the candidate is a model given by path", () => {
+		expect(gauntletBatchConfig({ modelPath: "./out/v9/model.onnx" }).localeByCountry).toEqual({})
 	})
 })
 
@@ -174,11 +194,11 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 })
 
 describe("gazetteerPrior pin (#1497)", () => {
-	// The pin includes an artifact, so the pure `resolverPinDeps` cannot see it
-	// and only the banner can announce it.
-	it("is announced even though resolverPinDeps cannot carry it", () => {
+	// The session loads the artifact the option selects, so the pin travels as the session option.
+	it("is announced and carried as the session option, both ways", () => {
 		expect(describeResolverPins(pinned({ gazetteerPrior: "on" }))).toContain("gazetteerPrior=ON")
-		expect(resolverPinDeps(pinned({ gazetteerPrior: "on" }))).toEqual({})
+		expect(resolverPinSessionOptions(pinned({ gazetteerPrior: "on" }))).toEqual({ gazetteerPrior: true })
+		expect(resolverPinSessionOptions(pinned({ gazetteerPrior: "off" }))).toEqual({ gazetteerPrior: false })
 	})
 
 	it("announces alongside a switch pin rather than replacing it", () => {
@@ -217,9 +237,14 @@ describe("capitalTier and variantAliasExemption pins", () => {
 })
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
-	it("maps the ON and OFF pins onto the geocode dep of the same name", () => {
-		expect(resolverPinDeps(pinned({ adminContainmentRerank: "on" }))).toEqual({ adminContainmentRerank: true })
-		expect(resolverPinDeps(pinned({ adminContainmentRerank: "off" }))).toEqual({ adminContainmentRerank: false })
+	it("maps the ON and OFF pins onto the session option of the same name", () => {
+		expect(resolverPinSessionOptions(pinned({ adminContainmentRerank: "on" }))).toEqual({
+			adminContainmentRerank: true,
+		})
+
+		expect(resolverPinSessionOptions(pinned({ adminContainmentRerank: "off" }))).toEqual({
+			adminContainmentRerank: false,
+		})
 	})
 
 	it("is announced in the run banner, both ways", () => {
@@ -233,7 +258,9 @@ describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 	})
 
 	it("composes with a sibling pin rather than replacing it", () => {
-		expect(resolverPinDeps(pinned({ adminContainmentRerank: "on", postcodeCountryCoherence: "off" }))).toEqual({
+		expect(
+			resolverPinSessionOptions(pinned({ adminContainmentRerank: "on", postcodeCountryCoherence: "off" }))
+		).toEqual({
 			adminContainmentRerank: true,
 			postcodeCountryCoherence: false,
 		})

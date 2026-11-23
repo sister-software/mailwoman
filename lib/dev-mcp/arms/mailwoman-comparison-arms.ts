@@ -16,7 +16,7 @@ import {
 import { inputSetProvenance, provenanceFor } from "#dev-mcp/result/tool-kit"
 import type { ResolvedInput, ResolvedInputSet } from "#dev-mcp/runs/input-sets"
 
-export interface PreparedMailwomanArms extends Disposable {
+export interface PreparedMailwomanArms extends AsyncDisposable {
 	geocodeA(input: ResolvedInput): Promise<GauntletResult>
 	geocodeB(input: ResolvedInput): Promise<GauntletResult>
 	provenanceA: unknown
@@ -38,7 +38,7 @@ export async function prepareMailwomanArms(
 	executionPath: "single-config" | "board-routed",
 	deps: PrepareMailwomanArmDeps
 ): Promise<PreparedMailwomanArms> {
-	using resources = new DisposableStack()
+	await using resources = new AsyncDisposableStack()
 	const fingerprint = await registry.fingerprint()
 	const effectiveA = resolveConfig(configA)
 	const effectiveB = resolveConfig(configB)

@@ -456,7 +456,7 @@ async function checkpoint(final: boolean): Promise<void> {
 
 const tagsOf = (path: readonly number[], labels: readonly string[]): string[] => path.map((i) => labels[i] ?? "O")
 
-using deps = await buildGauntletDeps()
+await using deps = await buildGauntletDeps()
 
 for await (const row of readDecodeCensusRows({
 	...(values.heldout ? { heldout: values.heldout } : {}),

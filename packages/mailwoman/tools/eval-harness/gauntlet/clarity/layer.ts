@@ -100,7 +100,7 @@ export async function runClarityLayer(
 	const cases = options.limit ? selected.slice(0, options.limit) : selected
 	const outDir = PathBuilder.from(options.outDir ?? tempRootPathBuilder(`clarity-${Date.now()}`))
 
-	using deps = await buildGauntletDeps(layerDepsOptions(options))
+	await using deps = await buildGauntletDeps(layerDepsOptions(options))
 	using gazetteer = await AblationGazetteer.create()
 
 	const rows: ClarityRowResult[] = []

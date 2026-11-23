@@ -379,7 +379,7 @@ describe("runFanout", () => {
 							}
 						: { components: { locality: "Uxbridge" }, locality: "Uxbridge", ...LAKE, tier: "admin" }
 				),
-			[Symbol.dispose]: () => {
+			[Symbol.asyncDispose]: async () => {
 				disposed.push(config.weights_cache ?? "production")
 			},
 		}))

@@ -11,12 +11,14 @@ export * from "#geocode/result"
 export * from "#geocode/session"
 export { type CapitalTier } from "#engine/resolver-backend"
 export * from "#geocode/batch/stream"
+export * from "#geocode/batch/config"
+export * from "#geocode/session/routes"
 export * from "#geocode/options/switches"
 export * from "#geocode/tree-reads"
 export * from "#geocode/rewrites/bare-postcode"
 
 // `#geocode/batch/worker` is deliberately absent.
-// It is a worker-thread entry rather than a library module: its body destructures
+// It is a worker-thread entry rather than a library module: its body reads
 // `workerData` at import, so pulling it through this barrel runs it on the main thread
 // and throws before any test reaches an assertion.
 // Entries are spawned by path.

@@ -152,8 +152,7 @@ const { values } = parseArguments({
 		workers: { type: "string", default: "6", description: "Parse worker threads" },
 		"geocode-workers": {
 			type: "string",
-			default: "6",
-			description: "Geocode worker threads under --geocode, each with its own geocoder; 1 geocodes on the main thread",
+			description: "Geocode worker threads under --geocode, each with its own geocode sessions (default: the pool's)",
 		},
 		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
 		"no-parse-cache": {
@@ -372,7 +371,7 @@ async function scoreAndReport(): Promise<void> {
 			outcomesByLabel.set(
 				arm.label,
 				await geocodeHeldoutRows(selected, arm, {
-					workers: Number(values["geocode-workers"]),
+					...(values["geocode-workers"] ? { workers: Number(values["geocode-workers"]) } : {}),
 					onRow: (done, total) => {
 						if (done % 500 === 0 || done === total) {
 							console.error(`  ${done} of ${total}`)

@@ -81,7 +81,7 @@ describe("mwdev_compare — production board routing", () => {
 							hierarchy: [],
 							admin_coherence: null,
 						}),
-						[Symbol.dispose]: () => {
+						[Symbol.asyncDispose]: async () => {
 							closes += 1
 						},
 					}

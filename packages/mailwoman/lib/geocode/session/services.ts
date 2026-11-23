@@ -15,6 +15,10 @@
  *   A server keeps one process scope and builds a child generation scope per data generation,
  *   so a reload neither reloads the model nor holds two copies of it.
  *
+ *   The generation scope's services split by whether they read the locale.
+ *   The data services read none, so sessions of several locales can share one scope of them
+ *   (`#geocode/session/routes`), and the locale services sit in each locale's scope below it.
+ *
  *   Each service declares the services it needs, and the registry resolves those first.
  *   Independent services therefore build in parallel.
  *
@@ -23,7 +27,7 @@
  */
 
 import { allKeyed } from "@mailwoman/core/async/promises"
-import type { RegionDatabases } from "@mailwoman/core/resolver"
+import type { FormerDivisionLookup, RegionDatabases } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
@@ -89,6 +93,7 @@ export const GenerationServices = {
 	wofPaths: createToken<string[]>("wof-paths"),
 	lookup: createToken<ResolverBackend>("resolver-backend"),
 	capitals: createToken<Awaited<ReturnType<typeof capitalIndexFor>>>("capitals"),
+	formerDivisions: createToken<FormerDivisionLookup | null>("former-divisions"),
 	regionDatabases: createToken<RegionDatabaseSource>("region-databases"),
 	explicitAddressPoints: createToken<InstanceType<ResolverModule["AddressPointSqliteLookup"]> | null>(
 		"explicit-address-points"
@@ -149,7 +154,85 @@ export function registerGenerationServices(
 	options: GeocodeSessionOptions,
 	contributions: readonly LayerContribution[]
 ): void {
+	registerDataServices(registry, options, contributions)
+	registerLocaleServices(registry, options)
+}
+
+/**
+ * Builds the kind classifier a session of `locale` reads, with the POI phrase
+ * lookup of that language's stopwords.
+ */
+export async function createLocaleKindClassifier(locale: string): Promise<NonNullable<GeocodeDeps["classifyKind"]>> {
+	const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
+	const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
+
+	return (input, shape) =>
+		classify(input, shape, {
+			locale,
+			confidence: 1,
+			alternatives: [],
+			script: [],
+			evidence: null,
+			source: "caller",
+		})
+}
+
+/**
+ * Registers the generation-scope services that read the session's locale: the parse-prior artifacts
+ * and the priors loaded from them, an address-point database passed by path, and the kind classifier.
+ *
+ * They read the classifier, so `registry` or a parent scope holds the process-scope services.
+ */
+export function registerLocaleServices(registry: ServiceRegistry, options: GeocodeSessionOptions): void {
 	const S = GenerationServices
+
+	// The FSTs the active selection lists, else the files beside the weights.
+	defineUnlessProvided(registry, ParsePriorArtifactsService, {
+		needs: { routed: ClassifierService, selection: S.selection },
+		build: ({ routed, selection }) =>
+			selectedParsePriorArtifacts(routed.primary, options.locale, options.dataRoot, selection.catalog),
+	})
+
+	registerParsePriorsService(registry, {
+		gazetteerPrior: options.gazetteerPrior,
+		venueHeadPrior: options.venueHeadPrior,
+		label: `locale ${options.locale}`,
+	})
+
+	// An address-point database passed by path is read under the street locale
+	// of the session locale's country.
+	// A locale tag without a region takes the default locale's country.
+	const explicitAddressPointRegion = options.locale.split("-")[1] ?? GEOCODE_DEFAULT_LOCALE.split("-")[1]!
+
+	defineUnlessProvided(registry, S.explicitAddressPoints, {
+		needs: { mod: ResolverModuleService },
+		build: ({ mod }) =>
+			options.addressPointsDB
+				? new mod.AddressPointSqliteLookup(options.addressPointsDB, {
+						streetLocale: streetLocaleForCountry(explicitAddressPointRegion),
+					})
+				: null,
+	})
+
+	defineUnlessProvided(registry, S.classifyKind, {
+		build: () => createLocaleKindClassifier(options.locale ?? GEOCODE_DEFAULT_LOCALE),
+	})
+}
+
+/**
+ * Registers the generation-scope services that read no locale: the selection lease, the resolver
+ * backend, the capital index, the former divisions table, the coarse placer and the data layers.
+ *
+ * It registers the resolver module they read unless a parent scope provides it.
+ */
+export function registerDataServices(
+	registry: ServiceRegistry,
+	options: GeocodeSessionOptions,
+	contributions: readonly LayerContribution[]
+): void {
+	const S = GenerationServices
+
+	registerResolverModuleService(registry)
 
 	// A session reading an active selection holds a lease on its generation,
 	// so a prune keeps those artifacts until the session is disposed.
@@ -168,19 +251,6 @@ export function registerGenerationServices(
 	defineUnlessProvided(registry, S.wofPaths, {
 		needs: { candidateDB: S.candidateDB, selection: S.selection },
 		build: ({ candidateDB, selection }) => (candidateDB ? [] : resolveWOFPath(options, selection.catalog)),
-	})
-
-	// The FSTs the active selection lists, else the files beside the weights.
-	defineUnlessProvided(registry, ParsePriorArtifactsService, {
-		needs: { routed: ClassifierService, selection: S.selection },
-		build: ({ routed, selection }) =>
-			selectedParsePriorArtifacts(routed.primary, options.locale, options.dataRoot, selection.catalog),
-	})
-
-	registerParsePriorsService(registry, {
-		gazetteerPrior: options.gazetteerPrior,
-		venueHeadPrior: options.venueHeadPrior,
-		label: `locale ${options.locale}`,
 	})
 
 	defineUnlessProvided(registry, S.lookup, {
@@ -205,43 +275,21 @@ export function registerGenerationServices(
 		build: ({ candidateDB }) => capitalIndexFor(options.capitalTier, candidateDB),
 	})
 
-	// An address-point database passed by path is read under the street locale
-	// of the session locale's country.
-	// A locale tag without a region takes the default locale's country.
-	const explicitAddressPointRegion = options.locale.split("-")[1] ?? GEOCODE_DEFAULT_LOCALE.split("-")[1]!
+	// The table is read when the switch is on, and a missing table fails the scope.
+	defineUnlessProvided(registry, S.formerDivisions, {
+		build: async () => {
+			if (!options.formerDivisions) return null
 
-	defineUnlessProvided(registry, S.explicitAddressPoints, {
-		needs: { mod: ResolverModuleService },
-		build: ({ mod }) =>
-			options.addressPointsDB
-				? new mod.AddressPointSqliteLookup(options.addressPointsDB, {
-						streetLocale: streetLocaleForCountry(explicitAddressPointRegion),
-					})
-				: null,
+			const { readFormerDivisionLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup/former-divisions")
+
+			return readFormerDivisionLookup(options.formerDivisionsTable)
+		},
 	})
 
 	defineUnlessProvided(registry, S.explicitInterpolation, {
 		needs: { mod: ResolverModuleService },
 		build: ({ mod }) =>
 			options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null,
-	})
-
-	defineUnlessProvided(registry, S.classifyKind, {
-		build: async () => {
-			const locale = options.locale ?? GEOCODE_DEFAULT_LOCALE
-			const leadingStopwords = await readLibPostalSingleWordStopwords(locale.split("-")[0]!)
-			const classify = createKindClassifier({ poiLexicon: createStopwordPOIPhraseLookup(leadingStopwords) })
-
-			return (input, shape) =>
-				classify(input, shape, {
-					locale,
-					confidence: 1,
-					alternatives: [],
-					script: [],
-					evidence: null,
-					source: "caller",
-				})
-		},
 	})
 
 	// The session reads the place-country function every runtime pipeline reads, at the session's threshold.
@@ -320,6 +368,7 @@ export async function resolveGenerationServices(registry: ServiceRegistry) {
 		parsePriors: registry.resolve(ParsePriorsService),
 		lookup: registry.resolve(S.lookup),
 		capitals: registry.resolve(S.capitals),
+		formerDivisions: registry.resolve(S.formerDivisions),
 		regionDatabases: registry.resolve(S.regionDatabases),
 		explicitAddressPoints: registry.resolve(S.explicitAddressPoints),
 		explicitInterpolation: registry.resolve(S.explicitInterpolation),

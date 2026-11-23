@@ -36,7 +36,7 @@ export async function runBarePostcodeCapability(
 	options: BarePostcodeCapabilityOptions = {},
 	report: (line: string) => void = console.log
 ): Promise<BarePostcodeCapabilityResult> {
-	using deps = await buildGauntletDeps(options)
+	await using deps = await buildGauntletDeps(options)
 
 	const groups: BarePostcodeCapabilityResult["groups"] = {
 		nnn_nn: { postcode: 0, houseNumber: 0, other: 0, total: 0 },

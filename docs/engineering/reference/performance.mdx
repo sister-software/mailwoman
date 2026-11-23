@@ -121,14 +121,16 @@ only the real checkpoint shows it.
 ## Worker threads
 
 [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/batch/stream.ts)
-moves work across a thread boundary. It is an async iterator over a `spliterator` worker pool. Each worker builds its
-own classifier and lookups. The iterator yields results as they finish.
+moves work across a thread boundary, and `geocodeInputs` beside it does the same for address strings. Each is an
+async iterator over a `spliterator` worker pool. Each worker builds its own geocode sessions, with their classifier
+and lookups. The iterator yields results as they finish.
 
-Expect a modest gain. The geocoding path is memory- and I/O-bound on a shared multi-gigabyte database. A
-measured NPPES sweep peaked at **two workers (~1.4x)** and degraded after that: four workers matched
-the baseline, and six gave no gain. Each worker also pays for its own 38 MB session and its own open
-database. Measure the worker count on your own data and machine instead of defaulting to
-`availableParallelism()`.
+The speedup a pool reaches depends on the workload. The geocoding path is memory- and I/O-bound on a shared multi-gigabyte database.
+On a 16-core host with about three cores held by another job, 2,000 held-out rows from the release development
+collections geocoded at 13, 26, 44, 55 and 51 rows per second with 1, 2, 4, 8 and 12 workers, so the pool's default
+is 8. An earlier NPPES record-ingest sweep peaked at **two workers (~1.4x)** and degraded after that. Each worker
+pays for its own sessions and its own open databases. Measure the worker count on your own data and machine instead
+of defaulting to `availableParallelism()`.
 
 Parse-only threading has no database and no contention, so it should scale further than geocoding.
 That scaling is unmeasured. In Python, `intra_op=2` with 8 threads reached 1.57x. That result suggests

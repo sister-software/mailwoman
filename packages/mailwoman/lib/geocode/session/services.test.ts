@@ -10,6 +10,7 @@ import { createGeocodeSessionOptions } from "#geocode/options"
 import {
 	describeGeocodeServices,
 	GenerationServices,
+	registerDataServices,
 	registerGenerationServices,
 	registerProcessServices,
 	unavailableLayers,
@@ -34,6 +35,25 @@ test("every service a session composes declares its needs, and each need is regi
 	)
 
 	expect(unregistered).toEqual([])
+})
+
+test("the data services need no classifier, so sessions of several locales can share one scope of them", async () => {
+	await using data = new ServiceRegistry()
+
+	registerDataServices(data, options, NODE_LAYER_CONTRIBUTIONS)
+
+	const graph = data.graph()
+
+	expect(graph.map((service) => service.token)).not.toContain(ClassifierService)
+	expect(graph.map((service) => service.token)).not.toContain(GenerationServices.classifyKind)
+
+	expect(
+		graph.flatMap((service) =>
+			service.needs
+				.filter((need) => !need.registered)
+				.map((need) => `${service.token.description} needs ${need.token.description}`)
+		)
+	).toEqual([])
 })
 
 test("the graph holds every session token, and reading it builds no service", async () => {

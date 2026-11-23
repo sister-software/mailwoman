@@ -162,9 +162,14 @@ const EVALUATORS = {
 				yield* stream.geocodeStream(records, {
 					mapping: opts.mapping,
 					geocode: {
-						wofDBPath: options.wof || wofPaths.wofDatabasePath("admin-global-priority.db").toString(),
 						dataRoot: options.dataRoot || dataRoot.dataRootPath().toString(),
-						country: "US",
+						session: {
+							resolveDB: options.wof || wofPaths.wofDatabasePath("admin-global-priority.db").toString(),
+							// country-branch: NPPES is the United States' provider register,
+							// so every row is a US address.
+							// The register's own country field would replace it.
+							defaultCountry: "US",
+						},
 					},
 					concurrency: opts.concurrency,
 				})

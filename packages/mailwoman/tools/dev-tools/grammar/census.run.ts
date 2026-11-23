@@ -134,7 +134,7 @@ try {
 		})
 	}
 } finally {
-	deps[Symbol.dispose]()
+	await deps[Symbol.asyncDispose]()
 	candidateDB?.destroy()
 }
 

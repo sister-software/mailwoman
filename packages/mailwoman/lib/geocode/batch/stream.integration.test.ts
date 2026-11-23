@@ -46,7 +46,10 @@ describe.skipIf(!(await pathExists(wofDatabasePath("candidate.db"))))("geocodeSt
 
 			for await (const result of geocodeStream([record], {
 				mapping: { address: ["addr"] },
-				geocode: { wofDBPath: wofDBPath ?? "", dataRoot: dataRootPath().toString(), locale: "en-US", country: "US" },
+				geocode: {
+					dataRoot: dataRootPath().toString(),
+					session: { resolveDB: wofDBPath ?? "", locale: "en-US", defaultCountry: "US" },
+				},
 				concurrency: 1,
 			})) {
 				geocoded.push(result)

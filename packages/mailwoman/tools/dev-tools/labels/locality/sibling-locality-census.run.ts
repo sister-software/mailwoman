@@ -325,11 +325,11 @@ async function parseChanges(input: string, opts: GauntletGeocodeOpts): Promise<b
 	return off.trace.path.some((labelIndex, piece) => on.trace.path[piece] !== labelIndex)
 }
 
-using offDeps = await buildGauntletDeps({
+await using offDeps = await buildGauntletDeps({
 	pins: { ...PRODUCTION_RESOLVER_PINS, [setting]: "off" },
 })
 
-using onDeps = await buildGauntletDeps({
+await using onDeps = await buildGauntletDeps({
 	pins: { ...PRODUCTION_RESOLVER_PINS, [setting]: "on" },
 })
 

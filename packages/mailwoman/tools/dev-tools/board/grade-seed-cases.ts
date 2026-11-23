@@ -67,7 +67,7 @@ export async function gradeSeedCases(cases: SeedCase[], deps?: GauntletDeps): Pr
 		}
 	} finally {
 		if (!deps) {
-			owned[Symbol.dispose]()
+			await owned[Symbol.asyncDispose]()
 		}
 	}
 

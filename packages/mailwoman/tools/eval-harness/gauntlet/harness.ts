@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared Gauntlet harness: build the full-pipeline geocode deps (optionally with a candidate model,
+ *   Shared Gauntlet harness: build the full-pipeline geocoder (optionally with a candidate model,
  *   so an eval can compare candidate-vs-production on the same inputs) and run one address end-to-end.
+ *
+ *   The geocoder is the routed geocode sessions of {@linkcode gauntletBatchConfig}
+ *   (`#geocode/batch/config`), the sessions a bulk geocode's workers build from the same config,
+ *   so the board, `mwdev_compare` and the held-out read grade one construction.
  *
  *   The Gauntlet grades the assembled output — coordinate + tier — not raw parse F1.
  */
@@ -16,43 +20,26 @@ import type { AdminCoherenceReport, GeocodeResult, VariantAliasExemption } from 
 import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
-import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { ModelCardToggle } from "@mailwoman/neural/classifier/options"
+import { ScriptRoutedClassifier } from "@mailwoman/neural/classifier/script-router"
 import type { FSTMatcherLike } from "@mailwoman/neural/prior/fst"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights/channels"
-import { createWOFResolver } from "@mailwoman/resolver"
-import { readFormerDivisionLookup } from "@mailwoman/resolver-wof-sqlite/lookup/former-divisions"
+import type { ServiceRegistry } from "async-init"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { LayerCatalog } from "#data/catalog"
-import { loadBundledPlaceCountry } from "#default/placer"
-import {
-	capitalIndexFor,
-	type CapitalTier,
-	createResolverBackend,
-	existingWOFDatabasePaths,
-	resolveCandidateDBPath,
-} from "#engine/resolver-backend"
-import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { openBANRegionDatabases } from "#geocode/layers/ban"
-import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/layers/fst"
-import { openOSMRegionDatabases } from "#geocode/layers/osm"
-import { createRegionDatabaseProvider } from "#geocode/layers/regions"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
-import {
-	createCountryFSTLookup,
-	loadParsePriors,
-	type ParsePriorArtifacts,
-	venueHeadOptsFor,
-} from "#geocode/parse-priors"
-import { loadForkEntityDeps } from "#geocode/session/layers"
-import { poiTaxonomyLookup } from "#poi/intent"
+import type { CapitalTier } from "#engine/resolver-backend"
+import { createBatchGeocodeSessions, type GeocodeBatchConfig } from "#geocode/batch/config"
+import { type DecoderSettings, geocodeParseInputs } from "#geocode/core"
+import type { GeocodeRequestOptions } from "#geocode/session"
+import type { GeocodeRoute } from "#geocode/session/routes"
+import { createLocaleKindClassifier, GenerationServices } from "#geocode/session/services"
+import { ClassifierService, registerClassifierService } from "#services/classifier"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
-import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/rig/switch-pin"
+import { type SwitchPin, switchPinEntry } from "#tools/eval-harness/rig/switch-pin"
 
-export interface GauntletDeps extends Disposable {
+export interface GauntletDeps extends AsyncDisposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
 	/**
 	 * The same geocode, with the resolver's interior recorded: one {@linkcode ResolveNodeTrace}
@@ -133,8 +120,8 @@ export interface GauntletDepsOptions {
 	 * Replace the kind classifier's top verdict on every input this deps object geocodes —
 	 * a declared ablation, never a shipping configuration.
 	 *
-	 * The verdict is what selects the parse register, so `deps.inputMode` is set from
-	 * {@link deriveInputMode} as well and wins over the pipeline's internal call.
+	 * The verdict is what selects the parse register, so each request's input mode is set
+	 * from {@link deriveInputMode} as well and wins over the pipeline's internal call.
 	 */
 	forceQueryKind?: QueryKind
 	/**
@@ -149,9 +136,9 @@ export interface GauntletDepsOptions {
  * Resolver-side pins a gauntlet run can PIN — the counterpart to the model-side
  * `modelPath`/`tokenizerPath` swaps.
  *
- * The `eval oa-resolver` idiom treats a pin as a default override rather than a new mechanism:
- * every field maps 1:1 onto a {@linkcode geocodeAddress} dependency or session setting
- * of the same name, and `"production"` leaves the production default in force.
+ * The `eval oa-resolver` idiom treats a pin as a default override rather than a new
+ * mechanism: every field maps 1:1 onto the geocode session option of the same name
+ * ({@linkcode resolverPinSessionOptions}), and `"production"` leaves the session's default in force.
  */
 export interface GauntletResolverPins {
 	/**
@@ -161,9 +148,6 @@ export interface GauntletResolverPins {
 	postcodeCountryCoherence: SwitchPin
 	/**
 	 * Feed the gazetteer FST prior to the parse.
-	 *
-	 * Unlike the switch pins this one selects an artifact, so the harness loads it
-	 * rather than `resolverPinDeps`, and only `"off"` withholds it.
 	 */
 	gazetteerPrior: SwitchPin
 	/**
@@ -215,8 +199,7 @@ export interface GauntletResolverPins {
 	fstCountryRouting: SwitchPin
 	/**
 	 * The capital-status ranking axis: bounded national-capital promotion on the bare-toponym
-	 * class, carrying an artifact (the candidate `capital` table with a repo-file fallback)
-	 * that the harness loads rather than `resolverPinDeps`.
+	 * class, read from the candidate `capital` table with a repo-file fallback.
 	 */
 	capitalTier: "production" | CapitalTier
 	/**
@@ -234,9 +217,7 @@ export interface GauntletResolverPins {
 	 */
 	poiVenueTier: SwitchPin
 	/**
-	 * The venue-head emission prior, read from the head-word table for each row's route country.
-	 *
-	 * This pin selects an artifact, so the harness loads it rather than `resolverPinDeps`.
+	 * The venue-head emission prior, read from the head-word table of each row's session country.
 	 */
 	venueHeadPrior: SwitchPin
 	/**
@@ -282,26 +263,12 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 }
 
 /**
- * The geocode deps a pin set turns into, spread into every {@linkcode geocodeAddress} call the run makes.
+ * The geocode session options a pin set turns into.
  *
- * A `"production"` pin contributes no dep, so the geocode's own defaults table decides.
- * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
+ * A `"production"` pin contributes no option, so the session's own default decides.
+ * Pure and exported so the pin-reaches-the-session interface is testable without the full database set.
  */
-export function resolverPinDeps(pins: GauntletResolverPins): {
-	postcodeCountryCoherence?: boolean
-	adminContainmentRerank?: boolean
-	dependentLocalityContainment?: boolean
-	countyDesignatorFallback?: boolean
-	formerDivisions?: boolean
-	scopeCountryRetrieval?: boolean
-	siblingLocalityContainment?: boolean
-	pairPriorWordPieces?: boolean
-	pairPriorChildPostcodeStrip?: boolean
-	pairIndexOwnCountry?: boolean
-	fstCountryRouting?: boolean
-	poiVenueTier?: boolean
-	spanRescoreWeakResolution?: WeakResolutionReading
-} {
+export function resolverPinSessionOptions(pins: GauntletResolverPins): NonNullable<GeocodeBatchConfig["session"]> {
 	return {
 		...switchPinEntry("pairPriorWordPieces", pins.pairPriorWordPieces),
 		...switchPinEntry("pairPriorChildPostcodeStrip", pins.pairPriorChildPostcodeStrip),
@@ -318,6 +285,12 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 		...(pins.spanRescoreWeakResolution === "production"
 			? {}
 			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),
+		...switchPinEntry("gazetteerPrior", pins.gazetteerPrior),
+		...(pins.capitalTier === "production" ? {} : { capitalTier: pins.capitalTier }),
+		...(pins.variantAliasExemption === "production" ? {} : { variantAliasExemption: pins.variantAliasExemption }),
+		...switchPinEntry("venueHeadPrior", pins.venueHeadPrior),
+		...(pins.venueHeadBiasScale === "production" ? {} : { venueHeadBiasScale: pins.venueHeadBiasScale }),
+		...switchPinEntry("streetMorphologyPrior", pins.streetMorphologyPrior),
 	}
 }
 
@@ -326,39 +299,16 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
  *
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
  * because an off/on pair whose logs are indistinguishable isn't evidence about the pin.
- * Only pins away from `"production"` are listed.
+ * Only pins away from `"production"` are listed, a switch as `ON` or `OFF` and any other pin by its value.
  */
 export function describeResolverPins(pins: GauntletResolverPins): string {
-	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
-	// so this list includes every pin rather than only the boolean ones.
-	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
-	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) =>
-		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
-	)
+	const entries: string[] = Object.entries(resolverPinSessionOptions(pins)).map(([key, value]) => {
+		if (typeof value === "boolean") return `${key}=${value ? "ON" : "OFF"}`
 
-	if (pins.gazetteerPrior !== "production") {
-		entries.push(`gazetteerPrior=${pins.gazetteerPrior.toUpperCase()}`)
-	}
+		if (key === "variantAliasExemption") return `${key}=${value === "applied" ? "ON" : "OFF"}`
 
-	if (pins.capitalTier !== "production") {
-		entries.push(`capitalTier=${pins.capitalTier}`)
-	}
-
-	if (pins.variantAliasExemption !== "production") {
-		entries.push(`variantAliasExemption=${pins.variantAliasExemption === "applied" ? "ON" : "OFF"}`)
-	}
-
-	if (pins.venueHeadPrior !== "production") {
-		entries.push(`venueHeadPrior=${pins.venueHeadPrior.toUpperCase()}`)
-	}
-
-	if (pins.venueHeadBiasScale !== "production") {
-		entries.push(`venueHeadBiasScale=${pins.venueHeadBiasScale}`)
-	}
-
-	if (pins.streetMorphologyPrior !== "production") {
-		entries.push(`streetMorphologyPrior=${pins.streetMorphologyPrior.toUpperCase()}`)
-	}
+		return `${key}=${String(value)}`
+	})
 
 	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
 
@@ -366,9 +316,35 @@ export function describeResolverPins(pins: GauntletResolverPins): string {
 }
 
 /**
- * Per-query resolution priors a case can pass to {@linkcode geocodeAddress}.
+ * The configuration the gauntlet's geocode sessions are built from,
+ * on the calling thread or in a bulk geocode's workers.
+ *
+ * A row is scoped only by the default country its case states, never by the locale's country,
+ * and a row's country selects the weights overlay its parse reads.
+ * A candidate model given by path has no overlay of its own, so every row parses under the base locale.
+ */
+export function gauntletBatchConfig(
+	opts: Pick<GauntletDepsOptions, "weightsCacheRoot" | "candidateDB" | "pins" | "modelPath" | "tokenizerPath">
+): GeocodeBatchConfig {
+	return {
+		dataRoot: dataRootPath().toString(),
+		session: {
+			...(opts.weightsCacheRoot ? { weightsCacheRoot: opts.weightsCacheRoot } : {}),
+			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
+			countryScope: "none",
+			...resolverPinSessionOptions(opts.pins ?? PRODUCTION_RESOLVER_PINS),
+		},
+		localeByCountry: opts.modelPath || opts.tokenizerPath ? {} : OVERLAY_LOCALE_BY_COUNTRY,
+	}
+}
+
+/**
+ * Per-query resolution priors a case can pass to the geocode.
  */
 export interface GauntletGeocodeOpts {
+	/**
+	 * The case's country scope: the session's default country for the row.
+	 */
 	defaultCountry?: string
 	/**
 	 * The case's country (ISO-3166 alpha-2) selects the per-locale weights overlay the classifier loads.
@@ -382,7 +358,7 @@ export interface GauntletGeocodeOpts {
 	caseCountry?: string
 	/**
 	 * The locale hint's country for the typo-fuzzy tier, derived from a row's `locale` field
-	 * and forwarded verbatim to `geocodeAddress`'s `fuzzyCountryScope`.
+	 * and forwarded verbatim as the request's `fuzzyCountryScope`.
 	 */
 	fuzzyCountryScope?: string
 }
@@ -433,9 +409,9 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * missing `postcode-us.bin` doesn't error.
  * The anchor channel resolves to off and the operator reads a model regression.
  *
- * Expectations come from each package's own card, never a hardcoded list, so en-gb's
- * deliberate absence and en-nz's missing source are not called broken. a package that
- * doesn't resolve at all is `classifierFor`'s base-only fallback instead.
+ * Expectations come from each package's own card, never a hardcoded list,
+ * so en-gb's deliberate absence and en-nz's missing source are not called broken. a
+ * package that doesn't resolve at all is graded base-only instead.
  */
 export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: PathBuilderLike): Promise<void> {
 	const missing: string[] = []
@@ -471,7 +447,70 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 }
 
 /**
- * Build the geocode deps.
+ * Loads a candidate model given by path: the ONNX with the shipped tokenizer,
+ * or with a splice candidate's tokenizer and card.
+ */
+async function loadCandidateClassifier(opts: GauntletDepsOptions): Promise<NeuralAddressClassifier> {
+	const suppressGazetteerNearPostcode = opts.suppressGazetteerNearPostcode ?? "declared"
+
+	if (!opts.tokenizerPath) {
+		return NeuralAddressClassifier.loadFromWeights({
+			locale: "en-US",
+			modelPath: resolvePath(opts.modelPath!),
+			suppressGazetteerNearPostcode,
+		})
+	}
+
+	return createScorer({
+		// An override of only the tokenizer still takes the model from the resolver rather than a package literal.
+		modelPath: opts.modelPath ? resolvePath(opts.modelPath) : (await resolveWeights({ locale: "en-us" })).modelPath,
+		tokenizerPath: resolvePath(opts.tokenizerPath),
+		modelCardPath: resolvePath(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
+		locale: "en-us",
+	})
+}
+
+/**
+ * Substitutes the services the options' ablations replace on one locale's scope: a candidate
+ * model given by path, the near-postcode gazetteer choreography, and the forced query kind.
+ */
+function prepareGauntletLocale(scope: ServiceRegistry, locale: string, opts: GauntletDepsOptions): void {
+	if (opts.modelPath || opts.tokenizerPath) {
+		// A candidate given by path has no package-shaped sibling for another script's family,
+		// so every input parses on the candidate.
+		scope.define(ClassifierService, {
+			build: async () =>
+				new ScriptRoutedClassifier({
+					primary: await loadCandidateClassifier(opts),
+					loadFamily: () => Promise.reject(new Error("a candidate model given by path routes no script family")),
+				}),
+		})
+	} else if (opts.suppressGazetteerNearPostcode && opts.suppressGazetteerNearPostcode !== "declared") {
+		registerClassifierService(scope, {
+			locale,
+			dataRoot: dataRootPath(),
+			...(opts.weightsCacheRoot ? { weightsCacheRoot: opts.weightsCacheRoot } : {}),
+			suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode,
+		})
+	}
+
+	const forced = opts.forceQueryKind
+
+	if (forced) {
+		// Only `kind` moves.
+		// A confidence, alternative or intent-marker rewrite would change more than the verdict under test.
+		scope.define(GenerationServices.classifyKind, {
+			build: async () => {
+				const classify = await createLocaleKindClassifier(locale)
+
+				return async (input, shape) => ({ ...(await classify(input, shape)), kind: forced })
+			},
+		})
+	}
+}
+
+/**
+ * Build the gauntlet's geocoder.
  *
  * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate
  * against production with every other input held equal.
@@ -482,19 +521,19 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
  * swap can never exercise, because the shipped tokenizer emits no ids for the new pieces.
  */
 export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise<GauntletDeps> {
-	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const pins = opts.pins ?? PRODUCTION_RESOLVER_PINS
+	const candidateModel = !!(opts.modelPath || opts.tokenizerPath)
 
 	// A package-shaped candidate weights dir.
-	// Prefer this over `modelPath` when the vocab differs, because `loadFromWeights({cacheRoot})`
-	// resolves the model, tokenizer, card and anchor/gazetteer siblings as production does,
-	// while a bare `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
+	// Prefer this over `modelPath` when the vocab differs, because it resolves the model,
+	// tokenizer, card and anchor/gazetteer siblings as production does, while a bare
+	// `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
 		: null
 
 	// Stamp the model under test so a stale dev symlink is never silent.
-	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
+	// The default path asks `resolveWeights`, which answers with the file the classifier
 	// will open, rather than naming a package directory that may not be materialized.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolvePath(opts.modelPath) : resolvedModel!)
@@ -511,383 +550,80 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
-	const ablation = { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? "declared" }
-
-	const classifier = opts.weightsCacheRoot
-		? await NeuralAddressClassifier.loadFromWeights({
-				locale: "en-US",
-				cacheRoot: opts.weightsCacheRoot,
-				...ablation,
-			})
-		: opts.tokenizerPath
-			? await createScorer({
-					// Same rule as the stamp above: an override of only the tokenizer still takes
-					// the model from the resolver rather than a package literal.
-					modelPath: opts.modelPath
-						? resolvePath(opts.modelPath)
-						: (await resolveWeights({ locale: "en-us" })).modelPath,
-					tokenizerPath: resolvePath(opts.tokenizerPath),
-					modelCardPath: resolvePath(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
-					locale: "en-us",
-				})
-			: opts.modelPath
-				? await NeuralAddressClassifier.loadFromWeights({
-						locale: "en-US",
-						modelPath: resolvePath(opts.modelPath),
-						...ablation,
-					})
-				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", ...ablation })
-
-	// Per-country overlay classifiers: a case's country selects the weights overlay
-	// so GB rows grade with en-GB's pair-index + transition-beta as production's
-	// locale-hint routes them, lazily and memoized.
-	// A missing overlay package falls back to the base classifier with one loud warning
-	// per locale, because base-only grading silently drops the dependent-locality prior
-	// and the row looks like a model failure.
 	// Checked for the base locale plus every overlay the corpus can route to,
 	// because the anchor artifact is per-package.
-	if (!opts.modelPath && !opts.tokenizerPath) {
+	if (!candidateModel) {
 		await assertDeclaredAnchorBins(["en-US", ...Object.values(OVERLAY_LOCALE_BY_COUNTRY)], opts.weightsCacheRoot)
 	}
 
-	const overlayClassifiers = new Map<string, typeof classifier>()
-	const warnedOverlays = new Set<string>()
-	// Overlay locales that failed to load, keyed by locale rather than country because the fallback is
-	// memoized per locale and a second country routing to the same overlay never reaches the catch.
-	const baseOnlyLocales = new Set<string>()
-
-	async function classifierFor(caseCountry?: string): Promise<typeof classifier> {
-		const overlayLocale = caseCountry ? OVERLAY_LOCALE_BY_COUNTRY[caseCountry] : null
-
-		// Scorer/modelPath legacy modes have no package-shaped sibling resolution — base only.
-		if (!overlayLocale || opts.tokenizerPath || opts.modelPath) return classifier
-
-		const cached = overlayClassifiers.get(overlayLocale)
-
-		if (cached) return cached
-
-		try {
-			const overlay = await NeuralAddressClassifier.loadFromWeights({
-				locale: overlayLocale,
-				...(opts.weightsCacheRoot ? { cacheRoot: opts.weightsCacheRoot } : {}),
-			})
-
-			overlayClassifiers.set(overlayLocale, overlay)
-
-			return overlay
-		} catch (error) {
-			baseOnlyLocales.add(overlayLocale)
-
-			if (!warnedOverlays.has(overlayLocale)) {
-				warnedOverlays.add(overlayLocale)
-
-				console.error(
-					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
-					`[gauntlet] ⚠ ${overlayLocale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
-						`grading ${caseCountry} cases BASE-ONLY (no pair-index/deploc prior). ` +
-						`For production-true grading, include @mailwoman/neural-weights-${overlayLocale.toLowerCase()} in the weights cache.`
-				)
-			}
-
-			overlayClassifiers.set(overlayLocale, classifier)
-
-			return classifier
-		}
-	}
-
-	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
-
-	// en-US is the CLI's default locale — the harness grades the production-default arm.
-	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = async (input, shape) => {
-		const verdict = await kindClassifierWithLexicon(input, shape, {
-			locale: "en-US",
-			confidence: 1,
-			alternatives: [],
-			script: [],
-			evidence: null,
-			source: "caller",
-		})
-
-		if (!opts.forceQueryKind) return verdict
-
-		// Only `kind` moves.
-		// A confidence, alternative or intent-marker rewrite would change more than the verdict under test.
-		// The coordinator routes on only the top kind.
-		return { ...verdict, kind: opts.forceQueryKind }
-	}
-
-	// The gauntlet reads one generation of the active selection, as the geocode session does.
-	const catalog = await LayerCatalog.read(dataRootPath())
-	// The database set is the paths that exist: the selected WOF extracts, else the conventional set.
-	const presentWofDatabases = await existingWOFDatabasePaths(null, dataRootPath(), catalog)
-
-	const resolver = createWOFResolver(
-		await createResolverBackend(resolverMod, {
-			wofPaths: presentWofDatabases,
-			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			variantAliasExemption:
-				pins.variantAliasExemption === "production"
-					? GEOCODE_SESSION_DEFAULTS.variantAliasExemption
-					: pins.variantAliasExemption,
-		})
-	)
-
-	// The reference loads here and becomes the per-candidate `capitalLevel` closure,
-	// matching `createGeocodeSession`.
-	const capitalIndex = await capitalIndexFor(
-		pins.capitalTier === "production" ? GEOCODE_SESSION_DEFAULTS.capitalTier : pins.capitalTier,
-		await resolveCandidateDBPath(opts.candidateDB, dataRootPath(), catalog)
-	)
-
-	const capitalLevel = capitalIndex
-		? (place: { name: string; country: string | null; lat: number; lon: number }): number =>
-				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
-		: null
-
-	const regionDatabaseProvider = await createRegionDatabaseProvider(resolverMod, dataRootPath())
-	// `@mailwoman/osm` is an optional peer of `mailwoman`, which the opener loads lazily.
-	// The gauntlet grades with the OpenStreetMap tier, so its absence is an error here.
-	const osmProvider = await openOSMRegionDatabases(dataRootPath(), catalog)
-
-	if (!osmProvider) throw new Error("the gauntlet grades the OpenStreetMap tier and needs @mailwoman/osm installed")
-
-	// The BAN national-register tier sits ahead of OSM in production, so without it the
-	// gauntlet would grade an OSM-first cascade production never runs.
-	const banProvider = await openBANRegionDatabases(dataRootPath(), catalog)
-
-	const pinDeps = {
-		...resolverPinDeps(pins),
-		...(pinnedSwitch(pins.formerDivisions, GEOCODE_SESSION_DEFAULTS.formerDivisions)
-			? { formerDivisionLookup: await readFormerDivisionLookup() }
-			: {}),
-	}
-
-	// This pin selects an artifact rather than a boolean value.
-	// The artifact is PER classifier.
-	// The FST ships beside the weights: the en-GB package includes `fst-en-gb.bin`,
-	// and the base package includes `fst-en-us.bin`.
-	// They hold different places: reading the path off the base classifier would feed every
-	// overlay case a gazetteer for the wrong country, a pairing production never runs.
-	// Cached per resolved path, because the overlay classifiers are themselves cached
-	// and several countries share one.
-	type PriorDeps = Pick<GeocodeDeps, "fst" | "fstForCountry" | "streetMorphology" | "anchorRegions">
-	const priorDepsByPath = new Map<string, PriorDeps>()
-	const warnedMissingPriorFST = new Set<string>()
-
-	async function priorDepsFor(forClassifier: typeof classifier, label: string): Promise<PriorDeps> {
-		if (!pinnedSwitch(pins.gazetteerPrior, GEOCODE_SESSION_DEFAULTS.gazetteerPrior)) return {}
-
-		// The FSTs the active selection lists for the case's locale, else the files
-		// beside the weights, as the geocode session reads them.
-		// The base package is the en-US model.
-		const artifacts = await selectedParsePriorArtifacts(
-			forClassifier as ParsePriorArtifacts,
-			label === "base" ? "en-US" : label,
-			dataRootPath(),
-			catalog
-		)
-
-		// A string, because it keys `priorDepsByPath`; a builder would key by object identity.
-		const fstPath = artifacts.fstPath?.toString()
-
-		if (!fstPath) {
-			// Loud, once per locale: a prior-on run against an overlay with no FST silently
-			// grades the base model for those rows while the pins line still records `on`.
-			if (!warnedMissingPriorFST.has(label)) {
-				warnedMissingPriorFST.add(label)
-
-				console.error(
-					`[gauntlet] ⚠ gazetteerPrior=ON but the ${label} weights package ships no FST — every ${label} row is ` +
-						"graded WITHOUT the prior. The pins line will still say ON; this is the only place that says otherwise."
-				)
-			}
-
-			return {}
-		}
-
-		const cached = priorDepsByPath.get(fstPath)
-
-		if (cached) return cached
-
-		// The loader reports a missing or unreadable artifact and returns no prior for it,
-		// because a silent absent prior scores lower and reads as a model difference.
-		const loaded = await loadParsePriors(
-			{
-				fstPath,
-				streetMorphologyPath: artifacts.streetMorphologyPath,
-				postcodePrefixPaths: artifacts.postcodePrefixPaths,
-			},
-			{ venueHeadPrior: false, label, onWarn: (message) => console.error(`[gauntlet] ${message}`) }
-		)
-
-		// The lookup loads another country's FST only when a parse under `fstCountryRouting` asks for it.
-		const fstForCountry = loaded.fst
-			? createCountryFSTLookup({
-					primaryCountry: (label === "base" ? "en-US" : label).split("-")[1] ?? null,
-					primaryFST: loaded.fst,
-					fstPathFor: (country) =>
-						shippedGazetteerFSTPath(country, dataRootPath(), catalog, opts.weightsCacheRoot ?? undefined),
-					onWarn: (message) => console.error(`[gauntlet] ${message}`),
-				})
-			: null
-
-		const deps: PriorDeps = {
-			...(loaded.fst ? { fst: loaded.fst } : {}),
-			...(fstForCountry ? { fstForCountry } : {}),
-			...(loaded.streetMorphology ? { streetMorphology: loaded.streetMorphology } : {}),
-			...(loaded.anchorRegions ? { anchorRegions: loaded.anchorRegions } : {}),
-		}
-
-		priorDepsByPath.set(fstPath, deps)
-
-		return deps
-	}
-
-	// The venue-head prior reads one lexicon per route country, the lookup the session builds from its locale.
-	// The lexicon is cached per country.
-	const venueHeadByCountry = new Map<string, Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">>()
-
-	async function venueHeadDepsFor(
-		caseCountry: string | undefined,
-		streetMorphology: FSTMatcherLike | null
-	): Promise<Pick<GeocodeDeps, "venueHead" | "venueHeadOpts">> {
-		if (!pinnedSwitch(pins.venueHeadPrior, GEOCODE_SESSION_DEFAULTS.venueHeadPrior)) return {}
-
-		const country = (caseCountry ?? "").toUpperCase()
-		// The street-type test reads the case's morphology matcher, so a country is cached per matcher.
-		const key = `${country}:${streetMorphology ? "fst" : "none"}`
-		const cached = venueHeadByCountry.get(key)
-
-		if (cached) return cached
-
-		const { venueHeadLexicon } = await import("@mailwoman/poi-taxonomy/venue-heads")
-
-		// An unpinned scale leaves `biasScale` unset, so the prior applies its own default.
-		const deps: Pick<GeocodeDeps, "venueHead" | "venueHeadOpts"> = {
-			venueHead: venueHeadLexicon(country),
-			venueHeadOpts: {
-				...venueHeadOptsFor(streetMorphology, country || null),
-				...(pins.venueHeadBiasScale === "production" ? {} : { biasScale: pins.venueHeadBiasScale }),
-			},
-		}
-
-		venueHeadByCountry.set(key, deps)
-
-		return deps
-	}
-
-	/**
-	 * The prior deps for one case: the classifier's matchers and the country's venue-head
-	 * lexicon with a street-type test over those matchers.
-	 */
-	async function caseDepsFor(
-		caseClassifier: typeof classifier,
-		caseCountry: string | undefined,
-		defaultCountry?: string
-	): Promise<PriorDeps & Pick<GeocodeDeps, "venueHead" | "venueHeadOpts" | "parseCountry">> {
-		const overlay = OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""]
-		const priorDeps = await priorDepsFor(caseClassifier, overlay ?? "base")
-		// A row routed to its own overlay states its country, as a session's chosen locale does.
-		const parseCountry = defaultCountry ?? (overlay ? caseCountry : undefined)
-
-		return {
-			...priorDeps,
-			...(await venueHeadDepsFor(caseCountry, priorDeps.streetMorphology ?? null)),
-			...(parseCountry ? { parseCountry } : {}),
-		}
-	}
-
-	const streetMorphologyPrior = pinnedSwitch(pins.streetMorphologyPrior, GEOCODE_SESSION_DEFAULTS.streetMorphologyPrior)
-
 	console.error(`[gauntlet] ${describeResolverPins(pins)}`)
 
-	// The fork→entity probe's signals come from the session's own loader, so the board
-	// grades the POI layers production opens (poi.db and the stations layer beside it).
-	const { deps: forkEntityDeps } = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
+	// A missing overlay grades its rows base-only with one loud warning per locale, because base-only
+	// grading silently drops the dependent-locality prior and the row looks like a model failure.
+	const sessions = createBatchGeocodeSessions(gauntletBatchConfig(opts), {
+		prepareLocale: (scope, locale) => prepareGauntletLocale(scope, locale, opts),
+		onLocaleUnavailable: (locale, error) =>
+			console.error(
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
+				`[gauntlet] ⚠ ${locale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
+					`grading its cases BASE-ONLY (no pair-index/deploc prior). ` +
+					`For production-true grading, include @mailwoman/neural-weights-${locale.toLowerCase()} in the weights cache.`
+			),
+	})
 
-	// The bundled placer's router, loaded once for the run and stated to every geocode.
-	const placeCountry = (await loadBundledPlaceCountry()) ?? "none"
+	try {
+		// The base session builds here, so a missing database fails the build rather than the first row.
+		const base = await sessions.sessionFor()
 
-	/**
-	 * The one geocode call both public entry points make; `extra` is spread last so a trace sink cannot
-	 * be shadowed, keeping the two entry points from drifting into different dependency assemblies.
-	 */
-	const runGeocode = async (
-		input: string,
-		geoOpts: GauntletGeocodeOpts | null,
-		extra: Pick<GeocodeDeps, "resolveTraceSink">
-	): Promise<GeocodeResult> => {
-		const { caseCountry, defaultCountry, ...forwarded } = geoOpts ?? {}
-		const caseClassifier = await classifierFor(caseCountry)
+		// `@mailwoman/osm` is an optional peer of `mailwoman`, which the session opens lazily.
+		// The gauntlet grades with the OpenStreetMap tier, so its absence is an error here.
+		if (!base.services.osm) {
+			throw new Error("the gauntlet grades the OpenStreetMap tier and needs @mailwoman/osm installed")
+		}
+	} catch (error) {
+		await sessions[Symbol.asyncDispose]()
 
-		return geocodeAddress(input, {
-			classifier: caseClassifier,
-			// Same lexicon-aware kind classifier the CLI session wires, so the harness grades the user's path.
-			classifyKind: poiKindClassifier,
-			// Unset on every shipping path, so the register comes from the verdict as production derives it.
-			...(opts.forceQueryKind ? { inputMode: deriveInputMode("auto", opts.forceQueryKind) } : {}),
-			resolver,
-			placeCountry,
-			databases: regionDatabaseProvider.for,
-			nationalDatabases: banProvider.for,
-			osmDatabases: osmProvider.for,
-			...pinDeps,
-			...(capitalLevel ? { capitalLevel } : {}),
-			...(await caseDepsFor(caseClassifier, caseCountry, defaultCountry)),
-			streetMorphologyPrior,
-			...forkEntityDeps,
-			...forwarded,
-			...(defaultCountry ? { defaultCountry: { country: defaultCountry, source: "caller" } } : {}),
-			...extra,
-		})
+		throw error
 	}
 
+	const routeOf = (geoOpts: GauntletGeocodeOpts | undefined): GeocodeRoute => ({
+		...(geoOpts?.caseCountry ? { country: geoOpts.caseCountry } : {}),
+		...(geoOpts?.defaultCountry ? { defaultCountry: geoOpts.defaultCountry } : {}),
+	})
+
+	// Unset on every shipping path, so the register comes from the verdict as production derives it.
+	const inputMode = opts.forceQueryKind ? deriveInputMode("auto", opts.forceQueryKind) : null
+
+	const requestOf = (geoOpts: GauntletGeocodeOpts | undefined): GeocodeRequestOptions => ({
+		...(geoOpts?.fuzzyCountryScope ? { fuzzyCountryScope: geoOpts.fuzzyCountryScope } : {}),
+		...(inputMode ? { inputMode } : {}),
+	})
+
 	return {
-		diagnoseParse: async (
-			input: string,
-			geoOpts?: GauntletGeocodeOpts,
-			wrapFST?: (fst: FSTMatcherLike) => FSTMatcherLike,
-			decoderSettings?: DecoderSettings
-		) => {
-			const { caseCountry, defaultCountry } = geoOpts ?? {}
-			const caseClassifier = await classifierFor(caseCountry)
+		geocode: async (input, geoOpts) => (await sessions.geocode(input, routeOf(geoOpts), requestOf(geoOpts))).result,
+		geocodeTraced: async (input, geoOpts) => {
+			const run = await sessions.geocode(input, { ...routeOf(geoOpts), trace: true }, requestOf(geoOpts))
 
-			const priorDeps = {
-				...(await caseDepsFor(caseClassifier, caseCountry, defaultCountry)),
-				...pinDeps,
-				...decoderSettings,
-				streetMorphologyPrior,
-			}
-
-			const parseFST = priorDeps.fst && wrapFST ? wrapFST(priorDeps.fst) : priorDeps.fst
+			return { result: run.result, resolver: run.trace?.resolver ?? [] }
+		},
+		diagnoseParse: async (input, geoOpts, wrapFST, decoderSettings) => {
+			const session = await sessions.sessionFor(routeOf(geoOpts))
+			const parseDeps = { ...session.parseDeps, ...decoderSettings, ...(inputMode ? { inputMode } : {}) }
+			const parseFST = parseDeps.fst && wrapFST ? wrapFST(parseDeps.fst) : parseDeps.fst
 
 			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, {
-				...priorDeps,
+				...parseDeps,
 				...(parseFST ? { fst: parseFST } : {}),
 			})
 
 			return {
-				trace: await caseClassifier.traceParse(parseInput, parseOpts),
-				classifier: caseClassifier,
-				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
+				trace: await parseDeps.classifier.traceParse(parseInput, parseOpts),
+				classifier: await parseDeps.classifier.forInput(parseInput),
+				...(parseDeps.fst ? { fst: parseDeps.fst } : {}),
 			}
 		},
-		gradedBaseOnly: (caseCountry: string | null) => gradedBaseOnly(caseCountry, baseOnlyLocales),
-		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts ?? null, {}),
-		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
-			const resolverTrace: ResolveNodeTrace[] = []
-
-			const result = await runGeocode(input, geoOpts ?? null, {
-				resolveTraceSink: (record) => resolverTrace.push(record),
-			})
-
-			return { result, resolver: resolverTrace }
-		},
-		[Symbol.dispose]: () => {
-			regionDatabaseProvider[Symbol.dispose]()
-			banProvider[Symbol.dispose]()
-			osmProvider[Symbol.dispose]()
-		},
+		gradedBaseOnly: (caseCountry) => gradedBaseOnly(caseCountry, sessions.unavailableLocales),
+		[Symbol.asyncDispose]: () => sessions[Symbol.asyncDispose](),
 	}
 }
 
