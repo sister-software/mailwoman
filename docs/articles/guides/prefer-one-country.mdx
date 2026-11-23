@@ -10,7 +10,7 @@ import { CommonPrerequisites } from "#partials/runtime"
 
 # Keep answers inside one country
 
-Use this guide when every address your application handles is in one country, and you want an ambiguous place name to resolve there.
+If your application handles addresses in one country, use that country to resolve ambiguous place names.
 
 By default `mailwoman geocode` treats the country of its locale as a preference that evidence in the address can overrule. With the default locale `en-US`, `12 Oak St, Paris` answers Paris, France, because that Paris is the larger place of the name. A configured country keeps the answer in the United States.
 
@@ -72,7 +72,7 @@ The answer is now Paris, Texas:
 
 A stated country is a filter that never yields. With this file, `1001 Boulevard Saint-Laurent, Montréal` answers Montreal, Wisconsin, at 46.433871, -90.232951. Use it only when zero address you handle lies outside the country.
 
-The command reads one `mailwoman.config.*` file from the working directory, in JSON, YAML, TOML, or a JavaScript or TypeScript module with a default export. `--config <path>` reads a file from another place. A typed flag overrules the file, and the file overrules the built-in default.
+The command reads one `mailwoman.config.*` file from the working directory, in JSON, YAML, TOML, or a JavaScript or TypeScript module with a default export. `--config <path>` reads a file from another place. The typed flag takes precedence over the file. Without a flag, the file takes precedence over the built-in default.
 
 ## 3. Choose between the two settings
 

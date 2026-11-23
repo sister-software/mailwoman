@@ -15,7 +15,7 @@ Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and yo
 
 That gap is easy to miss, because the cities that do resolve (Berlin, Paris, Tokyo) resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries that no one on the team types into a demo at 2am.
 
-If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. But enriching the places you have adds no coverage for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Each piece worked on its own, the join between them was empty, and no component failed loudly enough to notice.
+If you've shipped a data pipeline you know how this happens. A from-scratch rebuild enriched every existing place with alternate-language names, so Berlin now answers to Berlino, Берлин, 柏林, all 134 of its surface forms. But enriching the places you have adds no coverage for the places you don't, and the gap-fill that was supposed to add the missing countries lived in a side index the candidate table never folded in. Both indexes built successfully. The candidate table omitted the gap-fill index without reporting an error.
 
 ## A ten-minute probe ruled out exonyms
 
@@ -35,9 +35,9 @@ The numbers were ugly: median error came back at 47 kilometers for Portugal, 116
 
 I almost did, but first I checked which model the eval had loaded.
 
-It was a six-week-old build. The dev symlink that points at "the shipped model" had drifted to an old one: a test re-creates that symlink as a side effect, and it had been pinning the wrong file for weeks. Every eval that loaded the model by its default path was grading something we retired in May.
+It was a six-week-old build. The dev symlink that points at "the shipped model" had drifted to an old one: a test re-creates that symlink as a side effect and had been pinning the wrong file for weeks. Every eval that loaded the model by its default path was grading something we retired in May.
 
-Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8, Poland's median becomes 2.3 and Australia's 1.2. The shipped parser was fine the whole time, and the broken part was the model path the eval loaded. The retrain I was about to recommend would have fixed a problem that didn't exist, and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came.
+Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8, Poland's median becomes 2.3 and Australia's 1.2. The evaluation loaded the model from the wrong path. The shipped parser was working as intended. The retrain I was about to recommend would have fixed a problem that didn't exist, and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came.
 
 ## Two evals on the wrong inputs
 

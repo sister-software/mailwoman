@@ -14,9 +14,8 @@ independent of the Earth app and can proceed in parallel with it.
 Moon and Mars have authoritative, public-domain nomenclature and topography, and no package in the
 repository can read, normalize or publish them. Every existing acquisition package assumes Earth: a
 country, a WGS84 coordinate, an elevation above sea level, a radius of 6,371 km typed once in
-`@mailwoman/spatial` and refused everywhere else by the `prefer-home` rule. A planetary pipeline is
-therefore also a conformance test for the geographic primitives, and it exposes each Earth assumption
-at the point where a body parameter is missing.
+`@mailwoman/spatial` and refused everywhere else by the `prefer-home` rule. Building a planetary pipeline
+tests the geographic primitives by exposing places where they assume Earth instead of accepting a body parameter.
 
 ## Decisions taken
 

@@ -4,14 +4,13 @@
 /**
  *   Whether a test file has to run on a `mailwoman-data` runner, read from the file's own text.
  *
- *   Only those runners hold the data root, and the model weights are served from it.
+ *   Only those runners have the data root that serves the model weights.
  *   A hosted runner has a checkout, an install and a compile.
  *
  *   A test that needs an artifact a hosted runner lacks declares it in one of two ways.
  *   It skips when the artifact is absent, through `skipIf`, `runIf` or a `skip()` call.
  *
- *   Or it fails when the artifact is absent, and declares the runner in a
- *   comment: `// ci-runner: mailwoman-data`.
+ *   A test that fails without the artifact declares its runner with `// ci-runner: mailwoman-data`.
  *
  *   A file with neither runs on a hosted runner, where a skipped test fails the job.
  *   A file that gains a skip therefore moves to the data runner on its own,

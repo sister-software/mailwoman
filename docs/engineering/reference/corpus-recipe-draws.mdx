@@ -20,8 +20,8 @@ answer.
 The rows in `$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs/` and `corpus/recipe-outputs-boundary-family/`
 were counted line by line rather than estimated from file size.
 
-Every name below is a filename on disk. A `synth-` filename keeps its name, because renaming a file
-breaks the command that reads it, and the `source` string on those rows is a separate value:
+Every name below is a filename on disk. Keep the `synth-` filename so the command can find it.
+The `source` string on those rows is set separately:
 `packages/corpus/lib/recipes/sources.ts` maps each one to the operation spelling a corpus assembled
 from `v0.7.0-de-holdout` on stores, so `synth-unit-v30.jsonl` holds rows whose `source` reads
 `spliced-unit-v30`.
@@ -100,8 +100,8 @@ emitted and skipped, the time, and every option the run resolved:
 }
 ```
 
-The recipe outputs listed above predate it and have no sidecar. The table is their only record, and
-it goes stale the moment one of them is rebuilt.
+The recipe outputs listed above predate the sidecar. The table is the only record of their row counts.
+A rebuild makes the recorded count stale.
 
 ## The five locales drawn for the v0.6.0 corpus
 
@@ -129,7 +129,7 @@ each country supplies more. SK and LU supply fewer rows than the cap, so their p
 file and their draw is 68.3% and 91.2% of it. A country whose draw approaches its supply teaches
 that country's addresses close to exhaustively. PT's draw, by contrast, is 13.5% of its supply.
 
-Croatia's 1,003 city-noise drops are the only ones among the five. `cleanCityNoise` rejects a city
-value that contains a comma or four digits, and the recipe drops that row before it reaches the
+Croatia's 1,003 city-noise drops are the only ones among the five. When `cleanCityNoise` rejects a
+city value containing a comma or four digits, the recipe drops the row before it reaches the
 reservoir. The 1,003 rows are among HR's 1,680,503 supply rows but not among the rows the reservoir
 saw.

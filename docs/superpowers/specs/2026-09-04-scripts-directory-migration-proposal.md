@@ -73,8 +73,8 @@ is withdrawn.
 
 ## 4. Registries are the only executable entry points
 
-Each capability package exports one registry, and the registry is the package's knip entry point. knip
-can then report an implementation file that no registry lists as dead code. Section 2 describes that
+Each capability package exports one registry as its knip entry point. knip can then report an
+implementation file as dead code when no registry lists it. Section 2 describes that
 failure. The `scripts/**/*.ts` entry glob hid it.
 
 `repo-health`:

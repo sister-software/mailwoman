@@ -11,9 +11,8 @@ to substitute is much stronger here, because a national register does contain ev
 
 ## Rejected architectures
 
-This design sits between two architectures, and both have already failed in this project.
-The page describes them because future conveniences will tend to move the design toward one
-of them.
+The project tried both architectures below before adopting the current design. The failures explain
+why a change that moves toward either architecture can reintroduce old defects.
 
 ### Not a dictionary parser
 
@@ -158,8 +157,8 @@ because it learned from a corpus where bare street fragments are rare and bare l
 common. The cause is the training distribution, so the BAN corpus recipe takes priority over
 every inference-time change.
 
-Keep the tier rule anyway. The rule follows from what the data encodes, and it doesn't depend
-on a measured harm. A channel that answers "is this a locality" must never be read as answering "is this
+Keep the tier rule even when the measured effect is zero. The rule follows from what the data encodes.
+A channel that answers "is this a locality" must never be read as answering "is this
 a street," and a future consumer that did so would be reading the table above.
 
 ### Tier D: broad open data

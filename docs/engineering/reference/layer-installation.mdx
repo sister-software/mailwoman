@@ -93,8 +93,8 @@ and `data pull` share:
 8. Print the installed result and the next command.
 
 A bundle activates only when every one of its artifacts installed, so related artifacts are selected
-together. The installed artifacts of a bundle that failed are recorded and stay unselected, and the
-next pull verifies and selects them without transferring them again. A repeated pull verifies each
+together. When a bundle fails, the installer records the artifacts already installed and leaves them
+unselected. The next pull verifies and selects those artifacts without transferring them again. A repeated pull verifies each
 installed copy by its SHA-256 and transfers no bytes.
 
 All four published bundles, `candidate`, `us`, `fr` and `poi`, install through the selection. The BAN
@@ -106,15 +106,15 @@ and from the selection with eight queries and records an empty difference list.
 ## Source builds
 
 `mailwoman data build <recipe> --countries <cc>` runs a build recipe through the same installer.
-`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/install/build.ts`) implement it, and the recipe
-interface is `BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one registered recipe is
+`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/install/build.ts`) run recipes that implement
+`BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one registered recipe is
 `osm-address-points` (`packages/osm/tools/address-points-recipe.ts`), which ships in the optional
 `@mailwoman/osm` package. Without that package the command names it and stops before any request.
 
 1. Plan. The recipe resolves each country's extraction policy (`packages/osm/lib/<cc>/extraction-policy.ts`)
    to a Geofabrik region (`packages/osm/sdk/geofabrik/regions.ts`), and lists one input per region and
    one outline per country it clips. `--region` names one region for every requested country. The plan
-   reads no network and writes no file, and `--dry-run` stops after it.
+   reads no network and writes no file. With `--dry-run`, the command stops after planning.
 2. Check prerequisites. The build reads the extract with GDAL's OSM driver, so `ogr2ogr` must run. If it is
    missing, the build is refused before any transfer.
 3. Acquire. Each input stages under `tmp/acquire/` with the receipt-backed transfer `data pull` uses,
@@ -158,9 +158,9 @@ provider reads `active.json` once per call to its `warm` method, so every state 
 
 ## Source order and the meaning of an outcome
 
-Order within a selection entry means that the first installed and readable source answers. A
-subdivision entry is consulted before its country's entry, and a country entry before an unscoped
-one. The outcomes are fixed in `packages/core/lib/layers/outcome.ts`: only an absent layer moves on to
+Order within a selection entry means that the first installed and readable source answers. The reader
+checks the subdivision's entry first, then the country's entry, then the unscoped entry.
+The outcomes are fixed in `packages/core/lib/layers/outcome.ts`: only an absent layer moves on to
 the next source. An unsuccessful lookup is the answer of the first readable source. An unreadable
 artifact and an obligation refusal are errors that include the artifact's path.
 
@@ -178,8 +178,8 @@ paths and `releases.json`, in that order.
 ## Retention
 
 `packages/mailwoman/lib/data/install/retention.ts` defines the policy. Prune keeps every artifact referenced by the
-active generation, by the generation before it, or by a generation that a live session holds. That's two
-generations by default, and `--retain` changes the number. A geocode session that reads a selection writes a lease
+active generation, by the generation before it, or by a generation that a live session holds.
+Use `--retain` to change the default of two recent generations. A geocode session that reads a selection writes a lease
 and removes it on disposal. A data root that cannot be written takes no lease. Prune deletes only
 installed artifacts under `db/<role>/<sha256>/`. A file at a conventional path, a partial transfer
 and a source input are kept. Execution reads the generation and the leases again under both locks

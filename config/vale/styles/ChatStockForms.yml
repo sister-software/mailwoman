@@ -30,8 +30,8 @@ tokens:
   ## A trailing clause that comments on the report rather than continuing it: "…does not move alone,
   ## and that is the first thing to report". The reply IS the report, so ranking its own parts is
   ## filler. Causal prose starts a sentence — "That is why the loader refuses" — and is unaffected.
-  ## Quoted: a token opening with a comma and carrying an apostrophe is not a YAML scalar, and Vale
-  ## answers `did not find expected node content` with no report at all.
+  ## Quote the token because it starts with a comma and contains an apostrophe.
+  ## Without quotes, Vale returns `did not find expected node content` instead of a report.
   - ",\\s+and that(?:'s| is)\\b"
   ## `names the` is refused on every surface by NamesVerb.yml.
   - keep in mind

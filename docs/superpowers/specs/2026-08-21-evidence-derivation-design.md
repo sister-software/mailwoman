@@ -8,9 +8,8 @@ This spec adds a pure leaf workspace that holds the typed-evidence vocabulary, t
 axis, the coverage-basis exclusion check, and the derivation graph. It also covers the workspace's
 first four consumers.
 
-The scope is deliberately narrow, and it doesn't build an inference engine. It expresses the evidence
-the repository **already has** in one vocabulary, and it wires in the one check that's already built
-but has never been called.
+The design gives the evidence already in the repository a shared vocabulary. It also connects
+the existing exclusion check to its first callers. The scope excludes building an inference engine.
 
 ---
 
@@ -70,7 +69,7 @@ street-centroids-fr.db   ban:fr, release 2026-05-18
             NO layer_coverage table at all — predates the interface
 ```
 
-The layer exists, and the blocking condition is that no caller invokes the check with it.
+The layer exists. To use its coverage evidence, a caller must invoke the exclusion check with it.
 
 ### 1.3 The positive half is built and measured
 
@@ -120,7 +119,7 @@ a true absence.
 fold mismatches: `pillet-will` stored unhyphenated." This is the same defect at the locality band, and
 `constraint-census` currently counts fold failures in the coverage column.
 
-**This spec therefore defines a third state, and only the middle one may license an exclusion:**
+**The design distinguishes three states. Only confirmed absence from a complete survey can support an exclusion.**
 
 ```
 reachability   we hold the row, the query went to the wrong shelf   → retrieval fix
@@ -174,8 +173,8 @@ The type enforces these rules:
 - **Observation** — retrieved from an identified source at a stated vintage. It never holds a score.
 - **Exclusion** — proves a candidate impossible. It can be constructed **only** through
   `requireExclusionBasis`, and no public constructor skips the check.
-- **Relation** — structural compatibility between entities. It holds `assertion`, and it holds a
-  `score` only when `assertion === "inferred"`. This moves `filer.db`'s check constraint into the type
+- **Relation** — structural compatibility between entities. A relation holds an `assertion` and
+  includes a `score` only when `assertion === "inferred"`. This moves `filer.db`'s check constraint into the type
   system.
 - **Prior** — changes probability. A prior can never, by itself, prove or exclude.
 

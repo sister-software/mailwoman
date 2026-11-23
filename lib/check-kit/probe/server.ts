@@ -10,8 +10,10 @@
  *
  * The stop runs on every path out of {@link runProbe}: after the requests, after an early exit,
  * after the startup wait expired, after an interrupt, and after an error.
- * It sends SIGTERM, then SIGKILL when the process hasn't exited within the grace period, and
- * then checks by process id that neither the server nor any descendant it started remains.
+ * It sends SIGTERM and waits for the process to exit.
+ *
+ * After the grace period it sends SIGKILL if needed.
+ * It then checks by process ID that the server and its descendants have exited.
  */
 
 import { type ClockLike, systemClock } from "@mailwoman/core/api/clock"

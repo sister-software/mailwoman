@@ -6,9 +6,9 @@
 ## The problem
 
 `AGENTS.md` bans four words "in replies and in every committed prose surface": the three the
-`AmbiguousShorthand` rule listed then, and the retired one `repo-health` already counts. Each word stands
-for four or five different things, and a reader cannot tell which one a sentence means. Three Vale configs
-enforce parts of that ban, and the ban covers more than they enforce:
+`AmbiguousShorthand` rule listed then, and the retired one `repo-health` already counts. Each word can
+refer to four or five concepts without telling the reader which one applies. Three Vale configurations
+enforce parts of the ban as shown below.
 
 | Surface                                                                  | Config            | Rules applied                            |
 | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------- |
@@ -33,8 +33,8 @@ gap is a missing config section rather than a missing tool.
 ## Decisions taken
 
 **The strategy applies one sweep, then enables hard enforcement.** The plan uses neither a ratchet counter nor a
-per-file baseline. Every violation is fixed, and then every rule is switched on everywhere outside the
-dated-records exemption. The operator chose this over a ratchet after the risk of unreviewable diffs was
+per-file baseline. Fix all violations before enabling every rule outside the dated-records exemption.
+The operator chose this over a ratchet after the risk of unreviewable diffs was
 stated.
 
 **Scope: every committed prose surface.** TypeScript and TSX comments, Python docstrings and

@@ -12,8 +12,8 @@ tags:
 
 # POI layer runbook
 
-This runbook covers building, verifying and publishing poi.db, and the failures the build and
-publish path produce. It was written from the first poi.db builds (2026-07-18/19, PRs
+Use this runbook to build, verify and publish poi.db. It also describes failures from the first
+poi.db builds (2026-07-18/19, PRs
 #1180–#1185). Read it before touching `gazetteer build poi`, the poi executor, or the layer publish
 path.
 
@@ -36,8 +36,8 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 
 ### Overture Places schema gotchas
 
-- **There's no top-level `country` column** in the Places theme (the addresses theme has
-  one, and Places doesn't). Country lives at `addresses[1].country` (1-based DuckDB list
+- **Places stores country inside the address list.** The addresses theme has a top-level
+  `country` column. Places uses `addresses[1].country` (1-based DuckDB list
   index). The builder probes `DESCRIBE` output and picks the right expression
   (`chooseCountryExpression`); rows with no address struct are **excluded from per-country
   subsets** under the addresses-based filter. This is the accepted v1 limitation.

@@ -44,7 +44,7 @@ export default function searchIndexPlugin(context: LoadContext): Plugin {
 			for (const route of routesPaths) {
 				if (!isIndexedRoute(route)) continue
 
-				// `trailingSlash: false` emits `<route>.html`, and the root route `index.html`.
+				// With `trailingSlash: false`, Docusaurus emits `index.html` for the root and `<route>.html` for other routes.
 				const file = resolvePath(outDir, route === "/" ? "index.html" : `${route.replace(/^\//, "")}.html`)
 
 				records.push(...extractRecords(await readLocalTextFile(file), route))

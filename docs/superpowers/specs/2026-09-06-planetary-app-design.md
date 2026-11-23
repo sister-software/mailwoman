@@ -21,8 +21,7 @@ cheapest way to find out which of them assume Earth, and they're products in the
 
 **One source, two builds.** `PLANETARY_BODY=moon` and `PLANETARY_BODY=mars` are build variables in two
 Workers Builds projects over the same root directory. Each build emits its own manifest, service worker,
-icons, theme and body config. In production the host determines the body, and no query parameter can
-switch it.
+icons, theme and body config. In production only the host determines the body.
 
 **Private workspace under `packages/`.** The workspace is `packages/planetary` (`@mailwoman/planetary`,
 `private: true`), listed in `SANCTIONED_RELEASE_ABSENCES` with "private planetary map app — Cloudflare
@@ -62,7 +61,7 @@ packages/planetary/
 
 `vite.config.ts` reads `PLANETARY_BODY` through a typed `lib/env.ts` whose `liveEnv` view extends
 `@mailwoman/core/env`, never `process.env` directly. The app compares the production host with the
-built body at startup, and a mismatch renders an error page rather than the wrong body.
+built body at startup. If they differ, the app renders an error page.
 
 ### Build and deployment
 

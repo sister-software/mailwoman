@@ -118,7 +118,7 @@ The kebab-to-property derivation already exists as `optionPropertyName` in `@mai
 with an `OPTION_INITIALISMS` table listing the segments that capitalize a whole acronym. A mapped type that mirrors
 that derivation lets `Options` be derived instead of hand-written.
 
-The runtime table and the type-level table mustn't drift, and matching constants wouldn't prevent drift. This
+Two copies of the table can drift even if their constants match when written. This
 repository's rule is to share the function rather than the constants. The fix is one declaration: keep
 `OPTION_INITIALISMS` as a single `as const` object, derive the type side with `typeof`, and derive the runtime side
 with `Object.entries`.
@@ -166,8 +166,8 @@ registration that `AGENTS.md` documents. Decide before writing code.
 
 **The acceptance tests already exist.** Each layer has a `lib/sdk/build.test.ts` that drives the full build to
 a sealed database from hand-built fixture geometry, without network access or GDAL. Those four suites plus the four
-`packages/mailwoman/lib/observations/*-route.test.ts` must pass unchanged. A test that needs editing to
-accommodate the kit is a behavior change, and it stops the lane until explained.
+`packages/mailwoman/lib/observations/*-route.test.ts` must pass unchanged. If the kit requires a change to an
+existing test, stop the work until the behavior change is explained.
 
 ### Lanes C, E, G, H
 
@@ -311,8 +311,8 @@ standing rule, and do not open a separate pull request for a baseline.
 - **`yarn pack` freezes `workspace:*` at pack time.** A new `@mailwoman/layer-kit` joins seven registers. A
   workspace missing from the release list freezes without warning, and consumers bear the cost. Run the
   release-list arithmetic from `AGENTS.md` if lane B adds a workspace.
-- **A move can leave quoted path literals stale, and the compiler never reads them.** After any file move, search
-  imports and also quoted literals whose first segment is a workspace name.
+- **The compiler misses stale quoted paths after a move.** After any file move, search both imports and quoted
+  literals whose first segment is a workspace name.
 
 ## Appendix: how the numbers were derived
 

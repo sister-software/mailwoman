@@ -127,8 +127,9 @@ export async function assertValeClean(
  * Line-for-line splitting options that match `String.prototype.split` on a line feed.
  *
  * `TextSpliterator` trims each row and drops an empty one by default.
- * Both would break a line comparison: a trimmed row no longer matches the body it came
- * from byte-for-byte, and a dropped row moves every line number after it.
+ * A comparison needs the original bytes of each row.
+ *
+ * It also needs empty rows to keep subsequent line numbers fixed.
  */
 const BODY_LINES = { trim: false, skipEmpty: false } as const
 
@@ -136,8 +137,7 @@ const BODY_LINES = { trim: false, skipEmpty: false } as const
  * Rejects an error-severity Vale finding on a line the replacement introduces.
  *
  * A rule that lands after an issue is written makes every line of that issue's body a finding.
- * A whole-body check therefore refuses an edit until the author's earlier prose is rewritten
- * to rules it predates, and an edit that appends a task list shouldn't require that rewrite.
+ * A whole-body check would require authors to revise earlier prose before they could append a task list.
  *
  * Only a line absent from `previous` reaches Vale here.
  * A finding reports its line number in `next`, so the message points at the line the

@@ -6,12 +6,12 @@
  *
  * The log comes from `gh run view --job <id> --log-failed`, which prints only the failed steps,
  * or from the jobs API when that command refuses a job whose run is still in progress.
- * It is written under the cache root's `checks/ci-logs` directory, outside every
- * checkout, and read by the Vitest text parser.
+ * The reader saves the log under the cache root's `checks/ci-logs` directory, outside every checkout.
+ * It then passes the log to the Vitest text parser.
  *
- * A failed job whose log holds no failing test, such as a lint, build or summary job,
- * is first read by the script parser, and otherwise reported as `parsed: false` with
- * the reason and the log path, never as a job with zero failures.
+ * When the Vitest parser finds no failing test, the script parser looks for other failures.
+ * If neither parser explains the failure, the reader reports `parsed: false`
+ * with the reason and the log path.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
@@ -139,8 +139,9 @@ function annotationLines(text: string): string[] {
  * Read one job's log text.
  *
  * The Vitest parser reads it first.
- * A log with no Vitest summary, or a summary with no failing test, is read by the script
- * parser, and a log neither parser explains is returned as `parsed: false`.
+ * The script parser reads a log when it lacks a Vitest summary or the summary reports no failing test.
+ *
+ * If neither parser explains the failure, the result records `parsed: false`.
  */
 function parseFailedJobLog(
 	text: string,

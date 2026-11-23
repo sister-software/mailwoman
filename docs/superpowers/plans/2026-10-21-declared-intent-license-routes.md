@@ -44,8 +44,8 @@ Cloudflare Workers through Wrangler and `@cloudflare/vitest-pool-workers`, Ink w
 3. A second evaluation for an address that already received one answers 409 and mints no token. Task 6 pins it.
 4. A lid-less hand-issued token downloads, a `lapsed` lid is refused, and an artifact outside `scope` is refused.
    Task 7 pins all three.
-5. `data pull` of a free bundle is unchanged with no token, and of a licensed bundle with an expired token prints the
-   refresh command. Task 10 pins both.
+5. `data pull` still downloads a free bundle without a token. When the user tries to download a licensed bundle with
+   an expired token, the command prints the refresh command. Task 10 tests both cases.
 
 ---
 
@@ -507,7 +507,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
 - Consumes: `EngineCoverage` from Task 2; `BUNDLES`, `DataBundle.tier`, `DataBundle.countries` from Task 10; `RESOLUTION_TIERS` and `GeocodeResult` from `@mailwoman/core/geocode/result`.
 - Produces:
   - `installedBundleNames(dataRoot: PathBuilderLike, bundles = BUNDLES): Promise<ReadonlySet<string>>` using `existingLocalPath` per artifact.
-  - `precisionCeiling(result: Pick<GeocodeResult, "resolution_tier" | "hierarchy">, installed: ReadonlySet<string>, bundles = BUNDLES): EngineCoverage | null`: the country is the first `countryCode` in `hierarchy`; a bundle with `tier`, `countries` containing it, and absent from `installed` yields an entry whose `resolved` is `result.resolution_tier`, whose `tier` is `bundle.tier`, and whose `command` is `mailwoman data pull` followed by the bundle name, when `resolution_tier` is coarser than the street tiers, and `null` otherwise.
+  - `precisionCeiling(result: Pick<GeocodeResult, "resolution_tier" | "hierarchy">, installed: ReadonlySet<string>, bundles = BUNDLES): EngineCoverage | null` checks results coarser than the street tiers. It uses the first `countryCode` in `hierarchy` to find a bundle that declares a tier, covers the country and is absent from `installed`. A matching bundle yields an entry with `resolved` set to `result.resolution_tier` and `tier` set to `bundle.tier`. The entry's `command` is `mailwoman data pull` followed by the bundle name. The function returns `null` if the result is at least as precise as a street tier or no bundle matches.
   - `coverageSentence(coverage: EngineCoverage): string` = `Resolved to ${resolved}. The ${tier} tier covers this country and is not installed: ${command}`.
 
 - [ ] **Step 1: Write the failing tests** with a bundles fixture `{ "gb-streets": { tier: "tier:gb-streets", countries: ["GB"], access: "licensed", … } }`: a GB locality result with the tier uninstalled yields the entry, installed yields `null`, a US result yields `null`, and a street-level GB result yields `null`.

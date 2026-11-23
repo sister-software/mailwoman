@@ -22,8 +22,9 @@ import { trackedSourcePaths } from "#repo-health/tracked-sources"
 /**
  * Matches one Vale `--output line` record of the form `path:line:col:Rule:message`.
  *
- * Vale prefixes a rule with the style package that holds it, and `config/vale/.vale-code-census.ini`
- * sets that package to `styles` on its `BasedOnStyles = styles` line.
+ * Vale prefixes each rule with its style package.
+ * The `BasedOnStyles = styles` line in `config/vale/.vale-code-census.ini` sets that prefix to `styles`.
+ *
  * A pattern naming another package matches no record, so `collectHits` returns
  * an empty array for a tree that has hits.
  *

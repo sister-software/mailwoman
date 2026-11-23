@@ -3,9 +3,9 @@
 ## Vale existence rule. These are the "AI-slop" / consultant-deck constructions
 ## the house voice rejects outright — see feedback-plain-words-no-insider-jargon
 ## and feedback-sister-software-voice in project memory. `source of truth` is
-## legitimate as Docusaurus frontmatter (`source-of-truth: true`); frontmatter
-## is stripped by Vale before linting, and the `(^source-of-truth:.*)` entry in
-## .vale.ini's TokenIgnores is a defensive backstop for that case.
+## legitimate as Docusaurus frontmatter (`source-of-truth: true`). Vale strips
+## frontmatter before linting. The `(^source-of-truth:.*)` entry in .vale.ini's
+## TokenIgnores also exempts that line.
 ##
 ## `names the` is refused on every surface by NamesVerb.yml, whose message asks for the verb the
 ## subject performs (selects, reads, writes, points to, identifies). The imperative "name the

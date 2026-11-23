@@ -62,7 +62,7 @@ await writeFile("clinics.geojson", JSON.stringify(toGeoJSON(entities)))
 
 ## Checks before commit
 
-- Every command in the page was executed, and the pasted output is what it printed.
+- Run every command in the page and paste its actual output.
 - Every constraint that can stop a reader is stated before the step it stops.
 - Each caveat gives a ceiling and a next action in the same sentence pair.
 - Every superlative is backed by a checkable action in the same sentence, or it is removed.

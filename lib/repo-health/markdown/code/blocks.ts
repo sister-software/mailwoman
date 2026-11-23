@@ -5,7 +5,7 @@
  *   Selects the JavaScript and TypeScript code blocks of a page for linting.
  *
  *   A block qualifies when its info string starts with a language this module maps to a file extension.
- *   The word `fragment` after the language marks a partial example, and the lint skips that block.
+ *   Add `fragment` after the language to keep a partial example out of the lint run.
  *
  *   A block the page leaves unclosed renders as text and is skipped too.
  *
@@ -56,7 +56,8 @@ export interface CodeBlock {
 	/**
 	 * The whitespace removed from the start of each content line.
 	 *
-	 * Its length is added back to a reported column, and a fix writes it back before each line.
+	 * The linter adds the indentation length to reported columns.
+	 * A fix restores the indentation on each line.
 	 */
 	indent: string
 	/**

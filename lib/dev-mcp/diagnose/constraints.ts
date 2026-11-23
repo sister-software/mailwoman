@@ -175,8 +175,7 @@ const CONSTRAINT_PREDICATES: Record<ConstraintID, string> = {
 const round = (value: number) => Math.round(value * 1000) / 1000
 
 /**
- * A term margin below this magnitude is floating-point residue from summing
- * the term matrices, and is omitted.
+ * Omit term margins below this magnitude to discard floating-point residue from summing the term matrices.
  */
 const TERM_MARGIN_EPSILON = 1e-9
 

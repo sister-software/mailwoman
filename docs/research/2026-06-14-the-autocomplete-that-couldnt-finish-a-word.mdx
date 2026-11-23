@@ -12,21 +12,21 @@ We turned the demo into a real geocoder. You type an address and get a rooftop c
 
 ## The autocomplete we already had
 
-Our gazetteer (every country, region, county, and city we resolve against) is stored as a finite-state transducer. It is a trie over place-name tokens, and each accepting state stores the places whose names end at that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It is fast because the FST _is_ the index, so no separate search runs. The walk reaches a node, and the answers are stored there.
+Our gazetteer (every country, region, county, and city we resolve against) is stored as a finite-state transducer. In this trie over place-name tokens, each accepting state stores the places whose names end at that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It is fast because the FST _is_ the index, so no separate search runs. The walk reaches a node, and the answers are stored there.
 
-This design fits a command line. You type a whole word, press tab, and get completions. The unit of input is the word, and the trie is keyed by words.
+This design fits a command line. You type a whole word, press tab, and get completions. Both the input and the trie keys use whole words.
 
 ## Then we typed half a word
 
 A search box receives partial words such as `New Yor` or `Chic`. It gets the first part of a word and has to infer the rest.
 
-A token trie requires whole tokens, and `Yor` begins a token. The trie steps through `New`, looks for an edge labeled `Yor`, finds none, and fails. A trie cannot match a fragment, so that failure is expected. The problem was the fallback, a fuzzy forward geocode over the gazetteer that returned the nearest fuzzy match. For `New Yor`, that was Denver. We do not know why it chose Denver. The fuzzy distance metric may have weighted string length unexpectedly, the token boundaries may have skewed the scoring, or the cause may be something else. We didn't investigate, because the correct fix was to remove the need for the fallback.
+A trie keyed by whole tokens has no edge for the partial token `Yor`. The trie steps through `New`, looks for an edge labeled `Yor`, finds none, and fails. A trie cannot match a fragment, so that failure is expected. The problem was the fallback, a fuzzy forward geocode over the gazetteer that returned the nearest fuzzy match. For `New Yor`, that was Denver. We do not know why it chose Denver. The fuzzy distance metric may have weighted string length unexpectedly, the token boundaries may have skewed the scoring, or the cause may be something else. We didn't investigate, because the correct fix was to remove the need for the fallback.
 
 ## Whole tokens: four New Londons and no New York
 
 We then gave it whole tokens and got `New` → New London, four times.
 
-Two problems combined. The first was missing deduplication. New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown showed four rows of the same name before anything else. The second problem was more serious. The `New` node has 311 children. The walk collects completions breadth-first under a budget, and the dense New London branch filled the budget before the search reached `New York`. The trie contained New York, but the walk never reached it. The most prominent place a person was likely to mean was crowded out by smaller places that sorted first.
+Two problems combined. The first was missing deduplication. New London the city, New London the county, and a couple of smaller New Londons each took a slot, so the dropdown showed four rows of the same name before anything else. The second problem was more serious. The `New` node has 311 children. The breadth-first search collects completions up to a fixed budget. The dense New London branch exhausted it before the search reached `New York`. The trie contained New York, but the walk never reached it. The most prominent place a person was likely to mean was crowded out by smaller places that sorted first.
 
 ## The fix
 

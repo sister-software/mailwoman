@@ -56,7 +56,7 @@ Run the geocoder over the file. `--stdin` reads one address per line and loads t
 npx mailwoman geocode --stdin < addresses.txt > results.jsonl
 ```
 
-The command exits 0, and `results.jsonl` has six lines, one for each input line, in the same order.
+The command exits 0 and writes six lines to `results.jsonl`, one for each input line in the same order.
 
 ## 3. Read one result
 
@@ -204,7 +204,7 @@ The third line of `results.jsonl` shows how the geocoder chose that Springfield.
 }
 ```
 
-The geocoder weighed two Illinois localities called Springfield and the `localadmin` Springfield Township, and selected the highest-scoring locality, Who's On First place `wof:85940429`. `hierarchy` lists that locality and the Illinois region it sits in. When two candidates score close together, the input is ambiguous, and your application can ask for more detail instead of accepting the first result.
+The geocoder weighed two Illinois localities called Springfield and the `localadmin` Springfield Township. It selected the highest-scoring locality, Who's On First place `wof:85940429`. `hierarchy` lists that locality and the Illinois region it sits in. When two candidates score close together, your application can ask for more detail to disambiguate the input.
 
 ## 6. Find the rows that didn't resolve
 
@@ -226,10 +226,10 @@ Each unresolved row records its reason in `intent_markers`. For `Main Street`, t
 }
 ```
 
-For `qwerty asdf`, the parser read the text as the locality `Qwerty Asdf`, and no place matches it. Its marker states that the two words can be read as two places or as one place with its region. Keep unresolved rows in your output with their `null` coordinate, and send them to review.
+The parser read `qwerty asdf` as the locality `Qwerty Asdf`. The geocoder found no matching place. The result's marker states that the two words can be read as two places or as one place with its region. Keep unresolved rows in your output with their `null` coordinate, and send them to review.
 
 ## What you have now
 
-`results.jsonl` holds one geocode result for each line of `addresses.txt`, produced by one `--stdin` run with one model and data load, and `summarize-results.ts` prints each result's tier, status, coordinate and source. Each result's `candidates` list shows the places the geocoder weighed, and each unresolved row keeps its `null` coordinate, `epistemic_status: "unresolved"` and an `intent_markers` entry that gives the reason.
+One `--stdin` run loads the model and data once and writes one result to `results.jsonl` for each line of `addresses.txt`. `summarize-results.ts` prints each result's tier, status, coordinate and source. Each result's `candidates` list shows the places the geocoder weighed. An unresolved row keeps its `null` coordinate and `epistemic_status: "unresolved"`, with an `intent_markers` entry that gives the reason.
 
 Read [how geocoding chooses a coordinate](../explanation/geocoding.mdx) for what each tier means, and the [CLI reference](../reference/cli.mdx) for every `geocode` flag.

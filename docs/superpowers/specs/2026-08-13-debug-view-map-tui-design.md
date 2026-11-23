@@ -50,8 +50,8 @@ ANSI-styled lines. The renderer never writes to the terminal. The consumer owns 
 | `npx map-tui` (phase 2)                   | full-screen `AsciifyTerminal`, damage-diffed        |
 
 The debug view is a pure Ink app (approach A of three considered). Ink repaints the whole map
-pane on each pan. A full repaint is acceptable at pane sizes of about 60×25 cells. In exchange, the screen
-has exactly one writer, and the static path is the same code rendered once. Two alternatives were
+pane on each pan. A full repaint is acceptable at pane sizes of about 60×25 cells. Ink is the only
+writer on the screen. The static path renders the same code once. Two alternatives were
 rejected. A hybrid where `AsciifyTerminal` owns the map region beside Ink would have two writers,
 every Ink reflow would overwrite the pane, and the code would need `invalidate()` coordination
 with the same fragility mapscii had. A raw-ANSI app without Ink would give up the layout, focus,
@@ -120,8 +120,8 @@ Components live in `mailwoman/debug-view/` (a sibling family to `cli-kit/`):
   exit, so scrollback is never modified, as #1577 requires.
 - **`InputBar`** — an editable line (`ink-text-input`, pending the plan-time dependency check)
   above a span ribbon. The ribbon echoes the input with a colored background segment per
-  component tag and a legend beneath. Enter re-geocodes against the warm session, and a busy state
-  shows while it runs (under a second once warm).
+  component tag and a legend beneath. Enter geocodes the input again using the warm session. The
+  input displays a busy state until the request completes. A warm request takes under a second.
 - **`OutputPane`** — tier, coordinate, `uncertainty_m`, then hierarchy rows (tag, value,
   placeID, coord) colorized. ↑/↓ scrolls when focused.
 - **`MapPane`** — `MapRenderer` frame centered on the result, with a marker at the coordinate,

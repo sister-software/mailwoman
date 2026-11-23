@@ -26,7 +26,7 @@ npm install @mailwoman/match
 
 ## Create separate tuning and evaluation pairs
 
-Save the following as `match-records.ts`. Each pair has a known address identity label. The `T` pairs select a threshold. The `E` pairs evaluate that threshold and have different street addresses from the `T` pairs. `block` proposes a pair only when both postcodes agree, and a pair that blocking leaves out receives no score.
+Save the following as `match-records.ts`. Each pair has a known address identity label. The `T` pairs select a threshold. The `E` pairs evaluate that threshold and have different street addresses from the `T` pairs. `block` proposes a pair only when both postcodes agree. The scorer reads only the proposed pairs.
 
 ```ts
 import { block, exactKey, scorePair, similarityComparison } from "@mailwoman/match"

@@ -10,8 +10,9 @@
  *   A single reload on that takeover makes the page run the code the new worker serves.
  *
  *   A worker that calls `skipWaiting` on install takes control as soon as it installs.
- *   A worker that waits for a `SKIP_WAITING` message takes control when a page asks, and
- *   {@linkcode registerServiceWorkerUpdates} gives the page the notice and the action for that.
+ *   A worker that waits for a `SKIP_WAITING` message takes control when the page
+ *   requests it. {@linkcode registerServiceWorkerUpdates} gives the page a notice
+ *   and an action that sends the request.
  */
 
 /**
@@ -38,7 +39,7 @@ export function reloadOnServiceWorkerTakeover(): void {
  *
  * - `controlled`: a service worker controls the page, so requests made from now on reach it.
  * - `unsupported`: the browser has no service workers, as in a private window of some browsers.
- * - `timed-out`: no worker took control within the wait, and requests go to the network directly.
+ * - `timed-out`: requests go directly to the network because no worker took control within the wait.
  */
 export type ServiceWorkerControl = "controlled" | "unsupported" | "timed-out"
 
@@ -118,8 +119,8 @@ const STALE_MODULE_RELOAD_KEY = "mailwoman:stale-module-reload"
 /**
  * The shortest interval between two reloads after a module failed to load.
  *
- * A module that fails again right after a reload is missing from the deploy
- * rather than stale, and another reload would repeat without end.
+ * Treat a module that still fails to load right after a reload as missing from the deployment.
+ * Stop reloading at that point to avoid a loop.
  */
 const STALE_MODULE_RELOAD_INTERVAL_MS = 30_000
 

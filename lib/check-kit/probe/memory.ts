@@ -4,8 +4,9 @@
 /**
  * Reads the resident memory of a process and its descendants from `/proc`.
  *
- * `VmHWM` is the peak resident set size the kernel recorded for the process
- * since it started, and `VmRSS` the current one, both in kibibytes.
+ * The kernel records the process's peak resident set size in `VmHWM` and its current size in `VmRSS`.
+ * Both values are in kibibytes.
+ *
  * The descendants are read from `/proc/<pid>/task/<pid>/children`.
  *
  * That file lists the children the process's main thread started.

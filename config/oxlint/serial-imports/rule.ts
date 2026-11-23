@@ -125,8 +125,10 @@ export function keyFor(specifier: string, taken: Set<string>): string {
 }
 
 /**
- * The specifier this file imports `allKeyed` by: core's own `#async/promises` alias
- * inside `packages/core`, and the public subpath everywhere else.
+ * Returns the `allKeyed` import specifier.
+ *
+ * Files in `packages/core` use the local `#async/promises` alias.
+ * Other files use the public subpath.
  */
 function allKeyedSpecifier(filename: string): string {
 	return /(?:^|\/)packages\/core\//u.test(filename) ? "#async/promises" : "@mailwoman/core/async/promises"

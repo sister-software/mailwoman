@@ -107,7 +107,9 @@ export function readContextSource(context: RepoContext, path: string): Promise<s
 /**
  * The text of each file in `paths`, in the order given, with up to the filesystem fan-out's reads in flight.
  *
- * The reads complete in any order, and the texts are then taken in the order given.
+ * The reads can finish in any order.
+ * The result follows the order of the input paths.
+ *
  * The error thrown is therefore the one for the first unreadable path in `paths`,
  * as a loop reading one file at a time would throw.
  */

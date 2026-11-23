@@ -30,11 +30,11 @@ C-train was the first experiment to use all of these together.
 
 ## The recipe we tried first
 
-Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were copied from the C-s scaffold. They came from a host-side YAML-drafting decision, and the operator hadn't confirmed them.
+Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were copied from the C-s scaffold. The host copied those settings into the YAML without operator confirmation.
 
 The 50-step constant-LR smoke passed. val_macro_f1 climbed from 0.121 to 0.187 across 50 steps, and the recipe looked stable.
 
-We promoted it to a production-length run. Its loss started climbing at step 700, and we killed it at step 1000.
+We promoted it to a production-length run. We stopped the run at step 1000 after its loss began climbing at step 700.
 
 ## Loss logs from the four runs
 
@@ -86,7 +86,7 @@ Two architectural changes from the proven-stable v0.4.0 baseline remain:
 
 1. **Phrase-prior input features** (PR #128). The classifier's input embedding takes 10 extra per-token features that encode the phrase grouper's proposed spans: `is_phrase_start` / `is_phrase_mid` / `is_phrase_end` plus a one-hot for the proposed `PhraseKind`. They add a new projection layer and a new gradient pathway.
 
-2. **A1 tokenizer**. Its new 48K vocab (up from v0.1.0's 16K) was trained on corpus-v0.4.0, including the transliteration adapter. The embedding table is sized to that vocab, and the model has never trained against it before.
+2. **A1 tokenizer**. Its new 48K vocab (up from v0.1.0's 16K) was trained on corpus-v0.4.0, including the transliteration adapter. The new vocabulary requires an embedding table the model has never trained against.
 
 Both are real architectural changes from v0.4.0. Either could plausibly produce a confident but wrong degenerate minimum that the loss settles into and then leaves. The curves by themselves cannot tell them apart, because the shape is the same either way.
 
@@ -101,7 +101,7 @@ We found a real bug in our verdict-smoke process along the way. The original 50-
 Two things had to change for the smoke to predict the production-length run:
 
 - **Smoke length matters.** 50 steps capture only the warmup descent. The sustained-peak-LR regime where the recipe destabilizes starts at step 500 in our schedule. Smokes need to spend several hundred steps near peak LR, and we set 1500 steps as the minimum.
-- **Effective batch must match the production-length run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8), and the production-length run used eff_batch=128. The smoke was stable, and the production-length run diverged. **The recipe's stability depends on batch geometry.** A smoke that doesn't reproduce the full-run gradient noise cannot detect this class of failure.
+- **Effective batch must match the production-length run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8), and the production-length run used eff_batch=128. Training stayed stable in the smoke. The production-length run diverged. **The recipe's stability depends on batch geometry.** A smoke that doesn't reproduce the full-run gradient noise cannot detect this class of failure.
 
 The constant-LR mode that landed in Thread F is still correct. It is what made the v0.5.0 destabilization observable at all instead of hidden under cosine decay. The smoke configuration also needs to mirror the production-length run's _throughput_ characteristics, in addition to its LR schedule.
 
@@ -120,14 +120,14 @@ Most of the v0.5.0 fresh-slate work survives this episode intact:
 
 We spent roughly four hours of GPU time on four diverging training runs, learned what the destabilizer isn't, and stopped before spending a fifth run on it. v0.5.0's classifier weights aren't shipping today.
 
-We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smokes), and a concrete recommendation for v0.5.0.1's first step. The v0.4.0 model continues to ship in production, and no downstream work is blocked.
+We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smokes), and a concrete recommendation for v0.5.0.1's first step. Downstream work continues with the v0.4.0 model in production.
 
 ## Process changes for the next cycle
 
 1. **Smoke geometry must match the full-run geometry.** Constant-LR isn't enough if eff_batch differs. Either match the full-run batch shape or run two smokes: one at the smaller geometry for fast iteration and one at the full geometry as the actual check.
 2. **The "destabilizes a few hundred steps after warmup ends" pattern isn't unique to v0.4.0.** It appears in v0.5.0 too with a different recipe. The cause is likely a deeper issue with the dual-loss landscape under sustained peak LR than either retrospective has identified.
 3. **Plan for divergence retries in the time budget.** A single full training run is rarely the experiment that ships. v0.4.0 needed ten runs, and v0.5.0 has needed four so far with at least two more bisects ahead. A realistic v0.X.0 release cadence is probably 8-12 training runs per cycle rather than one.
-4. **Distinguish operator-confirmed recipe knobs from host-claude defaults early.** §1+§3 entered the v0.5.0 recipe because they were in the C-s scaffold YAML. That was a host-claude inheritance decision, and the operator never confirmed it. It cost us v3 in the bisect sequence.
+4. **Distinguish operator-confirmed recipe knobs from host-claude defaults early.** §1+§3 entered the v0.5.0 recipe because they were in the C-s scaffold YAML. The host inherited the settings without operator confirmation. It cost us v3 in the bisect sequence.
 
 ## Where to look
 

@@ -42,11 +42,11 @@ intra-token punctuation (dots, hyphens, or slashes) separates them, the bridge m
 and absorbs the punctuation the corpus could never label. The model and weights stayed the
 same, with no GPU time spent. `po_box` went from 60.4 to 87.
 
-The re-check then failed on French postcodes, and this failure taught us more. The bridge
+The next check exposed a regression in French postcode decoding. The bridge
 had also been merging across commas. For `Sainte-Livrade-sur-Lot 47110, 9016 Route de Lablasie`,
 the model sometimes labeled the house number as a second postcode, and the comma was the
 only thing keeping the two spans separate. The bridge merged the mistake into
-`47110, 9016`. A period sits _inside_ a surface form, and a comma separates two of them.
+`47110, 9016`. In these examples, a period sits _inside_ a surface form while a comma separates two forms.
 Once the bridge distinguished the two, French postcodes recovered and `po_box` rose another
 two points.
 

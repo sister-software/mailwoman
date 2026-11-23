@@ -13,8 +13,8 @@ dependent-locality work.
 
 WOF placetypes (~33: `borough`, `microhood`, `dependency`, `concourse`, …) describe what a place
 **is**. `ComponentTag` (see [SCHEMA](./SCHEMA.mdx)) describes the role a span plays in an
-address's **grammar**. A **projection** maps several placetypes onto each tag, and the
-decoder can use the projection but not the placetype itself. SCHEMA.mdx already gives the
+address's **grammar**. A **projection** maps several placetypes onto each tag. The decoder can use
+that mapping but cannot use a placetype directly. SCHEMA.mdx already gives the
 canonical example: `borough` isn't a tag, and `dependent_locality` is the umbrella term that
 borough projects onto.
 
@@ -72,13 +72,13 @@ The offline probe measured the following, with these limits:
   parent with the true positives. The census therefore has dependent-locality mass on 100% of them.
   A census bias with no other evidence would raise the venue span exactly as much as the real dependent locality.
 
-The census therefore ships **without a `delta`**. The header field exists and is optional, and it
-stays unset until a calibration step combines the census with span-level evidence and measures a
+The census therefore leaves the optional **`delta`** header field unset until a calibration step
+combines the census with span-level evidence and measures a
 magnitude. The share within a node turned out to hold no information, because WOF rarely parents a
 locality under a locality, so covered nodes read ~100% dependent-locality everywhere. The useful
 statistics are presence and magnitude across the parent population.
 
-The census is loaded and probed at runtime, and it applies no bias. `resolvePlacetypeCensusPath`
+The runtime loads and probes the census without applying a bias. `resolvePlacetypeCensusPath`
 (`packages/neural/lib/weights.ts`) finds `placetype-census-<cc>.bin` at the build-local data root.
 The file is deliberately left out of the weights tarballs, where it would add 137–165 KB per locale
 for an artifact that no decode path uses.

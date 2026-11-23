@@ -7,8 +7,8 @@
  * A subpath key is an interface and stays exactly as written, while the target is a path that must be rewritten so a
  * file can move without a consumer noticing.
  *
- * One source file maps to up to three targets because a workspace narrows `rootDir` to `lib/` and emits to
- * `out/`, and every one has to move together. A root beside `lib/` emits to `out/<root>/`.
+ * With `rootDir` set to `lib/`, one source file can map to up to three targets under `out/`.
+ * Move those targets together. A root beside `lib/` emits to `out/<root>/`.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

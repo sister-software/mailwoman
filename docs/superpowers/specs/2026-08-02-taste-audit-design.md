@@ -112,5 +112,5 @@ Each cluster gets two independent scores, reported separately rather than combin
 - One section per cluster with the duplicated logic, every `file:line`, the proposed owning module,
   both costs, and whether the fix is mechanical.
 - A **rejected-candidates appendix** that lists every candidate grep found and reading ruled out, with
-  the reason. `match/distance.ts` is the first entry. The appendix matters most: without it, the next
-  agent proposes the same false findings again, and this audit has to be re-run from scratch.
+  the reason. `match/distance.ts` is the first entry. A later reviewer can use these reasons to avoid
+  repeating the audit or proposing the same false findings.

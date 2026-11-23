@@ -24,7 +24,7 @@ role: evidence
 4. **Numbers.** A table. Deltas state their units.
 5. **Losses.** What got worse. This section isn't optional and doesn't go last by accident.
 6. **Caveats.** Mechanism first. Circularity caveats are mandatory.
-7. **Reproduce.** The command, and a link to the run.
+7. **Reproduce.** Give the command and link to the run.
 
 ## Start here
 

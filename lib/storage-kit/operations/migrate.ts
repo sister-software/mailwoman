@@ -5,8 +5,9 @@
  *   `storage.migrate` — move one data-root directory to another volume
  *   and leave a symbolic link at its path.
  *
- *   Every step checks the previous one before the next starts, and the original is deleted last,
- *   after a checksum comparison of every file and a read through the new link.
+ *   Each step checks the previous step's result before proceeding.
+ *   The operation deletes the original only after comparing every file's checksum
+ *   and reading through the new link.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -47,8 +48,9 @@ const migrateOutput = z.object({
 /**
  * The mount point that holds `path`, as the kernel reports it.
  *
- * A systemd automount stacks its `autofs` mount under the filesystem it mounts, and `findmnt`
- * prints one line per stacked mount, so the last line holds the mount the path resolves through.
+ * A systemd automount puts its `autofs` mount below the filesystem it mounts.
+ * `findmnt` prints one line per stacked mount.
+ * Its last line gives the mount that resolves the path.
  */
 async function mountTarget(path: string): Promise<string | null> {
 	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "TARGET", "--target", path])

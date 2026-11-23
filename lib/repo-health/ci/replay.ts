@@ -303,7 +303,8 @@ export interface ReplayComparison {
 	/**
 	 * Failed runs only one replay could check, as when `gh` answered an HTTP error for the other.
 	 *
-	 * The failure check leaves them out, and the list states that it did.
+	 * The failure comparison excludes these runs.
+	 * This list records which rule could check each run.
 	 */
 	unpairedRuns: Array<{ runID: number; checkedIn: "before" | "after" }>
 }

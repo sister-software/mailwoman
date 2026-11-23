@@ -37,7 +37,7 @@ full geocode:
 |          8 |        274.6 |   1.00x |
 |         16 |        274.5 |   1.00x |
 
-Two things block the thread, and either one by itself is enough to prevent overlap:
+Either of these operations blocks the thread and prevents overlap:
 
 - **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It doesn't hand work to the
   libuv pool. `Promise.all` over N inferences runs them one after another, for any N.
@@ -138,7 +138,7 @@ the likely shape of the curve, but it isn't a figure to quote.
 
 Avoid two mistakes, both of which produced a wrong answer during the original sweep:
 
-- **Warm up, and repeat.** A single cold run showed concurrency at 1.19x on the geocode path and
+- **Repeat the measurement after warmup.** A single cold run showed concurrency at 1.19x on the geocode path and
   nearly led to keeping the concurrency setting. Repeated runs showed no trend, and `c=1` beat `c=8`
   half the time. The spread across identical configs is ~13%, wider than most effects under
   investigation.

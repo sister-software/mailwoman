@@ -17,7 +17,7 @@ That left us with three things to find out. When a parser "collapses" on a test,
 
 ## The collapse that was a rendering bug
 
-Most of our German "collapse" was a test-rendering problem. German international-order addresses parsed around 45% while native-order ones scored in the eighties, and that gap measured our test harness as much as our model.
+Most of our German "collapse" was a test-rendering problem. International-order German addresses scored around 45%, compared with a score in the eighties for native-order German addresses. The harness's choice of address order contributed to the gap.
 
 Our German evaluation set is rendered from OpenAddresses in the layout our US-trained tooling defaults to: `27 Straußstraße, Berlin, Berlin 12623`. That layout puts the house number first, the postcode after the city, and the region at the end. German addresses are written `Straußstraße 27, 12623 Berlin`, with the street before the number and the postcode _before_ the city. The model had trained on the German order, we graded it on the American order, and we read the low score as a model failure.
 
@@ -33,7 +33,7 @@ The model with the anchor _on_ didn't improve. International stayed around 44%, 
 
 For the second attempt, we noticed that the international synthesizer dropped the region from the end of the address while the eval included it. The model was segmenting a `City, Region Postcode` ending it had never trained on. We rendered the region back into the ending and retrained. International region accuracy rose from zero to about forty percent, and locality accuracy didn't change. The address ending was not the limit either.
 
-The third attempt was architectural, and we expected it to work. The anchor sits on the postcode, and in international order the postcode comes after the city. We added a second injection of the anchor at the first token, where every locality can attend back to it regardless of the postcode's position. The change adds no parameters. When the anchor has zero confidence, the injection leaves the input exactly unchanged. We retrained.
+For the third attempt, we changed where the model receives the anchor. In international order, the postcode and its anchor come after the city. We added a second injection of the anchor at the first token, where every locality can attend back to it regardless of the postcode's position. The change adds no parameters. When the anchor has zero confidence, the injection leaves the input exactly unchanged. We retrained.
 
 It had no effect. International held at 43.7%, still below the anchor-off number.
 
@@ -47,13 +47,13 @@ Three retrains left the international number unchanged.
 
 ## What the anchor learned
 
-We looked at what the anchor does inside the model. We'd been describing the anchor as if it encoded a meaning ("this postcode could be German"), and a meaning has no direction. What we add at that position is a vector, and during training the model learns what to _do_ with it. What it learned has a direction.
+We looked at what the anchor does inside the model. We'd been describing the anchor as if it encoded a meaning ("this postcode could be German"), and a meaning has no direction. The anchor adds a vector at the postcode position. During training, the model learned to use that vector to look in one direction.
 
 Consider where the city sits relative to the postcode in each training distribution. In native German, the postcode comes _before_ the city: `12623 Berlin`. Every time the anchor fired during training, the locality it was supposed to help was to its right. The model learned an anchor that looks rightward. On native addresses it looks right and finds Berlin. That produces the +35 points. In an international-order address, the postcode comes _after_ the city. The anchor still looks right, finds the region or the end of the string, and misses the city behind it. The added signal slightly disrupts the city prediction.
 
 The US locale confirms this. American addresses put the postcode after the city (`Seattle WA 98101`), and the US anchor never hurt accuracy. US held at 96 to 97%. US training data is consistently postcode-after-city, so the US anchor learned to look _left_, toward the city, and the layout never varies. The architecture and injection point are the same, but the learned direction is opposite, because the two countries write addresses in opposite orders and each anchor learned the order it was trained on.
 
-This asymmetry won't go away by tuning a single shared anchor. A single added vector can encode "look toward the city." It cannot encode "look toward the city, sometimes to the left and sometimes to the right." When both orders are mixed into one extract, the vector settles on an average that serves the dominant order. That average matches the flat international number across retrains. To rule out a name-matching artifact, we ran a containment metric that checks whether the resolved point lands inside the correct city's polygon. The gap remained: 96% on native German and 57% on the international order. The misses are geographic errors, and the scoring method didn't cause them.
+This asymmetry won't go away by tuning a single shared anchor. A single added vector can encode "look toward the city." It cannot encode "look toward the city, sometimes to the left and sometimes to the right." When both orders are mixed into one extract, the vector settles on an average that serves the dominant order. That average matches the flat international number across retrains. To rule out a name-matching artifact, we ran a containment metric that checks whether the resolved point lands inside the correct city's polygon. The gap remained: 96% on native German and 57% on the international order. The containment check showed that the misses were geographic errors.
 
 ## The measured asymmetry is acceptable
 

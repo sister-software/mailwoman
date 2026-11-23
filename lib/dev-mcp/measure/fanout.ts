@@ -275,8 +275,9 @@ function coordinateSpreadKm(arms: readonly FanoutArmReading[]): number | null {
  * Reads how one row's readings agree across the arms.
  *
  * Only graded marks determine the kind.
- * An arm that errored or an ungraded row contributes no mark to the kind, and an errored
- * arm makes `stable_decode` false because its decode is unknown rather than equal.
+ * Skip arms with errors and rows without grades when determining the kind.
+ *
+ * An arm with an error makes `stable_decode` false because its decode is unknown.
  */
 export function readStability(arms: readonly FanoutArmReading[]): StabilityReading {
 	const answered = arms.filter((arm) => arm.error === null)
@@ -373,9 +374,10 @@ interface PreparedArm extends Disposable {
 /**
  * Builds one warm-session arm per spec.
  *
- * Each arm acquires its engine when its pass begins, and the first engine's tree
- * fingerprint is the one every later engine must match, so arms built against
- * different source trees are refused as they open.
+ * Each arm acquires its engine when its pass begins.
+ * Later engines must match the first engine's tree fingerprint.
+ *
+ * This rejects an arm built against a different source tree as soon as it opens.
  * The warnings list fills in as arms open: two arms that resolve to one engine
  * are one reading counted twice.
  */

@@ -423,8 +423,9 @@ async function materializePostcodePrefix(context: MaterializationContext, worksp
 /**
  * Remove the store's pair index when its header records a borough database other than `boroughDB`.
  *
- * The store key hashes the generating code and the committed inputs, and leaves the admin database out.
- * An admin swap therefore keeps the key, and the entry built from the previous database would serve.
+ * The store key hashes only the generating code and the committed inputs.
+ * An admin database replacement leaves the key unchanged, so a lookup would still
+ * return the pair index built from the previous database.
  *
  * The PIX1 header records the md5 of every source the build read, including the admin database.
  */

@@ -15,7 +15,7 @@ This post covers two countries where the gazetteer data is sparse, what a geocod
 
 Last week we extracted Japan's address hierarchy from Who's On First and learned that Japanese addresses run from largest to smallest unit and have no street names. This post covers resolving them.
 
-The European method is point-in-polygon, the simplest form of geocoding. A postcode comes with a centroid. Who's On First provides administrative polygons. You find the locality polygon that contains the centroid, and that locality is the city. The method is fast, and it worked for four European locales.
+The European method is point-in-polygon, the simplest form of geocoding. A postcode comes with a centroid. Who's On First provides administrative polygons. You find the locality polygon that contains the centroid, and that locality is the city. The method resolved localities quickly in the four European locales we tested.
 
 It gets Japan to 25%. It took us a long time to see why, because the failure looked like a tuning problem. We went through WOF's Japanese geometry one placetype at a time, and the same pattern held for each. The prefectures have polygons. The wards and sub-prefectures have polygons. The municipality (the 市区町村 level a postcode resolves to) is almost entirely points: a latitude and a longitude with no area.
 
@@ -41,13 +41,13 @@ Korea's data is the reverse of Japan's, so its build works in the reverse order.
 
 For Japan we had to fetch the names from a postal authority. For Korea, the GeoNames postal file already contains the postcode, the place name, the province, and a latitude and longitude in one place, without an encoding problem. The difficulty is that the names are in Hangul (추자면), while WOF's romanized `spr.name` for Korea uses a transliteration that may not match. A Hangul name cannot match its romanized form. That mismatch is why Korea was on our "blocked" list for a while.
 
-That assessment stopped one step early. WOF keeps more than the romanized name. Its `names` table also contains Hangul: 13,120 native entries plus several thousand more filed under "undetermined language" that are also Hangul. A Hangul-to-Hangul join is therefore possible. Every Korean postcode also arrives with a coordinate, so the build can start from the coordinate and use the Hangul name as confirmation. Korea's build is **point-primary**. It takes the postcode's coordinate, finds the nearest WOF locality, and confirms it by name where a name exists. The first step differs from Japan's, but the output is the same table, and the resolver needed no new code. That was the property we were testing.
+That assessment stopped one step early. WOF keeps more than the romanized name. Its `names` table also contains Hangul: 13,120 native entries plus several thousand more filed under "undetermined language" that are also Hangul. A Hangul-to-Hangul join is therefore possible. Every Korean postcode also arrives with a coordinate, so the build can start from the coordinate and use the Hangul name as confirmation. Korea's build is **point-primary**. It takes the postcode's coordinate, finds the nearest WOF locality, and confirms it by name where a name exists. Korea and Japan build the same table from different inputs. The resolver reads both tables with the same code. That was the property we were testing.
 
 The coordinate and province results are strong. WOF's Korean locality layer is dense, with 21,139 localities, roughly one per village. The nearest locality to a postcode is a median of **0.96 km away**. The province is exact: GeoNames' province name matches WOF's Korean region name 17 times out of 17. For 100% of Korean postcodes, we place the address in the right province and within about a kilometer of the right location.
 
 ## Where the map runs out
 
-The administrative name is much weaker. The name confirms on **26% of Korean postcodes**, compared with 94% for Japan. The resolver strategy was the same, and the difference comes from what the gazetteer contains.
+The administrative name is much weaker. The name confirms on **26% of Korean postcodes**, compared with 94% for Japan. Both countries used the same resolver strategy. The gazetteer contents account for the difference.
 
 Two problems cause the misses. The first is a granularity mismatch. GeoNames labels a postcode with a place at the eup/myeon/dong level, such as 추자면, Chuja-_myeon_. WOF's locality layer is one level finer, at the hamlet. The nearest WOF point to that postcode is a village called "Mung" _inside_ Chuja-myeon. The coordinate is correct, but the name belongs to a smaller place. Both sources are accurate about different levels of the hierarchy, and the levels do not align.
 
@@ -65,4 +65,4 @@ A point-primary build and a name-primary build, for two countries whose data has
 
 Korea ships with its actual coverage: reliable province and coordinate, a documented 26% name tier, marked experimental and kept out of the default bundle until the name coverage improves. The source for better coverage is known. Korea's road-name database, Juso, has the gu and dong names natively. It requires a government API key, so obtaining it is a deliberate acquisition, and it is next on the list. Taiwan is further behind. GeoNames has no postal file for Taiwan (the URL returns a 404), so there's no coordinate to start from until we find another source.
 
-The lesson from both countries is that a geocoder is limited by its reference data, and missing entries are one source of that limit. Japan's data was missing shapes, and we found another way to the answer. Korea's data is missing names in the cities, and no alternative route exists yet.
+The lesson from both countries is that a geocoder is limited by its reference data, and missing entries are one source of that limit. A postal-authority lookup supplied Japan's municipalities where the gazetteer lacked polygons. Korea still needs a source for the missing city names.

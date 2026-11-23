@@ -186,7 +186,10 @@ function assertOneStatement(sql: string, statement: StatementSync): void {
 }
 
 /**
- * A value in a form JSON can hold: a blob becomes its length, and an integer past 2^53 its decimal text.
+ * Converts a value to a form JSON can hold.
+ *
+ * A blob becomes its length.
+ * An integer past 2^53 becomes its decimal text.
  */
 function jsonValue(value: unknown): unknown {
 	if (value instanceof Uint8Array) return { blob_bytes: value.byteLength }

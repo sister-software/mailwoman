@@ -10,9 +10,9 @@
  *   the merge base with `origin/main` and in the working tree's own changes, so the default run covers
  *   that set. `--all` covers the whole tree.
  *
- *   oxlint runs twice because a first fix can uncover a second one in the same file. The second pass reads
- *   only the files whose modification time the first pass moved, and is skipped when it moved none. Neither
- *   oxlint 1.81 nor oxfmt 0.66 keeps a cache between runs, so each pass otherwise costs a full lint.
+ *   A first oxlint fix can uncover a second one in the same file. If the first pass changes any modification
+ *   times, the second pass reads only those files. Neither oxlint 1.81 nor oxfmt 0.66 keeps a cache between runs.
+ *   Each pass checks every file it receives.
  */
 
 /// <reference types="node" />
@@ -47,7 +47,8 @@ const YARN = "yarn"
 /**
  * oxfmt's message when every path it was handed is excluded by its ignore rules.
  *
- * The exit code is non-zero in that case, and the run is complete rather than failed.
+ * oxfmt exits with a nonzero status in that case.
+ * The fixer treats the run as complete when oxfmt prints this message.
  */
 const OXFMT_ALL_EXCLUDED = "may have been excluded by ignore rules"
 
@@ -135,7 +136,7 @@ async function modificationTimes(paths: readonly string[]): Promise<Map<string, 
 }
 
 /**
- * Run a tool over the given paths with inherited output, and answer its exit status.
+ * Run the tool on the given paths with inherited output and return its exit status.
  */
 function runFixer(tool: string, args: readonly string[], paths: readonly string[]): number {
 	const result = spawnProcessSync(tool, [...args, ...paths], { cwd: repoRootPathBuilder, stdio: "inherit" })

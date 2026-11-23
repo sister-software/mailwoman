@@ -6,7 +6,7 @@ tags: [infrastructure, geocoding, motivation]
 date: 2026-06-20
 ---
 
-Open the [demo](/demo), open your browser's network tab, and type an address. It resolves to a rooftop coordinate: `1600 Pennsylvania Ave` lands on the actual building, within about ten meters. The network tab shows no request carrying your address. The parser ran in the page. The gazetteer it resolved against is a file on a CDN, and the page read it a few kilobytes at a time. The query stayed on your machine.
+Open the [demo](/demo), open your browser's network tab, and type an address. It resolves to a rooftop coordinate: `1600 Pennsylvania Ave` lands on the actual building, within about ten meters. The network tab shows no request carrying your address. The parser ran in the page. The page read the gazetteer from a CDN a few kilobytes at a time. The query stayed on your machine.
 
 That's unusual, because each of the three kinds of product on the market today requires you to give something up.
 
@@ -24,7 +24,7 @@ The choices are to rent a service and send it the query, host a service and run 
 
 ## The client-side pipeline
 
-The whole pipeline, parsing and then resolving to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file of around 530 MB covering every country we resolve against, and the page never downloads the whole file. It reads the file over HTTP range requests, pulling roughly a dozen small ranges to answer a query. The resolver needs no Elasticsearch, PostGIS, or native module. It uses plain `node:sqlite`, and the same code runs in Node and in a browser tab.
+The whole pipeline, parsing and then resolving to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file of around 530 MB covering every country we resolve against, and the page never downloads the whole file. It reads the file over HTTP range requests, pulling roughly a dozen small ranges to answer a query. The resolver needs no Elasticsearch, PostGIS, or native module. The resolver code runs in both a browser tab and Node, where it uses `node:sqlite`.
 
 The resolver used to need 243 round trips. An index change reduced that count to twelve while the fetching stayed the same. [A separate post](/research/243-round-trips-to-find-a-city) covers that.
 
@@ -46,7 +46,7 @@ Google's geocoder costs five dollars per thousand requests after the free tier. 
 
 Rooftop precision (the actual building rather than the neighborhood) currently works only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver returns an administrative or postcode centroid. That centroid gives the right town and ZIP but not the building. The large cloud vendors have much better global rooftop coverage. If you need a rooftop in Lagos today, use Google.
 
-Mapbox does ship on-device geocoding, but only in their native mobile SDK, and it performs reverse geocoding (coordinate to address) rather than forward geocoding. The precise claim is that Mailwoman is the only geocoder that runs the full forward pipeline in a browser without a server. That's a narrow claim, and no other product we know of meets it. There's not yet a batch endpoint or an SLA. Mailwoman is infrastructure you embed, and it isn't a hosted service with an on-call team.
+Mapbox does ship on-device geocoding, but only in their native mobile SDK, and it performs reverse geocoding (coordinate to address) rather than forward geocoding. The precise claim is that Mailwoman is the only geocoder that runs the full forward pipeline in a browser without a server. That's a narrow claim, and no other product we know of meets it. There's not yet a batch endpoint or an SLA. Mailwoman runs inside your application, under your operation.
 
 ```sh npm2yarn
 npm install mailwoman @mailwoman/neural

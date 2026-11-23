@@ -80,15 +80,14 @@ takes `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation`, 
 adds `terminal` and `gate` from OSM's `aeroway` key, because WOF has no placetype for
 either and they're the two commonest sub-venue designators in real airport addresses.
 
-The table suggests where that vocabulary could grow, and where it shouldn't:
+Use the table to assess additions to the vocabulary:
 
 - **Plausible additions from OSM Simple Indoor Tagging**: `level` (overlaps Pub 28's `FLOOR`) and
   `hall`. Both are written in real venue addresses.
 - **Do not add**: `corridor`, `room` (already Pub 28), `area`. `corridor` and `area` are
   mapping primitives that never appear on an envelope.
-- **No entry comes from the administrative rows.** Those are the pair-index and census program's territory,
-  and `admin_level` being country-relative is exactly why we key that work on WOF's hierarchy rather
-  than OSM's numbers.
+- **No entry comes from the administrative rows.** The pair index and census use WOF's hierarchy
+  because the meaning of OSM's `admin_level` numbers varies by country.
 
 ## Why we lean on WOF for hierarchy and OSM for interiors
 

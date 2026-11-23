@@ -48,7 +48,7 @@ Save the following complete file as `parse.ts` in the same directory:
 
 ```
 
-The address is lowercase, has no commas, and places the apartment before the street number. `createParser` loads the English model, and the parser keeps it loaded for every `parser.parse` call. `await using` releases the model when the script ends. `decodeAsOutline` prints the returned tree one node per line and indents each child under its parent.
+The address is lowercase, has no commas, and places the apartment before the street number. `createParser` loads the English model once for reuse across `parser.parse` calls. `await using` releases the model when the script ends. `decodeAsOutline` prints the returned tree one node per line and indents each child under its parent.
 
 ## 4. Run the script
 

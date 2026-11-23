@@ -39,7 +39,7 @@ The parse response schema contains `input`, `components`, `tree`, and `debug`. T
 
 The native `APIError` schema requires `error` as a string and `detail` as either a string or `null`. The OpenAPI document assigns 400 to invalid native inputs, 413 to a batch over its configured cap, 501 when the app has no parse method configured, and 503 to unavailable geocoding or resolution methods where the relevant route declares it. The schema lists no 500 response for the native operations in the table. Runtime failures may have additional status codes.
 
-One complete error pair was observed through `createMailwomanAPI({})` from published `@mailwoman/api@11.0.0`. The in-process app had no geocoding method, and no network server or geographic database was involved:
+One complete error pair was observed through `createMailwomanAPI({})` from published `@mailwoman/api@11.0.0`. The in-process app had no geocoding method. This check used neither a network server nor a geographic database.
 
 ```json
 {

@@ -11,9 +11,9 @@ tags: [resolver, geocoding]
 
 :::
 
-Who's On First is the best open gazetteer we have, and one of the strangest datasets you'll encounter as a developer. It has a consistent place hierarchy and stable IDs, and its layout makes it hard to use directly, so we built tooling inside Mailwoman to work with it.
+Who's On First is the best open gazetteer we have for a consistent place hierarchy and stable IDs. We built tooling inside Mailwoman to query the data without scanning the original directory of GeoJSON files.
 
-If you've ever tried to answer "what city is this address in?" programmatically with open data instead of a paid geocoding API, you've probably already run into WOF, and it probably raised some questions.
+If you've tried to answer "what city is this address in?" with open data, you may already have encountered Who's On First (WOF).
 
 {/* truncate */}
 
@@ -23,7 +23,7 @@ WOF is a gazetteer, a structured database of places. It stores _places_ such as 
 
 It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totaling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
-WOF gives you something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap doesn't give you this, and GeoNames gives you only part of it. WOF stores the whole chain, with an opinion on how the world's administrative boundaries nest.
+WOF gives you something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap lacks this hierarchy. GeoNames provides only part of it. WOF stores the whole chain, with an opinion on how the world's administrative boundaries nest.
 
 ## What makes it hard
 
@@ -66,14 +66,14 @@ A WOF GeoJSON feature's properties object looks like this:
 }
 ```
 
-1. **Namespaced keys everywhere.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema is a single flat object without nesting, and the key name encodes the meaning.
+1. **Namespaced keys everywhere.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema puts that distinction in the keys of a flat object.
 2. **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name. `name:fra_x_preferred` would be French. `name:zho_x_preferred` would be Chinese. The `_x_` separator splits language code from name kind (`preferred`, `variant`, `colloquial`, `abbr`, `short`).
 3. **Some places have dozens of name keys.** A major city like Paris has `name:` entries in 50+ languages. A rural US neighborhood might have only one.
-4. **The hierarchy is pre-computed.** Instead of walking `parent_id` up the tree at query time, you can read the full ancestry chain that WOF stores in each record. The stored chain saves the walk at query time and duplicates the `parent_id` links, and it can be stale when a parent is reclassified.
+4. **The hierarchy is pre-computed.** Instead of walking `parent_id` up the tree at query time, you can read the full ancestry chain that WOF stores in each record. The stored chain saves the walk at query time by duplicating the `parent_id` links. The stored chain can become stale when a parent changes classification.
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. They're neither sequential nor geographically meaningful, and their numeric order is arbitrary. That works for lookup, but ID proximity makes no statement about geographic proximity.
+WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. The IDs serve as lookup keys. Their order conveys neither sequence nor geography. That works for lookup, but ID proximity makes no statement about geographic proximity.
 
 ### Supersession chains
 
@@ -139,13 +139,13 @@ When the data arrives as a single bulk NDJSON dump rather than 120K files, the a
 
 `AsyncSpliterator.asMany(source, delimiter, concurrency)` was built for this case. Given a file handle and a desired concurrency, it seeks to N roughly-equal byte positions in the file, snaps each position to the nearest delimiter boundary (so no line gets split between workers), and returns N independent async iterators that each process their own byte range.
 
-We built it and marked it `@internal`. We haven't exercised it at scale because the per-file path was sufficient for the repos we use. It is the right primitive once the data arrives as one bulk NDJSON dump. The full Geocode Earth distribution (3+ GB of admin data across all countries) is SQLite, and `asMany` can't split a SQLite file on a delimiter.
+We built it and marked it `@internal`. We haven't exercised it at scale because the per-file path was sufficient for the repos we use. It is the right primitive once the data arrives as one bulk NDJSON dump. The full Geocode Earth distribution stores more than 3 GB of administrative data for all countries in SQLite. That format has no delimiter that `asMany` can use to split the file.
 
 ## What's next
 
 These are the next three tasks, in priority order:
 
-1. **Finish the SQLite migration.** The worker targets Redis, and it should target `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing rather than design.
+1. **Finish the SQLite migration.** Change the worker's target from Redis to `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing rather than design.
 2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs. Those DBs hold the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
 3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the fallback. Whether it's needed at all depends on whether step 1 is fast enough without it.
 

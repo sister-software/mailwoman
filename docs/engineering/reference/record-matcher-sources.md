@@ -10,9 +10,9 @@ tags:
 
 This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
 resolves, with their schemas, column mappings, and join keys. They're real public compliance and reporting
-datasets. They have no shared entity key across them, and each one repeats entities heavily. The matcher
-deduplicates and cross-links these records. Those links make cross-dataset analysis possible. Our scope is the
-resolution, and the data consumer interprets any correlations that appear.
+datasets. Each dataset repeats entities, and the datasets share no entity key. The matcher
+deduplicates records within datasets and links records across them. Consumers interpret any correlations they find
+through those links.
 
 The data lives in `$MAILWOMAN_DATA_ROOT/record-matcher/sources/`, which is persistent storage rather than `/tmp`.
 The NPPES registry is 4.8 GB / 9.6M rows, so every reader streams it (`streamRows`, #616) and never uses
@@ -85,8 +85,8 @@ Each row has the columns `Filing HCP` and `Participating HCP`. Split each row in
 `Medicare Provider Number` / `Medicaid Provider Number` are present and could later join to NPPES via CMS
 certification data.
 
-The file's `Geo Location` column holds `lat,lon`. The matcher mapping doesn't read it, and the config entry sets
-`hasCoordinate: false`. `packages/entity-resolution/tools/txhhsc-to-oarow.ts` reads the column to grade the geocoder
+The file's `Geo Location` column holds `lat,lon`. The matcher mapping leaves those coordinates unread and declares
+`hasCoordinate: false` in the config. `packages/entity-resolution/tools/txhhsc-to-oarow.ts` reads the column to grade the geocoder
 against the provided coordinates.
 
 ## Join structure

@@ -112,11 +112,14 @@ const STALE_DECLARATION_ERROR = /error TS(?:2305|2724): (?:Module )?'"(?:@mailwo
 /**
  * Why a failed compile runs once more, or `null` when it doesn't.
  *
- * TypeScript 7's `tsc -b` has failed a first build after a rebase that added exports to
- * `@mailwoman/core`, with every missing-export error naming a module whose declaration
- * the same build rewrote, and passed a second build with no source change.
- * The cause isn't established, so the retry is limited to a failure whose errors include a missing
- * export from a workspace module, and the result records the first run.
+ * TypeScript 7's `tsc -b` failed the first build after a rebase that added exports to `@mailwoman/core`.
+ * Every missing-export error referred to a module whose declaration the build itself rewrote.
+ *
+ * The second invocation succeeded with the same source.
+ * The cause is unknown.
+ *
+ * Retry only when the errors include a missing export from a workspace module.
+ * The result records the first run.
  */
 function compileRetryReason(result: CheckResult): string | null {
 	const lines = result.run?.parsed.errorLines ?? []

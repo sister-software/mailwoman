@@ -8,7 +8,7 @@ The goal is a natural, useful explanation. A comment can be conversational, but 
 
 Explain the mechanism, then give the reader a place to stop.
 
-Some earlier comments use a conversational voice to walk through a sequence. Others state a constraint, its cause, and its consequence. Mailwoman can use either approach. In both, the explanation should remain concrete, and each sentence should finish one useful thought before the next begins.
+Some earlier comments use a conversational voice to walk through a sequence. Others state a constraint, its cause, and its consequence. Mailwoman can use either approach. In both, use concrete terms and finish one useful thought before starting the next.
 
 ## GOOD
 

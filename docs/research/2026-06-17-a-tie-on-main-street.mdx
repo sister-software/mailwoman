@@ -8,7 +8,7 @@ date: 2026-06-17
 
 Mailwoman ships two address parsers in the same box.
 
-We call the first one **v0**. It is our TypeScript port of the [Pelias parser](https://github.com/pelias/parser), a rules engine: tokenize, classify each token against dictionaries and patterns, solve for the most plausible arrangement under a pile of hand-written constraints. It is fast and deterministic, it encodes years of accumulated postal knowledge, and it is the baseline we set out to beat.
+We call the first one **v0**. It is our TypeScript port of the [Pelias parser](https://github.com/pelias/parser), a rules engine: tokenize, classify each token against dictionaries and patterns, solve for the most plausible arrangement under a pile of hand-written constraints. That fast, deterministic baseline encodes years of postal knowledge. We set out to beat it.
 
 The second is the **neural** classifier, a sequence labeler trained on a BIO-tagged corpus, the one this blog has spent most of its life arguing with.
 
@@ -77,7 +77,7 @@ If the neural net wins on weird addresses and ties on clean ones, the obvious mo
 
 On our label-match arena, arbitration captured 122 parses that the neural net by itself "missed." Then we graded the **assembled coordinate output** instead of the labels: locality match fell from 83% to 57%, the median coordinate error grew from 3 km to **over a thousand**, and half the addresses lost their street-and-number entirely.
 
-The arena's "neural missed it" column conflates two very different things: addresses the neural net gets _wrong_, and addresses it gets _differently right_. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse, and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure. The regression vanished, and so did the result. The safe version is a net wash.
+The arena's "neural missed it" column counts both errors and valid parses that use different labels. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse, and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure. With the tree intact, coordinate accuracy returned to the neural-only baseline. Arbitration then offered no coordinate accuracy gain.
 
 For a model this strong on the addresses we serve, **blending it with the rules parser left coordinate accuracy where the neural model put it without the blend, once the blend kept the tree intact**. Where neural differs from v0 it is differently right rather than wrong, and a differently-right parse isn't something to overwrite. We grade the coordinate now, never the label, and we let the arbitration implementation sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
 

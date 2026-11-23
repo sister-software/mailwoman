@@ -6,7 +6,7 @@ tags: [geocoding, resolver, evals]
 date: 2026-06-20
 ---
 
-Overnight I tried to teach the geocoder Canada. I pulled 843,000 Canadian postcodes, computed a centroid for every one, spot-checked the result (`M5H 2N2`, downtown Toronto, 43.652, −79.382, dead on) and validated the database every way I could read it: every postcode present, every coordinate right, and no other data disturbed. Every check passed. This morning, before flipping it live, I asked the demo to find a Toronto address, and it dropped the pin in Ohio.
+Overnight I tried to teach the geocoder Canada. I pulled 843,000 Canadian postcodes, computed a centroid for every one, spot-checked the result (`M5H 2N2`, downtown Toronto, 43.652, −79.382, dead on) and validated the database every way I could read it: every postcode present, every coordinate right, and no other data disturbed. Every check passed. Before deploying the change, I tried a Toronto address in the demo. The pin landed in Ohio.
 
 How does a database that passes every check still land the answer about 370 kilometers wrong? What does it mean to "validate" a thing? And why is Toronto in Ohio?
 
@@ -24,18 +24,18 @@ Four cases passed, Chicago, a Berlin postcode and the White House among them. Th
 
 ## The admin layer has no Canadian places
 
-The gazetteer has two layers. There's the postcode layer I'd rebuilt, and underneath it the admin layer, the one that records a place's country and population. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Toronto, Montréal and Vancouver are all missing, because Canada isn't in it at all. We'd built the gazetteer out of the European set, the US, and the CJK countries, and no build step had ever folded Canada in.
+The gazetteer has two layers. There's the postcode layer I'd rebuilt, and underneath it the admin layer, the one that records a place's country and population. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Toronto, Montréal and Vancouver are all missing, because Canada isn't in it at all. The gazetteer build included Europe, the US, and the CJK countries. Canada was absent from its inputs.
 
 The parser reads "Toronto" off the address and hands it to the resolver. The only Toronto the resolver has is the one in Ohio, so that's the city it picks. Then the cleverest piece of the cascade, the locality-first rule, finishes the job. We added that rule to keep Berlin's `10115`, which is also a perfectly good New York ZIP, from dragging German addresses to Manhattan: resolve the city first, then let that city restrict the postcode to its own country. It's a good rule, and here it backfires. The city resolved to the United States, so the correct Canadian postcode is now "from the wrong country," and the rule discards it. None of my 843,000 coordinates gets used, because the city is resolved first and the city is in Ohio.
 
 ## I validated the layer I made rather than the one that ships
 
-I validated the postcodes, and they were correct. I never validated the thing the user receives: the coordinate, the pin, the assembled output of every layer working together. Each green check was accurate and beside the point, because none of them graded the coordinate the demo returns.
+All of the postcode checks passed. I never validated the thing the user receives: the coordinate, the pin, the assembled output of every layer working together. Each green check was accurate and beside the point, because none of them graded the coordinate the demo returns.
 
-This keeps happening to us, in different forms. A model's per-tag F1 climbs while the coordinate it produces goes nowhere. A reconcile pass improves a label and breaks the geocode that depended on it. The discipline that survives every version of it is the same: grade the assembled coordinate against the truth rather than the component you happened to touch. The e2e check is the one check in the stack that reads the pin the user sees, and it's the only one that caught this.
+This keeps happening to us, in different forms. A model's per-tag F1 climbs while the coordinate it produces goes nowhere. A reconcile pass improves a label and breaks the geocode that depended on it. The discipline that survives every version of it is the same: grade the assembled coordinate against the truth rather than the component you happened to touch. Only the end-to-end check reads the pin the user sees. It caught the Ohio result.
 
 ## What the night's work is still good for
 
 The night wasn't wasted. The 843,000 centroids are correct and sitting ready, and the tooling that made them is the same tooling that'll make the next country. But the premise was half a country short. A postcode resolves only once the country's admin layer, the cities and regions that anchor a name to a place, is in the gazetteer. Fold Canada's divisions into the gazetteer the way we folded Europe's, and the postcodes I built start resolving at no added cost. Shipped without that layer, they're never used.
 
-So we didn't promote it, and the map still doesn't have Canada. Build the test that grades the pin your user sees, and run it before you trust the green checkmarks upstream of it.
+We held back promotion. The map still has no Canadian coverage. Build the test that grades the pin your user sees, and run it before you trust the green checkmarks upstream of it.

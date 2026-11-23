@@ -6,11 +6,11 @@
  *
  *   Three suffixes state a role a reader relies on:
  *
- *   - `Client` is an HTTP client, and it extends `APIClient`.
- *   - `Provider` hands out one of several handles by key, and it implements an interface whose name ends in `Provider`.
- *   - `Resolver` turns a parsed address into gazetteer entities, and it implements `Resolver`.
+ *   - A `Client` is an HTTP client that extends `APIClient`.
+ *   - A `Provider` hands out one of several handles by key. It implements an interface with the `Provider` suffix.
+ *   - A `Resolver` maps a parsed address to gazetteer entities and implements `Resolver`.
  *
- *   A class that reads one database or binary artifact by key is a lookup, and takes the `Lookup` suffix.
+ *   Use the `Lookup` suffix for a class that reads one database or binary artifact by key.
  *
  *   The test is syntactic: it reads the heritage clauses and resolves no types.
  *   A class whose role the clauses can't state keeps its name behind a reason, on the line above the declaration:

@@ -37,7 +37,7 @@ We ran a single probe on a canonical intersection. For every token in `Broadway 
 
 An uncertain model still puts _some_ probability on the right tag. A maximum of ~0.0001 means the model has _no representation of intersections_. The labels existed in its output vocabulary, but it had never learned to use them.
 
-We checked the corpus pipeline. It has synthesizers for streets, venues without a street, PO boxes, and house+venue combinations, and **no synthesizer that generates intersections**. The real-world adapters don't emit them in that form either.
+We checked the corpus pipeline. It synthesizes streets, venues without a street, PO boxes, and house+venue combinations. The corpus has no intersection synthesizer. The real-world adapters don't emit them in that form either.
 
 ## Alphanumeric postcodes and the regex repair
 
@@ -52,7 +52,7 @@ This fix needed no training. A **deterministic regex repair** runs _after_ the m
 - **Pick a metric that the change you're testing cannot inflate on its own.** Per-tag F1 looked fine while the product was stuck. Harness pass rate asks whether the _whole_ address comes out right, and it showed the real state.
 - **A confidently wrong model and a model missing training data need different fixes.** We assumed the first case, and the data showed the second.
 - **Structural validity is a separate signal.** A checker that flags incoherent parses, such as a house number without a street or an orphaned unit, caught a mid-training regression that the headline accuracy number hid.
-- **A model cannot learn a category that's absent from its training data.** The problem looked expensive, and its cause, a missing synthesizer, was the cheapest one to fix.
+- **A model cannot learn a category that's absent from its training data.** The missing intersection synthesizer was cheaper to add than the other fixes we'd considered.
 
 The fix for intersections is a couple thousand synthetic `X & Y St` examples, labeled and added to the corpus as a small targeted supplement, plus a retrain. That run is training as we publish this.
 

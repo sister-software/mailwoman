@@ -8,8 +8,7 @@ belong elsewhere. Code that needs to write something is a release operation or a
 the registry and are never registered in it: `lib/baseline.ts` writes the debt baseline, and `lib/fixes.ts` plus
 `lib/move/` apply the mechanical repair that a check's diagnostic describes.
 
-`lib/registry.ts` is the package's only executable entry point. A check file that's not registered is dead code, and
-knip reports it.
+`lib/registry.ts` is the package's only executable entry point. Knip reports an unregistered check file as unused.
 
 Every check enumerates `RepoContext.trackedFiles` from git, so an untracked file is invisible: `git add` a new file
 before running a check on it, or a green local run means only that git hasn't been told about the file. The
@@ -63,8 +62,8 @@ because `lib/move/` owns writing. A file that gains one sibling sharing its hyph
 | -------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `prefix-directories` | each grouped sibling into its prefix directory, a directory member expanding to one move per file under it |
 
-`lib/move/` is the operation that the fixes share, and it follows one rule: it writes a replacement specifier only if
-that specifier resolves to the moved file. Candidates come from the owning package's own `imports`/`exports` patterns,
+The fixes use `lib/move/` to write a replacement specifier only if it resolves to the moved file.
+Candidates come from the owning package's own `imports`/`exports` patterns,
 so the replacement keeps the form the author wrote. A `#` import stays private, a package subpath stays public, and a
 relative path stays relative. If any specifier has no candidate that resolves, the whole plan is refused.
 

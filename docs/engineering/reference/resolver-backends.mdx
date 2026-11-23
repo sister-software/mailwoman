@@ -41,8 +41,8 @@ resolver, independent of which backend is selected:
 
 An explicit `--default-country` outranks all three.
 
-`auto` reproduces the historical coupling between backend and country scope, and that coupling can
-invalidate measurements. `12 Rue de Rivoli, 75001 Paris` resolves to Paris TX on FTS and to Paris FR
+`auto` can invalidate backend comparisons because switching backends can also change the country scope.
+`12 Rue de Rivoli, 75001 Paris` resolves to Paris TX on FTS and to Paris FR
 on candidate. That looks like a backend difference, but the country filter causes all of it:
 
 | arm                   | result                                          |
@@ -135,8 +135,8 @@ mailwoman eval oa-resolver \
 implement it. Its public surface is `findPlace` and `close`. The published `candidate.db` holds a
 `candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup doesn't answer
 `ancestors()` from it. On the candidate backend, `includeAncestors` (default off) therefore leaves
-`metadata.ancestors` unset, and the Nominatim and Photon drop-ins cannot expose a containment
-lineage.
+`metadata.ancestors` unset. The Nominatim and Photon drop-ins therefore cannot expose the
+containment lineage.
 
 **Before FTS can be retired**, complete these steps in order:
 
@@ -164,6 +164,6 @@ discards correct answers, so this field cannot support an abstention mechanism i
 
 ## Synthetic WOF IDs
 
-Every gazetteer build reassigns the Overture-derived `8000000000000+` range, and the range differs
-between the two databases. **ID-equality grading is invalid for that range**, across backends and
-across builds. Grade by coordinate.
+Every gazetteer build reassigns the Overture-derived IDs in the `8000000000000+` range. The two
+databases also assign those IDs differently. Grade by coordinate when comparing either builds or
+backends.

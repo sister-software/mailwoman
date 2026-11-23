@@ -24,7 +24,7 @@ When one record can swing a metric by 2.4 points, the metric measures that recor
 
 The same week, the same eval told us our rural US locality resolution was a disaster: South Dakota matching 62%, Vermont 31%. That fit a story we already believed (the gazetteer is thin in rural states, the model can't resolve what isn't there), so it was easy to nod and file it under "known coverage gap."
 
-Then we pulled the misses. The resolver was landing the right place on nearly all of them. The problem was the scorer: it only counted a match if the resolved place was tagged `locality`, and New England-style civil towns are `localadmin` in our gazetteer rather than `locality`. For "Barre Town," "Saint Albans Town" and every Vermont township, the resolver found the place, and the metric didn't count it because its placetype was `localadmin`. Credit the group the resolver treats as a locality and Vermont goes from 31% to 93%, South Dakota from 62% to 98%. The model and the data were fine, and the scorer was wrong.
+Then we pulled the misses. The resolver was landing the right place on nearly all of them. The problem was the scorer: it only counted a match if the resolved place was tagged `locality`, and New England-style civil towns are `localadmin` in our gazetteer rather than `locality`. For "Barre Town," "Saint Albans Town" and every Vermont township, the resolver found the place, and the metric didn't count it because its placetype was `localadmin`. Credit the group the resolver treats as a locality and Vermont goes from 31% to 93%, South Dakota from 62% to 98%. The scorer rejected results that the model and gazetteer had placed correctly.
 
 ## The eval graded the centroid fallback
 
@@ -36,7 +36,7 @@ We pointed the eval at the real cascade and ran the same ten thousand addresses.
 
 ## The records behind each number
 
-The rows exposed three different failures: a country regression that was a single record, a coverage gap that was a placetype-tag mismatch, and a flagship accuracy number that graded the wrong object entirely. Each looked authoritative as a number in a table, and none survived contact with the actual rows.
+The rows exposed three different failures: a country regression that was a single record, a coverage gap that was a placetype-tag mismatch, and a flagship accuracy number that graded the wrong object entirely. Each number looked credible until we checked the rows it summarized.
 
 The rule we already keep on the wall is _grade the thing your user receives_, and it's true. The habit that would have caught these three is more basic: before a number changes a decision, dump the records it's summarizing and read them. Ask whether there's a pattern or whether it's one row on a small denominator. Ask whether the thing you scored is the thing you ship. It costs ten minutes and a `--errors-json` flag, and it would have caught all three of these before they reached a card or a roadmap.
 

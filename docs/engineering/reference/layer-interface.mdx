@@ -94,8 +94,8 @@ index.** This case came from `@mailwoman/soil`, which has three cell-facing tabl
 unsimplified rings, a `(cell, feature)` containment index above them, and a table with one row per
 cell that reduces the index into the summary both of its consumers read. The rule above still
 applies, because the key identifies the table a consumer joins on. Here that table is
-`soil_capability_cell.h3_cell`. It has a single resolution and one row per cell, and it is the only
-one of the three tables a bulk reader can key against. The containment index is keyed
+`soil_capability_cell.h3_cell`. A bulk reader can key against this table because it has one resolution
+and one row per cell. The containment index is keyed
 `(h3_cell, area_id)` and has mixed resolutions by construction, so it is a tier that the layer's own
 reader walks, and consumers do not join on it. A layer without a reduction, such as the flood
 zones, points at its index because that's its only cell-keyed table.
@@ -110,7 +110,7 @@ chain over every resolution in the table. A reader that probed only the manifest
 treat every row at another resolution as absent. This interface is designed to prevent that false
 negative.
 
-**`layer_coverage` has a single resolution, and that resolution is a third, separate value.**
+**`layer_coverage` stores cells at one resolution of its own.**
 `recoverShortCellResolution` in `@mailwoman/spatial` recovers one resolution from the stored coverage
 cells and throws on a table that mixes resolutions, so the coverage tier is never compacted. Three
 resolutions therefore coexist in one artifact: the manifest's index target, the per-row cell
@@ -133,9 +133,9 @@ That mechanism was measured with h3-js 4.5.0. The two requirements below apply t
 builder, including one built on `@sister.software/h3`:
 
 1. **Refuse an empty answer for any part.** A part with a non-degenerate bounding box touches at
-   least one cell, so zero cells is impossible for it. Run the check on each part. A
-   per-feature check passes any multi-part feature whose other parts returned cells, and it indexes
-   the feature incompletely without any error. That would reproduce, through the index, the silent
+   least one cell, so zero cells is impossible for it. Run the check on each part. A check on the
+   whole feature can pass if some parts return cells even when others are missing from the index.
+   That would reproduce, through the index, the silent
    absence the coverage rule is designed to refuse in the data.
 2. **Bound the classification by construction.** Run it in child processes over ranges of the
    source's own stable ids, so each process starts with an empty heap. A lower call count, for
@@ -226,9 +226,9 @@ A builder that had applied the flood rule to either of the other layers would ha
 erosion risk" over all of England, or "no restriction applies" over most of a country's land. The
 artifact would have been well formed and would have passed every structural check.
 
-**The basis is therefore checked in code at both ends.** A layer whose source publishes no
-footprint refuses to write a coverage row that would support an exclusion, and it refuses to open an
-artifact that contains one. The constructor calls `supportsExclusion` over the distinct bases, and a
+**The builder and reader both check the coverage basis.** If a source publishes no footprint, the
+builder refuses to write a coverage row that would support an exclusion. The reader rejects any
+artifact containing such a row. The constructor calls `supportsExclusion` over the distinct bases, and a
 stronger basis throws an error that explains why. A move to a stronger basis takes a deliberate edit
 to a guard whose message states the reason, so it can't arrive as an unnoticed coverage row.
 

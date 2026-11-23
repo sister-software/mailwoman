@@ -20,7 +20,7 @@
 - Browser code imports no Node builtin. The worker file `range-worker.ts` is bundled for the browser.
 - The index file is `search-index.db.gz` at the site root. Pages are emitted as `<route>.html`.
 - Lexical query reads 40 rows. `limit` is 1 to 20 with default 8. The modal caps text at 200 characters before a query runs.
-- Typo correction: 10 candidates from `terms_trigram`. A candidate is accepted when the Damerau-Levenshtein distance is at most 2, and at most 1 for a token under 6 characters. Only tokens of at least 3 characters are corrected.
+- For typo correction, read 10 candidates from `terms_trigram`. Skip tokens shorter than 3 characters. Accept a candidate at a Damerau-Levenshtein distance of at most 1 for tokens of 3 to 5 characters or at most 2 for longer tokens.
 - The modal uses `<dialog>` with `showModal()`, `<input type="search">` with `role="combobox"`, and a `role="listbox"` result list. It adds no focus-trap code and no `role="dialog"` attribute.
 - Shell commands may not write files inside the repository. Create and edit files with the file-editing tool.
 - Stage by path. Never run `git add -A`. Run `git add` on a new file before `yarn lint`.

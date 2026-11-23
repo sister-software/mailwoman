@@ -202,7 +202,7 @@ The elapsed time depends on the host. The script exits 0 when the geocoder exite
 {"id":"a6","status":"unresolved","tier":"admin","lat":null,"lon":null,"source":null}
 ```
 
-The script writes the empty-address records first and the geocoded records after them in input order, and a resumed run appends to the file, so join records to your input by `id` rather than by position. Each record has one of three statuses:
+The script writes the empty-address records first and the geocoded records after them in input order. A resumed run appends to the file. Join records to your input by `id` rather than by position. Each record has one of three statuses:
 
 - `failed` means the row had no address to send.
 - `unresolved` means the geocoder returned no coordinate. Send these rows to review.
@@ -220,7 +220,7 @@ node batch-geocode.ts
 nothing to geocode; 6 rows were already done
 ```
 
-If a run stops partway, the rows written before it stopped keep their records, and the next run geocodes the remaining rows. To geocode everything again, delete or rename the output file first.
+If a run stops partway, the next run keeps the existing output records and geocodes the remaining rows. To geocode everything again, delete or rename the output file first.
 
 ## Resource use
 

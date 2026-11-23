@@ -60,8 +60,8 @@ registers: BAN, GNAF, LINZ, …) is roughly 500–800M points. At the measured 2
 | **Total disk**                        | **150–220 GB** |
 
 **Memory: ~1–2 GB floor.** The fixed cost is the ORT session + tokenizer + FST + lexicons
-(~300–500 MB resident). Every layer is memory-mapped and probed by key, so the rest is page
-cache: more RAM lowers latency and doesn't change results, and no heap has to hold an index.
+(~300–500 MB resident). Readers probe each memory-mapped layer by key without loading the index
+onto the heap. More RAM increases the page cache, reducing latency without changing results.
 
 For context, here are the incumbents this trades against, from their public deployment guidance for
 full-planet installs (approximate). A planet Pelias is on the order of 600 GB of

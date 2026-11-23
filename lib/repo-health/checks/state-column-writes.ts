@@ -15,7 +15,7 @@
  *   moves several state columns together compares one of them, as `setLicenseState` compares `license_state` while it
  *   records `payment_state`. Test sources are skipped because they plant fixture rows.
  *
- *   The check reads syntax. It misses a set object held in a variable, and an SQL statement assembled from pieces.
+ *   The check reads syntax. It misses set objects held in variables and SQL assembled from fragments.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

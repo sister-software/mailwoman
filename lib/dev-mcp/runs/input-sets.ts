@@ -395,7 +395,8 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
-	// A literal input with coordinates can be graded, and one that also states components is graded on them.
+	// Coordinates let the grader check the location.
+	// If the literal input supplies components, the grader checks those too.
 	// A bare string can only be observed.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
 		typeof entry === "string"

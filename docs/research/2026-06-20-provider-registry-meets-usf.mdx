@@ -6,7 +6,7 @@ tags: [record-matching, geocoding]
 date: 2026-06-20
 ---
 
-Three public datasets land on your desk: NPPES (the national provider registry, with every NPI in the country), a federal telecom-funding file from the FCC's Rural Health Care program (one part of the Universal Service Fund), and a state list of licensed nursing facilities from Texas HHSC. You want to know which records describe the same provider, and not one of the three shares an identifier with the other two. The NPI is internal to NPPES. The funding file keys on its own SPIN. The state list has its own facility ID. There's no crosswalk, because none of the three publishers ever built one.
+Three public datasets land on your desk: NPPES (the national provider registry, with every NPI in the country), a federal telecom-funding file from the FCC's Rural Health Care program (one part of the Universal Service Fund), and a state list of licensed nursing facilities from Texas HHSC. To find which records describe the same provider, you have to link three datasets that use different identifiers. The NPI is internal to NPPES. The funding file keys on its own SPIN. The state list has its own facility ID. There's no crosswalk, because none of the three publishers ever built one.
 
 So you do what everyone does: you start a spreadsheet, you sort by name, and you give up around row 400.
 
@@ -26,13 +26,13 @@ The join matches places rather than strings. Each record's address goes through 
 
 219 entities resolved across two or more of these sources. Twenty-eight of them span different _agencies_ (CMS's provider registry, the FCC's funding program, Texas's licensing list), and those are the hard ones, because inside a single agency you can sometimes lean on an internal ID, while across agencies you have only the place and the name. (The other 191 links are FCC-internal: Rural Health Care filings matched back to their own commitment records.) You can see the cross-agency subset on its own in the [interactive map](pathname:///maps/provider-registry-usf-crossagency.html). The [full set is here](pathname:///maps/provider-registry-usf.html).
 
-Then the coverage reconciliation. Of the 2,771 entities carrying an eligibility record (an NPPES organization or a TX HHSC facility), 22 also resolve to a funding record. That's 0.8%, and it's a floor rather than a coverage rate, because imperfect resolution and a capped sample miss links and don't invent them. The set is the deliverable, and the percentage only reports its size.
+Then the coverage reconciliation. Of the 2,771 entities carrying an eligibility record (an NPPES organization or a TX HHSC facility), 22 also resolve to a funding record. That's 0.8%, and it's a floor rather than a coverage rate, because imperfect resolution and a capped sample miss links and don't invent them. We deliver the matched records for review. The percentage tells the reader how large that set is.
 
 ## What a missing funding link means
 
-This is a set-membership reconciliation rather than a determination. The 2,749 eligibility entities that didn't resolve to a funding record are a candidate set for review, and no more. A missing funding link can mean the entity didn't apply, applied under a name the resolver didn't catch, isn't eligible, or only that its funding record fell outside this capped 2,000-row sample. That last case is a sampling artifact rather than a finding. At full scale the set tightens, and it's still only a set of candidates.
+This is a set-membership reconciliation rather than a determination. The 2,749 of 2,771 entities with an eligibility record and no linked funding record form the set for review. A missing funding link can mean the entity didn't apply, applied under a name the resolver didn't catch, isn't eligible, or only that its funding record fell outside this capped 2,000-row sample. That last case is a sampling artifact rather than a finding. At full scale the set tightens, and it's still only a set of candidates.
 
-What we produce is the reconciled join and the candidate set. What a gap means, and whether it means anything at all, is the data consumer's call rather than the tool's. None of this is an allegation, and the map makes no claim about any provider on it beyond "these records appear to describe the same place."
+What we produce is the reconciled join and the candidate set. What a gap means, and whether it means anything at all, is the data consumer's call rather than the tool's. The map reports only whether records appear to describe the same place.
 
 ## Run it on your own files
 

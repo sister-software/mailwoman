@@ -22,7 +22,7 @@ role: explanation
 2. **The question.** Two or three sentences, phrased the way a reader would ask it.
 3. **The analog.** The rule-world concept, before any statistical term.
 4. **The mechanism.** What the system does, in the order it does it.
-5. **What it costs.** Where the design gives something up, and to whom.
+5. **What it costs.** What the design gives up and who bears the cost.
 6. **Related.** Links to the reference pages that keep the interface valid.
 
 ## Start here
@@ -58,7 +58,7 @@ groupPhrasesSync({ raw: text, normalized: text }, computeQueryShape(text))
 ## Checks before commit
 
 - The rule-world analog appears before the statistical term rather than after it.
-- Each term is defined in one sentence at first use, and the registry link supplies the rest.
+- Define each term in one sentence at first use. Link to its registry entry for details.
 - The page states what the design gives up rather than only what it gains.
 - The page contains no steps or interface tables. Those belong on a `guide` or a `reference` page, linked
   from Related.

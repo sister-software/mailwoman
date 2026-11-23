@@ -62,7 +62,7 @@ geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
 ## Checks before commit
 
 - The outcome sentence describes a state rather than an activity.
-- Every command was executed, and the verify step's output is pasted from a real run.
+- Run every command and paste the output from the verification step.
 - Unsupported cases appear in Limits with a next action, so the reader doesn't discover them mid-procedure.
 - The page contains no marketing language.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

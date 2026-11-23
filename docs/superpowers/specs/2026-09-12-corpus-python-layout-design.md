@@ -97,8 +97,8 @@ corpus/lib/
 └── build.ts  runner.ts  types.ts  index.ts                         shared entry points
 ```
 
-Role directories sit at the top for cross-country code, and the same role names are nested under a country key for
-country-specific code. A new country adds one directory holding only the roles it needs.
+Role directories sit at the top for cross-country code. Country directories reuse the same role names
+for country-specific code. Add one directory per country with only the roles it needs.
 
 `corpus-python` adopts that model with one change: the country keys sit under `countries/` rather than at the package
 root. Corpus has 14 country and region directories among 7 role directories today, and with every country present
@@ -205,9 +205,9 @@ the Modal SDK. It works today only because `modal run corpus-python/modal/train_
 script. That invocation puts `corpus-python/modal/` on `sys.path` rather than `corpus-python/`.
 
 The split requires Modal's module mode: an `__init__.py` imports every member module so the decorated
-functions register, and the package is invoked as `modal run -m <pkg>.<mod>`. That makes the directory a real
-package on `sys.path`, and the shadowing then takes effect. The directory is therefore renamed to `launch/`, which is `OLMo-core`'s name for the same
-role.
+functions register. The `modal run -m <pkg>.<mod>` command makes the local directory a package
+on `sys.path` where it shadows the Modal SDK. Rename the directory to `launch/`, the name `OLMo-core` gives
+the same role.
 
 ### 8.2 The shape
 
@@ -301,7 +301,7 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
   limit. `tokenizer.py` is 609 lines and must therefore split further than a rename into `tokenizer/__init__.py`.
 - The Python prefix check reports zero groups.
 - No intra-package import inside a function body imports a module that transitively imports the module holding it.
-  This detects a regression of §3.1, and it flags a cycle rather than every deferred import.
+  This checks §3.1 by flagging import cycles. A deferred import passes when it introduces no cycle.
 
   A deferred import isn't a defect on its own. Measured on this branch, `mailwoman_train.cli` imports in 22,340 µs
   while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off

@@ -68,11 +68,12 @@ resolves to no target. That refusal caught three real breaks during the fold (`r
 1. **Directory-level entries rather than file-level.** Each prefix fold becomes one export: `./geocode` →
    `lib/geocode/index.ts`, `./eval-harness` → its barrel. Internal reach stays free through `#*`, which is the
    map that was doing the real work all along.
-2. **Keep the deliberate isolation leaves, and mark them.** Each needs its reason in its own docstring. Today
+2. **Document why each isolation leaf stays separate.** State the reason in its docstring. Today
    only one of three has it (§2). Add `"sideEffects": false` to every published package so barrel imports
    tree-shake and the leaf list stops growing for bundle reasons. Today exactly **one** package declares it.
 3. **Wildcards only where the surface isn't public.** Five of the 64 workspaces are private.
-4. **Derive the mirrors.** The docs alias map hand-copies subpaths, and that list is **already stale** (§2.2).
+4. **Derive the mirrors.** Generate the docs alias map from the export subpaths. The hand-copied map
+   is already out of date (§2.2).
 
 ---
 

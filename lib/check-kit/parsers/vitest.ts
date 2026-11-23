@@ -4,9 +4,10 @@
 /**
  * Reads Vitest's totals and failing tests, from its JSON reporter or from its default reporter's text.
  *
- * A run the runner starts writes the JSON report beside the log, and that report is read first.
- * The text reader serves a run whose report is missing, such as one killed
- * before Vitest wrote it, and a log downloaded from GitHub Actions.
+ * For a local run, read Vitest's JSON report beside the log first.
+ * Read the log text when that report is missing, such as when the run stopped before Vitest wrote it.
+ *
+ * Logs downloaded from GitHub Actions also go to the text reader.
  */
 
 import { isPresent } from "@mailwoman/core/values/objects"

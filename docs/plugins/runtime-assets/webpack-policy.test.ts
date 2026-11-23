@@ -17,9 +17,12 @@ const docsDir = resolvePackagePath("@mailwoman/docs")
  * Directory subpaths whose barrel re-exports a Node-only sibling.
  * The demo mustn't import those barrels whole.
  *
- * `@mailwoman/resolver-wof-sqlite/fst` exports `fst/freshness`, and `/labels/street` exports
- * `labels/street/morphology/fst/loader`; both reach `@mailwoman/core/fs`, and the package
- * declares no `sideEffects`, so webpack cannot shake them out of the client bundle.
+ * `@mailwoman/resolver-wof-sqlite/fst` exports `fst/freshness`.
+ * The `/labels/street` entry point exports `labels/street/morphology/fst/loader`.
+ *
+ * Both modules reach `@mailwoman/core/fs`.
+ * Webpack keeps them in the client bundle because the package declares no `sideEffects`.
+ *
  * Enter through the leaf instead — `fst/deserialize-web`, `fst/autocomplete`, `labels/street/normalize`.
  *
  * This is a cheap stand-in for a five-minute `docusaurus build`, which is otherwise

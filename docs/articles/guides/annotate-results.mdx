@@ -26,7 +26,7 @@ The coordinate-format and country-reference annotators used below need no geogra
 
 ## Compose and check two annotators
 
-Save this as `annotate.ts`. `composeAnnotators` runs each annotator and merges its partial `AnnotationSet`. It skips an annotator that throws, and later annotators replace earlier values on a shared key. The explicit check stops this example if either expected field is absent.
+Save this as `annotate.ts`. `composeAnnotators` runs each annotator and merges its partial `AnnotationSet`. It skips any annotator that throws. When two annotators supply the same key, the later value replaces the earlier one. The explicit check stops this example if either expected field is absent.
 
 ```ts
 import { composeAnnotators, toNative, toOpenCage } from "@mailwoman/annotations"
@@ -124,7 +124,7 @@ Run `node annotate.ts`. Published 11.0.0 produced the following complete output 
 }
 ```
 
-`toNative(set)` returns the full `AnnotationSet`, including keys whose annotator supplied no value. `toOpenCage(set)` emits populated fields under its consumer's key names. It maps `dms.lon` to `DMS.lng`, `qiblaBearing` to `qibla`, and `currency.isoCode` to `currency.iso_code`. The OpenCage projection has no slot for `iso3166` or `sun.noon`, so those values from this run are absent. A `null` native `timezone` here means the chosen annotators left it unset, and the coordinate's timezone is unknown from this run.
+`toNative(set)` returns the full `AnnotationSet`, including keys whose annotator supplied no value. `toOpenCage(set)` emits populated fields under its consumer's key names. It maps `dms.lon` to `DMS.lng`, `qiblaBearing` to `qibla`, and `currency.isoCode` to `currency.iso_code`. The OpenCage projection has no slot for `iso3166` or `sun.noon`, so those values from this run are absent. The native `timezone` is `null` because the chosen annotators left it unset. The coordinate's timezone is unknown from this run.
 
 ## Build a schema.org Place from address fields
 
@@ -230,6 +230,6 @@ The flat object has one `locality` value. `includeDropped: true` reports the omi
 
 ## Add database-backed annotations
 
-Published 11.0.0 also declares `makeTimezoneAnnotator`, `makeUNLocodeAnnotator`, and `makeNUTSAnnotator` in their lookup packages. Each one reads its own lookup database, and no output from them is shown here. Check each expected output field after composing an annotator, because `composeAnnotators` skips an annotator that throws and leaves its fields `null`.
+Published 11.0.0 also declares `makeTimezoneAnnotator`, `makeUNLocodeAnnotator`, and `makeNUTSAnnotator` in their lookup packages. Each reads its own lookup database. This guide gives no example output for these annotators. Check each expected output field after composing an annotator, because `composeAnnotators` skips an annotator that throws and leaves its fields `null`.
 
 The published [annotation serializer](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/annotations/lib/index.ts), [coordinate annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/spatial/lib/coordinate/formats.ts), [country annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/lib/country/reference.ts), and [tree-to-JSON projection](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/decoder/serialize/json.ts) define the interfaces exercised above. [The library reference](../reference/library.mdx) covers the parser and geocoder calls that produce an address result.

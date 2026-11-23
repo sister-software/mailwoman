@@ -39,7 +39,8 @@ rather than a guess.
 
 - Translation or generated transliteration. The boundary in the deleted page
   `docs/articles/developers/knowledge-base/localization/cross-locale-queries.mdx` (readable at `3ed59fcf8e^`) stands: the
-  gazetteer connects writings through recorded names, and an absent name stays unresolved.
+  gazetteer connects forms in different scripts through recorded names. A name absent from the gazetteer
+  stays unresolved.
 - Point-of-interest lookup by a name in another script, such as finding `金龍酒家` by its Chinese name.
 
 ## Anti-goals
@@ -84,7 +85,7 @@ The operator picked A on 2026-11-14 and asked for the from-scratch form of it, w
 
 ### Part 2: declaration and page
 
-- `packages/codex/lib/support/promises.json` holds the rows, and `packages/codex/lib/support.ts` reads them with types.
+- `packages/codex/lib/support.ts` reads the rows in `packages/codex/lib/support/promises.json` with types.
   Codex already ships JSON this way (`lib/us/street-suffix.json`), and codex has no runtime dependency on the registry.
 - A docs component reads `@mailwoman/codex/support` and renders the matrix on `docs/articles/reference/support.mdx`.
 - A row's evidence is derived rather than declared: every gauntlet case under

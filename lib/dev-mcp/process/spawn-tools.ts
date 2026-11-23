@@ -52,8 +52,9 @@ let checkLaunches = 0
  * Names the out-dir of a check that gave none.
  *
  * The name takes the launch instant and a per-process counter.
- * A name derived from the job count repeats after a worker restart, and the new run
- * then reads the earlier run's `verdict.json` as its own until it writes one.
+ * A worker restart can reuse a name derived from the job count.
+ *
+ * The new run would then read the earlier run's `verdict.json` until it wrote its own.
  */
 export function defaultCheckOutDirName(now: Date = new Date()): string {
 	const stamp = now.toISOString().replaceAll(/[:.]/gu, "-").replace(/Z$/u, "")

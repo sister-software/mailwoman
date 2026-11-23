@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [evals, geocoding, international, multilingual]
 ---
 
-Our parser scores 28% on Spanish addresses. By the metric that reads its labels, it is, on paper, broken in a country of forty-seven million people. That metric grades labels, and the coordinate tells a different story.
+Our parser scores 28% on Spanish addresses. By the metric that reads its labels, it is, on paper, broken in a country of forty-seven million people. That metric grades component labels. Coordinate accuracy diverges from label accuracy in the comparison below.
 
 {/* truncate */}
 
@@ -48,12 +48,12 @@ Precision isn't the limit: outside Czechia and Australia, when the model commits
 
 The version we'd have preferred is that the model parses everything correctly and the _gazetteer_ is missing half of Poland, so the fix is a data import that reflects badly on no one. We checked, and that version isn't true.
 
-When a Portuguese address fails to resolve, it's not because the town is absent from our index. We folded the whole world's place names into the index months ago, and a spot check confirmed every Polish and Portuguese locality GeoNames knows is already there. It's that the model never emits the locality in the first place. The label test agrees, for once: Portuguese `locality`-recall sits at 39%, right alongside its 52% resolve rate. If the gazetteer were the bottleneck, the model would extract the town and the index would fail to find it. Instead the model and the resolver fail together: the towns are in the index, and the model doesn't reliably emit them as localities, so the resolver has no town to look up. We ran that check directly for Portuguese. Across the rest of the mid-tier the same shape repeats: low resolve, low locality-recall, and towns that the spot check found in the index. That pattern is what you'd expect if the cause is the same one.
+When a Portuguese address fails to resolve, it's not because the town is absent from our index. We folded the whole world's place names into the index months ago, and a spot check confirmed every Polish and Portuguese locality GeoNames knows is already there. It's that the model never emits the locality in the first place. The label test agrees, for once: Portuguese `locality`-recall sits at 39%, right alongside its 52% resolve rate. If the gazetteer were the bottleneck, the model would extract the town and the index would fail to find it. The towns are in the index. On failed rows where the model drops the locality, the resolver has no town to look up. We ran that check directly for Portuguese. Across the rest of the mid-tier the same shape repeats: low resolve, low locality-recall, and towns that the spot check found in the index. That pattern is what you'd expect if the cause is the same one.
 
 No clever rule or `Calle`-handling special case fixes this. Bolt on a Spanish street splitter and you've taught the parser one convention by hand and learned no general rule for the next forty. The model fails on these addresses because it hasn't seen enough of the place, so the change is the training distribution, and we now have a coordinate-graded yardstick that will tell us, locale by locale, whether feeding it more moves the recall it's supposed to.
 
 ## Conclusions
 
-The lesson is the same one as last time. We had it written down, and the label metric still nearly led us to the wrong conclusion before the coordinate corrected it. Distance to the truth doesn't depend on matching the gold's words or on which language the street type is in, so we grade on it. Every other metric is a proxy, and the proxies we use score us higher in the languages we trained on and lower in the ones we didn't.
+The lesson is the same one as last time. Even with that rule written down, we nearly treated the label metric as evidence of poor coordinate accuracy. Distance to the truth doesn't depend on matching the gold's words or on which language the street type is in, so we grade on it. Every other metric is a proxy, and the proxies we use score us higher in the languages we trained on and lower in the ones we didn't.
 
 The two columns also show that a model can be _right_ and _unavailable_ at the same time, and if you only measure one number you can't tell which problem you have. Measure recall separately from precision before you decide what's broken. Ours is accurate where it answers in six of the eight locales we measured, and the next work is getting it to answer for more addresses, in more places, by showing it more of the world.

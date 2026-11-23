@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [resolver, evals]
 ---
 
-Type `Vienna, Austria` into our geocoder and, until this week, it answered with a confident set of coordinates: 39.32, −81.54. That's Vienna, West Virginia, population about ten thousand, a few miles up the Ohio River from Parkersburg. The capital of Austria is 7,500 kilometers and one ocean away, and the geocoder had no doubt whatsoever.
+Type `Vienna, Austria` into our geocoder and, until this week, it answered with a confident set of coordinates: 39.32, −81.54. That's Vienna, West Virginia, population about ten thousand, a few miles up the Ohio River from Parkersburg. The geocoder was confident in a point 7,500 kilometers from the Austrian capital.
 
 {/* truncate */}
 
@@ -24,7 +24,7 @@ Vienna   → locality
 Austria  → country
 ```
 
-The model tagged Austria as a country every time, and Australia, Switzerland and Canada too. There was no model gap: the thing we were about to spend a retrain on already worked. The bug lived one layer down, in the part of the system that takes a correct parse and turns it into a place on Earth.
+The model tagged the country correctly in every checked address for Austria, Australia, Switzerland, and Canada. There was no model gap: the thing we were about to spend a retrain on already worked. The bug lived one layer down, in the part of the system that takes a correct parse and turns it into a place on Earth.
 
 ## Forty-five Viennas, ranked without the country
 
@@ -32,7 +32,7 @@ The resolver's job is to take the word "Vienna" and decide which Vienna. Our gaz
 
 So `Vienna` resolved on its own merits, and the populous American candidates outranked the Austrian one in the bag.
 
-The parse and the resolve each made a locally sensible decision, and no stage checked that they agreed.
+The parser identified the country correctly. The resolver chose a city by population and name without checking that country's tag.
 
 ## A consistency check instead of a country list
 

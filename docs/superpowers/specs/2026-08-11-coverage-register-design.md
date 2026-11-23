@@ -103,8 +103,8 @@ Three rules from the OSM-ingest section of the design record apply here, now gen
 3. **Only `surveyed_complete` can power hard negative evidence.** `surveyed_partial` may adjust
    ranking with positive evidence only, per the registry doctrine. The other two states may not affect ranking at all.
 
-The register is a companion table inside each sealed artifact. The artifact is rebuilt and swapped, never patched, and the table is
-readable through `@mailwoman/core/layers` beside the existing manifest.
+Each sealed artifact includes the register as a companion table. Rebuild and replace the artifact to
+update the register. Read the table and the existing manifest through `@mailwoman/core/layers`.
 
 ## What it unlocks, in dependency order
 
@@ -149,8 +149,8 @@ before the full register is built. Receipts are in `scratchpad/falsifiers/f4-sco
    key exists.
 2. Distinguish an unsurveyed locality namespace from a surveyed namespace without a match. These must be two
    different stored states rather than one shared absence.
-3. Keep exact foreign matches available under a locale hint. Only the fuzzy/derived tiers consult
-   scope coverage, and the exact tier never reads it. The Paris row on the #1585 board is the
+3. Keep exact foreign matches available under a locale hint. Scope coverage applies only to the fuzzy and
+   derived tiers. The Paris row on the #1585 board is the
    standing conditional test case.
 4. Prevent hard negative evidence from a partial namespace. Only `surveyed_complete` can power a
    negative, and the interface must refuse `surveyed_partial` for that use.

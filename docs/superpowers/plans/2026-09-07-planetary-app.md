@@ -124,7 +124,7 @@ export interface StyleSpecificationComposition {
 }
 ```
 
-The constructor stores `spec.baseLayers ?? BaseLayers` into the list, adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved value isn't `null`, and `toJSON` spreads `sprite` only when not `null` and uses `this.glyphs`. Keep the two URL constants as module-level default constants (`PROTOMAPS_GLYPHS_URL`, `PROTOMAPS_SPRITE_URL`) so the comment above them stays the one place they're explained.
+The constructor stores `spec.baseLayers ?? BaseLayers` in the layer list. It adds `[HillshadeTileSetID]: hillshadeSource` only when the resolved source is present. `toJSON` uses `this.glyphs` and includes `sprite` only when it is present. Keep the module defaults `PROTOMAPS_GLYPHS_URL` and `PROTOMAPS_SPRITE_URL` together with the comment that explains them.
 
 - [ ] **Step 3: Run, then the cartographer and docs consumers**
 

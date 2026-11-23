@@ -28,7 +28,7 @@ loc = geo.geocode("1600 Pennsylvania Avenue NW, Washington, DC 20500")
 print(loc.latitude, loc.longitude)   # 38.8977 -77.0365
 ```
 
-The call is the one you already had, and it now resolves to a rooftop-level result on your own box. The API also returns an OpenCage-style `annotations` block (timezone, coordinate formats, the things upstream Nominatim leaves empty) hanging off `loc.raw`.
+The same API call now resolves to a rooftop-level result on your own machine. The API also returns an OpenCage-style `annotations` block (timezone, coordinate formats, the things upstream Nominatim leaves empty) hanging off `loc.raw`.
 
 ## One `docker run` for the server
 
@@ -61,9 +61,9 @@ For the frontend, `@mailwoman/react` is the parse, geocode, and POI components t
 
 ## Requirements and limits
 
-You bring the gazetteer. The model is in the image, but geocoding needs the admin database. You download it or build it. The worldwide candidate file is about 1.4&nbsp;GB, and it's read-only, so you can mount it `:ro`. Until it's in place, the server parses but won't geocode. That's a degrade with a clear message rather than a crash. If you're not sure what's present, `mailwoman doctor` checks the weights, the data root, the gazetteer, and the runtime and tells you the one command to fix each gap.
+You bring the gazetteer. The model is in the image, but geocoding needs the admin database. You download it or build it. You can mount the roughly 1.4&nbsp;GB worldwide candidate file as read-only with `:ro`. Until it's in place, the server parses but won't geocode. That's a degrade with a clear message rather than a crash. If you're not sure what's present, `mailwoman doctor` checks the weights, the data root, the gazetteer, and the runtime and tells you the one command to fix each gap.
 
-The other cost is the shape. This is SQLite rather than a cluster, so one instance is one node. That's the point on a single box or inside an app, and it means you scale by running more copies behind a balancer rather than by tuning a shared database.
+The other cost is the shape. This is SQLite rather than a cluster, so one instance is one node. To scale beyond one node, run more copies behind a load balancer.
 
 And the license is AGPL, with a commercial option. If you're embedding it in something you ship closed, that's the conversation to have first.
 

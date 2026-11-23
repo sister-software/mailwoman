@@ -30,12 +30,11 @@ have crossed an ocean. The constraint that was already in hand went unused.
 1. **Hierarchical narrowing.** Resolved ancestors bound the search space for unresolved children.
    We partially do this. It is the least novel piece.
 
-2. **Negative evidence.** An unknown street inside a locality whose street set we hold _completely_
-   is known **not to be** any of them. That's categorically different from "no match", and today
-   both produce the same null. Requires the coverage register to state completeness per locality —
-   the meaning-of-zero rule (`docs/engineering/reference/the-meaning-of-zero.mdx`) already
-   establishes that a magnitude never encodes its own absence. This proposal depends on
-   exactly that distinction.
+2. **Negative evidence.** A failed lookup against a complete street set rules out every street
+   in that locality. The resolver currently returns null both for that
+   exclusion and for a failed lookup in an incomplete street set. The proposed exclusion requires
+   the coverage register to record completeness for each locality. This follows the
+   [meaning-of-zero rule](../../engineering/reference/the-meaning-of-zero.mdx).
 
 3. **Structural affinity.** Address-name patterns are real and mineable. A neighborhood whose streets are
    all US presidents admits an unknown `Garfield Ave` on family membership rather than string similarity.
@@ -70,7 +69,7 @@ This is the best-of-both-worlds the operator asked for: the precision of inferen
 legibility of the obvious failure. It also fits the existing calibration and attribution work
 rather than fighting it — `resolution_tier`, `uncertainty_m` and per-node `source` already exist.
 
-## Evidence is typed, and derivation is the product
+## Evidence types and what they establish
 
 Not every constraint is allowed to do the same thing. The operational vocabulary should separate:
 
@@ -99,15 +98,15 @@ and the response geometry should be derived from the graph so they cannot disagr
 Evidence sources that observe the same latent factor are not independent. Population, road
 density, broadband availability, POI density and built-up area are all partial observations of
 urbanization. A model that multiplies them as five independent likelihoods would manufacture confidence. A
-model must represent those correlations (directly or through latent factors), and calibration must
-use geographically held-out regions rather than random near rows. An 80% candidate region should
-contain the withheld truth approximately 80% of the time in in fact novel geographies.
+model must represent those correlations directly or through latent factors. Calibrate on held-out
+regions to measure performance in places the model has never seen. A region with 80% predicted
+containment should contain the withheld location in about 80% of cases across those regions.
 
 ## Central place theory, grounded
 
-Interpolation is the primitive version of this idea, limited to address ranges along a segment, and
-weak. The operator's extension: use settlement theory to get a prior over **existence and density**
-for things we hold no record of.
+Interpolation estimates a location from the address range along a known street segment. Settlement
+theory extends the idea to places we have no record of by estimating whether they exist and how
+densely they occur.
 
 Christaller's central place theory gives _threshold_ (minimum population sustaining a good) and
 _range_ (maximum distance traveled for it). The prediction: a settlement of a given size supports
@@ -126,8 +125,8 @@ than assumed**:
 - **TIGER** — roads, blocks, block groups: the skeleton facilities distribute along.
 - **BDC** (`bdc/`) — broadband availability as a development proxy, already ingested.
 - **Overture/POI** (`poi.db`, 13.68M rows) — the observed density that _calibrates_ the predicted
-  density. This is the direct move: fit the threshold/range parameters against places where we DO
-  hold POI coverage, then apply them where we do not, and report the residual.
+  density. Fit the thresholds and ranges against places with POI coverage. Apply the fitted
+  parameters to places outside that coverage and report the residual measured on held-out regions.
 
 That last point is what separates this from numerology. CPT supplies the functional form. poi.db
 supplies the fit. The fit's error on held-out regions is the confidence attached to any inference.
@@ -277,7 +276,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 
 ## Cheap versus speculative
 
-**Cheap, and useful on its own:**
+**Changes that help without a new inference model:**
 
 - Provenance in the result shape (`retrieved` / `interpolated` / `inferred` + listed constraints).
   Valuable even with zero inference implemented — it makes the current fallback ladder legible.

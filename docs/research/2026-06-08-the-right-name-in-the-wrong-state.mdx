@@ -11,7 +11,7 @@ Our resolver scored 93.7% on the metric we'd been quoting for months. On the sam
 
 ## A metric that reads the label and never checks the map
 
-When the resolver turns a parsed address into a place, we used to grade it one way: did the place it picked have the same _name_ as the gold answer? If the gold record lists the locality as "Sheldon" and the resolver returns "Sheldon", that's a point. It's a reasonable-sounding check, and it is wrong in a way that took us months to see. It can only fail when the name is wrong, and the name is almost never wrong.
+When the resolver turns a parsed address into a place, we used to grade it one way: did the place it picked have the same _name_ as the gold answer? If the gold record lists the locality as "Sheldon" and the resolver returns "Sheldon", that's a point. It took us months to see that the check accepts a place with the right name in the wrong state. The name itself is almost always right.
 
 There are ten places called "Sheldon" in the United States. "New York" is a city and a state and a village 280 kilometers apart. "Washington" is a town in most states you can name. When you grade by name, every one of those is a tie, and the resolver gets full marks for picking _any_ of them. The metric was answering "is this the right word?" when we needed to know "is this the right place on Earth?"
 
@@ -37,7 +37,7 @@ Region-match was 0.0%. The resolver was getting the state right essentially neve
 
 Hand the model `226 Bridge Rd, North Hero, VT 05474` and it directly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
 
-It throws it away because it can't read it. Who's On First stores Vermont as "Vermont". Our search index stored no abbreviations, so `findPlace("VT")` matched no entry. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country, and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. Picks like that, the right name attached to its more populous namesake, produced the 326-kilometer median error.
+It throws it away because it can't read it. Who's On First stores Vermont as "Vermont". Our search index stored no abbreviations, so `findPlace("VT")` matched no entry. With no resolved region, the resolver searched the entire country. With ten places called Sheldon in contention, it picked the one with the largest population. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. Picks like that, the right name attached to its more populous namesake, produced the 326-kilometer median error.
 
 The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same held-out set:
 
@@ -52,12 +52,12 @@ Across the full US sample, the long tail showed a larger improvement: the 90th-p
 
 Before promoting anything we ran the demo presets, the eight addresses we look at by hand, and one of them had gotten worse. `350 5th Ave, New York, NY` used to resolve to New York City. Now it resolved to "New York Mills", a village 283 kilometers upstate. The aggregate said the fix was a triumph. The functional check said we'd broken the most famous address in the set.
 
-The regression traced back to the ancestry table. Now that the region resolved, the resolver was boosting places that descend from it, and it works out descent from a precomputed ancestry table. New York City spans five boroughs, so Who's On First gives it the "no single parent" sentinel for a parent id, and our table-builder only ever followed parent ids. It had recorded NYC's ancestry as _itself_. No link to New York state. So the region boost lifted the correctly-filed village over the city, and a village of three thousand beat a city of eight million on a technicality of bookkeeping.
+The regression traced back to the ancestry table. Once the resolver could identify the region, it used a precomputed ancestry table to boost places that belong to it. Who's On First gives New York City the "no single parent" sentinel because the city spans five boroughs. Our table builder followed only parent IDs. It had recorded NYC's ancestry as _itself_. No link to New York state. So the region boost lifted the correctly-filed village over the city, and a village of three thousand beat a city of eight million on a technicality of bookkeeping.
 
-NYC's source record contains the full hierarchy, with New York state in all five of its borough branches, sitting in a field our builder didn't read. So we read it: a repair pass that rebuilds ancestry from the authoritative hierarchy fixed 47,129 places. New York City resolves to New York City again, Vermont stayed at 3.4 kilometers, and the metro regression was gone.
+NYC's source record contains the full hierarchy, with New York state in all five of its borough branches, sitting in a field our builder didn't read. So we read it: a repair pass that rebuilds ancestry from the authoritative hierarchy fixed 47,129 places. New York City again resolved to the correct city. Median error on the Vermont set stayed at 3.4 kilometers.
 
 ## Metrics we report now
 
-The first change is about metrics. A measurement that grades by name can be gamed by coincidence and will flatter you right up until a customer geocodes into the wrong state. We lead with region-match and distance now, and we report containment in full, point geometry and all. The yardstick comes before the optimization, because every win you book against a dishonest yardstick is a win you might have to give back.
+The first change is about metrics. A measurement that grades by name can be gamed by coincidence and will flatter you right up until a customer geocodes into the wrong state. We now lead with region-match and distance. The full containment report includes point geometry. The yardstick comes before the optimization, because every win you book against a dishonest yardstick is a win you might have to give back.
 
 The second is about trust. The aggregate loved the abbreviation fix. The eight addresses we read with our own eyes caught the regression the aggregate buried, and chasing _why_ those eight disagreed is what surfaced the ancestry bug underneath. An aggregate averages away the one case that would have embarrassed you, so we keep reading the addresses by hand.

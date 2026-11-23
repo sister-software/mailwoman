@@ -1,8 +1,8 @@
 # The meaning of zero
 
 A magnitude mustn't encode its own absence. When `0` means both "we don't know" and
-"we measured zero", a consumer can't tell the two apart. Both readings are valid numbers, so
-neither raises an error or writes a log line, and the mechanism takes no action. This page states the rule and lists
+"we measured zero", a consumer can't tell the two apart. Both readings produce the same valid number.
+The consumer receives no error or log message to distinguish them. This page states the rule and lists
 the places in the code where it was broken.
 
 The operator stated this rule after the defect appeared twice in one day. Two occurrences in one day made it a bug class.
@@ -31,7 +31,7 @@ interface Evidence {
 Re-encoding the domain doesn't fix it. A proposal to move `importance` to `[-1, 1]` with `0` as
 the default and `-1` as "unknown" was considered and rejected against the data: it still collapses
 absence onto the value axis, and 82% of places would land on `-1`, so the axis would encode mostly
-one thing. The separate presence bit fixes it, and the choice of range doesn't.
+one thing. A separate presence bit lets the consumer distinguish absence from any measured value.
 
 ## The audit
 
@@ -119,8 +119,8 @@ When you add a numeric channel, score, rate, bias, or weight, ask:
 > Can this field's zero mean "absent"?
 
 If yes, add the bit. If the bit already exists somewhere in the type, **check that the consumer reads
-it**. An unread discriminator has the same effect as none (site 1), and it's harder to spot because
-the type looks correct.
+it**. As site 1 shows, a consumer that ignores the bit still sees only the magnitude. The defect can
+escape a review of the type because the type already declares both fields.
 
 One tell is a docstring that reads "`0` when …", as at site 1. Grep for it.
 

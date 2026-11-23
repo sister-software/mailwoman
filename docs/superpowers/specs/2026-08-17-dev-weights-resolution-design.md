@@ -12,7 +12,7 @@ Rung three throws when the package resolves but its binaries are missing. The th
 comment calls it "the metadata-only dev-checkout trap".
 
 In a git worktree the workspace package always resolves and is always empty, because `model.onnx` and
-`tokenizer.model` are not in git. Rung three therefore throws, and the resolver never reaches rung four. The
+`tokenizer.model` are not in git. The resolver throws at the empty package before it can try the user cache. The
 error looks like a broken environment:
 
 ```
@@ -129,8 +129,8 @@ it unchecked. This applies the runbook's closing recommendation, "promote the wa
 
 Unit, against a temporary data root and a fake package directory:
 
-- package with binaries → resolves from the package, and the weights overlay is never probed
-- package empty, overlay populated → resolves from the overlay, and `source` names the overlay
+- A package with binaries resolves immediately without probing the weights overlay.
+- An empty package with a populated overlay resolves from that overlay. The overlay appears in `source`.
 - package empty, overlay empty, user cache populated → falls through to the cache (the lookup still uses the cache)
 - package empty, with no artifact anywhere → throws and lists the package dir, the overlay and the cache
 - overlay model present, tokenizer absent → throws rather than half-resolving

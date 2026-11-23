@@ -19,7 +19,7 @@ The browser integration required a new deserializer (`fst-deserialize-web.ts`) t
 
 While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (16K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. The team didn't notice because the demo was "working" (it showed results), just badly.
 
-The files in `docs/static/mailwoman/` were managed by hand. Model and tokenizer were copied independently, and the tokenizer copy was missed during the v0.5.3 update.
+The files in `docs/static/mailwoman/` were managed by hand. The v0.5.3 update copied the model but missed its tokenizer because the two files were copied separately.
 
 The fix is a Docusaurus plugin (`docs/plugins/demo-assets/`) that stages all binary assets from the `neural-weights-en-us` package at build time. Model card version is the authoritative record. The tokenizer/model mismatch can't recur because both come from the same source.
 

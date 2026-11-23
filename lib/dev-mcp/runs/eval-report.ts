@@ -124,8 +124,9 @@ type ArtifactCurrency = "absent" | "current" | "stale"
 /**
  * Reports whether a battery artifact was written by the job being read.
  *
- * An out-dir can hold a complete battery from an earlier run, and a job that's not written
- * its own verdict yet would otherwise report that run's floors as its own.
+ * An output directory can hold a complete battery from an earlier run.
+ * Check the artifact's timestamp so a job that has yet to write its verdict
+ * cannot report the earlier run's floors.
  */
 async function artifactCurrency(path: PathBuilderLike, startedAt: number | undefined): Promise<ArtifactCurrency> {
 	const stat = await tryStat(path)

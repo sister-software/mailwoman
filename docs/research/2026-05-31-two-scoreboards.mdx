@@ -30,10 +30,9 @@ in a landslide: 93.7% to 20.7%.
 
 At the per-file level, **`v0` passes 100% of every functional file**.
 
-Every one of those 415 assertions was ported from the
-Pelias and `addressit` test suites, and `v0` _is_ our port of Pelias, so the suite is grading a
-parser against its own author's answer key. It cannot, even in principle, catch `v0` being wrong,
-because `v0`'s output **is** the definition of correct.
+All 415 assertions come from the Pelias and `addressit` test suites. Since `v0` is our port of
+Pelias, those expected outputs measure agreement with the rules we ported. A rule can pass
+this check while producing the wrong result for an address.
 
 So "neural scores 20.7%" measures one thing: **how frequently neural disagrees with Pelias's exact
 conventions**: where to split a multi-word street, where a venue ends and a locality begins, the

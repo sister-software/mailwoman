@@ -30,10 +30,10 @@ import {
 /**
  * Replace any symlinked `files` entries with real copies of their targets.
  *
- * `yarn pack` stores symlinks AS symlinks in the tarball.
- * The registry rejects those (YN0035 / http 415), and npm's local-tarball extraction
- * handles them no better, so a smoke install of a packed weights workspace whose
- * `model.onnx` is a `link-dev-weights` symlink breaks the same way.
+ * `yarn pack` preserves symlinks in the tarball.
+ * The registry rejects them with HTTP 415 (`YN0035`).
+ *
+ * A smoke install from a local tarball also fails if `model.onnx` is a symlink from `link-dev-weights`.
  *
  * Single-sourced here (2026-07-23) so both pack callers get it: `publish-workspace.ts` keeps its own
  * pre-pack invocation as the documented safety net (see agents.md "symlinks in the publish tarball"),

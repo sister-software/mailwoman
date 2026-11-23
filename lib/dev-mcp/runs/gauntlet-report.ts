@@ -44,7 +44,7 @@ export interface GauntletReport {
 	 * candidate table holds only outside the band its tag selects, verbatim.
 	 *
 	 * `null` means the log has no such section, as in a run that stopped early or a layer that prints none.
-	 * An empty list is a read that found no such row, and the two are kept apart.
+	 * An empty list means the section was present and contained no such rows.
 	 */
 	unreachable_by_data: string[] | null
 	/**

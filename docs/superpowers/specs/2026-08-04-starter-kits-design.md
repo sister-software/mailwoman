@@ -6,7 +6,9 @@
 
 ## Problem
 
-The ten-minute trial still asks a developer to assemble a project by hand. Starter kits compress the journey to one command, and template repos make the same journey visible on GitHub. Both surfaces must stay true the way the docs now stay true: single-sourced, executed before shipped.
+The ten-minute trial still asks a developer to assemble a project by hand. A starter kit sets up the same
+project with one command. Its GitHub template shows what the command creates. Use one source for both
+and run the example before publishing it.
 
 ## Decisions (operator-approved)
 
@@ -20,7 +22,7 @@ The ten-minute trial still asks a developer to assemble a project by hand. Start
 
 - **`templates/<kit>/`** — a complete minimal project: `package.json` with versions **stamped at publish time** from the workspace release (never `latest`), a first-run script opening with `mailwoman doctor`, the kit's worked example lifted from its tutorial, a `smoke.sh` asserting the first command's output, a generated-header README. Shared scaffolding (data-pull bootstrap, doctor-first) lives once under `templates/_shared/` and is composed at build.
 - **`@mailwoman/create`** — prompts: project name, template (skipped when preselected), offer-not-run for `data pull` (print the command, and never download during scaffold). Copy → rename → `npm install` → print next steps. Node floor mirrors the `mailwoman` package's engines.
-- **Shims** — depend on the engine, pass the template name, and no more.
+- **Shims** depend on the engine and pass it the template name.
 - **Repo sync** — a release-time CI job renders each template (stamped versions) and force-pushes to its `mailwoman/starter-*` repo. Repo settings: template flag on, issues off (or a redirect note), the generated banner in the README.
 - **Docs integration** — trial page gains the one-liner entry. Each tutorial links its starter as the skip-the-setup path. Product capabilities links the org's starter repos.
 

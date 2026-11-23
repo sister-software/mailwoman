@@ -21,11 +21,11 @@ We spent hours on each of these:
 
 **Stale browser cache.** We'd recently updated the model from 25 MB (old tokenizer) to 29 MB (new tokenizer). The old model with the wrong tokenizer produces exactly this symptom. We added cache-busting query params, migrated assets to a CDN, and verified file sizes. The served sizes matched.
 
-**Tokenizer mismatch.** The v0.5.3 model uses a 48K-vocab tokenizer but an older 16K-vocab tokenizer was briefly deployed. We verified hashes, and the deployed tokenizer was the 48K one.
+**Tokenizer mismatch.** The v0.5.3 model uses a 48K-vocab tokenizer but an older 16K-vocab tokenizer was briefly deployed. The hashes confirmed that the deployed tokenizer was the 48K version.
 
 **Model version drift.** We have four model versions on the CDN, and the page might have loaded the wrong one. We added a version selector to the demo page and confirmed v0.5.3 was selected and loaded.
 
-**Browser-specific WASM numerics.** Safari's WASM implementation might handle int8 quantization differently. We tested WASM on Safari, and it worked perfectly. The problem was specific to WebGPU.
+**Browser-specific WASM numerics.** Safari's WASM implementation might handle int8 quantization differently. The WASM backend produced the expected output on Safari. The problem was specific to WebGPU.
 
 ## Why Playwright couldn't catch it
 
@@ -42,7 +42,7 @@ onnxruntime-web          → ort.bundle.min.mjs     → JSEP (old, broken)
 onnxruntime-web/webgpu   → ort.webgpu.bundle.min.mjs → Native EP (fixed)
 ```
 
-The JSEP (JavaScript-based execution provider) has a [`Slice` kernel bug](https://github.com/microsoft/onnxruntime/issues/25227) that produces incorrect results when reversing a tensor on a specific axis. This corrupts the dequantization of int8 weights. The bug is worse on Safari's Metal backend than on Chrome's Dawn/Vulkan backend, and in our case Chrome's output happened to look correct.
+The JSEP (JavaScript-based execution provider) has a [`Slice` kernel bug](https://github.com/microsoft/onnxruntime/issues/25227) that produces incorrect results when reversing a tensor on a specific axis. This corrupts the dequantization of int8 weights. The bug is worse on Safari's Metal backend than on Chrome's Dawn/Vulkan backend. In our case Chrome's output happened to look correct.
 
 The native WebGPU EP handles the same operations correctly on every backend we tested: Chrome, Safari macOS and iOS Safari.
 
@@ -53,7 +53,7 @@ The native WebGPU EP handles the same operations correctly on every backend we t
 + import * as ort from "onnxruntime-web/webgpu"
 ```
 
-The fix changes one line, and the API is identical. Session creation, tensor I/O, and provider fallback all work the same way. The native bundle is also smaller (113 KB vs 405 KB).
+The one-line fix keeps the same API. Session creation, tensor I/O, and provider fallback all work the same way. The native bundle is also smaller (113 KB vs 405 KB).
 
 After this change, the model produces correct results on Chrome, Safari macOS, and iOS Safari. All three run on WebGPU without needing the WASM fallback.
 

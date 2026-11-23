@@ -138,8 +138,9 @@ export class WorkerHost implements AsyncDisposable {
 	 * The start in progress, from the fork to the ready message.
 	 *
 	 * Every start shares it.
-	 * A worker that exits before ready fails this start, and that failure goes to the
-	 * start's caller, so the exit handler forks no second worker for it.
+	 * If the worker exits before its ready message, the caller waiting for it receives the start failure.
+	 *
+	 * The exit handler starts a replacement only after a worker has become ready.
 	 */
 	#starting: Promise<void> | null = null
 

@@ -7,8 +7,8 @@ description: Every runtime flag on the parse→resolve surface, with its default
 
 [SCOPE](../SCOPE.mdx), invariant 5, sets the policy: a runtime flag is a temporary measurement instrument. Every default-off feature exists to be measured. At each consolidation, a feature either
 becomes default-on with an eval result, stays explicitly experimental with a stated blocker, or is
-retired. This register records each flag's disposition. Every flag needs a row here, and a new flag
-lands with its row in the same PR.
+retired. This register records each flag's disposition. Add a row in the same pull request that
+introduces the flag.
 
 The list comes from option surfaces checked on 2026-07-02 (`CreateRuntimePipelineOpts`, `PipelineOpts`,
 `ClassifierOpts`, `ResolveOpts`, `ParseOpts`, `NeuralAddressClassifierConfig`, `CreateScorerOpts`,

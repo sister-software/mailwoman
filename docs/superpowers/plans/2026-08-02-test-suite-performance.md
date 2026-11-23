@@ -4,7 +4,7 @@
 
 **Goal:** Reduce `test.yml` green wall-clock from 6m29s to ~2m00–2m15s, and make the evidence-lexicons check invariant to gazetteer size.
 
-**Architecture:** The plan makes five independent changes, ordered by how certain their payoff is. Two are CI configuration: an Actions cache prune and a cache for the compiled `out/` tree. One moves derived weights artifacts from GitHub's cache service to the local data root that the self-hosted runner already has. One splits the test file that takes 93% of the slow leg's runtime into layers: a fast fixture test on every PR, and the full-scale build as a path-conditional job, a nightly run, and a release run. One hoists repeated model loads in `neural/test/weights.test.ts`.
+**Architecture:** Prune the Actions cache and cache the compiled `out/` tree. Move the derived weights from GitHub's cache service to the local data root on the self-hosted runner. The evidence lexicon tests took 236.9 seconds of the 253-second slow test job. Run a small fixture on every PR. Run the full test when the evidence lexicon build changes, each night and at release. Share repeated model loads in `neural/test/weights.test.ts`.
 
 **Tech Stack:** GitHub Actions, `gh` CLI, vitest 4.1.10, `node:sqlite` (`DatabaseSync`), TypeScript run directly under Node 24 (type stripping without flags), yarn 4.17.0.
 

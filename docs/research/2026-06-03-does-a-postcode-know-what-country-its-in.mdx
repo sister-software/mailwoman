@@ -17,7 +17,7 @@ This post is mostly about a larger question that followed: whether a postcode ca
 
 Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer. You hand it `DE` and it searches the German one. It works, but production input doesn't come with the country. You parse the address because you _don't_ know where it is yet.
 
-The postcode is the most information-dense token in an address. Its five or six characters encode a routing hierarchy, a region, and frequently a neighborhood. We already extract it before the neural parser runs. We wanted the postcode to _tell_ the resolver which country to search. That would let us delete the flag, and it would also give the street-vocabulary check the locale signal it needed.
+The postcode is the most information-dense token in an address. Its five or six characters encode a routing hierarchy, a region, and frequently a neighborhood. We already extract it before the neural parser runs. We wanted the postcode to _tell_ the resolver which country to search. The same country signal could replace the flag and tell the street-vocabulary check which words to use.
 
 That plan raised three questions:
 
@@ -33,9 +33,9 @@ When a decision is larger than it looks, we run it past a second model (a differ
 
 The second opinion argued that the street-vocabulary check was a symptom of a larger gap. A locale condition would fix that helper while leaving the larger gap in place: the codebase had no _single, early, reliable place_ to decide the country and share the result. We had three partial answers in different places: the extractor computed a country posterior from the gazetteer, a rule-based stage guessed locale from the postcode's shape, and the model eventually made a learned guess. No component defined which answer was authoritative or how the three related.
 
-The resulting design had one central idea: **share the postcode data between modules instead of merging the modules.** Every address system in our reference package already defines its own postcode shape. The one new piece we built is the _inverse_ of those shapes, a function that takes a postcode and asks every system whether the postcode matches its shape. A bare `68161` returns `[us, de, fr]`, because a five-digit shape belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. The two stages do not call each other. They share a table, and the table scales as countries are added.
+The resulting design had one central idea: **share the postcode data between modules instead of merging the modules.** Every address system in our reference package already defines its own postcode shape. The one new piece we built is the _inverse_ of those shapes, a function that takes a postcode and asks every system whether the postcode matches its shape. A bare `68161` returns `[us, de, fr]`, because a five-digit shape belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. The two stages do not call each other. Both callers use the same table. The table grows as more countries are added.
 
-The rest of the design followed. A small fused "locale prior" object holds the country evidence and passes it to the resolver. The resolver always accepts that object's _shape_, and the code that _produces_ it can be swapped (a cheap pre-pass today, the trained model later).
+The rest of the design followed. A small fused "locale prior" object holds the country evidence and passes it to the resolver. Both a cheap pre-pass and a future trained model can produce the same object for the resolver.
 
 Before building any of it, we tried to disprove the assumption the design depended on.
 

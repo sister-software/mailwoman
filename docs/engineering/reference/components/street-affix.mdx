@@ -6,8 +6,8 @@ description: How the parser recognizes a street type word such as Street, Rd, Av
 # Street affixes
 
 A street affix is a word that marks a street's type or direction: `Street`, `Rd`, `Avenue`, `rue`,
-`Calle`, `Straße`, `N`. The parser tags it `street_prefix` or `street_suffix`, and both tags are
-children of `street` in [`SCHEMA.mdx`](../SCHEMA.mdx). The glossary reserves _designator_ for the
+`Calle`, `Straße`, `N`. The parser tags it `street_prefix` or `street_suffix`. Both are children of
+`street` in [`SCHEMA.mdx`](../SCHEMA.mdx). The glossary reserves _designator_ for the
 leading word of a unit phrase (`Apt`, `Suite`, `Floor`), which has its own page.
 
 ## The signals
@@ -88,8 +88,8 @@ observed under `en-GB` with the shipped weights on 2026-10-11, through `mwdev_di
 | `10 St, London`                | `house_number "10"`, `street "St"`, `locality "London"`          |
 | `Avenue, Paris`                | `street_prefix "Avenue"`, `street "Paris"` (0.52)                |
 
-**A lone affix becomes the whole street.** `Road` and the `St` in `10 St, London` have no
-neighboring word that could take the `street` tag, and the decoder tags the affix itself `street`.
+**A lone affix becomes the whole street.** The decoder tags `Road` and the `St` in `10 St, London`
+as `street` because neither affix has a neighbor that can take the tag.
 The street-miss fallback acts on such a span only when the geocode returns a null coordinate and
 no fork was declared.
 

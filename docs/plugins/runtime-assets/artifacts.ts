@@ -5,9 +5,8 @@
  *   Build-time utilities for the runtime-assets plugin, running in Node.js only
  *   (Docusaurus config/plugin context) and never bundled into the client.
  *
- *   Everything here resolves through `@mailwoman/core/module/resolve-from` keyed
- *   on this file's `import.meta.url`, and no code touches `import.meta.resolve`,
- *   because Docusaurus's CommonJS transform rewrites the former and cannot parse the latter.
+ *   Resolve each path through `@mailwoman/core/module/resolve-from` using this file's `import.meta.url`.
+ *   Docusaurus's CommonJS transform rewrites `import.meta.url` and cannot parse `import.meta.resolve`.
  *   Only a docs build can verify a change to that.
  */
 

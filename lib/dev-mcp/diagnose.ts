@@ -162,7 +162,7 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
  * The `postal` generation reports every postcode as `postcode`.
  * The other postcode formats belong to the `legacy` generation.
  *
- * The detector reads the table by the hit's format string, and a format without an entry is left unchecked.
+ * The detector checks a hit only if its format string has an entry in the table.
  */
 const COMPONENT_FOR_KNOWN_FORMAT = {
 	postcode: "postcode",
@@ -951,7 +951,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
 	// Reachability reads the same candidate table the engine resolves against.
-	// A table that doesn't open leaves every reading `null`, and the summary states that it went unread.
+	// If the table fails to open, each reading is `null` and the summary reports the read failure.
 	const candidateDB = await openSealedArtifact(
 		await resolveCandidateDBPath(config.candidate_db, config.data_root ?? dataRootPath())
 	)

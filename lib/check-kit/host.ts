@@ -189,11 +189,13 @@ export interface HostAcquisition {
  * The CI wait holds no lock, so a check waiting on CI blocks no other check.
  * The lock serializes heavy checks: two checks that see CI finish together take it one after the other.
  *
- * When the CI wait expires the check still takes the lock and runs, and the acquisition records that.
- * The lock wait gets what the CI wait left of the bound, and always one attempt.
+ * When the CI wait expires, the check still attempts to take the lock.
+ * The acquisition records the timeout.
  *
- * When CI can't be read the wait stops, because further reads are likely to fail
- * the same way, and the reading records the error.
+ * The lock wait uses the time left after the CI wait and makes at least one attempt.
+ *
+ * A CI read error stops the wait because another read will likely fail the same way.
+ * The reading records the error.
  *
  * @param noWait Read CI once and try the lock once, without waiting on either.
  */

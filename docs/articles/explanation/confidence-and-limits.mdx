@@ -29,7 +29,7 @@ The [parse inspection tutorial](../tutorials/inspect-a-parse.mdx) prints node sc
 
 `createCalibrator` can map a raw span score through an isotonic lookup table when a caller supplies the table to a direct classifier parse. The default runtime parse doesn't pass a calibration table. A mapping fitted on held-out labels can support a frequency interpretation only for a model and population where the mapping has been evaluated.
 
-The published `@mailwoman/neural-weights-en-us@11.0.0` package identifies its model as version `10.8.0`. Its bundled `calibration.json` identifies `model_version` as `5.3.0`. The bundled table was therefore fitted to an older model, and calibration for the 10.8.0 model is unknown. The model card records calibration figures from that earlier fit. Those figures describe the 5.3.0 model. Treat the default node score as a model output whose current accuracy mapping is unknown. A decision threshold needs an independently checked calibration or outcome study for the exact model, locale, input population, and cost of an incorrect acceptance.
+The published `@mailwoman/neural-weights-en-us@11.0.0` package identifies its model as version `10.8.0`. Its bundled `calibration.json` identifies `model_version` as `5.3.0`. The bundled table was therefore fitted to an older model. Calibration for the 10.8.0 model is unknown. The model card records calibration figures from that earlier fit. Those figures describe the 5.3.0 model. Treat the default node score as a model output whose current accuracy mapping is unknown. A decision threshold needs an independently checked calibration or outcome study for the exact model, locale, input population, and cost of an incorrect acceptance.
 
 ## Place candidates and ambiguity markers
 
@@ -45,7 +45,7 @@ For some bare place-name queries, the geocoder emits a `declared_ambiguity` inte
 
 ## Unresolved results and abstention
 
-The parser returns a tree and records caught stage failures in `faults`. A classifier failure can leave that tree empty. The parser doesn't provide a general address-validity verdict. The geocoder can return `lat: null`, `lon: null`, and `epistemic_status: unresolved` when it has no coordinate. It can also return a coordinate with an ambiguity or coarser-answer advisory. These states report different conditions, and an advisory doesn't automatically suppress the coordinate.
+The parser returns a tree and records caught stage failures in `faults`. A classifier failure can leave that tree empty. The parser doesn't provide a general address-validity verdict. The geocoder can return `lat: null`, `lon: null`, and `epistemic_status: unresolved` when it has no coordinate. It can also return a coordinate with an ambiguity or coarser-answer advisory. An advisory can accompany a selected coordinate.
 
 An application should define the evidence it needs before accepting a result. A routing task may require an address-point coordinate from an acceptable source. A regional count may accept an administrative result. If the result has unresolved coordinates, unresolved identity, or an evidence tier below the application's requirement, the application can request more input or send the record for review.
 

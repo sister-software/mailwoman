@@ -15,9 +15,9 @@ For the European comparison we added a third system: Pelias, through geocode.ear
 
 ## How we kept score
 
-We graded on where the address lands on Earth, as we argue geocoders should be graded, and ignored whether the model's labels matched ours. OpenAddresses ships a truth coordinate with every row. For each address we parse it, resolve it to a point, and measure the great-circle distance to the true location. A result within 25 kilometers counts as correctly placed, and a no-result counts as a miss, the same as a wrong answer. Each system gets one number on the same real addresses, and each gets the same country hint.
+We graded on where the address lands on Earth, as we argue geocoders should be graded, and ignored whether the model's labels matched ours. OpenAddresses ships a truth coordinate with every row. For each address we parse it, resolve it to a point, and measure the great-circle distance to the true location. We count a result as correct if it lies within 25 kilometers. Empty results and results outside that radius count as misses. Each system receives the same real addresses and country hint. We report one score per system.
 
-This standard is stricter than the one we'd been using internally. Our internal "resolve rate" counted any resolution as a success, including results that landed a region away. Re-graded at 25 km, the internal metric had overstated our European results by fifteen to twenty points. The benchmark's first effect was to correct our own scoreboard, and we now grade the coordinate.
+This standard is stricter than the one we'd been using internally. Our internal "resolve rate" counted any resolution as a success, including results that landed a region away. Re-graded at 25 km, the internal metric had overstated our European results by fifteen to twenty points. The benchmark exposed the discrepancy in our own scores. We now grade the coordinate.
 
 ## US results
 
@@ -33,17 +33,17 @@ Empty results are easier to fix than wrong ones. We investigated why the results
 
 ## Empty results, cause one: the tokenizer splits towns at diacritics
 
-The first cause is fragmentation. The subword tokenizer splits a town like **Grudziądz** at the accented `ą` into `Grudzi` + `dz`. Neither half is a place, so neither resolves, and the whole address fails even though the full town name is in the input.
+The first cause is fragmentation. The subword tokenizer splits a town like **Grudziądz** at the accented `ą` into `Grudzi` + `dz`. Neither half resolves to a place. The address fails even though the input contains the full town name.
 
 The unresolved results include Polish, Czech, and Portuguese towns that the model split at a diacritic and then couldn't find.
 
 ## Empty results, cause two: no Polish or Czech postcodes
 
-The second cause was missing data. We had no postcodes for Poland and Czechia. WhosOnFirst, our gazetteer's main source, has rich postcode coverage for some countries and none for others, and PL and CZ had zero rows. A Polish address whose town the model _did_ read correctly could still fail, because the postcode it could have resolved by was absent from the database.
+The second cause was missing data. We had no postcodes for Poland and Czechia. Who's On First, our main gazetteer source, had no postcode rows for either Poland or Czechia, despite extensive postcode coverage for some other countries. A Polish address whose town the model _did_ read correctly could still fail, because the postcode it could have resolved by was absent from the database.
 
 ## Raw-text word recovery and a GeoNames postcode fill
 
-For the first cause, when a parse resolves no place, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match because a specific town name holds more information than an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered towns land about 1.8 km from the truth, and not in a place with the same name elsewhere in the country.
+For the first cause, when a parse resolves no place, the resolver now returns to the raw text, using the actual characters with diacritics intact instead of the model's subwords. It enumerates the whitespace tokens, matches each against the same-country gazetteer, and takes the longest exact match because a specific town name holds more information than an ambiguous prefix. Before trusting it, we checked that it recovered _real coordinates_. The recovered town coordinates landed about 1.8 km from the expected locations.
 
 For the second cause, we imported the missing postcodes from GeoNames: about 73,000 for Poland and 15,000 for Czechia, each with its own centroid and an open license. We added them directly to the gazetteer without a model change or retrain.
 
@@ -51,7 +51,7 @@ We didn't expect the two fixes to mostly solve the same cases by different route
 
 ## The third fix: stop being confidently wrong
 
-At 88%, a set of misses remained, and these were wrong results instead of empty ones. "06260 Saint-Pierre, La Placette 7" came back **617 kilometers** from the truth. Saint-Pierre is one of the most common town names in France, and we'd picked the wrong one. The postcode, 06260, had resolved correctly to the Alpes-Maritimes, where the address is. The coordinate picker trusted the town name and never checked it against the postcode in the same parse, so it discarded the correct answer.
+The remaining misses after we reached 88% were placements at the wrong location. "06260 Saint-Pierre, La Placette 7" came back **617 kilometers** from the truth. Saint-Pierre is one of the most common town names in France, and we'd picked the wrong one. The postcode, 06260, had resolved correctly to the Alpes-Maritimes, where the address is. The coordinate picker trusted the town name and never checked it against the postcode in the same parse, so it discarded the correct answer.
 
 We added that check. When a town lands far from its own postcode, the picker chooses the town of that name nearest the postcode instead. If none is close, it falls back to the postcode's own point. This applies the consistency check from recovery to the main path, without a model change. It raised Europe from 88% to **94%**. After we extended the GeoNames postcode fill to Portugal, Austria, and Australia, it also raised Australia from 35% to 65%, because a resolved postcode gave the disambiguation a reference point.
 

@@ -83,8 +83,9 @@ export function configFor(value: Surface) {
  * Three causes produce one empty set and want three different repairs.
  * A path absent from the working tree is a typo or a stale reference.
  *
- * A path an ignore rule covers is a build output, and linting one would report
- * findings its author cannot act on.
+ * Ignore rules cover build outputs.
+ * Vale would report findings in those outputs that the author cannot act on in the source file.
+ *
  * A path present and tracked by git is one this surface excludes by design.
  *
  * That third case is the only one where an empty result is correct.

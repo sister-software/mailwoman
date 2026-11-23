@@ -262,8 +262,9 @@ async function runBuildDryRun(tree: string): Promise<string> {
  * when `out/` is absent or older than the sources in the workspaces it covers.
  * When the tree has its own install, the tree's `tsc -b --dry` must also report no project to build.
  *
- * That reading covers every project `yarn compile` builds, including the root `lib/` project the
- * modification-time reader leaves out, and it judges each project from the build information `tsc` keeps.
+ * The dry run uses the build information TypeScript keeps for each project.
+ * It covers every project `yarn compile` builds, including the root `lib/` project
+ * the modification-time reader leaves out.
  *
  * @param dryRun Read `tsc -b --dry`, or `null` when the tree has no install to run it with.
  */

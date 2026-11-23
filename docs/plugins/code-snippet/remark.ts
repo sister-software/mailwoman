@@ -9,8 +9,9 @@
  *   `yarn compile` type-checks it against the workspace packages, and a release smoke test can run it.
  *
  *   A path resolves against the page's directory.
- *   A missing file, and a fence that holds text of its own beside a `file=` attribute,
- *   fail the build, so a page never shows a second copy that can drift.
+ *   The build fails if the file is missing or the fence contains text alongside its `file=` attribute.
+ *
+ *   The empty fence keeps a second copy of the example out of the page.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

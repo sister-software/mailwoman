@@ -22,9 +22,9 @@ creates the deploy and cache-purge tokens as account-owned tokens and writes the
 
 `mwops check <name> [paths…]` runs one registered repository check (`lib/check-kit/registry.ts`) in this checkout
 without a shell and exits with the check's status. The output goes to a log under the cache root, or under
-`--log-dir`. The command prints one summary line, the failing tests or checks, and the log path, and `--json` prints
-the result object. A heavy check waits for queued or in-progress CI runs, then takes the host lock under the cache root, which every
-checkout on the host shares, within one `--max-wait-minutes` bound (default 20). It holds no lock while it waits for
+`--log-dir`. The command prints one summary line, the failing tests or checks, and the log path. Use `--json` to print
+the result object. A heavy check waits for queued or in-progress CI runs before taking the lock under the shared cache
+root. Both waits use one `--max-wait-minutes` bound (default 20). The check holds no lock while it waits for
 CI, so a check waiting on CI blocks no other check. `--no-wait` refuses at once
 when the lock is held. A lock whose holder process is gone, or whose pid now belongs to a process with another start time,
 is released with a message. `mwops check preflight` runs the direct-push set from `AGENTS.md`, followed by
@@ -35,8 +35,8 @@ exits 0 when the host is idle, 3 when the bound expired with it busy, and 4 when
 runs over the current tree run only through the tests under `lib/repo-health`. `mwops check health-tree` runs those
 tests with Vitest and reads its JSON report.
 
-`mwops worktree status --path <dir>` reads the working tree that contains `<dir>` from this checkout, which has its own
-install. It reports three prerequisites, each as satisfied, missing, or unread with the reason: `node_modules` as a
+Run `mwops worktree status --path <dir>` from a checkout with its own install. The command reads the working tree that
+contains `<dir>`. It reports three prerequisites, each as satisfied, missing, or unread with the reason: `node_modules` as a
 directory of the tree's own, `out/` no older than the sources, and every weights workspace `copy-weights` writes
 holding the untracked files its `files` array declares. When the tree has its own install, `out/` counts as current
 only when the tree's `tsc -b --dry` also reports every build project up to date. Test projects are `noEmit`. The dry
@@ -49,7 +49,7 @@ checkout's file. It reads the contents of neither file. It exits 0 when the tree
 
 `mwops worktree prepare --path <dir>` runs `yarn install --json`, `yarn compile` and
 `yarn mwops release copy-weights` in that tree, each only when its prerequisite isn't satisfied, under one host lock.
-Each step runs through the check runner, which writes its log under the cache root. A failing step stops the sequence.
+The check runner runs each step and writes its log under the cache root. A failing step stops the sequence.
 A compile that fails with a missing-export error against a `@mailwoman/*` or `#` module runs once more. The step
 result records the first run and its log. TypeScript 7's `tsc -b` has failed that way on a tree whose `out/`
 predated a change to `@mailwoman/core`'s exports, then passed with no source change.
@@ -64,8 +64,8 @@ root's `checks/ci-logs` directory, and the command prints the failing tests the 
 that the log held none. A failed check that isn't a GitHub Actions job, such as CodeQL, has no job log. Its link ends in
 `/runs/<id>`, and the command reads that check run's annotations through
 `gh api repos/sister-software/mailwoman/check-runs/<id>/annotations` and prints each one's level, path, start line,
-title and message under the check. When that call fails or returns zero annotations, the command says which, and the
-check stays failed.
+title and message under the check. The command reports a failed call separately from a successful call that returned
+zero annotations. The check stays failed in either case.
 
 `mwops probe <workspace> --get <path> [--get <path> …]` starts one workspace's server from this checkout without a
 shell, bound to 127.0.0.1 with `--port 0`, and waits for the line that states `listening on http://<host>:<port>`. It
@@ -74,7 +74,7 @@ SIGKILL after 15 seconds. It then checks by process id that neither the server n
 are read from the checkout: each workspace whose `cli/main.ts` hands a `serve` command to `runDropInCLI` runs from
 source, and `api` runs the compiled `mailwoman serve --cpus 1`, whose command imports `@mailwoman/api`. Each request
 reports its status, content type, duration and body up to `--max-bytes` with a `truncated` marker, or the value at
-`--json-path` in a JSON body, which an absent path reports as absent. A request without a response reports the
+`--json-path` in a JSON body. The result marks a missing JSON path as absent. A request without a response reports the
 socket's cause code, such as `ECONNREFUSED`.
 
 `--env NAME=value` adds a value to the inherited environment, and `--env-file <file>` passes Node's `--env-file` to the

@@ -10,9 +10,9 @@ for the license worker (`packages/core/lib/worker-bundle.integration.test.ts` is
 
 ## The problem
 
-The docs site bundles the browser geocoder through webpack, and the only way it builds today is a
-Docusaurus plugin, `docs/plugins/demo-assets/`, whose `webpack-policy.ts` rewrites module resolution for
-`@mailwoman/*`. Counted on 2026-09-06 against `c79757bdf`:
+The docs site's webpack build can bundle the browser geocoder only because the Docusaurus plugin at
+`docs/plugins/demo-assets/` rewrites module resolution for `@mailwoman/*` in `webpack-policy.ts`.
+The table counts those entries on 2026-09-06 against `c79757bdf`:
 
 | Entry kind                                                                                                                   | Count | What it hides                                                             |
 | ---------------------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------- |
@@ -26,8 +26,8 @@ design it would need the same eighteen entries in `vite.config.ts`. A workaround
 bundler is unlikely ever to be removed.
 
 `rspack` stays disabled in `docs/docusaurus.config.ts` for the same reason: it refuses the `node:`
-imports webpack is told to stub. The docs build is slower than necessary because of packaging defects
-in the packages, and Docusaurus isn't the cause.
+imports webpack is told to stub. Those packaging defects keep the docs build on webpack and account
+for the extra build time.
 
 ## Decisions taken
 
@@ -86,9 +86,9 @@ follow the classifier's lazy `import("#classifier/loader")` regardless of `webpa
 Every bundle walk lives in one place: the `bundle-graph` check in `@mailwoman/repo-health`
 (`packages/repo-health/lib/checks/bundle-graph.ts`), which `yarn health` runs in the CI static leg after
 `yarn compile`. The check is a table of rows. Each row is an entry specifier with the platform and
-conditions a consumer bundles it under. `esbuild` bundles the row, and the check reads the metafile for
-a builtin on a static edge, a dynamic builtin import that no row lists, and files the row requires the bundle
-to include or to omit. The same table now holds the two license-key rows under
+conditions a consumer bundles it under. `esbuild` bundles the entry with those conditions. The check reads
+the resulting metafile for static imports of builtins, unlisted dynamic imports of builtins, and files the row
+requires the bundle to include or omit. The same table now holds the two license-key rows under
 `["workerd", "worker", "browser"]` that `packages/core/lib/worker-bundle.integration.test.ts` held, and
 the classifier row that `packages/neural/lib/browser-graph.test.ts` held. Both files are gone, so
 the repository has one esbuild walk rather than three. `packages/neural/lib/web/browser-slo.integration.test.ts`

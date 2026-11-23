@@ -89,7 +89,7 @@ objective_ and are decided together. For example, the overlapping name candidate
 committed before the inter-span grammar runs. Which candidates are real depends on which
 segmentation makes the whole address consistent.
 
-**Atomicity restricts the signature of each term, and it still permits internal grammar.**
+**Atomicity restricts what each term can read across spans.**
 `φ(i, j, t)` may read anything inside `x[i..j]`, including internal syntax. `ψ` reads spans only as
 atoms. No term crosses a span boundary. A parser may know that `of` in `Port of Spain` is an
 adposition. That knowledge raises `φ` for the whole span as a well-formed toponym and contributes
@@ -101,8 +101,8 @@ the `AddressTree` under `PARENT_OF`. `REL=address` equals the resolver's contain
 `number → street` is an existing `PARENT_OF` edge. The containment interface currently lacks one
 production: a POI under a POI (`Cafe at St Mary's` located at `Church of St Mary the Virgin`).
 `containment.ts:61` gives `venue` only the parents `["street", "locality"]`. The Heathrow sub-venue
-case was handled by widening `unit`'s parents instead of adding a venue→venue edge. That addition
-is schema work, and this page tracks it as open.
+case was handled by widening `unit`'s parents instead of adding a venue→venue edge. The schema
+still needs an edge from venue to venue.
 
 ## 3. Toponym-internal grammar and vocabulary
 

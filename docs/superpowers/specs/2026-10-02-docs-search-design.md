@@ -63,9 +63,9 @@ the file reaches the user compressed whichever content types the host compresses
 `zlib.gzipSync` at level 9 writes it.
 
 Pages are emitted as `<route>.html` because `trailingSlash` is `false`. The writer reads every
-`.html` under the build directory except `404.html`, derives the URL by removing the extension and a
-trailing `/index`, and extracts records with the rules below. `/404.html` is skipped, and any other
-page that fails to read throws.
+`.html` under the build directory except `404.html`. It derives each URL by removing the extension
+and any trailing `/index`, then applies the extraction rules below. An unreadable page causes the
+writer to throw.
 
 Extraction rules, kept from the Algolia crawler config:
 
@@ -135,7 +135,7 @@ and a `node:sqlite` adapter satisfies it in tests.
    `terms_trigram` is queried with the `OR` of the token's three-character windows for 10 candidates,
    and the candidate with the smallest Damerau-Levenshtein distance that's at most 2, and at most
    one for a token under 6 characters, replaces the token. The primary query runs again with the
-   corrected tokens, and the response reports the correction. A term that shares no three-character
+   corrected tokens. The response reports the correction. A term that shares no three-character
    window with the token is never proposed, so a transposition inside a word of four letters or fewer
    isn't corrected.
 4. Hits are the first record per URL, up to `limit`, with a 160-character snippet around the first
@@ -166,8 +166,8 @@ gains `strategy: "range" | "whole"`. For `whole`, the worker fetches the URL, in
 `DecompressionStream("gzip")` when its first two bytes are the gzip magic number `1f 8b`, and opens the
 bytes with `sqlite3_deserialize` into an in-memory database. The body's leading bytes decide inflation, so the
 open works whether or not the host sends `Content-Encoding: gzip`. The open then reads
-`sqlite_master`, so a corrupt file fails the open rather than the first query. `bytesRead()` reports the decompressed size. The index therefore runs off the main
-thread, and the modal stays responsive during a query.
+`sqlite_master`, so a corrupt file fails the open rather than the first query. `bytesRead()` reports the
+decompressed size. The worker keeps index queries off the main thread so the modal stays responsive.
 
 The docs site stages the worker and runtime under `/mailwoman/sqlite/` already, through the
 `runtime-assets` plugin.
@@ -185,8 +185,7 @@ neither the index nor sqlite-wasm. The modal:
 - states the condition in words when the request fails or returns zero hits;
 - announces "Loading the search index…" when a request has run for 300 ms without a response.
 
-The modal is built from native elements, and the platform supplies the behavior those elements
-define.
+The modal uses native elements for standard dialog behavior.
 
 - The container is a `<dialog>` opened with `showModal()`. The browser supplies the focus trap, the
   inert background, the `::backdrop`, the close on `Escape` and the return of focus to the navbar
@@ -215,7 +214,7 @@ handle. The `algolia` block is deleted from `docs/docusaurus.config.ts`.
 
 The query code and the index writer live in the docs workspace, under `docs/src/search/` and
 `docs/plugins/search-index/`, because the docs site is their only consumer. The record and response
-types live in `@mailwoman/react/search/types`, and the docs code imports them with `import type`.
+types come from `@mailwoman/react/search/types`. The docs code uses `import type` for both.
 
 ## Tests
 
@@ -223,8 +222,8 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
   heading ids, stable ids and hashes, the default category, `noindex` and article-less pages.
 - `docs/plugins/search-index/write-index.test.ts`: writes an index from fixture records, reopens it with
   `node:sqlite`, and checks the row counts, the `terms` table and the gzip round trip.
-- `docs/src/search/lexical.test.ts`: token filtering, quoting, prefix marking, and that every FTS5
-  syntax case (`"`, `*`, `:`, `-`, `AND`, `NEAR(`, `(`, `^`) returns rows or an empty list.
+- `docs/src/search/lexical.test.ts` checks token filtering, quoting and prefix marking. It also verifies
+  that every FTS5 syntax case (`"`, `*`, `:`, `-`, `AND`, `NEAR(`, `(`, `^`) returns rows or an empty list.
 - `docs/src/search/correct.test.ts`: a one-character typo is corrected, a word under six characters
   accepts one edit only, and a token with no close term is left as is.
 - `docs/src/search/snippet.test.ts`: snippet bounds and highlight ranges.
@@ -239,7 +238,7 @@ types live in `@mailwoman/react/search/types`, and the docs code imports them wi
   stale-response ordering, the loading announcement, and the live region.
 - `docs/test/e2e/search.spec.ts`, the Playwright `search` project, opens the modal on the built site,
   types a query, and asserts a hit. The docs-build workflow runs it with `yarn workspace @mailwoman/docs
-  test:search` after the acceptance queries, and the Playwright config serves `docs/build` on port 7770.
+  test:search` after the acceptance queries. The Playwright config serves `docs/build` on port 7770.
 
 ## Acceptance list
 
