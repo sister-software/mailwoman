@@ -12,8 +12,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import type { StreetCentroidDatabase } from "#street"
-import { SQLiteStreetNameLookup } from "#street"
+import type { StreetCentroidDatabase } from "#labels/street"
+import { SQLiteStreetNameLookup } from "#labels/street"
 
 let dir: TemporaryDirectory
 let dbPath: PathBuilder

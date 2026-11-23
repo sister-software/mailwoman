@@ -7,7 +7,7 @@
 
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 
-import { parseStreetLocale, type StreetLocale } from "#street/normalize"
+import { parseStreetLocale, type StreetLocale } from "#labels/street/normalize"
 
 /**
  * A table from a language or country code to the street locale each row spells.

@@ -23,8 +23,8 @@
  */
 
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 

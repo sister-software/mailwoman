@@ -143,7 +143,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * The name of one row of {@link STREET_KEY_RULES}, the rules a database's street,
  * locality and house-number keys are built under.
  *
- * Two functions produce one: `streetLocaleForCountry` in `#street/locale`, for a country,
+ * Two functions produce one: `streetLocaleForCountry` in `#labels/street/locale`, for a country,
  * and {@link parseStreetLocale}, for a spelling an artifact manifest records or a command line passes.
  * A string literal is therefore refused where a street locale is expected,
  * and code reads a locale's behavior from its row with {@link streetKeyRulesOf}.

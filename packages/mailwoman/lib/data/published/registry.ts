@@ -28,8 +28,8 @@ import {
 	ServingRole,
 } from "@mailwoman/core/layers"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
-import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
+import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 
 import { bundleArtifactRole, bundleArtifactSubdivision, BUNDLES, type DataBundle } from "#data/published/bundles"
 

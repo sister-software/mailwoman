@@ -15,7 +15,7 @@ import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import { describe, expect, it } from "vitest"
 
 import { deserializeFST, readFSTProvenance, serializeFST } from "#fst"
-import { buildStreetMorphologyFST } from "#street"
+import { buildStreetMorphologyFST } from "#labels/street"
 
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 

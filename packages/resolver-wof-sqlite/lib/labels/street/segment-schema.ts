@@ -19,7 +19,7 @@
 
 import { type Kysely, sql } from "kysely"
 
-import type { RouteKey } from "#street/normalize"
+import type { RouteKey } from "#labels/street/normalize"
 
 /**
  * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side`

@@ -7,13 +7,13 @@ import { populationScoreUnmeasured, referentialFromPopulation } from "@mailwoman
 import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { isPresent } from "@mailwoman/core/values/objects"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import {
 	rankByPrimaryPreference,
 	type RankedRow,
 	RERANK_FETCH,
 } from "@mailwoman/resolver-wof-sqlite/ranking/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/ranking/proximity-rerank"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 
 import type { MailwomanLookupLike } from "#browser-cascade"
 import { type RangeDatabase, tableExists } from "#httpvfs/database"

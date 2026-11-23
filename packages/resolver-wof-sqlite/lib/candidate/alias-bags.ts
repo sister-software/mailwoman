@@ -12,8 +12,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
+import { type NameKey, normalizeLocalityForKey, withoutApostropheLikeMarks } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { type NameKey, normalizeLocalityForKey, withoutApostropheLikeMarks } from "#street/normalize"
 
 /**
  * The official name of every current region, keyed `${country id}\0${name key}` →

@@ -19,7 +19,7 @@ import {
 	normalizeHouseNumberForKey,
 	normalizeLocalityForKeyLocale,
 	normalizeStreetForKeyLocale,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

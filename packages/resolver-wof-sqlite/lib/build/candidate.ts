@@ -33,8 +33,8 @@ import {
 	type CandidateDatabase,
 	POSTCODE_PLACETYPE,
 } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Options for {@link buildCandidateTable}.

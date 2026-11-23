@@ -8,7 +8,7 @@
 
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * The farthest apart two records' points may lie, in kilometers, while their localities disagree.

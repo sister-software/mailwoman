@@ -7,8 +7,8 @@ import { describe, expect, it, vi } from "vitest"
 
 import { AddressPointInterpolator } from "#address/point/interpolation"
 import type { AddressPointDatabase } from "#address/point/schema"
-import { StreetInterpolator } from "#street/interpolation"
-import type { StreetSegmentDatabase } from "#street/segment-schema"
+import { StreetInterpolator } from "#labels/street/interpolation"
+import type { StreetSegmentDatabase } from "#labels/street/segment-schema"
 
 type InterpolationFixtureDatabase = StreetSegmentDatabase & AddressPointDatabase
 

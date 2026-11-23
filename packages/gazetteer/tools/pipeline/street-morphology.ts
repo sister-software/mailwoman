@@ -25,8 +25,11 @@
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import {
+	buildStreetMorphologyFST,
+	STREET_MORPHOLOGY_ARTIFACT_FILENAME,
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { buildStreetMorphologyFST, STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, resolvePath } from "path-ts"
 
 export interface BuildStreetMorphologyArtifactOpts {

@@ -4,8 +4,8 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { WOFPostalCityAliasLookup, createPostalCityAliasTable, type PostalCityAliasDatabase } from "#labels/locality"
 import { WOFSQLitePlaceLookup } from "#lookup"
-import { WOFPostalCityAliasLookup, createPostalCityAliasTable, type PostalCityAliasDatabase } from "#postal"
 /**
  * Integration tests for the postal-city alias reader and the coordinate-first scorer wiring.
  */

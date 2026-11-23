@@ -10,8 +10,7 @@ import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
-import type { StreetCentroidDatabase } from "#street/centroid/schema"
+import type { StreetCentroidDatabase } from "#labels/street/centroid/schema"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
@@ -20,7 +19,8 @@ import {
 	streetLocaleForSurface,
 	type StreetLocale,
 	stripArrondissement,
-} from "#street/normalize"
+} from "#labels/street/normalize"
+import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 
 /**
  * The weighted centroid, extent and provenance an aggregate probe returns;

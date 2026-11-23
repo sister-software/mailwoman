@@ -13,7 +13,7 @@ import { ADDRESS_LAYER_COVERAGE_RESOLUTION, type AddressLayerManifest, buildAddr
 import { addressPostcodeKey } from "#address/keys/postcode"
 import type { AddressDetailDatabase, AddressLookupDatabase } from "#address/keys/schema"
 import { AddressNameForm, type AddressRecord } from "#address/record"
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function record(overrides: Partial<AddressRecord> & Pick<AddressRecord, "number" | "streetRaw">): AddressRecord {
 	const streetKey = normalizeStreetForKey(overrides.streetRaw)

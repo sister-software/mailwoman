@@ -14,7 +14,7 @@
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
 import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { isPresent } from "@mailwoman/core/values/objects"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { z } from "zod"
 
 import { fetchWithRetry } from "#browser-runtime/fetch"

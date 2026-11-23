@@ -11,7 +11,7 @@ import {
 	STREET_SEGMENT_COLUMNS,
 	STREET_SEGMENT_STAGE_TABLE,
 	type StreetSegmentDatabase,
-} from "#street/segment-schema"
+} from "#labels/street/segment-schema"
 
 type SegmentFixture = [street: string, postcode: string | null, min: number, max: number, side: string]
 

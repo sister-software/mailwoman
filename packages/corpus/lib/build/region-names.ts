@@ -12,14 +12,14 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isPresent } from "@mailwoman/core/values/objects"
-import { regionKeys } from "@mailwoman/resolver-wof-sqlite/lookup/region-keys"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { regionKeys } from "@mailwoman/resolver-wof-sqlite/labels/region"
 import {
 	normalizeLocalityForKey,
 	withArabicLetterVariantsFolded,
 	type NameKey,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 

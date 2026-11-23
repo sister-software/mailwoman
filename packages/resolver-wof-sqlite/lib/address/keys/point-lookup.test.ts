@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest"
 import { buildAddressLayer } from "#address/keys/build"
 import { openAddressLayerLookup } from "#address/keys/open"
 import { AddressNameForm, type AddressRecord } from "#address/record"
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#street/normalize"
+import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#labels/street/normalize"
 
 function record(number: string, postcode: string | null, locality: string | null, lat: number): AddressRecord {
 	const streetKey = normalizeStreetForKey("Main St")

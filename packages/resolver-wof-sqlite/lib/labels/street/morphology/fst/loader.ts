@@ -29,8 +29,8 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import type { FSTMatcher } from "#fst/matcher"
 import { deserializeFST, readFSTProvenance } from "#fst/serialize"
 import type { FSTProvenance } from "#fst/types"
+import { buildStreetMorphologyFST } from "#labels/street/morphology/fst/builder"
 import { wofDatabasePath } from "#paths"
-import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 
 /**
  * The sealed artifact's canonical filename, identical in the data-root staging dir

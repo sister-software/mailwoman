@@ -9,7 +9,7 @@ import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import { isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { decorateNode } from "@mailwoman/resolver/decorate-node"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 

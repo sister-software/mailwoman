@@ -20,7 +20,7 @@
 
 import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
 
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * The ancestry placetypes that answer for a parsed `region` qualifier,

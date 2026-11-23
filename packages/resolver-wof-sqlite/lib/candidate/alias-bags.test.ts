@@ -21,8 +21,8 @@ import { explodeAliasBags } from "#candidate/alias-bags"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
 import { ALIAS_SEPARATOR } from "#fts"
+import { normalizeLocalityForKey } from "#labels/street"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street"
 
 /**
  * The separator `fts.ts` joins the bag with, space-padded and trailing,

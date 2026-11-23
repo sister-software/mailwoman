@@ -214,11 +214,11 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// Both imports are dynamic so the published CLI doesn't require these optional dependencies.
 		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/labels/street")
 
 		try {
 			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/labels/street")
 		} catch {
 			throw new CommandError(
 				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."

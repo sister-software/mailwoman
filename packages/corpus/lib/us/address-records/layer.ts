@@ -42,7 +42,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/address/subdivision-bounds"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
 import { dirname, resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"

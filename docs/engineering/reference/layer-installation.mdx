@@ -32,7 +32,7 @@ The registry entry is read from the published bundle list, `BUNDLES` in
 `packages/mailwoman/lib/data/published/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
 role, its scope (a country, or an ISO 3166-2 subdivision such as `US-DC`), its role schema version
 and, for a street-keyed role, the street-key normalization it was keyed with
-(`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/street/normalize.ts`, version `1`).
+(`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/labels/street/normalize.ts`, version `1`).
 A registry size is an estimate until a transfer measures it.
 
 A manifest validates an artifact and never selects it. A file activates only when `active.json`

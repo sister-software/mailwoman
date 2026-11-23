@@ -27,7 +27,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	["@mailwoman/resolver", "span-rescore"],
 	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle
 	// never pulls the Node-only siblings that share its directory.
-	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts"].map(
+	...["fst/deserialize-web", "fst/matcher", "fst/types", "labels/street/normalize", "fst/autocomplete", "fts"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
 	["@mailwoman/sqlite", "dialect"],

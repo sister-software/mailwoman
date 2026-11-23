@@ -47,7 +47,7 @@ import {
 	UnreadableReason,
 } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
-import { STREET_KEY_NORMALIZATION, STREET_LOCALES } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { STREET_KEY_NORMALIZATION, STREET_LOCALES } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import {

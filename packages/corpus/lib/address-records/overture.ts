@@ -11,7 +11,7 @@ import {
 	normalizeHouseNumberForKey,
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
 import type { UnitSplitter } from "#adapters/street/unit"

@@ -8,8 +8,8 @@ import type { PathBuilderLike } from "path-ts"
 import { CANDIDATE_ANCESTOR_COLUMNS, CANDIDATE_ANCESTOR_TABLE } from "#candidate/ancestors/schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street/normalize"
 
 function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<number, PlaceAttrs>): Map<number, number> {
 	const regionOf = new Map<number, number>()

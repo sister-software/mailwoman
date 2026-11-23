@@ -36,11 +36,14 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address"
 import { deserializeFST, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/labels/street"
+import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/labels/street/locale"
+import {
+	normalizeLocalityForKey,
+	normalizeStreetForKeyLocale,
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
-import { streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street/locale"
-import { normalizeLocalityForKey, normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ServiceRegistry } from "async-init"
 import type { PathBuilder, PathBuilderLike } from "path-ts"

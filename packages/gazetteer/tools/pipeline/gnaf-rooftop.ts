@@ -49,7 +49,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	streetLocaleForCountry,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"

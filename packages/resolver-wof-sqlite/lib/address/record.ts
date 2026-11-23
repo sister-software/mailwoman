@@ -7,7 +7,7 @@
 
 import type { ADMIN_HIERARCHY_TAGS } from "@mailwoman/codex/component"
 
-import { type NameKey, normalizeLocalityForKey, type RouteKey, type StreetKey } from "#street/normalize"
+import { type NameKey, normalizeLocalityForKey, type RouteKey, type StreetKey } from "#labels/street/normalize"
 
 /**
  * The hierarchy level a place name on an address record states, as the encoder model tags it.

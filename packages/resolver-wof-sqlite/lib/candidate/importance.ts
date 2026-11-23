@@ -41,8 +41,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { CandidateDatabase } from "#candidate/schema"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 import { loadPopulationEstimates, type PlacePopulationEstimateDatabase } from "#schema/place-importance"
-import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * How far apart two artifacts may put the same place's centroid and still be read as the same place.

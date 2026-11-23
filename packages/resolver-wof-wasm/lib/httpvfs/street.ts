@@ -20,7 +20,7 @@ import {
 	streetKeyRulesOf,
 	type StreetLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+} from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 
 import { type RangeDatabase, tableExists } from "#httpvfs/database"

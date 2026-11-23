@@ -12,14 +12,14 @@
 
 import { addressPostcodeKey } from "#address/keys/postcode"
 import { houseNumberForms } from "#address/number-forms"
-import { streetLocaleForCountry } from "#street/locale"
+import { streetLocaleForCountry } from "#labels/street/locale"
 import {
 	normalizeHouseNumberForKey,
 	normalizeLocalityForKey,
 	type StreetLocale,
 	streetKeyVariants,
 	streetLocaleForSurface,
-} from "#street/normalize"
+} from "#labels/street/normalize"
 
 /**
  * The one capability the reader needs from a database: run a parameterized `SELECT` and return its rows.

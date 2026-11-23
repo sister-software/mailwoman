@@ -9,7 +9,7 @@
 
 import { collectNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { jaroWinkler } from "@mailwoman/match/comparators"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 
 import type { SameDataCandidate } from "#tools/eval-harness/same-data/fixture"
 

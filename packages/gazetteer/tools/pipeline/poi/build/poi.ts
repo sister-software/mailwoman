@@ -19,6 +19,7 @@ import {
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,
@@ -30,7 +31,6 @@ import {
 	POI_FTS_TABLE,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"

@@ -22,7 +22,7 @@
 
 import { sql, type Kysely } from "kysely"
 
-import type { NameKey } from "#street/normalize"
+import type { NameKey } from "#labels/street/normalize"
 
 /**
  * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`.

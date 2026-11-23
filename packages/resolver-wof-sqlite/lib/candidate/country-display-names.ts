@@ -4,7 +4,7 @@
 import { enumerateCountryDisplayNames } from "@mailwoman/codex/country"
 
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
-import { normalizeLocalityForKey } from "#street/normalize"
+import { normalizeLocalityForKey } from "#labels/street/normalize"
 
 /**
  * Stages each country name that `Intl.DisplayNames` renders in the codex display-name

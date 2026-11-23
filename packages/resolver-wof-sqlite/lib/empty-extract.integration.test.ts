@@ -12,8 +12,8 @@ import { afterAll, describe, expect, it } from "vitest"
 
 import { AddressPointSqliteLookup, AddressPointInterpolator } from "#address"
 import type { AddressPointDatabase } from "#address"
-import { streetLocaleForCountry, type StreetSegmentDatabase } from "#street"
-import { StreetInterpolator } from "#street/interpolation"
+import { streetLocaleForCountry, type StreetSegmentDatabase } from "#labels/street"
+import { StreetInterpolator } from "#labels/street/interpolation"
 
 const fixtures = new AsyncDisposableStack()
 

@@ -14,7 +14,7 @@ import {
 	streetKeyVariants,
 	streetLocaleForSurface,
 	stripLocalityQualifier,
-} from "#street"
+} from "#labels/street"
 
 const LOCALE = {
 	us: parseStreetLocale("us"),

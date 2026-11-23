@@ -17,7 +17,7 @@ import {
 	normalizeStreetForKey,
 	normalizeStreetForKeyLocale,
 	streetLocaleForCountry,
-} from "#street"
+} from "#labels/street"
 
 /**
  * The street locales of the two registers the fixtures stand for.

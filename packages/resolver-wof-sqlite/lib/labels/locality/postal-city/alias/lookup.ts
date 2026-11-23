@@ -19,7 +19,7 @@
 
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
-import type { PostalCityAliasDatabase } from "#postal/city/alias/schema"
+import type { PostalCityAliasDatabase } from "#labels/locality/postal-city/alias/schema"
 
 /**
  * Where a {@link WOFPostalCityAliasLookup} reads from: a `postal-city-alias-<cc>.db` built by

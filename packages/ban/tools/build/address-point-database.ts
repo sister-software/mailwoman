@@ -34,7 +34,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street"
+} from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { dirname, resolvePath } from "path-ts"

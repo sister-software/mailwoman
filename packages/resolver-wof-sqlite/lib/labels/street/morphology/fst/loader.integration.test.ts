@@ -20,7 +20,7 @@ import { afterAll, describe, expect, it } from "vitest"
 
 import { deserializeFSTWeb, serializeFST } from "#fst"
 import type { PlaceEntry } from "#fst"
-import { buildStreetMorphologyFST, loadStreetMorphologyFST } from "#street"
+import { buildStreetMorphologyFST, loadStreetMorphologyFST } from "#labels/street"
 
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 

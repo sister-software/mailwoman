@@ -24,7 +24,7 @@ import type {
 	RegionLayerDatabase,
 } from "@mailwoman/core/resolver"
 import type { AddressLayerCountryManifest } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
-import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import type { LayerCatalog } from "#data/catalog"

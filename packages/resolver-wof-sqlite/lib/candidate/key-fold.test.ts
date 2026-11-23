@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 
 import { applyCandidateKeyFold, CandidateKeyFold, candidateQueryKeyFold } from "#candidate/key-fold"
 import { type CandidateDatabase, createCandidateTable } from "#candidate/schema"
-import { type NameKey, normalizeLocalityForKey } from "#street/normalize"
+import { type NameKey, normalizeLocalityForKey } from "#labels/street/normalize"
 
 async function candidateDatabase(
 	rows: Array<[key: string, sprID: number]>

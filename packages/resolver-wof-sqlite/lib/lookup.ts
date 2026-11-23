@@ -37,6 +37,7 @@ import {
 } from "#fts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { fetchSearchRows, type RawSearchRow } from "#fts/search-fetch"
+import type { WOFPostalCityAliasLookup } from "#labels/locality/postal-city/alias/lookup"
 import {
 	pickExtractForPlacetype,
 	pickExtractsForPlacetype,
@@ -45,7 +46,6 @@ import {
 	type ExtractConfig,
 } from "#lookup/extracts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
-import type { WOFPostalCityAliasLookup } from "#postal/city/alias/lookup"
 import { cfNormalize, softNameScore } from "#ranking/name-score"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking/weights"
 import type { WOFDatabase } from "#schema"

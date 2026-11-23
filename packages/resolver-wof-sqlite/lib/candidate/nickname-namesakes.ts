@@ -12,8 +12,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { CandidateDatabase } from "#candidate/schema"
+import { normalizeLocalityForKey, withoutApostropheLikeMarks } from "#labels/street/normalize"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey, withoutApostropheLikeMarks } from "#street/normalize"
 
 /**
  * The WOF name kinds that name a place without being its name: a colloquial name
