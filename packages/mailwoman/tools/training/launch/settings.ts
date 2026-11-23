@@ -37,6 +37,11 @@ export const LaunchEnvSchema = z.object({
 			"The named Modal secret holding MAILWOMAN_TRAINING_GRANT, the mwt1 training grant a commercial launch's sandbox verifies. " +
 			"Create it with `modal secret create --from-dotenv <env file> <name>`. The launch records the name, never the token.",
 	}),
+	MAILWOMAN_MODAL_PROVENANCE_SECRET: blankAsAbsent(z.string().optional()).meta({
+		description:
+			"The named Modal secret holding MAILWOMAN_PROVENANCE_SIGNING_KEY and MAILWOMAN_PROVENANCE_SIGNING_KID. " +
+			"A commercial launch's sandbox signs the provenance manifest of the model it exports with it.",
+	}),
 	MAILWOMAN_TRAINING_GRANT: blankAsAbsent(z.string().optional()).meta({
 		description:
 			"A training grant held on the host. A commercial launch verifies it before it starts a sandbox and refuses one that doesn't admit the run; " +

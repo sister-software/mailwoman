@@ -180,8 +180,8 @@ export function trainerBaseCommands(variant: TrainerVariant, toolchain: string):
 }
 
 /**
- * The script a build sandbox runs: unpack the bundle from stdin, build `trainer-cli`,
- * install it, and refuse a binary whose shared objects do not resolve.
+ * The script a build sandbox runs: unpack the bundle from stdin, build `trainer-cli` and
+ * `trainer-export`, install both, and refuse a trainer binary whose shared objects do not resolve.
  *
  * A CUDA binary must list `libtorch_cuda.so` as NEEDED, or libtorch never loads its
  * CUDA backend and the trainer picks the CPU on a GPU host.
@@ -194,15 +194,18 @@ export function trainerBuildScript(variant: TrainerVariant, license: TrainerLice
 			? "readelf -d /usr/local/bin/trainer | grep -q 'libtorch_cuda\\.so'"
 			: "trainer device --device cpu"
 
-	const features = license === TrainerLicense.Commercial ? " --features commercial" : ""
+	// The build compiles two packages, so the feature is written with its package's prefix.
+	const features = license === TrainerLicense.Commercial ? " --features trainer-cli/commercial" : ""
 
 	return [
 		"set -euo pipefail",
 		`mkdir -p ${TRAINER_REPO_ROOT}`,
 		`base64 -d | tar -xz -C ${TRAINER_REPO_ROOT}`,
 		`cd ${TRAINER_REPO_ROOT}`,
-		`cargo build --profile trainer --locked -p trainer-cli${features}`,
+		`cargo build --profile trainer --locked -p trainer-cli -p trainer-export${features}`,
 		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer /usr/local/bin/trainer`,
+		// A commercial run exports and signs its model inside the sandbox, where the provenance key is.
+		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer-export /usr/local/bin/trainer-export`,
 		`rm -rf ${TRAINER_REPO_ROOT}/target /root/.cargo/registry`,
 		"! ldd /usr/local/bin/trainer | grep 'not found' | grep -v 'libcuda\\.so\\.1'",
 		linkage,

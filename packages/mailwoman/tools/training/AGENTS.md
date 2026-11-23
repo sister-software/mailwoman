@@ -66,22 +66,43 @@ launch.
 
 ### Commercial training
 
-`start --commercial` trains under a commercial training grant instead of the AGPL. It builds the trainer with
-`trainer-cli`'s `commercial` feature into its own image (`mailwoman-trainer-commercial-<variant>-…`). It attaches the
-Modal secret named by `MAILWOMAN_MODAL_TRAINING_SECRET`, which holds `MAILWOMAN_TRAINING_GRANT`, on every start and
-restart. Create the secret with `modal secret create --from-dotenv <env file> <name>`. The launch record keeps the
-secret's name, and no record, argument, log or artifact holds the token. A grant also set in the host's
+`start --commercial` trains under a commercial training grant instead of the AGPL. Sister Software's own runs use the
+grant `mtg_88553b5da439d4f8dc6c584a`, issued to Nirrius LLC, d/b/a Sister Software under
+`commercial-training-2026-11`, permitting `train` and `deploy`, and expiring 2027-02-22. Two Modal secrets back a
+commercial launch, and the launcher reads their names from two variables:
+
+| Variable                            | Secret                     | Holds                                                                                      |
+| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `MAILWOMAN_MODAL_TRAINING_SECRET`   | `mailwoman-training-grant` | `MAILWOMAN_TRAINING_GRANT`, the `mwt1` grant                                               |
+| `MAILWOMAN_MODAL_PROVENANCE_SECRET` | `mailwoman-provenance`     | `MAILWOMAN_PROVENANCE_SIGNING_KEY` and `MAILWOMAN_PROVENANCE_SIGNING_KID` (`p11-75b09012`) |
+
+```sh
+node --env-file=.env packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh --commercial
+```
+
+A commercial launch refuses before its preflight when either variable is unset. It builds the trainer with
+`trainer-cli`'s `commercial` feature into its own image (`mailwoman-trainer-commercial-<variant>-…`), which also holds
+`trainer-export`. It attaches both secrets on every start and restart. The launch record keeps the secrets' names, and
+no record, argument, log or artifact holds the token or the key. A grant also set in the host's
 `MAILWOMAN_TRAINING_GRANT` is verified before the preflight.
 
 In the sandbox the supervisor runs `trainer authorize` after the device check and before `--fresh` clears anything. An
 authorization refusal there, or an exit 3 from `trainer train` on a retry, refuses the run without a retry and leaves
 its checkpoints as committed. `restart` restarts a refused commercial run once the grant in the secret is renewed. Each
-run writes `TRAINING.json` beside its checkpoints, and `trainer-export` binds it into the model's signed provenance
-manifest. A managed export signs that manifest with the provenance key in the Modal secret `mailwoman-provenance`,
-which holds `MAILWOMAN_PROVENANCE_SIGNING_KEY` and `MAILWOMAN_PROVENANCE_SIGNING_KID` (`p11-75b09012`). Attach it to
-the sandbox or process that runs `trainer-export`. `docs/engineering/reference/product-license-tokens.mdx` specifies
-the grant, the record and the manifest, and lists the keys in service.
-Without `--commercial` the launch runs the open-source trainer, which checks no grant and records `AGPL-3.0-only`.
+run writes `TRAINING.json` beside its checkpoints.
+
+When training completes, the supervisor exports the newest complete checkpoint with `trainer-export export-onnx` and
+`quantize` into `<run base>/export/`. The export passes the char window `data.max_unit_width` for a
+`use_char_embed` model. Each graph leaves with a `<graph>.provenance.json` that the provenance key signs as `managed`,
+and the supervisor commits the volume. A failed export stops the sandbox with the exporter's exit code, and `restart`
+finds the run complete and exports again. `fetch <run key>` copies `export/` with the rest of the run.
+
+To renew the grant before 2027-02-22, run `mailwoman license grant-training --holder "Nirrius LLC, d/b/a Sister Software"
+--grant mtg_88553b5da439d4f8dc6c584a --expires <date within 92 days>`. Then replace the secret:
+`modal secret create mailwoman-training-grant --from-json <file> --force`, where the file holds
+`{"MAILWOMAN_TRAINING_GRANT": "<token>"}`. `docs/engineering/reference/product-license-tokens.mdx` specifies the grant,
+the record and the manifest, and lists the keys in service. Without `--commercial` the launch runs the open-source
+trainer, which checks no grant, leaves export to the host, and records `AGPL-3.0-only`.
 
 ### The lifecycle checks
 

@@ -63,12 +63,21 @@ const FAKE_SYNC = String.raw`#!/usr/bin/env bash
 echo "sync $1" >> "$FAKE_STATE/syncs"
 `
 
+/**
+ * A `trainer-export` that records its subcommand and arguments, and fails when `FAKE_EXPORT` is `fail`.
+ */
+const FAKE_EXPORTER = String.raw`#!/usr/bin/env bash
+echo "$*" >> "$FAKE_STATE/exports"
+[ "$FAKE_EXPORT" = fail ] && exit 2
+exit 0
+`
+
 async function runSupervisor(
 	plan: string,
 	overrides: Partial<SupervisorEnvironment> = {},
 	seedCheckpoint = false,
 	writeInputs = true,
-	fake: { authorize?: "refuse"; grant?: string } = {}
+	fake: { authorize?: "refuse"; grant?: string; export?: "fail" } = {}
 ) {
 	await using scratch = await temporaryDirectory("mailwoman-supervisor-")
 	const config = "data:\n  corpus_dir: /data/corpus\n"
@@ -76,6 +85,7 @@ async function runSupervisor(
 	const manifest = '{"files":[]}'
 	const trainer = scratch.path("trainer").toString()
 	const sync = scratch.path("sync").toString()
+	const exporter = scratch.path("trainer-export").toString()
 
 	// The inputs the host writes into the sandbox, `ready` last.
 	if (writeInputs) {
@@ -86,9 +96,11 @@ async function runSupervisor(
 
 	await writeLocalTextFile(FAKE_TRAINER, trainer)
 	await writeLocalTextFile(FAKE_SYNC, sync)
+	await writeLocalTextFile(FAKE_EXPORTER, exporter)
 	await writeLocalTextFile(manifest, scratch.path("volume", "corpus", "MANIFEST.json"))
 	await changeMode(trainer, 0o755)
 	await changeMode(sync, 0o755)
+	await changeMode(exporter, 0o755)
 
 	// An earlier run left this checkpoint.
 	// Only a fresh start removes it.
@@ -124,6 +136,9 @@ async function runSupervisor(
 		MW_FAIL_AT_STEP: "0",
 		MW_TRAINER: trainer,
 		MW_SYNC: sync,
+		MW_EXPORTER: exporter,
+		MW_EXPORT: "0",
+		MW_EXPORT_CHAR_WINDOW: "",
 		...overrides,
 	}
 
@@ -133,6 +148,7 @@ async function runSupervisor(
 			FAKE_STATE: scratch.path().toString(),
 			FAKE_PLAN: plan,
 			FAKE_AUTHORIZE: fake.authorize ?? "",
+			FAKE_EXPORT: fake.export ?? "",
 			// The training Secret's variable, as Modal injects it into the sandbox.
 			...(fake.grant ? { MAILWOMAN_TRAINING_GRANT: fake.grant } : {}),
 			PATH: "/usr/bin:/bin",
@@ -155,6 +171,8 @@ async function runSupervisor(
 		stdout,
 		calls: await read("calls"),
 		syncs: await read("syncs"),
+		exports: await read("exports"),
+		runBase: scratch.path("volume", "output").toString(),
 		authorizations: await read("authorizations"),
 		checkpointKept: await pathExists(earlier),
 	}
@@ -279,6 +297,36 @@ describe("the training sandbox supervisor", () => {
 		expect(run.calls).toEqual(["train auto", "train auto"])
 		expect(run.checkpointKept).toBe(true)
 		expect(run.stdout).toContain("refused: trainer train refused its training grant")
+	})
+
+	it("exports and quantizes the final checkpoint of a commercial run, then commits the volume", async () => {
+		const run = await runSupervisor("ok", { MW_EXPORT: "1", MW_EXPORT_CHAR_WINDOW: "12" })
+
+		expect(run.code).toBe(0)
+
+		expect(run.exports).toEqual([
+			`export-onnx --checkpoint ${run.runBase}/checkpoints/step-000030 --output ${run.runBase}/export/model.onnx --char-window 12`,
+			`quantize --input ${run.runBase}/export/model.onnx --output ${run.runBase}/export/model-int8.onnx`,
+		])
+
+		// One commit for the inputs, three for the checkpoints, one after the trainer exits, one after the export.
+		expect(run.syncs).toHaveLength(6)
+		expect(run.stdout).toContain("[launch] export complete")
+	})
+
+	it("exports nothing for an open-source run", async () => {
+		const run = await runSupervisor("ok")
+
+		expect(run.code).toBe(0)
+		expect(run.exports).toEqual([])
+	})
+
+	it("stops with the exporter's code when the export fails, so a restart exports again", async () => {
+		const run = await runSupervisor("ok", { MW_EXPORT: "1" }, false, true, { export: "fail" })
+
+		expect(run.code).toBe(2)
+		expect(run.exports).toHaveLength(1)
+		expect(run.stdout).toContain("export: export-onnx exited 2")
 	})
 
 	it("refuses when the launch inputs never arrive", async () => {

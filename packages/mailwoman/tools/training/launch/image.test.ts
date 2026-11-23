@@ -14,7 +14,11 @@ import {
 
 describe("the commercial trainer image", () => {
 	it("builds the commercial feature under its own name, and the open-source image without it", () => {
-		expect(trainerBuildScript("cu130", TrainerLicense.Commercial)).toContain("-p trainer-cli --features commercial")
+		expect(trainerBuildScript("cu130", TrainerLicense.Commercial)).toContain(
+			"-p trainer-cli -p trainer-export --features trainer-cli/commercial"
+		)
+
+		expect(trainerBuildScript("cu130", TrainerLicense.Commercial)).toContain("/usr/local/bin/trainer-export")
 		expect(trainerBuildScript("cu130", TrainerLicense.OpenSource)).not.toContain("commercial")
 
 		expect(trainerImageName("cu130", "1.99.1", "0".repeat(64), TrainerLicense.Commercial)).toBe(
