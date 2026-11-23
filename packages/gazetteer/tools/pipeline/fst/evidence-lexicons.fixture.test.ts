@@ -15,8 +15,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import type { BuiltLexicon } from "#tools/pipeline/evidence-lexicons"
-import { buildLocalitySurfaceLexicon } from "#tools/pipeline/evidence-lexicons"
+import type { BuiltLexicon } from "#tools/pipeline/fst/evidence-lexicons"
+import { buildLocalitySurfaceLexicon } from "#tools/pipeline/fst/evidence-lexicons"
 
 let scratch: TemporaryDirectory
 

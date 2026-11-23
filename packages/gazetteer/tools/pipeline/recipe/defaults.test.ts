@@ -8,7 +8,7 @@ import {
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
-} from "#tools/pipeline/defaults"
+} from "#tools/pipeline/recipe/defaults"
 
 test("the canonical coverage recipe holds its reconstructed shape (see #1015/#1021)", () => {
 	// The counts are a deliberate-drift guard.

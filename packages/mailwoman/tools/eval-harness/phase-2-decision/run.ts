@@ -29,7 +29,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { basename } from "path-ts"
 
 import { createSemanticObservationRoute, semanticObservationMarkers } from "#observations"

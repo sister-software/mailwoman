@@ -70,8 +70,8 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db
 import { licenseForOvertureCountry } from "mailwoman/geocode/layers/national-overture"
 import type { PathBuilderLike } from "path-ts"
 
-import { DEFAULT_ADMIN_DB } from "#tools/pipeline/defaults"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
+import { DEFAULT_ADMIN_DB } from "#tools/pipeline/recipe/defaults"
 
 /**
  * The license expression assigned to this artifact, read from the same entry the rooftop tier reads.

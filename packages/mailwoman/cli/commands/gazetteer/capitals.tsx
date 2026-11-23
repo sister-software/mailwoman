@@ -38,7 +38,7 @@ const GazetteerCapitals: CommandComponent<typeof spec> = ({ options }) => {
 			dataRoot: { dataRootPath },
 			paths: { repoRootPathBuilder },
 		} = await allKeyed({
-			capitals: import("@mailwoman/gazetteer/tools/pipeline/capitals"),
+			capitals: import("@mailwoman/gazetteer/tools/pipeline/admin/capitals"),
 			dataRoot: import("@mailwoman/core/data-root"),
 			paths: import("@mailwoman/core/paths"),
 		})

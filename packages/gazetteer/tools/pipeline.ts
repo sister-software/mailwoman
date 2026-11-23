@@ -45,9 +45,9 @@ import {
 	type InputTerms,
 	inputsRefusingPublication,
 	readInputTerms,
-} from "#tools/pipeline/candidate-manifest"
-import { emitCoverageManifest } from "#tools/pipeline/coverage-manifest"
-import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+} from "#tools/pipeline/manifest/candidate-manifest"
+import { emitCoverageManifest } from "#tools/pipeline/manifest/coverage-manifest"
+import { buildSHA, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { publishToPublicBucket } from "#tools/publish/public-bucket"
 
 /**
@@ -555,9 +555,9 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	return `${y}-${m}-${d}${suffix}`
 }
 
-export * from "#tools/pipeline/coverage-manifest"
-export * from "#tools/pipeline/defaults"
-export * from "#tools/pipeline/fts"
+export * from "#tools/pipeline/manifest/coverage-manifest"
+export * from "#tools/pipeline/recipe/defaults"
+export * from "#tools/pipeline/database/fts"
 export * from "#tools/pipeline/verify"
 export * from "#tools/pipeline/admin"
 export * from "#tools/pipeline/admin/enrich"
@@ -569,7 +569,7 @@ export * from "#tools/pipeline/postcode"
 export * from "#tools/pipeline/postcode/binary"
 export * from "#tools/pipeline/postcode/centroid-fills"
 export * from "#tools/pipeline/postcode/zcta-centroids"
-export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
+export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 export {
 	geonamesTailTerms,

@@ -26,7 +26,7 @@ import {
 	parseOpenUPRNLine,
 	parseOpenUPRNVersions,
 	type ExtractOpenUPRNResult,
-} from "#tools/pipeline/uprn-layer"
+} from "#tools/pipeline/gb/uprn-layer"
 
 const fixtures = new AsyncDisposableStack()
 

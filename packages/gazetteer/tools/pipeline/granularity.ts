@@ -11,8 +11,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
-import { DEFAULT_COVERAGE_FLOOR } from "#tools/pipeline/defaults"
-import { PLACETYPE_PROJECTION } from "#tools/pipeline/placetype-census"
+import { PLACETYPE_PROJECTION } from "#tools/pipeline/granularity/placetype-census"
+import { DEFAULT_COVERAGE_FLOOR } from "#tools/pipeline/recipe/defaults"
 
 /**
  * The containment rungs from broadest to deepest.

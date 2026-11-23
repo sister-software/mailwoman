@@ -25,7 +25,7 @@ import {
 	inputsRefusingPublication,
 	InputTermsRecord,
 	readInputTerms,
-} from "#tools/pipeline/candidate-manifest"
+} from "#tools/pipeline/manifest/candidate-manifest"
 
 const fixtures = new AsyncDisposableStack()
 

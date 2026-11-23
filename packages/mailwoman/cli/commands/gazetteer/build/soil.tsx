@@ -21,7 +21,7 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { PathBuilder } from "path-ts"
 
 import {

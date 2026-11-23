@@ -27,7 +27,7 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { JSONSpliterator } from "spliterator"
 
 import {

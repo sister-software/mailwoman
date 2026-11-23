@@ -30,12 +30,12 @@ import { Globerator } from "spliterator/node/fs"
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
-	"packages/gazetteer/tools/pipeline/borough-pairs.ts",
-	"packages/gazetteer/tools/pipeline/lieudit-pairs.ts",
+	"packages/gazetteer/tools/pipeline/pair/borough-pairs.ts",
+	"packages/gazetteer/tools/pipeline/fr/lieudit-pairs.ts",
 	"packages/mailwoman/cli/commands/gazetteer/pair-index.tsx",
 	"packages/mailwoman/cli/commands/gazetteer/postcode/binary.tsx",
-	"packages/gazetteer/out/tools/pipeline/borough-pairs.js",
-	"packages/gazetteer/out/tools/pipeline/lieudit-pairs.js",
+	"packages/gazetteer/out/tools/pipeline/pair/borough-pairs.js",
+	"packages/gazetteer/out/tools/pipeline/fr/lieudit-pairs.js",
 	"packages/mailwoman/out/cli/commands/gazetteer/pair-index.js",
 	"packages/mailwoman/out/cli/commands/gazetteer/postcode/binary.js",
 ]

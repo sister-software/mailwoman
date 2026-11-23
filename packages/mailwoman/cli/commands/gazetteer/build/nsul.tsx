@@ -54,8 +54,8 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			nsulLayer: { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel },
 		} = await allKeyed({
 			paths: import("@mailwoman/core/paths"),
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
-			nsulLayer: import("@mailwoman/gazetteer/tools/pipeline/nsul-layer"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
+			nsulLayer: import("@mailwoman/gazetteer/tools/pipeline/gb/nsul-layer"),
 		})
 
 		const result = await buildNSULLayer({

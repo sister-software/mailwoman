@@ -12,7 +12,7 @@ import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
-import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 

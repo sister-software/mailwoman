@@ -13,7 +13,7 @@ import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwom
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { buildCZDistrictsDatabase } from "#tools/pipeline/cz-districts"
+import { buildCZDistrictsDatabase } from "#tools/pipeline/cz/cz-districts"
 
 let root: TemporaryDirectory
 

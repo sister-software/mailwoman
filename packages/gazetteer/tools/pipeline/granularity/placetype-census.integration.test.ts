@@ -18,7 +18,7 @@ import {
 	WOF_PLACETYPES,
 	buildPlacetypeCensus,
 	toBaseRates,
-} from "#tools/pipeline/placetype-census"
+} from "#tools/pipeline/granularity/placetype-census"
 
 /**
  * Build an in-memory DB with the `spr`/`ancestors` shape the census reads,

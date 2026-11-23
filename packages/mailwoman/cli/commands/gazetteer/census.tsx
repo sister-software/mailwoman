@@ -72,7 +72,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			utils: import("@mailwoman/core/utils"),
 			fstPrior: import("@mailwoman/neural/prior/fst"),
 			placetype: import("@mailwoman/neural/placetype"),
-			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/placetype-census"),
+			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/granularity/placetype-census"),
 		})
 
 		const country = options.country.toLowerCase()

@@ -44,7 +44,7 @@ import {
 	parseNSULVintage,
 	type NSULRegion,
 	type NSULRegionSource,
-} from "#tools/pipeline/nsul-layer"
+} from "#tools/pipeline/gb/nsul-layer"
 
 const fixtures = new AsyncDisposableStack()
 

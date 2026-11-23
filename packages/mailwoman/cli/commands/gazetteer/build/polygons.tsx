@@ -8,7 +8,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import type { PolygonBuildCounts } from "@mailwoman/gazetteer/tools/pipeline/polygons"
+import type { PolygonBuildCounts } from "@mailwoman/gazetteer/tools/pipeline/admin/polygons"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
@@ -30,7 +30,7 @@ const GazetteerBuildPolygons: CommandComponent<typeof spec> = ({ options }) => {
 	const progress = useStageProgress<PolygonBuildCounts>({ describe: stringifyJSON })
 
 	const state = useCommandTask(async () => {
-		const { buildPolygonsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/polygons")
+		const { buildPolygonsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/admin/polygons")
 
 		const { out, counts } = await buildPolygonsDatabase({
 			...(options.out ? { out: options.out } : {}),

@@ -17,9 +17,9 @@ import { LayerTier } from "@mailwoman/core/layers"
 import { describe, expect, it } from "vitest"
 
 import { codePointLayerManifest } from "#tools/pipeline/gb/codepoint/database"
+import { contributingLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { geonamesTailTerms } from "#tools/pipeline/postcode/geonames/tail"
-import { contributingLayerManifest } from "#tools/pipeline/stamp-manifest"
-import { twDistrictsLayerManifest } from "#tools/pipeline/tw-districts"
+import { twDistrictsLayerManifest } from "#tools/pipeline/tw/tw-districts"
 
 const BASE = {
 	name: "fixture",

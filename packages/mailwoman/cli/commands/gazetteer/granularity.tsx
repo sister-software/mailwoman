@@ -3,7 +3,7 @@
 
 import { allKeyed } from "@mailwoman/core/async/promises"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { DEFAULT_COVERAGE_FLOOR } from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { DEFAULT_COVERAGE_FLOOR } from "@mailwoman/gazetteer/tools/pipeline/recipe/defaults"
 import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 
 import {

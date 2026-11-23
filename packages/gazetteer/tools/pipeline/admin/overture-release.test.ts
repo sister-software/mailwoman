@@ -13,8 +13,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { OvertureListingClient } from "#tools/pipeline/overture-release"
-import { checkOvertureRelease, listOvertureReleases } from "#tools/pipeline/overture-release"
+import type { OvertureListingClient } from "#tools/pipeline/admin/overture-release"
+import { checkOvertureRelease, listOvertureReleases } from "#tools/pipeline/admin/overture-release"
 
 /**
  * Minimal stand-in for the bucket listing — only `fetch` is reached.

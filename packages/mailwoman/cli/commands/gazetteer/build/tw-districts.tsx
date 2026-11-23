@@ -33,7 +33,7 @@ export const spec = {
 
 const GazetteerBuildTWDistricts: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildTWDistrictsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/tw-districts")
+		const { buildTWDistrictsDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/tw/tw-districts")
 
 		const r = await buildTWDistrictsDatabase({
 			release: options.release,

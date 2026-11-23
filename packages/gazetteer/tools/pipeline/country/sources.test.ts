@@ -23,7 +23,7 @@ import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
-} from "#tools/pipeline/defaults"
+} from "#tools/pipeline/recipe/defaults"
 
 const LIVE = {
 	wofCountries: DEFAULT_WOF_PRIORITY_COUNTRIES as readonly string[],

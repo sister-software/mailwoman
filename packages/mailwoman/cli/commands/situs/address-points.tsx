@@ -502,7 +502,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			layers: { LayerFreshnessPolicy, LayerTier },
 			paths: { repoRootPath },
 		} = await allKeyed({
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
 			layers: import("@mailwoman/core/layers"),
 			paths: import("@mailwoman/core/paths"),
 		})

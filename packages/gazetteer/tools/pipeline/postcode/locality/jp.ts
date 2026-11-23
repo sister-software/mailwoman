@@ -49,7 +49,7 @@ import {
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
 } from "#locality-postcode-schema"
-import { finalizeSealedBuild } from "#tools/pipeline/database-lifecycle"
+import { finalizeSealedBuild } from "#tools/pipeline/database/database-lifecycle"
 import { geonamesPostalRows } from "#tools/pipeline/postcode/geonames/postal"
 import { writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
 import { ProximityGrid } from "#tools/pipeline/postcode/locality/base"

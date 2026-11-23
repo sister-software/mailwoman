@@ -174,8 +174,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			pair: import("@mailwoman/neural/pair"),
 			pair2: import("@mailwoman/gazetteer/tools/pipeline/pair"),
 			spliterator: import("spliterator"),
-			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/borough-pairs"),
-			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs"),
+			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/pair/borough-pairs"),
+			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/fr/lieudit-pairs"),
 		})
 
 		const country = options.country.toLowerCase()

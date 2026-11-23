@@ -24,7 +24,7 @@ import { readTIGERBoundaries, TIGERBoundaryLevel } from "@mailwoman/tiger/sdk/fe
 import { AdminLevel1Code, type AdminLevel1Abbreviation } from "@mailwoman/tiger/state"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { DEFAULT_TOLERANCE_DEGREES, fitGeometry } from "#tools/pipeline/polygons"
+import { DEFAULT_TOLERANCE_DEGREES, fitGeometry } from "#tools/pipeline/admin/polygons"
 import { wofCountryOfState } from "#tools/pipeline/us/gnis-backfill"
 
 /**

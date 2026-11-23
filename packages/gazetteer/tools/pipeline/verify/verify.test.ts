@@ -6,7 +6,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { expect, test } from "vitest"
 
 import { enrichAdmin } from "#tools/pipeline/admin/enrich"
-import { buildFTS } from "#tools/pipeline/fts"
+import { buildFTS } from "#tools/pipeline/database/fts"
 import { type VerifyBaseline, verifyAdmin } from "#tools/pipeline/verify"
 
 const TINY_BASELINE: VerifyBaseline = {

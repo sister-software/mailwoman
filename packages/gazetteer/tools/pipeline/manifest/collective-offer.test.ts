@@ -13,7 +13,7 @@ import { isSealed } from "@mailwoman/sqlite/sealed/db"
 import type { PathBuilderLike } from "path-ts"
 import { describe, expect, test } from "vitest"
 
-import { buildOverturePart, OVERTURE_PART_ATTRIBUTION } from "#tools/pipeline/collective-offer"
+import { buildOverturePart, OVERTURE_PART_ATTRIBUTION } from "#tools/pipeline/manifest/collective-offer"
 
 const DIVISION = OVERTURE_ID_BASE + 5
 

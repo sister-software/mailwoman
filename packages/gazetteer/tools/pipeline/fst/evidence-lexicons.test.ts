@@ -13,6 +13,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
+import { loadDegenerateSurfaces } from "#tools/pipeline/fst"
 import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,
@@ -24,8 +25,7 @@ import {
 	ONE_TOKEN_IMPORTANCE_FLOOR,
 	painterFold,
 	PERSON_NAME_IMPORTANCE_FLOOR,
-} from "#tools/pipeline/evidence-lexicons"
-import { loadDegenerateSurfaces } from "#tools/pipeline/fst"
+} from "#tools/pipeline/fst/evidence-lexicons"
 
 const personNames = await loadPersonNameSurfaces()
 

@@ -35,7 +35,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { basename, type PathBuilderLike } from "path-ts"
 
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 
 /**
  * The SPDX expression that governs the Overture Divisions part.

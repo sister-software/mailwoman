@@ -57,7 +57,7 @@ describe("summarizeRuntimeReads", () => {
 	it("reads only the checkout's git metadata for a commit query, and the whole tree for a listing", () => {
 		const stamp = summarize(`
 			import { gitHead } from "@mailwoman/core/repo/git"
-			import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+			import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 			import { repoRootPath } from "@mailwoman/core/paths"
 
 			const commit = await gitHead(repoRootPath(), { short: true })

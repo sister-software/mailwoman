@@ -41,7 +41,7 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 	const progress = useStageProgress()
 
 	const state = useCommandTask(async () => {
-		const { buildStreetMorphologyArtifact } = await import("@mailwoman/gazetteer/tools/pipeline/street-morphology")
+		const { buildStreetMorphologyArtifact } = await import("@mailwoman/gazetteer/tools/pipeline/fst/street-morphology")
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,

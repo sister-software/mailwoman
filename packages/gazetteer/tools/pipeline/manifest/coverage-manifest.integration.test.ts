@@ -27,7 +27,7 @@ import {
 	emitCoverageManifest,
 	MEASURED_COUNTRY_BBOXES,
 	MEASURED_COUNTRY_COVERAGE,
-} from "#tools/pipeline/coverage-manifest"
+} from "#tools/pipeline/manifest/coverage-manifest"
 
 let scratch: TemporaryDirectory
 

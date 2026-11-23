@@ -42,8 +42,9 @@ import {
 	removeStagingArtifacts,
 	UNKNOWN_PROVENANCE,
 	vacuumDatabaseInto,
-} from "#tools/pipeline/database-lifecycle"
-import type { BuildFTSResult } from "#tools/pipeline/fts"
+} from "#tools/pipeline/database/database-lifecycle"
+import type { BuildFTSResult } from "#tools/pipeline/database/fts"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import type { DatabaseMetaDatabase } from "#tools/pipeline/postcode/geonames/tail"
 import { createDatabaseMetaTable, writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
 import {
@@ -59,7 +60,6 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#tools/pipeline/postcode/ni/osm"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row.

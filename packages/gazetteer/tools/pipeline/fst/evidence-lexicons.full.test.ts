@@ -33,7 +33,7 @@ const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
 
 describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
-		const { buildLocalitySurfaceLexicon } = await import("#tools/pipeline/evidence-lexicons")
+		const { buildLocalitySurfaceLexicon } = await import("#tools/pipeline/fst/evidence-lexicons")
 		const tmp = tempRootPath(`locality-surface-lexicon-test.json`)
 
 		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
@@ -56,7 +56,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 	}, 600_000)
 
 	it("v5: the census flip families are out, the legitimate entries stay", async () => {
-		const { buildLocalitySurfaceLexicon } = await import("#tools/pipeline/evidence-lexicons")
+		const { buildLocalitySurfaceLexicon } = await import("#tools/pipeline/fst/evidence-lexicons")
 		const tmp = tempRootPath(`locality-surface-lexicon-v5-us-test.json`)
 
 		const built = await buildLocalitySurfaceLexicon({
