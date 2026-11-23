@@ -67,23 +67,22 @@
 #
 # Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
 # section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
-# - done 2026-11-22: the manifest, built by packages/corpus/data/builds/v0.8.22-overlay/OVERLAY_PLAN.json and re-split
-#   under evaluation-groups.v0.8.22-confirm.json, is MANIFEST.json sha256
-#   ddc5b1114b6acbde88a68148e346ecd0527860605c1819c638ec7459c0263e24: 1,104 files, train 889,241,008, val 22,845,
-#   test 366,701;
-# - done 2026-11-22: `required_validation_label_support` is re-derived from the v0.8.22 val draw (its comment), and
+# - done 2026-11-23: the manifest is the third re-split of v0.8.22-prominent-overlay (MANIFEST.json sha256 aed71697…,
+#   v0.8.22-overlay with the re-sized recipe) under evaluation-groups.v0.8.23.json (sha256 cfaffa67…, 201,538 groups)
+#   and a validation quota of 15,300 groups (sha256 6e9ddd98…). It is MANIFEST.json sha256
+#   c01019fe088458f8e4950fc8245583083f7e230c3446b1bc4952947186f334fd: 1,104 files, train 889,226,116, val 23,330,
+#   test 381,056;
+# - done 2026-11-23: `audits/label/support.run.ts` meets `required_validation_label_support` on that val draw, and
 #   `audits/validation/coverage.run.ts` finds all 21 `required_validation_coverage` floors met;
-# - done 2026-11-22: the epoch-mixture audit (1,000,000 draws) meets all 71 receipts. `former-divisions-exposure`
-#   draws 1,360 against 1,235 (expected 1,372), and `prominent-places-exposure` 11,757 against 10,503 (expected 11,671);
-# - done 2026-11-22: `places.run.ts tuples --config <this file>` against the scan of v0.8.22-base-overlay, the v0.8.22
-#   corpus before the recipe joins it, after this config's weights were final: 32,430 rows for 16,425 places,
-#   rendered with seed 20261122;
-# - not done: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. On v0.8.22 coherence
-#   passes (0 short admin train rows write a dependent locality without a locality), but presence covers 20,584 of
-#   20,947 required forms and 11 of 813 demand cells fail (3 more are unwritable: FJ and GD locality region, ID
-#   sub-locality parent). The recipe's rows take their place's WOF record as `base_source_id`, so they share its
-#   group, and the re-split sends 139 of the 16,425 places out of train: 123 whose group heldout-confirm-v0.8.22 froze
-#   and 16 the validation quota chose. No earlier list held any of them.
+# - done 2026-11-23: the epoch-mixture audit (1,000,000 draws) meets all 71 receipts. `former-divisions-exposure`
+#   draws 1,441 against 1,240 (expected 1,378), and `prominent-places-exposure` 11,825 against 10,505 (expected 11,673);
+# - done 2026-11-23: `places.run.ts tuples --config <this file>` against the scan of v0.8.22-overlay without the
+#   recipe, sized through the receipt's held-out reader: 32,378 rows for 16,421 places, every one in train after the
+#   re-split;
+# - done 2026-11-23: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. Presence covers
+#   20,910 of 20,910 required forms, 808 of 811 demand cells meet their targets and none fails (FJ and GD locality
+#   region and ID sub-locality parent are unwritable), and 0 short admin train rows write a dependent locality without
+#   a locality;
 # - done: the places table `data.prominent_place_coverage` names is frozen on the host at
 #   /mnt/mw/audits/prominent-places/candidate-global-2026-11-19/ (`places.parquet` sha256 acfcd09a44b22622…, record
 #   version 3 with the `postal_pair` column). The version-2 table is kept beside it as `.v2-2026-11-20`. Only the

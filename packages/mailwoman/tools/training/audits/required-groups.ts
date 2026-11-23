@@ -24,8 +24,8 @@
  *   own match, so the reserve draw (`freeze.run.ts --reserve-groups-per-country`) skips them too.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { allKeyed } from "@mailwoman/core/promises"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { RequiredGroupReceipt, RequiredGroupSkip } from "@mailwoman/corpus/utils/evaluation-groups"
