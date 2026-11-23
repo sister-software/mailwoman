@@ -13,9 +13,8 @@
  *   A commercial token's expiry is its billing period, decided where the paid invoice becomes a token.
  */
 
-import type { LicenseIntent } from "@mailwoman/core/license/key"
-
-import { calendarDateUTC, plusDays } from "#dates"
+import { calendarDateUTC, plusDays } from "#product/dates"
+import type { LicenseIntent } from "#product/token"
 
 /**
  * The four dates a declaration can expire on, each 21 days before a calendar quarter starts.

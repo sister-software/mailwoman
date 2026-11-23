@@ -3,7 +3,36 @@
 
 import { describe, expect, it } from "vitest"
 
-import { TRAINER_DATA_FILES, trainerSourceFiles } from "#tools/training/launch/image"
+import {
+	TRAINER_BUILD_INPUTS,
+	TRAINER_DATA_FILES,
+	trainerBuildScript,
+	trainerImageName,
+	TrainerLicense,
+	trainerSourceFiles,
+} from "#tools/training/launch/image"
+
+describe("the commercial trainer image", () => {
+	it("builds the commercial feature under its own name, and the open-source image without it", () => {
+		expect(trainerBuildScript("cu130", TrainerLicense.Commercial)).toContain("-p trainer-cli --features commercial")
+		expect(trainerBuildScript("cu130", TrainerLicense.OpenSource)).not.toContain("commercial")
+
+		expect(trainerImageName("cu130", "1.99.1", "0".repeat(64), TrainerLicense.Commercial)).toBe(
+			"mailwoman-trainer-commercial-cu130-1.99.1-0000000000000000"
+		)
+
+		expect(trainerImageName("cu130", "1.99.1", "0".repeat(64), TrainerLicense.OpenSource)).toBe(
+			"mailwoman-trainer-cu130-1.99.1-0000000000000000"
+		)
+	})
+
+	it("ships the trust register the product-license crate embeds and the crate's sources", async () => {
+		const files = await trainerSourceFiles()
+
+		expect(files).toEqual(expect.arrayContaining([...TRAINER_BUILD_INPUTS]))
+		expect(files).toContain("packages/license/crates/product-license/src/token.rs")
+	})
+})
 
 describe("trainerSourceFiles", () => {
 	it("lists the crates' sources and manifests, and leaves their tests, benches, examples and Markdown out", async () => {

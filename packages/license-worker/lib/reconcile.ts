@@ -10,9 +10,9 @@
  */
 
 import { applyStep } from "@mailwoman/core/state-machine"
+import { todayUTC } from "@mailwoman/license/product/dates"
 import type Stripe from "stripe"
 
-import { todayUTC } from "#dates"
 import { resendIssuanceEmail } from "#declare"
 import type { LicenseWorkerEnv } from "#env"
 import { type FulfilDependencies, fulfilInvoice, sendTokenEmail } from "#fulfil"

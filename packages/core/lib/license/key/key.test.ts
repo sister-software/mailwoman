@@ -1,6 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import {
+	isSelfServicePayload,
+	LICENSE_KEY_PREFIX,
+	LicenseIntent,
+	type LicenseKeyPayload,
+	LicenseTerms,
+	scopeAdmits,
+} from "@mailwoman/license/product/token"
 import { describe, expect, it } from "vitest"
 
 import { readLocalJSONFile } from "#fs/readers"
@@ -10,13 +18,7 @@ import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	grantsCommercialTerms,
-	isSelfServicePayload,
-	LICENSE_KEY_PREFIX,
-	LicenseIntent,
 	licenseKeyID,
-	type LicenseKeyPayload,
-	LicenseTerms,
-	scopeAdmits,
 	verifyLicenseKey,
 } from "#license"
 import { resolvePackagePath } from "#module/resolvers"

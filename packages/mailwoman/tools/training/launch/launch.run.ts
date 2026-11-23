@@ -7,7 +7,7 @@
  *   Usage:
  *     node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> [--device <Modal GPU> | --cpu] \
  *       [--fresh] [--branch-from <checkpoint>] [--threads <n>] [--retries <n>] [--timeout-seconds <s>] \
- *       [--fail-at-step <n>] [--dry-run]
+ *       [--fail-at-step <n>] [--dry-run] [--commercial]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>
  *     node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines <n>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
@@ -20,6 +20,12 @@
  *   and starts one detached sandbox.
  *
  *   `--dry-run` runs everything up to the sandbox and prints what it would start, without contacting Modal.
+ *   `--commercial` runs the commercial trainer image.
+ *
+ *   That trainer refuses unless the training grant in the
+ *   `MAILWOMAN_MODAL_TRAINING_SECRET` secret admits the run.
+ *
+ *   A grant in the host's `MAILWOMAN_TRAINING_GRANT` is verified before the preflight.
  *   `restart` resumes a stopped run from its newest complete checkpoint in a fresh sandbox.
  *
  *   `fetch` copies the run's output directory, or one checkpoint of it, from the volume to the host.
@@ -49,6 +55,7 @@ import {
 	TRAINER_BASE_IMAGES,
 	trainerImageName,
 	trainerRustToolchain,
+	TrainerLicense,
 	trainerSourceBundle,
 	type TrainerVariant,
 } from "#tools/training/launch/image"
@@ -79,6 +86,7 @@ const { values, positionals } = parseArguments({
 		"timeout-seconds": { type: "string" },
 		"fail-at-step": { type: "string", default: "0" },
 		"dry-run": { type: "boolean", default: false },
+		commercial: { type: "boolean", default: false },
 		lines: { type: "string", default: "100" },
 		corpus: { type: "string" },
 		out: { type: "string" },
@@ -117,7 +125,7 @@ async function modal(): Promise<ModalBoundary> {
 	return boundary
 }
 
-async function imageBuild(variant: TrainerVariant): Promise<TrainerImageBuild> {
+async function imageBuild(variant: TrainerVariant, license: TrainerLicense): Promise<TrainerImageBuild> {
 	const toolchain = await trainerRustToolchain()
 	const bundle = await trainerSourceBundle()
 	await using scratch = await temporaryDirectory("mailwoman-trainer-bundle-")
@@ -128,12 +136,23 @@ async function imageBuild(variant: TrainerVariant): Promise<TrainerImageBuild> {
 	await runFile("tar", ["-czf", archive, "-C", repoRootPath().toString(), "-T", list])
 
 	return {
-		name: trainerImageName(variant, toolchain, bundle.digest),
+		name: trainerImageName(variant, toolchain, bundle.digest, license),
 		baseImage: TRAINER_BASE_IMAGES[variant],
 		baseCommands: trainerBaseCommands(variant, toolchain),
-		buildScript: trainerBuildScript(variant),
+		buildScript: trainerBuildScript(variant, license),
 		bundle: await readLocalBuffer(archive),
 	}
+}
+
+/**
+ * The host's check of a training grant in `MAILWOMAN_TRAINING_GRANT`, or `null` when the host holds none.
+ */
+async function checkLocalGrant() {
+	if (!settings.MAILWOMAN_TRAINING_GRANT) return null
+
+	const { checkTrainingEntitlement } = await import("@mailwoman/core/license/training")
+
+	return checkTrainingEntitlement(settings.MAILWOMAN_TRAINING_GRANT)
 }
 
 function dependencies(configPath: string | null, dryRun: boolean): LaunchDependencies {
@@ -159,6 +178,7 @@ function dependencies(configPath: string | null, dryRun: boolean): LaunchDepende
 			})
 		},
 		imageBuild,
+		checkLocalGrant,
 		readRecord: (key) => tryReadLocalJSONFile<LaunchRecord>(recordPath(key)),
 		writeRecord: (record) => writeLocalJSONFile(record, recordPath(record.runKey)),
 		lockRun: (key) =>
@@ -215,6 +235,10 @@ switch (command) {
 					: TRAIN_TIMEOUT_SECONDS,
 				failAtStep: integerArgument("fail-at-step", values["fail-at-step"]),
 				dryRun: values["dry-run"],
+				license: values.commercial ? TrainerLicense.Commercial : TrainerLicense.OpenSource,
+				...(settings.MAILWOMAN_MODAL_TRAINING_SECRET
+					? { trainingSecret: settings.MAILWOMAN_MODAL_TRAINING_SECRET }
+					: {}),
 			},
 			dependencies(configPath, values["dry-run"])
 		)

@@ -11,7 +11,8 @@
  *   All other code gets Stripe IDs from this module, so re-provisioning an account changes only `ids.json`.
  */
 
-import type { ShopPlan } from "#shop/catalog"
+import type { ShopPlan } from "@mailwoman/license/product/plans"
+
 import ids from "#shop/ids.json" with { type: "json" }
 
 /**

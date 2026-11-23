@@ -36,8 +36,10 @@ admits that bundle's tier. The AGPL grants those rights directly, so exercising 
 A commercial license lets you use the Mailwoman platform and run our pretrained models in proprietary
 products and hosted services without the AGPL's share-alike and source-offer requirements for the code
 and model artifacts covered by your agreement. The agreement you accept at checkout is the
-[commercial license agreement](/license/terms/commercial-2026-10),
-published at its own address and never edited after publication. It is the agreement that binds, and
+[commercial license agreement](/license/terms/commercial-2026-11),
+published at its own address and never edited after publication. Its grant covers platform use and inference
+with our pretrained models, and its section 2a excludes the commercial training stack. A subscription bought
+under the earlier [`commercial-2026-10`](/license/terms/commercial-2026-10) keeps that version. It is the agreement that binds, and
 it is the document to read for what you owe and what you're owed. This page and the site
 [terms of service](/terms-of-service) describe the website and the catalog, and neither replaces a
 term of the agreement you accepted. What each tier covers, and the enterprise and OEM tiers, are on
@@ -46,7 +48,8 @@ the [pricing page](/pricing).
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md)
 in the repository is a reference template, and its own opening notice states that it isn't self-executing and
 grants no rights on its own. It has the published agreement's ten sections in the same order, plus a
-section 4a on third-party datasets, and four of the ten differ
+section 4a on third-party datasets. The published `commercial-2026-11` adds section 2a, which excludes the training
+stack and has no counterpart in the template. Four of the ten sections differ
 in substance from `commercial-2026-10`: the template defines the licensee generically where the
 published agreement identifies the entity given at checkout, the template leaves fees and term open where
 the published agreement states the subscription price and the key-period mechanics, and the published
@@ -57,10 +60,18 @@ made under it. The template is where a negotiated agreement starts.
 
 ### Model training and continued use
 
-We offer commercial terms for the Mailwoman training stack under a separate written agreement.
+We offer commercial terms for the Mailwoman training stack under a separate written agreement, signed as an
+order form that incorporates the
+[commercial training agreement](/license/terms/commercial-training-2026-11). Checkout never sells it.
 [Contact us for training terms and pricing](mailto:hello@sister.software?subject=Mailwoman%20training%20licensing).
-The training agreement sets out your rights to use and distribute the resulting models, including
-any rights that continue after the agreement ends.
+The training agreement sets out your rights to use and distribute the resulting models during the term, and the
+post-term deployment grant an order form may add for continued use after the agreement ends.
+
+Under a training agreement we issue a training grant: a signed credential with its own grant ID, agreement version
+and expiry. A platform license key, including one whose scope is `all`, grants no training permission. The
+commercial trainer verifies the grant before every start, retry and resume, and every model it exports leaves with a
+provenance manifest that binds the model's bytes to the run and the grant that produced it. A manifest records how a
+model was made and stays verifiable after the grant expires; it is never a grant itself.
 
 If you train or fine-tune a model under the AGPL, the AGPL continues to apply to the training code
 and to any resulting model artifact that qualifies as a covered work. Section 2 of the

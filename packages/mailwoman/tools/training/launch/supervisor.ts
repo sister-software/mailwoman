@@ -5,8 +5,8 @@
  *   The supervisor a training sandbox runs: a bash script, so the trainer image
  *   needs neither Node nor Python.
  *
- *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that
- *   describe another config or corpus, checks the device, and runs `trainer train`.
+ *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that describe
+ *   another config or corpus, checks the device and the training grant, and runs `trainer train`.
  *   It commits the volume after every checkpoint the trainer saves, and it restarts
  *   the trainer after a failed exit, up to the retry count, resuming from the newest
  *   complete checkpoint, or from the branch checkpoint while the run has none.
@@ -16,10 +16,16 @@
  */
 
 /**
- * The supervisor's exit code for a refusal a retry would repeat: inputs that describe
- * another config or corpus, or a device other than the requested one.
+ * The supervisor's exit code for a refusal a retry would repeat: inputs that describe another config
+ * or corpus, a device other than the requested one, or a training grant that doesn't admit the run.
  */
 export const SUPERVISOR_REFUSED_EXIT = 3
+
+/**
+ * The exit code of `trainer train` and `trainer authorize` when the run's training grant doesn't
+ * admit it (`AUTHORIZATION_REFUSED_EXIT` in `packages/trainer/crates/trainer-cli/src/authorize.rs`).
+ */
+export const TRAINER_AUTHORIZATION_REFUSED_EXIT = 3
 
 /**
  * The trainer's console line for a finished checkpoint, after which the supervisor commits the volume.
@@ -103,6 +109,11 @@ export interface SupervisorEnvironment {
 	 */
 	MW_TRAINER: string
 	MW_SYNC: string
+	/**
+	 * The published trainer image's name.
+	 * The trainer records it in the run's `TRAINING.json`.
+	 */
+	MAILWOMAN_TRAINER_IMAGE?: string
 }
 
 /**
@@ -156,6 +167,10 @@ commit
 log "inputs: verified ($MW_CONFIG_PATH, $MW_RESOLVED_PATH)"
 
 "$MW_TRAINER" device --device "$MW_EXPECT_DEVICE" || refuse "trainer device refused $MW_EXPECT_DEVICE"
+
+# The commercial trainer verifies its training grant here, before a fresh start clears anything. The open-source
+# trainer reports its branch and admits. The report holds the grant's claims and never the token.
+"$MW_TRAINER" authorize || refuse "trainer authorize refused the run's training grant"
 
 if [ "$MW_FRESH" = 1 ] && [ -e "$MW_OUTPUT_DIR" ]; then
 	rm -rf "$MW_OUTPUT_DIR"
@@ -228,6 +243,10 @@ while :; do
 		log "training complete"
 		exit 0
 	fi
+
+	# The trainer's authorization refusal: a grant that expired since the last attempt, for instance. A retry would
+	# repeat it, and the run's checkpoints stay as the last attempt committed them.
+	[ "$code" -eq ${TRAINER_AUTHORIZATION_REFUSED_EXIT} ] && refuse "trainer train refused its training grant"
 
 	if [ "$attempt" -ge "$MW_RETRIES" ]; then
 		log "trainer train exited $code after $attempt retries"

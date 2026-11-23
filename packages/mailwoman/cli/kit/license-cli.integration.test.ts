@@ -15,18 +15,28 @@ import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	encodeLicenseKey,
+	encodeTrainingGrant,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
 	publishedLicenseKeys,
 } from "@mailwoman/core/license"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 
 import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
+
+/**
+ * The UTC calendar date `days` from now.
+ */
+function isoDateInDays(days: number): string {
+	return isoDate(new Date(Date.now() + days * 86_400_000))
+}
 
 interface CLIRun extends ProcessOutput {
 	exitCode: number
@@ -81,6 +91,70 @@ describe("mailwoman license", () => {
 		const { stdout } = await cli(["verify", "--key", token, "--json"])
 
 		expect(parseJSONStrict<{ status: string; kid: string }>(stdout)).toMatchObject({ status: "unknown_key", kid })
+	})
+
+	test("grant-training refuses a signing key the register does not carry and an expiry past one quarter", async () => {
+		await using scratch = await temporaryDirectory("license-cli-")
+		const env = { MAILWOMAN_CONFIG_ROOT: scratch.path.toString() }
+
+		await cli(["keygen", "--major", "9"], env)
+
+		const unregistered = await cli(["grant-training", "--holder", "Example Ltd", "--expires", isoDateInDays(30)], env)
+
+		expect(unregistered.exitCode).not.toBe(0)
+		expect(unregistered.stderr).toContain("not in this build's register")
+
+		const tooLong = await cli(["grant-training", "--holder", "Example Ltd", "--expires", isoDateInDays(200)], env)
+
+		expect(tooLong.stderr).toContain("within 92 days")
+	})
+
+	test("verify reads a training grant, reports its admission, and prints no token", async () => {
+		const pair = await generateLicenseSigningKeyPair()
+		const kid = await licenseKeyID(pair.publicKeyPEM, 9)
+
+		const token = await encodeTrainingGrant(
+			{
+				v: 1,
+				kid,
+				grant: "mtg_0123456789abcdef01234567",
+				holder: "x",
+				agreement: "commercial-training-2026-11",
+				issued: "2026-11-01",
+				expires: "2099-01-31",
+				permits: ["train"],
+			},
+			pair.privateKeyPEM
+		)
+
+		const { stdout, exitCode } = await cli(["verify", "--key", token, "--json"])
+
+		expect(exitCode).toBe(1)
+		expect(parseJSONStrict(stdout)).toMatchObject({ status: "unknown_key", kid, training: "unknown_key" })
+		expect(stdout).not.toContain(token)
+	})
+
+	test("provenance verifies an unattested manifest's bytes and refuses one signed by a key this build does not trust", async () => {
+		const fixture = (name: string) =>
+			resolvePackagePath("@mailwoman/license", "test", "fixtures", "product", "provenance", name)
+
+		const unattested = await cli(["provenance", "--manifest", fixture("unattested.provenance.json")])
+
+		expect(unattested.exitCode).toBe(0)
+		expect(unattested.stdout).toContain("status: verified (unattested)")
+
+		const required = await cli([
+			"provenance",
+			"--manifest",
+			fixture("unattested.provenance.json"),
+			"--require-signature",
+		])
+
+		expect(required.stdout).toContain("refused (unsigned)")
+
+		const signed = await cli(["provenance", "--manifest", fixture("model.provenance.json"), "--json"])
+
+		expect(parseJSONStrict(signed.stdout)).toMatchObject({ status: "refused", refusal: "unknown_key" })
 	})
 
 	const LID = `lic_${"a".repeat(22)}`

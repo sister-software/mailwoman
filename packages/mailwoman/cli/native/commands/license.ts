@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman license <keygen|issue|verify|register|adopt|refresh>` provides
- *   commands for license issuers, customers and installations.
+ *   `mailwoman license <keygen|issue|grant-training|verify|provenance|attest|register|adopt|refresh>`
+ *   provides commands for license issuers, customers and installations.
  *
  *   `keygen` creates an Ed25519 signing pair in the config root and prints the public key with its key id.
  *   `issue` signs a payload with the private key and prints the token.
+ *
+ *   `grant-training` signs a commercial training grant, the negotiated path that checkout never reaches.
+ *   `provenance` verifies a model's provenance manifest, and `attest` signs a customer-submitted one.
  *
  *   `verify` checks a token (or the configured token) offline against this build's register.
  *   With `--online`, it asks mailwoman.post whether the key id remains listed
@@ -20,8 +23,6 @@
  *   Neither command writes a token this build cannot verify.
  */
 
-import { configRootPath } from "@mailwoman/core/data-root"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -33,15 +34,11 @@ import {
 	docsSiteURL,
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
-	isSelfServicePayload,
-	LicenseIntent,
 	licenseKeyID,
-	type LicenseKeyPayload,
-	type LicenseKeyVerification,
+	provenanceKeyID,
 	publishedLicenseKeys,
 	readOrMintInstallationID,
 	readRefreshCredentials,
-	trustedLicenseSigningKeys,
 	verifyLicenseKey,
 	writeLicenseKeyFile,
 	writeRefreshCredentials,
@@ -61,9 +58,30 @@ import {
 import { repoRootPath } from "@mailwoman/core/paths"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
-import { resolvePath } from "path-ts"
+import {
+	isSelfServicePayload,
+	LicenseIntent,
+	type LicenseKeyPayload,
+	type LicenseKeyVerification,
+	TRAINING_GRANT_PREFIX,
+} from "@mailwoman/license/product/token"
+import { trustedLicenseSigningKeys } from "@mailwoman/license/product/trust"
 
 import { attributionReport, renderAttributionReport } from "#cli/native/commands/license/attribution"
+import {
+	licenseConfigPath,
+	PROVENANCE_KEY_FILE,
+	PROVENANCE_PUBLIC_KEY_FILE,
+	PUBLIC_KEY_FILE,
+	registeredSigningKey,
+	SIGNING_KEY_FILE,
+} from "#cli/native/commands/license/signing"
+import {
+	attestCommand,
+	grantTraining,
+	provenanceCommand,
+	reportTrainingGrant,
+} from "#cli/native/commands/license/training"
 import {
 	booleanValue,
 	CLIError,
@@ -82,11 +100,12 @@ import { readMailwomanManifest } from "#package/metadata"
 export const spec = {
 	name: "license",
 	description:
-		"Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id. `issue` signs a key for a licensee. `verify` checks a token offline against the public keys this build trusts. `register` prints the well-known key file the shipped register derives. `adopt <token> --secret <s>` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it. `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` reports which branch applies and why.",
+		"Mint, issue, verify, adopt and refresh commercial license keys and training grants. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id. `issue` signs a platform key for a licensee. `grant-training` signs a commercial training grant under a written training agreement; checkout and declarations never issue one. `verify` checks a platform key or a training grant offline against the public keys this build trusts. `provenance` verifies a model's provenance manifest against the files beside it, and `attest` signs a customer-submitted manifest after checking its bytes. `register` prints the well-known key file the shipped register derives. `adopt <token> --secret <s>` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it. `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` reports which branch applies and why.",
 	positionals: [
 		{
 			name: "action",
-			description: "One of: keygen, issue, verify, register, adopt, refresh, declare, evaluate, attribution.",
+			description:
+				"One of: keygen, issue, grant-training, verify, provenance, attest, register, adopt, refresh, declare, evaluate, attribution.",
 			required: true,
 		},
 		{ name: "argument", description: "adopt: the token to adopt.", required: false },
@@ -172,14 +191,55 @@ export const spec = {
 			default: false,
 			description: "register: write the well-known file under docs/static instead of printing it.",
 		},
+		holder: {
+			type: "string",
+			hint: "name",
+			description:
+				"grant-training: the party the training agreement was signed with. Model provenance never copies it.",
+		},
+		grant: {
+			type: "string",
+			hint: "mtg_…",
+			description:
+				"grant-training: the grant id a renewal keeps, so a run continued under the renewed grant keeps one record. Omit to mint a new id.",
+		},
+		permits: {
+			type: "string",
+			default: "train,deploy",
+			hint: "train,deploy",
+			description:
+				"grant-training: the permissions the grant carries. `train` admits commercial training runs and their exports, and `deploy` commercial use of the models trained under the grant.",
+		},
+		agreement: {
+			type: "string",
+			hint: "version",
+			description: "grant-training: the written training agreement's version. Defaults to the current one.",
+		},
+		manifest: {
+			type: "string",
+			hint: "path",
+			description: "provenance, attest: the `<graph>.provenance.json` manifest.",
+		},
+		out: {
+			type: "string",
+			hint: "path",
+			description: "attest: where to write the attested manifest.",
+		},
+		use: {
+			type: "string",
+			default: "license",
+			hint: "license|provenance",
+			description:
+				"keygen: `license` mints a key that signs platform keys and training grants; `provenance` mints a key that signs model provenance manifests, under the file name provenance-key.pem.",
+		},
+		"require-signature": {
+			type: "boolean",
+			default: false,
+			description: "provenance: refuse an unattested manifest, as the commercial production path does.",
+		},
 		json: { type: "boolean", default: false, description: "Emit the result as JSON." },
 	},
 } as const satisfies CommandSpec
-
-const SIGNING_KEY_FILE = "signing-key.pem"
-const PUBLIC_KEY_FILE = "signing-key.pub.pem"
-
-const licenseConfigPath = configRootPath("license")
 
 async function thisMajorVersion(): Promise<number> {
 	const manifest = await readMailwomanManifest()
@@ -192,8 +252,15 @@ async function thisMajorVersion(): Promise<number> {
 }
 
 async function keygen(parsed: ParsedCommand): Promise<number> {
-	const privatePath = licenseConfigPath(SIGNING_KEY_FILE)
-	const publicPath = licenseConfigPath(PUBLIC_KEY_FILE)
+	const use = stringValue(parsed.values, "use") ?? "license"
+
+	if (use !== "license" && use !== "provenance") {
+		throw new CLIUsageError(`--use must be license or provenance, got ${stringifyJSON(use)}.`)
+	}
+
+	const provenance = use === "provenance"
+	const privatePath = licenseConfigPath(provenance ? PROVENANCE_KEY_FILE : SIGNING_KEY_FILE)
+	const publicPath = licenseConfigPath(provenance ? PROVENANCE_PUBLIC_KEY_FILE : PUBLIC_KEY_FILE)
 
 	if (await pathExists(privatePath)) {
 		throw new CLIError(
@@ -207,13 +274,13 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	if (!Number.isFinite(major)) throw new CLIUsageError(`--major must be an integer, got ${stringifyJSON(majorOption)}.`)
 
 	const pair = await generateLicenseSigningKeyPair()
-	const kid = await licenseKeyID(pair.publicKeyPEM, major)
+	const kid = await (provenance ? provenanceKeyID : licenseKeyID)(pair.publicKeyPEM, major)
 
 	await writePrivateTextFile(pair.privateKeyPEM, privatePath)
 	await writeLocalTextFile(pair.publicKeyPEM, publicPath)
 
 	if (booleanValue(parsed.values, "json")) {
-		process.stdout.write(prettyJSON({ kid, publicKeyPEM: pair.publicKeyPEM, privateKeyPath: privatePath }))
+		process.stdout.write(prettyJSON({ kid, use, publicKeyPEM: pair.publicKeyPEM, privateKeyPath: privatePath }))
 	} else {
 		process.stdout.write(
 			[
@@ -221,8 +288,8 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 				`public key written:  ${publicPath}`,
 				`key id:              ${kid}`,
 				"",
-				"Register the public key, then regenerate the well-known file, before issuing keys against it:",
-				'  1. packages/core/lib/license/register.ts — add an entry with status "active"',
+				"Register the public key, then regenerate the well-known file, before signing against it:",
+				`  1. packages/license/lib/product/trust-register.json — add an entry with status "active" to ${provenance ? "provenance_keys" : "license_keys"}`,
 				"  2. mailwoman license register --write",
 				"",
 				pair.publicKeyPEM.trimEnd(),
@@ -239,27 +306,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 
 	if (!licensee) throw new CLIUsageError("issue requires --licensee <name>.")
 
-	const signingKeyPath = stringValue(parsed.values, "signing-key") ?? licenseConfigPath(SIGNING_KEY_FILE)
-
-	if (!(await pathExists(signingKeyPath))) {
-		throw new CLIError(
-			`No signing key at ${signingKeyPath}. Run \`mailwoman license keygen\` first, or pass --signing-key.`
-		)
-	}
-
-	const privateKeyPEM = await readLocalTextFile(signingKeyPath)
-	const publicKeyPath = resolvePath(signingKeyPath.replace(/\.pem$/u, ""), "..", PUBLIC_KEY_FILE)
-	const publicKeyPEM = (await pathExists(publicKeyPath)) ? await readLocalTextFile(publicKeyPath) : null
-
-	const trusted = publicKeyPEM
-		? Object.entries(trustedLicenseSigningKeys()).find(([, pem]) => pem.trim() === publicKeyPEM.trim())
-		: null
-
-	if (!trusted) {
-		throw new CLIError(
-			`The public half of ${signingKeyPath} is not in this build's register (packages/core/lib/license/register.ts), so a key it signs would verify nowhere. Add it and rebuild first.`
-		)
-	}
+	const signer = await registeredSigningKey(parsed, SIGNING_KEY_FILE, PUBLIC_KEY_FILE, trustedLicenseSigningKeys())
 
 	const scopeRaw = stringValue(parsed.values, "scope") ?? "all"
 
@@ -269,7 +316,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 
 	const payload: LicenseKeyPayload = {
 		v: 1,
-		kid: trusted[0],
+		kid: signer.kid,
 		licensee,
 		issued: isoDate(),
 		...(expires ? { expires } : {}),
@@ -277,7 +324,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 		terms: "LicenseRef-Commercial",
 	}
 
-	const token = await encodeLicenseKey(payload, privateKeyPEM)
+	const token = await encodeLicenseKey(payload, signer.privateKeyPEM)
 
 	process.stdout.write(booleanValue(parsed.values, "json") ? prettyJSON({ token, payload }) : `${token}\n`)
 
@@ -636,6 +683,8 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 
 	if (!token) throw new CLIUsageError("verify needs a token: pass --key <token> or set MAILWOMAN_LICENSE_KEY.")
 
+	if (token.trim().startsWith(`${TRAINING_GRANT_PREFIX}.`)) return reportTrainingGrant(parsed, token)
+
 	const verification = await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys() })
 	const kid = "kid" in verification ? verification.kid : null
 	const online = booleanValue(parsed.values, "online")
@@ -737,8 +786,14 @@ export async function run(args: readonly string[]): Promise<number> {
 				return keygen(parsed)
 			case "issue":
 				return issue(parsed)
+			case "grant-training":
+				return grantTraining(parsed)
 			case "verify":
 				return verifyCommand(parsed)
+			case "provenance":
+				return provenanceCommand(parsed)
+			case "attest":
+				return attestCommand(parsed)
 			case "register":
 				return registerCommand(parsed)
 			case "adopt":
@@ -753,7 +808,7 @@ export async function run(args: readonly string[]): Promise<number> {
 				return attributionCommand(parsed)
 			default:
 				throw new CLIUsageError(
-					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt, refresh, declare, evaluate or attribution.`
+					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, grant-training, verify, provenance, attest, register, adopt, refresh, declare, evaluate or attribution.`
 				)
 		}
 	})

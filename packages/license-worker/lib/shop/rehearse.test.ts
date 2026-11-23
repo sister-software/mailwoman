@@ -10,11 +10,12 @@
  *   The renewed expiry matches the period end plus the grace period.
  */
 
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
-import { AGREEMENT_VERSION, checkoutCollection } from "#shop/catalog"
+import { checkoutCollection } from "#shop/catalog"
 import { advanceRehearsal, startRehearsal } from "#shop/rehearse"
 import { stripeClient } from "#stripe/client"
 import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/mock"

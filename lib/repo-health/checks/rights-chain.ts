@@ -28,7 +28,9 @@ const RIGHTS_DOCUMENTS: ReadonlyArray<readonly [path: string, role: string]> = [
 	["COMMERCIAL-LICENSE.md", "the commercial reference template"],
 	["CONTRIBUTING.md", "the contributor grant this repository relies on to sublicense a contribution"],
 	["docs/src/pages/license.mdx", "the public license page"],
-	["docs/src/pages/license/terms/commercial-2026-10.mdx", "the versioned checkout agreement"],
+	["docs/src/pages/license/terms/commercial-2026-10.mdx", "the checkout agreement sold until commercial-2026-11"],
+	["docs/src/pages/license/terms/commercial-2026-11.mdx", "the versioned checkout agreement"],
+	["docs/src/pages/license/terms/commercial-training-2026-11.mdx", "the written training agreement's published terms"],
 ]
 
 /**

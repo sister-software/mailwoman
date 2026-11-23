@@ -10,9 +10,11 @@
  *   because it imports the HTTP client and this module is on the CLI launcher's path for every invocation.
  */
 
-import { verifyLicenseKey, type LicenseKeyVerification } from "#license/key"
+import type { LicenseKeyVerification } from "@mailwoman/license/product/token"
+import { trustedLicenseSigningKeys } from "@mailwoman/license/product/trust"
+
+import { verifyLicenseKey } from "#license/key"
 import { readConfiguredLicenseToken } from "#license/key/file"
-import { trustedLicenseSigningKeys } from "#license/register"
 
 /**
  * Verify the configured key offline, or `undefined` when neither the variable nor the key file is set.

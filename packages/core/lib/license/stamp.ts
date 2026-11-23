@@ -8,10 +8,16 @@
  *   The well-known register supplies the doctor's freshness check, so each process makes no network call.
  */
 
+import {
+	licenseExpiryInstant,
+	type LicenseKeyPayload,
+	type LicenseKeyVerification,
+	LicenseTerms,
+} from "@mailwoman/license/product/token"
+
 import { appliedLicenseBranch, grantsCommercialTerms } from "#license/branch"
 import { EXPIRY_NOTICE_DAYS } from "#license/declaration"
 import { docsSiteURL } from "#license/docs-site"
-import { licenseExpiryInstant, type LicenseKeyPayload, type LicenseKeyVerification, LicenseTerms } from "#license/key"
 
 /**
  * The singular page path the notice and the `Link: rel="license"` header point at,

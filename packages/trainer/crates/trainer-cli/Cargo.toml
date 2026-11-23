@@ -10,10 +10,16 @@ repository.workspace = true
 name = "trainer"
 path = "src/main.rs"
 
+[features]
+# The commercial trainer: `train` refuses unless a training grant admits the run. The trainer image for a commercial
+# launch is built with it; a build without it is the open-source trainer.
+commercial = []
+
 [dependencies]
 tch.workspace = true
 trainer-model = { path = "../trainer-model" }
 trainer-loop = { path = "../trainer-loop" }
+product-license.workspace = true
 serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
 
 [dev-dependencies]

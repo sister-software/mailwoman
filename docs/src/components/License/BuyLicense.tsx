@@ -12,11 +12,9 @@ import {
 	BILLING_PORTAL_URL,
 	PAYMENT_LINK_MONTHLY,
 	PAYMENT_LINK_YEARLY,
-	PRICE_MONTHLY,
-	PRICE_YEARLY,
-	PRICE_YEARLY_PER_MONTH,
-	TERMS_PATH,
 } from "@mailwoman/license-worker/client/constants"
+import { TERMS_PATH } from "@mailwoman/license/product/agreement"
+import { PRICE_MONTHLY, PRICE_YEARLY, PRICE_YEARLY_PER_MONTH } from "@mailwoman/license/product/plans"
 import type React from "react"
 
 import styles from "./styles.module.css"

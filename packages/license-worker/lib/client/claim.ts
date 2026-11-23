@@ -17,8 +17,9 @@
  *   The worker's exact-origin CORS admits this site and returns `no-store`.
  */
 
+import { LICENSE_WORKER_URL } from "@mailwoman/license/product/agreement"
+
 import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-interface"
-import { LICENSE_WORKER_URL } from "#client/constants"
 
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }

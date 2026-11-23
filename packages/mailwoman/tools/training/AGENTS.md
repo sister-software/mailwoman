@@ -64,6 +64,22 @@ Its filesystem snapshot is published as `mailwoman-trainer-<variant>-<toolchain>
 with the same sources reuses it. A change under `packages/trainer` or the mtf crates builds a new image on the next
 launch.
 
+### Commercial training
+
+`start --commercial` trains under a commercial training grant instead of the AGPL. It builds the trainer with
+`trainer-cli`'s `commercial` feature into its own image (`mailwoman-trainer-commercial-<variant>-…`). It attaches the
+Modal secret named by `MAILWOMAN_MODAL_TRAINING_SECRET`, which holds `MAILWOMAN_TRAINING_GRANT`, on every start and
+restart. Create the secret with `modal secret create --from-dotenv <env file> <name>`. The launch record keeps the
+secret's name, and no record, argument, log or artifact holds the token. A grant also set in the host's
+`MAILWOMAN_TRAINING_GRANT` is verified before the preflight.
+
+In the sandbox the supervisor runs `trainer authorize` after the device check and before `--fresh` clears anything. An
+authorization refusal there, or an exit 3 from `trainer train` on a retry, refuses the run without a retry and leaves
+its checkpoints as committed. `restart` restarts a refused commercial run once the grant in the secret is renewed. Each
+run writes `TRAINING.json` beside its checkpoints, and `trainer-export` binds it into the model's signed provenance
+manifest. `docs/engineering/reference/product-license-tokens.mdx` specifies the grant, the record and the manifest.
+Without `--commercial` the launch runs the open-source trainer, which checks no grant and records `AGPL-3.0-only`.
+
 ### The lifecycle checks
 
 `--cpu` runs the CPU image at 4 CPUs. `--fail-at-step <n>`, accepted only with `--cpu`, kills the trainer once after it
@@ -74,7 +90,8 @@ launch. `launch/*.test.ts` checks each lifecycle step against a stub boundary an
 ## Settings
 
 `launch/settings.ts` reads `MAILWOMAN_MODAL_APP`, `MAILWOMAN_MODAL_VOLUME`, `MAILWOMAN_MODAL_TRAIN_GPU`,
-`MAILWOMAN_MODAL_TRAIN_RETRIES` and `MAILWOMAN_MODAL_R2_SECRET` with the Python launcher's defaults, over the corpus
+`MAILWOMAN_MODAL_TRAIN_RETRIES` and `MAILWOMAN_MODAL_R2_SECRET` with the Python launcher's defaults, and
+`MAILWOMAN_MODAL_TRAINING_SECRET` and `MAILWOMAN_TRAINING_GRANT` for a commercial launch, over the corpus
 package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`. Modal credentials come from
 `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or `~/.modal.toml`.
 

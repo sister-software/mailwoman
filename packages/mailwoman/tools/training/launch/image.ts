@@ -98,6 +98,28 @@ export const TRAINER_DATA_FILES = [
 ] as const
 
 /**
+ * The build inputs outside `packages/*\/crates/**` that a crate embeds at compile time.
+ *
+ * `product-license` embeds the trust register with `include_str!`, so the register is
+ * part of the image's digest, and a register change builds a new image.
+ */
+export const TRAINER_BUILD_INPUTS = ["packages/license/lib/product/trust-register.json"] as const
+
+/**
+ * The license branch a trainer image's binary trains under.
+ *
+ * The commercial image is built with `trainer-cli`'s `commercial` feature,
+ * so its `trainer train` refuses unless a training grant admits the run.
+ * The branch is compiled in, so no config or flag of a launch switches it off.
+ */
+export const TrainerLicense = {
+	Commercial: "commercial",
+	OpenSource: "open-source",
+} as const
+
+export type TrainerLicense = (typeof TrainerLicense)[keyof typeof TrainerLicense]
+
+/**
  * The channel the root `rust-toolchain.toml` pins.
  *
  * @throws When the file states no channel.
@@ -166,18 +188,20 @@ export function trainerBaseCommands(variant: TrainerVariant, toolchain: string):
  * The CUDA driver's `libcuda.so.1` is the one library a build sandbox lacks.
  * Modal mounts it into a GPU sandbox.
  */
-export function trainerBuildScript(variant: TrainerVariant): string {
+export function trainerBuildScript(variant: TrainerVariant, license: TrainerLicense): string {
 	const linkage =
 		variant === TrainerVariant.CUDA
 			? "readelf -d /usr/local/bin/trainer | grep -q 'libtorch_cuda\\.so'"
 			: "trainer device --device cpu"
+
+	const features = license === TrainerLicense.Commercial ? " --features commercial" : ""
 
 	return [
 		"set -euo pipefail",
 		`mkdir -p ${TRAINER_REPO_ROOT}`,
 		`base64 -d | tar -xz -C ${TRAINER_REPO_ROOT}`,
 		`cd ${TRAINER_REPO_ROOT}`,
-		"cargo build --profile trainer --locked -p trainer-cli",
+		`cargo build --profile trainer --locked -p trainer-cli${features}`,
 		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer /usr/local/bin/trainer`,
 		`rm -rf ${TRAINER_REPO_ROOT}/target /root/.cargo/registry`,
 		"! ldd /usr/local/bin/trainer | grep 'not found' | grep -v 'libcuda\\.so\\.1'",
@@ -205,7 +229,9 @@ export async function trainerSourceFiles(): Promise<string[]> {
 	// `-p trainer-cli` compiles only the trainer and what it depends on.
 	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", ":(glob)packages/*/crates/**"])
 
-	return [...new Set([...[...trainer, ...mtf].filter(isBuildInput), ...TRAINER_DATA_FILES])].toSorted()
+	return [
+		...new Set([...[...trainer, ...mtf].filter(isBuildInput), ...TRAINER_DATA_FILES, ...TRAINER_BUILD_INPUTS]),
+	].toSorted()
 }
 
 /**
@@ -243,8 +269,19 @@ export async function trainerSourceBundle(): Promise<TrainerSourceBundle> {
 }
 
 /**
- * The published name of the trainer image for one variant, toolchain and source digest.
+ * The published name of the trainer image for one license branch, variant, toolchain and source digest.
+ *
+ * The open-source image keeps the name it had before the branches existed.
+ * The commercial image adds `commercial-`.
+ * The two binaries never share a published name.
  */
-export function trainerImageName(variant: TrainerVariant, toolchain: string, digest: string): string {
-	return `mailwoman-trainer-${variant}-${toolchain}-${digest.slice(0, 16)}`
+export function trainerImageName(
+	variant: TrainerVariant,
+	toolchain: string,
+	digest: string,
+	license: TrainerLicense
+): string {
+	const branch = license === TrainerLicense.Commercial ? "commercial-" : ""
+
+	return `mailwoman-trainer-${branch}${variant}-${toolchain}-${digest.slice(0, 16)}`
 }

@@ -1,24 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { AGREEMENT_VERSION, type ShopPlan, SHOP_PLANS } from "#shop/catalog"
+/**
+ *   The live Stripe addresses the site links to: the two Payment Links and the billing portal.
+ *
+ *   The agreement version, the support address and the printed prices are vendor-neutral
+ *   and belong to `@mailwoman/license/product`.
+ */
+
 import { SHOP_IDS } from "#shop/ids"
-
-/**
- * The license worker's origin: the claim route the issued page polls lives under it.
- */
-export const LICENSE_WORKER_URL = "https://license.mailwoman.post"
-
-/**
- * Where a buyer writes when the page cannot help.
- */
-export const SUPPORT_EMAIL = "support@sister.software"
-
-/**
- * The clickwrap agreement page for the current version, one page per version,
- * never edited after publication.
- */
-export const TERMS_PATH = `/license/terms/${AGREEMENT_VERSION}`
 
 /**
  * Monthly Payment Link.
@@ -34,42 +24,3 @@ export const PAYMENT_LINK_YEARLY = SHOP_IDS.live.paymentLinks["commercial-yearly
  * The Customer Portal's login page, where a customer changes the card, the plan, or cancels.
  */
 export const BILLING_PORTAL_URL = SHOP_IDS.live.portalURL
-
-/**
- * One formatter serves the site, so every printed figure comes from the same
- * `SHOP_PLANS` entry the provisioner sends to Stripe.
- */
-function formatAmount(cents: number, currency: string): string {
-	return new Intl.NumberFormat("en-US", {
-		style: "currency",
-		currency: currency.toUpperCase(),
-		maximumFractionDigits: 0,
-	}).format(cents / 100)
-}
-
-function planOrThrow(code: ShopPlan["code"]): ShopPlan {
-	const plan = SHOP_PLANS.find((candidate) => candidate.code === code)
-
-	if (!plan) throw new Error(`No shop plan for ${code}`)
-
-	return plan
-}
-
-const MONTHLY_PLAN = planOrThrow("commercial-monthly-v1")
-const YEARLY_PLAN = planOrThrow("commercial-yearly-v1")
-
-/**
- * The monthly plan's headline price, e.g. `$250`, derived from `SHOP_PLANS` so a price change reaches
- * the card and Stripe together and a card can never advertise a number the checkout doesn't charge.
- */
-export const PRICE_MONTHLY = formatAmount(MONTHLY_PLAN.unitAmount, MONTHLY_PLAN.currency)
-
-/**
- * The yearly plan's headline price, e.g. `$2,400`.
- */
-export const PRICE_YEARLY = formatAmount(YEARLY_PLAN.unitAmount, YEARLY_PLAN.currency)
-
-/**
- * The yearly plan as an effective monthly rate, e.g. `$200`.
- */
-export const PRICE_YEARLY_PER_MONTH = formatAmount(Math.round(YEARLY_PLAN.unitAmount / 12), YEARLY_PLAN.currency)

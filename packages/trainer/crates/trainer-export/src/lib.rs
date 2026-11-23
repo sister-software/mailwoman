@@ -24,6 +24,7 @@ pub mod export;
 pub mod graph;
 pub mod npy;
 pub mod pickle;
+pub mod provenance;
 pub mod quantize;
 pub mod shape;
 pub mod span;

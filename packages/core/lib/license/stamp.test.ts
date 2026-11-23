@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { describe, expect, it } from "vitest"
 
 import { stringifyJSON } from "#json"
@@ -9,7 +10,6 @@ import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
-	type LicenseKeyPayload,
 	licenseNoticeLines,
 	licensePageURL,
 	verifyLicenseKey,

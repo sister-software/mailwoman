@@ -1,0 +1,168 @@
+---
+title: Product license tokens and model provenance
+role: reference
+audience: maintainer
+owner: operations
+source-of-truth: packages/license/lib/product/token.ts
+tags:
+  - operations
+  - licensing
+---
+
+# Product license tokens and model provenance
+
+This page specifies Mailwoman's own product credentials and the provenance record a trained model carries. Two
+implementations read them. The TypeScript side has the schemas in `@mailwoman/license/product/*` and the signatures in
+`@mailwoman/core/license/key` and `@mailwoman/core/license/provenance`. The Rust side is the
+`packages/license/crates/product-license` crate, which the trainer and the exporter link. Both run the fixtures under
+`packages/license/test/fixtures/product/`, which `packages/core/tools/license/product-fixtures.run.ts` writes from the
+test keys in `keys.json`. A case the two disagree on is a defect in one of them.
+
+## Trust register
+
+`packages/license/lib/product/trust-register.json` is the one register of public signing keys. TypeScript imports it,
+the Rust crate embeds it with `include_str!`, and the trainer image's source digest covers it (`TRAINER_BUILD_INPUTS` in
+`packages/mailwoman/tools/training/launch/image.ts`).
+
+| List              | Key id             | Signs                                                       |
+| ----------------- | ------------------ | ----------------------------------------------------------- |
+| `license_keys`    | `v<major>-<8 hex>` | platform license keys (`mwl1`) and training grants (`mwt1`) |
+| `provenance_keys` | `p<major>-<8 hex>` | model provenance manifests (`mwp1`)                         |
+
+The eight hex digits are the first four bytes of the sha256 of the key's spki DER. A key is `active`, `retired` or
+`revoked`, and a revoked key is left out of every trust map. A key appears in at most one list, so a license key never
+verifies a manifest and a provenance key never verifies a credential. `mailwoman license keygen --use provenance` mints
+a provenance key. The public half of each key goes into the register, and `mailwoman license register --write`
+regenerates the well-known file.
+
+## Token format
+
+A token is `<prefix>.<payload>.<signature>`, three parts separated by dots after surrounding whitespace is trimmed.
+
+- `<prefix>` is `mwl1` for a platform license key or `mwt1` for a training grant. Any other prefix is invalid.
+- `<payload>` is unpadded base64url of a UTF-8 JSON object. A part outside the base64url alphabet is invalid, and so
+  is a payload that isn't UTF-8 or isn't JSON. Non-zero trailing bits are admitted, as the browser's `atob` admits
+  them.
+- `<signature>` is unpadded base64url of a 64-byte Ed25519 signature over the ASCII bytes `<prefix>.<payload>` exactly
+  as the token carries them. A verifier never re-encodes the payload. The Rust verifier uses `verify_strict`.
+
+The verifier selects the public key by the payload's `kid`. It returns one of four statuses, in this order of checks:
+
+1. `invalid`: the token, the payload or its schema is malformed, the prefix is another version's, or the signature
+   doesn't verify.
+2. `unknown_key`: the register holds no unrevoked key with the payload's `kid`.
+3. `expired`: the payload's `expires` date has passed.
+4. `valid`.
+
+### Dates and expiry
+
+A date is `YYYY-MM-DD` and must name a real day: `2027-02-30` and `2027-13-01` are invalid. An expiry date is inclusive
+in UTC. A credential that expires on `2027-01-31` is valid at `2027-01-31T23:59:59.999Z` and expired at
+`2027-02-01T00:00:00.000Z`.
+
+### Platform license key (`mwl1`)
+
+The payload is `LicenseKeyPayloadSchema`: `v` 1, `kid`, `licensee`, `issued`, optional `expires`, `scope` (`"all"` or a
+non-empty list of artifact entries), `terms` (`LicenseRef-Commercial` or `AGPL-3.0-only`), and the optional `lid`,
+`agreement`, `intent`, `seq` and `install`. A field the schema doesn't define is ignored. `scope` governs artifact
+downloads only and grants no training permission, `"all"` included.
+
+### Training grant (`mwt1`)
+
+The payload is `TrainingGrantPayloadSchema`:
+
+| Field       | Value                                                                             |
+| ----------- | --------------------------------------------------------------------------------- |
+| `v`         | `1`                                                                               |
+| `kid`       | the signing key's id                                                              |
+| `grant`     | `mtg_` and 24 lowercase hex digits; a renewal keeps it                            |
+| `holder`    | the party the agreement was signed with; no training record copies it             |
+| `agreement` | the training agreement's version, such as `commercial-training-2026-11`           |
+| `issued`    | a date                                                                            |
+| `expires`   | a date; every grant expires                                                       |
+| `permits`   | a non-empty list: `train` admits training runs, `deploy` commercial use of models |
+
+A permission the verifier doesn't know admits no operation. `mailwoman license grant-training` issues a grant with the
+issuer's license key and refuses an expiry more than 92 days ahead. Checkout and declarations never issue one.
+
+## Entitlement checks
+
+`trainingAdmission` (TypeScript) and `training_admission` (Rust) take a verification and return `admitted` or a refusal
+code. `checkTrainingEntitlement` and `check_training` take the raw credential.
+
+| Refusal                | Condition                                   |
+| ---------------------- | ------------------------------------------- |
+| `missing`              | no credential                               |
+| `not_a_training_grant` | an `mwl1` platform key, whatever its scope  |
+| `invalid`              | the verifier returned `invalid`             |
+| `unknown_key`          | the verifier returned `unknown_key`         |
+| `expired`              | the grant's expiry date has passed          |
+| `not_permitted`        | the grant verified but doesn't list `train` |
+
+`deploymentAdmission` checks a grant against the grant id a model's provenance records. It refuses `not_permitted`
+without `deploy`, and `other_grant` when the ids differ.
+
+### Expiry and revocation
+
+Verification is offline and observes expiry only. The trainer checks the grant when each process starts: a start, a
+retry and a resume. A process admitted before expiry trains to completion. Revocation before expiry is the issuer's
+choice of a short expiry: a grant runs at most 92 days, and the issuer renews it under the same grant id.
+
+## Training branches
+
+The trainer's license branch is compiled in. `trainer-cli` built with its `commercial` feature is the commercial
+trainer. `trainer train` and `trainer authorize` verify the grant in `MAILWOMAN_TRAINING_GRANT` against the embedded
+register. They do so before the corpus is read, a checkpoint is written or a GPU is initialized, and they exit 3 on a
+refusal. A build without the feature is the open-source trainer, which trains under AGPL-3.0-only and checks no grant.
+No config value or flag turns the check off. A debug build also reads `MAILWOMAN_TRAINING_TRUST_FILE` and
+`MAILWOMAN_TRAINING_NOW` for the tests; the trainer image is a release build and reads neither.
+
+The Modal launcher's `start --commercial` builds the commercial image (`mailwoman-trainer-commercial-<variant>-…`). It
+attaches the Modal secret named by `MAILWOMAN_MODAL_TRAINING_SECRET` beside the R2 secret on every start and restart,
+and records the secret's name, never the token. A grant in the host's `MAILWOMAN_TRAINING_GRANT` is verified before the
+preflight. The sandbox supervisor runs `trainer authorize` before `--fresh` clears anything. A refusal there, or an exit
+3 from `trainer train` on a later attempt, ends the sandbox with the `refused` state without a retry. A refused
+commercial run restarts once its grant is renewed. A grant held only in the Modal secret is first checked inside the
+sandbox, after the sandbox starts. The cost of that startup on a GPU sandbox is unmeasured.
+
+## Training record
+
+Every `trainer train` process writes or extends `TRAINING.json` beside the run's checkpoints (`TrainingRecordSchema`):
+the run id, the license branch, the admitting grant's claims without its holder, the trainer's version, build and
+image, the sha256 of the resolved config and the corpus `MANIFEST.json`, the parent checkpoint, and one verification
+event per process. A first process writes `start`. A retry or resume in the same output directory keeps the record and
+appends `resume`. A resume under another branch or another grant id is refused. A branch from another run's checkpoint,
+or a fine-tune from `train.init_from`, is a new run whose `parent` records the parent run's id and the sha256 of the
+parent's model weights.
+
+## Provenance manifest
+
+`trainer-export export-onnx` copies `TRAINING.json` and `CORPUS.json` beside the graph. It writes the provenance id into
+the graph's ONNX metadata as `mailwoman.provenance_id`, and writes `<graph>.provenance.json`:
+
+```json
+{ "format": "mailwoman-model-provenance/1", "payload": "<base64url JSON>", "kid": "p11-…", "signature": "<base64url>" }
+```
+
+The signature covers the ASCII bytes `mwp1.<payload>`. The payload (`ProvenancePayloadSchema`) holds `v` 1, a
+`provenance_id` of `mwprov_` and 24 hex digits, `created`, the `attestation`, the bound `artifacts` (each path relative
+to the manifest with its sha256 and byte length, the graph first), the `training` record, and the `parent` manifest.
+
+| Attestation          | Meaning                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `managed`            | Sister Software ran training and export and signed the bytes it exported                         |
+| `customer-submitted` | the issuer checked submitted bytes against submitted digests; the record is the customer's claim |
+| `unattested`         | no key signed it; `kid` and `signature` are `null`                                               |
+
+The exporter signs with the key in `MAILWOMAN_PROVENANCE_SIGNING_KEY` and its id in `MAILWOMAN_PROVENANCE_SIGNING_KID`,
+which only the managed environment holds. A run trained under `LicenseRef-Commercial` exports only with that key.
+`quantize` and `split-embeddings` change the graph's bytes. Each verifies its input's manifest, then writes a new
+manifest for its output with a new provenance id and a `parent` reference holding the input manifest's id and sha256.
+`mailwoman license attest` signs a customer-submitted manifest as `customer-submitted`.
+
+Verification (`verifyProvenanceManifest`, `verify_manifest`, `mailwoman license provenance`,
+`trainer-export verify-provenance`) checks the schemas, the signature under a trusted provenance key, and each bound
+file's length and sha256. It refuses with `malformed`, `unsigned`, `unknown_key`, `bad_signature` or
+`artifact_mismatch`. A changed graph, a changed sidecar, or a manifest moved beside another model fails with
+`artifact_mismatch`. A manifest stays verifiable after its grant expires: it records history and is never a current
+grant. A model exported before the record existed has no `TRAINING.json`, and its manifest records `training: null`.

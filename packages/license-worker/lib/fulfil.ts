@@ -21,11 +21,13 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
+import { encodeLicenseKey } from "@mailwoman/core/license/key"
 import { applyStep } from "@mailwoman/core/state-machine"
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
+import { calendarDateUTC, plusDays } from "@mailwoman/license/product/dates"
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import type Stripe from "stripe"
 
-import { calendarDateUTC, plusDays } from "#dates"
 import type { EmailProvider } from "#email/provider"
 import type { LicenseWorkerEnv } from "#env"
 import { newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
@@ -42,7 +44,7 @@ import {
 import { emailMachine, tokenEmailCarrier } from "#ledger/machines"
 import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
-import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
+import { AGREEMENT_METADATA_KEY, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
 
 export interface FulfilDependencies {

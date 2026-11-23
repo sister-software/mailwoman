@@ -172,6 +172,16 @@
 			"node": "./lib/license/status.ts",
 			"default": "./out/license/status.js"
 		},
+		"./license/training": {
+			"types": "./out/license/training.d.ts",
+			"node": "./lib/license/training.ts",
+			"default": "./out/license/training.js"
+		},
+		"./license/provenance": {
+			"types": "./out/license/provenance.d.ts",
+			"node": "./lib/license/provenance.ts",
+			"default": "./out/license/provenance.js"
+		},
 		"./license/stamp": {
 			"types": "./out/license/stamp.d.ts",
 			"node": "./lib/license/stamp.ts",

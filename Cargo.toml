@@ -1,13 +1,15 @@
 [workspace]
 resolver = "2"
 # Each crate sits beside the npm package that builds or ships it: the tokenizer, encoder and sampler crates under
-# `packages/mtf`, the trainer crates under `packages/trainer`, and the basemap tiler's crates under `packages/hrt`.
+# `packages/mtf`, the trainer crates under `packages/trainer`, the product-license verifier under `packages/license`,
+# and the basemap tiler's crates under `packages/hrt`.
 members = ["packages/*/crates/*"]
 # A bare `cargo build` or `cargo test` builds the crates that need no libtorch. `trainer-model`, `trainer-loop` and
 # `trainer-cli` link libtorch through `torch-sys`: build them with `-p <crate>` or `--workspace` after
 # `node packages/mailwoman/tools/training/libtorch.run.ts` installs it where `.cargo/config.toml` points `LIBTORCH`.
 default-members = [
 	"packages/core/crates/*",
+	"packages/license/crates/*",
 	"packages/mtf/crates/*",
 	"packages/recognizer/crates/*",
 	"packages/registry/crates/*",
@@ -28,6 +30,7 @@ mtf-core = { path = "packages/mtf/crates/mtf-core" }
 mtf-channels = { path = "packages/mtf/crates/mtf-channels" }
 mtf-sampler = { path = "packages/mtf/crates/mtf-sampler" }
 recognizer-core = { path = "packages/recognizer/crates/recognizer-core" }
+product-license = { path = "packages/license/crates/product-license" }
 
 # The size-optimized profile `wasm/mtf.wasm` is built with.
 [profile.release]

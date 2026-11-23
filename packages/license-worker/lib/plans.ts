@@ -9,16 +9,13 @@
  * and production use different Stripe objects for the same two plans.
  */
 
+import { GRACE_DAYS, type ShopPlanCode } from "@mailwoman/license/product/plans"
+
 import type { LicenseWorkerEnv } from "#env"
 import { SHOP_IDS } from "#shop/ids"
 
-/**
- * Days past the paid period's end a token stays valid.
- */
-export const GRACE_DAYS = 14
-
 export interface CommercialPlan {
-	code: "commercial-monthly-v1" | "commercial-yearly-v1"
+	code: ShopPlanCode
 	stripePriceID: string
 	scope: "all"
 	terms: "LicenseRef-Commercial"

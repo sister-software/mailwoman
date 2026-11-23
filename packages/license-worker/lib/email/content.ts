@@ -12,8 +12,9 @@
  */
 
 import { EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
+import { SUPPORT_EMAIL } from "@mailwoman/license/product/agreement"
 
-import { BILLING_PORTAL_URL, SUPPORT_EMAIL } from "#client/constants"
+import { BILLING_PORTAL_URL } from "#client/constants"
 import type { LicenseEmail } from "#email/provider"
 
 export type EmailBlock =

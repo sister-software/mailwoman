@@ -12,8 +12,11 @@ over a network (section 13). Under a commercial agreement, the source offer and 
 condition do not apply to the code and model artifacts Teffen Ellis authors or that are contributed to
 her. Nirrius LLC (d/b/a Sister Software) grants the commercial agreement.
 
+The checkout agreement covers platform use and inference with this pretrained model. Training or
+fine-tuning a model with the commercial training stack takes a separate written training agreement.
+
 - Open-source terms: https://github.com/sister-software/mailwoman/blob/main/LICENSE.md
-- Commercial terms, as executed at checkout: https://mailwoman.post/license/terms/commercial-2026-10
+- Commercial terms, as executed at checkout: https://mailwoman.post/license/terms/commercial-2026-11
 - Commercial terms, as a reference template that does not itself execute:
   https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md
 

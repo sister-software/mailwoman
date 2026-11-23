@@ -6,6 +6,13 @@
 //! The resolved config is what `mailwoman train config resolve <config.yaml> --out <resolved.json>` writes. The
 //! repository data files (postcode layouts, shapes, syntax, the address-system registry and the label schema) are
 //! read from the checkout the binary was built from, or from `MAILWOMAN_REPO_ROOT`.
+//!
+//! A build with the `commercial` feature is the commercial trainer: `train` refuses, with exit code 3, unless the
+//! training grant in `MAILWOMAN_TRAINING_GRANT` admits the run (`authorize.rs`). Every `train` writes or extends the
+//! run's `TRAINING.json` (`record.rs`).
+
+mod authorize;
+mod record;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -15,6 +22,7 @@ use trainer_loop::supervised::TrainOptions;
 
 const USAGE: &str = "usage:
   trainer train <resolved.json> [--set section.key=value]... [--resume <dir>|auto] [--threads N] [--device cpu|cuda]
+  trainer authorize
   trainer device [--device cpu|cuda]
   trainer convert-checkpoint <python-checkpoint-dir> [--out <dir>]
   trainer compare-checkpoints <dir-a> <dir-b> [--report <json>]
@@ -112,6 +120,13 @@ fn check_device(args: &[String]) -> Result<(), String> {
 	}
 }
 
+/// Reports an authorization refusal and exits with [`authorize::AUTHORIZATION_REFUSED_EXIT`], which the sandbox
+/// supervisor reads as a refusal a retry would repeat.
+fn refuse(refused: &authorize::Refused) -> ! {
+	eprintln!("training refused ({}): {}", refused.code, refused.reason);
+	std::process::exit(i32::from(authorize::AUTHORIZATION_REFUSED_EXIT))
+}
+
 fn run(args: &[String]) -> Result<bool, String> {
 	set_threads(args)?;
 	let err = |e: trainer_loop::Error| e.to_string();
@@ -121,7 +136,20 @@ fn run(args: &[String]) -> Result<bool, String> {
 			check_device(args)?;
 			Ok(true)
 		}
+		Some("authorize") => {
+			let outcome = authorize::authorize();
+			println!("{}", authorize::report(&outcome));
+			match outcome {
+				Ok(_) => Ok(true),
+				Err(refused) => refuse(&refused),
+			}
+		}
 		Some("train") => {
+			// Before the device check, which initializes CUDA, and before any corpus read or checkpoint write.
+			let (grant, now) = match authorize::authorize() {
+				Ok(admitted) => admitted,
+				Err(refused) => refuse(&refused),
+			};
 			check_device(args)?;
 			let path = PathBuf::from(args.get(1).ok_or(USAGE)?);
 			let mut run = RunConfig::read(&path).map_err(err)?;
@@ -133,6 +161,15 @@ fn run(args: &[String]) -> Result<bool, String> {
 				files: None,
 				autocast_on_cpu: args.iter().any(|a| a == "--autocast-cpu"),
 			};
+			let output_dir = run.output_dir().map_err(err)?;
+			let resume = trainer_loop::supervised::resolve_resume(&opts, &output_dir).map_err(err)?;
+			let record = record::prepare(&run, &path, resume.as_deref(), grant.as_ref(), now)?;
+			println!(
+				"[license] {} run {} ({} verification events)",
+				record.license_branch,
+				record.run_id,
+				record.verifications.len()
+			);
 			trainer_loop::supervised::train(&run, &opts).map_err(err)?;
 			Ok(true)
 		}

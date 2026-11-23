@@ -3,7 +3,7 @@
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Link from "@docusaurus/Link"
-import { PRICE_MONTHLY } from "@mailwoman/license-worker/client/constants"
+import { PRICE_MONTHLY } from "@mailwoman/license/product/plans"
 import CodeBlock from "@theme/CodeBlock"
 import Heading from "@theme/Heading"
 import Layout from "@theme/Layout"

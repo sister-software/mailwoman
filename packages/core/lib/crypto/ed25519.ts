@@ -21,6 +21,14 @@ export interface Ed25519KeyPairPEM {
 const ALGORITHM = { name: "Ed25519" } as const
 
 /**
+ * The byte length of an Ed25519 signature (RFC 8032 section 5.1.6).
+ *
+ * A verifier refuses a signature of another length before it calls WebCrypto,
+ * as the Rust verifier's `Signature::from_slice` does.
+ */
+export const ED25519_SIGNATURE_BYTES = 64
+
+/**
  * PEM wraps its base64 at this width; `node:crypto` writes the same,
  * so a key round-trips through either writer.
  */

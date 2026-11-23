@@ -15,13 +15,14 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type DeclarationRequest, EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
-import { encodeLicenseKey, type LicenseKeyPayload, LicenseTerms } from "@mailwoman/core/license/key"
+import { encodeLicenseKey } from "@mailwoman/core/license/key"
 import { applyStep } from "@mailwoman/core/state-machine"
+import { todayUTC } from "@mailwoman/license/product/dates"
+import { daysBetween, expiryForIntent } from "@mailwoman/license/product/expiry"
+import { type LicenseKeyPayload, LicenseTerms } from "@mailwoman/license/product/token"
 
-import { todayUTC } from "#dates"
 import type { EmailProvider } from "#email/provider"
 import type { LicenseWorkerEnv } from "#env"
-import { daysBetween, expiryForIntent } from "#expiry"
 import { newClaimID, newIssuanceID, newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {

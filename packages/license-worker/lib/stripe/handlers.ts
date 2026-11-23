@@ -16,9 +16,9 @@
  */
 
 import { applyStep, type MachineEffect, type StepOutcome } from "@mailwoman/core/state-machine"
+import { todayUTC } from "@mailwoman/license/product/dates"
 import type Stripe from "stripe"
 
-import { todayUTC } from "#dates"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies, fulfilInvoice } from "#fulfil"
 import type { Ledger } from "#ledger/client"

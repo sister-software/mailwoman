@@ -133,6 +133,12 @@ export class SDKModalBoundary implements ModalBoundary {
 
 		this.#secret ??= this.#options.secretName ? this.#client.secrets.fromName(this.#options.secretName) : null
 
+		// A secret name Modal doesn't hold refuses the start here, before Modal creates the sandbox.
+		const secrets = [
+			...(this.#secret ? [await this.#secret] : []),
+			...(await Promise.all(spec.secretNames.map((name) => this.#client.secrets.fromName(name)))),
+		]
+
 		const sandbox = await this.#client.sandboxes
 			.create(app, image, {
 				command: spec.command,
@@ -142,7 +148,7 @@ export class SDKModalBoundary implements ModalBoundary {
 				memoryMiB: spec.memoryMiB,
 				timeoutMs: spec.timeoutMs,
 				volumes: { [this.#options.mount]: await this.#volumeHandle() },
-				...(this.#secret ? { secrets: [await this.#secret] } : {}),
+				...(secrets.length ? { secrets } : {}),
 				name: spec.name,
 				tags: spec.tags,
 			})

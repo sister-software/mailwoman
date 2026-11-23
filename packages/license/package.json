@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/license",
 	"version": "11.2.0",
-	"description": "The rights of third-party data sources: license decisions and the operations they permit, SPDX expression obligations, license-string records, and the build policies that read them. Mailwoman's own commercial license is not here.",
+	"description": "The rights of third-party data sources (license decisions and the operations they permit, SPDX expression obligations, license-string records and the build policies that read them), and the wire format, trust register and entitlement rules of Mailwoman's own product license.",
 	"keywords": [
 		"data-license",
 		"geocoding",
@@ -28,6 +28,8 @@
 		"out/**/*.d.ts.map",
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
+		"lib/product/trust-register.json",
+		"out/product/trust-register.json",
 		"!**/*.test.ts",
 		"!**/*.test.tsx"
 	],
@@ -55,6 +57,9 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"zod": "^4.6.7"
 	},
 	"engines": {
 		"node": "^24.22.3 || >=26.13.1"

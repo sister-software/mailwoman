@@ -6,12 +6,12 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
-	type LicenseKeyPayload,
 	licenseKeyID,
 	readConfiguredLicenseToken,
 	readInstallationID,
 	readRefreshCredentials,
 } from "@mailwoman/core/license"
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { declareAction, evaluateAction, spec } from "#cli/native/commands/license"

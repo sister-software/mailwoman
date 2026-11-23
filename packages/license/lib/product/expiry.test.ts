@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { declarationExpiry, expiryForIntent, nearestQuarterLead, plusMonths } from "#expiry"
+import { declarationExpiry, expiryForIntent, nearestQuarterLead, plusMonths } from "#product/expiry"
 
 describe("plusMonths", () => {
 	it("adds calendar months and lets a day past the month's end roll forward", () => {

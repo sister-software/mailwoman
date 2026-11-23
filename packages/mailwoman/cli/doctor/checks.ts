@@ -7,16 +7,12 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { stringifyJSON } from "@mailwoman/core/json"
-import {
-	docsSiteURL,
-	isSelfServicePayload,
-	chooseLicenseBranch,
-	type LicenseKeyVerification,
-} from "@mailwoman/core/license"
+import { chooseLicenseBranch, docsSiteURL } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { ObligationClass } from "@mailwoman/license/mixed"
 import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
+import { isSelfServicePayload, type LicenseKeyVerification } from "@mailwoman/license/product/token"
 import { obligationFindings, type ObligationRefusal } from "@mailwoman/license/refusals"
 
 /**

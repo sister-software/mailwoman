@@ -32,6 +32,16 @@ export const LaunchEnvSchema = z.object({
 	MAILWOMAN_MODAL_R2_SECRET: blankAsAbsent(z.string().optional()).meta({
 		description: "The named Modal secret holding the RCLONE_S3_* keys, passed to every sandbox.",
 	}),
+	MAILWOMAN_MODAL_TRAINING_SECRET: blankAsAbsent(z.string().optional()).meta({
+		description:
+			"The named Modal secret holding MAILWOMAN_TRAINING_GRANT, the mwt1 training grant a commercial launch's sandbox verifies. " +
+			"Create it with `modal secret create --from-dotenv <env file> <name>`. The launch records the name, never the token.",
+	}),
+	MAILWOMAN_TRAINING_GRANT: blankAsAbsent(z.string().optional()).meta({
+		description:
+			"A training grant held on the host. A commercial launch verifies it before it starts a sandbox and refuses one that doesn't admit the run; " +
+			"the sandbox reads its own copy from the named training secret.",
+	}),
 })
 
 /**

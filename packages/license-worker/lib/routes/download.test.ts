@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
+import { encodeLicenseKey } from "@mailwoman/core/license/key"
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { env } from "cloudflare:workers"
 import { beforeAll, describe, expect, it } from "vitest"
 

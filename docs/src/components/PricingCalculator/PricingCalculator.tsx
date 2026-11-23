@@ -7,7 +7,7 @@
  *   The slider moves every row except ours.
  */
 
-import { PRICE_MONTHLY } from "@mailwoman/license-worker/client/constants"
+import { PRICE_MONTHLY } from "@mailwoman/license/product/plans"
 import clsx from "clsx"
 import { useId, useState, type ReactNode } from "react"
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { verifyLicenseKey } from "@mailwoman/core/license/key"
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import { env } from "cloudflare:workers"
 import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 
@@ -10,7 +11,6 @@ import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
 import { countTokens, findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
-import { AGREEMENT_VERSION } from "#shop/catalog"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
 import { envWithSigningKey } from "#test/support/keys"
