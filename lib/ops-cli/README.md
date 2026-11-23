@@ -23,8 +23,9 @@ creates the deploy and cache-purge tokens as account-owned tokens and writes the
 `mwops check <name> [paths…]` runs one registered repository check (`lib/check-kit/registry.ts`) in this checkout
 without a shell and exits with the check's status. The output goes to a log under the cache root, or under
 `--log-dir`. The command prints one summary line, the failing tests or checks, and the log path, and `--json` prints
-the result object. A heavy check takes the host lock under the cache root, which every checkout on the host shares,
-and waits for queued or in-progress CI runs, within `--max-wait-minutes` (default 20). `--no-wait` refuses at once
+the result object. A heavy check waits for queued or in-progress CI runs, then takes the host lock under the cache root, which every
+checkout on the host shares, within one `--max-wait-minutes` bound (default 20). It holds no lock while it waits for
+CI, so a check waiting on CI blocks no other check. `--no-wait` refuses at once
 when the lock is held. A lock whose holder process is gone, or whose pid now belongs to a process with another start time,
 is released with a message. `mwops check preflight` runs the direct-push set from `AGENTS.md`, followed by
 `health-tree`. `mwops host status` reports the lock holder and the CI runs, and `mwops host wait-idle --max-minutes N`
