@@ -207,7 +207,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		let sides = 0
 		let skippedNonNumeric = 0
 		// `StreetInterpolator` reads this multiplier when it opens the file.
-		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[STATE]
+		const measuredMultiplier = INTERP_RADIUS_CALIBRATION.byRegion[`US-${STATE}`]
 
 		const calibration = {
 			radius_multiplier: measuredMultiplier ?? INTERP_RADIUS_CALIBRATION.default,

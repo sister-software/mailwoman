@@ -30,7 +30,7 @@ import { ArtifactOutcome, executeInstallation, type InstallationResult } from "#
 import { takeInventory } from "#data/inventory"
 import { planInstallation, PlannedAction, type InstallationRequest } from "#data/plan"
 import { readInstallationState } from "#data/state"
-import { type RegionDatabaseFactory, USStateDatabaseProvider } from "#geocode/regions"
+import { createRegionDatabaseProvider, type RegionDatabaseFactory } from "#geocode/regions"
 import { resolveCandidateDBPath } from "#resolver-backend"
 import {
 	FIXTURE_DC_POINT,
@@ -252,12 +252,12 @@ describe("the published installation path", () => {
 		expect(result.selection?.generation).toBe(2)
 		expect(registry.requests.some((line) => line.includes("/al/"))).toBe(false)
 
-		using provider = await USStateDatabaseProvider.create(factory, scratch.path)
-		const dc = provider.for("dc")
+		using provider = await createRegionDatabaseProvider(factory, scratch.path)
+		const dc = provider.for("US-DC")
 
 		expect(dc.addressPoints?.find(DC_QUERY)).toMatchObject(FIXTURE_DC_POINT)
 		expect(dc.interpolation).toBeTruthy()
-		expect(provider.for("al").addressPoints).toBeFalsy()
+		expect(provider.for("US-AL").addressPoints).toBeFalsy()
 	})
 
 	it("reports a missing gazetteer as a dependency of the street tier", async () => {
@@ -298,9 +298,9 @@ describe("the published installation path", () => {
 		expect(failed.selection).toBeNull()
 		expect((await readActiveSelection(scratch.path))?.generation).toBe(1)
 
-		using before = await USStateDatabaseProvider.create(factory, scratch.path)
+		using before = await createRegionDatabaseProvider(factory, scratch.path)
 
-		expect(before.for("dc").addressPoints).toBeFalsy()
+		expect(before.for("US-DC").addressPoints).toBeFalsy()
 
 		// The diagnostics report the stopped transfer and the unselected sibling apart from the active gazetteer.
 		const state = await readInstallationState(scratch.path)
@@ -322,9 +322,9 @@ describe("the published installation path", () => {
 		expect(registry.requests).toContain("GET street/us/dc/situs.db bytes=4096-")
 		expect(resumed.selection?.generation).toBe(2)
 
-		using after = await USStateDatabaseProvider.create(factory, scratch.path)
+		using after = await createRegionDatabaseProvider(factory, scratch.path)
 
-		expect(after.for("dc").addressPoints?.find(DC_QUERY)).toMatchObject(FIXTURE_DC_POINT)
+		expect(after.for("US-DC").addressPoints?.find(DC_QUERY)).toMatchObject(FIXTURE_DC_POINT)
 	})
 
 	it("reports a cancelled transfer as cancelled, keeps its bytes and the selection, and resumes it next time", async () => {

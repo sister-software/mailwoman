@@ -60,7 +60,7 @@ import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue 
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
 import { parsePriorOptions } from "#geocode/parse-priors"
-import { type RegionDatabaseResolver, regionSlugFromTree } from "#geocode/regions"
+import { type RegionDatabaseResolver, regionSubdivisionOfTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
 import {
 	countryScopeRecord,
@@ -692,9 +692,9 @@ async function geocodeAddressOnce(
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps, context))
 	const queryShape = computeQueryShape(parseInput, queryShapeGenerationOf(deps.classifier))
-	const stateSlug = regionSlugFromTree(tree)
-	const usDatabases = deps.databases?.(stateSlug) ?? {}
-	const interpolation = usDatabases.interpolation
+	const subdivision = regionSubdivisionOfTree(tree)
+	const regionDatabases = deps.databases?.(subdivision) ?? {}
+	const interpolation = regionDatabases.interpolation
 
 	// Wrap trace sink so records can also be attached to the final result.
 	const trace = traceCollector(deps.resolveTraceSink)
@@ -829,7 +829,7 @@ async function geocodeAddressOnce(
 
 		const fallback =
 			interpolation.radiusCalibration == null && typeof deps.interpCalibration === "object"
-				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
+				? interpCalibrationForRegion(deps.interpCalibration, subdivision)
 				: null
 
 		const calibration = explicit ?? fallback
@@ -875,7 +875,8 @@ async function geocodeAddressOnce(
 			resolver: deps.resolver,
 			opts,
 			preResolveCountry,
-			regionAddressPoints: usDatabases.addressPoints ?? null,
+			regionSubdivision: subdivision,
+			regionAddressPoints: regionDatabases.addressPoints ?? null,
 			streetHints,
 			...(deps.nationalDatabases ? { nationalDatabases: deps.nationalDatabases } : {}),
 			...(deps.osmDatabases ? { osmDatabases: deps.osmDatabases } : {}),

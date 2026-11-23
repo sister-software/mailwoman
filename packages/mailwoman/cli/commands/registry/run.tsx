@@ -210,7 +210,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 			resolver: import("@mailwoman/resolver"),
 		})
 
-		const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
+		const [{ geocodeAddress }, { createRegionDatabaseProvider }] = await Promise.all([
 			import("#geocode/core"),
 			import("#geocode/regions"),
 		])
@@ -228,7 +228,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
-		const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, dataRoot)
+		const regionDatabaseProvider = await createRegionDatabaseProvider(mod, dataRoot)
 
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {

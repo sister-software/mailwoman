@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Versioned data switchover: path resolution, and the `USStateDatabaseProvider`
- *   reading the release a manifest pins at construction.
+ *   Versioned data switchover: path resolution, and the region provider reading
+ *   the release a manifest pins at construction.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -13,7 +13,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { resolveDatabasePath } from "#data"
-import { USStateDatabaseProvider } from "#geocode"
+import { createRegionDatabaseProvider } from "#geocode"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -86,28 +86,27 @@ describe("resolveDatabasePath", () => {
 	})
 })
 
-describe("USStateDatabaseProvider release pinning", () => {
+describe("the region provider's release pinning", () => {
 	test("a provider built after the manifest moves reads the new release, and disposal closes its handles", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
-		const first = await USStateDatabaseProvider.create(factory, await root)
-		const v1 = first.for("tx").addressPoints as FakeAddressPoints
+		const first = await createRegionDatabaseProvider(factory, await root)
+		const v1 = first.for("US-TX").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
-		expect(first.versions()).toEqual({ "address-points": "v1" })
+		expect(first.regions()).toEqual(["US-TX"])
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
 
 		// The provider already built keeps reading the release it pinned.
-		expect((first.for("tx").addressPoints as FakeAddressPoints).dbPath).toContain("address-points-us-tx-v1.db")
+		expect((first.for("US-TX").addressPoints as FakeAddressPoints).dbPath).toContain("address-points-us-tx-v1.db")
 
-		const second = await USStateDatabaseProvider.create(factory, await root)
-		const v2 = second.for("tx").addressPoints as FakeAddressPoints
+		const second = await createRegionDatabaseProvider(factory, await root)
+		const v2 = second.for("US-TX").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
-		expect(second.versions()).toEqual({ "address-points": "v2" })
 
 		first[Symbol.dispose]()
 		expect(v1.closed).toBe(true)

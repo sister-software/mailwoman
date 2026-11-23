@@ -843,13 +843,13 @@ const noCrossPackageReexportRule: Rule = {
  * `DisposableDuckDB` calls `closeSync()` on its connection and the instance behind it.
  *
  * A `RegionDatabaseProvider` closes its cached handles.
- * `USStateDatabaseProvider` is the concrete class whose static `create` answers one.
+ * `SubdivisionDatabaseProvider` is the concrete class whose static `create` answers one.
  */
 const SYNC_DISPOSABLE_TYPES = new Set([
 	"DatabaseClient",
 	"DisposableDuckDB",
 	"RegionDatabaseProvider",
-	"USStateDatabaseProvider",
+	"SubdivisionDatabaseProvider",
 ])
 
 /**
@@ -858,6 +858,7 @@ const SYNC_DISPOSABLE_TYPES = new Set([
  * For a same-file helper the rule reads the declared return type instead.
  */
 const SYNC_DISPOSABLE_FACTORIES = new Set([
+	"createRegionDatabaseProvider",
 	"openBDCDatabaseIfPresent",
 	"openBuiltClient",
 	"openDuckDB",
