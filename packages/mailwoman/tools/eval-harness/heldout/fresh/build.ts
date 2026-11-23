@@ -31,6 +31,7 @@ import { allocate } from "@mailwoman/corpus/recipes/sub/venue"
 import type { AddressSourceRegister } from "@mailwoman/corpus/source-register/types"
 import { LicenseAction } from "@mailwoman/license/actions"
 import type { LicenseDecision } from "@mailwoman/license/decision"
+import { activeReservation } from "@mailwoman/license/reservation"
 import { evaluateLicense } from "@mailwoman/license/tree"
 import { type PathBuilder, resolvePath } from "path-ts"
 
@@ -104,9 +105,9 @@ export function stratumQuotas(supply: ReadonlyMap<string, number>, quota: number
 }
 
 /**
- * Every reason `source` can't give unseen evaluation rows: a decision that withholds
- * fetching, extracting or transforming it, a register row with no reservation for
- * evaluation in force, or a training manifest that read the row.
+ * Every reason `source` can't give unseen evaluation rows: a decision that withholds fetching,
+ * extracting, transforming or evaluating on it, or evaluating for commercial use, a register
+ * row with no reservation for evaluation in force, or a training manifest that read the row.
  *
  * `trained` maps each register source to the training manifests that read it
  * (`trainedRegisterSources` in `@mailwoman/corpus/source-register/reservations`).
@@ -125,7 +126,7 @@ export function evaluationSourceProblems(
 
 	const [answer] = evaluateLicense(
 		{
-			action: LicenseAction.EvaluateOnly,
+			action: LicenseAction.Evaluate,
 			offering: null,
 			sources: [{ source: row.sourceID, licenseID: row.license }],
 		},
@@ -133,11 +134,17 @@ export function evaluationSourceProblems(
 	).sources
 
 	const problems = [...answer!.problems]
+	const decision = register.licenses.find((entry) => entry.licenseID === row.license)
 
-	if (!row.reservation) {
-		problems.push(`register source ${row.sourceID} is not reserved for evaluation`)
-	} else if (row.reservation.lifted) {
-		problems.push(`register source ${row.sourceID}'s reservation was lifted on ${row.reservation.lifted.at}`)
+	// A source is reserved by choice, or by terms that permit evaluate and refuse train.
+	const reserved = decision != null && activeReservation(row.reservation, decision) != null
+
+	if (!reserved) {
+		problems.push(
+			row.reservation?.lifted
+				? `register source ${row.sourceID}'s reservation was lifted on ${row.reservation.lifted.at}`
+				: `register source ${row.sourceID} is not reserved for evaluation`
+		)
 	}
 
 	const readers = trained.get(row.sourceID)

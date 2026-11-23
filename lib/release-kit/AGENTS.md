@@ -111,9 +111,10 @@ reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped sou
 this rule.
 
 The operation reads the same register rows for what releasing the model performs. It fails on a row whose decision
-doesn't permit `redistribute-model`, and `commercial-sublicense` when the package's license expression offers
-`LicenseRef-Commercial` (`soldUnderCommercialTerms` in `packages/license/lib/operations.ts` defines the act). No
-accepted-violations list applies: a row that blocks a release gets a decision permitting both, or leaves the corpus.
+doesn't permit `distribute-model` for the `commercial-use` purpose, and for `sale` when the package's license
+expression offers `LicenseRef-Commercial` (`soldUnderCommercialTerms` in `packages/license/lib/operations.ts` defines
+the sale). No accepted-violations list applies: a row that blocks a release gets a decision permitting each, or leaves
+the corpus.
 CC BY 4.0, CC BY 3.0 AU, OGL v3.0 and Licence Ouverte 2.0 each carry one family reading applied to every row under
 them, and a row whose own terms add a use restriction keeps its own reading (#3277).
 

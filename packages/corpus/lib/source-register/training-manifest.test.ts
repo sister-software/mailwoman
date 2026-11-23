@@ -272,11 +272,26 @@ describe("auditTrainingManifest", () => {
 
 describe("sourcesNotPermitting", () => {
 	it("names every source whose terms did not permit the operation, and says which of the reasons applies", () => {
-		const blocking = sourcesNotPermitting(freeze(), SourceOperation.RedistributeModel)
+		const blocking = sourcesNotPermitting(freeze(), SourceOperation.DistributeModel)
 
 		expect(blocking.map((entry) => entry.source)).toEqual(["zz-business-1", "zz-health-1"])
 		expect(blocking[0]?.because).toContain("read unchecked when the corpus was built")
-		expect(blocking[1]?.because).toContain("did not permit redistribute-model")
+		expect(blocking[1]?.because).toContain("did not permit distribute-model")
+	})
+
+	it("reads a manifest frozen under the retired operation names as today's operations", () => {
+		const manifest = freeze({ rowsBySource: new Map([["zz-health-1", { rows: 400, license: "etalab-2.0" }]]) })
+		const record = manifest.sources[0]!
+
+		const older = {
+			...manifest,
+			sources: [
+				{ ...record, decision: { ...record.decision!, permitted: ["redistribute-model", "commercial-sublicense"] } },
+			],
+		}
+
+		expect(sourcesNotPermitting(older, SourceOperation.DistributeModel)).toEqual([])
+		expect(sourcesNotPermitting(older, SourceOperation.Train).map((entry) => entry.source)).toEqual(["zz-health-1"])
 	})
 
 	it("returns nothing when every source's elected grant permitted the operation", () => {

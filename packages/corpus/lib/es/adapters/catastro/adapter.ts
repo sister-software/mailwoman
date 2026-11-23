@@ -131,8 +131,8 @@ export const ES_CATASTRO_COUNTRIES: readonly string[] = ["ES"]
  * `all rights reserved` template the feed still shows. No Creative Commons label or SPDX identifier
  * covers that instrument, so the row records the instrument's own title.
  *
- * The register reads `refused` for `redistribute-data`: clause 1 withholds distribution
- * of the information as supplied, and requires transformation before any public use.
+ * The register reads `refused` for `distribute-rows`: clause 1 withholds distribution of
+ * the information as supplied, and requires transformation before any public use.
  * Ingest, transformation and training are permitted, and this adapter performs those.
  */
 export const ES_CATASTRO_LICENSE =

@@ -86,7 +86,7 @@ export async function admitTrainingConfig(
 					registerSource: null,
 					licenseID: null,
 					state: null,
-					missing: actionOperations(LicenseAction.Train, null),
+					missing: actionOperations(LicenseAction.Train),
 					because:
 						"the config sets no source_weights, so it admits every source its corpus holds and names none to check",
 				},

@@ -14,6 +14,7 @@ import {
 	permissionFor,
 	type ElectedLicense,
 	type LicenseDecision,
+	UsePurpose,
 } from "@mailwoman/license/decision"
 import { SourceOperation } from "@mailwoman/license/operations"
 import { beforeAll, describe, expect, it } from "vitest"
@@ -108,7 +109,7 @@ describe("the committed address-source register", () => {
 
 			expect(decision.state, source.sourceID).toBe(LicenseReviewState.Elected)
 
-			for (const operation of actionOperations(LicenseAction.Ingest, null)) {
+			for (const operation of actionOperations(LicenseAction.Ingest)) {
 				expect(permissionFor(decision, operation).permission, `${source.sourceID} ${operation}`).toBe(
 					OperationPermission.Permitted
 				)
@@ -583,6 +584,7 @@ describe("permission by operation", () => {
 			[SourceOperation.Transform]: permits("§3 permits adaptation"),
 			[SourceOperation.Train]: permits("§3 permits adaptation"),
 		},
+		purposes: { [UsePurpose.CommercialUse]: permits("§1 grants reuse for any purpose") },
 	}
 
 	it("admits a source for ingest when the terms permit every act ingest performs", () => {
@@ -595,15 +597,15 @@ describe("permission by operation", () => {
 		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE)
 
 		expect(problems).toHaveLength(2)
-		expect(problems[0]).toContain("unreviewed for redistribute-model")
-		expect(problems[1]).toContain("unreviewed for commercial-sublicense")
+		expect(problems[0]).toContain("unreviewed for distribute-model")
+		expect(problems[1]).toContain("unreviewed for sale")
 	})
 
 	it("reads an operation the elected terms omit as unreviewed rather than permitted", () => {
-		const reading = permissionFor(ingestOnly, SourceOperation.RedistributeModel)
+		const reading = permissionFor(ingestOnly, SourceOperation.DistributeModel)
 
 		expect(reading.permission).toBe(OperationPermission.Unreviewed)
-		expect(reading.because).toContain("do not state whether redistribute-model is permitted")
+		expect(reading.because).toContain("do not state whether distribute-model is permitted")
 	})
 
 	it("reads every operation as unreviewed while the decision is unchecked", () => {
@@ -620,22 +622,41 @@ describe("permission by operation", () => {
 	})
 
 	it("blocks the refused act alone and quotes the reviewer's reason", () => {
-		const refusesCommercial: ElectedLicense = {
+		const refusesSale: ElectedLicense = {
 			...ingestOnly,
 			operations: {
 				...ingestOnly.operations,
-				[SourceOperation.RedistributeModel]: permits("§5 permits redistribution of derived works"),
-				[SourceOperation.CommercialSublicense]: {
+				[SourceOperation.DistributeModel]: permits("§5 permits redistribution of derived works"),
+			},
+			purposes: {
+				...ingestOnly.purposes,
+				[UsePurpose.Sale]: {
+					permission: OperationPermission.Refused,
+					because: "§6 forbids selling the data or a product built from it",
+				},
+			},
+		}
+
+		expect(ingestEligibilityProblems(source, registerWith(refusesSale))).toEqual([])
+
+		expect(ingestEligibilityProblems(source, registerWith(refusesSale), MODEL_RELEASE)).toEqual([
+			"the elected terms read refused for sale: §6 forbids selling the data or a product built from it",
+		])
+	})
+
+	it("refuses every act under terms that bar commercial use", () => {
+		const noncommercial: ElectedLicense = {
+			...ingestOnly,
+			purposes: {
+				[UsePurpose.CommercialUse]: {
 					permission: OperationPermission.Refused,
 					because: "§6 restricts reuse to non-commercial purposes",
 				},
 			},
 		}
 
-		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial))).toEqual([])
-
-		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial), MODEL_RELEASE)).toEqual([
-			"the elected terms read refused for commercial-sublicense: §6 restricts reuse to non-commercial purposes",
+		expect(ingestEligibilityProblems(source, registerWith(noncommercial))).toEqual([
+			"the elected terms read refused for commercial-use: §6 restricts reuse to non-commercial purposes",
 		])
 	})
 
@@ -712,6 +733,8 @@ describe("permission by operation", () => {
 			[SourceOperation.Train]: permits("the grant permits adaptation"),
 		}
 
+		const commercialUse = { [UsePurpose.CommercialUse]: permits("the grant names no noncommercial restriction") }
+
 		it("admits every act under an attribution-only grant that names commercial reuse", () => {
 			// Licence Ouverte 2.0's shape: reuse for commercial or non-commercial purposes, worldwide,
 			// with one condition and no reciprocal licensing requirement for a derivative work.
@@ -723,9 +746,12 @@ describe("permission by operation", () => {
 				electedBecause: "the grant the publisher's dataset page names",
 				operations: {
 					...everyIngestAct,
-					[SourceOperation.RedistributeData]: permits("the grant permits diffuser, redistribuer et publier"),
-					[SourceOperation.RedistributeModel]: permits("the grant permits redistribution of an adapted work"),
-					[SourceOperation.CommercialSublicense]: permits("the grant names exploiter à titre commercial"),
+					[SourceOperation.DistributeRows]: permits("the grant permits diffuser, redistribuer et publier"),
+					[SourceOperation.DistributeModel]: permits("the grant permits redistribution of an adapted work"),
+				},
+				purposes: {
+					...commercialUse,
+					[UsePurpose.Sale]: permits("the grant names exploiter à titre commercial"),
 				},
 			}
 
@@ -744,15 +770,16 @@ describe("permission by operation", () => {
 				electedBecause: "the grant the publisher names on the dataset page",
 				operations: {
 					...everyIngestAct,
-					[SourceOperation.RedistributeModel]: permits(
+					[SourceOperation.DistributeModel]: permits(
 						"the grant permits redistribution and requires a statement that the data was modified"
 					),
 				},
+				purposes: commercialUse,
 			}
 
 			expect(ingestEligibilityProblems(source, registerWith(modificationNotice))).toEqual([])
 
-			expect(permissionFor(modificationNotice, SourceOperation.RedistributeModel).because).toContain(
+			expect(permissionFor(modificationNotice, SourceOperation.DistributeModel).because).toContain(
 				"requires a statement that the data was modified"
 			)
 		})
@@ -768,18 +795,19 @@ describe("permission by operation", () => {
 				electedBecause: "the reciprocal half of the publisher's dual grant",
 				operations: {
 					...everyIngestAct,
-					[SourceOperation.RedistributeModel]: {
+					[SourceOperation.DistributeModel]: {
 						permission: OperationPermission.Refused,
 						because: "§4.4 requires a derived database to be offered under these same terms",
 					},
 				},
+				purposes: commercialUse,
 			}
 
 			expect(ingestEligibilityProblems(source, registerWith(shareAlike))).toEqual([])
 
 			expect(ingestEligibilityProblems(source, registerWith(shareAlike), MODEL_RELEASE)).toEqual([
-				"the elected terms read refused for redistribute-model: §4.4 requires a derived database to be offered under these same terms",
-				"the elected terms read unreviewed for commercial-sublicense: the elected terms do not state whether commercial-sublicense is permitted",
+				"the elected terms read refused for distribute-model: §4.4 requires a derived database to be offered under these same terms",
+				"the elected terms read unreviewed for sale: the elected terms do not state whether sale is permitted",
 			])
 		})
 
@@ -801,7 +829,7 @@ describe("permission by operation", () => {
 			// The permissive half makes no statement about publishing a model.
 			// No reviewer compared these terms with that act, so the record reads unreviewed
 			// rather than inheriting either half's answer.
-			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)
+			expect(permissionFor(elected, SourceOperation.DistributeModel).permission).toBe(OperationPermission.Unreviewed)
 		})
 	})
 

@@ -184,7 +184,7 @@ describe("auditRights", () => {
 		// en-us is offered under `AGPL-3.0-only OR LicenseRef-Commercial`, so its release sells the weights.
 		expect(audit.modelRelease.operations).toContainEqual({
 			package: "@mailwoman/neural-weights-en-us",
-			operations: ["redistribute-model", "commercial-sublicense"],
+			operations: ["distribute-model", "commercial-use", "sale"],
 		})
 
 		const licenses = new Map(register.licenses.map((decision) => [decision.licenseID, decision]))

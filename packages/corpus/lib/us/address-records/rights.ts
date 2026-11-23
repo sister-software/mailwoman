@@ -96,13 +96,15 @@ function rowExclusion(
 		return { reason, because: firstSentence(stopped.because) }
 	}
 
-	const readings = path.filter((step) => step.node === DecisionNode.Operations)
+	const readings = path.filter((step) => step.node === DecisionNode.Operations || step.node === DecisionNode.Purpose)
 	const refused = readings.find((step) => step.outcome === DecisionVerdict.NoGo)
 
 	if (refused) {
+		const act = refused.purpose ? `${refused.purpose} for ${refused.operation}` : refused.operation
+
 		return {
 			reason: LayerExclusionReason.Refused,
-			because: `${refused.operation} is refused: ${firstSentence(refused.because)}`,
+			because: `${act} is refused: ${firstSentence(refused.because)}`,
 		}
 	}
 

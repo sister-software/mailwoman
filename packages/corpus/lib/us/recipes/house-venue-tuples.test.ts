@@ -29,6 +29,7 @@ const elected = (licenseID: string) => ({
 	retrievedCopy: "copy",
 	electedBecause: "x",
 	operations: { transform: PERMITTED, train: PERMITTED },
+	purposes: { "commercial-use": PERMITTED },
 })
 
 const REGISTER: RegisterDecisions = {
