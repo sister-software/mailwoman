@@ -24,6 +24,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import {
 	LICENSE_FILE,
 	PROVENANCE_FILE,
+	carriedModelGraph,
 	modelGraphUncompared,
 	provenanceMatches,
 	renderLicenseFile,
@@ -79,13 +80,14 @@ async function licenseDiffers(repoRoot: PathBuilderLike, workspace: string, expe
 	}
 }
 
-async function provenanceDiffers(repoRoot: PathBuilderLike, record: WeightsRightsRecord): Promise<boolean> {
+/**
+ * The committed `PROVENANCE.json`, or null when it is missing or unreadable, so a first run writes it.
+ */
+async function readCommittedProvenance(repoRoot: PathBuilderLike, record: WeightsRightsRecord): Promise<unknown> {
 	try {
-		const committed = await readLocalJSONFile<unknown>(resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))
-
-		return !provenanceMatches(committed, record)
+		return await readLocalJSONFile<unknown>(resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))
 	} catch {
-		return true
+		return null
 	}
 }
 
@@ -100,26 +102,35 @@ export async function writeWeightsRightsFiles(
 
 	for (const record of await weightsRightsRecords(repoRoot)) {
 		const license = renderLicenseFile(record)
+
 		const licenseChanged = await licenseDiffers(repoRoot, record.workspace, license)
 
 		if (licenseChanged) {
 			await writeLocalFile(license, resolvePath(repoRoot, record.workspace, LICENSE_FILE))
 		}
 
-		const provenanceChanged = await provenanceDiffers(repoRoot, record)
-
+		const committed = await readCommittedProvenance(repoRoot, record)
+		const provenanceChanged = !provenanceMatches(committed, record)
+		const provenance = renderProvenance(record)
 		const unreadGraph = modelGraphUncompared(record)
 
-		// A file written here would replace the committed graph with the statement that it went unread.
 		if (provenanceChanged && unreadGraph) {
-			throw new Error(
-				`${record.workspace}/${PROVENANCE_FILE} needs rewriting, and this machine can't read its model graph (${unreadGraph}). ` +
-					"Run `yarn mwops release copy-weights` first, or write the file on a machine that holds the model."
-			)
+			const carried = carriedModelGraph(committed, record)
+
+			// A file written here would replace a description of different graph bytes
+			// with the statement that it went unread.
+			if (!carried) {
+				throw new Error(
+					`${record.workspace}/${PROVENANCE_FILE} needs rewriting, its model.onnx md5 differs from the committed record's, and this machine can't read the graph (${unreadGraph}). ` +
+						"Run `yarn mwops release copy-weights` first, or write the file on a machine that holds the model."
+				)
+			}
+
+			provenance.model_graph = carried
 		}
 
 		if (provenanceChanged) {
-			await writeLocalJSONFile(renderProvenance(record), resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))
+			await writeLocalJSONFile(provenance, resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))
 		}
 
 		for (const [file, changed] of [
