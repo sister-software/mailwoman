@@ -16,7 +16,7 @@ import { coordinates } from "#coordinates"
 import { isDeterministicCoordinate } from "#deterministic"
 import { createRecognizer, type RecognizerResult, type TracedRecognizerResult } from "#index"
 import { primitives } from "#primitives"
-import { Outcome, type Trace, TraceResult } from "#trace"
+import { Outcome, type Trace, TraceResult } from "#runtime/trace"
 
 const families = [primitives, coordinates] as const
 const recognizer = createRecognizer(families)

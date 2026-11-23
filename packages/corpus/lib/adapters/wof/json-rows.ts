@@ -14,7 +14,7 @@ import {
 } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { isPresent } from "@mailwoman/core/values/objects"
-import { textScript } from "@mailwoman/recognizer/script-run"
+import { textScript } from "@mailwoman/recognizer/query-shape/script-run"
 
 import type { RowSampler, SampledRow } from "#adapters/wof/sample"
 import type { AdapterOptions, CanonicalRow } from "#types"

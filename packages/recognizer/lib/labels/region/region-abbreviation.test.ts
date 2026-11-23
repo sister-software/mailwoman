@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isRegionAbbreviationToken } from "#region-abbreviation"
+import { isRegionAbbreviationToken } from "#labels/region/region-abbreviation"
 
 describe("isRegionAbbreviationToken", () => {
 	it("accepts two uppercase ASCII letters by default", () => {

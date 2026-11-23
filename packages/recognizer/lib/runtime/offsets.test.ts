@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { offsetMap } from "#offsets"
+import { offsetMap } from "#runtime/offsets"
 
 const encoder = new TextEncoder()
 
