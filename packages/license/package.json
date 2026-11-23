@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/license",
-	"version": "11.2.0",
+	"version": "11.3.0",
 	"description": "The rights of third-party data sources (license decisions and the operations they permit, SPDX expression obligations, license-string records and the build policies that read them), and the wire format, trust register and entitlement rules of Mailwoman's own product license.",
 	"keywords": [
 		"data-license",
