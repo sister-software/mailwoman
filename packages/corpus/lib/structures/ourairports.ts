@@ -56,7 +56,7 @@ const CLOSED_TYPE = "closed"
 /**
  * The `@mailwoman/poi-taxonomy` category of each open OurAirports `type`.
  */
-export const OURAIRPORTS_TYPE_CATEGORIES: Readonly<Record<string, string>> = {
+const OURAIRPORTS_TYPE_CATEGORIES: Readonly<Record<string, string>> = {
 	large_airport: "airport",
 	medium_airport: "airport",
 	small_airport: "airport",

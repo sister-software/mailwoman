@@ -4,7 +4,7 @@
 import { getPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import { describe, expect, it } from "vitest"
 
-import { OURAIRPORTS_TYPE_CATEGORIES, ourAirportsStructureRecord } from "#structures/ourairports"
+import { ourAirportsStructureRecord } from "#structures/ourairports"
 
 const HELIPORT = {
 	ident: "00A",
@@ -37,10 +37,15 @@ describe("ourAirportsStructureRecord", () => {
 	})
 })
 
-describe("OURAIRPORTS_TYPE_CATEGORIES", () => {
-	it("names only categories the POI taxonomy holds", () => {
-		for (const category of Object.values(OURAIRPORTS_TYPE_CATEGORIES)) {
-			expect(getPOICategory(category), category).not.toBeNull()
+describe("the open OurAirports types", () => {
+	it("file each one under a category the POI taxonomy holds", () => {
+		const types = ["large_airport", "medium_airport", "small_airport", "heliport", "seaplane_base", "balloonport"]
+
+		for (const type of types) {
+			const record = ourAirportsStructureRecord({ ...HELIPORT, type })
+
+			expect(record?.category, type).toBeDefined()
+			expect(getPOICategory(record?.category ?? ""), type).not.toBeNull()
 		}
 	})
 })
