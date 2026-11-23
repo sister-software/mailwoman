@@ -6,7 +6,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { describe, expect, it } from "vitest"
 
-import { buildCapitalsReference, type CapitalsReference, parseCapitalRows } from "#tools/pipeline/capitals"
+import { buildCapitalsReference, type CapitalsReference, parseCapitalRows } from "#tools/pipeline/admin/capitals"
 
 function dumpRow(id: number, name: string, fclass: string, fcode: string, country: string, alternates = ""): string {
 	const cols = new Array<string>(19).fill("")

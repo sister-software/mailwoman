@@ -59,7 +59,7 @@ import { dirname, type PathBuilder, resolvePath, resolvePathBuilder, type PathBu
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { UNKNOWN_PROVENANCE } from "#tools/pipeline/database-lifecycle"
+import { UNKNOWN_PROVENANCE } from "#tools/pipeline/database/database-lifecycle"
 /**
  * Spdx id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
  */
@@ -916,7 +916,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 		attribution,
 		source: `ONS National Statistics UPRN Lookup (${vintage.monthName} ${vintage.year}, Epoch ${vintage.epoch}) — ${NSUL_PORTAL_URL}`,
 		sourceVintage: vintageLabel,
-		buildCmd: "buildNSULLayer — packages/gazetteer/tools/pipeline/nsul-layer.ts",
+		buildCmd: "buildNSULLayer — packages/gazetteer/tools/pipeline/gb/nsul-layer.ts",
 		buildSHA: options.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: UPRN_H3_RESOLUTION } },
@@ -955,7 +955,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 				"Rows with empty PCDS or no uprn.db point are counted in quality_drops and not written. " +
 				`Coverage = res-${NSUL_COVERAGE_H3_RESOLUTION} parents of observed rows, basis designated (ONS publishes the complete GB register).`,
 		],
-		["builder", "buildNSULLayer — packages/gazetteer/tools/pipeline/nsul-layer.ts"],
+		["builder", "buildNSULLayer — packages/gazetteer/tools/pipeline/gb/nsul-layer.ts"],
 	]
 
 	for (const [key, value] of metaRows) {

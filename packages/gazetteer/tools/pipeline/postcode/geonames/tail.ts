@@ -24,17 +24,17 @@ import type { KeyValueMetaTable } from "@mailwoman/sqlite/database-schema"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { UNDECLARED_INPUT_LICENSE } from "#tools/pipeline/candidate-manifest"
 import {
 	applyStagingPragmas,
 	buildDatabaseFTS,
 	freezeStagingDatabase,
 	removeStagingArtifacts,
 	vacuumDatabaseInto,
-} from "#tools/pipeline/database-lifecycle"
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
-import type { BuildFTSResult } from "#tools/pipeline/fts"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+} from "#tools/pipeline/database/database-lifecycle"
+import type { BuildFTSResult } from "#tools/pipeline/database/fts"
+import { UNDECLARED_INPUT_LICENSE } from "#tools/pipeline/manifest/candidate-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 /**
  * The terms the artifact's `layer_manifest` records for a given country list,

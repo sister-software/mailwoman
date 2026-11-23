@@ -39,7 +39,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { DEFAULT_ADMIN_DB } from "#tools/pipeline/defaults"
+import { DEFAULT_ADMIN_DB } from "#tools/pipeline/recipe/defaults"
 
 /**
  * The served Latin-script language tiers (see scope.mdx) — uniform curation set for every locale FST.

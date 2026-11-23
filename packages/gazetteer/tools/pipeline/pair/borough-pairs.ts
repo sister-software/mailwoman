@@ -31,7 +31,7 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { PLACETYPE_PROJECTION } from "#tools/pipeline/placetype-census"
+import { PLACETYPE_PROJECTION } from "#tools/pipeline/granularity/placetype-census"
 
 /**
  * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys

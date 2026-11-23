@@ -95,7 +95,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			dataRoot: import("@mailwoman/core/data-root"),
 			readers: import("@mailwoman/core/fs/readers"),
 			paths: import("@mailwoman/core/paths"),
-			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"),
 			nad: import("@mailwoman/corpus/us/tools/fetch/nad"),
 			layer: import("@mailwoman/corpus/us/address-records/layer"),
 			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),

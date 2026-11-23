@@ -53,7 +53,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 
 /**
  * The license grant the artifact records.

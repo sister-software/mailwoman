@@ -28,8 +28,8 @@ import {
 	removeStagingArtifacts,
 	UNKNOWN_PROVENANCE,
 	vacuumDatabaseInto,
-} from "#tools/pipeline/database-lifecycle"
-import type { BuildFTSResult } from "#tools/pipeline/fts"
+} from "#tools/pipeline/database/database-lifecycle"
+import type { BuildFTSResult } from "#tools/pipeline/database/fts"
 import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
@@ -40,8 +40,8 @@ import {
 	downloadCodePointOpen,
 	extractCodePointOpen,
 } from "#tools/pipeline/gb/codepoint"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { createDatabaseMetaTable, writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The year the attribution block names, taken from OS's own `copyright date` rather than the build clock,

@@ -29,7 +29,7 @@ import { dirname, PathBuilder, resolvePathBuilder, type PathBuilderLike } from "
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#tools/pipeline/database-lifecycle"
+import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#tools/pipeline/database/database-lifecycle"
 import { createOSDownloadsClient } from "#tools/pipeline/gb/codepoint/fetch"
 /**
  * The OS Data Hub product ID for Open UPRN.
@@ -700,7 +700,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		attribution: openUPRNAttribution(copyrightYear),
 		source: `Ordnance Survey OS Open UPRN — ${OS_DOWNLOADS_API_BASE}/products/${OPEN_UPRN_PRODUCT_ID}`,
 		sourceVintage: `${osVersion} (extracted ${extracted.versions.extractionDate})`,
-		buildCmd: "buildUPRNLayer — packages/gazetteer/tools/pipeline/uprn-layer.ts",
+		buildCmd: "buildUPRNLayer — packages/gazetteer/tools/pipeline/gb/uprn-layer.ts",
 		buildSHA: options.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: 9 } },
@@ -730,7 +730,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 				"h3_cell = res-9 short cell via @mailwoman/resolver-wof-sqlite/uprn-schema's uprnFullCell. " +
 				"Coverage = res-6 parents of observed rows, basis designated (OS publishes the complete GB UPRN set).",
 		],
-		["builder", "buildUPRNLayer — packages/gazetteer/tools/pipeline/uprn-layer.ts"],
+		["builder", "buildUPRNLayer — packages/gazetteer/tools/pipeline/gb/uprn-layer.ts"],
 	]
 
 	for (const [key, value] of metaRows) {

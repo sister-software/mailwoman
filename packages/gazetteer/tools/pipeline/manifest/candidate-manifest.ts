@@ -17,7 +17,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { probeManifest } from "mailwoman/data/catalog/inventory"
 import { basename, type PathBuilderLike } from "path-ts"
 
-import { OVERTURE_PART_NOTICE } from "#tools/pipeline/collective-offer"
+import { OVERTURE_PART_NOTICE } from "#tools/pipeline/manifest/collective-offer"
 
 /**
  * The ancestor's identity as this manifest records it, where `unknown` is a

@@ -9,7 +9,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { buildFTS, type BuildFTSResult } from "#tools/pipeline/fts"
+import { buildFTS, type BuildFTSResult } from "#tools/pipeline/database/fts"
 
 /**
  * The staging-database pragma block the ingest-then-`vacuum into` builders open with.

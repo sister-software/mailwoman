@@ -54,7 +54,7 @@ large.
 **Built 2026-08-01** (hierarchy campaign R4c) as **PCN1**. `packages/neural/lib/placetype/census.ts` holds both
 the writer and the reader, following the same convention as PIX1 and PCB1. `mailwoman gazetteer
 census` builds the census from the WOF admin DB through the projection table above. The table is
-executable as `PLACETYPE_PROJECTION` in `packages/gazetteer/tools/pipeline/placetype-census.ts`, so a
+executable as `PLACETYPE_PROJECTION` in `packages/gazetteer/tools/pipeline/granularity/placetype-census.ts`, so a
 placetype missing from the table makes the build throw instead of silently going uncounted. The GB
 artifact has 5,577 nodes (137 KB) over 33,899 counted child links.
 

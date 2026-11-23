@@ -8,7 +8,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { districtNameVariants, matchTaiwanRegion, type TaiwanRegionName } from "#tools/pipeline/tw-districts"
+import { districtNameVariants, matchTaiwanRegion, type TaiwanRegionName } from "#tools/pipeline/tw/tw-districts"
 
 const HSINCHU_CITY = 85_679_557
 const HSINCHU_COUNTY = 85_679_563

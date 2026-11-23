@@ -16,7 +16,7 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { GazetteerSourceName } from "@mailwoman/resolver-wof-sqlite/build/sources"
 
-import { OVERTURE_PART_NOTICE } from "#tools/pipeline/collective-offer"
+import { OVERTURE_PART_NOTICE } from "#tools/pipeline/manifest/collective-offer"
 
 /**
  * The number of rows each source contributed to a build.

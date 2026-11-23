@@ -4,7 +4,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
-import { stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"

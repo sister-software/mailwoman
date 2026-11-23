@@ -13,7 +13,7 @@
 
 import { allKeyed } from "@mailwoman/core/async/promises"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
+import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/recipe/defaults"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"

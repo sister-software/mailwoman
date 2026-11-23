@@ -63,7 +63,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 			paths: { wofDatabasePath },
 		} = await allKeyed({
 			importance: import("@mailwoman/gazetteer/tools/pipeline/importance"),
-			defaults: import("@mailwoman/gazetteer/tools/pipeline/defaults"),
+			defaults: import("@mailwoman/gazetteer/tools/pipeline/recipe/defaults"),
 			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
 		})
 

@@ -52,9 +52,9 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 } from "#locality-postcode-schema"
-import { finalizeSealedBuild } from "#tools/pipeline/database-lifecycle"
+import { finalizeSealedBuild } from "#tools/pipeline/database/database-lifecycle"
+import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { writeMetaRows } from "#tools/pipeline/postcode/geonames/tail"
-import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 
 /**
  * The grant the finalized table records in its `license` meta row.

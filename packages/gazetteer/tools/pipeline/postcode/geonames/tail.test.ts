@@ -20,8 +20,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "#tools/pipeline/postcode/geonames/tail"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 
 let root: TemporaryDirectory
 let postalDir: PathBuilder

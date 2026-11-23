@@ -16,7 +16,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 import { publishGazetteer } from "#tools/pipeline"
-import { contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
+import { contributingLayerManifest, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 
 let root: TemporaryDirectory
 

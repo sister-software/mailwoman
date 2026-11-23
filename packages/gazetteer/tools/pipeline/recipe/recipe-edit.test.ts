@@ -16,7 +16,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
-import { addCountry, removeCountry } from "#tools/pipeline/recipe-edit"
+import { addCountry, removeCountry } from "#tools/pipeline/recipe/recipe-edit"
 
 const LIST = `/**
  * A docstring the editor must not touch.

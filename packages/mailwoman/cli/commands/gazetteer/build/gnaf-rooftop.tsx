@@ -37,7 +37,7 @@ export const spec = {
 
 const GazetteerBuildGNAFRooftop: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildGNAFRooftopDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/gnaf-rooftop")
+		const { buildGNAFRooftopDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/au/gnaf-rooftop")
 
 		const r = await buildGNAFRooftopDatabase({
 			standardDir: options.standardDir,

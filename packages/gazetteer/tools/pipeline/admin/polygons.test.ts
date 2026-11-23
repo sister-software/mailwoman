@@ -10,7 +10,7 @@ import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/schema/poly
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-import { buildPolygonsDatabase } from "#tools/pipeline/polygons"
+import { buildPolygonsDatabase } from "#tools/pipeline/admin/polygons"
 
 const SQUARE = {
 	type: "Polygon",

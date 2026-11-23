@@ -11,7 +11,7 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
-import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/manifest/stamp-manifest"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
