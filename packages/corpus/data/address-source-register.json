@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "d836f5938ff4c9608aaa42659d26227feee332c1fab9b20127bf9a0b892ab24a",
+	"contentDigest": "3efdcfab263121c5599f7af9b9d8cf12c0c069b4241f49d0066da5da5114cec0",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -448,6 +448,87 @@
 		},
 		{
 			"state": "elected",
+			"electedTerms": "Public Domain: \"All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use.\"",
+			"termsVersion": "OurAirports data page as served on 2026-11-23",
+			"retrievedCopy": "internal/strategy/rights-receipts/transport-codes-2026-11-23/",
+			"retrievedAt": "2026-11-23",
+			"reading": {
+				"url": "https://ourairports.com/data/",
+				"found": "terms",
+				"quote": "Terms of use All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use."
+			},
+			"obligations": [
+				{
+					"obligation": "attribution",
+					"strength": "requested",
+					"quote": "We'd love you to give us credit, like we give credit to our sources , but you're not required to.",
+					"text": "OurAirports (https://ourairports.com/)"
+				}
+			],
+			"electedBecause": "OurAirports states one term over its data dumps. `https://ourairports.com/data/`, read on 2026-11-23 (13,278 bytes, sha256 `16f4d41af8f257e34ca73a9f0ee1ed216f03812ec4033da9337549829d9244e4`), reads under `Terms of use`: `All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use.` The same page says of the CSV dump `You can download these files and open them with almost any spreadsheet program or import them into your own database. You can even use them to set up your own, competing airport web site if you'd like! We'd love you to give us credit, like we give credit to our sources , but you're not required to.` The about page (20,527 bytes, sha256 `2d46ac929a657a208520d9bd1c704ea52b59a71e4ac0e47718526b0a83f4326a`) repeats `OurAirport's data, which is all in the Public Domain (no permission required)`, and records that content users submit `is released into Public Domain`, so contributors release their edits on the same terms. The page names no dedication instrument, so `spdx` is left out and `electedTerms` holds the publisher's words. A release to the public domain reserves no act, so every operation below is permitted, and the credit the page asks for is recorded as a requested obligation. The site served an expired TLS certificate on 2026-11-23; the page was read with verification off for that request, and the GitHub mirror's README at `davidmegginson/ourairports-data`, served over a valid certificate, points to `https://ourairports.com/data/` for its documentation. The CSV files are served from `https://davidmegginson.github.io/ourairports-data/`, which `ourairports.com/data/*.csv` redirects to, so the page's terms govern those files. The rows describe airports, heliports and seaplane bases with a name, a point, codes and a municipality, and no person.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "`All data is released to the Public Domain`, and the page invites the reader to `download these files`."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page invites the reader to `import them into your own database`, and a release to the public domain reserves no act."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A release to the public domain reserves no act, adaptation included."
+				},
+				"evaluate": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `train` permission: scoring a model on the rows fits no weight and only aggregate scores leave, so the grant that permits training on the rows permits evaluating on them."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A release to the public domain reserves no act, so fitting a model on the rows is unrestricted by it."
+				},
+				"distribute-rows": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page permits a reuser to `set up your own, competing airport web site`, which publishes the rows, and asks for credit without requiring it."
+				},
+				"answer-queries": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `distribute-rows` permission: answering one request at a time releases less of the rows than a file they can be read back from, under the same grant."
+				},
+				"distribute-derived": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Read from the `distribute-rows` permission: an artifact the rows can't be recovered from releases less of them than a file they can be read back from, under the same grant."
+				},
+				"distribute-model": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A release to the public domain leaves no right that would make the release of a derived work a licensed act."
+				}
+			},
+			"purposes": {
+				"commercial-use": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "The page names a competing airport web site as a permitted use and states no noncommercial restriction."
+				},
+				"sale": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "A release to the public domain leaves no right to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-access-free-ca-ourairports"
+		},
+		{
+			"state": "elected",
 			"electedTerms": "Nutzungsbedingungen für kostenlose Geodaten und Geodienste (OGD) von swisstopo",
 			"termsVersion": "2022-08-26",
 			"retrievedCopy": "internal/strategy/rights-receipts/eu-inspire-addresses-2026-09-30/",
@@ -517,6 +598,74 @@
 			"state": "unchecked",
 			"publisherStatement": "Free",
 			"note": "An access label from the original memo: the download costs nothing. It states no grant. The research pass recorded no publisher, so this decision is scoped to ch-business-legal-1 alone."
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Terms and Conditions of Use of United Nations Websites, clause (a): personal, non-commercial use, without any right to resell, redistribute, compile or create derivative works",
+			"candidateGrants": [
+				"Terms and Conditions of Use of United Nations Websites, clause (a), at https://unlocode.unece.org/terms/",
+				"\"All UN/CEFACT standards are free to use under CC By 4.0 license\", the unversioned footer of every unlocode.unece.org page, which names LOCODE among the related UN/CEFACT standards"
+			],
+			"termsVersion": "UN/LOCODE site terms as served on 2026-11-23 (Last-Modified 2026-11-05)",
+			"retrievedCopy": "internal/strategy/rights-receipts/transport-codes-2026-11-23/",
+			"retrievedAt": "2026-11-23",
+			"reading": {
+				"url": "https://unlocode.unece.org/terms/",
+				"found": "terms",
+				"quote": "The United Nations grants permission to Users to visit the Site and to download and copy the information, documents and materials (collectively, “Materials”) from the Site for the User’s personal, non-commercial use, without any right to resell or redistribute them or to compile or create derivative works therefrom, subject to the terms and conditions outlined below, and also subject to more specific restrictions that may apply to specific Material within this Site."
+			},
+			"electedBecause": "UNECE publishes UN/LOCODE on `unlocode.unece.org`, and none of the release files carries a licence: the 2025-1 release archive the publications page links (`vocab-locode/-/jobs/artifacts/2025-1/download?job=package-release`, 13,507,338 bytes, sha256 `ad409fc7149b10f98d61190c34d9daf78b78bb8b31464cc66de1a89d09b01b5d`) holds MDB, CSV, TXT, XML and SKOS files and no licence file, and the SKOS concept scheme names `dct:publisher \"United Nations Economic Commission for Europe (UNECE)\"` and no `dct:license`. Two site-wide statements speak to the material, read on 2026-11-23. The site's terms (`https://unlocode.unece.org/terms/`, 15,950 bytes, sha256 `aca9416052d7e2b717b6494d539fcfbf941e1dfe906a5b65118242eba4d6f3d0`), the same text as UNECE's own site terms, grant clause (a) quoted under `reading`: download and copy for personal, non-commercial use, with no right to resell, redistribute, compile or create derivative works. The footer of every page, the publications page included (11,337 bytes, sha256 `ffced74ea69395d2c41d8fc05f32946c50e27e1c6ddc37d8b90c75ee66e28faa`), reads `All UN/CEFACT standards are free to use under CC By 4.0 license` and then `Related UN/CEFACT standards: GRID , UNVTD , LOCODE`, with no version, link or legal code. Recommendation 16 states only a price: `Updated versions of the UN/LOCODE directory will be issued regularly and will be published on the UNECE website free of charge.` The source repository's GPL-3.0 `LICENSE` covers the repository, which also holds the tooling and the website, and no notice ties it to the code list. Both statements are recorded in `candidateGrants`. Neither is a statement in the dataset, and a footer is a site-wide assertion (`$firstRefusals`), so neither is the more specific; the terms' own `more specific restrictions` clause anticipates narrower terms for specific Material and not a wider grant. The election takes clause (a), the stricter of the two, because it is the only one that spells out its scope and its limits and the engineering policy elects the strictest grant for what a release may include (`candidateGrants` in `@mailwoman/license/decision`). Terms that spell out a restricted use are a refusal (`packages/corpus/AGENTS.md`, License election), so every operation that leaves this repository and every commercial purpose is refused below. Under the footer's reading every operation would be permitted with attribution; a statement from UNECE that names the code list would settle which reading governs. The `datasets/un-locode` repackaging this host's `code-list.csv` comes from places only its maintainers' own work under ODC-PDDL-1.0 and records the data's licence as unclear, so it grants nothing over the codes. No corpus source reads the list. `@mailwoman/un-locode-lookup` builds `un-locode.db` from it and the `nominatim` command annotates results with its codes, which this decision's `answer-queries` and `commercial-use` readings refuse.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Clause (a) grants permission `to download and copy the information, documents and materials`, limited to personal, non-commercial use; the `commercial-use` purpose below records that limit."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "publisher-grant",
+					"because": "Reading the columns out of a downloaded copy is copying, which clause (a) grants under the same limit."
+				},
+				"transform": {
+					"permission": "refused",
+					"because": "Clause (a) grants the copy `without any right ... to compile or create derivative works therefrom`, and a token and tag corpus or a lookup database compiled from the list is one."
+				},
+				"evaluate": {
+					"permission": "refused",
+					"because": "Scoring a model on the rows needs `transform`, which clause (a) refuses, and the model scored is sold, which the `commercial-use` reading refuses."
+				},
+				"train": {
+					"permission": "refused",
+					"because": "Fitting a model on the list creates a derivative work, which clause (a) excludes."
+				},
+				"distribute-rows": {
+					"permission": "refused",
+					"because": "Clause (a) grants the copy `without any right to resell or redistribute them`."
+				},
+				"answer-queries": {
+					"permission": "refused",
+					"because": "Sending a code drawn from the list with each answer redistributes the Materials one value at a time, which clause (a) excludes, and the answers serve a sold product."
+				},
+				"distribute-derived": {
+					"permission": "refused",
+					"because": "An artifact computed from the list is a compilation or derivative work, which clause (a) excludes."
+				},
+				"distribute-model": {
+					"permission": "refused",
+					"because": "Weights fitted on the list are a derivative work, and clause (a) excludes both creating and redistributing one."
+				}
+			},
+			"purposes": {
+				"commercial-use": {
+					"permission": "refused",
+					"because": "Clause (a) grants its permission `for the User’s personal, non-commercial use`. Every act this repository performs is in aid of Mailwoman, which is sold under `LicenseRef-Commercial`."
+				},
+				"sale": {
+					"permission": "refused",
+					"because": "Clause (a) grants the copy `without any right to resell` it."
+				}
+			},
+			"licenseID": "unchecked-access-free-ch-united-nations-economic-commission-for-europe"
 		},
 		{
 			"licenseID": "unchecked-access-free-cn-cn-business-legal-1",
@@ -97617,6 +97766,38 @@
 			"publisher": "Servicios Postales Nacionales S.A.S. (4-72)",
 			"sourceURL": "https://www.datos.gov.co/d/ajs9-6i5i",
 			"note": "No corpus source reads this list. Its grant is CC BY-SA 4.0, whose share-alike term the share-alike-free license policy refuses."
+		},
+		{
+			"sourceID": "ch-transport-1",
+			"iso2": "CH",
+			"sector": "transport",
+			"name": "UN/LOCODE, the United Nations Code for Trade and Transport Locations (UNECE Recommendation 16)",
+			"status": "verified-authority",
+			"asserts": ["observation"],
+			"authorityBasis": "UNECE maintains UN/LOCODE through UN/CEFACT under Recommendation 16 and publishes each release on unlocode.unece.org",
+			"geometry": "partial",
+			"license": "unchecked-access-free-ch-united-nations-economic-commission-for-europe",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "Release archive linked from https://unlocode.unece.org/publications/ (MDB, CSV, TXT, XML and SKOS), no key; this host reads `code-list.csv` from the `datasets/un-locode` repackaging on GitHub",
+			"publisher": "United Nations Economic Commission for Europe (UNECE)",
+			"sourceURL": "https://unlocode.unece.org/publications/",
+			"note": "No corpus source reads this list. `$MAILWOMAN_DATA_ROOT/un-locode/un-locode.db`, built from it by `@mailwoman/un-locode-lookup`, feeds the UN_LOCODE annotation of the `nominatim` command. Each entry has a country, a three-character location code, a name, a subdivision, an eight-position function classifier (port, rail, road, airport, postal exchange, multimodal, fixed transport, border crossing) and, on most entries, coordinates in degrees and minutes. The terms read on 2026-11-23 limit use to personal, non-commercial use; the decision records each reading."
+		},
+		{
+			"sourceID": "ca-transport-1",
+			"iso2": "CA",
+			"sector": "transport",
+			"name": "OurAirports open data downloads (airports.csv, runways.csv, countries.csv, regions.csv)",
+			"status": "verified-authority",
+			"asserts": ["observation"],
+			"authorityBasis": "OurAirports, a volunteer-edited airport database founded by David Megginson, publishes a nightly CSV dump of its records",
+			"geometry": "present",
+			"license": "unchecked-access-free-ca-ourairports",
+			"researchPass": "2026-09-30-rights-review",
+			"access": "CSV files at https://davidmegginson.github.io/ourairports-data/, to which `ourairports.com/data/*.csv` redirects, no key",
+			"publisher": "OurAirports",
+			"sourceURL": "https://ourairports.com/data/",
+			"note": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), and `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada."
 		},
 		{
 			"sourceID": "es-health-1",
