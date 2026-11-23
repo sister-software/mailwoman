@@ -221,7 +221,7 @@ yarn mwops release sbom --version <version>                                     
 node packages/mailwoman/out/cli/main.js data bom --skip-inventory                  # docs/static/sbom/mailwoman-data-<version>.cdx.json
 ```
 
-When the job couldn't open the PR, commit the three files the release carries. Validation commands and rationale live
+When the job couldn't open the PR, commit the three files attached to the GitHub release. Validation commands and rationale live
 in [`docs/records/site-2026-08/licensing/sbom.md`](./docs/records/site-2026-08/licensing/sbom.md),
 and the script header explains the SPDX normalization.
 
