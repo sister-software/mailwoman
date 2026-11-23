@@ -300,22 +300,17 @@ export interface ProminentTuplesSummary {
 }
 
 /**
- * Writes `prominent-tuples.jsonl` into `out` from `places.parquet` and the base corpus's
- * `short-admin-rows.parquet` there, under the training config's epoch over that base.
- *
- * @throws When the config requests no draws of the recipe's source, or the base already holds its rows.
- */
-/**
- * The demand cells the step sizes, each with its target: the receipt's tables over the base scan
- * (`createProminentCoverageTables`), with the places the corpus holds out by design left out
- * as the receipt leaves them out, so a cell's target is the one the receipt grades it against.
+ * The demand cells the step sizes, each with its target: the receipt's tables
+ * (`createProminentCoverageTables`) over the base scan and the listed groups' rows,
+ * so a form the corpus holds out by design is left out as the receipt leaves it out,
+ * and a cell's target is the one the receipt grades it against.
  * The connection keeps the tables for the step's other reads.
  */
 export async function readSizingCells(
 	db: DisposableDuckDB,
-	input: { places: string; shortAdminRows: string; rates: EpochRates; heldOut: ReadonlySet<number> }
+	input: { places: string; shortAdminRows: string; rates: EpochRates; listedShortAdminRows: string | null }
 ): Promise<Array<DemandCell & { target: number | null }>> {
-	await createProminentCoverageTables(db, input.places, input.shortAdminRows, input.rates, input.heldOut)
+	await createProminentCoverageTables(db, input.places, input.shortAdminRows, input.rates, input.listedShortAdminRows)
 
 	return (await readDemandCells(db)).map((cell) => ({
 		...cell,
@@ -323,6 +318,12 @@ export async function readSizingCells(
 	}))
 }
 
+/**
+ * Writes `prominent-tuples.jsonl` into `out` from `places.parquet` and the base corpus's
+ * `short-admin-rows.parquet` there, under the training config's epoch over that base.
+ *
+ * @throws When the config requests no draws of the recipe's source, or the base already holds its rows.
+ */
 export async function writeProminentTuples(options: {
 	out: string
 	/**
@@ -330,11 +331,12 @@ export async function writeProminentTuples(options: {
 	 */
 	epoch: EpochMeasure
 	/**
-	 * The places the corpus holds out by design (`readHeldOutByDesign` over the base manifest),
-	 * which the receipt neither requires nor counts.
-	 * The cells are then sized against the receipt's own targets.
+	 * The listed groups' short admin rows the scan wrote beside the train rows
+	 * (`listed-short-admin-rows.parquet`), or `null` for a base split under no evaluation-group policy.
+	 *
+	 * The cells are then sized against the receipt's own held-out forms and targets.
 	 */
-	heldOut: ReadonlySet<number>
+	listedShortAdminRows: string | null
 	limits?: DuckDBLimits
 }): Promise<ProminentTuplesSummary> {
 	const placesPath = `${options.out}/places.parquet`
@@ -372,7 +374,7 @@ export async function writeProminentTuples(options: {
 		places: placesPath,
 		shortAdminRows: `${options.out}/short-admin-rows.parquet`,
 		rates,
-		heldOut: options.heldOut,
+		listedShortAdminRows: options.listedShortAdminRows,
 	})
 
 	const placeShapes = await queryRows(

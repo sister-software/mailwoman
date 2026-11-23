@@ -58,9 +58,10 @@ const { presence, demand_share: demand, coherence, held_out_by_design: heldOut }
 console.log(`prominent place coverage — ${configPath.split("/").at(-1)}`)
 
 console.log(
-	heldOut.policy
-		? `  held out by design: ${heldOut.places} ranked places (${heldOut.selected} selected) of ${heldOut.listed_records} ` +
-				`listed WOF records; ${heldOut.trained_records} listed records keep a train group`
+	heldOut.policy && heldOut.read
+		? `  held out by design: ${heldOut.forms} forms (${heldOut.required_place_forms} of required places), read from ` +
+				`${heldOut.read.short_admin_rows.toLocaleString("en-US")} short admin rows of ${heldOut.listed_groups.toLocaleString("en-US")} ` +
+				`listed groups in ${heldOut.read.files_read.length} data files`
 		: "  held out by design: none, the corpus records no evaluation-group policy"
 )
 console.log(`  presence: ${presence.covered_forms} of ${presence.required_forms} required forms covered`)

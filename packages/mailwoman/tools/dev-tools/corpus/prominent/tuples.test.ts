@@ -18,15 +18,16 @@ import {
 import { apportionUnderCap, type DemandCellPlan, readSizingCells, solveRecipeRows } from "./tuples.ts"
 
 describe("readSizingCells", () => {
-	it("sizes a cell against the target the receipt grades it by, with a held-out place out of its population", async () => {
+	it("sizes a cell against the target the receipt grades it by, with each kind of frozen row in it", async () => {
 		await using directory = await temporaryDirectory("prominent-sizing-")
 		const path = directory.path.toString()
 
 		{
 			using db = await openDuckDB()
 
-			// GB's Alpha (decile 1, required), Beta (decile 2, held out by design) and Gamma
-			// (decile 9), 1,000 people each, as Babeldaob South sat in PW's decile 2 on v0.8.22.
+			// GB's Alpha (decile 1, required), Beta (decile 2) and Gamma (decile 9), 1,000 people each.
+			// A collection froze Beta's bare row, its own surface, as Babeldaob South's sat in
+			// PW's decile 2 on v0.8.22, and a row of another name of Gamma's, as Changsha's.
 			await db.run(
 				"COPY (SELECT * FROM (VALUES " +
 					"(1, 'GB', 'locality', 'Alpha', 'alpha', 1, 1, true, false, 'importance', NULL, NULL, NULL, 1000, NULL, NULL, []::VARCHAR[], 'none', false), " +
@@ -41,6 +42,12 @@ describe("readSizingCells", () => {
 				"COPY (SELECT * FROM (VALUES ('GB', 'wof-admin', 'locality', 'alpha', NULL, NULL::VARCHAR, 1::BIGINT), " +
 					"('GB', 'wof-admin', 'locality', 'gamma', NULL, NULL, 9)) AS t(country, source, shape, s1, s2, s3, rows)) " +
 					`TO '${path}/short-admin-rows.parquet' (FORMAT PARQUET)`
+			)
+
+			await db.run(
+				"COPY (SELECT * FROM (VALUES ('GB', 'wof-admin', 'locality', 'beta', NULL, NULL::VARCHAR, 1::BIGINT), " +
+					"('GB', 'wof-admin', 'locality', 'gamma-ville', NULL, NULL, 1)) AS t(country, source, shape, s1, s2, s3, rows)) " +
+					`TO '${path}/listed-short-admin-rows.parquet' (FORMAT PARQUET)`
 			)
 		}
 
@@ -58,23 +65,27 @@ describe("readSizingCells", () => {
 			admission: new Map([["GB", 1]]),
 		}
 
-		const input = { places: `${path}/places.parquet`, shortAdminRows: `${path}/short-admin-rows.parquet`, rates }
-		const heldOut = new Set([2])
+		const input = {
+			places: `${path}/places.parquet`,
+			shortAdminRows: `${path}/short-admin-rows.parquet`,
+			rates,
+			listedShortAdminRows: `${path}/listed-short-admin-rows.parquet`,
+		}
 
 		using sizing = await openDuckDB()
 
-		const sized = (await readSizingCells(sizing, { ...input, heldOut })).find((cell) => cell.query_shape === "bare")
+		const sized = (await readSizingCells(sizing, input)).find((cell) => cell.query_shape === "bare")
 
 		using receipt = await openDuckDB()
 
-		await createProminentCoverageTables(receipt, input.places, input.shortAdminRows, rates, heldOut)
+		await createProminentCoverageTables(receipt, input.places, input.shortAdminRows, rates, input.listedShortAdminRows)
 
 		const graded = (await evaluateProminentCoverage(receipt)).demand_share.failing.find(
 			(cell) => cell.query_shape === "bare"
 		)
 
-		// Without Beta decile 1 holds 1,000 of 2,000 people, a target of 0.25.
-		// With Beta it would be 1,000 of 3,000.
+		// Beta leaves the bare cell, and Gamma stays: decile 1 holds 1,000 of 2,000 people, a target of 0.25.
+		// With Beta it would be 1,000 of 3,000, and without Gamma too 1,000 of 1,000.
 		expect(sized?.target).toBeCloseTo(0.25)
 		expect(sized?.target).toBe(graded?.target)
 	})

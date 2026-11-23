@@ -15,6 +15,7 @@ import {
 	type EpochRates,
 	evaluateProminentCoverage,
 	PROMINENT_PLACES_RECORD_VERSION,
+	readHeldOutForms,
 	readProminentPlacesRecord,
 	readRequiredFormGroups,
 } from "./coverage.ts"
@@ -91,17 +92,41 @@ const RATES: EpochRates = {
 	admission: new Map([["GB", 1]]),
 }
 
+/**
+ * Writes short rows as the listed pass writes the listed groups' rows, `listed-short-admin-rows.parquet`.
+ */
+async function writeListedRows(db: DisposableDuckDB, directory: string, rows: readonly ShortRow[]): Promise<string> {
+	const path = `${directory}/listed-short-admin-rows.parquet`
+
+	const values = rows.map(
+		([shape, s1, s2, n, source]) =>
+			`('GB', '${source ?? "wof-admin"}', '${shape}', '${s1}', ${s2 ? `'${s2}'` : "NULL"}, NULL::VARCHAR, ${n}::BIGINT)`
+	)
+
+	await db.run(
+		`COPY (SELECT * FROM (VALUES ${values.join(", ")}) AS t(country, source, shape, s1, s2, s3, rows)) TO '${path}' (FORMAT PARQUET)`
+	)
+
+	return path
+}
+
 async function evaluate(
 	directory: string,
 	shortRows: readonly ShortRow[],
 	rates: EpochRates = RATES,
 	places = PLACES_SQL,
-	heldOut: ReadonlySet<number> = new Set()
+	listedRows: readonly ShortRow[] = []
 ) {
+	let listed: string | null = null
+
 	{
 		using writer = await openDuckDB()
 
 		await fixture(writer, directory, shortRows, places)
+
+		if (listedRows.length) {
+			listed = await writeListedRows(writer, directory, listedRows)
+		}
 	}
 
 	using db = await openDuckDB()
@@ -111,11 +136,11 @@ async function evaluate(
 		`${directory}/places.parquet`,
 		`${directory}/short-admin-rows.parquet`,
 		rates,
-		heldOut
+		listed
 	)
 
 	// Awaited here, because `using` closes the database when the function returns.
-	return await evaluateProminentCoverage(db)
+	return { ...(await evaluateProminentCoverage(db)), held: await readHeldOutForms(db) }
 }
 
 /**
@@ -265,7 +290,7 @@ describe("prominent_place_coverage", () => {
 		expect(bare.undrawn_decile1_places).toBe(bare.undrawn_examples.length)
 	})
 
-	it("leaves a place held out by design out of presence and out of its demand cell", async () => {
+	it("holds out a form whose own surface a listed group writes, and its place leaves that cell", async () => {
 		await using directory = await temporaryDirectory("prominent-coverage-")
 
 		// Delta shares decile 1 with Alpha, and Beta in decile 10 holds 1,000 people, as each of them does.
@@ -275,8 +300,9 @@ describe("prominent_place_coverage", () => {
 				"'England', ['ENG'], 'none', false)) AS t("
 		)
 
-		// A freeze took every group of Alpha's, so the corpus trains on none of its rows.
+		// A freeze took every row of Alpha's: the listed groups write each of its forms, and no train row does.
 		const rows: ShortRow[] = [...COVERED.filter(([, s1]) => s1 !== "alpha"), ["locality", "delta", null, 4]]
+		const listed = COVERED.filter(([, s1]) => s1 === "alpha")
 
 		const bare = (result: Awaited<ReturnType<typeof evaluate>>) =>
 			result.demand_share.failing.find((cell) => cell.band === "locality" && cell.query_shape === "bare")
@@ -287,23 +313,63 @@ describe("prominent_place_coverage", () => {
 		// Decile 1 holds 2,500 of 3,500 people, so the target is 0.357, and Delta's 4 of 12 draws miss it.
 		expect(bare(counted)?.target).toBeCloseTo(0.5 * (2500 / 3500))
 
-		const heldOut = await evaluate(directory.path.toString(), rows, RATES, places, new Set([1]))
+		const heldOut = await evaluate(directory.path.toString(), rows, RATES, places, listed)
 
 		expect(heldOut.presence.covered_forms).toBe(heldOut.presence.required_forms)
-		expect(heldOut.presence.not_required).toEqual({ "competing-candidate": 1, "held-out-by-design": 1 })
+		expect(heldOut.held.forms).toBe(4)
 		// Without Alpha, decile 1 holds 1,500 of 2,500 people, a target of 0.3 that 4 of 12 draws reach.
 		expect(bare(heldOut)).toBeUndefined()
 	})
 
-	it("keeps a listed place that a train row of another group still writes", async () => {
+	it("holds out only the form whose surface is frozen, as Roeselare's country form", async () => {
 		await using directory = await temporaryDirectory("prominent-coverage-")
 
-		// Every WOF group of Alpha's is listed, but rows of other groups still write it, as one did Timmins on v0.8.22.
-		const listed = await evaluate(directory.path.toString(), COVERED, RATES, PLACES_SQL, new Set([1]))
+		// A collection froze Alpha's `default-with-country` row, and train rows write its other forms.
+		const rows = COVERED.filter(([shape]) => shape !== "locality|country")
+
+		const result = await evaluate(directory.path.toString(), rows, RATES, PLACES_SQL, [
+			["locality|country", "alpha", null, 1],
+		])
+
+		expect(result.held).toMatchObject({
+			forms: 1,
+			by_country_shape: [{ country: "GB", query_shape: "country", forms: 1 }],
+		})
+
+		expect(result.presence.covered_forms).toBe(result.presence.required_forms)
+		expect(result.presence.required_places).toBe(2)
+	})
+
+	it("keeps every form required when the frozen row is a variant name, as Changsha's", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		// The only frozen row of Alpha's writes another name of it, and the corpus trains on no row of Alpha's.
+		const rows = COVERED.filter(([, s1]) => s1 !== "alpha")
+
+		const result = await evaluate(directory.path.toString(), rows, RATES, PLACES_SQL, [
+			["locality|region", "alfa", "england", 1],
+		])
+
+		expect(result.held.forms).toBe(0)
+
+		expect(
+			result.presence.failing
+				.filter((form) => form.name === "Alpha")
+				.map((form) => form.query_shape)
+				.toSorted()
+		).toEqual(["bare", "country", "region", "region_abbr"])
+	})
+
+	it("keeps a form a train row still writes, whatever the listed rows write", async () => {
+		await using directory = await temporaryDirectory("prominent-coverage-")
+
+		// The listed rows write Alpha's forms, but train rows of other groups do too, as one did Timmins on v0.8.22.
+		const listedRows = COVERED.filter(([, s1]) => s1 === "alpha")
+		const listed = await evaluate(directory.path.toString(), COVERED, RATES, PLACES_SQL, listedRows)
 		const unlisted = await evaluate(directory.path.toString(), COVERED, RATES, PLACES_SQL)
 
+		expect(listed.held.forms).toBe(0)
 		expect(listed.presence).toEqual(unlisted.presence)
-		expect(listed.presence.not_required["held-out-by-design"]).toBeUndefined()
 		expect(listed.demand_share).toEqual(unlisted.demand_share)
 	})
 

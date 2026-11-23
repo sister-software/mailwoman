@@ -46,7 +46,7 @@ import {
 import { drawGeocodeInputs, gradeGeocodes, renderProminenceReport } from "#tools/dev-tools/corpus/prominent/probe"
 import { writeProminentTuples } from "#tools/dev-tools/corpus/prominent/tuples"
 import { readEpochMeasure } from "#tools/training/audits/prominent/coverage"
-import { readHeldOutByDesign } from "#tools/training/audits/prominent/records"
+import { readListedGroups } from "#tools/training/audits/prominent/records"
 import { loadTrainingConfig } from "#tools/training/config"
 
 const { values, positionals } = parseArguments({
@@ -95,9 +95,15 @@ if (command === "places") {
 } else if (command === "scan") {
 	if (!values.manifest) throw new Error("scan needs --manifest <MANIFEST.json>")
 
+	const manifest = resolvePath(values.manifest).toString()
+
+	// The lists the base's re-split applies: their groups leave the train scan and fill the listed pass.
+	const listed = await readListedGroups(manifest)
+
 	const record = await scanShortAdminRows({
-		manifest: resolvePath(values.manifest).toString(),
+		manifest,
 		out,
+		...(listed.policy ? { listed: listed.groups } : {}),
 		...(values["limit-files"] ? { limitFiles: Number(values["limit-files"]) } : {}),
 		limits,
 		log,
@@ -134,10 +140,10 @@ if (command === "places") {
 		limits,
 	})
 
-	// The places the base corpus holds out by design, so the cells take the receipt's targets.
-	const heldOut = await readHeldOutByDesign(scan.manifest, limits, log)
+	// The listed groups' rows the scan wrote, so the cells take the receipt's held-out forms and targets.
+	const listedShortAdminRows = scan.listed ? resolvePath(out, "listed-short-admin-rows.parquet").toString() : null
 
-	console.log(stringifyJSON(await writeProminentTuples({ out, epoch, heldOut: heldOut.records, limits })))
+	console.log(stringifyJSON(await writeProminentTuples({ out, epoch, listedShortAdminRows, limits })))
 } else {
 	throw new Error("expected one of places, scan, coverage, report, inputs, grade, tuples")
 }
