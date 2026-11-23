@@ -13,8 +13,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { probeForkEntity } from "#geocode/result/fork-entity"
 import { loadForkEntityDeps } from "#geocode/session/layers"

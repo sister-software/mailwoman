@@ -6,8 +6,8 @@
  *   id never starts naming a different place across artifacts without an error.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { OvertureWOFMatchDatabase } from "@mailwoman/resolver-wof-sqlite/schema/overture-match"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/schema/unified"

@@ -10,9 +10,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { geometryContains } from "@mailwoman/spatial/geometries/polygon"

@@ -8,8 +8,8 @@
  *       [--duckdb-threads 8] [--duckdb-memory-gb 12]
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { buildStreetIndex } from "#tools/street-index/build"
 

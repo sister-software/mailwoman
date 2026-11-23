@@ -12,7 +12,7 @@
  */
 
 import { titleCaseFR } from "@mailwoman/codex/fr"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 

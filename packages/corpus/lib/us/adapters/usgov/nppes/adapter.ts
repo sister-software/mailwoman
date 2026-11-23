@@ -6,8 +6,8 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"

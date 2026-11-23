@@ -14,8 +14,8 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,

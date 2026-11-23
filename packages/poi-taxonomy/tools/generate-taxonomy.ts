@@ -4,11 +4,11 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator, sentenceCase, TextSpliterator } from "spliterator"
 

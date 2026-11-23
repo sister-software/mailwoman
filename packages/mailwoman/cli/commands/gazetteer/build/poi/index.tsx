@@ -23,10 +23,10 @@
  *   Overture branch below is untouched and stays byte-identical when `--source` is omitted.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"

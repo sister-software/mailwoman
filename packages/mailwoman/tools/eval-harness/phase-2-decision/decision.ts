@@ -6,7 +6,7 @@
  *   The module loads no engine and writes no receipt.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import type { Phase2Comparability, Phase2Counts, Phase2Verdict } from "#tools/eval-harness/phase-2-decision/results"

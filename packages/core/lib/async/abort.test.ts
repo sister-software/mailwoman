@@ -4,7 +4,7 @@
 import { ServiceRegistry } from "async-init"
 import { describe, expect, test } from "vitest"
 
-import { AbortKind, abortKindOf, AbortReason } from "#abort"
+import { AbortKind, abortKindOf, AbortReason } from "#async/abort"
 
 describe("abortKindOf", () => {
 	test("answers null while the signal has not aborted", () => {

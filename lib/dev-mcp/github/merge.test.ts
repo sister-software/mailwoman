@@ -7,7 +7,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it } from "vitest"
 
 import type { RunGitHub } from "#dev-mcp/github"

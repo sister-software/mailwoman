@@ -15,8 +15,8 @@
  *     [--ceiling 50000] [--per-place 100] [--per-street 2] [--seed 20261017]
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { writeVarietySample } from "@mailwoman/corpus/tools/variety-sample"
 
 const { values } = parseArguments({

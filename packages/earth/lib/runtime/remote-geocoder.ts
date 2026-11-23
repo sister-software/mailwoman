@@ -12,10 +12,10 @@
 import type { GeocodeBiasPoint, GeocodeResponse } from "@mailwoman/api/operations/geocode/address"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { GeocodeCandidate } from "@mailwoman/core/geocode"
-import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
 import type { EngineStamp } from "@mailwoman/core/license"
-import { isPresent } from "@mailwoman/core/objects"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 /**
  * The progress labels {@link remoteGeocode} reports through `onStage`.

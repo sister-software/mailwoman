@@ -3,7 +3,7 @@
 
 import { createHash } from "node:crypto"
 
-import { isPresent } from "#objects"
+import { isPresent } from "#values/objects"
 
 /**
  * A value that can be used as input to {@link simpleSHA3}.

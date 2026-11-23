@@ -9,7 +9,7 @@
  *   grader scores it: exact parse correctness under the country's street convention.
  */
 
-import { workerUserData } from "@mailwoman/core/workers"
+import { workerUserData } from "@mailwoman/core/scripting/workers"
 
 import {
 	type HeldoutClassifier,

@@ -30,9 +30,9 @@ import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
 import { open } from "#fs/readers/stat"
-import { stringifyJSON } from "#json"
 import { workspacePath } from "#paths"
-import { SourceHeaderSyntax, spdxHeaderText } from "#spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "#repo/spdx-header"
+import { stringifyJSON } from "#values/json"
 
 /**
  * Options for {@linkcode generateLanguageTypes}.

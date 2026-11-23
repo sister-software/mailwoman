@@ -5,8 +5,8 @@
  * Builds the US address layer from the NAD, Overture and OpenAddresses sources the register admits.
  */
 
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
-import { allKeyed } from "@mailwoman/core/promises"
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"

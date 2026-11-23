@@ -36,14 +36,14 @@
  *   Usage: `node packages/postcode/tools/generate.run.ts [--check]`
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict, prettyJSON } from "@mailwoman/core/values/json"
 import { type FormatConfig, format } from "oxfmt"
 
 import {

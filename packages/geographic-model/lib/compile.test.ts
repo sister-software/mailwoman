@@ -5,7 +5,7 @@
  * The compiler, its derivations and the artifact's two determinism properties.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { toPOICategoryID } from "@mailwoman/poi-taxonomy/types"
 import { describe, expect, it } from "vitest"
 

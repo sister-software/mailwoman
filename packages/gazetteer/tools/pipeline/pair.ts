@@ -18,7 +18,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
 import { normalizeFSTToken } from "@mailwoman/neural/prior/fst"
 

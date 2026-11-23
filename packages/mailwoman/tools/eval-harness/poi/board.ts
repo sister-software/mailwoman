@@ -6,8 +6,8 @@
  *   The board also checks the registered floors.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineOpts, PipelineResult, POIQueryResult } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 

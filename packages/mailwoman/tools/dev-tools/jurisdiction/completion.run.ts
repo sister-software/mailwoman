@@ -24,10 +24,10 @@ import { layoutForCountry } from "@mailwoman/codex/address/layouts"
 import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex/address/system/conventions"
 import { CountryISO2 } from "@mailwoman/codex/country"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readScopeConfig } from "@mailwoman/core/scope-config"
+import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 
 import { censusCoverage, type CountryCoverage, newestManifest, resolveTrainingConfig } from "#coverage"
 

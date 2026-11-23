@@ -5,7 +5,7 @@
  * The CI reader reports a failed `gh` call as unread rather than as an empty queue.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { readActiveCIRuns } from "#check-kit/ci-runs"

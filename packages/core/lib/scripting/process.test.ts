@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isProcessError, type ProcessProgress, ProcessTask, runProcess } from "#process"
+import { isProcessError, type ProcessProgress, ProcessTask, runProcess } from "#scripting/process"
 
 function node(source: string): [string, string[]] {
 	return [process.execPath, ["--eval", source]]

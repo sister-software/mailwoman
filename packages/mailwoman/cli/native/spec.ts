@@ -9,9 +9,9 @@
  * `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type OptionPropertyName, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type * as React from "react"
 
 type OptionValue = boolean | number | string | boolean[] | number[] | string[]

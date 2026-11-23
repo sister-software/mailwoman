@@ -19,8 +19,8 @@
  *   The query aliases it to `distance_m`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { limitedFeatureCount } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity, type OGRLayerSchema } from "@mailwoman/spatial/tools/ogr"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"

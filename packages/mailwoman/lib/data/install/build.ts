@@ -22,6 +22,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { md5File, sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -31,8 +32,6 @@ import {
 	removePathIfPresent,
 	writeLocalJSONFileAtomically,
 } from "@mailwoman/core/fs/writers"
-import { md5File, sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
 import {
 	type AcquiredBuildInput,
 	type ArtifactManifest,
@@ -53,6 +52,7 @@ import {
 	selectionScopesOf,
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

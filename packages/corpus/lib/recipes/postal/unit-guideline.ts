@@ -20,7 +20,7 @@
  *   DE has none, because the Deutsche Post page states no unit rule.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { AU_UNIT_TYPE_GUIDELINE_LEG } from "#au/recipes/unit-type-guideline"
 import { FR_UNIT_LINE_GUIDELINE_LEG } from "#fr/recipes/unit-line-guideline"

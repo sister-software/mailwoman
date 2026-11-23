@@ -22,7 +22,6 @@
  *   indexed for that cell and scenario.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertCoverageLicensesNoExclusion,
 	assertNoCellsFinerThanIndex,
@@ -30,6 +29,7 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	ancestorChainCells,

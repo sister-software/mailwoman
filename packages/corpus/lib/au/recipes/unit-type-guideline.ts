@@ -20,7 +20,7 @@
  */
 
 import { AU_UNIT_TYPE_RULES } from "@mailwoman/codex/au"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { AU_DELIVERY_GUIDELINE_LEG } from "#au/recipes/delivery-guideline"
 import {

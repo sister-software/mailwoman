@@ -28,7 +28,7 @@
  *   the grant from the start when the attribution it prescribes is missing.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 
 import { readCSVRecords } from "#recipes/scaffold"

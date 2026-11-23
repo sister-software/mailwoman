@@ -10,8 +10,8 @@
 import { readLocalJSONFile, readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
+import { pyRound } from "@mailwoman/core/math/numeric"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { pyRound } from "@mailwoman/core/numeric"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 

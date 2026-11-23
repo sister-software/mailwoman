@@ -10,11 +10,11 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { ExpressionOperator, licenseExpressionTerms, licenseWithoutException } from "@mailwoman/license/expression"
 import { licenseIdentifiers } from "@mailwoman/license/obligations"
 import { soldUnderCommercialTerms } from "@mailwoman/license/operations"

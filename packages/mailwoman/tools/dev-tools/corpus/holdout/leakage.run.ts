@@ -22,8 +22,8 @@
  *   Usage: node packages/mailwoman/tools/dev-tools/corpus/holdout/leakage.run.ts --corpus <corpus dir>
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { componentAtSpanSQL } from "@mailwoman/corpus/parquet/span-sql"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"

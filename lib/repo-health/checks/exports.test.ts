@@ -12,16 +12,16 @@
  *   file. A planted report holds none of those entries, so each case reads only the diagnostics that state a file.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { RepoContext } from "#repo-health/check"
 
 const mocks = vi.hoisted(() => ({ run: vi.fn() }))
 
-vi.mock("@mailwoman/core/process", async (importOriginal) => ({
-	...(await importOriginal<typeof import("@mailwoman/core/process")>()),
+vi.mock("@mailwoman/core/scripting/process", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@mailwoman/core/scripting/process")>()),
 	runFile: mocks.run,
 }))
 

@@ -10,9 +10,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isProcessError, runFile } from "@mailwoman/core/process"
-import { valeCommand } from "@mailwoman/core/vale"
+import { valeCommand } from "@mailwoman/core/repo/vale"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

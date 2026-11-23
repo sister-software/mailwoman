@@ -19,8 +19,8 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 // Deterministic stand-in for Math.random — reruns must be byte-identical.
 const random = mulberry32(20_260_712)

@@ -5,7 +5,7 @@
  *   Generates addresses in which a house number, a street and a venue appear together.
  */
 
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { layoutAdminTail } from "#synthesizers/tail"
 import { countryToLocale } from "#synthesizers/utils"

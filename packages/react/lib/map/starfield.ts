@@ -14,7 +14,7 @@
  *   This module touches no DOM or WebGL at import, so node tests can load it.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 
 /**
  * The options that shape a generated sky.

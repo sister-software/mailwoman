@@ -16,10 +16,10 @@
  *   builder (`corpora/secondary.py`), and `fixtures/builders/secondary/record.json` pins the rows.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * The corpus source of every row.

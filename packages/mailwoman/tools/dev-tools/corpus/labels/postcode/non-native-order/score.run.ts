@@ -17,9 +17,9 @@
  * or to `<golden>.<weights-cache basename>.score.json` when a cache is graded.
  */
 
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { md5Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { basename, dirname, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"

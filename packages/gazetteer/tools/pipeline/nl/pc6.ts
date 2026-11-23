@@ -27,9 +27,9 @@
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

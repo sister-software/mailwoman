@@ -9,7 +9,7 @@
  * A failed read is reported as unread, never as idle, because an unreadable queue may hold a run.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 import { type RunGitHub, runGitHub } from "#dev-mcp/github"
 

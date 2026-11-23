@@ -8,7 +8,7 @@
  * It also runs an environment-restricted integration pass against the production databases.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { LineStringPath } from "@mailwoman/spatial"
 import { pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

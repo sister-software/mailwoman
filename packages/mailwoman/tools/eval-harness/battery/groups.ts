@@ -25,7 +25,7 @@
  *   Those regroupings give the spread that the choice of split produces by itself.
  */
 
-import { formatPercent, mean } from "@mailwoman/core/stats"
+import { formatPercent, mean } from "@mailwoman/core/math/stats"
 
 import type { BatteryReport, BatteryRowResult } from "#tools/eval-harness/battery/battery"
 import { regularizedBeta, studentTUpperQuantile } from "#tools/eval-harness/release/bounds"

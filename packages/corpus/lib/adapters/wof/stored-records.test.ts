@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { reduceWOFFeature } from "@mailwoman/gazetteer/whosonfirst/record-store"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"

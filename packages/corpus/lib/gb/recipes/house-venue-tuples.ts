@@ -14,8 +14,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
-import type { SeededRandom } from "@mailwoman/core/random"
+import type { SeededRandom } from "@mailwoman/core/math/random"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

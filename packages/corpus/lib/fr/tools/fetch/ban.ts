@@ -22,12 +22,12 @@
  *   gunzip replaces the `gunzip` subprocess. no Python.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { gunzip } from "@mailwoman/core/fs/compression"
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { isFile, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"

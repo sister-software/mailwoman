@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { makeGlibcLcgFloat64, makeGlibcLcgInt32, mulberry32, SeededRandom, shuffleBy, shuffleWith } from "#random"
+import { makeGlibcLcgFloat64, makeGlibcLcgInt32, mulberry32, SeededRandom, shuffleBy, shuffleWith } from "#math/random"
 
 /**
  * The walk as `panel-fill`, `fr-lieudit` and the coarse-placer trainer each spelled it out.

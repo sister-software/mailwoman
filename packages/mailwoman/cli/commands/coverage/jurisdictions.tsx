@@ -13,12 +13,12 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readScopeConfig } from "@mailwoman/core/scope-config"
+import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 
 /**
  * The maximum zoom level that Tippecanoe supports.

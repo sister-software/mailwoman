@@ -3,7 +3,7 @@
 
 import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { soilDatabasePath } from "#paths"

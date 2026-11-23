@@ -10,7 +10,7 @@
  */
 
 import ExecutionEnvironment from "@docusaurus/ExecutionEnvironment"
-import { registerTrustPolicies } from "@mailwoman/core/trust-policies"
+import { registerTrustPolicies } from "@mailwoman/core/html/trust-policies"
 
 if (ExecutionEnvironment.canUseDOM) {
 	registerTrustPolicies()

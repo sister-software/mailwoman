@@ -7,9 +7,9 @@
  * A change makes the engine unreachable rather than wrong.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
-import { gitSync } from "@mailwoman/core/git"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

@@ -7,7 +7,7 @@
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { type AppDependencies, createLicenseWorkerApp } from "#app"
 import { cloudflareEmailProvider } from "#email/cloudflare"

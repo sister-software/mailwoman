@@ -5,10 +5,10 @@
  *   Caches geocode sessions by effective configuration and source fingerprint.
  */
 
+import { md5File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import type { VariantAliasExemption } from "@mailwoman/core/geocode"
-import { md5File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type ChannelPins, SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import {
 	type CapitalTier,

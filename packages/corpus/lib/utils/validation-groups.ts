@@ -15,8 +15,8 @@
  *   The quota parameters and the list's sha256 join the split policy hash.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
 
 import {
 	type EvaluationGroups,

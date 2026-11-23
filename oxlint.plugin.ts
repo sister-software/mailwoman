@@ -5,7 +5,7 @@
  * @file Repository-specific oxlint rules, loaded through `jsPlugins` in `oxlint.config.ts`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { CreateRule } from "@oxlint/plugins"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
@@ -430,7 +430,7 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * The `@mailwoman/core/process` entry points that use their first argument as the command name.
+ * The `@mailwoman/core/scripting/process` entry points that use their first argument as the command name.
  */
 const PROCESS_SPAWNERS = new Set([
 	"runFile",
@@ -442,7 +442,7 @@ const PROCESS_SPAWNERS = new Set([
 ])
 
 /**
- * Route git through `@mailwoman/core/git`, whose `GitClient` reports transfer progress
+ * Route git through `@mailwoman/core/repo/git`, whose `GitClient` reports transfer progress
  * and stops its processes on disposal, and whose `gitSync` serves a synchronous caller.
  */
 const noRawGitSpawnRule: Rule = {
@@ -468,7 +468,7 @@ const noRawGitSpawnRule: Rule = {
 			context.report({
 				node,
 				message:
-					"Run git through `@mailwoman/core/git`: a `GitClient` method or `client.read(args)` for an async caller, " +
+					"Run git through `@mailwoman/core/repo/git`: a `GitClient` method or `client.read(args)` for an async caller, " +
 					"`client.start(args)` for a transfer whose progress a caller renders, or `gitSync(args, { cwd })` " +
 					"for a synchronous one.",
 			})

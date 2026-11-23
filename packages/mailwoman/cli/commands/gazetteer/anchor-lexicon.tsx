@@ -27,8 +27,8 @@
  *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 

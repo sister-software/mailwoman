@@ -4,7 +4,6 @@
 import { describe, expect, it } from "vitest"
 
 import { readLocalJSONFile } from "#fs/readers"
-import { stringifyJSON } from "#json"
 import {
 	decodeLicenseKeyPayload,
 	encodeLicenseKey,
@@ -20,6 +19,7 @@ import {
 	verifyLicenseKey,
 } from "#license"
 import { resolvePackagePath } from "#module/resolvers"
+import { stringifyJSON } from "#values/json"
 
 interface LegacyFixture {
 	privateKeyPEM: string

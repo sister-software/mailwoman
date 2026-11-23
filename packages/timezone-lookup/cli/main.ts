@@ -13,8 +13,8 @@
  *   The `--` separates flags from coordinates so negative longitudes parse as positionals.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { buildTimezoneDB } from "#build"
 import { offsetSecForTimezone, TimezoneLookup } from "#index"

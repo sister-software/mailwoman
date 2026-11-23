@@ -6,7 +6,7 @@
  *   and the accessors the city model and landmark converters read.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 
 const GLB_MAGIC = 0x46_54_6c_67
 const JSON_CHUNK = 0x4e_4f_53_4a

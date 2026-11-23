@@ -10,7 +10,7 @@
  *   Ported from the Python builders' `countries/jp/corpora/rows.py`.
  */
 
-import type { SeededRandom } from "@mailwoman/core/random"
+import type { SeededRandom } from "@mailwoman/core/math/random"
 
 import { type CJKRecord, labelTokensByFirstSpan, RowRenderer, verifyRecord } from "#cjk/builder"
 import { intToKanji } from "#cjk/text"

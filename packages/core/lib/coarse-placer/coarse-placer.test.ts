@@ -18,7 +18,7 @@ import {
 } from "#coarse-placer/coarse-placer"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { makeLcg } from "#random"
+import { makeLcg } from "#math/random"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())

@@ -17,7 +17,7 @@
  */
 
 import { GB_STREET_TYPES, GB_SUB_BUILDING_RULES, isUkPostcode, titleCaseGB } from "@mailwoman/codex/gb"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
 import {

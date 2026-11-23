@@ -3,7 +3,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 import {
 	addressFrequencyKey,

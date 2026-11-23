@@ -12,8 +12,8 @@
  *   The operator swaps and promotes them as separate steps (releasing.md).
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,

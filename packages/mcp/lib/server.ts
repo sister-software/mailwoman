@@ -9,8 +9,8 @@
  *   `cli.ts` owns building the real `MCPToolDeps` and connecting a transport.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 

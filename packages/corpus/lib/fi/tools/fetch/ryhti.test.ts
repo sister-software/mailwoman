@@ -3,11 +3,11 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { type StubResult, stubTransport } from "@mailwoman/core/api/test-transport"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"
 import type { PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"

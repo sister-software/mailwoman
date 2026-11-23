@@ -18,8 +18,8 @@ import { scriptOf } from "#coarse-placer/featurize"
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { databaseRootPath, dataRootPath } from "#data-root"
 import { appendLocalTextFile } from "#fs/writers"
-import { stringifyJSON } from "#json"
 import { defaultDataDir } from "#tools/coarse-placer/paths"
+import { stringifyJSON } from "#values/json"
 
 /**
  * The minimum share of counted characters that must be off-map for a name to be kept.

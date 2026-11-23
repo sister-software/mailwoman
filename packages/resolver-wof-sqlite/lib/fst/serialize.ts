@@ -23,7 +23,7 @@
  *   Presence bits keep a missing value distinct from a stored zero.
  */
 
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 
 import {
 	decodePlaceEntry,

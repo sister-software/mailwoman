@@ -5,12 +5,13 @@
  *   The incremental digest the runner records in `manifest.json`.
  */
 
-import { createHash, type Hash } from "@mailwoman/core/hash"
+import { createHash, type Hash } from "@mailwoman/core/crypto/hash"
 
 /**
  * A digest built from chunks rather than from one value.
  *
- * `@mailwoman/core/hash` covers one-shot digests with `sha256Hex` and whole-file digests with `sha256File`.
+ * `@mailwoman/core/crypto/hash` covers one-shot digests with `sha256Hex`
+ * and whole-file digests with `sha256File`.
  * The runner needs neither, because it hashes each jsonl line as it streams past
  * and would otherwise read the file a second time for the manifest checksum.
  */

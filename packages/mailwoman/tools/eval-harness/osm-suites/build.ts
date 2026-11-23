@@ -29,9 +29,9 @@
  *   The builder reads the extracts and writes only under the output directory it is given.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
 

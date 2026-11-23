@@ -11,7 +11,7 @@
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { expect, test } from "vitest"
 

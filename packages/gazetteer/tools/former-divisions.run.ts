@@ -16,14 +16,14 @@
  */
 
 import { ISO2_TO_NAME } from "@mailwoman/codex/country/country"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import { COUNTRY_DISPLAY_NAME } from "@mailwoman/corpus/adapters/wof/json-rows"
 import { POSTCODE_CONVENTIONS } from "@mailwoman/corpus/tools/postcode/triples"

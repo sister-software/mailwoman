@@ -26,8 +26,8 @@
  *   `drawnFrom.files` names every extract read.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { osmAdapter } from "@mailwoman/corpus/adapters/osm/adapter"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"

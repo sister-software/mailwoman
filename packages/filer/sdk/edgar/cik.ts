@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { nameSimilarity } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Tagged } from "type-fest"

@@ -26,10 +26,10 @@
  * Link every weights overlay before believing a number here, or the map measures the instrument.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 

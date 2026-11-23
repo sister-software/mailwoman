@@ -14,7 +14,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { TextSpliterator } from "spliterator"
 

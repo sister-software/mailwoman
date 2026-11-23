@@ -14,8 +14,8 @@
  *   Only fiber and fixed wireless have physical-plant categories.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest, type layerschemahandle } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"

@@ -62,12 +62,12 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient, assertNoOGCServiceException, readWFSFeatureCount } from "@mailwoman/core/api"
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { rootAttribute } from "@mailwoman/core/html/document"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { ES_BIZKAIA_ADAPTER_ID, ES_BIZKAIA_LICENSE } from "#es/adapters/bizkaia/adapter"

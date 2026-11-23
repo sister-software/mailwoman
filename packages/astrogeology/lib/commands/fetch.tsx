@@ -8,8 +8,8 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli/kit"
 
 import { parseBody } from "#commands/options"

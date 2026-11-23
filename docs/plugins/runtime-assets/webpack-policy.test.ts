@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { bundleAliases, configureRuntimeWebpack } from "@mailwoman/docs/plugins/runtime-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/runtime-assets/workspace/aliases"
 import { resolvePath } from "path-ts"

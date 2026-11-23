@@ -16,7 +16,7 @@
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 
 import { checkOutputLines } from "#check-kit/output-lines"
 import { type FailingTest, MAX_ERROR_LINES, type ParsedSource } from "#check-kit/parsed"

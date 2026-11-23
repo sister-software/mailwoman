@@ -21,8 +21,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { appliedRow } from "mailwoman/cli/debug-view/trace-rows"

@@ -23,9 +23,9 @@
  *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"

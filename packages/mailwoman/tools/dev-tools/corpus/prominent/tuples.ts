@@ -42,7 +42,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import {
 	PROMINENT_PLACES_SOURCE,

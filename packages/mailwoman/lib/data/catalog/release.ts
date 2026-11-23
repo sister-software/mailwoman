@@ -15,8 +15,8 @@
 
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { JSONParseError, stringifyJSON } from "@mailwoman/core/json"
 import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
+import { JSONParseError, stringifyJSON } from "@mailwoman/core/values/json"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
 

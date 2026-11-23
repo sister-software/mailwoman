@@ -12,8 +12,8 @@
  */
 
 import { BDUK_EXTRACTED_DIRECTORY, type BDUKRow, bdukReleasePath, readBDUKReleaseDirectory } from "@mailwoman/bduk"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
 import { FloodZoneLookup } from "@mailwoman/flood"
 import { floodLayerReading } from "@mailwoman/flood/layer-readings"
 import { floodDatabasePath } from "@mailwoman/flood/paths"

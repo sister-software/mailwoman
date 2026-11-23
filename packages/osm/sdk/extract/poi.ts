@@ -45,7 +45,7 @@
  *   `--country` flag and is expected to stamp it onto each row before the rows reach `buildPOIDatabase`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 

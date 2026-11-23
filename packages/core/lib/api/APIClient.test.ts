@@ -14,7 +14,7 @@ import { isTransientResourceError, ResourceErrorKind, resourceErrorKind } from "
 import { createFakeClock, drainMicrotasks, maxCountInSlidingWindow, VirtualClock } from "#api/test/clocks"
 import { stubTransport } from "#api/test/transport"
 import { ResourceError } from "#errors/schema"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 function get(url: string): AxiosRequestConfig {
 	return { url }

@@ -14,9 +14,9 @@
  *   A digest rather than a copy is pinned, because a formatter rewrites a committed JSON copy's whitespace.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
-import { orderedJSON } from "@mailwoman/core/json"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 

@@ -3,8 +3,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, test } from "vitest"
 
 import { MailwomanTokenizer, SPACE_SENTINEL } from "#input/tokenizer"

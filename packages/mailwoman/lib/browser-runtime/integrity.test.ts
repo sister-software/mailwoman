@@ -6,7 +6,7 @@
  *   reloaded once on a mismatch, and refused with the file's name when the reload also differs.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { describe, expect, it } from "vitest"
 
 import { ArtifactLoadError } from "#browser-runtime/artifact-ledger"

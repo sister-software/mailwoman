@@ -180,18 +180,22 @@ const config = {
 		{
 			name: "no-core-utility-to-core-service",
 			comment:
-				"Core holds two roles in one package. Its utility subpaths (`fs`, `module`, `utils`, `strings`, `json`) are " +
-				"what every workspace imports for files, paths, text and JSON. Its service subpaths (`decoder`, `layers`, " +
+				"Core holds two roles in one package. Its utility subpaths (`fs`, `module`, `utils`, `strings`, `values`, " +
+				"`math`, `async`) are what every workspace imports for files, paths, text, JSON and numbers. " +
+				"Its service subpaths (`decoder`, `layers`, " +
 				"`geocode`, `resolver`, `pipeline`, `coarse-placer`, `tokenization`) define the geocoding interfaces. " +
 				"A utility that imports a service makes every consumer of a file helper load the geocoding graph, " +
-				"and it closes a cycle inside the package as soon as a service uses that utility.",
+				"and it closes a cycle inside the package as soon as a service uses that utility. " +
+				"`coarse-placer/fnv-hash.ts` is the one admitted target: it imports no module, and `math/random.ts` " +
+				"seeds a generator with it.",
 			severity: "error",
 			from: {
-				path: "^packages/core/lib/(?:fs|module|utils|strings)(?:/|[.]ts$)|^packages/core/lib/json[.]ts$",
+				path: "^packages/core/lib/(?:fs|module|utils|strings|values|math|async)(?:/|[.]ts$)",
 				pathNot: "[.]test[.]tsx?$",
 			},
 			to: {
 				path: "^packages/core/lib/(?:decoder|layers|geocode|resolver|pipeline|coarse-placer|tokenization)(?:/|[.]ts$)",
+				pathNot: "^packages/core/lib/coarse-placer/fnv-hash[.]ts$",
 				dependencyTypesNot: ["type-only", "type-import"],
 			},
 		},

@@ -11,6 +11,7 @@
 
 import { isCountryToken } from "@mailwoman/codex/country"
 import { streetTypeWordTestFor } from "@mailwoman/codex/street/type"
+import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/asset/postcode-prefix-files"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type AnchorRegionLookupLike,
@@ -21,7 +22,6 @@ import {
 	type VenueHeadLexiconLike,
 	type VenueHeadPriorOpts,
 } from "@mailwoman/core/pipeline"
-import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/postcode-prefix-files"
 import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
 import { isStreetAffix } from "@mailwoman/neural/prior/fst"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"

@@ -23,8 +23,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { median } from "@mailwoman/core/stats"
+import { median } from "@mailwoman/core/math/stats"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { DatabaseClient, type SQLInputValue, type StatementSync } from "@mailwoman/sqlite/client"
 import { isAbsolute, relative, resolvePath } from "path-ts"
 import { z } from "zod"

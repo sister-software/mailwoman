@@ -5,7 +5,7 @@
  *   Builds authoritative and inferred filer clusters in `filer.db`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildDefaultModel, resolveEntities, type SourceRecord } from "@mailwoman/entity-resolution"
 import { cluster, exactKey, scorePair, type ScoredLink } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"

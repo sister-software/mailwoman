@@ -11,10 +11,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { pyFixed } from "@mailwoman/core/numeric"
+import { pyFixed } from "@mailwoman/core/math/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 
 import {

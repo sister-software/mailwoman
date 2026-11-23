@@ -7,7 +7,7 @@
  */
 
 import { pathExists, readLink, tryStatLink } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

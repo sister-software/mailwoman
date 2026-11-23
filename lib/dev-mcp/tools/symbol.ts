@@ -17,8 +17,8 @@
  *   names share no substring with the query.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import { searchDeclarations } from "#dev-mcp/symbol"

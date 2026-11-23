@@ -19,10 +19,14 @@
  *   artifact classes to nonexistent paths.
  */
 
+import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/asset/postcode-prefix-files"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { newestPostcodePrefixFiles, shippedPostcodePrefixName } from "@mailwoman/core/postcode-prefix-files"
-import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
+import {
+	readReleaseConfig,
+	repoCommittedSoftFeedSources,
+	type SoftFeedRecipe,
+} from "@mailwoman/core/repo/release-config"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 

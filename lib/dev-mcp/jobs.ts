@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
+import { type ChildProcess, spawnProcess } from "@mailwoman/core/scripting/process"
 import { defineStateMachine } from "@mailwoman/core/state-machine"
 
 /**

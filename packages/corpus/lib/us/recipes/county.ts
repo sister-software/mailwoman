@@ -24,7 +24,7 @@ import { splitUSCountyDesignator, type USCountyDesignator } from "@mailwoman/cod
 import { lookupUSState, US_STATE_BY_ABBREVIATION, type USStateAbbreviation } from "@mailwoman/codex/us/state"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
-import { mulberry32, shuffleWith } from "@mailwoman/core/random"
+import { mulberry32, shuffleWith } from "@mailwoman/core/math/random"
 import {
 	openWOFRecordStoreReader,
 	storedWOFRecords,

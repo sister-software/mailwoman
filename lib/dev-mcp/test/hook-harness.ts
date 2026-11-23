@@ -5,9 +5,9 @@
  * @file Drive a hook exactly as the harness does: one JSON payload on stdin, one JSON document on stdout.
  */
 
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { runFileSync } from "@mailwoman/core/process"
+import { runFileSync } from "@mailwoman/core/scripting/process"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  * The half of a hook's answer every suite here reads.

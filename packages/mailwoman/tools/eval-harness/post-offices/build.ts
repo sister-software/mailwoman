@@ -12,9 +12,9 @@
  *   A lineage file beside it records each source's terms, provenance class, vintage and tally.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { postOfficeCategoryID, type StructureSource } from "@mailwoman/corpus/structures/source"
 import { type PathBuilder, resolvePath } from "path-ts"
 

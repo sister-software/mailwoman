@@ -11,7 +11,7 @@
  *   The generator also feeds the invariant test, and that test needs no reference.
  */
 
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 
 /**
  * The alphabet of the generated inputs: ASCII letters and digits, the punctuation

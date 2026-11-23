@@ -3,8 +3,8 @@
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
 import { OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { expect, test } from "vitest"
 
 import {

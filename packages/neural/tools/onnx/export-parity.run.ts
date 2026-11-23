@@ -25,12 +25,12 @@
  *   --candidate <b.onnx> --rows <heldout rows.jsonl> [--count 1000] [--tolerance 1e-4] [--threads 4] [--out <json>]`
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import * as ort from "onnxruntime-node"
 import { JSONSpliterator } from "spliterator"
 

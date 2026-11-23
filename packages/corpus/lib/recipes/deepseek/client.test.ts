@@ -7,8 +7,8 @@
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { type StubRequestConfig, stubTransport } from "@mailwoman/core/api/test-transport"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { silentLogger } from "@mailwoman/core/logging"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import {

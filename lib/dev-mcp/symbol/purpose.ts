@@ -12,7 +12,7 @@
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead, trackedFiles, workingTreeStatus } from "@mailwoman/core/git"
+import { gitHead, trackedFiles, workingTreeStatus } from "@mailwoman/core/repo/git"
 import type { PathBuilder } from "path-ts"
 import ts from "typescript"
 

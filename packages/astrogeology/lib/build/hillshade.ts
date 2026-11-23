@@ -22,8 +22,8 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { BODIES, type BuildableBodyID } from "#bodies"

@@ -6,9 +6,9 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { md5Hex } from "@mailwoman/core/utils"
 import { OSM_ATTRIBUTION, OSM_LICENSE_URL } from "@mailwoman/corpus/adapters/osm/license"
 import { PathBuilder, type PathBuilderLike } from "path-ts"

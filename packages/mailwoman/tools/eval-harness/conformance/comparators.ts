@@ -6,8 +6,8 @@
  *   An identity law therefore never falls back to distance.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { accountRefinement } from "#tools/eval-harness/conformance/candidate-admissibility"

@@ -10,7 +10,7 @@
  *   `--degraded` is the flag that skips the encoder load on the benchmark path.
  */
 
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

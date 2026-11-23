@@ -6,11 +6,11 @@
  * Container-side sync then pulls from R2.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { runProcess } from "@mailwoman/core/process"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
 import { Box, Text } from "ink"
@@ -153,7 +153,7 @@ export async function refuseShareAlike(version: string, upload: CorpusUploadSour
 	const {
 		json: { stringifyJSON },
 		license: { shareAlikeFindings },
-	} = await allKeyed({ json: import("@mailwoman/core/json"), license: import("@mailwoman/license/policy") })
+	} = await allKeyed({ json: import("@mailwoman/core/values/json"), license: import("@mailwoman/license/policy") })
 
 	const uploadedPath = PathBuilder.from(upload.source)("MANIFEST.json")
 	const uploaded = await readRequiredManifest(version, uploadedPath)

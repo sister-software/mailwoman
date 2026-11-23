@@ -5,9 +5,9 @@
  * Builds a state or national address-point database from Overture or OpenAddresses.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { EXCLUDE_UNREAD_SOURCES } from "@mailwoman/corpus/us/address-records/rights"

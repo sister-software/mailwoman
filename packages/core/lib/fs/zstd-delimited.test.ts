@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { unzstd, zstd } from "#fs/compression"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "#fs/writers"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 interface Row {
 	street: string

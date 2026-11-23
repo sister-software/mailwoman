@@ -13,10 +13,10 @@
  *   The ledger's unique pair on `(lid, seq)` makes two racing re-issuances one row.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type DeclarationRequest, EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
 import { encodeLicenseKey, type LicenseKeyPayload, LicenseTerms } from "@mailwoman/core/license/key"
 import { applyStep } from "@mailwoman/core/state-machine"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { todayUTC } from "#dates"
 import type { EmailProvider } from "#email/provider"

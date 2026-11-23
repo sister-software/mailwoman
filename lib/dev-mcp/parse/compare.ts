@@ -26,7 +26,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { COMPONENT_TO_LIBPOSTAL, toLibpostalComponents, treeToParseMatches } from "@mailwoman/libpostal"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 

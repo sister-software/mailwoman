@@ -8,8 +8,8 @@
  *   with `{ raw, country }`. Rows are aligned per character for the CJK model.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"

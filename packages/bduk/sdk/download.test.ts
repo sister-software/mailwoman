@@ -5,10 +5,10 @@
  *   The download step over a stubbed `fetch` that answers with a ZIP built from the reader's fixture.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { workspacePath } from "@mailwoman/core/paths"
 import ADMZip from "adm-zip"
 import { afterEach, describe, expect, test, vi } from "vitest"

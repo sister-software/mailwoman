@@ -19,10 +19,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { LayerTier } from "@mailwoman/core/layers/schema"
 import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
-import { isPlainObject } from "@mailwoman/core/objects"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 import type { PathBuilderLike } from "path-ts"
 
 /**

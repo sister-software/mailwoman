@@ -17,7 +17,7 @@
  *   writes, so the section reads in columns as plain text and survives formatting unchanged.
  */
 
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import type { Dossier, EntityID } from "@mailwoman/dossier"
 
 import { calendarMonth, type CashFlowRow, type CashFlowTable, projectCashFlow } from "#cash-flow"

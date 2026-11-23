@@ -6,7 +6,7 @@
  *   backend and the parse/resolve options pinned by the flags.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { ScorerOverrides } from "@mailwoman/neural/classifier/scorer"
 import { createWOFResolver } from "@mailwoman/resolver"
 

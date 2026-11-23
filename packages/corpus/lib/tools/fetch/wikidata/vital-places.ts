@@ -26,10 +26,10 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

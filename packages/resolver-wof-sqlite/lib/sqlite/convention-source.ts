@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "#convention"

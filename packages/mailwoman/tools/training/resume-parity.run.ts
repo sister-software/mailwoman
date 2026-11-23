@@ -22,12 +22,12 @@
  *       --out <directory> --kill-after 110 --resume-step 100 --batch-size 8 [--threads 4]
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { unzstd } from "@mailwoman/core/fs/compression"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { runFile, spawnProcess } from "@mailwoman/core/scripting/process"
 import { PathBuilder, resolvePath } from "path-ts"
 
 const { values } = parseArguments({

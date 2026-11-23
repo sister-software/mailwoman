@@ -34,7 +34,7 @@ process.exitCode =
 		await assertCheckoutLocality(import.meta.dirname)
 
 		const [{ trackedFiles }, { repoRootPath }, { cliArguments }, { dispatch }, storage, sudo] = await Promise.all([
-			import("@mailwoman/core/git"),
+			import("@mailwoman/core/repo/git"),
 			import("@mailwoman/core/paths"),
 			import("@mailwoman/core/scripting/arguments"),
 			import("#ops-cli/dispatch"),

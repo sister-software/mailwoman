@@ -29,8 +29,8 @@
  *   Each month is a snapshot under `$MAILWOMAN_DATA_ROOT/snapshots/juso-kr/<YYYY-MM>/`.
  */
 
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { sha256File } from "@mailwoman/core/crypto/hash"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
 
 import type { FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"

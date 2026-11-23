@@ -16,7 +16,7 @@
  *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
 import {
 	loadClassifierPair,

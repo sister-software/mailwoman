@@ -13,8 +13,8 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { spawnProcess } from "@mailwoman/core/process"
+import { spawnProcess } from "@mailwoman/core/scripting/process"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199

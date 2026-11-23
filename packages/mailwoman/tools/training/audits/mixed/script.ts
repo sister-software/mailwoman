@@ -17,7 +17,7 @@
  *   addon, because Node has no character-name table.
  */
 
-import { countInto } from "@mailwoman/core/stats"
+import { countInto } from "@mailwoman/core/math/stats"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode, PythonText, SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 

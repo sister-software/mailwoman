@@ -11,7 +11,7 @@
  *   inheritance cycles, relation constraints, inverses and derivation inputs.
  */
 
-import { isPlainObject } from "@mailwoman/core/objects"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 
 import {
 	ConceptKind,

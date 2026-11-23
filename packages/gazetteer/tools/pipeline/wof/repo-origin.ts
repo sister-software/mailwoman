@@ -13,7 +13,7 @@
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
 import { sleep } from "@mailwoman/core/utils/sleep"
 
 import { WOF_DATA_OWNER } from "#whosonfirst/extract-repo"

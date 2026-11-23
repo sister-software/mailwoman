@@ -19,7 +19,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { median } from "@mailwoman/core/stats"
+import { median } from "@mailwoman/core/math/stats"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { escapeSQLString, openDuckDB, type DuckDBLimits } from "#parquet/duckdb"

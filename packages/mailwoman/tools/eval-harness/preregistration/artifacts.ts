@@ -5,11 +5,11 @@
  *   Shared helpers for hashing, loading, auditing, plus identifying frozen pre-registration artifacts.
  */
 
+import { md5File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { md5File, sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { canonicalJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"

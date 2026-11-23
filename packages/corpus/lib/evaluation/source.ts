@@ -23,9 +23,9 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 
 import { splitCORDISStreetLine, streetOrderForCountry } from "#adapters/cordis/adapter"

@@ -7,8 +7,8 @@
 
 import { liveEnv } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 const ciEnvironment = liveEnv(

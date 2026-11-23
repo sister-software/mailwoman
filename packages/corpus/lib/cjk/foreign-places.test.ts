@@ -8,8 +8,8 @@
 import { countriesOfScript, minus, union } from "@mailwoman/codex/country/sets"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import {

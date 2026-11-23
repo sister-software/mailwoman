@@ -17,7 +17,7 @@ import {
 	writeLocalFile,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

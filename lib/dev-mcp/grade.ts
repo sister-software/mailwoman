@@ -14,7 +14,7 @@
  *   The grade keeps it out of passing cases.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { SeedCase } from "mailwoman/tools/eval-harness/gauntlet/cases/seed-case"
 import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/tools/eval-harness/gauntlet/schema"

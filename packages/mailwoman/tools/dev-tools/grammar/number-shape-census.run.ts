@@ -29,8 +29,8 @@
 
 import { UNIT_SHAPES } from "@mailwoman/codex/unit-shapes"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"

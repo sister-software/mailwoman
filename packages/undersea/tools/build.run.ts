@@ -9,11 +9,11 @@
  *   under `$MAILWOMAN_DATA_ROOT/snapshots/undersea/<date>/`.
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { prettyJSON } from "@mailwoman/core/json"
 import { scriptBuildCommand } from "@mailwoman/core/layers"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder } from "path-ts"
 
 import { underseaDatabasePath, underseaSourcePath } from "#paths"

@@ -17,9 +17,9 @@
 import { currentSourcePath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { SeededRandom } from "@mailwoman/core/random"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { SeededRandom } from "@mailwoman/core/math/random"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {

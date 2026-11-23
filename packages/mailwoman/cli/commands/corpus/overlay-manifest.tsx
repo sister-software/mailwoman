@@ -5,7 +5,7 @@
  *   Generate a corpus overlay manifest.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { DuckDBLimits } from "@mailwoman/corpus/parquet/duckdb"

@@ -15,7 +15,7 @@
  */
 
 import { us } from "@mailwoman/codex"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { normalize } from "@mailwoman/normalize"
 import type { GeoCoordinate } from "@mailwoman/spatial"
 import { latLngToCell } from "@sister.software/h3"

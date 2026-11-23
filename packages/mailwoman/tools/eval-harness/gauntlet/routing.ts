@@ -5,7 +5,7 @@
  * Shared weights-overlay routing metadata for board runners.
  */
 
-import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 
 /**

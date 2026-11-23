@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { currentBranch } from "@mailwoman/core/git"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
+import { currentBranch } from "@mailwoman/core/repo/git"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 

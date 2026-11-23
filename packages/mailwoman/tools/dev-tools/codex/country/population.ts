@@ -9,7 +9,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { TSVSpliterator } from "spliterator"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"

@@ -8,10 +8,10 @@
  *   The module is separate from `main.ts` because that file connects the server when it loads.
  */
 
+import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { Resolver } from "@mailwoman/core/resolver"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"

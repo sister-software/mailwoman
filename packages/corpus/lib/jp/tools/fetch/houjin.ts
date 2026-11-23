@@ -28,8 +28,8 @@
  *   Each monthly file is a snapshot under `$MAILWOMAN_DATA_ROOT/snapshots/houjin-jp/<YYYY-MM-DD>/`.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 
 import type { FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"

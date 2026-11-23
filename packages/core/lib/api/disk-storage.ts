@@ -24,12 +24,12 @@
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { sha256Hex } from "#crypto/hash"
 import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
-import { sha256Hex } from "#hash"
-import { tryParsingJSON, stringifyJSON } from "#json"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging"
+import { tryParsingJSON, stringifyJSON } from "#values/json"
 
 /**
  * Options for {@linkcode buildDiskStorage}.

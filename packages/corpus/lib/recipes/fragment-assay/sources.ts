@@ -12,7 +12,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { SeededRandom } from "@mailwoman/core/random"
+import { SeededRandom } from "@mailwoman/core/math/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { isDecimalDigits } from "@mailwoman/core/strings/unicode"

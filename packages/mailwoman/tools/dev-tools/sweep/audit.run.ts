@@ -10,7 +10,7 @@
  *   Usage: node packages/mailwoman/tools/dev-tools/sweep/audit.run.ts --commit <rev> [--lines 6]
  */
 
-import { git } from "@mailwoman/core/git"
+import { git } from "@mailwoman/core/repo/git"
 import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { TextSpliterator } from "spliterator"
 

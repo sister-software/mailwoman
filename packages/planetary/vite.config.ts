@@ -9,7 +9,7 @@
  *   There's no server side. every output is a static asset Cloudflare serves without invoking a Worker.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildInfoPlugin } from "@mailwoman/universe/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/universe/site-kit/vite/pwa"
 import react from "@vitejs/plugin-react"

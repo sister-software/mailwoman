@@ -11,7 +11,7 @@
  *   The description is the required half of it.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "#dev-mcp/run-store"

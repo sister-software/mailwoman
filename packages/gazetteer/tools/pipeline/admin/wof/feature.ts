@@ -12,7 +12,7 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { GeoCoordinate } from "@mailwoman/spatial/position"
 
 import { isSupersededRecord, type WOFNamesOf } from "#tools/pipeline/wof/slim"

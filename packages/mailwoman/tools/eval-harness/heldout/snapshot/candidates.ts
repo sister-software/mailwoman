@@ -18,11 +18,11 @@
  *   the drawn rows against every source of both training lineages.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import type { UnitSplitter } from "@mailwoman/corpus/adapters/street/unit"
 import { type AlignTally, createRowAligner, emptyAlignResult } from "@mailwoman/corpus/build/align"

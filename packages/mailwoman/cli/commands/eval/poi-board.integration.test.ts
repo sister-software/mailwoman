@@ -11,9 +11,9 @@
 // ci-runner: mailwoman-data
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { poiDatabasePath, wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, test } from "vitest"
 

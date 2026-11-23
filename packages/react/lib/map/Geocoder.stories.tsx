@@ -7,7 +7,7 @@
  *   `WithPanels` also demonstrates the host-injected panel slots.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo, useState } from "react"
 

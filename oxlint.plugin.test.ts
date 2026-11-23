@@ -161,7 +161,7 @@ test("prefer-home names the home for a re-typed constant and ignores other numbe
 
 test("prefer-home names the git home for a shell-out string in a literal or a template", () => {
 	expect(reportsFor("prefer-home", { type: "Literal", value: "rev-parse HEAD", range: [0, 0] })[0]).toContain(
-		"`@mailwoman/core/git`"
+		"`@mailwoman/core/repo/git`"
 	)
 
 	const template = {
@@ -274,7 +274,7 @@ test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or
 	const destructured = reportsFor("prefer-home", forLoop({ body: destructuredSwap("xs") }))
 
 	expect(destructured).toHaveLength(1)
-	expect(destructured[0]).toContain("`@mailwoman/core/random`")
+	expect(destructured[0]).toContain("`@mailwoman/core/math/random`")
 	// The home is `shuffleWith`, not `SeededRandom.shuffle`, because the class seeds
 	// mulberry32 internally and three copies pin their own stream.
 	expect(destructured[0]).toContain("shuffleWith")

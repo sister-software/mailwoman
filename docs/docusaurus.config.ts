@@ -4,7 +4,7 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import remarkPluginNPM2Yarn from "@docusaurus/remark-plugin-npm2yarn"
 import type { Config } from "@docusaurus/types"
-import { gitSync } from "@mailwoman/core/git"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { FontFamilies } from "@sister.software/theme"
 import { themes as prismThemes } from "prism-react-renderer"
 

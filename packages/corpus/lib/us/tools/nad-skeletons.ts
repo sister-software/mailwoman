@@ -10,10 +10,10 @@
  */
 
 import { matchLeadingDesignator } from "@mailwoman/codex/us"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { mulberry32 } from "@mailwoman/core/random"
+import { mulberry32 } from "@mailwoman/core/math/random"
 import ADMZip from "adm-zip"
 import type { PathBuilderLike } from "path-ts"
 

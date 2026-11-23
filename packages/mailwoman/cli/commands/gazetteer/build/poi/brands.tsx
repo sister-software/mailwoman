@@ -16,7 +16,7 @@
  *   Runs `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 
-import { runFileSync } from "@mailwoman/core/process"
+import { runFileSync } from "@mailwoman/core/scripting/process"
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 
 import {

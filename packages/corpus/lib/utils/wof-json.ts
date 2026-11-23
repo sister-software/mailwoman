@@ -15,8 +15,8 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 
 /**

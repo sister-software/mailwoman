@@ -32,7 +32,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { acceptPostcode } from "@mailwoman/postcode/country-formats"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

@@ -6,8 +6,8 @@
  *   No output from this command changes a resolve.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { TriageRow, TriageSummary } from "@mailwoman/gazetteer/tools/pipeline/wof/triage"
 import { Box, Text } from "ink"

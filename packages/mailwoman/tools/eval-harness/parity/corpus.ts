@@ -8,8 +8,8 @@
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"

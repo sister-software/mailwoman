@@ -38,7 +38,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { nameContainsSurfaces, type SurfaceIndex } from "#subvenue/surfaces"

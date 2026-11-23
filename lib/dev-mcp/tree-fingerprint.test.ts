@@ -3,8 +3,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, makeDirectories } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

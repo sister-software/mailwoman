@@ -9,7 +9,7 @@
  *   the matching `source_id`s as a deletion sidecar (#2750).
  */
 
-import { sha256File } from "@mailwoman/core/hash"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { moduleGraphHash } from "@mailwoman/corpus/build/code-hash"
 import { openCorpusRowStream } from "@mailwoman/corpus/parquet/corpus-rows"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"

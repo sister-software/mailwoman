@@ -8,7 +8,7 @@
  *   and paragraph and list text joins the record of the heading above it.
  */
 
-import { sha256Hex } from "@mailwoman/core/hash"
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { HIERARCHY_DEPTH, type SearchRecord, TABLE_ROW_LEVEL } from "@mailwoman/react/search/types"
 import { type AnyNode, type Document, type Element, isTag, isText } from "domhandler"
 import { findAll, findOne, getAttributeValue } from "domutils"

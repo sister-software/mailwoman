@@ -13,7 +13,7 @@ import {
 	type AddressScript,
 } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { textScript } from "@mailwoman/recognizer/script-run"
 
 import type { RowSampler, SampledRow } from "#adapters/wof/sample"

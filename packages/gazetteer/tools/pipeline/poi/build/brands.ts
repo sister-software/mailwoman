@@ -26,10 +26,10 @@
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"

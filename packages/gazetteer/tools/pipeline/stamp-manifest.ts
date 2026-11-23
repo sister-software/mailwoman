@@ -7,8 +7,6 @@
  *   Call it before `sealDatabase`, because a sealed database is read-only.
  */
 
-import { gitSync } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertTierMatchesLicense,
 	createLayerManifestTable,
@@ -19,6 +17,8 @@ import {
 	type SpineKeys,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { assertAdmissibleLicenseExpression } from "@mailwoman/license/obligations"
 import { LicenseResolution, readLicenseRecord } from "@mailwoman/license/record"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

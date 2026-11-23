@@ -41,12 +41,12 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient } from "@mailwoman/core/api"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream, openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { RYHTI_ADAPTER_ID } from "#fi/adapters/ryhti/adapter"

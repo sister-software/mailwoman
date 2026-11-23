@@ -17,9 +17,9 @@ import { countriesDeclaredBy, hasCountry } from "@mailwoman/codex/country/sets"
 import { directoryHasEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
 import { isLetter } from "@mailwoman/core/strings/unicode"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { basename, resolvePath } from "path-ts"
 
 import {

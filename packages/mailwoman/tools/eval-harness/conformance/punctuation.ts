@@ -8,8 +8,8 @@
  *   Hyphens and punctuation inside tokens are out of scope.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import {
 	auditCommonFixtureFields,

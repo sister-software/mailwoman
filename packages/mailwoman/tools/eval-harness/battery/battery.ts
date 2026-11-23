@@ -12,7 +12,7 @@
  *   On the `photon-` suites it is needed because their US labels keep the street whole.
  */
 
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
 import {
 	BATTERY_CAUSES,

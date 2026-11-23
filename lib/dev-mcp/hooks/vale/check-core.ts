@@ -28,10 +28,10 @@
  *   vague praise) need judgment a regex doesn't have, so the agent weighs them.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { spawnProcessSync } from "@mailwoman/core/process"
-import { valeCommand } from "@mailwoman/core/vale"
+import { valeCommand } from "@mailwoman/core/repo/vale"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 
 const MAX_MATCHES_PER_RULE = 8
 

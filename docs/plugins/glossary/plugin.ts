@@ -31,7 +31,7 @@
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type {
 	GlossaryData,
 	GlossaryPluginOptions as BaseGlossaryPluginOptions,

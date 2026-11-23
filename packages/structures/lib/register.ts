@@ -9,7 +9,7 @@
  *   operation in {@link PUBLISH_OPERATIONS}.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { auditLicenseDecision, operationProblems } from "@mailwoman/license/decision"
 
 import { CH_LICENSES, CH_SOURCES } from "#ch/sources"

@@ -5,7 +5,7 @@
  * @file What the address-source register records about a row's source, read once per build.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { LicenseAction } from "@mailwoman/license/actions"
 
 import { ingestEligibilityProblems, readAddressSourceRegister, type SourceDecisionTable } from "#source-register"

@@ -6,7 +6,7 @@
  */
 
 import type { AddressNode, AddressTree } from "#decoder/types"
-import { stringifyJSON } from "#json"
+import { stringifyJSON } from "#values/json"
 
 function outlineLines(node: AddressNode, depth: number, lines: string[], metadata: boolean): void {
 	const stated =

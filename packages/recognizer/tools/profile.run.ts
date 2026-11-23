@@ -33,10 +33,10 @@
  *   Usage: `node packages/recognizer/tools/profile.run.ts [--json]`
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { prettyJSON } from "@mailwoman/core/json"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { cpuModel } from "@mailwoman/core/utils/system"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { coordinates } from "#coordinates"
 import { createRecognizer } from "#index"

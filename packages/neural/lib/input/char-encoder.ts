@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { TextFragment } from "@mailwoman/core/tokenization/Span"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { familyFallbackFor } from "#weights/families"
 

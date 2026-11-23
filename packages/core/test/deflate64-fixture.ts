@@ -16,7 +16,7 @@
  *   compress, so the encoder may store it.
  */
 
-import { mulberry32 } from "#random"
+import { mulberry32 } from "#math/random"
 
 /**
  * The member's name inside the fixture archive.

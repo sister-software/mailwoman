@@ -19,7 +19,7 @@ import { $public } from "#env"
 import { readLocalJSONFile, readLocalTextFile } from "#fs/readers"
 import { pathExists } from "#fs/readers/stat"
 import { writeLocalTextFile, writePrivateTextFile } from "#fs/writers"
-import { prettyJSON } from "#json"
+import { prettyJSON } from "#values/json"
 
 const LICENSE_KEY_FILE = "key"
 const LICENSE_REFRESH_FILE = "refresh.json"

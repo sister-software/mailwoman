@@ -13,9 +13,9 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { stableSourceID } from "#adapters/source-id"
 import { readOATuples, requireRegister, type CorpusRecipe } from "#recipes/scaffold"

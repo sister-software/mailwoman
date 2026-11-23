@@ -15,10 +15,10 @@
 // ci-runner: mailwoman-data
 
 import { APIClient } from "@mailwoman/core/api"
+import { md5Hex, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { type AcquiredBuildInput, type BuildRecipe, BuildRecipeName, ServingRole } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { createOSMAddressPointsRecipe } from "@mailwoman/osm/tools/address-points-recipe"
 import { writePBF } from "@mailwoman/osm/tools/pbf-writer"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

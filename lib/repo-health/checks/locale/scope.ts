@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { SUPPORT_PROMISES } from "@mailwoman/codex/support"
-import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
-import { readScopeConfig } from "@mailwoman/core/scope-config"
+import { readReleaseConfig, shippingLocales } from "@mailwoman/core/repo/release-config"
+import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 

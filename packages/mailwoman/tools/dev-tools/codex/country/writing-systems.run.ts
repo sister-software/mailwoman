@@ -23,11 +23,11 @@ import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { countInto } from "@mailwoman/core/math/stats"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
-import { countInto } from "@mailwoman/core/stats"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**

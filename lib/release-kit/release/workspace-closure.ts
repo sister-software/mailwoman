@@ -8,7 +8,7 @@
  */
 
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { packWorkspaceForPublish } from "#release-kit/pack/pack-workspace"

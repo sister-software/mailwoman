@@ -9,10 +9,10 @@
  *   default file built from an older admin database, and its manifest said only `importance=yes`.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, copyFileTo, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import {
 	importanceDatabasePath,

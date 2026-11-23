@@ -15,9 +15,9 @@
  *   That mode prints counts and exits 0.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import type {
 	PostcodeAuditReport,

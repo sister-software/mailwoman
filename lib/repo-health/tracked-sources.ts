@@ -14,7 +14,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { resolvePath } from "path-ts"
 
 import type { RepoContext } from "#repo-health/check"

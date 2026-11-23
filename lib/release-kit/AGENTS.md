@@ -49,7 +49,7 @@ Every workspace's committed `exports` map is the DEV map only: one `*` pattern p
 A `private: true` flag is checkable. Membership in a JSON array isn't, so check the arithmetic whenever you add or move a workspace:
 
 ```sh
-node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoman/core/workspaces'; import r from './.release-it.json' with { type: 'json' }; const w = await readWorkspaceDirectories('.'); console.log(w.filter((x) => !r.plugins['@release-it-plugins/workspaces'].workspaces.includes(x)))"
+node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoman/core/repo/workspaces'; import r from './.release-it.json' with { type: 'json' }; const w = await readWorkspaceDirectories('.'); console.log(w.filter((x) => !r.plugins['@release-it-plugins/workspaces'].workspaces.includes(x)))"
 ```
 
 Every name it prints needs a reason you can state. `mwops release scaffold-weights-overlay` registers a new overlay in both lists for exactly this reason — a locale added by hand skips that step.

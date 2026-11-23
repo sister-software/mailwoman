@@ -26,7 +26,7 @@
  */
 
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 const EMPTY_SLOT = -1
 

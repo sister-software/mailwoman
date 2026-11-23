@@ -12,7 +12,7 @@
 import { realPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { git } from "@mailwoman/core/git"
+import { git } from "@mailwoman/core/repo/git"
 import { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -57,14 +57,14 @@ async function plant(sources: Record<string, string>) {
 
 describe("isRepositoryPathLiteral", () => {
 	it("admits a repository path with a file extension", () => {
-		expect(isRepositoryPathLiteral("packages/core/lib/git.ts")).toBe(true)
+		expect(isRepositoryPathLiteral("packages/core/lib/repo/git.ts")).toBe(true)
 		expect(isRepositoryPathLiteral("docs/engineering/SCOPE.mdx")).toBe(true)
 		expect(isRepositoryPathLiteral("data/gazetteer/anchor-lexicon-v1.json")).toBe(true)
 	})
 
 	it("refuses a package specifier, which is a subpath export and not a directory", () => {
 		expect(isRepositoryPathLiteral("mailwoman/gazetteer-pipeline")).toBe(false)
-		expect(isRepositoryPathLiteral("@mailwoman/core/git")).toBe(false)
+		expect(isRepositoryPathLiteral("@mailwoman/core/repo/git")).toBe(false)
 	})
 
 	it("refuses a directory, a glob, an interpolation and a URL", () => {
@@ -75,14 +75,14 @@ describe("isRepositoryPathLiteral", () => {
 	})
 
 	it("refuses derived output and a dated record", () => {
-		expect(isRepositoryPathLiteral("packages/core/out/git.js")).toBe(false)
+		expect(isRepositoryPathLiteral("packages/core/out/repo/git.js")).toBe(false)
 		expect(isRepositoryPathLiteral("packages/core/node_modules/x/index.ts")).toBe(false)
 		expect(isRepositoryPathLiteral("packages/core/lib/x.tsbuildinfo")).toBe(false)
 		expect(isRepositoryPathLiteral("docs/records/evals/2026-08-16-something.md")).toBe(false)
 	})
 
 	it("refuses prose that happens to name a directory", () => {
-		expect(isRepositoryPathLiteral("see packages/core/lib/git.ts for the reader")).toBe(false)
+		expect(isRepositoryPathLiteral("see packages/core/lib/repo/git.ts for the reader")).toBe(false)
 	})
 })
 

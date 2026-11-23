@@ -11,7 +11,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { changedFiles, git } from "@mailwoman/core/git"
+import { changedFiles, git } from "@mailwoman/core/repo/git"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { inputCheckoutStates, mergeInputCheckouts, readParquetRecord } from "#parquet/record"

@@ -31,8 +31,8 @@
 
 import type { ClassificationRecord } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { percentile } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { allRows, mean } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

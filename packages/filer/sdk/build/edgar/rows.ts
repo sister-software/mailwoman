@@ -5,7 +5,7 @@
  * @file One EDGAR Exhibit 21 subsidiary disclosure and the two edges it can produce.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { StatementSync } from "@mailwoman/sqlite/client"
 

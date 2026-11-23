@@ -6,7 +6,6 @@
  *   distribution at a coordinate.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import {
 	assertCoverageNotEmpty,
 	singleManifestRow,
@@ -14,6 +13,7 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

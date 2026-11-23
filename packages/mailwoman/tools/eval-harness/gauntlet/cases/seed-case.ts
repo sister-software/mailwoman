@@ -8,7 +8,7 @@
  */
 
 import { RESOLUTION_TIERS, type ResolutionTier } from "@mailwoman/annotations/geo"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import zod from "zod"
 
 import type { MutuallyAssignable, SameShape } from "#tools/eval-harness/board/shape-assertions"

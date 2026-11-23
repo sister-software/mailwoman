@@ -13,10 +13,10 @@
  * and the parser arm, with the row's script family.
  */
 
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { percentile } from "@mailwoman/core/math/stats"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
 
 import { createParser } from "#engine/parser"

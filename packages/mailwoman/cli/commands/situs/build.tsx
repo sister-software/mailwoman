@@ -40,10 +40,10 @@
  *   `--force` rebuilds regardless.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { spawnProcess } from "@mailwoman/core/process"
-import { allKeyed } from "@mailwoman/core/promises"
+import { spawnProcess } from "@mailwoman/core/scripting/process"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"

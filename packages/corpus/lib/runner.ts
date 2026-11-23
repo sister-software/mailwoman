@@ -10,7 +10,7 @@
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { canonicalDedupKey } from "#adapters/dedup-key"

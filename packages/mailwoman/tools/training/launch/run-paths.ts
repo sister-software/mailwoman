@@ -8,7 +8,7 @@
  *   It also maps config volume paths onto the host copy read by preflight audits.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 
 /**
  * A run's checkpoint directory and CSV log on the volume, and the directory that holds both.

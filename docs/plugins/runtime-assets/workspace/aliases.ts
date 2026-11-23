@@ -20,7 +20,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	["@mailwoman/cartographer", "base"],
 	["@mailwoman/cartographer", "styles"],
 	["@mailwoman/cartographer", "coverage"],
-	...["decoder", "tokenization", "types", "resources", "pipeline", "objects"].map(
+	...["decoder", "tokenization", "types", "resources", "pipeline", "values/objects"].map(
 		(subpath) => ["@mailwoman/core", subpath] as const
 	),
 	["@mailwoman/resolver", "resolve"],

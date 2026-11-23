@@ -22,7 +22,7 @@
  */
 
 import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { lintReply, renderVerdict } from "#dev-mcp/hooks/vale/check-core"

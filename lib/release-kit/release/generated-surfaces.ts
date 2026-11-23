@@ -18,8 +18,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { dirtyTrackedFiles } from "@mailwoman/core/git"
-import { runProcess } from "@mailwoman/core/process"
+import { dirtyTrackedFiles } from "@mailwoman/core/repo/git"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { resolvePath } from "path-ts"
 
 /**

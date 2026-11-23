@@ -11,8 +11,8 @@
  *       [--stats-sample 50000] [--max-row-groups <n>] [--seed 42] [--force] [--unshippable-reason <why>]
  */
 
-import { orderedJSON } from "@mailwoman/core/json"
 import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { orderedJSON } from "@mailwoman/core/values/json"
 
 import { buildRegistryCorpus, REGISTRY_LOCALES, type RegistryLocale } from "#cjk/registry"
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"

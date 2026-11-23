@@ -9,8 +9,8 @@
  *   Each loader answers an absent layer with `null` or an empty dependency set.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { allKeyed } from "@mailwoman/core/promises"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import type { LayerCatalog } from "#data/catalog"

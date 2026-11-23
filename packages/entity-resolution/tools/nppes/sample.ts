@@ -8,7 +8,7 @@
  *   One registry pass serves any number of states, so the cross-state eval samples two at once.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { TermFrequencyTable } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"

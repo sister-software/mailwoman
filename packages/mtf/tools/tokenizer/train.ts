@@ -11,10 +11,10 @@
  *   every flag, and the model's SHA-256.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { isoSeconds } from "@mailwoman/core/utils"
 
 import { runMTFTokenizer, SENTENCEPIECE } from "./binary.ts"

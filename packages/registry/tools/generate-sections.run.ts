@@ -11,10 +11,10 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 interface SectionDefinitions {
 	envelope: { magic: string; version: number; headerOffset: number; directoryEntryBytes: number; alignment: number }

@@ -26,11 +26,11 @@
  *   `wrong_format_present` and doesn't count as coverage.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
-import { sha256File } from "@mailwoman/core/hash"
 import { TSVSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"

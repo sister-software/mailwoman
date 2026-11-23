@@ -12,11 +12,11 @@
  *   `\x1b[2J\x1b[3J\x1b[H`. The `3J` code wipes the scrollback.
  */
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { resolvePath } from "path-ts"
 
@@ -74,7 +74,7 @@ async function readMixedLayers(from: string, dataRoot: string) {
 		mixedLayer: { bucketLayerFileReader, describeMixedAddressLayer, localLayerFileReader, servedMixedAddressLayers },
 	} = await allKeyed({
 		api: import("@mailwoman/core/api"),
-		releaseConfig: import("@mailwoman/core/release-config"),
+		releaseConfig: import("@mailwoman/core/repo/release-config"),
 		remote: import("#data/published/remote"),
 		mixedLayer: import("#data/terms/mixed-layer"),
 	})

@@ -8,7 +8,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { namesUSCounty } from "@mailwoman/codex/us/county"
 import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { PathBuilderLike } from "path-ts"
 
 import { rawTextDiscriminator } from "#adapters/record-id"

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type LoadLedgerSnapshot, SERVED_FROM_HEADER } from "@mailwoman/core/load-ledger"
+import { type LoadLedgerSnapshot, SERVED_FROM_HEADER } from "@mailwoman/core/asset/load-ledger"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { artifactSource, LoadLedger, roleOfArtifactURL } from "#browser-runtime/artifact-ledger"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
-import { clamp } from "@mailwoman/core/numeric"
+import { clamp } from "@mailwoman/core/math/numeric"
 import { AsciifyTerminal, cursorTo, SGR_RESET } from "@sister.software/asciify/tui"
 
 import { blitFrame } from "#frame"

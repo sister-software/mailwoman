@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { spec as parseSpec } from "mailwoman/commands/parse"

@@ -11,8 +11,8 @@
  *   Invalid rows fail loading rather than being skipped or defaulted.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPlainObject } from "@mailwoman/core/objects"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPlainObject } from "@mailwoman/core/values/objects"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

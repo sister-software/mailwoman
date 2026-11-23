@@ -16,9 +16,9 @@
  *   --locale en-gb [--cache-root <dir>]
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { caseNormalizationOf, DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { buildSoftFeatures } from "@mailwoman/neural/channels/soft-features"
 import { DEFAULT_TOGGLE } from "@mailwoman/neural/classifier/options"

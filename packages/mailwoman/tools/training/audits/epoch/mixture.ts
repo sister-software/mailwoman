@@ -26,8 +26,8 @@
  *   A passing audit is bound to the config's and the manifest's bytes by {@linkcode corpusReceiptBinding}.
  */
 
-import { pySum } from "@mailwoman/core/numeric"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { pySum } from "@mailwoman/core/math/numeric"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode, SourceCount } from "@mailwoman/mtf/tools/sampler/native"
 

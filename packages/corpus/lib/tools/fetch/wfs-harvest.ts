@@ -39,13 +39,13 @@
  */
 
 import { APIClient, assertNoOGCServiceException, type CheckedWFSFeatureCount } from "@mailwoman/core/api"
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readFileRange } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { appendLocalTextFile, makeDirectories, removePathIfPresent, truncateFile } from "@mailwoman/core/fs/writers"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { readManifest, writeManifest, type FetchSummary } from "#tools/fetch/download"

@@ -13,8 +13,8 @@
 
 import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type { SeededRandom } from "@mailwoman/core/random"
-import { countInto } from "@mailwoman/core/stats"
+import type { SeededRandom } from "@mailwoman/core/math/random"
+import { countInto } from "@mailwoman/core/math/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import type { PathBuilderLike } from "path-ts"
 

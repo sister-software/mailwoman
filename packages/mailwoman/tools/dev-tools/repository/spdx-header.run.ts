@@ -11,11 +11,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { trackedFiles } from "@mailwoman/core/git"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { trackedFiles } from "@mailwoman/core/repo/git"
+import { isScriptSourcePath, rewriteSourceHeader, sourceHeaderSyntax } from "@mailwoman/core/repo/spdx-header"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { isScriptSourcePath, rewriteSourceHeader, sourceHeaderSyntax } from "@mailwoman/core/spdx-header"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { parseSync } from "oxc-parser"
 
 const OLD_HEADER = /^[\t ]*(?:\*|\/\/|#)[\t ]*@copyright Sister Software\b/m

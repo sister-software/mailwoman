@@ -210,7 +210,7 @@ export interface PipelineStage<Input, Output, Trace = StageRecord, ID extends st
  * Runs one stage: checks the abort signal, runs the stage, and adds its duration to the context's timing.
  *
  * An aborted request rejects with the signal's reason, the value the cancelling code aborted with.
- * `abortKindOf` in `#abort` reads that reason's kind.
+ * `abortKindOf` in `#async/abort` reads that reason's kind.
  *
  * The signal is checked before the stage, so a running stage finishes first.
  *

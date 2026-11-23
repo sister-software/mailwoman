@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { gitSync } from "@mailwoman/core/git"
-import { isIdentical } from "@mailwoman/core/identical"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { isIdentical } from "@mailwoman/core/values/identical"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, resolvePath } from "path-ts"
 
 import { effectiveKeyFor } from "#dev-mcp/engine/registry"

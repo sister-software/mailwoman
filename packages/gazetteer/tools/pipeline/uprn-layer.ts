@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { createHash, md5File } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { tryStat, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
-import { createHash, md5File } from "@mailwoman/core/hash"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -17,6 +16,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { isoDate, streamToDisk } from "@mailwoman/core/utils"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"

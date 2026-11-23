@@ -16,7 +16,7 @@ import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { runMTFTokenizer } from "./binary.ts"
 import { editModel, PieceType, readModelPieces } from "./model.ts"

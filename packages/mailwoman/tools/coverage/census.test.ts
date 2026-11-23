@@ -13,7 +13,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { readScopeConfig, shippedTrainingConfigs } from "@mailwoman/core/scope-config"
+import { readScopeConfig, shippedTrainingConfigs } from "@mailwoman/core/repo/scope-config"
 import {
 	buildCorpusCensus,
 	ConfigProvenance,
@@ -29,7 +29,7 @@ import {
 import { utimes } from "node:fs/promises"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
-import { stringifyJSON } from "@mailwoman/core/json";
+import { stringifyJSON } from "@mailwoman/core/values/json";
 
 const fixtures = new AsyncDisposableStack()
 

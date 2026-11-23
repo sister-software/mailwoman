@@ -7,8 +7,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { TextSpliterator } from "spliterator"
 
 import { openMixture, readMixtureFiles } from "#tools/dev-tools/corpus/mixture"

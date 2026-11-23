@@ -13,7 +13,7 @@
 import { dataRootPath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { countInto } from "@mailwoman/core/stats"
+import { countInto } from "@mailwoman/core/math/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { isDecimalDigits, splitLines } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"

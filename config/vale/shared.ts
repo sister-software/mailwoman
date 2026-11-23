@@ -6,8 +6,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { workingTreeFiles } from "@mailwoman/core/repo/git"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

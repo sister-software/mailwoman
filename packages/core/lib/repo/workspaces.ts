@@ -14,8 +14,8 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { tryStat } from "#fs/readers/stat"
-import { stringifyJSON } from "#json"
 import { readPackageJSON } from "#module/resolve-from"
+import { stringifyJSON } from "#values/json"
 
 const TRAILING_STAR = /^(?<parent>[^*]+)\/\*$/u
 

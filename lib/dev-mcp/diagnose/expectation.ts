@@ -5,7 +5,7 @@
  * @file Diagnosed-row expectation grading.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { GeocodeRun } from "mailwoman/geocode"
 import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"

@@ -6,7 +6,6 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	docsSiteURL,
 	isSelfServicePayload,
@@ -15,6 +14,7 @@ import {
 } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { ObligationClass } from "@mailwoman/license/mixed"
 import { LicenseObligation, summarizeLicense } from "@mailwoman/license/obligations"
 import { obligationFindings, type ObligationRefusal } from "@mailwoman/license/refusals"

@@ -13,9 +13,9 @@
  *   Usage: node packages/mailwoman/tools/dev-tools/candidate-cache/compare.run.ts <cache a> <cache b>
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { isFile, isSymbolicLink } from "@mailwoman/core/fs/readers/stat"
-import { md5File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { PathBuilder } from "path-ts"

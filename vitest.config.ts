@@ -15,7 +15,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { assertCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { resolvePath } from "path-ts"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"

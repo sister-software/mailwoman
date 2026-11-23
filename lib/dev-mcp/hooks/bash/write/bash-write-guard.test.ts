@@ -27,7 +27,7 @@ function guidanceFor(command: string): string | null {
 describe("bash-write-guard: the direct spellings of a file edit", () => {
 	it.each([
 		["a python heredoc", `cd ${REPO_ROOT} && python3 - <<'PY'\nprint("x")\nPY`],
-		["a heredoc writing a module", `cat > packages/core/lib/workspaces.ts <<'TS'\nexport const x = 1\nTS`],
+		["a heredoc writing a module", `cat > packages/core/lib/repo/workspaces.ts <<'TS'\nexport const x = 1\nTS`],
 		["sed in place", `sed -i 's|old|new|' packages/tile-worker/wrangler.toml`],
 		["sed in place, long flag", `sed --in-place 's/a/b/' AGENTS.md`],
 		["sed in place behind a directory change", `cd packages/core && sed -i.bak 's/a/b/' package.json`],

@@ -5,10 +5,10 @@
  * @file The integrity table `mailwoman release hf` writes into a release entry, read back by the browser runtime.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { artifactMismatch, readArtifactIntegrityTable } from "#browser-runtime/integrity"

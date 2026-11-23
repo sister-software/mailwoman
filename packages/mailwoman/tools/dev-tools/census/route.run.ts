@@ -35,10 +35,10 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
+import { formatPercent } from "@mailwoman/core/math/stats"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/repo/git"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { detectLocale, scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
 import {

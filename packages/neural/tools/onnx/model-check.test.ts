@@ -3,7 +3,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
 import { expect, test } from "vitest"
 
 const SCRIPT = new URL("./model-check.run.ts", import.meta.url).pathname

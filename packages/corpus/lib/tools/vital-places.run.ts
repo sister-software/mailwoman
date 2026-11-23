@@ -13,13 +13,13 @@
  *   The part goes to `<out>/wikidata-vital-places-00000.parquet`, and the holdout and counts beside it.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

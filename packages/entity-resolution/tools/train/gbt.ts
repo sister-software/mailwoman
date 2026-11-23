@@ -22,10 +22,10 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { makeLcg } from "@mailwoman/core/random"
-import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/spdx-header"
+import { makeLcg } from "@mailwoman/core/math/random"
+import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-header"
 import { isoDate } from "@mailwoman/core/utils"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { dirname } from "path-ts"
 

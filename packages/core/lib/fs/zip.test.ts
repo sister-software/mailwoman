@@ -20,8 +20,8 @@ import {
 	readZipEntry,
 	verifyZipIntegrity,
 } from "#fs/zip"
+import { mulberry32 } from "#math/random"
 import { resolvePackagePath } from "#module/resolvers"
-import { mulberry32 } from "#random"
 import { DEFLATE64_FIXTURE_MEMBER, deflate64MemberBytes } from "#test/deflate64-fixture"
 
 /**

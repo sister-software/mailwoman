@@ -24,8 +24,8 @@
  *   byte for byte apart from `measured_at`.
  */
 
-import { gitHead } from "@mailwoman/core/git"
-import { countInto } from "@mailwoman/core/stats"
+import { countInto } from "@mailwoman/core/math/stats"
+import { gitHead } from "@mailwoman/core/repo/git"
 import type { PythonText } from "@mailwoman/mtf/tools/sampler/native"
 import { IGNORE_INDEX } from "@mailwoman/neural/labels"
 import type { LabelSetContract } from "@mailwoman/neural/labels/semantic-tags"

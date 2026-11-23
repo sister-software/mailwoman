@@ -18,9 +18,9 @@ import { readFileRange, readLocalBuffer, readLocalJSONFile, readLocalTextFile } 
 import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { splitLines } from "@mailwoman/core/strings/unicode"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 

@@ -13,7 +13,7 @@
  *   class share. The unrated share, the no-data share and the not-rateable share each have their own column.
  */
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { pointInEncodedRings } from "@mailwoman/spatial"
 import { cellToChildren, cellToLatLng, type H3Cell } from "@sister.software/h3"
 

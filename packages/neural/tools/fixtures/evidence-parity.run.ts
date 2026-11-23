@@ -20,9 +20,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
+import { runFile } from "@mailwoman/core/scripting/process"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { runMTFTokenizer } from "@mailwoman/mtf/tools/tokenizer/binary"
 
 interface FixtureLexicon {

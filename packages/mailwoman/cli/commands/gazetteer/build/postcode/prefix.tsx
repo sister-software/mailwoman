@@ -15,10 +15,10 @@
  */
 
 import { POSTCODE_PREFIX_LEVELS, type PostcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { allKeyed } from "@mailwoman/core/promises"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix"
 import { PathBuilder } from "path-ts"
 

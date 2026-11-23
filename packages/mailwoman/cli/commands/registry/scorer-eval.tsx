@@ -8,7 +8,7 @@
  *   and database data locally, so they're operator-run.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import type { EvalGeocoderFactory, EvalGeocodeStream } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 
 import {

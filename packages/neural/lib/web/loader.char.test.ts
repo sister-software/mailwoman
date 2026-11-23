@@ -6,7 +6,7 @@
  *   sealed vocabulary without fetching the tokenizer or lexicons. It gives the classifier a `charEncoder`.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock, classifierConfigs } = vi.hoisted(() => ({

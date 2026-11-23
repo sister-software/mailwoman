@@ -28,8 +28,8 @@
  *   (JP postcode database or real-world address dumps from mlit/JapanPost).
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

@@ -10,8 +10,8 @@
  *   instance held to the threads and memory the coordinator gave each worker.
  */
 
-import { sha256File } from "@mailwoman/core/hash"
-import { workerUserData } from "@mailwoman/core/workers"
+import { sha256File } from "@mailwoman/core/crypto/hash"
+import { workerUserData } from "@mailwoman/core/scripting/workers"
 import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
 import { readEvaluationGroupPolicy } from "@mailwoman/corpus/utils/validation-groups"

@@ -5,7 +5,7 @@
  * Publishes one US address-layer version to the public bucket and verifies every object it uploaded.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import {

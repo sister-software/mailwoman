@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { buildSHA, stampLayerManifest } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
@@ -126,7 +126,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			interpCalibration: { INTERP_RADIUS_CALIBRATION },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
-			json: import("@mailwoman/core/json"),
+			json: import("@mailwoman/core/values/json"),
 			interpCalibration: import("#street/interp-calibration"),
 		})
 

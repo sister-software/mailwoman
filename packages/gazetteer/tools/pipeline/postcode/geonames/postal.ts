@@ -6,7 +6,7 @@
  */
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { pyFloat } from "@mailwoman/core/numeric"
+import { pyFloat } from "@mailwoman/core/math/numeric"
 
 /**
  * One usable row of a GeoNames postal dump: a postcode with a parseable coordinate,

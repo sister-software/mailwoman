@@ -8,7 +8,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { countInto } from "@mailwoman/core/stats"
+import { countInto } from "@mailwoman/core/math/stats"
 import { SINGLETON_TAGS } from "@mailwoman/neural/decode/cardinality-filter"
 
 /**

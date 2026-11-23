@@ -23,7 +23,7 @@
  *   gives: a session that cannot start because its orientation hook threw is the worse trade.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { valeRuleDigest } from "#dev-mcp/hooks/vale/rule-digest"
 

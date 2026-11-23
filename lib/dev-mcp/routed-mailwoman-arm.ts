@@ -8,8 +8,8 @@
  * This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { realPath } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
 import {
 	buildGauntletDeps,

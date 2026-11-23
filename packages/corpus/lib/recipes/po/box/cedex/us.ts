@@ -6,7 +6,7 @@
    it. */
 
 import { matchLeadingDirectional, matchTrailingSuffix } from "@mailwoman/codex/us"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { makePoBoxPhrase } from "#recipes/po/box/cedex/phrases"
 import type { Rendered, USTuple } from "#recipes/po/box/cedex/types"

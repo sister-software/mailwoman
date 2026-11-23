@@ -6,10 +6,10 @@
  *   Python module first wrote and which was re-frozen when the recipe moved to `SeededRandom` (#2879 T62).
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { canonicalJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"

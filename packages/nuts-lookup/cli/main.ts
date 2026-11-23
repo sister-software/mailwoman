@@ -13,8 +13,8 @@
  *   The `--` separates flags from coordinates so negative coordinates parse as positionals.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 import { buildNUTSDB } from "#build"
 import { NUTSLookup } from "#index"

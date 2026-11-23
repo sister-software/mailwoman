@@ -28,7 +28,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { countrySurfaceForms } from "@mailwoman/codex/country/country"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 
 import { COUNTRY_DISPLAY_NAME, LOCALE_BY_COUNTRY, renderHierarchy } from "#adapters/wof/json-rows"

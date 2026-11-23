@@ -8,7 +8,7 @@
 
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
-import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { readWorkspaceDirectories } from "@mailwoman/core/repo/workspaces"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { orientationListing } from "#dev-mcp/hooks/session-orientation"

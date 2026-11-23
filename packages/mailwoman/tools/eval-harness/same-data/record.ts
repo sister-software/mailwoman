@@ -16,8 +16,8 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 

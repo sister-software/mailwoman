@@ -7,7 +7,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { verifyReleaseMetadata } from "#release-kit/release/verify-metadata"

@@ -10,7 +10,7 @@
  */
 
 import { DE_POSTFACH_RULES, formatPostfachNumber } from "@mailwoman/codex/de/postfach"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
 import {

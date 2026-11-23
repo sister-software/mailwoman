@@ -3,7 +3,7 @@
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { formatPercent, percentile } from "@mailwoman/core/stats"
+import { formatPercent, percentile } from "@mailwoman/core/math/stats"
 
 import type { Agg, AggPair } from "#tools/eval-harness/oa/resolver/aggregate"
 import type { OAResolverEvalOptions } from "#tools/eval-harness/oa/resolver/options"

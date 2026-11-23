@@ -19,7 +19,7 @@
  */
 
 import { FR_UNIT_LINE_RULES } from "@mailwoman/codex/fr"
-import { sample } from "@mailwoman/core/random"
+import { sample } from "@mailwoman/core/math/random"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
 import {

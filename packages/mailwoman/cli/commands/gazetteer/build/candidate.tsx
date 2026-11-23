@@ -10,7 +10,7 @@
  *   See releasing.md Step 5.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import { formatPhaseTimings } from "@mailwoman/core/utils"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 

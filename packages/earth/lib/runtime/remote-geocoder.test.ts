@@ -3,7 +3,7 @@
 
 import type { GeocodeResponse } from "@mailwoman/api/operations/geocode/address"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { candidatesFromGeocode, RemoteGeocoderError, remoteGeocode } from "#runtime/remote-geocoder"

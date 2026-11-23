@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { describe, expect, it } from "vitest"
 
 import {

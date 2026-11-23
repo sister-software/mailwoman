@@ -17,8 +17,8 @@
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { SOURCE_RESERVATION_SCOPE } from "@mailwoman/license/reservation"
 
 import { mappingInputsFor, type CorpusSourceInputs } from "#source-register/corpus-inputs"

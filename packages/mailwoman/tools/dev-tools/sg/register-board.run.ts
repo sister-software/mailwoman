@@ -6,8 +6,8 @@
  * from a seeded draw of Overture rows.
  */
 
+import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/asset/overture-pins"
 import { snapshotSourcePath } from "@mailwoman/core/data-root"
-import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate, mulberry32 } from "@mailwoman/core/utils"
 import { isBuildingName, renderSGRegister, type SGRegister } from "@mailwoman/corpus/sg/recipes/register"

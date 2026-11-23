@@ -17,8 +17,8 @@
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { classifyFeatureCells } from "@mailwoman/spatial"
 
 import { CoastalCellIndex, type CellIndexMeasurement } from "#sdk/cells"

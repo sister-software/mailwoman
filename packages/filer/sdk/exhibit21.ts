@@ -8,8 +8,8 @@
 import { narrowDocument } from "@mailwoman/core/html/document"
 import { extractTableRows, padAndDropBlankColumns, type TableCell, widestRow } from "@mailwoman/core/html/tables"
 import { BLOCK_ELEMENTS, htmlToLayoutText } from "@mailwoman/core/html/text"
-import { isPresent } from "@mailwoman/core/objects"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 import {

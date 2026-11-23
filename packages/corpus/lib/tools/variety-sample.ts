@@ -20,11 +20,11 @@
  */
 
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
-import { mulberry32, shuffleWith } from "@mailwoman/core/random"
+import { mulberry32, shuffleWith } from "@mailwoman/core/math/random"
+import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { resourceDictionaryPath } from "@mailwoman/dictionaries/paths"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"

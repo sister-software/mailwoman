@@ -9,8 +9,8 @@
 
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { pick } from "@mailwoman/core/objects"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { pick } from "@mailwoman/core/values/objects"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { z } from "zod"
 

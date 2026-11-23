@@ -3,7 +3,7 @@
 
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { createFilerFamilyTable, createFilerManifestTable, type FilerDatabase } from "@mailwoman/filer/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"

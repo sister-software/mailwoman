@@ -19,8 +19,8 @@
 import { directoryHasEntries, sortedGlob } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
+import { orderedJSON } from "@mailwoman/core/values/json"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

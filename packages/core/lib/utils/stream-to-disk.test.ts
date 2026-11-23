@@ -7,11 +7,11 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { createHash } from "#crypto/hash"
 import { readLocalTextFile } from "#fs/readers"
 import { pathExists } from "#fs/readers/stat"
 import { temporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
-import { createHash } from "#hash"
 import { ResumeRefusedError, streamToDisk } from "#utils/stream-to-disk"
 
 const CHUNKS = ["first chunk ", "second chunk ", "third chunk"]

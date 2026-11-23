@@ -20,8 +20,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 
 import { measureByteFallback, readFixtureLines } from "./byte-fallback.ts"

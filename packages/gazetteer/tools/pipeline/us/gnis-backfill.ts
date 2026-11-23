@@ -36,8 +36,8 @@
  */
 
 import { hasCountry, worldCountries } from "@mailwoman/codex/country/sets"
-import { isPresent } from "@mailwoman/core/objects"
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { GNISPopulatedPlace } from "@mailwoman/corpus/us/tools/fetch/usgs/gnis"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import {

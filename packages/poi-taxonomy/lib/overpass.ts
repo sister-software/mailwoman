@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 /**
  *   OverpassQL export emitter over a POI intent (spec §1: "we print the query. we never run it").

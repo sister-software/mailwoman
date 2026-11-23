@@ -9,8 +9,8 @@
  *   rather than default to train, because defaulting to train is what the policy exists to prevent.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { sha256File } from "@mailwoman/core/hash"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { ParquetRow } from "#parquet/schema"

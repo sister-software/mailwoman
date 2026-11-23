@@ -12,7 +12,7 @@
  *   using the v1/v2 layout (12-byte state entries, u16 per-state counts), per fst-serialize.ts.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, test } from "vitest"
 
 import { deserializeFSTWeb, FST_FORMAT_VERSION, readFSTProvenanceWeb } from "#fst"

@@ -8,7 +8,7 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { tigerDatabasePath } from "#paths"

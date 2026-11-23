@@ -16,7 +16,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { isPresent } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 

@@ -10,8 +10,8 @@
  * Its stdout is piped to the shim's stderr, so library noise cannot corrupt the MCP channel.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { z } from "zod"
 
 import { EngineRegistry } from "#dev-mcp/engine/registry"

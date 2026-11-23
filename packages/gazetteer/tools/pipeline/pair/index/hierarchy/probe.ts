@@ -25,9 +25,9 @@
  * The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { md5File } from "@mailwoman/core/hash"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"

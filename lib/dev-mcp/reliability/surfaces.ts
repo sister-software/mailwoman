@@ -10,7 +10,7 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { componentMatches } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 

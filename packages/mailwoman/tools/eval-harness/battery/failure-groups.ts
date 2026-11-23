@@ -26,7 +26,7 @@
  *   The address-list reader of 2026-10-28 kept spans apart and counted the same row as `venue→street`.
  */
 
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
 import { parseBatteryFieldKey } from "#tools/eval-harness/battery/classify"
 

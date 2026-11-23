@@ -4,12 +4,12 @@
 /**
  * @file The `mailwoman/spdx-header` rule: a file starts with the SPDX header, then one blank line.
  *
- * The rule and the `spdx-header` repository check both decide through `@mailwoman/core/spdx-header`.
+ * The rule and the `spdx-header` repository check both decide through `@mailwoman/core/repo/spdx-header`.
  * The fix rewrites the file with the same function the sweep tool used.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
-import { rewriteSourceHeader, sourceHeaderProblem, sourceHeaderSyntax } from "@mailwoman/core/spdx-header"
+import { rewriteSourceHeader, sourceHeaderProblem, sourceHeaderSyntax } from "@mailwoman/core/repo/spdx-header"
 import type { CreateRule } from "@oxlint/plugins"
 
 /**

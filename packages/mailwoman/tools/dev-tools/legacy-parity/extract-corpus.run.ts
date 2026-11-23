@@ -9,7 +9,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 import { Globerator } from "spliterator/node/fs"

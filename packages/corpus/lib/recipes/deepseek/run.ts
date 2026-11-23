@@ -12,7 +12,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { appendLocalTextFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { orderedJSON } from "@mailwoman/core/json"
+import { orderedJSON } from "@mailwoman/core/values/json"
 
 /**
  * The prefix a worker puts on a batch id to leave the batch pending.

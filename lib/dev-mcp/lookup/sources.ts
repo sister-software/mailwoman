@@ -8,8 +8,8 @@
  */
 
 import { us } from "@mailwoman/codex"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { AnchorSpanMode } from "@mailwoman/neural/channels/anchor-inference"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"

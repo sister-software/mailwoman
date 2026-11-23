@@ -3,9 +3,9 @@
 
 import { describe, expect, it } from "vitest"
 
+import { md5File, sha256File, sha256Hex } from "#crypto/hash"
 import { temporaryDirectory } from "#fs/temporary"
 import { writeLocalTextFile } from "#fs/writers"
-import { md5File, sha256File, sha256Hex } from "#hash"
 
 // echo -n "mailwoman" | sha256sum
 const MAILWOMAN_SHA256 = "d2594f1b25603175987fe47a442c3426f65b4572d4b82c8623daeb7bcc8c630d"

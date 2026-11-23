@@ -3,10 +3,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { isIdentical } from "@mailwoman/core/identical"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { runFileSync, spawnProcess } from "@mailwoman/core/process"
+import { runFileSync, spawnProcess } from "@mailwoman/core/scripting/process"
+import { isIdentical } from "@mailwoman/core/values/identical"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
 import { installedMailwomanBin } from "#release-kit/release/smoke/installed-bin"

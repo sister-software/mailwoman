@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { AddressClassifier } from "@mailwoman/core/pipeline"
-import { runFile } from "@mailwoman/core/process"
 import type { Resolver } from "@mailwoman/core/resolver"
+import { runFile } from "@mailwoman/core/scripting/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it, vi } from "vitest"
 
 import { createRuntimePipeline } from "#engine/runtime-pipeline"

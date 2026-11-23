@@ -10,7 +10,7 @@
  * so the dependency graph stays traceable.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import type { CorpusAdapter } from "#types"
 

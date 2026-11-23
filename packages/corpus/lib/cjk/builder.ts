@@ -10,17 +10,17 @@
  *   the Basic Multilingual Plane. JavaScript counts that character as two code units.
  */
 
+import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { pyRound, pySum } from "@mailwoman/core/numeric"
+import { pyRound, pySum } from "@mailwoman/core/math/numeric"
+import type { SeededRandom } from "@mailwoman/core/math/random"
+import { countInto, mostCommon } from "@mailwoman/core/math/stats"
 import { repoRootPath } from "@mailwoman/core/paths"
-import type { SeededRandom } from "@mailwoman/core/random"
-import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { isWhitespaceCharacter, splitWhitespace } from "@mailwoman/core/strings/unicode"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { normalizeCJKText } from "#cjk/text"

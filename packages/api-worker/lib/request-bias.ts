@@ -11,7 +11,7 @@
 
 import { MAX_BIAS_POINTS } from "@mailwoman/api/input-limits"
 import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
-import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
+import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/values/json"
 
 import { pluckCFRequestGeo } from "#cloudflare/geo"
 

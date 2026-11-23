@@ -19,7 +19,7 @@
  *     down to it, in the same image format.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
 import { padded, readGLB, writeGLB } from "#glb"
 

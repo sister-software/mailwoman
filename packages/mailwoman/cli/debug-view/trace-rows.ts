@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { bareBIOTag } from "@mailwoman/codex/component"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { softmax } from "@mailwoman/neural/decode/viterbi"
 
 import type { GeocodeApplied, GeocodeTrace } from "#geocode/session"

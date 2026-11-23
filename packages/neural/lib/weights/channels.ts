@@ -7,7 +7,7 @@
 
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { PostcodeBinaryLookup } from "@mailwoman/postcode/binary-resolver"
 import { QueryShapeGeneration } from "@mailwoman/postcode/recognizer/rule-generation"
 import { type PathBuilderLike, resolvePath } from "path-ts"

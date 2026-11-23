@@ -23,9 +23,9 @@
  *   them. A corpus build runs from the checkout.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname, relative, resolvePath } from "path-ts"

@@ -13,9 +13,9 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, PathBuilder } from "path-ts"
-import { runProcess } from "@mailwoman/core/process"
+import { runProcess } from "@mailwoman/core/scripting/process"
 import { Globerator } from "spliterator/node/fs"
-import { stringifyJSON } from "@mailwoman/core/json";
+import { stringifyJSON } from "@mailwoman/core/values/json";
 import { TextSpliterator } from "spliterator"
 
 /**

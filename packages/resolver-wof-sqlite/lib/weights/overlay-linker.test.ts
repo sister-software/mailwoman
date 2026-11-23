@@ -12,7 +12,7 @@ import { readLink, statLink, tryStatLink } from "@mailwoman/core/fs/readers/stat
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder, workspacePathBuilder } from "@mailwoman/core/paths"
-import { readReleaseConfig } from "@mailwoman/core/release-config"
+import { readReleaseConfig } from "@mailwoman/core/repo/release-config"
 import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 

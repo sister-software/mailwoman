@@ -10,7 +10,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { extractionPolicyFor, extractionPolicyName } from "@mailwoman/osm/extraction-policy"
 import { afterAll, describe, expect, it } from "vitest"

@@ -7,8 +7,8 @@
  *   Pure. shared by the explorer's copy button.
  */
 
-import { prettyJSON } from "@mailwoman/core/json"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import { prettyJSON } from "@mailwoman/core/values/json"
 
 export function buildParsePayload(result: ParseResult, selected: ResolvedPlaceView | null): string {
 	return prettyJSON({

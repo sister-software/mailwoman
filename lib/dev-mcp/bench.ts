@@ -22,7 +22,7 @@
  *   Quote the single-threaded number, because added workers do not scale throughput past that ceiling.
  */
 
-import { percentile } from "@mailwoman/core/stats"
+import { percentile } from "@mailwoman/core/math/stats"
 
 export interface LatencyReading {
 	n: number

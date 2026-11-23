@@ -9,8 +9,8 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { openCorpusRowStream } from "#parquet/corpus-rows"

@@ -4,8 +4,8 @@
 /**
  *   This module reads an HTML fragment as text through `htmlparser2`, using one rule in two ways.
  *
- *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) decodes entities, survives a `<`
- *   inside an attribute value and leaves source whitespace runs intact, but `textContent`
+ *   `stripHTMLToText` (`@mailwoman/core/html/trust-policies`) decodes entities, survives a
+ *   `<` inside an attribute value and leaves source whitespace runs intact, but `textContent`
  *   inserts no separator at an element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and
  *   `<p>Acme Fiber</p><p>LLC</p>` as `"Acme FiberLLC"`, a name that appears nowhere in the document.
  *

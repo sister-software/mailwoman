@@ -31,8 +31,8 @@
  *   The build measures that percentile on each run rather than storing a constant.
  */
 
+import { percentile } from "@mailwoman/core/math/stats"
 import { isOverturePartID } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import { percentile } from "@mailwoman/core/stats"
 import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 

@@ -15,14 +15,14 @@
  *   Inputs outside the weights cache, such as the gazetteer under the data root, are not keyed.
  */
 
+import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitHead, workingTreeStatus } from "@mailwoman/core/git"
-import { sha256File, sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { gitHead, workingTreeStatus } from "@mailwoman/core/repo/git"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"

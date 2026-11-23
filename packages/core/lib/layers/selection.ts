@@ -19,8 +19,7 @@
  *   behavior change that needs its own evaluation.
  */
 
-import { sha256Hex } from "#hash"
-import { canonicalJSON, stringifyJSON } from "#json"
+import { sha256Hex } from "#crypto/hash"
 import {
 	type ArtifactID,
 	type ArtifactScope,
@@ -30,6 +29,7 @@ import {
 	isScopeSubdivisionCode,
 	ServingRole,
 } from "#layers/artifact"
+import { canonicalJSON, stringifyJSON } from "#values/json"
 
 const ROLES = new Set<string>(Object.values(ServingRole))
 

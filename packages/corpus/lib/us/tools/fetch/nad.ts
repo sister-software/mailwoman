@@ -25,12 +25,12 @@
  *   ```
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
-import { sha256File } from "@mailwoman/core/hash"
 import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"

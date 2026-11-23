@@ -6,7 +6,7 @@
  *   sides every time and counts `undecidable` as a violation.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import {
 	type ComparatorReading,

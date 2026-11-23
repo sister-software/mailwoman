@@ -5,7 +5,7 @@
  *   The street tier's per-region extracts, opened by byte ranges for situs and interpolation reads.
  */
 
-import { allKeyed } from "@mailwoman/core/promises"
+import { allKeyed } from "@mailwoman/core/async/promises"
 import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import { NATIONAL_STREET_SLUGS, streetExtractURL } from "mailwoman/browser-runtime/resources"
 

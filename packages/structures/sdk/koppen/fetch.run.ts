@@ -17,8 +17,8 @@
  *   `packages/structures/data/licenses/` with the publisher's terms, per `packages/structures/AGENTS.md`.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 /**

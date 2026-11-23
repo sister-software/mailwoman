@@ -7,8 +7,8 @@
 
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
-import { stringifyJSON } from "#json"
 import type { CoverageCell } from "#layers/manifest"
+import { stringifyJSON } from "#values/json"
 
 /**
  * A `source_present` layer has one coverage row for each cell reached by the authority's polygons.

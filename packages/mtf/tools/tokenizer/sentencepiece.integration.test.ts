@@ -16,12 +16,12 @@
  *   and is skipped otherwise, so a host without CMake doesn't fail the suite.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
 import { workspacePath } from "@mailwoman/core/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 

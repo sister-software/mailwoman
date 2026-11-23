@@ -5,11 +5,11 @@
  * @file The derivation hash, the per-file record, and the fold of records into a training manifest's tally.
  */
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, removeFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { gitSync } from "@mailwoman/core/git"
-import { sha256File } from "@mailwoman/core/hash"
+import { gitSync } from "@mailwoman/core/repo/git"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"

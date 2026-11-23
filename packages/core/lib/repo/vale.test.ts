@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalTextFile, writeLocalJSONFile } from "#fs/writers"
 import { pathToFileURL } from "#module/file-url"
-import { valeCommand } from "#vale"
+import { valeCommand } from "#repo/vale"
 
 /**
  * Writes a fixture `@vvago/vale` install and returns a caller module URL to resolve from.

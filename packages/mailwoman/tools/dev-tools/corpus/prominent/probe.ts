@@ -12,9 +12,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
-import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { isPresent } from "@mailwoman/core/values/objects"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { QUERY_SHAPES, type QueryShape } from "@mailwoman/corpus/recipes/prominent/places"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"

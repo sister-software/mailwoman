@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { buildAddressTree } from "@mailwoman/core/decoder"
-import { prettyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import { prettyJSON } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
 import type { AnchorLookup } from "#channels/anchor-inference"

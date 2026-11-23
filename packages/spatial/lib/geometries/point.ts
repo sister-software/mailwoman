@@ -3,7 +3,7 @@
 
 /// <reference types="google.maps" />
 
-import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { latLngToCell } from "@sister.software/h3"
 import { convert as convertCoords } from "geo-coordinates-parser"
 

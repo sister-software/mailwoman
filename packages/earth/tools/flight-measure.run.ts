@@ -19,8 +19,8 @@
  *   Usage: node packages/earth/tools/flight-measure.run.ts [--url http://localhost:7771/] [--proxy <url>]
  */
 
+import { percentile } from "@mailwoman/core/math/stats"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/stats"
 import { chromium } from "@playwright/test"
 
 const { values } = parseArguments({

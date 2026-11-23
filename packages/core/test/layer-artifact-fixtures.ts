@@ -10,7 +10,7 @@
  *   France, one OpenStreetMap region spanning several countries, and an FST with its pair index.
  */
 
-import { sha256Hex } from "#hash"
+import { sha256Hex } from "#crypto/hash"
 import {
 	type ArtifactManifest,
 	artifactIDFromSHA256,

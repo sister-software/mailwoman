@@ -27,7 +27,7 @@
  *   and a reader can reproduce each present value from the factor printed beside it.
  */
 
-import { formatPercent } from "@mailwoman/core/stats"
+import { formatPercent } from "@mailwoman/core/math/stats"
 
 /**
  * An amount as an integer count of a currency's minor unit.

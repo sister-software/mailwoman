@@ -23,11 +23,11 @@
  *   {@linkcode compareHeldoutDatasets} reports what changed between two versions.
  */
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile, readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalJSONFileAtomically, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { sha256Hex } from "@mailwoman/core/hash"
-import { canonicalJSON, stringifyJSON } from "@mailwoman/core/json"
+import { canonicalJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

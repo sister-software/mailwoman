@@ -9,7 +9,7 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import type { HTTPGetServices } from "#check-kit/http-get"

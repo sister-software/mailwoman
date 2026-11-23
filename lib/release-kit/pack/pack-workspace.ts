@@ -16,9 +16,9 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readLink, tryStatLink } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { spawnProcessSync } from "@mailwoman/core/process"
+import { spawnProcessSync } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import {

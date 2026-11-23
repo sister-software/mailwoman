@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { memoizeResettable } from "#memoize"
+import { memoizeResettable } from "#async/memoize"
 
 describe("memoizeResettable", () => {
 	it("shares one in-flight call between concurrent callers and keeps a resolved value", async () => {

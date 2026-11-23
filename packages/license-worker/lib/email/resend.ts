@@ -7,7 +7,7 @@
  *   The `Idempotency-Key` header is the invoice id, so a retried send is one message.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { licenseEmailSubject } from "#email/content"
 import type { EmailProvider } from "#email/provider"
