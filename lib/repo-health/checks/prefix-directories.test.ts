@@ -34,7 +34,7 @@ describe("findPrefixGroups", () => {
 		])
 	})
 
-	test("a word behind a prefix particle is one word, so its family goes under the whole word", () => {
+	test("a known hyphenated name is one word, and a longer name that starts with it nests under it", () => {
 		const recipes = "packages/corpus/lib/recipes"
 
 		const groups = findPrefixGroups([

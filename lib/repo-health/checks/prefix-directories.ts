@@ -29,9 +29,11 @@
  *   `fixtures/.../whosonfirst-data-admin-fr/` is an upstream repository.
  *   This check doesn't arrange either external repository.
  *
- *   A hyphen inside one word is part of the word.
- *   A component tag such as `house-number` or `street-prefix` is one segment, and
- *   so is a word behind a prefix particle, such as `sub-venue` or `non-native`.
+ *   A hyphen inside a known name is part of the name. {@link KNOWN_NAMES} holds each name
+ *   the repository spells with a hyphen, such as the component tag `house-number`.
+ *
+ *   A child whose whole name is in the set is one word and joins no family through that hyphen.
+ *   `house-number-forms.ts` still belongs under `house-number/`.
  *
  *   `labels/street-prefix/` therefore stays beside `labels/street/`, and
  *   `sub-venue-lexicon.ts` belongs under `sub-venue/`, never under `sub/venue/`.
@@ -54,19 +56,18 @@ const GROUP_THRESHOLD = 2
 const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
 
 /**
- * The component tags spelled with a hyphen, longest first, so `street-prefix-particle`
- * is read before `street-prefix`.
- */
-const HYPHENATED_TAGS = COMPONENT_TAGS.filter((tag) => tag.includes("_"))
-	.map((tag) => tag.replaceAll("_", "-"))
-	.toSorted((a, b) => b.length - a.length)
-
-/**
- * A particle that forms one word with the segment after it.
+ * Each word the repository spells with a hyphen.
  *
- * A directory titled `sub` or `non` states no subject.
+ * Every component tag of more than one word is here, read from the codex.
+ * `sub-venue` is a corpus recipe and the tier of its lexicon.
+ *
+ * `non-native` is the script order that the corpus tools measure.
  */
-const PREFIX_PARTICLE = /^(?<word>(?:sub|non)-[a-z0-9]+)(?:-.+)?$/u
+const KNOWN_NAMES: ReadonlySet<string> = new Set([
+	...COMPONENT_TAGS.filter((tag) => tag.includes("_")).map((tag) => tag.replaceAll("_", "-")),
+	"sub-venue",
+	"non-native",
+])
 
 const SOURCE_FILE = /\.tsx?$/u
 const TEST_FILE = /\.(?:test|spec)\.tsx?$/u
@@ -159,14 +160,21 @@ function directoryChildren(
  * The prefix a name shares with its family, or null when the name is one word.
  *
  * The prefix is the name's first word.
- * A hyphenated component tag and a word behind a prefix particle each count as one word.
+ * The longest {@link KNOWN_NAMES} entry the name starts with is that word,
+ * so `street-prefix-particle-table` reads `street-prefix-particle` before `street-prefix`.
+ *
+ * A name the set holds whole, with zero segments after it, is one word.
  */
 function familyPrefixOf(stem: string): string | null {
-	const word =
-		HYPHENATED_TAGS.find((tag) => stem === tag || stem.startsWith(`${tag}-`)) ??
-		PREFIX_PARTICLE.exec(stem)?.groups?.word
+	if (KNOWN_NAMES.has(stem)) return null
 
-	if (word) return stem === word ? null : word
+	const segments = stem.split("-")
+
+	for (let length = segments.length - 1; length > 1; length--) {
+		const leading = segments.slice(0, length).join("-")
+
+		if (KNOWN_NAMES.has(leading)) return leading
+	}
 
 	return PREFIXED.exec(stem)?.groups?.prefix ?? null
 }
