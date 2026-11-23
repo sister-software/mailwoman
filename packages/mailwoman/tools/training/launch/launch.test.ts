@@ -348,6 +348,25 @@ describe("the training launch lifecycle", () => {
 		await expect(fetchRun("0".repeat(16), null, "/tmp/out", deps)).rejects.toThrow(/no launch record/)
 	})
 
+	it("copies a commercial run's export beside its output directory with the whole run", async () => {
+		const { deps, fetches } = harness()
+		const record = await startLaunch(CONFIG, COMMERCIAL, deps)
+
+		await expect(fetchRun(runKey, null, "/tmp/out", deps)).resolves.toEqual([
+			"model.safetensors",
+			"export/model.safetensors",
+		])
+
+		expect(fetches).toEqual([
+			{ remoteDir: record.environment.MW_OUTPUT_DIR, localDir: "/tmp/out" },
+			{ remoteDir: `${record.environment.MW_RUN_BASE}/export`, localDir: "/tmp/out/export" },
+		])
+
+		fetches.length = 0
+		await fetchRun(runKey, "step-000200", "/tmp/out", deps)
+		expect(fetches.map((fetch) => fetch.remoteDir)).toEqual([`${record.environment.MW_OUTPUT_DIR}/step-000200`])
+	})
+
 	it("runs the preflight on a dry run and starts nothing", async () => {
 		const { deps, sandboxes, logs, preflights } = harness()
 
