@@ -5,7 +5,7 @@
  * @file Grades one OpenAddresses row by admin match and by distance from the resolved place to the row's point.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { LocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"

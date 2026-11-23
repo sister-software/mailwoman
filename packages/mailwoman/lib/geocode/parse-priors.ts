@@ -10,7 +10,7 @@
  */
 
 import { isCountryToken } from "@mailwoman/codex/country"
-import { streetTypeWordTestFor } from "@mailwoman/codex/street/type"
+import { streetTypeWordTestFor } from "@mailwoman/codex/labels/street/type"
 import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman/core/asset/postcode-prefix-files"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {

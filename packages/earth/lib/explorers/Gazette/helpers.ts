@@ -9,7 +9,7 @@
  *   Kept free of the range database so they unit-test without a worker.
  */
 
-import { DEFAULT_PLACETYPE_MAP, expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { DEFAULT_PLACETYPE_MAP, expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { SQLValue } from "@mailwoman/resolver-wof-wasm/httpvfs/worker-protocol"
 

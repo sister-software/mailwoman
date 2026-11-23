@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { countyNameWithoutDesignator } from "#county-designators"
+import { countyNameWithoutDesignator } from "#designators/county"
 
 describe("countyNameWithoutDesignator", () => {
 	it("removes a covered country's suffix and keeps the written spelling", () => {

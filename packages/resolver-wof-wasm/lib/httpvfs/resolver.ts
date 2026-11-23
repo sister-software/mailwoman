@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
+import { expandPlacetypeFilter } from "@mailwoman/codex/labels/placetype-map"
 import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import { populationScoreUnmeasured, referentialFromPopulation } from "@mailwoman/core/resolver"
 import { tryParsingJSON } from "@mailwoman/core/values/json"

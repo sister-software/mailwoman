@@ -18,7 +18,7 @@
  *   (`Near Sawrey`, `In der Au`, `Barrow-in-Furness`).
  */
 
-import type { LevelDesignatorKind, LevelDesignatorRow } from "#level-semantics"
+import type { LevelDesignatorKind, LevelDesignatorRow } from "#designators/level-semantics"
 
 /**
  * The concepts a designator maps to, grouped by class.

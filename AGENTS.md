@@ -180,7 +180,7 @@ comparison against a country literal. Before writing a branch for US, GB or anot
 look for the source that covers every country: Who's On First admin names and abbreviations, the
 Overture places file, the codex country tables. A finding about a few countries is a hypothesis about
 a global distribution. Before adding a row to a per-country table such as
-`COUNTRY_PLACETYPE_OVERRIDES` in `packages/codex/lib/placetype-map.ts`, compute the same statistic for
+`COUNTRY_PLACETYPE_OVERRIDES` in `packages/codex/lib/labels/placetype-map.ts`, compute the same statistic for
 every country and print the distribution. When the countries that looked anomalous sit inside a
 populated mode, the rule is wrong rather than the countries. A census drawn from where the data is
 densest encodes that region's structure as the norm.

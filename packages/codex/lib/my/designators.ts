@@ -14,7 +14,7 @@
  * @see {@link https://en.wiktionary.org/wiki/saya Wiktionary saya}
  */
 
-import type { PostalDesignatorTable } from "#postal/designator"
+import type { PostalDesignatorTable } from "#designators/concepts"
 
 const UPU_MALAYSIA = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mysEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

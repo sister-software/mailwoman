@@ -9,7 +9,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
-import type { PostalGuidelineRule } from "@mailwoman/codex/postal/guideline"
+import type { PostalGuidelineRule } from "@mailwoman/codex/designators/guideline"
 
 /**
  * The longest GeoNames place name a leg writes, the same cap the `po-box-cedex` place readers apply.

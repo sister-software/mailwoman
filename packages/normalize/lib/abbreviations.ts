@@ -5,7 +5,7 @@
  *   Abbreviation expansion over the per-locale tables in `@mailwoman/codex/abbreviations`.
  */
 
-import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
+import { abbreviationDictionary } from "@mailwoman/codex/labels/street/abbreviations"
 import type { TextSpan } from "@mailwoman/recognizer/types"
 
 export interface AbbreviationResult {

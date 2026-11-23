@@ -21,7 +21,7 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
-import { wordNorm, wordNormLower } from "@mailwoman/codex/normalize"
+import { wordNorm, wordNormLower } from "@mailwoman/codex/names/normalize"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us/state"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"

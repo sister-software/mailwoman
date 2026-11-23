@@ -45,13 +45,13 @@
  * @see {@link https://www.costaricaspanish.net/2008/06/finding-your-way-2/ Costa Rica Spanish, finding your way}
  */
 
-import { ES_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	designatorRowsFromLevels,
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { ES_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/criEn.pdf"
 

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { streetTypeWordTestFor } from "#street/type"
+import { streetTypeWordTestFor } from "#labels/street/type"
 
 describe("streetTypeWordTestFor", () => {
 	it("reads the USPS abbreviations and directionals the morphology FST omits", () => {

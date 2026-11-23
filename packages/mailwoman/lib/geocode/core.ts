@@ -13,7 +13,7 @@
  * Database access is injected via {@link RegionDatabaseResolver}.
  */
 
-import { placetypeMapForCountry } from "@mailwoman/codex/placetype-map"
+import { placetypeMapForCountry } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"

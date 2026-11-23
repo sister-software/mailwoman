@@ -18,7 +18,7 @@ import {
 	isPlacetypeFallback,
 	PLACETYPE_FILTER_GROUPS,
 	placetypeMapForCountry,
-} from "#placetype-map"
+} from "#labels/placetype-map"
 
 describe("placetypeMapForCountry", () => {
 	it("types the Taiwanese 鄉鎮市區 (`subregion`) as a locality-band placetype, and leaves every other tag alone", () => {

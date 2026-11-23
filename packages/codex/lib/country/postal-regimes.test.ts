@@ -14,7 +14,13 @@
 
 import { describe, expect, it } from "vitest"
 
-import { POSTAL_REGIMES, postalRegimeByID, postalRegimesForCountry, RegimeCoverage, RegimeKind } from "#postal/regimes"
+import {
+	POSTAL_REGIMES,
+	postalRegimeByID,
+	postalRegimesForCountry,
+	RegimeCoverage,
+	RegimeKind,
+} from "#country/postal-regimes"
 
 describe("POSTAL_REGIMES", () => {
 	it("gives every regime a unique id that is not an ISO code", () => {

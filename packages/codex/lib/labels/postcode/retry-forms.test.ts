@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { postcodeRetryForms } from "#postal/retry-forms"
+import { postcodeRetryForms } from "#labels/postcode/retry-forms"
 
 describe("postcodeRetryForms", () => {
 	it("tries the joined Dutch code before its four-digit district", () => {

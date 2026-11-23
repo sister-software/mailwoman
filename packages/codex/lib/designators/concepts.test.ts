@@ -3,13 +3,13 @@
 
 import { describe, expect, it } from "vitest"
 
-import { FR_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	designatorCollisions,
 	designatorRowsFromLevels,
 	foldDesignatorSpelling,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { FR_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 describe("designatorRowsFromLevels", () => {
 	it("reads French floors from the floor lexicon with their concepts", () => {

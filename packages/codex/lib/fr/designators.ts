@@ -19,14 +19,14 @@
  * @see {@link https://en.wiktionary.org/wiki/moi Wiktionary, moi}
  */
 
-import { FR_UNIT_LINE_RULES } from "#fr/unit-line"
-import { FR_LEVEL_DESIGNATORS } from "#level-semantics"
 import {
 	type DesignatorConcept,
 	designatorRowsFromLevels,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal/designator"
+} from "#designators/concepts"
+import { FR_LEVEL_DESIGNATORS } from "#designators/level-semantics"
+import { FR_UNIT_LINE_RULES } from "#fr/unit-line"
 
 const LA_POSTE_ABBREVIATIONS = "https://www.laposte.fr/envoyer/abreviation-adresses-postales"
 const UPU_FRANCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/fraEn.pdf"
@@ -39,7 +39,8 @@ const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 const composedFrom = (near: string, pronoun: string) =>
 	`composed from the ${near} row and the first-person pronoun (Wiktionary ${WIKTIONARY}${pronoun})`
 
-const LEVEL_LEXICON = "packages/codex/lib/level-semantics.ts, common building usage with no published authority"
+const LEVEL_LEXICON =
+	"packages/codex/lib/designators/level-semantics.ts, common building usage with no published authority"
 
 const FR = { script: "Latn", language: "fr" } as const
 

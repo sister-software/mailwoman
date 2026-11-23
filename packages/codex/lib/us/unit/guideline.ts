@@ -13,7 +13,7 @@
  * @see {@link https://pe.usps.com/text/pub28/28c2_003.htm USPS Pub 28 §213 (Secondary Address Unit Designators)}
  */
 
-import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#postal/guideline"
+import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#designators/guideline"
 import {
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_REQUIRES_RANGE,

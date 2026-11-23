@@ -12,7 +12,7 @@
 
 import { Alpha3ToCountryRecord, CountryISO2 } from "#country/codes"
 import type { CountryName } from "#country/names"
-import { foldName } from "#normalize"
+import { foldName } from "#names/normalize"
 
 /**
  * Common address spellings by ISO alpha-2.

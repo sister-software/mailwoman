@@ -20,8 +20,8 @@
  * @see {@link https://en.wiktionary.org/wiki/me Wiktionary, me}
  */
 
-import { EN_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#designators/concepts"
+import { EN_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 const AN_POST_PO_BOX = "https://www.anpost.com/Post-Parcels/Receiving/Rent-a-PO-Box"
@@ -30,7 +30,8 @@ const AN_POST_TERMS = "https://www.anpost.com/Terms-Conditions"
 const composedFrom = (near: string, pronoun: string) =>
 	`composed from the ${near} row and the first-person pronoun (Wiktionary ${WIKTIONARY}${pronoun})`
 
-const LEVEL_LEXICON = "packages/codex/lib/level-semantics.ts, common building usage with no published authority"
+const LEVEL_LEXICON =
+	"packages/codex/lib/designators/level-semantics.ts, common building usage with no published authority"
 
 const EN = { script: "Latn", language: "en" } as const
 

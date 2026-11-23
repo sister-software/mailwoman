@@ -15,7 +15,7 @@
  *   regions, the Canadian code is a surface form as well as a resolver key.
  */
 
-import { foldName } from "#normalize"
+import { foldName } from "#names/normalize"
 
 /**
  * Per-province record with an ISO 3166-2:CA code, an English name and a co-official French name.

@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { postcodePrefixAt, postcodePrefixLevel } from "#postal/prefix"
+import { postcodePrefixAt, postcodePrefixLevel } from "#labels/postcode/prefix"
 
 describe("postcodePrefixLevel", () => {
 	it("reads a country in either case and returns null for a country without a rule", () => {

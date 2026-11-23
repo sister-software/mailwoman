@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
+import { abbreviationDictionary } from "@mailwoman/codex/labels/street/abbreviations"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"

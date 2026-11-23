@@ -19,7 +19,7 @@
 import { AU_DELIVERY_SERVICE_DESIGNATORS, type AuDeliveryServiceAbbreviation } from "#au/delivery/service"
 import { AU_LEVEL_DESIGNATOR_VARIANTS, AU_LEVEL_DESIGNATORS, type AuLevelCode } from "#au/level-designator"
 import { AU_UNIT_TYPE_RULES } from "#au/unit-type"
-import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
+import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#designators/concepts"
 
 const BOOKLET = "https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf"
 

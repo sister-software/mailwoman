@@ -9,7 +9,7 @@
  */
 
 import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
-import { foldName } from "@mailwoman/codex/normalize"
+import { foldName } from "@mailwoman/codex/names/normalize"
 import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

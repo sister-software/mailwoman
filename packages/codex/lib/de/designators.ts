@@ -23,8 +23,8 @@
  */
 
 import { DE_POSTFACH_RULES } from "#de/postfach"
-import { DE_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#designators/concepts"
+import { DE_LEVEL_DESIGNATORS } from "#designators/level-semantics"
 
 const UPU_GERMANY = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/deuEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
@@ -32,7 +32,8 @@ const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 const composedFrom = (near: string, pronoun: string) =>
 	`composed from the ${near} row and the first-person pronoun (Wiktionary ${WIKTIONARY}${pronoun})`
 
-const LEVEL_LEXICON = "packages/codex/lib/level-semantics.ts, common building usage with no published authority"
+const LEVEL_LEXICON =
+	"packages/codex/lib/designators/level-semantics.ts, common building usage with no published authority"
 
 const DE = { script: "Latn", language: "de" } as const
 

@@ -31,7 +31,7 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { foldToken } from "@mailwoman/codex/normalize"
+import { foldToken } from "@mailwoman/codex/names/normalize"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict } from "@mailwoman/core/values/json"

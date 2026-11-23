@@ -7,7 +7,7 @@
  *   Each revision is one decision applied to every row it covers, with an id a revised manifest records.
  */
 
-import { countyDesignatorsFor, countyNameWithoutDesignator } from "@mailwoman/codex/county-designators"
+import { countyDesignatorsFor, countyNameWithoutDesignator } from "@mailwoman/codex/designators/county"
 
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
 

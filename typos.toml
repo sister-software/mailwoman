@@ -393,7 +393,6 @@ extend-glob = [
 	"street-type.ts",
 	"register.test.ts",
 	"locale.test.ts",
-	"house-number-repetition.ts",
 	"repetition.ts",
 	"repetition.test.ts",
 ]

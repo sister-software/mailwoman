@@ -38,7 +38,7 @@
 import { AU_STATE_ABBREVIATIONS } from "#au/state"
 import { CA_PROVINCES } from "#ca/province"
 import { GB_COUNTRIES } from "#gb/country"
-import { foldName } from "#normalize"
+import { foldName } from "#names/normalize"
 import { US_STATE_BY_ABBREVIATION } from "#us/state"
 
 /**

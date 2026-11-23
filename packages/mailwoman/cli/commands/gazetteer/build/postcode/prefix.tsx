@@ -14,7 +14,7 @@
  *   and the file is sealed read-only afterwards.
  */
 
-import { POSTCODE_PREFIX_LEVELS, type PostcodePrefixLevel } from "@mailwoman/codex/postal/prefix"
+import { POSTCODE_PREFIX_LEVELS, type PostcodePrefixLevel } from "@mailwoman/codex/labels/postcode/prefix"
 import { allKeyed } from "@mailwoman/core/async/promises"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

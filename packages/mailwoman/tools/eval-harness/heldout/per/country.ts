@@ -19,7 +19,7 @@
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
-import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street/convention"
+import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/labels/street/convention"
 import { sha256File, sha256Hex } from "@mailwoman/core/crypto/hash"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"

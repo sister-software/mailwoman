@@ -8,7 +8,7 @@
  *   a postcode the same way. The binding assertions below are the ones a constant cannot satisfy.
  */
 
-import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
+import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { describe, expect, it } from "vitest"

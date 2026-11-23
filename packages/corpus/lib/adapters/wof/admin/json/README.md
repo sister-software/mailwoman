@@ -58,7 +58,7 @@ Per WOF feature, the adapter consults:
 Anything else is silently dropped.
 
 A country whose towns WOF types as another placetype reads that placetype as its locality
-(`postalTownPlacetypeForCountry` in `@mailwoman/codex/placetype-map`). New Zealand's towns and cities
+(`postalTownPlacetypeForCountry` in `@mailwoman/codex/labels/placetype-map`). New Zealand's towns and cities
 are `localadmin` records, so `Auckland` is the `locality`, and a WOF `locality` inside it with another
 name, such as `Papatoetoe`, is a `dependent_locality` written beside it, as NZ Post writes the suburb
 above the town or city.
