@@ -1566,6 +1566,48 @@
 				}
 			},
 			"notes": "v8.9.0 seed 42 int8 (md5 75b1e6f6b4c7d85221091ab5ffa12063), the first model to pass a release verdict: requirements v13, confirmation role, 16 of 16 checks, objective +0.081 [+0.061, +0.101] against 10.8.0. Battery: 17 of 18 floors, int8 against fp32 delta 0 on all 17 legs. The operator accepted fr.postcode 98.6 against its 98.8 floor (tp 1,258, fp 6, fn 30 of 1,288) as a reported loss; the v9.0.0-base spec is unrevised. fr.bare_street_intact 100 against its 75 floor has no ledger key. OPERATOR-EXCEPTED CHECKS: fr.postcode. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v890/battery-pair]"
+		},
+		{
+			"run_id": "v9-0-0-base-20261123",
+			"model_version": "11.3.0",
+			"model_path": "@mailwoman/neural-weights-en-us@11.3.0",
+			"corpus_version": "v0.8.22-retention-overlay",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"tokenizer_md5": "5a1759ca2a384ab7fe1ac2166399106c",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-11-23",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 90000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 95,
+					"country_homograph": 98.1,
+					"micro": 88.4,
+					"locality": 90.2,
+					"region": 93.2,
+					"street": 77.1,
+					"street_prefix": 95.8,
+					"street_suffix": 100,
+					"unit": 100,
+					"po_box_real": 98.2,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 98.8,
+					"house_number": 97.9,
+					"region": 85.5,
+					"cedex_real": 100
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 67
+				}
+			},
+			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v8100/promotion]"
 		}
 	]
 }
