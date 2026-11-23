@@ -65,9 +65,9 @@ with the publisher's words, for the others.
 `found: "site-terms-not-applied"` records a reading where the dataset's metadata states no terms and the
 publisher's website states site-wide terms that the decision doesn't read as the dataset's grant. Oneida and
 Waukesha counties in Wisconsin read that way. A noncommercial site policy over the site that leads to the file
-refuses `distribute-rows` and leaves `transform` and `train` permitted, as on those two rows and on St.
-Mary's County, Maryland, whose file the policy's own site serves. Their `commercial-use` purpose reads permitted,
-carried from those operation readings, and states that the clause hasn't been re-read for that purpose.
+refuses `distribute-rows`, as on those two rows and on St. Mary's County, Maryland, whose file the policy's own site
+serves. The 2026-11-23 re-read found that each policy limits use as well as redistribution, so those three decisions
+refuse `commercial-use` with the clause in full, and no action that trains, evaluates or sells admits them.
 
 Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw
 listing, the Taoyuan City Government's portal page or the Keelung City Government's site-wide open-data

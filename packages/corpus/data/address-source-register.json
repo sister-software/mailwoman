@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "a98157357ab82a109dd855e9f6c41420f09ff258bd4e40add2a811735ca92be2",
+	"contentDigest": "d836f5938ff4c9608aaa42659d26227feee332c1fab9b20127bf9a0b892ab24a",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -29096,9 +29096,8 @@
 			},
 			"purposes": {
 				"commercial-use": {
-					"permission": "permitted",
-					"basis": "other-documented",
-					"because": "Carried from this decision's operation readings, which apply the noncommercial clause quoted under `distribute-rows` to that operation alone and permit the others under the US factual-data reading. Whether the clause also bars commercial use of the rows has not been re-read since the purpose axis was added."
+					"permission": "refused",
+					"because": "Re-read on 2026-11-23 at https://www.stmaryscountymd.gov/IT/Legal/ (HTTP 200, 34,013 bytes, sha256 `07c5d0df0be2396f…`). The Copyright Policy states: `The contents of this website are proprietary to the Board of County Commissioners for St. Mary’s County, Inc. and third parties and are subject to the copyrights, trademarks and other intellectual property rights of the Board of County Commissioners for St. Mary’s County, Inc. and third parties. You may use this website only for your personal, non-commercial use. Other than making limited copies of this website's content, which you may also share with and transmit to your friends and colleagues, you may not reproduce, retransmit, redistribute, upload or post any part of this website, including the contents thereof, in any form or by any means, or store it in any information storage and retrieval system, without prior written permission from the Board of County Commissioners for St. Mary’s County, Inc.` Address_Points.zip is served from that website, and this decision already reads it as the website's content. The policy permits only personal, non-commercial use, so training or evaluating a model that is sold is refused."
 				},
 				"sale": {
 					"permission": "permitted",
@@ -58023,9 +58022,8 @@
 			},
 			"purposes": {
 				"commercial-use": {
-					"permission": "permitted",
-					"basis": "other-documented",
-					"because": "Carried from this decision's operation readings, which apply the noncommercial clause quoted under `distribute-rows` to that operation alone and permit the others under the US factual-data reading. Whether the clause also bars commercial use of the rows has not been re-read since the purpose axis was added."
+					"permission": "refused",
+					"because": "Re-read on 2026-11-23 at https://www.oneidacountywi.gov/acceptable-use-policy/ (HTTP 200, 254,247 bytes, sha256 `c05e1d47614c8ca5…`). The Acceptable Use Policy's Copyright section states: `The material is for the noncommercial use of the general public. The fair use guidelines of the U.S. copyright statutes apply to all material on the www.co.oneida.wi.gov and linked agency web sites. Oneida (County) shall remain the sole and exclusive owner of all rights, title and interest in and to all specifically copyrighted information created and posted for inclusion in this system. Photographs and graphics on the Oneida County Web site are the property of the County and the County Department that holds a license to use and display the material. For copy or use of information on the County web site that is outside of the fair use provisions of copyright law, please seek permission from the individual listed as responsible for the web site.` Its first sentence limits the use of the material, not only its redistribution, and this decision already applies the policy to the layer reached from the Land Records page, refusing `distribute-rows` on it. Training or evaluating a model that is sold is commercial use of the material, so the same clause refuses it."
 				},
 				"sale": {
 					"permission": "permitted",
@@ -79218,9 +79216,8 @@
 			},
 			"purposes": {
 				"commercial-use": {
-					"permission": "permitted",
-					"basis": "other-documented",
-					"because": "Carried from this decision's operation readings, which apply the noncommercial clause quoted under `distribute-rows` to that operation alone and permit the others under the US factual-data reading. Whether the clause also bars commercial use of the rows has not been re-read since the purpose axis was added."
+					"permission": "refused",
+					"because": "Re-read on 2026-11-23 at https://www.waukeshacounty.gov/website-policies-notices/ (HTTP 200, 87,557 bytes, sha256 `2261b5fc6944332b…`). Terms & Conditions of Use E states: `The materials provided here are intended for noncommercial public use, with adherence to the fair use guidelines under U.S. copyright laws applying to all materials on the County’s website. The County retains exclusive ownership of all rights, title, and interests in any specifically copyrighted content created and published within the County’s website.` Section D states `The laws of the State of Wisconsin shall apply to all uses of this data and the County’s website.`, and F asks a user `To reproduce or use information from the County’s website beyond fair use` to contact the Public Information Officer. The clause limits use of the materials, data included, and not only their redistribution, and this decision already applies the policy to the layer reached from the Land Information System page, refusing `distribute-rows` on it. Training or evaluating a model that is sold is commercial use, so the same clause refuses it."
 				},
 				"sale": {
 					"permission": "permitted",
