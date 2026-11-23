@@ -45,7 +45,7 @@ is a license grant rather than an assignment.
    contribution, or your employer has waived those rights.
 
 If you're contributing on behalf of a company and need a signed corporate CLA
-rather than the DCO certification, contact teffen@sister.software.
+rather than the DCO certification, contact hello@sister.software.
 
 <details>
 <summary><strong>Developer Certificate of Origin 1.1</strong> (full text)</summary>
@@ -203,4 +203,4 @@ node packages/mailwoman/out/cli/main.js --help
 - [`docs/records/site-2026-08/concepts/what-mailwoman-is.mdx`](./docs/records/site-2026-08/concepts/what-mailwoman-is.mdx)
   — what the system _is_, if you're new to the project.
 
-Questions that don't fit an issue? teffen@sister.software.
+Questions that don't fit an issue? hello@sister.software.

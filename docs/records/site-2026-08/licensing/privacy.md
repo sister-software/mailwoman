@@ -7,7 +7,7 @@ hide_footer: true
 
 # Privacy policy & legal posture
 
-Last updated: 2026-07-11. Contact for anything on this page: teffen@sister.software.
+Last updated: 2026-07-11. Contact for anything on this page: hello@sister.software.
 
 Mailwoman keeps personal data private through its architecture rather than through procedures. The software is designed so that personal data never reaches us. This page states that design, describes the few services we operate, and lists the legal frameworks the design addresses.
 

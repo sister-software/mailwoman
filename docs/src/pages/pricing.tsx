@@ -20,7 +20,7 @@ import { PricingCalculator } from "../components/PricingCalculator/PricingCalcul
 
 import styles from "./pricing.module.css"
 
-const SALES_MAILTO = "mailto:teffen@sister.software?subject=Mailwoman%20licensing"
+const SALES_MAILTO = "mailto:hello@sister.software?subject=Mailwoman%20licensing"
 
 interface TierProps {
 	name: string

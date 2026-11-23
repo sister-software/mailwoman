@@ -27,7 +27,7 @@ Under the commercial license, you may use Mailwoman in proprietary or closed-sou
 
 This license is granted under a separate written agreement between the licensee and Sister Software. A reference template of those terms is provided in [`COMMERCIAL-LICENSE.md`](./COMMERCIAL-LICENSE.md); it is a template only, and grants no rights until a specific agreement is executed in writing.
 
-To obtain a commercial license, contact: teffen@sister.software
+To obtain a commercial license, contact: hello@sister.software
 
 ---
 

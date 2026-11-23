@@ -209,7 +209,7 @@ Mailwoman is dual-licensed:
   may use, modify, and redistribute the software, but you must share your modifications and,
   for network services, your source.
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing
-  obligation. Contact `teffen@sister.software`.
+  obligation. Contact `hello@sister.software`.
 
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases).
 The [privacy policy](https://mailwoman.post/privacy)

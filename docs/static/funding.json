@@ -4,7 +4,7 @@
 		"type": "individual",
 		"role": "owner",
 		"name": "Teffen Ellis",
-		"email": "teffen@sister.software",
+		"email": "hello@sister.software",
 		"description": "Creator and maintainer of Mailwoman, publishing as Sister Software. I build open, self-hostable address infrastructure: a small neural address parser plus geocoder that runs from reproducible, open-data artifacts — no cloud dependency, no per-query cost.",
 		"webpageUrl": {
 			"url": "https://mailwoman.sister.software"
@@ -43,12 +43,12 @@
 				"guid": "bank-transfer",
 				"type": "bank",
 				"address": "",
-				"description": "Bank transfer (ACH/SEPA/wire). Contact teffen@sister.software for invoicing and account details."
+				"description": "Bank transfer (ACH/SEPA/wire). Contact hello@sister.software for invoicing and account details."
 			},
 			{
 				"guid": "email",
 				"type": "other",
-				"address": "teffen@sister.software",
+				"address": "hello@sister.software",
 				"description": "Email contact for any funding arrangement, grants administration, or invoicing questions."
 			}
 		],

@@ -5,7 +5,7 @@ id: third-party-notices
 ---
 
 Mailwoman is distributed under the [AGPL-3.0 license](https://www.gnu.org/licenses/AGPL-3.0.html)
-(with a commercial license available — contact `teffen@sister.software`), and is made
+(with a commercial license available — contact `hello@sister.software`), and is made
 possible through the contributions of the open-source community.
 
 The notices below are split by where each dependency reaches you:

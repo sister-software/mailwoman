@@ -23,7 +23,7 @@ differ, the repository copy governs code contributions and this page will be cor
 
 ## Feedback: bugs and enhancement requests
 
-- **Email, always answered:** teffen@sister.software — bug reports, enhancement requests, and
+- **Email, always answered:** hello@sister.software — bug reports, enhancement requests, and
   questions. For geocoding bugs, include the input string, the result you got (the trial
   endpoint is fine for reproduction), and the result you expected.
 - The full issue tracker accompanies the source repository. The repository is in the final stage of
@@ -48,7 +48,7 @@ own checks and runbook: [Contributing model work](https://github.com/sister-soft
    Software) a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use,
    modify, distribute, sublicense, and relicense the contribution — including under the AGPL
    and the commercial license — plus a patent license on AGPL §11 terms. Corporate CLA needed
-   instead? Email teffen@sister.software. The complete legal text lives in the repository's
+   instead? Email hello@sister.software. The complete legal text lives in the repository's
    `CONTRIBUTING.md`.
 2. **Code standard.** The codebase uses TypeScript throughout. **oxlint + oxfmt** enforce linting and
    formatting (`yarn lint` must pass — the pre-commit hook runs it on staged files and
@@ -65,4 +65,4 @@ own checks and runbook: [Contributing model work](https://github.com/sister-soft
 4. **Commits and PRs.** Conventional-commit messages (`fix(scope): …`), branched off `main`,
    one concept per PR, CI green (Test + Docs workflows).
 
-Questions that fit none of the above: teffen@sister.software.
+Questions that fit none of the above: hello@sister.software.

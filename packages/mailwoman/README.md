@@ -232,7 +232,7 @@ package is the umbrella that wires them together as a single `npm install`.
 
 Dual-licensed: **[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)** for
 open-source use, or a **commercial license** for closed-source use without the AGPL's
-source-sharing obligation (contact `teffen@sister.software`). Portions derived from
+source-sharing obligation (contact `hello@sister.software`). Portions derived from
 [Pelias Parser](https://github.com/pelias/parser) remain under MIT, and `@mailwoman/core`
 bundles third-party reference data under its own terms — see
 [THIRD_PARTY_NOTICES](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md).

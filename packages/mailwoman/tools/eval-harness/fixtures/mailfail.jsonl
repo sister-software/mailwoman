@@ -79,7 +79,7 @@
 {"raw":"https://example.com/search?q=350+5th+Ave&city=New+York#frag","class":"structured","expect":"no-throw","note":"a URL"}
 {"raw":"/home/lab/Projects/mailwoman/core/data/wof.db","class":"structured","expect":"no-resolve","note":"a unix file path"}
 {"raw":"C:\\Users\\lab\\Documents\\addresses.csv","class":"structured","expect":"no-resolve","note":"a Windows path"}
-{"raw":"teffen@sister.software","class":"structured","expect":"no-resolve","note":"an email address"}
+{"raw":"hello@sister.software","class":"structured","expect":"no-resolve","note":"an email address"}
 {"raw":"127.0.0.1 - - [02/Aug/2026:14:33:07 +0000] \"GET /v1/parse HTTP/1.1\" 200 4523","class":"structured","expect":"no-resolve","note":"an nginx access-log line"}
 {"raw":"id,name,lat,lon\n1,New York,40.7128,-74.0060","class":"structured","expect":"no-throw","note":"a CSV header + row"}
 {"raw":"address:\n  street: 5th Ave\n  city: New York\n","class":"structured","expect":"no-throw","note":"a YAML document"}

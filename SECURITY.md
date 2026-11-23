@@ -5,7 +5,7 @@
 If you find a security issue in Mailwoman, please report it privately — **do not
 open a public GitHub issue** for anything that could be exploited.
 
-Email **teffen@sister.software** with:
+Email **hello@sister.software** with:
 
 - a description of the issue and the impact you think it has,
 - the steps (or a proof of concept) to reproduce it,

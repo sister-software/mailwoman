@@ -13,7 +13,7 @@ This Agreement is an alternative to the AGPL-3.0-only license. If you do not acc
 ## 1. Parties
 
 Licensor: Nirrius LLC (d/b/a Sister Software)
-Contact: teffen@sister.software
+Contact: hello@sister.software
 
 Licensee: The individual or legal entity obtaining rights under this Agreement.
 
