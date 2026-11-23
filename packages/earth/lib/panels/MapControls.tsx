@@ -16,7 +16,7 @@
  */
 
 import type React from "react"
-import { useEffect } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import { registerMemoryMap } from "#memory/ledger"
@@ -24,10 +24,21 @@ import { useMemoryProfile } from "#memory/profile"
 import { pageSearchParam } from "#routes"
 
 import { CompactBuildings } from "../scene/CompactBuildings.tsx"
-import { Scene3D } from "../scene/Scene3D.tsx"
 import { CameraPermalink } from "./CameraPermalink.tsx"
 import { JurisdictionInspector } from "./JurisdictionInspector.tsx"
 import { DebugControl } from "./MapDebug.tsx"
+
+/**
+ * The deck.gl scene, fetched when a page first mounts it.
+ *
+ * The scene's module imports deck.gl, luma.gl and loaders.gl.
+ * A page that leaves the scene out, by `?no-3d` or by its memory profile, fetches none of them.
+ */
+const Scene3D = lazy(async () => {
+	const { Scene3D: Scene } = await import("#scene/Scene3D")
+
+	return { default: Scene }
+})
 
 /**
  * Mounts the jurisdiction legend and hover card on the surrounding `<Map>`,
@@ -50,7 +61,11 @@ export const MapControls: React.FC<{ devMode: boolean; runtimeReady: boolean }> 
 
 	return (
 		<>
-			{scene3D ? <Scene3D runtimeReady={runtimeReady} budget={scene3D.budget} /> : null}
+			{scene3D ? (
+				<Suspense fallback={null}>
+					<Scene3D runtimeReady={runtimeReady} budget={scene3D.budget} />
+				</Suspense>
+			) : null}
 			<CompactBuildings runtimeReady={runtimeReady} />
 			<CameraPermalink />
 			<JurisdictionInspector map={map} />
