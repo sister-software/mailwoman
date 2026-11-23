@@ -159,15 +159,27 @@ shape (no WOF region for the shape, or a GeoNames-fallback score that failed its
 doesn't fail the receipt, and the report lists it with its reasons. A cell with a writable decile-1 place that
 misses its target fails. The report lists every failing form, and lists under each failing cell the writable
 decile-1 places that have no expected draws, required or not, because a place outside the selection counts toward the share but never
-toward presence. A place the corpus holds out by design counts toward neither: every one of its groups is on the
-evaluation-group list or the validation list that the corpus manifest records under `evaluation_groups`. A place
-can't be required in training and frozen for grading at once. `readHeldOutByDesign` in `audits/prominent/records.ts` reads both lists, refuses one
-whose sha256 isn't the manifest's, takes each listed group's WOF record, and keeps a record that has no train row in
-any of its groups. That pass reads every train file's ids: 322 s over v0.8.22's 1,104 files. The report's
-`held_out_by_design` gives the places and lists by country, and `not_required` counts them as
-`held-out-by-design`. A held-out place has no form and no population in its demand cell, so decile 1's
-population share is measured over the places training can read. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
-held-out freeze and the validation quota skip. A sub-locality's pair with its parent is required as `locality` and `region` when the
+toward presence.
+
+A form the corpus holds out by design counts toward neither. Hold-out by design applies to one form and its surface
+at a time: a form is held out when rows of the groups on the evaluation-group list or the validation list (the lists
+the corpus manifest records under `evaluation_groups`) write that form's own surface in its shape, by the receipt's
+own match, and no drawable train row does. The surface is then kept for grading, and a surface can't be required in
+training and frozen for grading at once. Every other form of the place stays required: a frozen row of another name
+of the place, such as Changsha's `-name-kan-x-preferred-with-region-country` row, holds out no primary-name form,
+while Roeselare's frozen `default-with-country` row holds out its `country` form alone. A place leaves the
+population of a cell only when its form in that cell's shape is held out. `readListedGroups` in
+`audits/prominent/records.ts` reads both lists and refuses one whose sha256 isn't the manifest's. The scan
+(`scanShortAdminRows` with `listed`) then leaves every row of a listed group out of the train rows, as the re-split
+takes it out of train, and a second pass writes the short admin rows of the listed groups in every data file of the
+manifest, the rows the policy sends to `val` and `test`. The receipt reads only those data files: never
+`data/eval/**`, a collection's `.rows.jsonl` or the reserve's rows file. It compares surfaces inside DuckDB, prints
+counts and group ids, and records under `held_out_by_design.read` the files it read and the listed rows it found.
+The census's `tuples` step sizes through the same reader (`readSizingCells`), so its held-out forms and targets are
+the receipt's. `audits/required-groups.ts` reads the receipt's required places as the WOF records whose groups a
+held-out freeze and the validation quota skip. A reserve draw also skips `withRequiredFormGroups`: every group
+whose short admin train rows write a required form by the receipt's own match (`readRequiredFormGroups`), such as a
+namesake record's `wof-admin` group that was the only `country`-shape row of Rotorua on v0.8.22. A sub-locality's pair with its parent is required as `locality` and `region` when the
 places table marks it `postal_pair` (`isPostalLocalityPair` in `@mailwoman/gazetteer/tools/pipeline/pair/postal-children`),
 and as `dependent_locality` and `locality` otherwise. The draws are what the config's sampler reads in one epoch. A row's
 expected draws are its source's requested share of `train_rows_per_epoch` over the source's admitted rows, times

@@ -264,9 +264,19 @@ table through the receipt's own reader and returns the WOF record of every requi
 admits. `freeze.run.ts --training-config <yaml>` and `quota.run.ts --config <yaml>` both skip every group of those
 records, and each records the skip in its output (`sampling.requiredTrainingGroups`, `requiredTrainingGroups`) and
 prints it by country. A row of another source that writes the place keeps its own group, and a draw can still take
-that group. `freeze.run.ts --dry-run` prints the pool's counts and the skip and draws no row. The receipt in turn
-counts no place the corpus holds out by design, one whose every group is on the evaluation-group list or the
-validation list the corpus manifest records: such a place is neither required nor part of its demand cell
+that group. `freeze.run.ts --dry-run` prints the pool's counts and the skip and draws no row. A reserve draw also
+skips every group whose train rows write a required form by the receipt's match, and every group of a top-decile place
+the `prominent-places` recipe may write demand rows for, so no draw takes a recipe row out of train after the recipe
+is sized.
+
+**Held out by design, per form.** The receipt holds out one form of a place at a time. A form is held out by design when rows
+of the groups on the evaluation-group list or the validation list the corpus manifest records write the form's own
+surface in its shape, and no drawable train row does. Neither the receipt nor the recipe's sizing then requires that
+form, and its place leaves the population of that form's cell. Every other form of the place stays required, so a
+frozen row of another name of a place keeps its primary-name forms in training. To find those forms the receipt reads
+the short admin rows of the listed groups from the data files the corpus manifest lists, the rows this policy sends to
+`val` and `test`. It reads no file under `data/eval`, no collection's rows file and no reserve's rows file. It compares
+surfaces inside DuckDB, prints counts and group ids, and records which files it read
 (`packages/mailwoman/tools/training/AGENTS.md`).
 
 **A forward reserve.** A collection frozen from a build's held-out places holds only the rows the build adds, so a

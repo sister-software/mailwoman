@@ -15,16 +15,18 @@ import {
 } from "#tools/training/audits/required-groups"
 
 /**
- * GB's ranked Alpha (required), Beta (unselected) and Gamma (a failed GeoNames match), and FR's capital Delta.
+ * GB's ranked Alpha (required), Beta (unselected, decile 9), Gamma (a failed GeoNames match)
+ * and Epsilon (unselected in decile 1, so the recipe may write it), and FR's capital Delta.
  * A config admitting only GB doesn't require Delta.
  */
 const PLACES_SQL =
 	"SELECT * FROM (VALUES " +
-	"(101, 'GB', 1, true, false, 'importance', NULL), " +
-	"(102, 'GB', 9, false, false, 'importance', NULL), " +
-	"(103, 'GB', 2, true, false, 'geonames', 'competing-candidate'), " +
-	"(104, 'FR', 1, false, true, 'importance', NULL)" +
-	") AS t(spr_id, country, rank, by_rank, capital, score_source, geonames_check)"
+	"(101, 'GB', 1, 1, true, false, 'importance', NULL), " +
+	"(102, 'GB', 9, 9, false, false, 'importance', NULL), " +
+	"(103, 'GB', 2, 1, true, false, 'geonames', 'competing-candidate'), " +
+	"(104, 'FR', 1, 1, false, true, 'importance', NULL), " +
+	"(105, 'GB', 3, 1, false, false, 'importance', NULL)" +
+	") AS t(spr_id, country, rank, decile, by_rank, capital, score_source, geonames_check)"
 
 describe("readRequiredTrainingGroups", () => {
 	it("reads the receipt's required places for the config's countries, and names each place's groups", async () => {
@@ -46,8 +48,18 @@ describe("readRequiredTrainingGroups", () => {
 			data: { prominent_place_coverage: places, country_weights: { GB: 1 } },
 		})
 
-		expect(required.records).toEqual(new Map([[101, "GB"]]))
-		expect(required.receipts).toMatchObject([{ receipt: "prominent_place_coverage", places, required_places: 1 }])
+		// Alpha is required.
+		// Epsilon's demand rows are the recipe's, so its groups stay in train too.
+		expect(required.records).toEqual(
+			new Map([
+				[101, "GB"],
+				[105, "GB"],
+			])
+		)
+
+		expect(required.receipts).toMatchObject([
+			{ receipt: "prominent_place_coverage", places, required_places: 1, writable_places: 1 },
+		])
 
 		using db = await openDuckDB()
 
@@ -83,6 +95,6 @@ describe("readRequiredTrainingGroups", () => {
 			data: { prominent_place_coverage: null, country_weights: { GB: 1 } },
 		})
 
-		expect(required).toEqual({ receipts: [], records: new Map() })
+		expect(required).toEqual({ receipts: [], records: new Map(), formGroups: null })
 	})
 })

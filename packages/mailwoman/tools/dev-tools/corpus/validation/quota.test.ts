@@ -33,7 +33,7 @@ describe("readValidationPool", () => {
 			manifest,
 			frozen: { groups: new Set() },
 			capRows: 100,
-			required: { receipts: [], records: new Map([[7, "SM"]]) },
+			required: { receipts: [], records: new Map([[7, "SM"]]), formGroups: null },
 		})
 
 		expect(candidates.map((candidate) => candidate.group).toSorted()).toEqual(["oa-sm-1", "wof-admin-8-default-self"])

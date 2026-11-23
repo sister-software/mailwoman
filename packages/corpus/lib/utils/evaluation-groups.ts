@@ -212,6 +212,13 @@ export interface RequiredGroupReceipt {
 	places: string
 	places_sha256: string
 	required_places: number
+	/**
+	 * Decile-1 places outside the receipt's requirement.
+	 *
+	 * The prominent-places recipe may write demand rows for them, so the draw skips their groups too.
+	 * A skip recorded before they were read records none.
+	 */
+	writable_places?: number
 }
 
 /**
@@ -222,6 +229,10 @@ export interface RequiredGroupReceipt {
 export interface RequiredGroupSkip {
 	receipts: RequiredGroupReceipt[]
 	requiredRecords: number
+	/**
+	 * Groups of another record or source whose train rows write a required form, when the draw read them.
+	 */
+	requiredFormGroups?: number
 	skippedGroups: number
 	/**
 	 * Skipped groups per country of the pool's rows, sorted by country.

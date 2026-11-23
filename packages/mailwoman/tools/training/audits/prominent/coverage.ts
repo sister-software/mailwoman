@@ -40,10 +40,13 @@
  *   A place whose score rests on a GeoNames population is required only when that
  *   match passed its checks (`geonames_check = 'verified'`).
  *
- *   A place the corpus holds out by design is neither required nor counted in its demand cell:
- *   every one of its groups is on the evaluation-group list or the validation list
- *   the corpus manifest records ({@linkcode readHeldOutByDesign}).
- *   A place can't be required in training and frozen for grading at once.
+ *   A form the corpus holds out by design is neither required nor counted:
+ *   rows of the groups on the evaluation-group list or the validation list the
+ *   corpus manifest records ({@linkcode readListedGroups}) write the form's own
+ *   surface in its shape, and no drawable train row does.
+ *   Its place leaves that form's cell population, and every other form of the place stays required.
+ *
+ *   A surface can't be required in training and frozen for grading at once.
  *
  *   Every threshold comes from the rule: presence is one row, the demand target is
  *   a population share from WOF and GeoNames, and the half follows the held-out
@@ -72,7 +75,7 @@ import { countryAdmission, countSourceShapes, drawsPerAdmittedRow } from "../../
 import { countTrainShapes, type TrainShapeCount } from "../../exposure/train-shapes.ts"
 import { epochRows } from "../census.ts"
 import { requestedShares, resolveSourceWeights } from "../epoch/mixture.ts"
-import { type HeldOutByDesign, readHeldOutByDesign } from "./records.ts"
+import { type ListedGroups, readListedGroups } from "./records.ts"
 
 /**
  * What one epoch of a config draws: its length, each source's requested share,
@@ -318,14 +321,12 @@ function valuesSQL(entries: ReadonlyMap<string, number>): string {
 
 /**
  * Creates `admission` from the admitted countries and `ranked` from a places table:
- * every ranked place, with `held_out` set on the places `heldOut` names
- * and `required` set on the other places the rule requires.
+ * every ranked place, with `required` set on the places the rule requires.
  */
 export async function createRankedPlacesTable(
 	db: DisposableDuckDB,
 	placesPath: string,
-	admission: ReadonlyMap<string, number>,
-	heldOut: ReadonlySet<number> = new Set()
+	admission: ReadonlyMap<string, number>
 ): Promise<void> {
 	await db.run("CREATE OR REPLACE TABLE admission (country VARCHAR, chance DOUBLE)")
 
@@ -333,25 +334,11 @@ export async function createRankedPlacesTable(
 		await db.run(`INSERT INTO admission VALUES ${valuesSQL(admission)}`)
 	}
 
-	await db.run("CREATE OR REPLACE TABLE held_out_places (spr_id BIGINT)")
-
-	const held = [...heldOut]
-
-	for (let start = 0; start < held.length; start += 5000) {
-		await db.run(
-			`INSERT INTO held_out_places VALUES ${held
-				.slice(start, start + 5000)
-				.map((id) => `(${id})`)
-				.join(", ")}`
-		)
-	}
-
 	await db.run(
-		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, h.spr_id IS NOT NULL AS held_out, ` +
-			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND h.spr_id IS NULL AND " +
+		`CREATE OR REPLACE TABLE ranked AS SELECT p.*, a.country IS NOT NULL AS admitted, ` +
+			"(p.by_rank OR p.capital) AND a.country IS NOT NULL AND " +
 			"(p.score_source <> 'geonames' OR p.geonames_check = 'verified') AS required " +
-			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) ` +
-			"LEFT JOIN held_out_places h ON h.spr_id = p.spr_id WHERE p.rank IS NOT NULL"
+			`FROM read_parquet(${quoted(placesPath)}) p LEFT JOIN admission a USING (country) WHERE p.rank IS NOT NULL`
 	)
 }
 
@@ -365,34 +352,98 @@ export interface RequiredProminentPlace {
 
 /**
  * Every place the receipt requires for a config's country weights, read from the places table
- * after {@linkcode readProminentPlacesRecord} checks it.
+ * after {@linkcode readProminentPlacesRecord} checks it, and every other place the recipe may write
+ * ({@linkcode writablePlaceSQL}) in an admitted country: a decile-1 place a demand cell's rows go to.
  */
 export async function readRequiredProminentPlaces(
 	placesPath: string,
 	countryWeights: Readonly<Record<string, number>>,
 	limits?: DuckDBLimits
-): Promise<{ record: ProminentPlacesRecord; places: RequiredProminentPlace[] }> {
+): Promise<{ record: ProminentPlacesRecord; places: RequiredProminentPlace[]; writable: RequiredProminentPlace[] }> {
 	const record = await readProminentPlacesRecord(placesPath)
 
 	using db = await openDuckDB(limits)
 
 	await createRankedPlacesTable(db, placesPath, admittedCountries(countryWeights))
 
-	const places = await queryRows(
-		db,
-		"SELECT spr_id, country FROM ranked WHERE required ORDER BY spr_id",
-		(row): RequiredProminentPlace => ({ spr_id: row.number("spr_id"), country: row.text("country") })
-	)
+	const read = (where: string) =>
+		queryRows(
+			db,
+			`SELECT spr_id, country FROM ranked WHERE ${where} ORDER BY spr_id`,
+			(row): RequiredProminentPlace => ({ spr_id: row.number("spr_id"), country: row.text("country") })
+		)
 
-	return { record, places }
+	return {
+		record,
+		places: await read("required"),
+		writable: await read(`NOT required AND admitted AND ${writablePlaceSQL()}`),
+	}
 }
 
+/**
+ * The short admin rows of `agg` keyed by the place's own span and the second segment,
+ * with their drawable rows and expected draws, as SQL.
+ * `extra` adds grouping columns of `agg`, such as `g, `.
+ *
+ * The place's own span is the dependent locality when the row writes one, else the locality,
+ * in either position: a largest-first layout writes `Iran, Tehran` and `東京都渋谷区`.
+ */
+function keyedRowsSQL(extra: string, table = "agg"): string {
+	return (
+		`SELECT country, ${extra}` +
+		"CASE WHEN place = 1 THEN s1 ELSE s2 END AS s1, CASE WHEN len(tags) = 1 THEN NULL WHEN place = 1 THEN s2 ELSE s1 END AS s2, " +
+		"CASE WHEN len(tags) = 1 THEN 'bare' ELSE tags[3 - place] END AS second_tag, " +
+		"tags[place] AS place_tag, coalesce(sum(rows) FILTER (WHERE draws > 0), 0)::BIGINT AS rows, " +
+		"sum(draws) AS draws FROM (" +
+		"SELECT *, CASE WHEN list_contains(tags, 'dependent_locality') THEN list_position(tags, 'dependent_locality') " +
+		`WHEN list_contains(tags, 'locality') THEN list_position(tags, 'locality') ELSE 1 END AS place FROM ${table} WHERE len(tags) <= 2` +
+		") GROUP BY ALL"
+	)
+}
+
+/**
+ * Whether a keyed row `k` writes form `f`: the same country and surface, the form's
+ * tag on the place's own span, and the shape's second segment.
+ */
+const FORM_MATCH_SQL =
+	"k.country = f.country AND k.s1 = f.fold AND k.place_tag = f.tag AND (" +
+	"(f.query_shape = 'bare' AND k.second_tag = 'bare') OR (f.query_shape = 'country' AND k.second_tag = 'country') OR " +
+	"(f.query_shape IN ('parent', 'region', 'region_abbr') AND k.second_tag = f.second_tag AND k.s2 = f.second))"
+
+/**
+ * Every group with a drawable train row that writes a required form,
+ * by the match the receipt's presence rule reads.
+ *
+ * The tables must come from {@linkcode createProminentCoverageTables} over a scan written
+ * with groups (`scanShortAdminRows({ groups: true })`), whose rows hold column `g`.
+ */
+export async function readRequiredFormGroups(db: DisposableDuckDB): Promise<Array<{ group: string; country: string }>> {
+	await db.run(`CREATE OR REPLACE TEMP TABLE keyed_groups AS ${keyedRowsSQL("g, ")}`)
+
+	return queryRows(
+		db,
+		"SELECT DISTINCT k.g, f.country FROM forms f JOIN ranked r USING (spr_id) " +
+			`JOIN keyed_groups k ON ${FORM_MATCH_SQL} WHERE r.required AND k.rows > 0 ORDER BY k.g`,
+		(row) => ({ group: row.text("g"), country: row.text("country") })
+	)
+}
+
+/**
+ * Creates the receipt's tables in `db` from a places table, a short admin train aggregate
+ * and, when the corpus lists groups, the short admin aggregate of the listed
+ * groups' rows (`listed-short-admin-rows.parquet`).
+ *
+ * A form is held out by design when the listed rows write its own surface in its shape, by the same
+ * match as the train rows, and no drawable train row does: the corpus keeps that surface for grading.
+ * A held-out form is neither required nor counted, and its place leaves the population of that form's cell.
+ * Every other form of the place stays required.
+ */
 export async function createProminentCoverageTables(
 	db: DisposableDuckDB,
 	placesPath: string,
 	shortAdminPath: string,
 	rates: EpochRates,
-	heldOut: ReadonlySet<number> = new Set()
+	listedShortAdminPath: string | null = null
 ): Promise<void> {
 	await db.run("CREATE OR REPLACE TABLE source_rates (source VARCHAR, per_row DOUBLE)")
 
@@ -401,7 +452,7 @@ export async function createProminentCoverageTables(
 	}
 
 	await db.run(`CREATE OR REPLACE TABLE epoch AS SELECT ${rates.draws}::DOUBLE AS draws`)
-	await createRankedPlacesTable(db, placesPath, rates.admission, heldOut)
+	await createRankedPlacesTable(db, placesPath, rates.admission)
 
 	// A row's expected draws: its source's draws per admitted row times its country's admission chance.
 	await db.run(
@@ -417,61 +468,72 @@ export async function createProminentCoverageTables(
 
 	await db.run(`INSERT INTO requirements VALUES ${requirementValuesSQL()}`)
 
-	// A place held out by design has no form and no population in its cell: every place below is `counted`.
-	await db.run("CREATE OR REPLACE TABLE counted AS SELECT * FROM ranked WHERE NOT held_out")
-
 	// The second segment's tag comes with the place's own: a parent is a locality, or a postal pair's region.
 	await db.run(
 		"CREATE OR REPLACE TABLE forms AS SELECT f.*, q.tag, q.second_tag FROM (" +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM counted UNION ALL " +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM counted WHERE parent_locality IS NOT NULL UNION ALL ` +
-			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM counted WHERE region IS NOT NULL UNION ALL ` +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'bare' AS query_shape, NULL::VARCHAR AS second FROM ranked UNION ALL " +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'parent', ${foldSurfaceSQL("parent_locality")} FROM ranked WHERE parent_locality IS NOT NULL UNION ALL ` +
+			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region', ${foldSurfaceSQL("region")} FROM ranked WHERE region IS NOT NULL UNION ALL ` +
 			`SELECT spr_id, country, band, fold, decile, postal_pair, 'region_abbr', ${foldSurfaceSQL("abbr")} FROM ` +
-			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM counted) UNION ALL " +
-			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM counted" +
+			"(SELECT spr_id, country, band, fold, decile, postal_pair, unnest(region_abbrs) AS abbr FROM ranked) UNION ALL " +
+			"SELECT spr_id, country, band, fold, decile, postal_pair, 'country', NULL FROM ranked" +
 			") f JOIN requirements q ON q.band = f.band AND q.query_shape = f.query_shape AND q.postal_pair = f.postal_pair"
 	)
 
-	// The place's own span is the dependent locality when the row writes one, else the locality,
-	// in either position: a largest-first layout writes `Iran, Tehran` and `東京都渋谷区`.
-	await db.run(
-		"CREATE OR REPLACE TABLE keyed AS SELECT country, " +
-			"CASE WHEN place = 1 THEN s1 ELSE s2 END AS s1, CASE WHEN len(tags) = 1 THEN NULL WHEN place = 1 THEN s2 ELSE s1 END AS s2, " +
-			"CASE WHEN len(tags) = 1 THEN 'bare' ELSE tags[3 - place] END AS second_tag, " +
-			"tags[place] AS place_tag, coalesce(sum(rows) FILTER (WHERE draws > 0), 0)::BIGINT AS rows, " +
-			"sum(draws) AS draws FROM (" +
-			"SELECT *, CASE WHEN list_contains(tags, 'dependent_locality') THEN list_position(tags, 'dependent_locality') " +
-			"WHEN list_contains(tags, 'locality') THEN list_position(tags, 'locality') ELSE 1 END AS place FROM agg WHERE len(tags) <= 2" +
-			") GROUP BY ALL"
-	)
+	await db.run(`CREATE OR REPLACE TABLE keyed AS ${keyedRowsSQL("")}`)
 
 	// A form's rows: the drawable short rows of its surfaces whose own span holds the required tag.
 	await db.run(
 		"CREATE OR REPLACE TABLE hits AS SELECT f.spr_id, f.country, f.band, f.query_shape, f.decile, f.fold, f.second, " +
 			"coalesce(sum(k.rows), 0)::BIGINT AS rows, coalesce(sum(k.draws), 0)::DOUBLE AS draws " +
-			"FROM forms f LEFT JOIN keyed k ON k.country = f.country AND " +
-			"k.s1 = f.fold AND k.place_tag = f.tag AND (" +
-			"(f.query_shape = 'bare' AND k.second_tag = 'bare') OR (f.query_shape = 'country' AND k.second_tag = 'country') OR " +
-			"(f.query_shape IN ('parent', 'region', 'region_abbr') AND k.second_tag = f.second_tag AND k.s2 = f.second)) " +
-			"GROUP BY ALL"
+			`FROM forms f LEFT JOIN keyed k ON ${FORM_MATCH_SQL} GROUP BY ALL`
+	)
+
+	// The forms held out by design: listed rows write the form's own surface, and no drawable train row does.
+	await db.run("CREATE OR REPLACE TABLE held_forms (spr_id BIGINT, query_shape VARCHAR, listed_rows BIGINT)")
+
+	if (listedShortAdminPath) {
+		// Every listed row counts once, whatever its source's weight: the match only asks whether one writes the surface.
+		await db.run(
+			"CREATE OR REPLACE TEMP TABLE listed_agg AS SELECT a.*, string_split(a.shape, '|') AS tags, a.rows::DOUBLE AS draws " +
+				`FROM read_parquet(${quoted(listedShortAdminPath)}) a`
+		)
+
+		await db.run(`CREATE OR REPLACE TEMP TABLE listed_keyed AS ${keyedRowsSQL("", "listed_agg")}`)
+
+		await db.run(
+			"INSERT INTO held_forms SELECT f.spr_id, f.query_shape, sum(k.rows)::BIGINT FROM forms f " +
+				`JOIN listed_keyed k ON ${FORM_MATCH_SQL} WHERE k.rows > 0 AND NOT EXISTS (` +
+				"SELECT 1 FROM hits h WHERE h.spr_id = f.spr_id AND h.query_shape = f.query_shape AND h.rows > 0) " +
+				"GROUP BY f.spr_id, f.query_shape"
+		)
+	}
+
+	// The forms the receipt counts: every form but the held-out ones.
+	await db.run(
+		"CREATE OR REPLACE TABLE counted_hits AS SELECT h.* FROM hits h " +
+			"ANTI JOIN held_forms x ON x.spr_id = h.spr_id AND x.query_shape = h.query_shape"
 	)
 
 	// A place with several region abbreviations is covered in that shape by a row in any of them.
 	await db.run(
 		"CREATE OR REPLACE TABLE place_shapes AS SELECT spr_id, country, band, query_shape, sum(rows)::BIGINT AS rows, " +
-			"sum(draws) AS draws FROM hits GROUP BY ALL"
+			"sum(draws) AS draws FROM counted_hits GROUP BY ALL"
 	)
 
 	// Each surface key counts once in its cell, toward the best decile among the ranked places that write it.
 	await db.run(
 		"CREATE OR REPLACE TABLE surface_rows AS SELECT country, band, query_shape, fold, second, " +
-			"min(decile) AS decile, any_value(rows) AS rows, any_value(draws) AS draws FROM hits GROUP BY ALL"
+			"min(decile) AS decile, any_value(rows) AS rows, any_value(draws) AS draws FROM counted_hits GROUP BY ALL"
 	)
 
+	// A cell's population: its band's places with a population, but those whose form in the cell's shape is held out.
 	await db.run(
-		"CREATE OR REPLACE TABLE population AS SELECT country, band, " +
-			"sum(population_used) FILTER (WHERE decile = 1) / nullif(sum(population_used), 0) AS decile1_population_share " +
-			"FROM counted WHERE population_used > 0 GROUP BY ALL"
+		"CREATE OR REPLACE TABLE population AS SELECT r.country, r.band, q.query_shape, " +
+			"sum(r.population_used) FILTER (WHERE r.decile = 1) / nullif(sum(r.population_used), 0) AS decile1_population_share " +
+			"FROM ranked r JOIN (SELECT DISTINCT band, query_shape FROM requirements) q USING (band) " +
+			"ANTI JOIN held_forms x ON x.spr_id = r.spr_id AND x.query_shape = q.query_shape " +
+			"WHERE r.population_used > 0 GROUP BY ALL"
 	)
 
 	await db.run(
@@ -479,9 +541,10 @@ export async function createProminentCoverageTables(
 			"coalesce(sum(s.rows) FILTER (WHERE s.decile = 1), 0)::BIGINT AS decile1_rows, " +
 			"sum(s.draws)::DOUBLE AS draws, coalesce(sum(s.draws) FILTER (WHERE s.decile = 1), 0)::DOUBLE AS decile1_draws, " +
 			"p.decile1_population_share " +
-			"FROM surface_rows s JOIN (SELECT DISTINCT f.country, f.band, f.query_shape FROM forms f " +
+			"FROM surface_rows s JOIN (SELECT DISTINCT p.country, p.band, p.query_shape FROM place_shapes p " +
 			"JOIN ranked r USING (spr_id) WHERE r.required) c USING (country, band, query_shape) " +
-			"LEFT JOIN population p USING (country, band) GROUP BY s.country, s.band, s.query_shape, p.decile1_population_share"
+			"LEFT JOIN population p USING (country, band, query_shape) " +
+			"GROUP BY s.country, s.band, s.query_shape, p.decile1_population_share"
 	)
 }
 
@@ -510,23 +573,26 @@ export interface ProminentCoverageReport {
 	>
 	corpus: ShortAdminScanRecord
 	/**
-	 * The ranked places the corpus holds out by design ({@linkcode readHeldOutByDesign}),
-	 * which neither presence nor a demand cell counts.
+	 * The forms the corpus holds out by design, and the held-out rows the receipt read to find them.
+	 * Neither presence nor a demand cell counts those forms.
 	 */
-	held_out_by_design: Omit<HeldOutByDesign, "records"> & {
+	held_out_by_design: {
+		policy: ListedGroups["policy"]
+		listed_groups: number
 		/**
-		 * Held-out records that are ranked places.
+		 * The data files the listed pass read, and the short admin rows of listed groups it found there.
+		 * The policy's re-split sends those rows to `val` and `test`.
 		 */
-		places: number
+		read: ShortAdminScanRecord["listed"] | null
 		/**
-		 * Of those, the places the selection rule picks in an admitted country.
-		 * The receipt would otherwise require them.
+		 * Forms held out by design, of ranked places and of required ones.
 		 */
-		selected: number
+		forms: number
+		required_place_forms: number
 		/**
-		 * Held-out ranked places per country.
+		 * Held-out forms per country and shape.
 		 */
-		by_country: Record<string, number>
+		by_country_shape: Array<{ country: string; query_shape: string; forms: number }>
 	}
 	presence: {
 		required_places: number
@@ -714,7 +780,8 @@ export function readDecileOneWritability(db: DisposableDuckDB): Promise<DecileOn
 			`CASE WHEN count(f.spr_id) = 0 THEN ${MISSING_SEGMENT_SQL} ` +
 			`WHEN NOT any_value(${writablePlaceSQL("r")}) ` +
 			"THEN 'GeoNames check failed: ' || coalesce(any_value(r.geonames_check), 'unchecked') END AS reason " +
-			"FROM cells c JOIN counted r ON r.country = c.country AND r.band = c.band AND r.decile = 1 " +
+			"FROM cells c JOIN ranked r ON r.country = c.country AND r.band = c.band AND r.decile = 1 " +
+			"ANTI JOIN held_forms x ON x.spr_id = r.spr_id AND x.query_shape = c.query_shape " +
 			"LEFT JOIN forms f ON f.spr_id = r.spr_id AND f.query_shape = c.query_shape " +
 			"GROUP BY c.country, c.band, c.query_shape, r.spr_id ORDER BY c.country, c.band, c.query_shape, r.spr_id",
 		(row) => ({
@@ -748,8 +815,7 @@ export async function evaluateProminentCoverage(
 
 	const notRequired = await queryRows(
 		db,
-		"SELECT CASE WHEN NOT admitted THEN 'country-not-admitted' WHEN held_out THEN 'held-out-by-design' " +
-			"ELSE coalesce(geonames_check, 'unchecked') END AS reason, " +
+		"SELECT CASE WHEN NOT admitted THEN 'country-not-admitted' ELSE coalesce(geonames_check, 'unchecked') END AS reason, " +
 			"count(*)::INTEGER AS places FROM ranked " +
 			"WHERE (by_rank OR capital) AND NOT required GROUP BY ALL ORDER BY reason",
 		(row) => [row.text("reason"), row.number("places")] as const
@@ -961,7 +1027,34 @@ export interface ProminentCoverageOptions {
 }
 
 /**
- * Runs the receipt: scans the corpus's short admin train rows and applies the three rules,
+ * The forms {@linkcode createProminentCoverageTables} held out by design, counted.
+ */
+export async function readHeldOutForms(
+	db: DisposableDuckDB
+): Promise<Pick<ProminentCoverageReport["held_out_by_design"], "forms" | "required_place_forms" | "by_country_shape">> {
+	const byCountryShape = await queryRows(
+		db,
+		"SELECT r.country, x.query_shape, count(*)::INTEGER AS forms FROM held_forms x JOIN ranked r USING (spr_id) " +
+			"GROUP BY ALL ORDER BY r.country, x.query_shape",
+		(row) => ({ country: row.text("country"), query_shape: row.text("query_shape"), forms: row.number("forms") })
+	)
+
+	const [required] = await queryRows(
+		db,
+		"SELECT count(*)::INTEGER AS n FROM held_forms x JOIN ranked r USING (spr_id) WHERE r.required",
+		(row) => row.number("n")
+	)
+
+	return {
+		forms: byCountryShape.reduce((sum, row) => sum + row.forms, 0),
+		required_place_forms: required ?? 0,
+		by_country_shape: byCountryShape,
+	}
+}
+
+/**
+ * Runs the receipt: scans the corpus's short admin train rows and, when the
+ * corpus lists groups, the listed groups' rows, and applies the three rules,
  * the demand share in the config's expected epoch draws.
  */
 export async function prominentCoverageReport(options: ProminentCoverageOptions): Promise<ProminentCoverageReport> {
@@ -973,14 +1066,15 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 	// The rules need neither.
 	const { scanShortAdminRows } = await import("#tools/dev-tools/corpus/prominent/places")
 
+	const listed = await readListedGroups(options.manifest)
+
 	const corpus = await scanShortAdminRows({
 		manifest: options.manifest,
 		out: scratch.path.toString(),
+		...(listed.policy ? { listed: listed.groups } : {}),
 		limits: options.limits,
 		log: options.log,
 	})
-
-	const heldOut = await readHeldOutByDesign(options.manifest, options.limits, options.log)
 
 	using db = await openDuckDB(options.limits)
 
@@ -989,18 +1083,11 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 		options.places,
 		scratch.path("short-admin-rows.parquet").toString(),
 		epochRates(options.epoch),
-		heldOut.records
+		listed.policy ? scratch.path("listed-short-admin-rows.parquet").toString() : null
 	)
 
 	const rules = await evaluateProminentCoverage(db)
-
-	const heldOutPlaces = await queryRows(
-		db,
-		"SELECT country, count(*)::INTEGER AS places, " +
-			"count(*) FILTER (WHERE (by_rank OR capital) AND admitted)::INTEGER AS selected " +
-			"FROM ranked WHERE held_out GROUP BY country ORDER BY country",
-		(row) => ({ country: row.text("country"), places: row.number("places"), selected: row.number("selected") })
-	)
+	const heldOut = await readHeldOutForms(db)
 
 	const passed =
 		rules.presence.covered_forms === rules.presence.required_forms &&
@@ -1020,12 +1107,10 @@ export async function prominentCoverageReport(options: ProminentCoverageOptions)
 		},
 		corpus,
 		held_out_by_design: {
-			policy: heldOut.policy,
-			listed_records: heldOut.listed_records,
-			trained_records: heldOut.trained_records,
-			places: heldOutPlaces.reduce((sum, row) => sum + row.places, 0),
-			selected: heldOutPlaces.reduce((sum, row) => sum + row.selected, 0),
-			by_country: Object.fromEntries(heldOutPlaces.map((row) => [row.country, row.places])),
+			policy: listed.policy,
+			listed_groups: listed.groups.size,
+			read: corpus.listed ?? null,
+			...heldOut,
 		},
 		...rules,
 	}

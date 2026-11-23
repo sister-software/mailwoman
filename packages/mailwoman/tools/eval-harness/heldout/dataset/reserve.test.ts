@@ -65,7 +65,7 @@ describe("sampleReserveRows", () => {
 			groupsPerCountry: 20,
 			seed: 3,
 			exclusions: [{ datasetID: "confirm", version: "v", groups: ["a0"] }],
-			required: { receipts: [], records: new Map([[5, "NZ"]]) },
+			required: { receipts: [], records: new Map([[5, "NZ"]]), formGroups: null },
 		})
 
 		const groups = new Set(sample.rows.map((row) => row.group))

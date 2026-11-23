@@ -43,7 +43,7 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
+import { type DisposableDuckDB, type DuckDBLimits, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import {
 	PROMINENT_PLACES_SOURCE,
 	type PlaceBand,
@@ -56,8 +56,10 @@ import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 
 import {
 	createProminentCoverageTables,
+	type DemandCell,
 	epochRates,
 	type EpochMeasure,
+	type EpochRates,
 	queryRows,
 	readDemandCells,
 	DEMAND_SHARE_FRACTION,
@@ -298,6 +300,25 @@ export interface ProminentTuplesSummary {
 }
 
 /**
+ * The demand cells the step sizes, each with its target: the receipt's tables
+ * (`createProminentCoverageTables`) over the base scan and the listed groups' rows,
+ * so a form the corpus holds out by design is left out as the receipt leaves it out,
+ * and a cell's target is the one the receipt grades it against.
+ * The connection keeps the tables for the step's other reads.
+ */
+export async function readSizingCells(
+	db: DisposableDuckDB,
+	input: { places: string; shortAdminRows: string; rates: EpochRates; listedShortAdminRows: string | null }
+): Promise<Array<DemandCell & { target: number | null }>> {
+	await createProminentCoverageTables(db, input.places, input.shortAdminRows, input.rates, input.listedShortAdminRows)
+
+	return (await readDemandCells(db)).map((cell) => ({
+		...cell,
+		target: cell.decile1_population_share == null ? null : DEMAND_SHARE_FRACTION * cell.decile1_population_share,
+	}))
+}
+
+/**
  * Writes `prominent-tuples.jsonl` into `out` from `places.parquet` and the base corpus's
  * `short-admin-rows.parquet` there, under the training config's epoch over that base.
  *
@@ -309,6 +330,13 @@ export async function writeProminentTuples(options: {
 	 * The training config's epoch over the base corpus the scan read.
 	 */
 	epoch: EpochMeasure
+	/**
+	 * The listed groups' short admin rows the scan wrote beside the train rows
+	 * (`listed-short-admin-rows.parquet`), or `null` for a base split under no evaluation-group policy.
+	 *
+	 * The cells are then sized against the receipt's own held-out forms and targets.
+	 */
+	listedShortAdminRows: string | null
 	limits?: DuckDBLimits
 }): Promise<ProminentTuplesSummary> {
 	const placesPath = `${options.out}/places.parquet`
@@ -342,7 +370,12 @@ export async function writeProminentTuples(options: {
 
 	using db = await openDuckDB(options.limits)
 
-	await createProminentCoverageTables(db, placesPath, `${options.out}/short-admin-rows.parquet`, rates)
+	const sized = await readSizingCells(db, {
+		places: placesPath,
+		shortAdminRows: `${options.out}/short-admin-rows.parquet`,
+		rates,
+		listedShortAdminRows: options.listedShortAdminRows,
+	})
 
 	const placeShapes = await queryRows(
 		db,
@@ -365,7 +398,7 @@ export async function writeProminentTuples(options: {
 		`${row.country}\u0000${row.band}\u0000${row.query_shape}`
 
 	const placeShapesByCell = Map.groupBy(placeShapes, cellKey)
-	const cells = await readDemandCells(db)
+	const cells = sized
 
 	const places = new Map(
 		(
@@ -426,7 +459,7 @@ export async function writeProminentTuples(options: {
 	const unwritable: Array<{ cell: (typeof cells)[number]; plan: DemandCellPlan }> = []
 
 	for (const cell of cells) {
-		if (cell.decile1_population_share == null) continue
+		if (cell.target == null) continue
 
 		const writable = placeShapesByCell.get(cellKey(cell)) ?? []
 		const members = writable.filter((row) => row.decile === 1)
@@ -435,7 +468,7 @@ export async function writeProminentTuples(options: {
 		const plan: DemandCellPlan = {
 			draws: cell.draws,
 			decile1Draws: cell.decile1_draws,
-			target: DEMAND_SHARE_FRACTION * cell.decile1_population_share,
+			target: cell.target,
 			presenceRows: writable.filter((row) => row.required && row.rows === 0).length,
 			decile1PresenceRows: members.filter((row) => row.required && row.rows === 0).length,
 			admission: admission(cell.country),

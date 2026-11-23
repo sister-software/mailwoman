@@ -316,8 +316,57 @@ The required-group skip keys a place's groups by its WOF record, and the receipt
 writes the place, so a namesake record's group covers a required form without being skipped. The census sized the
 recipe's rows to close each cell at its target on the base build, so a later split that changes the recipe's train rows
 moves those cells. Timmins (decile 1) reads held out by design while one train row in a group of another record writes
-it, so the receipt drops that row's 0.347 draws. The fixes and a third re-split wait for the operator's decision
+it, so the receipt drops that row's 0.347 draws. The operator approved the fixes and a third re-split on 2026-11-23
 (#3333).
+
+**The third re-split.** Four changes went in before it:
+
+1. A form is held out by design only when rows of listed groups write that form's own surface in its shape and no
+   drawable train row does. Before this change a place counted as held out when its own WOF groups were all listed. On
+   the candidate, 31 selected places counted as held out under the place-level reading, 21 of them only because a row
+   of another of their names was frozen, such as Changsha's `-name-kan-x-preferred-with-region-country` row. Under the per-form rule those 21 keep
+   their primary-name forms required, and 4 forms stay held out, each the frozen row's own surface: the `country` forms
+   of Relizane, Roeselare, Berovo and Moquegua.
+2. The census's `tuples` step sizes through the receipt's reader (`readSizingCells`), so the two compute the same
+   held-out forms and the same targets. On the candidate, the earlier sizing used a different held-out set from the
+   receipt's in 300 of 739 cells, and that difference is what failed PW.
+3. The reserve and the validation quota skip the groups of every decile-1 place the recipe may write. The quota had
+   sent 14 recipe rows of 7 CA decile-1 places to validation after the recipe was sized, and those rows failed both CA
+   cells.
+4. The reserve also skips every group whose short admin train rows write a required form, which keeps Rotorua's
+   namesake group in training.
+
+Two other designs were measured on the candidate and not taken:
+
+- A fixed point, which releases a place whenever the recipe's text matches it, covers every required form. It leaves
+  the 21 places held out.
+- The place-level hold-out with the recipe rows dropped whose text matches a held-out place fails 2 of 20,892
+  forms. Both are the namesake Huancayo in Lima (WOF 421177467), bare and `country`.
+
+The re-sized recipe holds 32,378 rows for 16,421 places, every one in train after the re-split. The reserve was redrawn
+as `heldout-reserve-v0.8.22@b2a259ef6bcba5b4` (7,200 groups, 20,500 rows, seed 2216, from the first split's train
+pool), and the group list `evaluation-groups.v0.8.23.json` (sha256 `cfaffa67…`, 201,538 groups) holds it beside the
+section 9 collections. The quota chose 15,300 validation groups (sha256 `6e9ddd98…`) on both the base and the
+recipe-joined build. The re-split (`--jobs 8`, 8,679 s) wrote MANIFEST.json sha256
+`c01019fe088458f8e4950fc8245583083f7e230c3446b1bc4952947186f334fd`: 1,104 files, train 889,226,116, val 23,330, test
+381,056.
+
+**The receipts on that manifest** all exit 0:
+
+| Receipt                  | Result                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Prominent-place coverage | presence 20,910 of 20,910 forms. 808 of 811 demand cells meet their targets, none fails, 3 unwritable (FJ, GD, ID). Coherence 0 rows |
+| Epoch mixture            | all 71 receipts. `former-divisions-exposure` 1,441 against 1,240, `prominent-places-exposure` 11,825 against 10,505                  |
+| Validation coverage      | all 21 floors                                                                                                                        |
+| Label support            | passes                                                                                                                               |
+
+**The audits.** Against v0.8.21-retention-overlay and this manifest under both training configs, the section 9
+collections read `verified_unseen` on every row (8,358, 7,800 and 5,000). The development collections read
+`verified_unseen` 83,278, 5,000 and 42,384, with 3,229 `known_overlap` and 2,932 `unseen_by_candidate` rows among
+them. The pass proof under spec 14 is proven for both roles: the arm at 0.95 against the published 0.85 passes every
+check, and the arm at 0.85 doesn't pass. Against this manifest alone, the reserve's rows overlap training by folded
+text in 1,168 of 20,500 rows, by identity, group and address in none. Those rows read `known_overlap` for the v15
+confirmation draw.
 
 ## 9. The draw of `heldout-confirm-v0.8.22b` from rows outside every corpus
 

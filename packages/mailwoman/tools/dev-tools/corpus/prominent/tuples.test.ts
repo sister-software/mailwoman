@@ -1,9 +1,95 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { sha256File } from "@mailwoman/core/crypto/hash"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/values/json"
+import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { describe, expect, it } from "vitest"
 
-import { apportionUnderCap, type DemandCellPlan, solveRecipeRows } from "./tuples.ts"
+import {
+	createProminentCoverageTables,
+	type EpochRates,
+	evaluateProminentCoverage,
+	PROMINENT_PLACES_RECORD_VERSION,
+} from "#tools/training/audits/prominent/coverage"
+
+import { apportionUnderCap, type DemandCellPlan, readSizingCells, solveRecipeRows } from "./tuples.ts"
+
+describe("readSizingCells", () => {
+	it("sizes a cell against the target the receipt grades it by, with each kind of frozen row in it", async () => {
+		await using directory = await temporaryDirectory("prominent-sizing-")
+		const path = directory.path.toString()
+
+		{
+			using db = await openDuckDB()
+
+			// GB's Alpha (decile 1, required), Beta (decile 2) and Gamma (decile 9), 1,000 people each.
+			// A collection froze Beta's bare row, its own surface, as Babeldaob South's sat in
+			// PW's decile 2 on v0.8.22, and a row of another name of Gamma's, as Changsha's.
+			await db.run(
+				"COPY (SELECT * FROM (VALUES " +
+					"(1, 'GB', 'locality', 'Alpha', 'alpha', 1, 1, true, false, 'importance', NULL, NULL, NULL, 1000, NULL, NULL, []::VARCHAR[], 'none', false), " +
+					"(2, 'GB', 'locality', 'Beta', 'beta', 2, 2, false, false, 'importance', NULL, NULL, NULL, 1000, NULL, NULL, []::VARCHAR[], 'none', false), " +
+					"(3, 'GB', 'locality', 'Gamma', 'gamma', 9, 9, false, false, 'importance', NULL, NULL, NULL, 1000, NULL, NULL, []::VARCHAR[], 'none', false)" +
+					") AS t(spr_id, country, band, name, fold, decile, rank, by_rank, capital, score_source, geonames_check, geonames_km, " +
+					`geonames_id, population_used, parent_locality, region, region_abbrs, postal_evidence, postal_pair)) TO '${path}/places.parquet' (FORMAT PARQUET)`
+			)
+
+			// Alpha takes 1 of the cell's 10 draws, short of either target.
+			await db.run(
+				"COPY (SELECT * FROM (VALUES ('GB', 'wof-admin', 'locality', 'alpha', NULL, NULL::VARCHAR, 1::BIGINT), " +
+					"('GB', 'wof-admin', 'locality', 'gamma', NULL, NULL, 9)) AS t(country, source, shape, s1, s2, s3, rows)) " +
+					`TO '${path}/short-admin-rows.parquet' (FORMAT PARQUET)`
+			)
+
+			await db.run(
+				"COPY (SELECT * FROM (VALUES ('GB', 'wof-admin', 'locality', 'beta', NULL, NULL::VARCHAR, 1::BIGINT), " +
+					"('GB', 'wof-admin', 'locality', 'gamma-ville', NULL, NULL, 1)) AS t(country, source, shape, s1, s2, s3, rows)) " +
+					`TO '${path}/listed-short-admin-rows.parquet' (FORMAT PARQUET)`
+			)
+		}
+
+		await writeLocalTextFile(
+			stringifyJSON({
+				version: PROMINENT_PLACES_RECORD_VERSION,
+				places_sha256: await sha256File(`${path}/places.parquet`),
+			}),
+			`${path}/PLACES.json`
+		)
+
+		const rates: EpochRates = {
+			draws: 100,
+			perAdmittedRow: new Map([["wof-admin", 1]]),
+			admission: new Map([["GB", 1]]),
+		}
+
+		const input = {
+			places: `${path}/places.parquet`,
+			shortAdminRows: `${path}/short-admin-rows.parquet`,
+			rates,
+			listedShortAdminRows: `${path}/listed-short-admin-rows.parquet`,
+		}
+
+		using sizing = await openDuckDB()
+
+		const sized = (await readSizingCells(sizing, input)).find((cell) => cell.query_shape === "bare")
+
+		using receipt = await openDuckDB()
+
+		await createProminentCoverageTables(receipt, input.places, input.shortAdminRows, rates, input.listedShortAdminRows)
+
+		const graded = (await evaluateProminentCoverage(receipt)).demand_share.failing.find(
+			(cell) => cell.query_shape === "bare"
+		)
+
+		// Beta leaves the bare cell, and Gamma stays: decile 1 holds 1,000 of 2,000 people, a target of 0.25.
+		// With Beta it would be 1,000 of 3,000, and without Gamma too 1,000 of 1,000.
+		expect(sized?.target).toBeCloseTo(0.25)
+		expect(sized?.target).toBe(graded?.target)
+	})
+})
 
 it("gives no place more than the smallest equal share of a deficit, and the parts sum to the deficit", () => {
 	const weights = [8_000_000, 1_000_000, 1_000_000, 500]
