@@ -88,13 +88,12 @@ const config = createOxlintConfig({
  * `import type` stays legal because it is erased before bundling.
  * Only the docs build bundles this package, so the lint rule is the earliest check.
  */
-const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
+const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/**/*.ts"]
 
 /**
  * Node-tier files of `@mailwoman/neural`, which are exempt from the browser import rule.
  *
  * `index.ts` is the Node entry.
- * Nested directories already fall outside the single-segment glob above.
  */
 const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/index.ts",
@@ -102,20 +101,19 @@ const NODE_TIER_NEURAL_FILES = [
 	"packages/neural/lib/onnx/runner.ts",
 	"packages/neural/lib/classifier/scorer.ts",
 	"packages/neural/lib/weights.ts",
-	"packages/neural/lib/*.test.ts",
+	"packages/neural/lib/**/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
 
 /**
  * Node-only modules that the browser tier mustn't import as values.
  *
- * Export conditions do not apply to relative specifiers.
- * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` doesn't.
+ * Each entry is the specifier the package's own modules write, since the rule compares specifiers as text.
+ * `#onnx-runner` is absent because its `browser` condition resolves to a browser build.
  */
 const NODE_ONLY_NEURAL_MODULES = [
-	"./onnx-runner.ts",
-	"./weights.ts",
-	"./classifier/scorer.ts",
+	"#weights",
+	"#classifier/scorer",
 	"onnxruntime-node",
 	// `@mailwoman/core/env` imports Node builtins.
 	// The `node:*` pattern cannot detect that import.
