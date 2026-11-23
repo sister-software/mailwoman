@@ -40,7 +40,8 @@ import {
 	sourceRightsGaps,
 	type SourceRightsGap,
 } from "@mailwoman/corpus/source-register/corpus-inputs"
-import { actionOperations, LicenseAction } from "@mailwoman/license/actions"
+import { actionOperations, actionPurposes, LicenseAction } from "@mailwoman/license/actions"
+import type { UsePurpose } from "@mailwoman/license/decision"
 import type { SourceOperation } from "@mailwoman/license/operations"
 import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -723,9 +724,9 @@ interface ModelReleaseRightsGap {
 	licenseID: string | null
 	state: string | null
 	/**
-	 * The operations the row's decision doesn't permit.
+	 * The operations the row's decision doesn't permit, then the purposes it doesn't permit them for.
 	 */
-	missing: SourceOperation[]
+	missing: Array<SourceOperation | UsePurpose>
 	because: string
 	/**
 	 * The corpus sources that read the row, sorted.
@@ -738,10 +739,11 @@ interface ModelReleaseRightsGap {
  */
 interface ModelReleaseRightsAudit {
 	/**
-	 * For each graph package, the operations a release of it performs: `redistribute-model`,
-	 * and `commercial-sublicense` when its license expression offers the commercial terms.
+	 * For each graph package, the operations a release of it performs and the purposes
+	 * it performs them for: `distribute-model` for `commercial-use`, and for `sale`
+	 * when its license expression offers the commercial terms.
 	 */
-	operations: Array<{ package: string; operations: SourceOperation[] }>
+	operations: Array<{ package: string; operations: Array<SourceOperation | UsePurpose> }>
 	gaps: ModelReleaseRightsGap[]
 	/**
 	 * Graph packages whose training sources couldn't be read, so no gap was measured for them.
@@ -750,9 +752,10 @@ interface ModelReleaseRightsAudit {
 }
 
 /**
- * Reads every register row behind each published model's training corpus, through the corpus's
- * effective training manifest and the corpus-source table, and returns each row whose decision
- * doesn't permit `redistribute-model` and, for a commercially sold model, `commercial-sublicense`.
+ * Reads every register row behind each published model's training corpus,
+ * through the corpus's effective training manifest and the corpus-source table,
+ * and returns each row whose decision doesn't permit `distribute-model` for `commercial-use`
+ * and, for a commercially sold model, for `sale`.
  *
  * A row that several corpus sources read is reported once, with those sources.
  */
@@ -785,12 +788,15 @@ async function auditModelReleaseRights(
 			continue
 		}
 
-		const performed = actionOperations(LicenseAction.ReleaseModel, pkg.license)
+		const request = { action: LicenseAction.ReleaseModel, offering: pkg.license }
 
-		operations.push({ package: row.package, operations: [...performed] })
+		operations.push({
+			package: row.package,
+			operations: [...actionOperations(request.action), ...actionPurposes(request.action, request.offering)],
+		})
 
 		for (const source of effective.trainingSources) {
-			for (const gap of sourceRightsGaps(source, inputs, register, row.corpusNamed, performed)) {
+			for (const gap of sourceRightsGaps(source, inputs, register, row.corpusNamed, request)) {
 				const key = [row.package, row.corpusNamed, gap.registerSource ?? `unmapped:${source}`].join("|")
 				const seen = gaps.get(key)
 

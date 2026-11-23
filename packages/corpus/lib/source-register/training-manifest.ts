@@ -13,7 +13,7 @@
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { LicenseReviewState, type LicenseDecision } from "@mailwoman/license/decision"
-import type { SourceOperation } from "@mailwoman/license/operations"
+import { SourceOperation } from "@mailwoman/license/operations"
 
 import { mappingInputsFor, type CorpusSourceInputs } from "#source-register/corpus-inputs"
 import { inputDecisions } from "#source-register/row-license"
@@ -90,11 +90,37 @@ export interface TrainingInputDecision {
 	state: LicenseReviewState
 	electedTerms: string | null
 	/**
-	 * The operations the elected grant permitted at build time.
+	 * The operations the elected grant permitted at build time, spelled as the freeze wrote them.
 	 *
 	 * An operation absent here was `unreviewed` or `refused`, which the decision records separately.
+	 * A manifest frozen before the operations were renamed records the names in
+	 * {@linkcode FROZEN_OPERATION_NAMES}, and {@linkcode frozenPermittedOperations} reads them.
 	 */
-	permitted: SourceOperation[]
+	permitted: string[]
+}
+
+/**
+ * The operation each name a manifest frozen before 2026-11-23 records means today,
+ * or `null` for a name no operation means.
+ *
+ * A frozen manifest's digest covers its names, so the record keeps them and the reader maps them.
+ * `commercial-sublicense` was the act the `sale` purpose now reads, and a freeze records no purpose.
+ */
+export const FROZEN_OPERATION_NAMES: Readonly<Record<string, SourceOperation | null>> = {
+	"redistribute-data": SourceOperation.DistributeRows,
+	"redistribute-model": SourceOperation.DistributeModel,
+	"commercial-sublicense": null,
+}
+
+/**
+ * The operations a frozen decision records as permitted, read under today's names.
+ */
+export function frozenPermittedOperations(decision: Pick<TrainingInputDecision, "permitted">): SourceOperation[] {
+	return decision.permitted.flatMap((name) => {
+		const mapped = Object.hasOwn(FROZEN_OPERATION_NAMES, name) ? FROZEN_OPERATION_NAMES[name] : name
+
+		return mapped ? [mapped as SourceOperation] : []
+	})
 }
 
 /**
@@ -411,7 +437,7 @@ export function sourcesNotPermitting(
 			continue
 		}
 
-		if (!record.decision.permitted.includes(operation)) {
+		if (!frozenPermittedOperations(record.decision).includes(operation)) {
 			blocking.push({
 				source: record.source,
 				because: `the elected terms ${stringifyJSON(record.decision.electedTerms ?? "")} did not permit ${operation}`,

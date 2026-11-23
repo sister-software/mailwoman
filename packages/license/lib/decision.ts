@@ -114,6 +114,35 @@ export interface OperationDecision {
 }
 
 /**
+ * Why an act is performed, read beside the act itself.
+ *
+ * A grant can permit an operation and still bar it for a purpose: a noncommercial clause bars every use
+ * in aid of a sold product, and a `will not sell` clause bars a paying customer receiving the output.
+ */
+export const UsePurpose = {
+	/**
+	 * Any use by a company in aid of a product it sells.
+	 *
+	 * Every act this repository performs is one, because Mailwoman is sold under `LicenseRef-Commercial`.
+	 * An evaluation of a commercially sold model is commercial use.
+	 * A noncommercial clause refuses it.
+	 */
+	CommercialUse: "commercial-use",
+	/**
+	 * A paying customer receives the act's output, under Mailwoman's commercial terms.
+	 *
+	 * It implies {@linkcode UsePurpose.CommercialUse}.
+	 * A `will not sell` clause refuses it.
+	 */
+	Sale: "sale",
+} as const
+
+/**
+ * One of the {@link UsePurpose} values.
+ */
+export type UsePurpose = (typeof UsePurpose)[keyof typeof UsePurpose]
+
+/**
  * What a reviewer found on the page that holds a publisher's terms.
  */
 export const TermsStatement = {
@@ -132,7 +161,7 @@ export const TermsStatement = {
 	 * terms on the publisher's website.
 	 *
 	 * The decision doesn't read the site terms as the dataset's grant.
-	 * Its `operations` record what it decides about them, such as a refused `redistribute-data`.
+	 * Its `operations` record what it decides about them, such as a refused `distribute-rows`.
 	 */
 	SiteTermsNotApplied: "site-terms-not-applied",
 } as const
@@ -275,6 +304,18 @@ export interface ElectedLicense<Operation extends string = string> {
 	 * An omitted operation reads as `unreviewed`.
 	 */
 	operations?: Partial<Record<Operation, OperationDecision>>
+	/**
+	 * The permission for each reviewed purpose, read for every operation the decision
+	 * doesn't name in {@linkcode ElectedLicense.purposeExceptions}.
+	 *
+	 * An omitted purpose reads as `unreviewed`.
+	 */
+	purposes?: Partial<Record<UsePurpose, OperationDecision>>
+	/**
+	 * The purpose readings that differ for one operation, such as a `will not sell access`
+	 * clause that bars the sale of query answers and leaves the sale of trained weights open.
+	 */
+	purposeExceptions?: Partial<Record<Operation, Partial<Record<UsePurpose, OperationDecision>>>>
 }
 
 /**
@@ -329,6 +370,48 @@ export function permissionFor<Operation extends string>(
 			because: `the elected terms do not state whether ${operation} is permitted`,
 		}
 	)
+}
+
+/**
+ * The permission one purpose reads for one operation, with the label a problem names it by.
+ */
+export interface PurposeReading {
+	reading: OperationDecision
+	/**
+	 * The purpose, or `<purpose> of <operation>` for a reading the decision records as an exception.
+	 */
+	label: string
+}
+
+/**
+ * Returns the recorded permission for one purpose of one operation under a license decision.
+ *
+ * An exception for the operation comes first, then the decision's default for the purpose.
+ * The result is `unreviewed` when the decision isn't elected or records neither.
+ */
+export function purposeFor<Operation extends string>(
+	decision: LicenseDecision<Operation>,
+	operation: Operation,
+	purpose: UsePurpose
+): PurposeReading {
+	if (decision.state !== LicenseReviewState.Elected) {
+		return {
+			reading: { permission: OperationPermission.Unreviewed, because: unelectedReadingReason(decision.state) },
+			label: purpose,
+		}
+	}
+
+	const exception = decision.purposeExceptions?.[operation]?.[purpose]
+
+	if (exception) return { reading: exception, label: `${purpose} of ${operation}` }
+
+	return {
+		reading: decision.purposes?.[purpose] ?? {
+			permission: OperationPermission.Unreviewed,
+			because: `the elected terms do not state whether ${purpose} is permitted`,
+		},
+		label: purpose,
+	}
 }
 
 /**
@@ -457,25 +540,29 @@ function auditElected<Operation extends string>(
 		problems.push(`license ${named} is elected and gives no reason`)
 	}
 
-	for (const [operation, reading] of Object.entries<OperationDecision | undefined>(decision.operations ?? {})) {
-		if (!reading) continue
+	const auditReadings = (readings: Readonly<Record<string, OperationDecision | undefined>>, operation?: string) => {
+		for (const [subject, reading] of Object.entries(readings)) {
+			if (!reading) continue
 
-		if (!reading.because) {
-			problems.push(`license ${named} reads ${reading.permission} for ${operation} and gives no reason`)
+			const label = operation ? `${subject} of ${operation}` : subject
+
+			if (!reading.because) {
+				problems.push(`license ${named} reads ${reading.permission} for ${label} and gives no reason`)
+			}
+
+			// A permission must cite its basis in the terms so that a reviewer can check it.
+			// A refusal needs no basis.
+			if (reading.permission === OperationPermission.Permitted && !reading.basis) {
+				problems.push(`license ${named} permits ${label} and names no basis for the permission`)
+			}
+
+			if (!permissions.has(reading.permission)) {
+				problems.push(`license ${named} reads an unknown permission ${JSON.stringify(reading.permission)} for ${label}`)
+			}
 		}
+	}
 
-		// A permission must cite its basis in the terms so that a reviewer can check it.
-		// A refusal needs no basis.
-		if (reading.permission === OperationPermission.Permitted && !reading.basis) {
-			problems.push(`license ${named} permits ${operation} and names no basis for the permission`)
-		}
-
-		if (!permissions.has(reading.permission)) {
-			problems.push(
-				`license ${named} reads an unknown permission ${JSON.stringify(reading.permission)} for ${operation}`
-			)
-		}
-
+	const auditOperationName = (operation: string) => {
 		if (!known.has(operation)) {
 			problems.push(
 				`license ${named} names ${JSON.stringify(operation)}, which is not an operation this repository performs`
@@ -483,10 +570,41 @@ function auditElected<Operation extends string>(
 		}
 	}
 
+	const auditPurposeNames = (readings: object, operation?: string) => {
+		for (const purpose of Object.keys(readings)) {
+			if (!USE_PURPOSES.has(purpose)) {
+				problems.push(
+					`license ${named} names ${JSON.stringify(purpose)}${operation ? ` for ${operation}` : ""}, which is not a use purpose`
+				)
+			}
+		}
+	}
+
+	const operations: Readonly<Record<string, OperationDecision | undefined>> = decision.operations ?? {}
+
+	auditReadings(operations)
+	Object.keys(operations).forEach(auditOperationName)
+
+	auditReadings(decision.purposes ?? {})
+	auditPurposeNames(decision.purposes ?? {})
+
+	const exceptions: Readonly<Record<string, Readonly<Record<string, OperationDecision | undefined>> | undefined>> =
+		decision.purposeExceptions ?? {}
+
+	for (const [operation, readings] of Object.entries(exceptions)) {
+		if (!readings) continue
+
+		auditOperationName(operation)
+		auditReadings(readings, operation)
+		auditPurposeNames(readings, operation)
+	}
+
 	problems.push(...auditObligations(decision, named))
 
 	return problems
 }
+
+const USE_PURPOSES = new Set<string>(Object.values(UsePurpose))
 
 const LICENSE_OBLIGATIONS = new Set<string>(Object.values(LicenseObligation))
 const OBLIGATION_STRENGTHS = new Set<string>(Object.values(ObligationStrength))

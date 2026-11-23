@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest"
 import { registerRowTerms, RegisterTermsBasis, type RegisterTermsInput } from "#source-register/terms"
 
 const permitted = (basis: "publisher-grant" | "other-documented") => ({
-	[SourceOperation.RedistributeData]: { permission: "permitted" as const, basis, because: "Read. Second sentence." },
+	[SourceOperation.DistributeRows]: { permission: "permitted" as const, basis, because: "Read. Second sentence." },
 })
 
 const LICENSES: LicenseDecision<SourceOperation>[] = [

@@ -279,7 +279,7 @@ under the data root's `corpus/epoch-mixture/`). Then set the card's `training.co
 record's key and run `write-rights-files`.
 
 The audit also fails when a register row behind the model's training corpus doesn't permit
-`redistribute-model`, and `commercial-sublicense` for a package sold under `LicenseRef-Commercial`. Read its
+`distribute-model` for `commercial-use`, and for `sale` when the package is sold under `LicenseRef-Commercial`. Read its
 "Register rows behind a published model" section before the prepare dispatch. Each row there needs a decision
 permitting both, or a corpus without it.
 

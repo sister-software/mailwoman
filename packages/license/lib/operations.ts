@@ -4,7 +4,8 @@
 /**
  * @file The acts this repository performs on an address source.
  *
- *   A license decision in the address-source register records a permission per operation.
+ *   A license decision in the address-source register records a permission per operation,
+ *   and a permission per purpose (`UsePurpose` in `#decision`).
  *   The action table in `#actions` states which operations each build or release performs.
  */
 
@@ -18,10 +19,10 @@ const COMMERCIAL_TERMS = "LicenseRef-Commercial"
 
 /**
  * Whether an artifact's license expression offers it under Mailwoman's commercial terms,
- * so a release of it performs `commercial-sublicense` on every source behind it.
+ * so an act that delivers it performs the `sale` purpose on every source behind it.
  *
- * `commercial-sublicense` is the act of licensing a result built from a source's rows,
- * trained weights or a served data layer, to a paying customer under `LicenseRef-Commercial`,
+ * A `sale` is the licensing of a result built from a source's rows, trained weights
+ * or a served data layer, to a paying customer under `LicenseRef-Commercial`,
  * beside or in place of the open-source branch.
  * A source's decision permits it when its grant lets this repository license that result
  * on terms of its own, for a fee: CC BY 4.0 §1(b) and §3(a)(4) let an adapter license
@@ -31,13 +32,13 @@ const COMMERCIAL_TERMS = "LicenseRef-Commercial"
  * A grant refuses it when it limits use to non-commercial purposes, forbids sale
  * or resale, or forbids terms on the result.
  *
- * The act passes on no license to the source's own rows.
+ * A sale passes on no license to the source's own rows.
  * Under CC BY 4.0 §2(a)(5)(A), CC BY 3.0 AU clause 9, OGL v3.0 and Licence Ouverte 2.0
  * a recipient takes the source's grant from its licensor directly, so the commercial
  * terms add to that grant and never restrict it (CC BY 4.0 §2(a)(5)(B)).
  *
- * A grant's `non-sublicensable` clause therefore refuses an act this repository
- * doesn't perform and doesn't refuse this one.
+ * A grant's `non-sublicensable` clause therefore refuses {@linkcode SourceOperation.Sublicense},
+ * an act this repository doesn't perform, and doesn't refuse a sale.
  */
 export function soldUnderCommercialTerms(expression: string): boolean {
 	return licenseIdentifiers(expression).some((identifier) => licenseWithoutException(identifier) === COMMERCIAL_TERMS)
@@ -45,6 +46,7 @@ export function soldUnderCommercialTerms(expression: string): boolean {
 
 /**
  * The acts this repository performs on a source, in pipeline order.
+ * Each name states what leaves this repository's hands.
  *
  * A grant can permit some and stay silent on others, so license decisions record a permission per operation.
  */
@@ -62,25 +64,38 @@ export const SourceOperation = {
 	 */
 	Transform: "transform",
 	/**
+	 * A model scored on the transformed rows.
+	 * No weight is fitted, and only aggregate scores leave.
+	 */
+	Evaluate: "evaluate",
+	/**
 	 * Model fitting on the transformed rows.
 	 */
 	Train: "train",
 	/**
-	 * Redistribution of raw or transformed rows as a database, lexicon or index.
+	 * A file from which the rows can be read back leaves: a database, a dataset or tiles.
 	 */
-	RedistributeData: "redistribute-data",
+	DistributeRows: "distribute-rows",
 	/**
-	 * Redistribution of weights trained on the rows.
+	 * Values drawn from the rows leave one request at a time, and the file stays.
 	 */
-	RedistributeModel: "redistribute-model",
+	AnswerQueries: "answer-queries",
 	/**
-	 * A paying customer receives a license, under `LicenseRef-Commercial`, to a result
-	 * built from the rows: trained weights or a served data layer.
+	 * An artifact computed from the rows leaves, and the rows can't be recovered from it:
+	 * an FST, a lexicon or centroids.
+	 */
+	DistributeDerived: "distribute-derived",
+	/**
+	 * Weights fitted on the rows leave.
+	 */
+	DistributeModel: "distribute-model",
+	/**
+	 * A recipient is granted a license to the source's own rows.
 	 *
-	 * It passes on no license to the rows themselves. {@linkcode soldUnderCommercialTerms}
-	 * states the definition and the grants that permit it.
+	 * No action performs it: a sale licenses a result built from the rows,
+	 * and {@linkcode soldUnderCommercialTerms} states why that's a different act.
 	 */
-	CommercialSublicense: "commercial-sublicense",
+	Sublicense: "sublicense",
 } as const
 
 /**

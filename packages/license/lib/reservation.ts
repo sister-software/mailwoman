@@ -9,8 +9,8 @@
  *
  *   - By choice: the register records a {@link SourceReservation} on the source. The operator lifts it by
  *     filling {@link SourceReservation.lifted}, and the entry stays as the record of the reservation.
- *   - By terms: computed and never stored, for a source whose decision refuses `train`.
- *     {@link activeReservation} computes it only when its caller asks, through `reservedByTerms`.
+ *   - By terms: computed and never stored, for a source whose decision permits `evaluate` and refuses
+ *     `train`. Only a new reading of the terms lifts it.
  */
 
 import { type LicenseDecision, OperationPermission, permissionFor } from "#decision"
@@ -83,7 +83,7 @@ export const ReservationOrigin = {
 	 */
 	Choice: "choice",
 	/**
-	 * The source's decision refuses `train`, so the source can only be evaluated on.
+	 * The source's decision permits `evaluate` and refuses `train`, so the source can only be evaluated on.
 	 */
 	Terms: "terms",
 } as const
@@ -108,28 +108,13 @@ export interface ActiveReservation {
 }
 
 /**
- * Options for {@link activeReservation}.
- */
-export interface ReservationReadingOptions {
-	/**
-	 * Whether a source whose decision refuses `train` reads as reserved by terms.
-	 *
-	 * TODO(PR 4 of #3343's plan): the `evaluate` operation replaces this flag.
-	 * A source whose decision permits `evaluate` and refuses `train` is
-	 * then reserved by terms on every reading.
-	 */
-	reservedByTerms?: boolean
-}
-
-/**
  * The reservation in force on a source, or `null` when none is.
  *
  * A recorded reservation with `lifted` filled is no longer in force.
  */
 export function activeReservation(
 	recorded: SourceReservation | null | undefined,
-	decision: LicenseDecision<SourceOperation>,
-	options: ReservationReadingOptions = {}
+	decision: LicenseDecision<SourceOperation>
 ): ActiveReservation | null {
 	if (recorded && !recorded.lifted) {
 		return {
@@ -141,17 +126,17 @@ export function activeReservation(
 		}
 	}
 
-	if (!options.reservedByTerms) return null
-
 	const training = permissionFor(decision, SourceOperation.Train)
 
 	if (training.permission !== OperationPermission.Refused) return null
+
+	if (permissionFor(decision, SourceOperation.Evaluate).permission !== OperationPermission.Permitted) return null
 
 	return {
 		origin: ReservationOrigin.Terms,
 		use: ReservationUse.Evaluation,
 		scope: SOURCE_RESERVATION_SCOPE,
-		because: `the decision refuses train, so the source can only be evaluated on: ${training.because}`,
+		because: `the decision permits evaluate and refuses train, so the source can only be evaluated on: ${training.because}`,
 		recorded: null,
 	}
 }
@@ -164,12 +149,11 @@ export function activeReservation(
 export function refusingReservation(
 	recorded: SourceReservation | null | undefined,
 	decision: LicenseDecision<SourceOperation>,
-	operations: readonly SourceOperation[],
-	options: ReservationReadingOptions = {}
+	operations: readonly SourceOperation[]
 ): ActiveReservation | null {
 	if (!operations.includes(SourceOperation.Train)) return null
 
-	return activeReservation(recorded, decision, options)
+	return activeReservation(recorded, decision)
 }
 
 /**

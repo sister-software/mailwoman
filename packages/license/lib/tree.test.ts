@@ -12,6 +12,7 @@ import {
 	OperationPermission,
 	PermissionBasis,
 	TermsStatement,
+	UsePurpose,
 } from "#decision"
 import { LicenseObligation } from "#obligations"
 import { SourceOperation } from "#operations"
@@ -25,7 +26,7 @@ const permits = (because: string) => ({
 })
 
 /**
- * A decision permitting every operation, as a grant like CC BY 4.0 does.
+ * A decision permitting every operation for every purpose, as a grant like CC BY 4.0 does.
  */
 const everyOperation: ElectedLicense<SourceOperation> = {
 	licenseID: "open",
@@ -35,6 +36,7 @@ const everyOperation: ElectedLicense<SourceOperation> = {
 	retrievedCopy: "licenses/cc-by-4.0.txt",
 	electedBecause: "The publisher offers one grant.",
 	operations: Object.fromEntries(Object.values(SourceOperation).map((operation) => [operation, permits("§2(a)")])),
+	purposes: Object.fromEntries(Object.values(UsePurpose).map((purpose) => [purpose, permits("§2(a)(1)")])),
 }
 
 const registerOf = (...licenses: LicenseDecision<SourceOperation>[]): LicenseRegister => ({
@@ -95,15 +97,15 @@ describe("evaluateLicense", () => {
 		expect(answer.verdict).toBe(DecisionVerdict.Go)
 		expect(answer.registerDigest).toBe("digest")
 
-		expect(answer.path.map((step) => [step.node, step.operation ?? null])).toEqual([
-			[DecisionNode.Registered, null],
-			[DecisionNode.ReviewState, null],
-			[DecisionNode.Reservation, null],
-			[DecisionNode.Operations, SourceOperation.RedistributeModel],
-			[DecisionNode.Operations, SourceOperation.CommercialSublicense],
-			[DecisionNode.Purpose, null],
-			[DecisionNode.BasisFloor, null],
-			[DecisionNode.Obligations, null],
+		expect(answer.path.map((step) => [step.node, step.operation ?? null, step.purpose ?? null])).toEqual([
+			[DecisionNode.Registered, null, null],
+			[DecisionNode.ReviewState, null, null],
+			[DecisionNode.Reservation, null, null],
+			[DecisionNode.Operations, SourceOperation.DistributeModel, null],
+			[DecisionNode.Purpose, SourceOperation.DistributeModel, UsePurpose.CommercialUse],
+			[DecisionNode.Purpose, SourceOperation.DistributeModel, UsePurpose.Sale],
+			[DecisionNode.BasisFloor, null, null],
+			[DecisionNode.Obligations, null, null],
 		])
 
 		expect(answer.owed).toEqual([
@@ -117,13 +119,91 @@ describe("evaluateLicense", () => {
 		])
 	})
 
-	it("performs commercial-sublicense only for an offering sold under the commercial terms", () => {
-		const open = evaluateLicense(
-			{ action: LicenseAction.ReleaseModel, offering: "AGPL-3.0-only", sources: [{ source: "s", licenseID: "open" }] },
-			registerOf(everyOperation)
-		)
+	it("reads sale only for an offering sold under the commercial terms, and commercial use for every action", () => {
+		for (const action of Object.values(LicenseAction)) {
+			const open = evaluateLicense(
+				{ action, offering: "AGPL-3.0-only", sources: [{ source: "s", licenseID: "open" }] },
+				registerOf(everyOperation)
+			)
 
-		expect(open.path.flatMap((step) => step.operation ?? [])).toEqual([SourceOperation.RedistributeModel])
+			expect(new Set(open.path.flatMap((step) => step.purpose ?? [])), action).toEqual(
+				new Set([UsePurpose.CommercialUse])
+			)
+		}
+	})
+
+	it("refuses evaluating a commercially sold model on rows whose terms bar commercial use", () => {
+		const noncommercial: ElectedLicense<SourceOperation> = {
+			...everyOperation,
+			purposes: {
+				[UsePurpose.CommercialUse]: { permission: OperationPermission.Refused, because: "NonCommercial: §1(i)" },
+			},
+		}
+
+		const answer = ask(registerOf(noncommercial), LicenseAction.Evaluate)
+
+		expect(answer.verdict).toBe(DecisionVerdict.NoGo)
+		expect(answer.path.at(-1)).toMatchObject({ node: DecisionNode.Purpose })
+
+		// A default reading covers every operation, so its problem is listed once.
+		// Evaluation hands no recipient its result, so the sold offering adds no sale.
+		expect(answer.sources[0]!.problems).toEqual([
+			"the elected terms read refused for commercial-use: NonCommercial: §1(i)",
+		])
+	})
+
+	it("reads a purpose exception for its own operation only", () => {
+		// A will-not-sell-access clause bars selling the rows and leaves selling trained weights open.
+		const noSaleOfRows: ElectedLicense<SourceOperation> = {
+			...everyOperation,
+			purposeExceptions: {
+				[SourceOperation.DistributeRows]: {
+					[UsePurpose.Sale]: { permission: OperationPermission.Refused, because: "will not sell access to the data" },
+				},
+			},
+		}
+
+		const layer = ask(registerOf(noSaleOfRows), LicenseAction.ServeAddressLayer)
+
+		expect(layer.verdict).toBe(DecisionVerdict.NoGo)
+
+		expect(layer.sources[0]!.problems).toEqual([
+			"the elected terms read refused for sale of distribute-rows: will not sell access to the data",
+		])
+
+		expect(ask(registerOf(noSaleOfRows), LicenseAction.ReleaseModel).verdict).toBe(DecisionVerdict.Go)
+	})
+
+	it("lists an unpermitted purpose beside an unpermitted operation", () => {
+		const both: ElectedLicense<SourceOperation> = {
+			...everyOperation,
+			operations: { ...everyOperation.operations, [SourceOperation.DistributeModel]: undefined },
+			purposes: { [UsePurpose.CommercialUse]: permits("§2(a)(1)") },
+		}
+
+		const answer = ask(registerOf(both), LicenseAction.ReleaseModel)
+
+		expect(answer.verdict).toBe(DecisionVerdict.Unknown)
+		expect(answer.sources[0]!.problems).toHaveLength(2)
+		expect(answer.path.map((step) => step.node)).not.toContain(DecisionNode.BasisFloor)
+	})
+
+	it("marks rows quotable only where the decision permits distribute-rows, whatever the verdict", () => {
+		const unpublishable: ElectedLicense<SourceOperation> = {
+			...everyOperation,
+			operations: {
+				...everyOperation.operations,
+				[SourceOperation.DistributeRows]: { permission: OperationPermission.Refused, because: "no redistribution" },
+			},
+		}
+
+		expect(ask(registerOf(everyOperation), LicenseAction.Evaluate).sources[0]!.quotable).toBe(true)
+
+		const evaluated = ask(registerOf(unpublishable), LicenseAction.Evaluate)
+
+		expect(evaluated.verdict).toBe(DecisionVerdict.Go)
+		expect(evaluated.sources[0]!.quotable).toBe(false)
+		expect(ask(registerOf(), LicenseAction.Evaluate, "missing").sources[0]!.quotable).toBe(false)
 	})
 
 	it("answers the same for the same request in any source order", () => {
@@ -157,9 +237,9 @@ describe("evaluateLicense", () => {
 			])
 		}
 
-		// A model release and a served layer perform no train operation,
+		// Evaluation, a model release and a served layer perform no train operation,
 		// so a reservation leaves them to the operations node.
-		for (const action of [LicenseAction.ReleaseModel, LicenseAction.ServeAddressLayer]) {
+		for (const action of [LicenseAction.Evaluate, LicenseAction.ReleaseModel, LicenseAction.ServeAddressLayer]) {
 			expect(ask(reserved(reservation, everyOperation), action).verdict, action).toBe(DecisionVerdict.Go)
 		}
 	})
@@ -186,23 +266,29 @@ describe("evaluateLicense", () => {
 		expect(answer.path.at(-1)!.node).toBe(DecisionNode.Reservation)
 	})
 
-	it("reserves a source by its terms only when the request asks", () => {
+	it("reserves a source by its terms when the decision permits evaluate and refuses train", () => {
 		const refusesTraining: ElectedLicense<SourceOperation> = {
 			...everyOperation,
 			operations: {
 				...everyOperation.operations,
-				train: { permission: OperationPermission.Refused, because: "§4 forbids model training" },
+				[SourceOperation.Train]: { permission: OperationPermission.Refused, because: "§4 forbids model training" },
 			},
+		}
+
+		const unreadEvaluation: ElectedLicense<SourceOperation> = {
+			...refusesTraining,
+			operations: { ...refusesTraining.operations, [SourceOperation.Evaluate]: undefined },
 		}
 
 		const request = { action: LicenseAction.Train, offering: null, sources: [{ source: "s", licenseID: "open" }] }
 
-		const byTerms = evaluateLicense({ ...request, reservedByTerms: true }, registerOf(refusesTraining))
-		const unflagged = evaluateLicense(request, registerOf(refusesTraining))
+		const byTerms = evaluateLicense(request, registerOf(refusesTraining))
+		const unread = evaluateLicense(request, registerOf(unreadEvaluation))
 
 		expect(byTerms.path.at(-1)!.node).toBe(DecisionNode.Reservation)
 		expect(byTerms.sources[0]!.problems[0]).toMatch(/reserved for evaluation by its terms/u)
-		expect(unflagged.path.at(-1)!.node).toBe(DecisionNode.Operations)
+		expect(unread.path.at(-1)!.node).toBe(DecisionNode.Purpose)
+		expect(ask(registerOf(refusesTraining), LicenseAction.Evaluate).verdict).toBe(DecisionVerdict.Go)
 	})
 
 	it("never refuses on an obligation, an indemnity included", () => {

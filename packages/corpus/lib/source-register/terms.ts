@@ -5,7 +5,7 @@
  *   What a register row's decision records about redistributing that publisher's rows.
  *
  *   A served data layer copies a publisher's rows and redistributes them, so the reading is taken
- *   for `redistribute-data`, the operation serving performs, whatever else the decision permits.
+ *   for `distribute-rows`, the operation serving performs, whatever else the decision permits.
  */
 
 import {
@@ -172,7 +172,7 @@ export function registerRowTerms(register: RegisterTermsInput, registerSource: s
 		}
 	}
 
-	const redistribution = permissionFor(decision, SourceOperation.RedistributeData)
+	const redistribution = permissionFor(decision, SourceOperation.DistributeRows)
 
 	const elected = {
 		...base,

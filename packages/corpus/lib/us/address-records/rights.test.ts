@@ -23,9 +23,10 @@ const elected = (licenseID: string, operations: Record<string, typeof permitted>
 	retrievedCopy: "copy",
 	electedBecause: "x",
 	operations,
+	purposes: { "commercial-use": permitted },
 })
 
-const serving = { fetch: permitted, extract: permitted, "redistribute-data": permitted }
+const serving = { fetch: permitted, extract: permitted, "distribute-rows": permitted }
 
 const REGISTER: RegisterDecisions = {
 	licenses: [
@@ -139,7 +140,7 @@ describe("readUSAddressSourceAdmission", () => {
 				// WVDHSEM's SAMS data, refused on its redistribution clause across the statewide run and the county copies.
 				"openaddresses:us/wv/statewide",
 				"openaddresses:us/wv/lewis",
-				// Buncombe's no-sale clause refuses redistribute-data and permits training.
+				// Buncombe's no-sale clause refuses distribute-rows and permits training.
 				"openaddresses:us/nc/buncombe",
 				// Contractor-hosted with only the contractor's metadata.
 				"openaddresses:us/ia/cass",
