@@ -29,8 +29,8 @@ import {
 	type SubVenueSurface,
 	SUBVENUE_LEXICON_VERSION,
 } from "#subvenue/table"
-import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
-import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
+import { deriveHeadNounSurfaces } from "#tools/sub-venue/head-nouns"
+import { surfacesFromWikidata } from "#tools/sub-venue/wikidata"
 
 /**
  * Returns a copy of the surfaces with `curated: true` set on each surface that a promotion matches.

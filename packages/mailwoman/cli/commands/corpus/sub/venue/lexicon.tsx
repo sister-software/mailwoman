@@ -68,7 +68,7 @@ const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 			lexicon: { generateSubVenueLexicon },
 			overtureSubvenue: { readOvertureLayerVintage, readOvertureSubVenues },
 		} = await allKeyed({
-			lexicon: import("@mailwoman/corpus/tools/sub/venue/lexicon"),
+			lexicon: import("@mailwoman/corpus/tools/sub-venue/lexicon"),
 			overtureSubvenue: import("@mailwoman/corpus/tools/overture-subvenue"),
 		})
 

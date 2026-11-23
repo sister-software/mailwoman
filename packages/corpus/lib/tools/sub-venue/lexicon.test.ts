@@ -14,9 +14,9 @@ import { SUBVENUE_PROMOTIONS } from "#subvenue/promotions"
 import { buildSurfaceIndex, nameContainsSurfaces, normalizeSurface } from "#subvenue/surfaces"
 import { CONCEPT_QIDS, SHIPPED_DESIGNATOR_SEED, SHIPPED_MODIFIER_SEED, type SubVenueSurface } from "#subvenue/table"
 import { SUBVENUE_CONCEPTS } from "#tools/fetch/wikidata/subvenue"
-import { deriveHeadNounSurfaces } from "#tools/sub/venue/head-nouns"
-import { applyPromotions, buildSubVenueLexicon, serializeSubVenueLexicon } from "#tools/sub/venue/lexicon"
-import { surfacesFromWikidata } from "#tools/sub/venue/wikidata"
+import { deriveHeadNounSurfaces } from "#tools/sub-venue/head-nouns"
+import { applyPromotions, buildSubVenueLexicon, serializeSubVenueLexicon } from "#tools/sub-venue/lexicon"
+import { surfacesFromWikidata } from "#tools/sub-venue/wikidata"
 
 /**
  * A minimal sparql envelope in the exact shape wdqs serves.

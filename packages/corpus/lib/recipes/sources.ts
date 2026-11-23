@@ -254,7 +254,7 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		["affix", "recipes/street/affix.ts"],
 		["suffix-boundary", "recipes/street/affix.ts"],
 		["country", "recipes/country-balanced.ts", "Country names are drawn without regard to the address's own country."],
-		["sub-venue", "recipes/sub/venue/index.ts"],
+		["sub-venue", "recipes/sub-venue.ts"],
 		["trailing-region", TRAILING_REGION, "The house number is drawn on a quarter of the postcode rows."],
 		["trailing-region-structured", TRAILING_REGION],
 		["trailing-region-us", TRAILING_REGION],
