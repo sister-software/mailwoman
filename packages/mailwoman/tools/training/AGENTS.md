@@ -23,7 +23,11 @@ node packages/mailwoman/tools/training/launch/launch.run.ts restart <run key>
 3. It runs the preflight (`launch/preflight.ts`) against the copy of the volume under `MAILWOMAN_DATA_ROOT`. The
    preflight runs each audit the config declares (`required_corpus_receipts`, `required_validation_coverage`,
    `required_validation_label_support`, `prominent_place_coverage`) on a copy of the config re-rooted at the host copy, checks the wall clock
-   (`launch/wall-clock.ts`), and writes the receipt under `<data root>/audits`.
+   (`launch/wall-clock.ts`), and writes the receipt under `<data root>/audits`. The receipt records the commit and
+   whether `packages/` held a change. A later `start` with the same config, manifest and places table reuses that
+   receipt in place of running the audits again only when it records a pass for every declared audit and both trees
+   are that commit with no change under `packages/` (`reusablePreflightReceipt` in `audits/receipt.ts`). The key leaves
+   out the audit code, and the commit stands in for it.
 4. It publishes or reuses the trainer image (`launch/image.ts`) and starts one detached sandbox, then records the run
    under `<data root>/launch/runs/<run key>.json`.
 

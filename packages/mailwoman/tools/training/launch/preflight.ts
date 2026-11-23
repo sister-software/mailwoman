@@ -17,11 +17,12 @@ import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { gitHead, workingTreeStatus } from "@mailwoman/core/repo/git"
 import { runFile } from "@mailwoman/core/scripting/process"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 
-import { manifestFileDigests, writePreflightReceipt } from "#tools/training/audits/receipt"
+import { manifestFileDigests, reusablePreflightReceipt, writePreflightReceipt } from "#tools/training/audits/receipt"
 import type { PreflightResult, ResolvedLaunchConfig } from "#tools/training/launch/launch"
 import { rerootConfigText } from "#tools/training/launch/run-paths"
 import { checkWallClock } from "#tools/training/launch/wall-clock"
@@ -140,9 +141,28 @@ export async function hostPreflight(
 		rerooted
 	)
 
-	for (const command of AUDIT_COMMANDS) {
-		if (!command.declared(typed.data)) continue
+	const declared = AUDIT_COMMANDS.filter((command) => command.declared(typed.data))
 
+	const source = {
+		commit: await gitHead(),
+		clean: (await workingTreeStatus(undefined, ["packages"])).length === 0,
+	}
+
+	const { receipt, reason } = await reusablePreflightReceipt(
+		auditRoot,
+		options.configPath,
+		hostCorpus,
+		[...audits, ...declared.map((command) => command.audit)],
+		source
+	)
+
+	if (receipt) {
+		options.log(`Audits: reusing the receipt ${receipt.path}: ${reason}, for this config and manifest`)
+	} else {
+		options.log(`Audits: running each one (${reason})`)
+	}
+
+	for (const command of receipt ? [] : declared) {
 		const json = `${auditRoot}/${command.report}-${stem}.json`
 		const script = repoRootPath("packages", "mailwoman", "tools", "training", "audits", command.script).toString()
 
@@ -163,7 +183,12 @@ export async function hostPreflight(
 			`(${estimate.trainSeconds}s of steps, ${estimate.evaluations} validation passes)`
 	)
 
-	const token = await writePreflightReceipt(auditRoot, options.configPath, hostCorpus, audits, reports)
+	if (receipt) {
+		Object.assign(reports, receipt.reports)
+		audits.push(...declared.map((command) => command.audit))
+	}
+
+	const token = await writePreflightReceipt(auditRoot, options.configPath, hostCorpus, audits, reports, source)
 	const manifestPath = `${corpusDir.replace(/\/+$/, "")}/MANIFEST.json`
 
 	return {

@@ -11,6 +11,7 @@ import {
 	auditReportText,
 	preflightKey,
 	PreflightReceiptError,
+	reusablePreflightReceipt,
 	verifyPreflightReceipt,
 	writePreflightReceipt,
 } from "./receipt.ts"
@@ -56,6 +57,43 @@ test("the key ignores manifest order and formatting and moves with a digest or t
 	)
 
 	await expect(preflightKey(a.config, a.corpusDir)).resolves.not.toBe(await preflightKey(b.config, b.corpusDir))
+})
+
+test("a receipt stands in for its audits only at the commit and clean tree it was written from", async () => {
+	await using directory = await temporaryDirectory()
+	const { config, corpusDir } = await corpus(directory.path, [{ path: "a.parquet", sha256: "aa" }])
+	const root = `${directory.path}/audits`
+	const clean = { commit: "c1", clean: true }
+	const required = ["corpus_receipts"]
+
+	await expect(reusablePreflightReceipt(root, config, corpusDir, required, clean)).resolves.toMatchObject({
+		receipt: null,
+		reason: expect.stringContaining("no receipt"),
+	})
+
+	await writePreflightReceipt(root, config, corpusDir, required, { corpus_receipts: "r.json" }, clean)
+
+	const reused = await reusablePreflightReceipt(root, config, corpusDir, required, clean)
+
+	expect(reused.receipt?.reports).toEqual({ corpus_receipts: "r.json" })
+
+	for (const [source, needed, why] of [
+		[{ commit: "c2", clean: true }, required, "not c2"],
+		[{ commit: "c1", clean: false }, required, "changes under packages/"],
+		[clean, ["corpus_receipts", "validation_coverage"], "records no pass for validation_coverage"],
+	] as const) {
+		const refused = await reusablePreflightReceipt(root, config, corpusDir, needed, source)
+
+		expect(refused.receipt).toBeNull()
+		expect(refused.reason).toContain(why)
+	}
+
+	await writePreflightReceipt(root, config, corpusDir, required, {}, { commit: "c1", clean: false })
+
+	await expect(reusablePreflightReceipt(root, config, corpusDir, required, clean)).resolves.toMatchObject({
+		receipt: null,
+		reason: expect.stringContaining("from a changed tree"),
+	})
 })
 
 test("an entry without a digest cannot be bound", async () => {
