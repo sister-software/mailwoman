@@ -37,9 +37,16 @@ export const StructureProvenance = {
 	 */
 	PostalOperator: "postal-operator",
 	/**
-	 * A government mapping agency's compilation, such as the USGS National Map's structures layer.
+	 * A government mapping agency's compilation, such as the USGS National Map's
+	 * structures layer or NGA's World Port Index.
 	 */
 	MappingAgency: "mapping-agency",
+	/**
+	 * A compilation volunteers edit, such as OurAirports.
+	 *
+	 * No body that runs or maps the facilities stands behind each record.
+	 */
+	Community: "community",
 } as const
 
 export type StructureProvenance = (typeof StructureProvenance)[keyof typeof StructureProvenance]
@@ -72,6 +79,23 @@ export interface StructureRecord {
 	 * and expects the parser to return each one.
 	 */
 	address: Readonly<Partial<Record<ComponentTag, string>>> | null
+	/**
+	 * The ISO 3166-1 alpha-2 code of the country the structure stands in,
+	 * when the source's list spans countries.
+	 *
+	 * The row takes it in place of {@linkcode StructureSource.country}.
+	 */
+	country?: string
+}
+
+/**
+ * The ISO 3166-1 alpha-2 code a record's row is stamped with: its own country, else its source's.
+ */
+export function structureRecordCountry(
+	source: Pick<StructureSource, "country">,
+	record: Pick<StructureRecord, "country">
+): string {
+	return record.country ?? source.country
 }
 
 /**
@@ -94,7 +118,10 @@ export interface StructureSource {
 	 */
 	id: string
 	/**
-	 * The ISO 3166-1 alpha-2 code stamped on every row.
+	 * The ISO 3166-1 alpha-2 code stamped on every row whose record states none.
+	 *
+	 * A list that spans countries, such as the World Port Index, records its publisher's
+	 * jurisdiction here and states each record's country in {@linkcode StructureRecord.country}.
 	 */
 	country: string
 	publisher: string

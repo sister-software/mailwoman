@@ -102,6 +102,10 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// The election rests on that publication without a written grant, and a request for one has gone to GEBCO.
 	// The citation is the obligation it records.
 	["LicenseRef-GEBCO-Operator-Election", [LicenseObligation.Attribution]],
+	// OurAirports' data page states "All data is released to the Public Domain"
+	// and cites no license instrument.
+	// Its request for credit adds "you're not required to", so the table records no obligation.
+	["LicenseRef-OurAirports-Public-Domain", []],
 	// The Who's On First records (#3163).
 	// Each repository's `LICENSE.md` requires a link back to that license.
 	// The attribution notice holds the link.

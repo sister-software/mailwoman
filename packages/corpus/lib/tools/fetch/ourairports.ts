@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc.
+ * Fetch the OurAirports CSV dumps: the venue side of the sub-venue corpus arc,
+ * and the input of the structures layer's airports (`#structures/ourairports`).
  *
- * Source: https://davidmegginson.github.io/ourairports-data License: public domain,
- * with a courtesy credit requested.
+ * Source: https://davidmegginson.github.io/ourairports-data.
+ * Terms: "All data is released to the Public Domain" (https://ourairports.com/data/),
+ * with a credit requested and not required.
+ *
+ * `unchecked-access-free-ca-ourairports` records the decision.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -15,7 +19,12 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
-const SLUG = "ourairports"
+/**
+ * The source directory the fetcher writes.
+ */
+export const OURAIRPORTS_SOURCE_ID = "ourairports"
+
+const SLUG = OURAIRPORTS_SOURCE_ID
 
 /**
  * `ourairports.com/data/*.csv` redirects to the project's own GitHub Pages mirror.
@@ -31,7 +40,10 @@ const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as
 
 export type FetchOurAirportsOptions = BaseFetchOptions
 
-interface OurAirportsFileEntry {
+/**
+ * One downloaded file as the manifest records it.
+ */
+export interface OurAirportsFileEntry {
 	filename: string
 	source_url: string
 	sha256: string
@@ -44,7 +56,11 @@ interface OurAirportsFileEntry {
 	last_modified: string | null
 }
 
-interface OurAirportsManifest {
+/**
+ * What one run recorded.
+ * `files` lists only the files that arrived.
+ */
+export interface OurAirportsManifest {
 	source: string
 	base_url: string
 	license: string
@@ -56,9 +72,9 @@ interface OurAirportsManifest {
  * @returns `null` on any failure, because provenance metadata must never fail
  * a download that otherwise succeeded.
  */
-async function readLastModified(url: string): Promise<string | null> {
+async function readLastModified(client: Pick<APIClient, "fetch">, url: string): Promise<string | null> {
 	try {
-		const res = await new APIClient({ displayName: "ourairports", retry: true }).fetch({
+		const res = await client.fetch({
 			url,
 			method: "head",
 			timeout: 30_000,
@@ -78,6 +94,7 @@ export async function fetchOurAirports(
 	options: FetchOurAirportsOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
+	await using client = new APIClient({ displayName: SLUG, retry: true })
 	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
@@ -102,7 +119,7 @@ export async function fetchOurAirports(
 					headers: { "Accept-Encoding": "gzip, br" },
 					report,
 				}),
-				readLastModified(url),
+				readLastModified(client, url),
 			])
 
 			entries.push({
@@ -125,7 +142,7 @@ export async function fetchOurAirports(
 	const manifest: OurAirportsManifest = {
 		source: "OurAirports",
 		base_url: BASE_URL,
-		license: "public domain (courtesy credit requested)",
+		license: "LicenseRef-OurAirports-Public-Domain",
 		downloaded_at: new Date().toISOString(),
 		files: entries,
 	}

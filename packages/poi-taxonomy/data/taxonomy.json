@@ -12321,6 +12321,14 @@
 			"source": "overture"
 		},
 		{
+			"id": "seaport",
+			"label": "Seaport",
+			"hierarchy": ["travel", "seaport"],
+			"basicLabel": "Seaport",
+			"osmTag": "landuse=port",
+			"source": "mailwoman"
+		},
+		{
 			"id": "secretarial_services",
 			"label": "Secretarial services",
 			"hierarchy": [

@@ -23,7 +23,7 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { LayerTier } from "@mailwoman/core/layers"
-import type { StructureSource } from "@mailwoman/corpus/structures/source"
+import { type StructureSource, structureRecordCountry } from "@mailwoman/corpus/structures/source"
 import { carriesShareAlike, readLicenseRecord } from "@mailwoman/license/record"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { getPOICategory } from "@mailwoman/poi-taxonomy/lookup"
@@ -152,7 +152,7 @@ export async function buildStructureLayer(opts: BuildStructureLayerOptions): Pro
 					brandWikidata: null,
 					latitude: record.point.latitude,
 					longitude: record.point.longitude,
-					country: source.country,
+					country: structureRecordCountry(source, record),
 					confidence: 1,
 					gersID: `${source.id}:${record.id}`,
 				}

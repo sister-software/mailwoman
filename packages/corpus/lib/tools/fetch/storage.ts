@@ -98,6 +98,8 @@ export const SOURCE_STORAGE_CLASSES = {
 	// A query over OPT-NC's live agencies FeatureServer.
 	"nc-opt-agences": StorageClass.current,
 	"nl-kadaster": StorageClass.current,
+	// NGA's monthly CSV at an undated link, replaced in place.
+	"nga-wpi": StorageClass.current,
 	openaddresses: StorageClass.current,
 	ourairports: StorageClass.current,
 	"ro-retea-scolara": StorageClass.current,
@@ -215,6 +217,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 	nad: ["usgov-nad"],
 	"nc-opt-agences": ["nc-opt-agences"],
 	"nl-kadaster": ["nl-kadaster"],
+	"nga-wpi": ["nga-wpi"],
 	nppes: ["usgov-nppes"],
 	openaddresses: ["openaddresses"],
 	ourairports: ["ourairports"],
