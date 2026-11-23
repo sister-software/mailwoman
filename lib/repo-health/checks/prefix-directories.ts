@@ -28,8 +28,16 @@
  *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository.
  *   `fixtures/.../whosonfirst-data-admin-fr/` is an upstream repository.
  *   This check doesn't arrange either external repository.
+ *
+ *   A hyphen inside one word is part of the word.
+ *   A component tag such as `house-number` or `street-prefix` is one segment, and
+ *   so is a word behind a prefix particle, such as `sub-venue` or `non-native`.
+ *
+ *   `labels/street-prefix/` therefore stays beside `labels/street/`, and
+ *   `sub-venue-lexicon.ts` belongs under `sub-venue/`, never under `sub/venue/`.
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 
 import { DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -44,6 +52,22 @@ const CHECK_ID = "prefix-directories"
 const GROUP_THRESHOLD = 2
 
 const PREFIXED = /^(?<prefix>[a-z0-9]+)-.+$/u
+
+/**
+ * The component tags spelled with a hyphen, longest first, so `street-prefix-particle`
+ * is read before `street-prefix`.
+ */
+const HYPHENATED_TAGS = COMPONENT_TAGS.filter((tag) => tag.includes("_"))
+	.map((tag) => tag.replaceAll("_", "-"))
+	.toSorted((a, b) => b.length - a.length)
+
+/**
+ * A particle that forms one word with the segment after it.
+ *
+ * A directory titled `sub` or `non` states no subject.
+ */
+const PREFIX_PARTICLE = /^(?<word>(?:sub|non)-[a-z0-9]+)(?:-.+)?$/u
+
 const SOURCE_FILE = /\.tsx?$/u
 const TEST_FILE = /\.(?:test|spec)\.tsx?$/u
 
@@ -131,6 +155,22 @@ function directoryChildren(
 	return new Map([...children].map(([directory, bucket]) => [directory, withCompanions([...bucket.values()])]))
 }
 
+/**
+ * The prefix a name shares with its family, or null when the name is one word.
+ *
+ * The prefix is the name's first word.
+ * A hyphenated component tag and a word behind a prefix particle each count as one word.
+ */
+function familyPrefixOf(stem: string): string | null {
+	const word =
+		HYPHENATED_TAGS.find((tag) => stem === tag || stem.startsWith(`${tag}-`)) ??
+		PREFIX_PARTICLE.exec(stem)?.groups?.word
+
+	if (word) return stem === word ? null : word
+
+	return PREFIXED.exec(stem)?.groups?.prefix ?? null
+}
+
 function memberStem(member: PrefixMember): string {
 	return member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
 }
@@ -173,7 +213,7 @@ export function findPrefixGroups(
 
 			stems.set(stem, member)
 
-			const prefix = PREFIXED.exec(stem)?.groups?.prefix
+			const prefix = familyPrefixOf(stem)
 
 			if (!prefix) continue
 
