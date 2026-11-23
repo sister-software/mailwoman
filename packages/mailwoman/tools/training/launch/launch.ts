@@ -576,8 +576,10 @@ export async function cancelLaunch(runKey: string, deps: LaunchDependencies): Pr
  * Copies a run's output directory from the volume to the host, or one checkpoint directory of it
  * when `checkpoint` names one, and returns the copied files' paths relative to `localDir`.
  *
- * @throws When the host holds no record of the run, or the volume holds no
- * file under the requested directory.
+ * A commercial run's export (`<MW_RUN_BASE>/export`, written beside the output directory by the supervisor)
+ * is copied with the whole run into `<localDir>/export`, and its paths are returned under `export/`.
+ *
+ * @throws When the host holds no record of the run, or the volume holds no file under a requested directory.
  */
 export async function fetchRun(
 	runKey: string,
@@ -587,8 +589,13 @@ export async function fetchRun(
 ): Promise<string[]> {
 	const record = await requireRecord(runKey, deps)
 	const remote = checkpoint ? `${record.environment.MW_OUTPUT_DIR}/${checkpoint}` : record.environment.MW_OUTPUT_DIR
+	const fetched = await deps.boundary.fetchDirectory(remote, localDir)
 
-	return deps.boundary.fetchDirectory(remote, localDir)
+	if (checkpoint || record.license !== TrainerLicense.Commercial) return fetched
+
+	const exported = await deps.boundary.fetchDirectory(`${record.environment.MW_RUN_BASE}/export`, `${localDir}/export`)
+
+	return [...fetched, ...exported.map((path) => `export/${path}`)]
 }
 
 async function requireRecord(runKey: string, deps: LaunchDependencies): Promise<LaunchRecord> {
