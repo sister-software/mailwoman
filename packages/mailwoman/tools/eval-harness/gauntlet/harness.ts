@@ -28,27 +28,27 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
 import { loadBundledPlaceCountry } from "#default/placer"
-import { openBANRegionDatabases } from "#geocode/ban-layers"
-import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
-import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/fst-layers"
-import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
-import { openOSMRegionDatabases } from "#geocode/osm-layers"
-import {
-	createCountryFSTLookup,
-	loadParsePriors,
-	type ParsePriorArtifacts,
-	venueHeadOptsFor,
-} from "#geocode/parse-priors"
-import { createRegionDatabaseProvider } from "#geocode/regions"
-import { loadForkEntityDeps } from "#geocode/session/layers"
-import { poiTaxonomyLookup } from "#poi/intent"
 import {
 	capitalIndexFor,
 	type CapitalTier,
 	createResolverBackend,
 	existingWOFDatabasePaths,
 	resolveCandidateDBPath,
-} from "#resolver-backend"
+} from "#engine/resolver-backend"
+import { type DecoderSettings, geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import { openBANRegionDatabases } from "#geocode/layers/ban"
+import { selectedParsePriorArtifacts, shippedGazetteerFSTPath } from "#geocode/layers/fst"
+import { openOSMRegionDatabases } from "#geocode/layers/osm"
+import { createRegionDatabaseProvider } from "#geocode/layers/regions"
+import { GEOCODE_SESSION_DEFAULTS } from "#geocode/options"
+import {
+	createCountryFSTLookup,
+	loadParsePriors,
+	type ParsePriorArtifacts,
+	venueHeadOptsFor,
+} from "#geocode/parse-priors"
+import { loadForkEntityDeps } from "#geocode/session/layers"
+import { poiTaxonomyLookup } from "#poi/intent"
 import { gradedBaseOnly, OVERLAY_LOCALE_BY_COUNTRY } from "#tools/eval-harness/gauntlet/routing"
 import { pinnedSwitch, type SwitchPin, switchPinEntry } from "#tools/eval-harness/switch-pin"
 

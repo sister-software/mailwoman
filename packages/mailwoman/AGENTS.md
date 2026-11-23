@@ -7,8 +7,23 @@ The package has three source roots. `lib/` holds the library, including the pars
 tree, and the CLI helpers in `cli/kit/`. `tools/` holds evaluation, build and maintenance code such as
 `tools/eval-harness/` and `tools/dev-tools/`. Library code never imports `cli/` or `tools/`.
 
-`lib/metadata.ts` owns `readMailwomanManifest()`, the single read of this package's own
+`lib/package/metadata.ts` owns `readMailwomanManifest()`, the single read of this package's own
 `package.json` for its version, engines floor, and license.
+
+## Library layout
+
+The `lib/` root holds `index.ts`, `env.ts` and the sibling file of a directory. Every other module
+lives in the directory of its role:
+
+- `engine/` builds what a caller runs: the parser, the runtime pipeline, the resolver backend and the serve engine.
+- `parse/` holds the steps the runtime pipeline runs on a decoded tree.
+- `geocode/` holds the geocode cascade. Its directories are `rewrites/` (tree rewrites after the decode),
+  `scope/` (the country scope), `intent/` (query-intent markers), `result/` (what a geocode adds to its result),
+  `layers/` (the data layers a session opens), `session/`, `options/` and `batch/` (geocoding a stream of records).
+- `data/` holds the data root's installer. Its directories are `published/` (what the public bucket offers),
+  `install/` (acquire, plan, build and prune), `catalog/` (the installed artifacts) and `terms/` (license and sources).
+- `diagnostics/` holds what a check or a server reports about the running process.
+- `package/` reads this package's own manifest.
 
 ## CLI commands
 

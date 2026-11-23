@@ -36,7 +36,7 @@ import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolv
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-backend"
+import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#engine/resolver-backend"
 
 /**
  * One real pair per codex system, a postcode that exists and the locality it belongs to.

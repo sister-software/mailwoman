@@ -13,7 +13,7 @@ import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
 import { parseCommand } from "#cli/native/spec"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

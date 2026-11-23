@@ -49,6 +49,12 @@ import {
 } from "#cli/doctor/checks"
 import { mailwomanCommandPrefix } from "#cli/kit/invocation"
 import { LayerCatalog } from "#data/catalog"
+import {
+	conventionCandidateDBPath,
+	resolveCandidateDBPath,
+	resolveWOFDatabasePaths,
+	selectedWOFExtracts,
+} from "#engine/resolver-backend"
 import { $public } from "#env"
 import {
 	addressPointDatabases,
@@ -58,14 +64,8 @@ import {
 	type AddressPointDatabaseRef,
 	type LayerDatabaseRef,
 	type LayerID,
-} from "#geocode/layer-paths"
-import { readMailwomanManifest } from "#metadata"
-import {
-	conventionCandidateDBPath,
-	resolveCandidateDBPath,
-	resolveWOFDatabasePaths,
-	selectedWOFExtracts,
-} from "#resolver-backend"
+} from "#geocode/layers/paths"
+import { readMailwomanManifest } from "#package/metadata"
 
 /**
  * The resolved-weights shape the runner needs: a structural subset of
@@ -399,7 +399,7 @@ async function gatherAddressPointLicense(
  */
 async function gatherMixedLayers(dataRoot: PathBuilderLike): Promise<MixedLayerObservation[]> {
 	const [mixed, { readLatestAddressLayerManifest }, { version }] = await Promise.all([
-		import("#data/mixed-layer"),
+		import("#data/terms/mixed-layer"),
 		import("@mailwoman/resolver-wof-sqlite/address/keys/layout"),
 		readMailwomanManifest(),
 	])

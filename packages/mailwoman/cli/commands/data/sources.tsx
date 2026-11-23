@@ -8,8 +8,8 @@
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { BUNDLES } from "#data/bundles"
-import { censusBundleSources, renderSourceCensus } from "#data/sources"
+import { BUNDLES } from "#data/published/bundles"
+import { censusBundleSources, renderSourceCensus } from "#data/terms/sources"
 
 /**
  * Native command-line interface consumed by the filesystem command router.

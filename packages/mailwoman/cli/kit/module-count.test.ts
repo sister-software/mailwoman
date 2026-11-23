@@ -21,7 +21,7 @@ import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, test } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 const cliBin = await mailwomanCLIPath()
 

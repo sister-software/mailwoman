@@ -101,7 +101,7 @@ async function manifestTerms(options: {
 	const sourceRecords = Object.fromEntries(options.counts.map(([dataset, rows]) => [options.sourceIDOf(dataset), rows]))
 
 	if (options.openAddresses) {
-		const { addressSourcesManifestTerms } = await import("#data/mixed-layer")
+		const { addressSourcesManifestTerms } = await import("#data/terms/mixed-layer")
 		const terms = await addressSourcesManifestTerms({ country: "US", sourceRecords })
 
 		return { license: terms.license, attribution: terms.attribution, source: "openaddresses", sourceRecords }
@@ -203,7 +203,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const SCOPE = COUNTRY ?? STATE
 
 		const { licenseForOvertureCountry, nationalAddressPointsPath, streetLocaleForOvertureCountry } =
-			await import("#geocode/national-overture")
+			await import("#geocode/layers/national-overture")
 
 		const finalOut = resolvePath(
 			options.out ??

@@ -16,7 +16,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { DATA_CLIENT_HEADER } from "#data/remote"
+import { DATA_CLIENT_HEADER } from "#data/published/remote"
 import { $private } from "#env"
 import { bucketAccessDescription, bucketAccessExpression } from "#tools/dev-tools/cloudflare/firewall"
 import { upsertZoneRule } from "#tools/dev-tools/cloudflare/rulesets"

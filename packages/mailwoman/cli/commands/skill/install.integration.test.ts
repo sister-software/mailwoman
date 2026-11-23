@@ -18,7 +18,7 @@ import { runFile } from "@mailwoman/core/process"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 
 const fixtures = new AsyncDisposableStack()

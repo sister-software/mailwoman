@@ -16,16 +16,16 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { BUNDLES, type DataBundle } from "#data/bundles"
-import { licenseRouteLines } from "#data/licensed"
 import {
 	type InstallationPlan,
 	type InstallationRequest,
 	planInstallation,
 	PlannedAction,
 	type PlannedArtifact,
-} from "#data/plan"
-import { SizeBasis } from "#data/registry"
+} from "#data/install/plan"
+import { BUNDLES, type DataBundle } from "#data/published/bundles"
+import { licenseRouteLines } from "#data/published/licensed"
+import { SizeBasis } from "#data/published/registry"
 
 /**
  * The installation inventory couldn't be read, naming the input that failed.

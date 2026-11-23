@@ -14,7 +14,7 @@ import { licenseIdentifiers } from "@mailwoman/license/obligations"
 import { readLicenseRecord } from "@mailwoman/license/record"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
-import { probeManifest } from "mailwoman/data/inventory"
+import { probeManifest } from "mailwoman/data/catalog/inventory"
 import { basename, type PathBuilderLike } from "path-ts"
 
 import { OVERTURE_PART_NOTICE } from "#tools/pipeline/collective-offer"

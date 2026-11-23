@@ -201,8 +201,8 @@ export interface NominatimStatus {
 }
 
 /**
- * A freshness report as this surface consumes it, structurally `mailwoman/freshness`'s `FreshnessReport`
- * and declared here so the wire interface keeps no import from the engine implementation.
+ * A freshness report as this surface consumes it, structurally `mailwoman/diagnostics/freshness`'s
+ * `FreshnessReport` and declared here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
 	dataUpdated: string | null

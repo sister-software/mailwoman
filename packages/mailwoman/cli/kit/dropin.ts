@@ -22,10 +22,10 @@ import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli/kit/engine-stamp"
-import { type FreshnessReport, readFreshness } from "#freshness"
-import type { LayerContribution } from "#geocode/contributions"
+import { type FreshnessReport, readFreshness } from "#diagnostics/freshness"
+import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#engine/resolver-backend"
+import type { LayerContribution } from "#geocode/layers/contributions"
 import type { GeocodeSession } from "#geocode/session"
-import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPath } from "#resolver-backend"
 /**
  * The documentation page linked by missing-gazetteer messages.
  */

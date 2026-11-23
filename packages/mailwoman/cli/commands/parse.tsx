@@ -32,8 +32,8 @@ import {
 } from "#cli-kit"
 import { WeightsGuard, type WeightsResult } from "#cli-kit/weights-guard"
 import { typedLocaleHint } from "#cli/kit/locale-hint"
-import { resolverDefaultCountry } from "#country-scope"
-import type { createRuntimePipeline } from "#runtime-pipeline"
+import type { createRuntimePipeline } from "#engine/runtime-pipeline"
+import { resolverDefaultCountry } from "#geocode/scope/country"
 
 const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -324,7 +324,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 	const {
 		resolver: { createWOFResolver },
 		resolverBackend: { createResolverBackend, resolveCandidateDBPath },
-	} = await allKeyed({ resolver: import("@mailwoman/resolver"), resolverBackend: import("#resolver-backend") })
+	} = await allKeyed({ resolver: import("@mailwoman/resolver"), resolverBackend: import("#engine/resolver-backend") })
 
 	// `@mailwoman/resolver-wof-sqlite` is an optional peer, so it loads only when a resolver is needed.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
@@ -419,7 +419,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 }
 
 async function structuralResult(input: string, options: ParseOptions) {
-	const { createRuntimePipeline } = await import("#runtime-pipeline")
+	const { createRuntimePipeline } = await import("#engine/runtime-pipeline")
 	await using pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
 
 	// The result is awaited here, because the pipeline's scope closes when this function returns.
@@ -512,7 +512,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// A `false` value disables it.
 	const streetEvidence = options.streetEvidenceRerank ? "auto" : "none"
 
-	const { createRuntimePipeline } = await import("#runtime-pipeline")
+	const { createRuntimePipeline } = await import("#engine/runtime-pipeline")
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
@@ -627,7 +627,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
-	const { createRuntimePipeline } = await import("#runtime-pipeline")
+	const { createRuntimePipeline } = await import("#engine/runtime-pipeline")
 
 	const benchmark = async (resolver?: Resolver): ReturnType<typeof collect> => {
 		await using pipeline = createRuntimePipeline({

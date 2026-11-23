@@ -31,9 +31,9 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli/kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli/kit/engine-stamp"
-import { readSourceLocations, type SourceLocations } from "mailwoman/data/source-locations"
+import { readSourceLocations, type SourceLocations } from "mailwoman/data/terms/source-locations"
+import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/diagnostics/freshness"
 import { $public } from "mailwoman/env"
-import { type ArtifactFreshness, ManifestState, readFreshness } from "mailwoman/freshness"
 
 import { openOGCGeocoder } from "#cli/geocoder"
 import {

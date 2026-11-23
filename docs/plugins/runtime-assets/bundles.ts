@@ -12,7 +12,7 @@
  *
  *   Every module on this import path is transformed by the Docusaurus loader,
  *   so none of them may touch `import.meta.resolve`, per the note atop `artifacts.ts`.
- *   The imports name `mailwoman/data/bundles` and `mailwoman/data/published-bundles`
+ *   The imports name `mailwoman/data/published/bundles` and `mailwoman/data/published/snapshot`
  *   rather than the `mailwoman/data` barrel, because the barrel re-exports the inventory module.
  *
  *   The loader cannot require that module's SQLite client.
@@ -20,13 +20,13 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { BUNDLES } from "mailwoman/data/bundles"
+import { BUNDLES } from "mailwoman/data/published/bundles"
 import {
 	MeasurementStatus,
 	type PublishedBundleRecord,
 	readPublishedBundlesSnapshot,
 	type RightsComponent,
-} from "mailwoman/data/published-bundles"
+} from "mailwoman/data/published/snapshot"
 
 /**
  * What the snapshot recorded for one bundle, reduced for rendering.

@@ -8,7 +8,7 @@
 			"type": "data",
 			"name": "mailwoman-data",
 			"version": "11.2.0",
-			"description": "Every data artifact a mailwoman release can deliver, with the terms each one carries. Sizes and per-artifact manifests come from the committed snapshot in packages/mailwoman/data/published-bundles.json; publishers, terms, conditions and open questions come from the bundle registry in packages/mailwoman/lib/data/bundles.ts."
+			"description": "Every data artifact a mailwoman release can deliver, with the terms each one carries. Sizes and per-artifact manifests come from the committed snapshot in packages/mailwoman/data/published-bundles.json; publishers, terms, conditions and open questions come from the bundle registry in packages/mailwoman/lib/data/published/bundles.ts."
 		},
 		"properties": [
 			{

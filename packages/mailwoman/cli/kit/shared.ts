@@ -19,9 +19,9 @@ import { Box, Text } from "ink"
 import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
 
-import type { Check } from "#check"
 import { type StageProgress, StageLine } from "#cli/kit/progress"
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
+import type { Check } from "#diagnostics/check"
 
 /**
  * Props for commands parsed from a native specification.
@@ -403,7 +403,7 @@ export async function loadClassifierTolerant(
  * The CLI prints a `CommandError` as guidance rather than as a stack.
  */
 export async function requireCommandWOFPath(options: { resolveDB?: string }): Promise<string> {
-	const { requireWOFPath } = await import("#resolver-backend")
+	const { requireWOFPath } = await import("#engine/resolver-backend")
 
 	try {
 		return await requireWOFPath(options.resolveDB)

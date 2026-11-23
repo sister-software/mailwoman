@@ -1,0 +1,292 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * @file Opens the national address-point databases built from Overture, one for each country that has one under the data root.
+ */
+
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { ServingRole } from "@mailwoman/core/layers"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
+import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
+import type { PathBuilderLike } from "path-ts"
+
+import { LayerCatalog } from "#data/catalog"
+import { isNationalAddressPointArtifact } from "#geocode/layers/osm"
+
+/**
+ * The countries with a national address-point database built from Overture, in ISO 3166-1 alpha-2.
+ */
+// country-branch: the list records which countries have a built database,
+// a fact about the data root's contents.
+// A read of the layer catalog's national address-point artifacts would replace it.
+const NATIONAL_OVERTURE_COUNTRIES = ["tw", "it", "es"] as const
+
+const registry = createStreetLocaleRegistry(
+	NATIONAL_OVERTURE_COUNTRIES,
+	"Build its national address-point database and add it to NATIONAL_OVERTURE_COUNTRIES in national-overture.ts."
+)
+
+/**
+ * Returns the street locale a country's national address-point database folds under.
+ *
+ * @throws For a country without a national address-point database.
+ */
+export function streetLocaleForOvertureCountry(countryCode: string): StreetLocale {
+	return registry.localeFor(countryCode)
+}
+
+/**
+ * What's known about the grant on one country's national address-point rows.
+ *
+ * Two documents can describe the same rows and disagree.
+ * The stricter reading would state an unverified grant.
+ *
+ * An incorrect restrictive attribution is as incorrect as an incorrect permissive one.
+ *
+ * So an entry holds either a settled expression or the candidate readings and evidence for each.
+ * The build refuses to stamp an unsettled expression.
+ */
+export interface OvertureCountryLicense {
+	/**
+	 * The SPDX expression, where one document states it.
+	 */
+	expression?: string
+	/**
+	 * The readings that remain, where more than one document describes the rows.
+	 */
+	candidates?: readonly string[]
+	/**
+	 * What each reading rests on, so a later reader doesn't repeat the research.
+	 */
+	evidence: readonly string[]
+	/**
+	 * The register recorded in `sources[].dataset`.
+	 * Research must address this register.
+	 */
+	register: string
+}
+
+/**
+ * The grant on each country's national address-point database comes only from the upstream register.
+ *
+ * Overture declares no identifier for the addresses theme.
+ * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
+ * and `ODbL-1.0` for divisions.
+ *
+ * For addresses, Overture states only that the sources use permissive open licenses
+ * before listing the upstream register per country.
+ *
+ * An expression carrying a second Overture grant would assert a grant Overture doesn't make.
+ *
+ * `sources[].license` reads NULL on every row of every country here, so the identifier
+ * comes from Overture's entry for the register that `sources[].dataset` records.
+ */
+const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
+	[
+		"tw",
+		{
+			// Two documents describe the same municipal 門牌 rows.
+			// They describe two grants, rather than conflicting terms for one grant.
+			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
+			// Overture redistributes the data under those terms.
+			// The counsel dossier records OGDL-Taiwan-1.0 as the originating agencies' grant.
+			//
+			// A consumer of a row that came through Overture is bound by both,
+			// so the conjunction is the settled reading.
+			// Each identifier has only Attribution in `KNOWN_OBLIGATIONS`.
+			// The conjunction adds no obligation either grant lacks.
+			// A row with one grant would omit the other's conditions.
+			// OGDL-Taiwan-1.0 §5.2 permits an agency to withdraw its data.
+			// An attribution failure voids that grant ab initio.
+			expression: "CC-BY-4.0 AND OGDL-Taiwan-1.0",
+			evidence: [
+				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries — the terms Overture redistributes under",
+				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data — the originating agencies' own grant",
+			],
+			register: "OpenAddresses/<bureau> Civil Affairs",
+		},
+	],
+	[
+		"it",
+		{
+			expression: "CC-BY-4.0",
+			evidence: ["Overture attribution page, Italy entry: ANNCSU under CC BY 4.0"],
+			register: "OpenAddresses/Istat e dall'Agenzia delle Entrate",
+		},
+	],
+	[
+		"es",
+		{
+			expression: "CC-BY-4.0",
+			// CartoCiudad, an IGN/CNIG product within the Sistema Cartográfico Nacional.
+			// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
+			evidence: [
+				"Overture attribution page, Spain entry: scne.es under CC BY 4.0",
+				"IGN license PDF linked by both the CNIG product page and Overture",
+			],
+			register: "OpenAddresses/scne.es",
+		},
+	],
+])
+
+/**
+ * Returns what's known about a country's grant, or `undefined` for a country with no entry.
+ *
+ * A caller that needs to reason about an unsettled grant reads this.
+ * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
+ * which refuses one that's unsettled.
+ */
+export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | null {
+	return COUNTRY_LICENSES.get(countryCode.toLowerCase()) ?? null
+}
+
+/**
+ * Returns the SPDX license expression a country's national address-point database is published under.
+ *
+ * @throws When the country has no entry, or when its entry holds candidate readings
+ * rather than a settled expression.
+ * A build that stamped a candidate would record an unverified grant.
+ * The artifact would preserve that claim for as long as it exists.
+ */
+export function licenseForOvertureCountry(countryCode: string): string {
+	const entry = overtureCountryLicense(countryCode)
+
+	if (!entry) {
+		throw new Error(
+			`No license registered for country "${countryCode}". Add it to COUNTRY_LICENSES in national-overture.ts.`
+		)
+	}
+
+	if (!entry.expression) {
+		const candidates = entry.candidates?.join(" or ") ?? "none recorded"
+
+		throw new Error(
+			`The grant on ${countryCode}'s ${entry.register} rows is unsettled: ${candidates}. ` +
+				`Evidence: ${entry.evidence.join("; ")}. ` +
+				`Stamping either candidate would record a grant nobody established, so this build stops. ` +
+				`Settle it and give the entry an \`expression\` in COUNTRY_LICENSES.`
+		)
+	}
+
+	return entry.expression
+}
+
+/**
+ * Lists the lowercase country codes that have a registered national Overture address-point locale.
+ */
+export function supportedOvertureCountries(): string[] {
+	return registry.supported()
+}
+
+/**
+ * Returns the path of a country's national address-point database, in the same directory
+ * the older per-state files of `#geocode/layers/us/state-files` sit in.
+ *
+ * The provider treats a missing file as no rooftop tier, so a path anywhere
+ * else would hide an existing database.
+ */
+export function nationalAddressPointsPath(dataRoot: PathBuilderLike, countryCode: string): string {
+	return addressPointDatabaseRoot(dataRoot)(`address-points-${countryCode.toLowerCase()}.db`).toString()
+}
+
+/**
+ * Opens and caches national Overture rooftop lookups by country.
+ *
+ * Use {@link OvertureNationalDatabaseProvider.create}, because `for` answers
+ * only from what `warm` found on disk.
+ */
+export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
+	readonly #dataRoot: PathBuilderLike
+	readonly #cache = new Map<string, RegionDatabases>()
+	readonly #onDisk = new Set<string>()
+	/**
+	 * Per-country paths the active selection lists, read in place of the conventional path.
+	 */
+	readonly #selected = new Map<string, string>()
+	readonly #catalog: LayerCatalog | undefined
+	#warmPromise?: Promise<void>
+
+	constructor(dataRoot: PathBuilderLike, catalog?: LayerCatalog) {
+		this.#dataRoot = dataRoot
+		this.#catalog = catalog
+	}
+
+	/**
+	 * @param catalog One reading of the active selection.
+	 * Read here when omitted.
+	 */
+	static async create(dataRoot: PathBuilderLike, catalog?: LayerCatalog): Promise<OvertureNationalDatabaseProvider> {
+		const provider = new OvertureNationalDatabaseProvider(dataRoot, catalog)
+
+		await provider.warm()
+
+		return provider
+	}
+
+	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probe())
+
+	#path(cc: string): string {
+		return this.#selected.get(cc) ?? nationalAddressPointsPath(this.#dataRoot, cc)
+	}
+
+	async #probe(): Promise<void> {
+		const catalog = this.#catalog ?? (await LayerCatalog.read(this.#dataRoot))
+
+		for (const cc of supportedOvertureCountries()) {
+			// The national Overture countries and the BAN countries are disjoint today (it, es, tw and fr),
+			// so a selection entry for one of these countries lists its Overture database first.
+			// An OpenStreetMap build in the same entry is the OpenStreetMap tier's, consulted after this one.
+			const selected = await catalog.firstPath(
+				ServingRole.AddressPoints,
+				{ country: cc.toUpperCase(), subdivision: null },
+				isNationalAddressPointArtifact
+			)
+
+			if (selected) {
+				this.#selected.set(cc, selected)
+			}
+
+			const path = this.#path(cc)
+
+			if (await pathExists(path)) {
+				this.#onDisk.add(path)
+			}
+		}
+	}
+
+	/**
+	 * Returns the rooftop lookup for an ISO 3166-1 alpha-2 country, or `{}`
+	 * when the country is unsupported or its database isn't on disk.
+	 */
+	readonly for = (country: string): RegionDatabases => {
+		const cc = country.toLowerCase()
+		const cached = this.#cache.get(cc)
+
+		if (cached) return cached
+
+		const entry: RegionDatabases = {}
+
+		if (supportedOvertureCountries().includes(cc)) {
+			const path = this.#path(cc)
+
+			if (this.#onDisk.has(path)) {
+				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForOvertureCountry(cc) })
+			}
+		}
+
+		this.#cache.set(cc, entry)
+
+		return entry
+	};
+
+	[Symbol.dispose](): void {
+		for (const entry of this.#cache.values()) {
+			;(entry.addressPoints as Disposable | undefined)?.[Symbol.dispose]()
+		}
+
+		this.#cache.clear()
+	}
+}

@@ -12,7 +12,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 
 const SOURCE = "operator:world-structures-2026-08-10"

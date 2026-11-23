@@ -16,8 +16,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import type { Check } from "#check"
-import { readMailwomanVersion } from "#metadata"
+import type { Check } from "#diagnostics/check"
+import { readMailwomanVersion } from "#package/metadata"
 
 /**
  * The HTTP surfaces that each get an emitted OpenAPI spec and a generated Python and Rust client.

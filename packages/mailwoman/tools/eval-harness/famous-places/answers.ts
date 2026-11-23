@@ -15,8 +15,8 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
+import { resolveCandidateDBPath } from "#engine/resolver-backend"
 import { loadForkEntityDeps } from "#geocode/session/layers"
-import { resolveCandidateDBPath } from "#resolver-backend"
 import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow } from "#tools/eval-harness/famous-places/score"
 import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"
 

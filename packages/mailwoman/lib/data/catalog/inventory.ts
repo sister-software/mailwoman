@@ -1,0 +1,555 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Inventories databases in the data root and reports their provenance and symlink targets.
+ */
+
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import type { Dirent } from "@mailwoman/core/fs/readers"
+import { pathExists, readLink, isSymbolicLink, statPath } from "@mailwoman/core/fs/readers/stat"
+import { tryParsingJSON } from "@mailwoman/core/json"
+import { LayerManifestState, type LayerManifestRead, probeLayerManifest } from "@mailwoman/core/layers/manifest"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
+import { getRow } from "@mailwoman/core/utils"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
+import { basename, PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
+
+import type { InstallationState } from "#data/catalog/state"
+
+/**
+ * Whether an artifact can say how it was made.
+ */
+export const Provenance = {
+	/**
+	 * Has a `layer_manifest` row — source, vintage, build command, build sha.
+	 */
+	Manifested: "manifested",
+	/**
+	 * A built artifact with no manifest.
+	 *
+	 * The builder requires knowledge of which command made it.
+	 * A person may know that command even when the file doesn't record it.
+	 */
+	Unprovenanced: "unprovenanced",
+	/**
+	 * Not ours to reproduce — a third party's artifact we keep for comparison.
+	 *
+	 * The number would never improve if the inventory counted these as debt.
+	 */
+	Foreign: "foreign",
+	/**
+	 * The file couldn't be opened as a database (locked, truncated, or not SQLite).
+	 *
+	 * Reported as its own state because "we couldn't look" isn't "it has no manifest".
+	 */
+	Unreadable: "unreadable",
+} as const
+
+export type Provenance = (typeof Provenance)[keyof typeof Provenance]
+
+/**
+ * Directories whose contents belong to someone else, with the reason.
+ *
+ * Keyed on the first path segment under the data root.
+ * Use a list instead of a heuristic.
+ *
+ * "Is this ours" is a fact about intent.
+ * A filename-based guess lets a real gap pass as foreign.
+ */
+export const FOREIGN_ROOTS: Record<string, string> = {
+	"pelias-rig": "a Pelias comparison rig — a third party's build, kept to measure against",
+	"geocoder-tester": "the upstream geocoder-tester fixtures, not a mailwoman artifact",
+}
+
+/**
+ * The `layer_manifest` columns the inventory reports.
+ *
+ * `build_cmd` is the one that matters: it is the difference between an artifact
+ * that documents its own reproduction and one that doesn't.
+ */
+export interface LayerManifest {
+	name: string
+	version: string
+	tier: string
+	/**
+	 * The SPDX expression the build admitted.
+	 * `refusalsForPublication` reads it beside `tier`.
+	 *
+	 * A row written before the column existed leaves it undefined.
+	 * An absent expression is an unstated one rather than a permissive one.
+	 */
+	license?: string
+	attribution?: string
+	source: string
+	source_vintage: string
+	build_cmd: string
+	build_sha: string
+	created_at: string
+	/**
+	 * JSON object of publisher name to the record count that publisher supplied to the build.
+	 *
+	 * A row written before the column existed leaves it undefined.
+	 * A build that recorded no count also leaves it undefined.
+	 *
+	 * The count is of the build's input rather than the rows the artifact kept.
+	 * It cannot be recovered afterwards because Overture removes a release from
+	 * its bucket once a newer one lands.
+	 */
+	source_records?: string
+	/**
+	 * The URL the build downloaded its input file from.
+	 *
+	 * Undefined for a row written before the column existed and for a build that didn't record it.
+	 */
+	source_url?: string
+	/**
+	 * The SHA-256 of the build's input file.
+	 *
+	 * Undefined for a row written before the column existed and for a build that didn't record it.
+	 */
+	source_sha256?: string
+}
+
+export interface InventoryEntry {
+	/**
+	 * Path relative to the data root, so a report is comparable across machines.
+	 */
+	path: string
+	bytes: number
+	provenance: Provenance
+	/**
+	 * Present only for {@link Provenance.Manifested}.
+	 */
+	manifest?: LayerManifest
+	/**
+	 * Where a symlink points, relative to the data root when it lands inside it.
+	 *
+	 * Absent for a real file.
+	 */
+	linkTarget?: string
+	/**
+	 * Why this entry is foreign, unreadable, or without a manifest row.
+	 *
+	 * Absent for a manifested entry.
+	 */
+	note?: string
+	/**
+	 * Why `probeLayerManifest` refused the manifest row, for a manifested entry
+	 * whose row fails its validation.
+	 *
+	 * Absent when the row is valid and for every other provenance.
+	 */
+	manifestError?: string
+	/**
+	 * `active` when the active selection lists the artifact, `inactive` when it is installed and unselected.
+	 *
+	 * Absent for a file the catalog doesn't hold, such as one at a conventional path.
+	 */
+	selection?: "active" | "inactive"
+}
+
+export interface InventoryReport {
+	dataRoot: string
+	entries: InventoryEntry[]
+	counts: Record<Provenance, number>
+	/**
+	 * Databases that were found but not opened, because they sit under a foreign root.
+	 *
+	 * The name lets readers audit the report's denominator.
+	 */
+	skippedForeign: number
+	/**
+	 * The depth where the walk stopped and the directories it declined to enter.
+	 *
+	 * A report that silently bounded its own search would read as coverage.
+	 */
+	maxDepth: number
+	/**
+	 * The depth where the walk stopped inside the data root's database group, `db/`.
+	 */
+	layerDepth: number
+}
+
+/**
+ * The depth the walk reaches inside the data root's database group.
+ *
+ * A versioned address layer sits at `db/addresses/<region>/<version>/lookup.db`,
+ * four directories below the data root.
+ */
+const DATABASE_GROUP_DEPTH = 4
+
+/**
+ * Read a database's `layer_manifest`, or report why not.
+ *
+ * Opened read-only and closed immediately: every built database in this repo is sealed `0444`,
+ * and a reader that opened one read-write would fail on exactly the artifacts it most needs to describe.
+ */
+export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest; error?: string } {
+	let db: DatabaseClient<layerschemadatabase> | null = null
+
+	try {
+		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+
+		if (!tableExists(db, "layer_manifest")) return {}
+
+		const row = getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1"))
+
+		return row ? { manifest: row } : {}
+	} catch (error) {
+		return { error: (error as Error).message }
+	} finally {
+		db?.destroy()
+	}
+}
+
+/**
+ * What one database's `layer_manifest` reads as, through the reader the serving layers use.
+ */
+type ManifestProbe =
+	| { state: "unopenable"; reason: string }
+	| { state: typeof LayerManifestState.Absent; reason: string }
+	| { state: "invalid"; reason: string; row: LayerManifest | null }
+	| { state: typeof LayerManifestState.Present; row: LayerManifest }
+
+/**
+ * Open one database read-only, classify its manifest with {@linkcode probeLayerManifest}, and close it.
+ *
+ * A missing table is absent, as `probeLayerManifest` reports it.
+ * A table that exists and fails that reader's validation is invalid, and its recorded row is still
+ * returned, because the row's build command and license are what an operator needs to repair it.
+ */
+async function probeManifestState(path: string): Promise<ManifestProbe> {
+	let db: DatabaseClient<layerschemadatabase>
+
+	try {
+		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
+	} catch (error) {
+		return { state: "unopenable", reason: (error as Error).message }
+	}
+
+	try {
+		// A file that isn't SQLite fails here, at its first read, and reads as unopenable.
+		tableExists(db, "layer_manifest")
+
+		let read: LayerManifestRead
+
+		try {
+			read = await probeLayerManifest(db)
+		} catch (error) {
+			let row: LayerManifest | null = null
+
+			try {
+				row = getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1")) ?? null
+			} catch {
+				// The validation message states the defect, and the entry reports that message without a row.
+			}
+
+			return { state: "invalid", reason: (error as Error).message, row }
+		}
+
+		if (read.state === LayerManifestState.Absent) return { state: read.state, reason: read.reason }
+
+		return { state: read.state, row: getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1"))! }
+	} catch (error) {
+		return { state: "unopenable", reason: (error as Error).message }
+	} finally {
+		db.destroy()
+	}
+}
+
+/**
+ * Every `*.db` under `dataRoot`, to `maxDepth` path segments, and to `layerDepth` inside the database group.
+ *
+ * Bounded because the data root holds source trees with millions of files (a WOF checkout is ~1.2 M GeoJSON),
+ * and an unbounded walk would spend minutes in directories that contain no databases.
+ * The database group holds only built layers, so its deeper bound reaches versioned layers at little cost.
+ * Foreign roots are not descended into at all.
+ *
+ * The inventory records each row and its name at lower cost.
+ *
+ * @throws The system error, naming the directory, when a directory exists and cannot be read.
+ */
+async function findDatabases(
+	dataRoot: PathBuilder,
+	maxDepth: number,
+	layerDepth: number
+): Promise<{ paths: string[]; skippedForeign: number }> {
+	const paths: string[] = []
+	const databaseGroup = databaseRootPath(dataRoot).toString()
+	let skippedForeign = 0
+
+	const walk = async (dir: PathBuilder, depth: number, limit: number): Promise<void> => {
+		if (depth > limit) return
+
+		let entries: Dirent[]
+
+		try {
+			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
+		} catch (error) {
+			// A directory that doesn't exist holds no databases.
+			// Any other failure leaves the walk unable to say what the directory holds,
+			// and the system error names it.
+			if ((error as { code?: unknown } | null)?.code === "ENOENT") return
+
+			throw error
+		}
+
+		for (const entry of entries) {
+			const full = dir(entry.name)
+
+			if (entry.isDirectory()) {
+				if (depth === 0 && FOREIGN_ROOTS[entry.name]) {
+					skippedForeign++
+
+					continue
+				}
+
+				await walk(full, depth + 1, depth === 0 && full.toString() === databaseGroup ? layerDepth : limit)
+
+				continue
+			}
+
+			if (entry.name.endsWith(".db")) {
+				paths.push(full.toString())
+			}
+		}
+	}
+
+	await walk(dataRoot, 0, maxDepth)
+
+	return { paths: paths.toSorted(), skippedForeign }
+}
+
+/**
+ * Classify one database.
+ *
+ * Run `lstat` before `stat` for a symlinked artifact.
+ * The report must include the link and the size of its target.
+ *
+ * `stat` by itself answers only for the target; `lstat` by itself answers only for the link.
+ */
+async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
+	const rel = relative(dataRoot, path)
+	const segment = rel.split("/")[0] ?? ""
+
+	const link = (await isSymbolicLink(path)) ? await readLink(path) : null
+	const bytes = (await pathExists(path)) ? (await statPath(path)).size : 0
+
+	const base: InventoryEntry = {
+		path: rel,
+		bytes,
+		provenance: Provenance.Unprovenanced,
+		...(link ? { linkTarget: relative(dataRoot, resolvePath(dataRoot, segment, link)) } : {}),
+	}
+
+	if (FOREIGN_ROOTS[segment]) {
+		return { ...base, provenance: Provenance.Foreign, note: FOREIGN_ROOTS[segment] }
+	}
+
+	const probe = await probeManifestState(path)
+
+	switch (probe.state) {
+		case "unopenable":
+			return { ...base, provenance: Provenance.Unreadable, note: probe.reason }
+		case LayerManifestState.Absent:
+			return { ...base, note: probe.reason }
+		case "invalid":
+			// A table without a row records no build command, as a missing table does.
+			return probe.row
+				? { ...base, provenance: Provenance.Manifested, manifest: probe.row, manifestError: probe.reason }
+				: { ...base, note: probe.reason, manifestError: probe.reason }
+		case LayerManifestState.Present:
+			return { ...base, provenance: Provenance.Manifested, manifest: probe.row }
+	}
+}
+
+/**
+ * Walk the data root and classify every database in it.
+ */
+export async function takeInventory(options: {
+	dataRoot: PathBuilderLike
+	maxDepth?: number
+	/**
+	 * The depth bound inside the database group, `db/`.
+	 * It is never lower than `maxDepth`.
+	 *
+	 * @defaultValue 4. That depth reaches a versioned layer at `db/<layer>/<region>/<version>/<file>.db`.
+	 */
+	layerDepth?: number
+	/**
+	 * The catalog's lists.
+	 *
+	 * Each installed artifact is reported whatever the walk's depth, and every entry
+	 * the catalog holds is marked active or inactive.
+	 */
+	installation?: InstallationState
+}): Promise<InventoryReport> {
+	const root = PathBuilder.from(options.dataRoot)
+	// The report records the root and each entry's path as strings.
+	const dataRoot = root.toString()
+	// A database sits three segments down, at `db/<layer>/<file>.db`, since the `db/` group added a level.
+	// A bound of two stops the walk at `db/<layer>/`.
+	// The report then describes a data root holding zero databases.
+	const maxDepth = options.maxDepth ?? 3
+	const layerDepth = Math.max(maxDepth, options.layerDepth ?? DATABASE_GROUP_DEPTH)
+	const { paths, skippedForeign } = await findDatabases(root, maxDepth, layerDepth)
+	const installed = new Map<string, "active" | "inactive">()
+
+	for (const copy of options.installation?.active ?? []) {
+		installed.set(copy.path, "active")
+	}
+
+	for (const copy of options.installation?.inactive ?? []) {
+		if (!installed.has(copy.path)) {
+			installed.set(copy.path, "inactive")
+		}
+	}
+
+	const walked = new Set(paths)
+	const allPaths = [...paths, ...[...installed.keys()].filter((path) => !walked.has(path))]
+
+	const entries: InventoryEntry[] = []
+
+	// The loop opens one database at a time, and each handle closes before the next opens.
+	for (const path of allPaths) {
+		const entry = await inventoryEntry(dataRoot, path)
+		const selection = installed.get(path)
+
+		entries.push(selection ? { ...entry, selection } : entry)
+	}
+
+	const counts: Record<Provenance, number> = {
+		[Provenance.Manifested]: 0,
+		[Provenance.Unprovenanced]: 0,
+		[Provenance.Foreign]: 0,
+		[Provenance.Unreadable]: 0,
+	}
+
+	for (const entry of entries) {
+		counts[entry.provenance]++
+	}
+
+	return { dataRoot, entries, counts, skippedForeign, maxDepth, layerDepth }
+}
+
+/**
+ * The one sentence a caller relays.
+ *
+ * The denominator excludes foreign and unreadable artifacts deliberately:
+ * the number is meant to be improvable.
+ * A rate that counts artifacts outside our provenance scope to provenance can
+ * never reach 100% no matter what's fixed.
+ */
+export function inventorySentence(report: InventoryReport): string {
+	const ours = report.counts.manifested + report.counts.unprovenanced
+	const pct = ours === 0 ? 0 : Math.round((report.counts.manifested / ours) * 1000) / 10
+
+	return (
+		`${report.counts.manifested} of ${ours} mailwoman-built databases carry a layer_manifest table (${pct}%)` +
+		`${report.counts.foreign ? `; ${report.counts.foreign} foreign, not ours to reproduce` : ""}` +
+		`${report.counts.unreadable ? `; ${report.counts.unreadable} could not be opened` : ""}` +
+		`. Walked ${report.maxDepth} level(s) under the data root and ${report.layerDepth} in its db/ group` +
+		`${report.skippedForeign ? `, skipping ${report.skippedForeign} foreign root(s)` : ""}.`
+	)
+}
+
+/**
+ * Whether a recorded `build_cmd` names something that still exists in this repo.
+ *
+ * A manifest is only as useful as its build command.
+ * Shipped artifacts showed two ways of being worthless were measured on the shipped artifacts.
+ *
+ * `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`,
+ * a path the workspace regroup moved to `packages/osm/...`
+ *
+ * The literal survived the move inside a built database, where no lint can reach it.
+ *
+ * And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`,
+ * which exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
+ *
+ * Both artifacts pass every "has a manifest" check and neither can be rebuilt from its recorded contents.
+ * So the inventory doesn't count the presence of a manifest as a property on its own.
+ *
+ * The check is deliberately shallow: any token that looks like a path
+ * (contains `/` and no shell metacharacter) must resolve under the repo root.
+ * A command with no such token — `mailwoman gazetteer build poi` — is treated as runnable,
+ * because verifying a CLI verb means running the CLI.
+ */
+export async function buildCommandGaps(buildCmd: string, repoRoot: PathBuilderLike): Promise<string[]> {
+	const root = PathBuilder.from(repoRoot)
+	const gaps: string[] = []
+
+	for (const token of buildCmd
+		.split(/\s+/)
+		.filter((candidate) => candidate.includes("/") && !/[$`|><*]/.test(candidate))) {
+		if (!(await pathExists(root(token)))) {
+			gaps.push(token)
+		}
+	}
+
+	return gaps
+}
+
+/**
+ * The command that would rebuild an artifact, or the reason none is known.
+ */
+/**
+ * The terms a manifested artifact records, as one line for the text report.
+ *
+ * A manifest row written before the `license` column existed leaves it undefined.
+ * This reports that state as unrecorded rather than as an absence of obligations.
+ *
+ * An artifact whose provenance is anything other than `Manifested` has no `layer_manifest` row to read.
+ * It returns `null` so the caller omits the line.
+ */
+export function licenseHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const manifest = entry.manifest!
+	const license = manifest.license ?? "license unrecorded in layer_manifest"
+	const attribution = manifest.attribution ? ` — attribution: ${manifest.attribution}` : ""
+
+	return `${license}${attribution}`
+}
+
+/**
+ * The input record counts a manifested artifact records, as one line for the text report.
+ *
+ * Returns `null` when the artifact records no count at all, so the caller omits
+ * the line rather than printing a zero.
+ * An artifact built before the `source_records` column exists is in that state.
+ * So is an artifact whose build didn't count its inputs.
+ */
+export function sourceRecordsHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const recorded = entry.manifest!.source_records
+
+	if (!recorded) return null
+
+	const counts = tryParsingJSON<Record<string, number>>(recorded)
+
+	if (!counts) return `source_records is present and unreadable: ${recorded}`
+
+	const entries = Object.entries(counts)
+
+	if (!entries.length) return "the build counted its inputs and recorded no publisher"
+
+	return entries
+		.toSorted((left, right) => right[1] - left[1])
+		.map(([publisher, rows]) => `${publisher} ${rows.toLocaleString()}`)
+		.join(", ")
+}
+
+export function rebuildHint(entry: InventoryEntry): string {
+	if (entry.provenance === Provenance.Manifested) return entry.manifest!.build_cmd
+
+	if (entry.provenance === Provenance.Foreign) return `not ours — ${entry.note ?? "third-party artifact"}`
+
+	if (entry.provenance === Provenance.Unreadable) return `could not open: ${entry.note ?? "unknown"}`
+
+	return `no provenance — unreproducible from the artifact alone (${basename(entry.path)})`
+}

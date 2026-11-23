@@ -16,7 +16,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { probeForkEntity } from "#fork-entity"
+import { probeForkEntity } from "#geocode/result/fork-entity"
 import { loadForkEntityDeps } from "#geocode/session/layers"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"

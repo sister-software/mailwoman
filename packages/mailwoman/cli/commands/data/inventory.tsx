@@ -20,10 +20,10 @@ import {
 	rebuildHint,
 	sourceRecordsHint,
 	takeInventory,
-} from "#data/inventory"
-import { buildLayerReport, layerFamily, layerReportEntryLines, layerReportSummaryLines } from "#data/layer-report"
-import { readSourceLocations } from "#data/source-locations"
-import { readInstallationState } from "#data/state"
+} from "#data/catalog/inventory"
+import { readInstallationState } from "#data/catalog/state"
+import { buildLayerReport, layerFamily, layerReportEntryLines, layerReportSummaryLines } from "#data/terms/layer-report"
+import { readSourceLocations } from "#data/terms/source-locations"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +

@@ -154,7 +154,7 @@ const EVALUATORS = {
 		const geocodeStream: EvalGeocodeStream = (records, opts) =>
 			(async function* () {
 				const { stream, dataRoot, wofPaths } = await allKeyed({
-					stream: import("#geocode/stream"),
+					stream: import("#geocode/batch/stream"),
 					dataRoot: import("@mailwoman/core/data-root"),
 					wofPaths: import("@mailwoman/resolver-wof-sqlite/paths"),
 				})

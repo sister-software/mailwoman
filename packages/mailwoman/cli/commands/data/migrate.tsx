@@ -15,7 +15,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { planMigration } from "#data/migrate"
+import { planMigration } from "#data/install/migrate"
 
 /**
  * Native command-line interface consumed by the filesystem command router.

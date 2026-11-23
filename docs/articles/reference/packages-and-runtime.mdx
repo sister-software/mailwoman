@@ -2,7 +2,7 @@
 title: Packages and runtime
 description: Published 11.0.0 package roles, the current Node security floor, runtime variables, and measured local file sizes.
 role: reference
-source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, packages/neural-weights-en-us/package.json, packages/codex/package.json, packages/mailwoman/lib/env/schema.ts, packages/mailwoman/lib/resolver-backend.ts, packages/mailwoman/lib/geocode/session.ts, packages/mailwoman/lib/api-engine.ts, packages/resolver-wof-sqlite/lib/env.ts, packages/core/lib/env/schema.ts, packages/core/lib/env/paths.ts
+source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, packages/neural-weights-en-us/package.json, packages/codex/package.json, packages/mailwoman/lib/env/schema.ts, packages/mailwoman/lib/engine/resolver-backend.ts, packages/mailwoman/lib/geocode/session.ts, packages/mailwoman/lib/engine/api.ts, packages/resolver-wof-sqlite/lib/env.ts, packages/core/lib/env/schema.ts, packages/core/lib/env/paths.ts
 verified-with: mailwoman v11.0.0
 ---
 
@@ -60,5 +60,5 @@ On 18 November 2026, `npm view <package>@11.0.0 dist.unpackedSize` returned the 
 ## Published sources
 
 - [`mailwoman@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/package.json), [`@mailwoman/neural@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/package.json), [en-US weights manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/package.json), and [codex manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/package.json).
-- [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/resolver-backend.ts).
-- [Published geocode session](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/geocode/session.ts), [resolver environment schema](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/lib/env.ts), and [native health report](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/api-engine.ts).
+- [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/engine/resolver-backend.ts).
+- [Published geocode session](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/geocode/session.ts), [resolver environment schema](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/lib/env.ts), and [native health report](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/engine/api.ts).

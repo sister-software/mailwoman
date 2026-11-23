@@ -11,7 +11,7 @@
  * The fourth, Stage 2.5 cannot raise `bare_toponym`'s `declared_ambiguity` from the string by itself.
  *
  * Its trigger is the dominance margin of the resolved candidate list.
- * `mailwoman/query-intent.ts` raises it after the resolve against `DECISIVE_MARGIN_LOG10`.
+ * `mailwoman/geocode/intent/markers.ts` raises it after the resolve against `DECISIVE_MARGIN_LOG10`.
  *
  * This module therefore never emits `declared_ambiguity`, since a marker asserting
  * ambiguity from the string by itself would declare every bare city name ambiguous.

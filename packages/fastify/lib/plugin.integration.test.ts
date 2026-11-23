@@ -13,7 +13,7 @@
 // ci-runner: mailwoman-data
 
 import Fastify from "fastify"
-import { existingWOFDatabasePaths } from "mailwoman/resolver-backend"
+import { existingWOFDatabasePaths } from "mailwoman/engine/resolver-backend"
 import { NODE_LAYER_CONTRIBUTIONS } from "mailwoman/services/entry/node"
 import { serverParityDataPresent, serverParityDifferences } from "mailwoman/tools/eval-harness/test-kit/server-parity"
 import { describe, expect, it, vi } from "vitest"

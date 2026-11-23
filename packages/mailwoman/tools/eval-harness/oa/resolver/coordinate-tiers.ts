@@ -90,7 +90,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 			regions: { createRegionDatabaseProvider },
 			resolverWofSqlite: { AddressPointSqliteLookup, StreetInterpolator },
 		} = await allKeyed({
-			regions: import("#geocode/regions"),
+			regions: import("#geocode/layers/regions"),
 			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 		})
 

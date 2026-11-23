@@ -33,9 +33,9 @@ import {
 	useStageProgress,
 	writeRawStdout,
 } from "#cli-kit"
-import { executeBuild, planBuild, type BuildReport, type BuildResult } from "#data/build"
-import { ProblemKind } from "#data/plan"
-import { readMailwomanVersion } from "#metadata"
+import { executeBuild, planBuild, type BuildReport, type BuildResult } from "#data/install/build"
+import { ProblemKind } from "#data/install/plan"
+import { readMailwomanVersion } from "#package/metadata"
 
 /**
  * Native command-line interface consumed by the filesystem command router.

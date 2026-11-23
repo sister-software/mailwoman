@@ -44,7 +44,7 @@ import {
 	type TierRow,
 	tiersFor,
 } from "#cli/setup/plan"
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 
 /**
  * The `setup` command's interface: no positionals, a tri-state `--interactive`

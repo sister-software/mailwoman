@@ -12,8 +12,8 @@ import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { openPOIAnchorResolver, type POIAnchorBackend, type POIAnchorResolver } from "#poi/anchor-resolver"
-import { createRuntimePipeline } from "#runtime-pipeline"
 
 /**
  * Options for the POI board and its pipeline.

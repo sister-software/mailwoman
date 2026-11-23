@@ -35,8 +35,8 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/switches"
-import { resolveCandidateDBPath } from "#resolver-backend"
+import { resolveCandidateDBPath } from "#engine/resolver-backend"
+import { GEOCODE_SWITCH_DEFAULTS } from "#geocode/options/switches"
 import { checkCase, isCoordinateIssue } from "#tools/eval-harness/gauntlet/check-case"
 import { assertCorpusStampFresh } from "#tools/eval-harness/gauntlet/corpus-stamp"
 import {

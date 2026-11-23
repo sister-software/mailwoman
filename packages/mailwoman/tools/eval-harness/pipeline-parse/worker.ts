@@ -14,7 +14,7 @@ import type { CaseNormalization } from "@mailwoman/core/pipeline/types"
 import { workerThreadID, workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 
 /**

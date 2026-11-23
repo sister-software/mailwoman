@@ -8,7 +8,7 @@
 import { allKeyed } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 
-import { createResolverBackend, resolvePOIResolverPaths } from "#resolver-backend"
+import { createResolverBackend, resolvePOIResolverPaths } from "#engine/resolver-backend"
 
 /**
  * The gazetteer backend an anchor resolver reads.

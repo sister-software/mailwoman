@@ -26,7 +26,7 @@ import type {
 import type { POIPhraseLookup, POIPhraseMatch } from "@mailwoman/kind-classifier"
 import type { LocaleScope, LocaleScopeMatch } from "@mailwoman/variant-aliases"
 
-import { localeToCountry } from "#country-scope"
+import { localeToCountry } from "#geocode/scope/country"
 import { readCommittedModel } from "#observations/committed-model"
 
 /**

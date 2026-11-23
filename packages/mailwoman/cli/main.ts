@@ -47,7 +47,7 @@ if (interactiveGeocode) {
 }
 
 async function printVersion(): Promise<number> {
-	const { readMailwomanVersion } = await import("#metadata")
+	const { readMailwomanVersion } = await import("#package/metadata")
 
 	process.stdout.write(`${await readMailwomanVersion()}\n`)
 

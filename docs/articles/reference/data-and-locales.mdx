@@ -2,7 +2,7 @@
 title: Data and locales
 description: Published 11.0.0 data bundles, weight families, locale classifications, and installation checks.
 role: reference
-source-of-truth: packages/mailwoman/lib/data/bundles.ts, packages/neural/lib/weights/families.ts, packages/codex/lib/support/promises.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
+source-of-truth: packages/mailwoman/lib/data/published/bundles.ts, packages/neural/lib/weights/families.ts, packages/codex/lib/support/promises.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
 verified-with: mailwoman v11.0.0
 ---
 
@@ -14,7 +14,7 @@ The [CLI reference](./cli.mdx) lists generated command and flag tables and selec
 
 ## Published data bundles
 
-The `mailwoman/data/bundles` export declares these bundles. Its country entries describe where a layer can add resolution after the required place lookup. Whether a particular address has a matching record depends on that layer's source data.
+The `mailwoman/data/published/bundles` export declares these bundles. Its country entries describe where a layer can add resolution after the required place lookup. Whether a particular address has a matching record depends on that layer's source data.
 
 | Bundle      | Role and declared reach                                                                                    | Required bundle | Artifacts and source                                                                                                                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -57,5 +57,5 @@ mailwoman doctor --verbose
 
 ## Sources checked
 
-- Published [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/bundles.ts), [active-selection resolver](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/release.ts), and [OSM address-point recipe](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/osm/tools/address-points-recipe.ts).
+- Published [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/published/bundles.ts), [active-selection resolver](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/catalog/release.ts), and [OSM address-point recipe](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/osm/tools/address-points-recipe.ts).
 - Published [weights-family declaration](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/lib/weights/families.ts), plus the maintained [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json), [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx), and [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json).

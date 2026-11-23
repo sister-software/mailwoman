@@ -11,7 +11,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import { TextSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { REGISTERS as BASE_REGISTERS, register } from "#tools/dev-tools/register-board"
 
 const REGISTERS = [...BASE_REGISTERS, "comma-drop"] as const

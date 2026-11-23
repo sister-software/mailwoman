@@ -26,7 +26,7 @@
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { conventionCandidateDBPath } from "mailwoman/resolver-backend"
+import { conventionCandidateDBPath } from "mailwoman/engine/resolver-backend"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { resolveInputSet, type InputSetRef } from "#dev-mcp/input-sets"

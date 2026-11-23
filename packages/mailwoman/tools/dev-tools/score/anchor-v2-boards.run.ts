@@ -10,7 +10,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import {
 	type Board,
 	emptyBoard,

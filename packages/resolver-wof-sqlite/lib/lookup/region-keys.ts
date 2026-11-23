@@ -7,7 +7,7 @@
  *
  *   Both consumers use this expansion to compare parsed region qualifiers with stored keys.
  *
- *   Admin-coherence verdicts (`mailwoman/admin-coherence.ts`) fold a qualifier
+ *   Admin-coherence verdicts (`mailwoman/geocode/result/admin-coherence.ts`) fold a qualifier
  *   and the winner's ancestry to decide `confirmed` or `contradicted`.
  *   The candidate backend's admin-containment re-rank (`candidate-lookup.ts`)
  *   uses the same fold to find region-class rows.

@@ -122,5 +122,5 @@ the parse names:
 
 The check removes a wrong postcode. It never invents one, and it never relabels a span as something else.
 
-No autocomplete path calls `canComplete` yet. The FST autocomplete in `packages/mailwoman/lib/autocomplete-core.ts`
+No autocomplete path calls `canComplete` yet. The FST autocomplete in `packages/mailwoman/lib/autocomplete/core.ts`
 completes place names and never asks whether a postcode prefix can complete.

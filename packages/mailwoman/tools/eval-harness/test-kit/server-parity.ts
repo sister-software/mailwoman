@@ -15,7 +15,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import type { InputModeSelection } from "@mailwoman/core/pipeline"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
-import type { LayerContribution } from "#geocode/contributions"
+import type { LayerContribution } from "#geocode/layers/contributions"
 import { createDropInGeocodeSession } from "#geocode/session/drop-in"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "#tools/eval-harness/gauntlet/cases/seed-case"

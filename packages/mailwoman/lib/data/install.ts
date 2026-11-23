@@ -58,6 +58,8 @@ import {
 } from "@mailwoman/sqlite/sealed/db"
 import { basename, type PathBuilderLike, relative, resolvePath } from "path-ts"
 
+import { catalogPaths, readInstalledManifest, replaceActiveSelection, writeInstallation } from "#data/catalog"
+import { probeManifest } from "#data/catalog/inventory"
 import {
 	AcquisitionCancelledError,
 	acquireRemoteObject,
@@ -65,10 +67,7 @@ import {
 	type AcquisitionReceipt,
 	readRemoteIdentity,
 	type RemoteIdentity,
-} from "#data/acquire"
-import { catalogPaths, readInstalledManifest, replaceActiveSelection, writeInstallation } from "#data/catalog"
-import { probeManifest } from "#data/inventory"
-import { licensedArtifactName, requestGrantedDownload } from "#data/licensed"
+} from "#data/install/acquire"
 import {
 	type InstallationPlan,
 	type InstalledCopy,
@@ -76,9 +75,10 @@ import {
 	type PlannedArtifact,
 	type PlannedBundle,
 	ProblemKind,
-} from "#data/plan"
-import { PUBLISHED_SCHEMA_VERSION } from "#data/registry"
-import { dataClientHeaders } from "#data/remote"
+} from "#data/install/plan"
+import { licensedArtifactName, requestGrantedDownload } from "#data/published/licensed"
+import { PUBLISHED_SCHEMA_VERSION } from "#data/published/registry"
+import { dataClientHeaders } from "#data/published/remote"
 
 /**
  * What happened to one planned artifact.

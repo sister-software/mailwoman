@@ -12,10 +12,10 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
-import { adminCoherenceField } from "#admin-coherence"
-import { epistemicStatusFor } from "#geocode/epistemic-status"
+import { adminCoherenceField } from "#geocode/result/admin-coherence"
+import { epistemicStatusFor } from "#geocode/result/epistemic-status"
+import { assembleHierarchy, type HierarchySourceNode, lineageAnchorNode } from "#geocode/result/hierarchy-lineage"
 import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode/tree-reads"
-import { assembleHierarchy, type HierarchySourceNode, lineageAnchorNode } from "#hierarchy-lineage"
 import { assembleStreetName } from "#street/name-assembly"
 
 /**

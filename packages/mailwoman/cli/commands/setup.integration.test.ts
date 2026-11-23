@@ -11,7 +11,7 @@ import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, test, vi } from "vitest"
 
-import { mailwomanCLIPath } from "#metadata"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 
 const CLI_SPAWN_TIMEOUT_MS = 120_000

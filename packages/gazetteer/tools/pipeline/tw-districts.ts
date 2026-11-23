@@ -67,7 +67,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKeyLocale, streetLocaleForCountry } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { licenseForOvertureCountry } from "mailwoman/geocode/national-overture"
+import { licenseForOvertureCountry } from "mailwoman/geocode/layers/national-overture"
 import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_ADMIN_DB } from "#tools/pipeline/defaults"
@@ -78,7 +78,8 @@ import { buildSHA, contributingLayerManifest, stampLayerManifest } from "#tools/
  *
  * Both artifacts are built from one input, the pinned Overture addresses parquet for Taiwan,
  * so one grant covers both and one entry records it.
- * `COUNTRY_LICENSES` in `#geocode/national-overture` gives Taiwan `CC-BY-4.0 AND OGDL-Taiwan-1.0`.
+ * `COUNTRY_LICENSES` in `mailwoman/geocode/layers/national-overture` gives
+ * Taiwan `CC-BY-4.0 AND OGDL-Taiwan-1.0`.
  *
  * So this build stops until one is settled.
  * A candidate stamp would record an unverified grant.

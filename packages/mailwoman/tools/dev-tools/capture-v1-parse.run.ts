@@ -15,7 +15,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"
 
-import { createServeEngine } from "#api-engine"
+import { createServeEngine } from "#engine/api"
 import type { ParityCase } from "#tools/dev-tools/parity-extract"
 
 const PARITY_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inputs.jsonl"

@@ -9,9 +9,9 @@ import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test, vi } from "vitest"
 
 import { parseCommand } from "#cli/native/spec"
-import { localeToCountry, resolverDefaultCountry } from "#country-scope"
 import { $public } from "#env"
-import { mailwomanCLIPath } from "#metadata"
+import { localeToCountry, resolverDefaultCountry } from "#geocode/scope/country"
+import { mailwomanCLIPath } from "#package/metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 
 const CLI_SPAWN_TIMEOUT_MS = 60_000

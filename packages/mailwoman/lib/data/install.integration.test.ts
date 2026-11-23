@@ -24,14 +24,14 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { BUNDLES, type DataBundle } from "#data/bundles"
 import { catalogPaths, LayerCatalog, readActiveSelection } from "#data/catalog"
+import { takeInventory } from "#data/catalog/inventory"
+import { readInstallationState } from "#data/catalog/state"
 import { ArtifactOutcome, executeInstallation, type InstallationResult } from "#data/install"
-import { takeInventory } from "#data/inventory"
-import { planInstallation, PlannedAction, type InstallationRequest } from "#data/plan"
-import { readInstallationState } from "#data/state"
-import { createRegionDatabaseProvider, type RegionDatabaseFactory } from "#geocode/regions"
-import { resolveCandidateDBPath } from "#resolver-backend"
+import { planInstallation, PlannedAction, type InstallationRequest } from "#data/install/plan"
+import { BUNDLES, type DataBundle } from "#data/published/bundles"
+import { resolveCandidateDBPath } from "#engine/resolver-backend"
+import { createRegionDatabaseProvider, type RegionDatabaseFactory } from "#geocode/layers/regions"
 import {
 	FIXTURE_DC_POINT,
 	FIXTURE_DC_STREET,

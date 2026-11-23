@@ -21,7 +21,7 @@ import {
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { resolvePath } from "path-ts"
 
-import { OSM_PLACES_DATABASE_FILE } from "#geocode/osm-layers"
+import { OSM_PLACES_DATABASE_FILE } from "#geocode/layers/osm"
 import {
 	OSM_PLACE_H3_RESOLUTION,
 	osmPlaceQuery,

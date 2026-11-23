@@ -539,7 +539,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"packages/mailwoman/tools/eval-harness/conformance/punctuation.test.ts",
 		"punctuation conformance tests name the physical gate",
 	],
-	["packages/mailwoman/lib/venue-structure-confounds.integration.test.ts", "venue confounds name the physical gate"],
+	[
+		"packages/mailwoman/lib/poi/venue-structure-confounds.integration.test.ts",
+		"venue confounds name the physical gate",
+	],
 	["packages/codex/lib/level-semantics.ts", "GATEPLAN is Norwegian for street level"],
 	["packages/codex/lib/level-semantics.test.ts", "GATEPLAN is Norwegian for street level"],
 	["packages/activity-lexicon/", "activity phrases name real-world actions"],

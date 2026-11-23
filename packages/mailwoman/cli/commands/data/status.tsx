@@ -31,6 +31,9 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
+import { LayerCatalog, type ResolvedSource } from "#data/catalog"
+import { existingLocalPath, readReleaseManifest } from "#data/catalog/release"
+import { type InterruptedAcquisition, readInstallationState } from "#data/catalog/state"
 import {
 	artifactURL,
 	bundleArtifactPath,
@@ -38,12 +41,9 @@ import {
 	needsDownload,
 	resolveBundleArtifacts,
 	type BundleArtifact,
-} from "#data/bundles"
-import { LayerCatalog, type ResolvedSource } from "#data/catalog"
-import { availableDataEntry, selectionScopeOf } from "#data/registry"
-import { existingLocalPath, readReleaseManifest } from "#data/release"
-import { dataClientHeaders, headContentLength } from "#data/remote"
-import { type InterruptedAcquisition, readInstallationState } from "#data/state"
+} from "#data/published/bundles"
+import { availableDataEntry, selectionScopeOf } from "#data/published/registry"
+import { dataClientHeaders, headContentLength } from "#data/published/remote"
 
 /**
  * Native command-line interface consumed by the filesystem command router.

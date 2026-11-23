@@ -22,14 +22,14 @@ The artifact shape every layer database embeds is in the [spatial-layer interfac
 
 The installation keeps three records apart, because each answers a different question.
 
-| Record                  | Question it answers                                      | Declared in                               |
-| ----------------------- | -------------------------------------------------------- | ----------------------------------------- |
-| Available-data registry | What can be downloaded or built, and what it needs       | `packages/mailwoman/lib/data/registry.ts` |
-| Artifact manifest       | What one immutable file contains                         | `packages/core/lib/layers/artifact.ts`    |
-| Active selection        | Which installed artifacts each role reads, in what order | `packages/core/lib/layers/selection.ts`   |
+| Record                  | Question it answers                                      | Declared in                                         |
+| ----------------------- | -------------------------------------------------------- | --------------------------------------------------- |
+| Available-data registry | What can be downloaded or built, and what it needs       | `packages/mailwoman/lib/data/published/registry.ts` |
+| Artifact manifest       | What one immutable file contains                         | `packages/core/lib/layers/artifact.ts`              |
+| Active selection        | Which installed artifacts each role reads, in what order | `packages/core/lib/layers/selection.ts`             |
 
 The registry entry is read from the published bundle list, `BUNDLES` in
-`packages/mailwoman/lib/data/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
+`packages/mailwoman/lib/data/published/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
 role, its scope (a country, or an ISO 3166-2 subdivision such as `US-DC`), its role schema version
 and, for a street-keyed role, the street-key normalization it was keyed with
 (`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/street/normalize.ts`, version `1`).
@@ -67,7 +67,7 @@ Country is manifest metadata and an installation selector. No field is parsed fr
 
 ## Installation lifecycle
 
-`planInstallation` (`packages/mailwoman/lib/data/plan.ts`) and `executeInstallation`
+`planInstallation` (`packages/mailwoman/lib/data/install/plan.ts`) and `executeInstallation`
 (`packages/mailwoman/lib/data/install.ts`) implement one sequence that `setup`, `data pull --dry-run`
 and `data pull` share:
 
@@ -106,7 +106,7 @@ and from the selection with eight queries and records an empty difference list.
 ## Source builds
 
 `mailwoman data build <recipe> --countries <cc>` runs a build recipe through the same installer.
-`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/build.ts`) implement it, and the recipe
+`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/install/build.ts`) implement it, and the recipe
 interface is `BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one registered recipe is
 `osm-address-points` (`packages/osm/tools/address-points-recipe.ts`), which ships in the optional
 `@mailwoman/osm` package. Without that package the command names it and stops before any request.
@@ -167,9 +167,9 @@ artifact and an obligation refusal are errors that include the artifact's path.
 The readers consult the selection after any explicit option or environment pin and before the
 conventional paths and `releases.json`:
 
-- `resolveCandidateDBPath` in `packages/mailwoman/lib/resolver-backend.ts`, which the geocode session,
+- `resolveCandidateDBPath` in `packages/mailwoman/lib/engine/resolver-backend.ts`, which the geocode session,
   `serve`, the MCP server, the drop-in servers and the evaluation harness call;
-- `resolveDatabasePath` in `packages/mailwoman/lib/data/release.ts`, which the per-state address-point
+- `resolveDatabasePath` in `packages/mailwoman/lib/data/catalog/release.ts`, which the per-state address-point
   and interpolation provider calls.
 
 A data root without `active.json` resolves through the explicit option, the environment pin, the conventional
@@ -177,7 +177,7 @@ paths and `releases.json`, in that order.
 
 ## Retention
 
-`packages/mailwoman/lib/data/retention.ts` defines the policy. Prune keeps every artifact referenced by the
+`packages/mailwoman/lib/data/install/retention.ts` defines the policy. Prune keeps every artifact referenced by the
 active generation, by the generation before it, or by a generation that a live session holds. That's two
 generations by default, and `--retain` changes the number. A geocode session that reads a selection writes a lease
 and removes it on disposal. A data root that cannot be written takes no lease. Prune deletes only
@@ -187,7 +187,7 @@ and refuses when either changed since planning.
 
 ## Migration
 
-`planMigration` (`packages/mailwoman/lib/data/migrate.ts`) discovers what the readers select today and
+`planMigration` (`packages/mailwoman/lib/data/install/migrate.ts`) discovers what the readers select today and
 classifies each file: `importable` (records a `layer_manifest`), `registry-manifest` (a published
 artifact with no manifest, with a registry record that supplies one), `source-rebuild` (a local build with
 no manifest), `unknown-provenance`, or `blocked-wal` (a WAL sidecar is present). It reports symlink
@@ -198,7 +198,7 @@ explains how to read the plan in that release.
 
 ## Diagnostics
 
-`readInstallationState` (`packages/mailwoman/lib/data/state.ts`) reads three lists: artifacts the
+`readInstallationState` (`packages/mailwoman/lib/data/catalog/state.ts`) reads three lists: artifacts the
 active generation selects, installed artifacts it doesn't select, and transfers that stopped with
 partial bytes. `data status`, `data inventory`, `data bom` and `doctor` read it, so they report the
 same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request didn't

@@ -19,8 +19,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier, scriptFamilyForText } from "@mailwoman/neural"
 
-import { createParser } from "#parser"
-import { createRuntimePipeline } from "#runtime-pipeline"
+import { createParser } from "#engine/parser"
+import { createRuntimePipeline } from "#engine/runtime-pipeline"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 
 const { values } = parseArguments({

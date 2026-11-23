@@ -44,9 +44,7 @@ import {
 	useStageProgress,
 	writeRawStdout,
 } from "#cli-kit"
-import { BUNDLES, type BundleRightsSummary, summarizeBundleRights } from "#data/bundles"
 import { ArtifactOutcome, type ArtifactResult, executeInstallation } from "#data/install"
-import { readConfiguredKey } from "#data/licensed"
 import {
 	describePlannedArtifact,
 	describePlanSummary,
@@ -55,7 +53,9 @@ import {
 	type PlanProblem,
 	planProblems,
 	ProblemKind,
-} from "#data/plan"
+} from "#data/install/plan"
+import { BUNDLES, type BundleRightsSummary, summarizeBundleRights } from "#data/published/bundles"
+import { readConfiguredKey } from "#data/published/licensed"
 import { $public } from "#env"
 
 /**
@@ -309,7 +309,7 @@ async function pull(
 	// Its warnings and errors still print.
 	const logger: IRuntimeLogger = { ...createConsoleLogger("mailwoman data"), debug: () => {}, trace: () => {} }
 
-	const { dataClientHeaders } = await import("#data/remote")
+	const { dataClientHeaders } = await import("#data/published/remote")
 
 	await using client = new APIClient({
 		displayName: "mailwoman data",

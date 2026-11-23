@@ -36,7 +36,7 @@ import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/candidate/capi
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { ResolvedImportance } from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { probeManifest } from "mailwoman/data/inventory"
+import { probeManifest } from "mailwoman/data/catalog/inventory"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import {

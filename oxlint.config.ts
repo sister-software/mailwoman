@@ -205,7 +205,7 @@ export default {
 				"packages/mailwoman/cli/kit/cluster/reload.ts",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
 				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
-				"packages/mailwoman/lib/geocode/worker.ts",
+				"packages/mailwoman/lib/geocode/batch/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"packages/mailwoman/lib/test-kit/fixture-registry.ts",
 				"docs/static/examples/mailwoman-server.mjs",

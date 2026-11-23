@@ -29,7 +29,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate/lookup"
 
-import { resolveCandidateDBPath } from "#resolver-backend"
+import { resolveCandidateDBPath } from "#engine/resolver-backend"
 
 const { values } = parseArguments({
 	options: {

@@ -13,7 +13,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import type { PathBuilderLike } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
+import { bundleArtifactPath, BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/published/bundles"
 
 /**
  * The group description shown by `mailwoman data --help` and in the root command listing.

@@ -259,7 +259,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				api: import("@mailwoman/api"),
 				apiKit: import("@mailwoman/api-kit"),
 				env: import("#env"),
-				apiEngine: import("#api-engine"),
+				apiEngine: import("#engine/api"),
 			})
 
 			const serveEngine = await createServeEngine()
