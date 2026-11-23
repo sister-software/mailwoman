@@ -171,14 +171,26 @@ export function preflightReceiptPath(auditRoot: string, key: string): string {
 }
 
 /**
+ * The source tree a receipt's audits ran from: the commit, and whether `packages/` held no change to it.
+ */
+export interface PreflightSource {
+	commit: string
+	clean: boolean
+}
+
+/**
  * Writes the receipt for audits that all passed and returns its key, the token the GPU run presents.
+ *
+ * `source` records the tree the audits ran from.
+ * `reusablePreflightReceipt` reads it.
  */
 export async function writePreflightReceipt(
 	auditRoot: string,
 	configPath: string,
 	corpusDir: string,
 	audits: readonly string[],
-	reports: Record<string, string>
+	reports: Record<string, string>,
+	source?: PreflightSource
 ): Promise<string> {
 	const key = await preflightKey(configPath, corpusDir)
 
@@ -191,6 +203,7 @@ export async function writePreflightReceipt(
 		manifest_file_count: (await manifestFileDigests(corpusDir)).length,
 		audits: [...audits].toSorted(),
 		reports,
+		...(source ? { commit: source.commit, tree_clean: source.clean } : {}),
 	}
 
 	await writeLocalTextFile(
@@ -199,6 +212,67 @@ export async function writePreflightReceipt(
 	)
 
 	return key
+}
+
+/**
+ * A receipt that a new preflight may present in place of running its audits again.
+ */
+export interface ReusablePreflightReceipt {
+	key: string
+	path: string
+	reports: Record<string, string>
+}
+
+/**
+ * Returns the receipt for this config and corpus when it can stand in for running
+ * the audits, or `null` with why it can't.
+ *
+ * The key binds the config's bytes, the manifest's file digests and the places table,
+ * and leaves out the audit code.
+ * A receipt stands in only when it records a pass for every `required` audit
+ * and was written from a tree with no change under `packages/` at `source.commit`,
+ * and only for a `source` with no change under `packages/` either.
+ * Any other tree runs the audits again.
+ */
+export async function reusablePreflightReceipt(
+	auditRoot: string,
+	configPath: string,
+	corpusDir: string,
+	required: readonly string[],
+	source: PreflightSource
+): Promise<{ receipt: ReusablePreflightReceipt | null; reason: string }> {
+	if (!source.clean) return { receipt: null, reason: "the working tree has changes under packages/" }
+
+	const key = await preflightKey(configPath, corpusDir)
+	const path = preflightReceiptPath(auditRoot, key)
+
+	if (!(await isFile(path))) return { receipt: null, reason: `no receipt at ${path}` }
+
+	const body = await readLocalJSONFile<{
+		version?: number
+		key?: string
+		audits?: string[]
+		reports?: Record<string, string>
+		commit?: string
+		tree_clean?: boolean
+	}>(path)
+
+	if (body.version !== PREFLIGHT_RECEIPT_VERSION || body.key !== key) {
+		return { receipt: null, reason: `${path} is not a version-${PREFLIGHT_RECEIPT_VERSION} receipt for this key` }
+	}
+
+	if (body.commit !== source.commit || body.tree_clean !== true) {
+		return {
+			receipt: null,
+			reason: `${path} was written at ${body.commit ?? "an unrecorded commit"}${body.tree_clean === true ? "" : " from a changed tree"}, not ${source.commit}`,
+		}
+	}
+
+	const missing = [...new Set(required)].filter((audit) => !(body.audits ?? []).includes(audit))
+
+	if (missing.length) return { receipt: null, reason: `${path} records no pass for ${missing.toSorted().join(", ")}` }
+
+	return { receipt: { key, path, reports: body.reports ?? {} }, reason: `${path} was written at ${source.commit}` }
 }
 
 /**
