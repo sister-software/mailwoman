@@ -55,6 +55,12 @@ describe("scriptFamilyForText", () => {
 		expect(scriptFamilyForText("一零三团七连, xinjiang uyghur")).toBe("cjk")
 	})
 
+	it("routes a tab-separated input as it routes the same input with spaces", () => {
+		const spaced = "Far East Chinese 口福羊汤, 13 Gerrard St, London W1D 5PS"
+
+		expect(scriptFamilyForText(spaced.replaceAll(" ", "\t"))).toBe(scriptFamilyForText(spaced))
+	})
+
 	it("abstains on a house number or a postcode inside a Han segment rather than disqualifying it", () => {
 		expect(carriesFamilySegment(computeQueryShape("六分场七队 100, HUNAN"))).toBe(true)
 	})
