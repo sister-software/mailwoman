@@ -20,6 +20,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import { isPresent } from "@mailwoman/core/values/objects"
 import type { EntitlementAdmission } from "@mailwoman/license/product/entitlement"
 
 import {
@@ -120,6 +121,12 @@ export interface ResolvedLaunchConfig {
 	maxSteps: number
 	evalEverySteps: number
 	batchSize: number
+	/**
+	 * The char path's unit window, `data.max_unit_width`, for a model with `use_char_embed`, else `null`.
+	 *
+	 * A commercial launch's export reads it, because the checkpoint doesn't store it.
+	 */
+	charWindow: number | null
 }
 
 /**
@@ -175,6 +182,11 @@ export interface LaunchRecord {
 	 * The record holds the name and never the token.
 	 */
 	trainingSecret: string | null
+	/**
+	 * The name of the Modal secret that holds the provenance signing key the commercial
+	 * run's export signs with, or `null` on the open-source branch.
+	 */
+	provenanceSecret: string | null
 	imageID: string
 	resources: SandboxResources
 	environment: SupervisorEnvironment
@@ -211,13 +223,20 @@ export interface LaunchOptions {
 	/**
 	 * The license branch to train under.
 	 *
-	 * A commercial launch runs the commercial trainer image and needs {@linkcode LaunchOptions.trainingSecret}.
+	 * A commercial launch runs the commercial trainer image and needs
+	 * {@linkcode LaunchOptions.trainingSecret} and {@linkcode LaunchOptions.provenanceSecret}.
 	 */
 	license: TrainerLicense
 	/**
 	 * The name of the Modal secret holding `MAILWOMAN_TRAINING_GRANT` (`MAILWOMAN_MODAL_TRAINING_SECRET`).
 	 */
 	trainingSecret?: string
+	/**
+	 * The name of the Modal secret holding `MAILWOMAN_PROVENANCE_SIGNING_KEY`
+	 * and `MAILWOMAN_PROVENANCE_SIGNING_KID` (`MAILWOMAN_MODAL_PROVENANCE_SECRET`).
+	 * The sandbox exports and signs the final checkpoint with it.
+	 */
+	provenanceSecret?: string
 }
 
 /**
@@ -285,6 +304,9 @@ export function supervisorEnvironment(
 		MW_FAIL_AT_STEP: String(options.failAtStep),
 		MW_TRAINER: "trainer",
 		MW_SYNC: "sync",
+		MW_EXPORTER: "trainer-export",
+		MW_EXPORT: options.license === TrainerLicense.Commercial ? "1" : "0",
+		MW_EXPORT_CHAR_WINDOW: config.charWindow == null ? "" : String(config.charWindow),
 	}
 }
 
@@ -323,7 +345,13 @@ export async function startLaunch(
 
 	if (commercial && !options.trainingSecret) {
 		throw new TrainingAuthorizationError(
-			"a commercial launch needs the named Modal secret that holds its training grant; set MAILWOMAN_MODAL_TRAINING_SECRET"
+			"a commercial launch needs the Modal secret that holds its training grant. Set MAILWOMAN_MODAL_TRAINING_SECRET"
+		)
+	}
+
+	if (commercial && !options.provenanceSecret) {
+		throw new TrainingAuthorizationError(
+			"a commercial launch exports a signed model and needs the Modal secret that holds the provenance key. Set MAILWOMAN_MODAL_PROVENANCE_SECRET"
 		)
 	}
 
@@ -366,6 +394,7 @@ export async function startLaunch(
 		device: options.device,
 		license: options.license,
 		trainingSecret: commercial ? options.trainingSecret! : null,
+		provenanceSecret: commercial ? options.provenanceSecret! : null,
 		imageID: "",
 		resources,
 		environment: { ...environment, MAILWOMAN_TRAINER_IMAGE: build.name },
@@ -428,7 +457,7 @@ async function startNamedSandbox(record: LaunchRecord, deps: LaunchDependencies)
 					{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
 				],
 				tags: { [RUN_TAG]: record.runKey, config: record.config },
-				secretNames: record.trainingSecret ? [record.trainingSecret] : [],
+				secretNames: [record.trainingSecret, record.provenanceSecret].filter(isPresent),
 			})
 		} catch (error) {
 			if (!(error instanceof SandboxNameTakenError)) throw error

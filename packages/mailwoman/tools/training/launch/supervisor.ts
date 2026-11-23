@@ -7,6 +7,8 @@
  *
  *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that describe
  *   another config or corpus, checks the device and the training grant, and runs `trainer train`.
+ *   A commercial launch also exports and signs the final checkpoint once training completes.
+ *
  *   It commits the volume after every checkpoint the trainer saves, and it restarts
  *   the trainer after a failed exit, up to the retry count, resuming from the newest
  *   complete checkpoint, or from the branch checkpoint while the run has none.
@@ -109,6 +111,21 @@ export interface SupervisorEnvironment {
 	 */
 	MW_TRAINER: string
 	MW_SYNC: string
+	/**
+	 * The `trainer-export` command.
+	 * A test replaces it.
+	 */
+	MW_EXPORTER: string
+	/**
+	 * `1` exports the final checkpoint after training completes: `export-onnx` and `quantize` into
+	 * `<MW_RUN_BASE>/export/`, each with a provenance manifest the key in the sandbox's environment signs.
+	 * A commercial launch sets it.
+	 */
+	MW_EXPORT: string
+	/**
+	 * The char path's unit window (`data.max_unit_width`) for a model with `use_char_embed`, or empty.
+	 */
+	MW_EXPORT_CHAR_WINDOW: string
 	/**
 	 * The published trainer image's name.
 	 * The trainer records it in the run's `TRAINING.json`.
@@ -241,6 +258,29 @@ while :; do
 
 	if [ "$code" -eq 0 ]; then
 		log "training complete"
+		[ "${"$"}{MW_EXPORT:-0}" = 1 ] || exit 0
+		# A commercial run exports here, where the provenance key is. The export signs a manifest beside each graph,
+		# and a failed export stops the sandbox so a restart exports again.
+		final=$(compgen -G "$MW_OUTPUT_DIR/step-*/training_state.json" | sort | tail -n 1)
+		[ -n "$final" ] || { log "export: $MW_OUTPUT_DIR holds no complete checkpoint"; exit 1; }
+		final=$(dirname "$final")
+		export_dir="$MW_RUN_BASE/export"
+		mkdir -p "$export_dir"
+		window=()
+		[ -n "${"$"}{MW_EXPORT_CHAR_WINDOW:-}" ] && window=(--char-window "$MW_EXPORT_CHAR_WINDOW")
+		log "export: $final -> $export_dir"
+		"$MW_EXPORTER" export-onnx --checkpoint "$final" --output "$export_dir/model.onnx" "${"$"}{window[@]}" || {
+			code=$?
+			log "export: export-onnx exited $code"
+			exit "$code"
+		}
+		"$MW_EXPORTER" quantize --input "$export_dir/model.onnx" --output "$export_dir/model-int8.onnx" || {
+			code=$?
+			log "export: quantize exited $code"
+			exit "$code"
+		}
+		commit
+		log "export complete: $export_dir"
 		exit 0
 	fi
 

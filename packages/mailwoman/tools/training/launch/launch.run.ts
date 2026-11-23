@@ -222,6 +222,7 @@ switch (command) {
 				maxSteps: train.max_steps,
 				evalEverySteps: train.eval_every_steps,
 				batchSize: train.batch_size,
+				charWindow: document.config.model.use_char_embed ? document.config.data.max_unit_width : null,
 			},
 			{
 				device: values.cpu ? "cpu" : (values.device ?? settings.MAILWOMAN_MODAL_TRAIN_GPU),
@@ -238,6 +239,9 @@ switch (command) {
 				license: values.commercial ? TrainerLicense.Commercial : TrainerLicense.OpenSource,
 				...(settings.MAILWOMAN_MODAL_TRAINING_SECRET
 					? { trainingSecret: settings.MAILWOMAN_MODAL_TRAINING_SECRET }
+					: {}),
+				...(settings.MAILWOMAN_MODAL_PROVENANCE_SECRET
+					? { provenanceSecret: settings.MAILWOMAN_MODAL_PROVENANCE_SECRET }
 					: {}),
 			},
 			dependencies(configPath, values["dry-run"])

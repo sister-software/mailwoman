@@ -46,6 +46,7 @@ const CONFIG: ResolvedLaunchConfig = {
 	maxSteps: 200,
 	evalEverySteps: 100,
 	batchSize: 8,
+	charWindow: null,
 }
 
 const OPTIONS: LaunchOptions = {
@@ -60,7 +61,14 @@ const OPTIONS: LaunchOptions = {
 	license: "open-source",
 }
 
-const COMMERCIAL: LaunchOptions = { ...OPTIONS, license: "commercial", trainingSecret: "mailwoman-training-grant" }
+const COMMERCIAL: LaunchOptions = {
+	...OPTIONS,
+	license: "commercial",
+	trainingSecret: "mailwoman-training-grant",
+	provenanceSecret: "mailwoman-provenance",
+}
+
+const BOTH_SECRETS = ["mailwoman-training-grant", "mailwoman-provenance"]
 
 function harness() {
 	const sandboxes = new Map<string, SandboxState & { spec: TrainingSandboxSpec }>()
@@ -355,10 +363,17 @@ describe("the training launch lifecycle", () => {
 		const spec = sandboxes.get(record.sandboxes[0]!)!.spec
 
 		expect(record.imageID).toBe("im-mailwoman-trainer-commercial-cpu")
-		expect(spec.secretNames).toEqual(["mailwoman-training-grant"])
+		expect(spec.secretNames).toEqual(BOTH_SECRETS)
+		// The sandbox exports and signs the final checkpoint.
+		expect(spec.env).toMatchObject({ MW_EXPORT: "1", MW_EXPORTER: "trainer-export", MW_EXPORT_CHAR_WINDOW: "" })
 		expect(spec.env).toMatchObject({ MAILWOMAN_TRAINER_IMAGE: "mailwoman-trainer-commercial-cpu" })
 		expect(spec.env).not.toHaveProperty("MAILWOMAN_TRAINING_GRANT")
-		expect(records.get(runKey)).toMatchObject({ license: "commercial", trainingSecret: "mailwoman-training-grant" })
+
+		expect(records.get(runKey)).toMatchObject({
+			license: "commercial",
+			trainingSecret: "mailwoman-training-grant",
+			provenanceSecret: "mailwoman-provenance",
+		})
 	})
 
 	it("starts an open-source run with no training secret", async () => {
@@ -366,7 +381,8 @@ describe("the training launch lifecycle", () => {
 		const record = await startLaunch(CONFIG, OPTIONS, deps)
 
 		expect(sandboxes.get(record.sandboxes[0]!)!.spec.secretNames).toEqual([])
-		expect(record).toMatchObject({ license: "open-source", trainingSecret: null })
+		expect(record).toMatchObject({ license: "open-source", trainingSecret: null, provenanceSecret: null })
+		expect(record.environment.MW_EXPORT).toBe("0")
 	})
 
 	it("refuses a commercial launch without a training secret, or with a host grant that refuses, before its preflight", async () => {
@@ -374,6 +390,10 @@ describe("the training launch lifecycle", () => {
 
 		await expect(startLaunch(CONFIG, { ...COMMERCIAL, trainingSecret: undefined }, deps)).rejects.toBeInstanceOf(
 			TrainingAuthorizationError
+		)
+
+		await expect(startLaunch(CONFIG, { ...COMMERCIAL, provenanceSecret: undefined }, deps)).rejects.toThrow(
+			/MAILWOMAN_MODAL_PROVENANCE_SECRET/
 		)
 
 		host.grant = { admitted: false, refusal: "expired", reason: "training grant mtg_x expired" }
@@ -391,7 +411,7 @@ describe("the training launch lifecycle", () => {
 
 		const second = await restartLaunch(runKey, deps)
 
-		expect(sandboxes.get(second.sandboxes[1]!)!.spec.secretNames).toEqual(["mailwoman-training-grant"])
+		expect(sandboxes.get(second.sandboxes[1]!)!.spec.secretNames).toEqual(BOTH_SECRETS)
 
 		sandboxes.get(second.sandboxes[1]!)!.exitCode = 1
 		host.grant = { admitted: false, refusal: "not_a_training_grant", reason: "a mwl1 platform key" }
