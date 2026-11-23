@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { heldoutArmDecoderSettings, parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
+import { heldoutArmDecoderSettings, parseHeldoutArm, splitHeldoutArms } from "#tools/eval-harness/heldout/per/arm"
 import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
 
 describe("parseHeldoutArm", () => {
@@ -36,5 +36,19 @@ describe("parseHeldoutArm", () => {
 		expect(heldoutArmDecoderSettings(arm)).toEqual({ pairPriorWordPieces: true, pairIndexOwnCountry: false })
 		expect(heldoutArmDecoderSettings(parseHeldoutArm("/r#poiVenueTier=on"))).toEqual({})
 		expect(() => parseHeldoutArm("/r#fstCountryRouting=on")).toThrow(/the switches an arm may pin/u)
+	})
+})
+
+describe("splitHeldoutArms", () => {
+	it("keeps an arm's comma-separated pins with the arm and splits at the next root", () => {
+		const pinned = "/c#pairPriorWordPieces=on,pairPriorChildPostcodeStrip=on"
+
+		expect(splitHeldoutArms(`${pinned},/d,/e#poiVenueTier=off`)).toEqual([pinned, "/d", "/e#poiVenueTier=off"])
+		expect(splitHeldoutArms("/a, /b")).toEqual(["/a", "/b"])
+
+		expect(parseHeldoutArm(splitHeldoutArms(pinned)[0]!).pins).toEqual({
+			pairPriorWordPieces: "on",
+			pairPriorChildPostcodeStrip: "on",
+		})
 	})
 })

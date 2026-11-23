@@ -61,7 +61,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { isPresent } from "@mailwoman/core/values/objects"
 
 import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
-import { heldoutArmDecoderSettings, parseHeldoutArm } from "#tools/eval-harness/heldout/per/arm"
+import { heldoutArmDecoderSettings, parseHeldoutArm, splitHeldoutArms } from "#tools/eval-harness/heldout/per/arm"
 import {
 	type HeldoutRowOutcome,
 	assertPairedArms,
@@ -150,6 +150,11 @@ const { values } = parseArguments({
 				"The release specification whose capability requirements name the probe sources kept out of the address cells",
 		},
 		workers: { type: "string", default: "6", description: "Parse worker threads" },
+		"geocode-workers": {
+			type: "string",
+			default: "6",
+			description: "Geocode worker threads under --geocode, each with its own geocoder; 1 geocodes on the main thread",
+		},
 		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
 		"no-parse-cache": {
 			type: "boolean",
@@ -293,7 +298,7 @@ async function scoreAndReport(): Promise<void> {
 
 	console.error(`${rows.length} held-out rows from ${values.dataset ?? values.manifest}`)
 
-	const arms = [values.baseline, ...splitList(values.candidates)]
+	const arms = [values.baseline, ...splitHeldoutArms(values.candidates)]
 	const parsedArms = arms.map(parseHeldoutArm)
 	const scored: HeldoutArmResult[] = []
 	const packages = await readHeldoutLocalePackages()
@@ -366,10 +371,13 @@ async function scoreAndReport(): Promise<void> {
 
 			outcomesByLabel.set(
 				arm.label,
-				await geocodeHeldoutRows(selected, arm, (done, total) => {
-					if (done % 500 === 0 || done === total) {
-						console.error(`  ${done} of ${total}`)
-					}
+				await geocodeHeldoutRows(selected, arm, {
+					workers: Number(values["geocode-workers"]),
+					onRow: (done, total) => {
+						if (done % 500 === 0 || done === total) {
+							console.error(`  ${done} of ${total}`)
+						}
+					},
 				})
 			)
 
