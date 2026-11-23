@@ -107,6 +107,10 @@ describe("classifyAxiosFailure", () => {
 		})
 	})
 
+	it("retries a body that failed after a 200 arrived, as a mid-transfer drop", () => {
+		expect(classifyAxiosFailure(axiosErrorWithResponse(200)).retryable).toBe(true)
+	})
+
 	it("classifies a 403 as terminal even when it carries a Retry-After", () => {
 		expect(classifyAxiosFailure(axiosErrorWithResponse(403, { "retry-after": "5" })).retryable).toBe(false)
 	})

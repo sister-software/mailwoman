@@ -5,7 +5,7 @@
  * @file Bounded retry policy for `APIClient`, including RFC 9110 `Retry-After` parsing and Axios error classification.
  */
 
-import { AxiosError, isAxiosError } from "axios"
+import { AxiosError, HttpStatusCode, isAxiosError } from "axios"
 
 /**
  * HTTP status for rate limiting.
@@ -157,7 +157,12 @@ export function classifyAxiosFailure(error: unknown): RetryDirective {
 	const retryAfterMs = retryAfterFrom(error)
 
 	if (error.response) {
-		return { retryable: isRetryableStatus(error.response.status), retryAfterMs }
+		const { status } = error.response
+
+		// A 2xx status on an error means the body failed after the headers arrived, a mid-transfer drop.
+		if (status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices) return { retryable: true, retryAfterMs }
+
+		return { retryable: isRetryableStatus(status), retryAfterMs }
 	}
 
 	// No response at all: a network-class failure, unless the caller cancelled it themselves.
