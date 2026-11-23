@@ -11,6 +11,12 @@
 //! - `split-embeddings --input <model-int8.onnx> --out-dir <dir> [--counts <counts.npy|.json>] [--coverage 0.99]
 //!   [--always 0,1,2,3]`: `encoder.onnx` and the `MWE1` row file `embeddings.rows`, and with per-piece counts the hot
 //!   subset `embeddings-hot.bin`. Prints the summary as JSON.
+//! - `verify-provenance --manifest <graph.provenance.json> [--require-signature true]`: verifies a manifest against
+//!   the files beside it and the provenance keys of the trust register, prints the result as JSON, and exits 1 on a
+//!   refusal.
+//!
+//! `export-onnx`, `quantize` and `split-embeddings` write `<graph>.provenance.json` beside each graph they write
+//! (`provenance.rs`). A model trained under `LicenseRef-Commercial` exports only with a provenance signing key.
 //! - `inspect --model <model.onnx>`: the opsets, declared inputs and outputs, and the count of each operator type.
 //! - `tensors --checkpoint <dir>`: each state-dict tensor's name, storage type and shape, one per line.
 //! - `diff-initializers --left <a.onnx> --right <b.onnx>`: the initializers the two graphs share by name, with the
@@ -23,12 +29,14 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use product_license::provenance::{verify_manifest, ProvenanceVerification, TRAINING_RECORD_FILE};
 use prost::Message;
 use trainer_export::checkpoint::read_checkpoint;
 use trainer_export::config::ModelConfig;
 use trainer_export::export::{build_model, ExportOptions};
 use trainer_export::onnx::tensor_proto::DataType;
 use trainer_export::onnx::ModelProto;
+use trainer_export::provenance;
 use trainer_export::quantize::quantize_dynamic_qint8;
 use trainer_export::span::{semi_crf_transitions, SEMI_CRF_TRANSITIONS_FILE};
 use trainer_export::split::{read_counts, split_model_file, HotSelection};
@@ -219,8 +227,17 @@ fn run(args: &[String]) -> Result<bool> {
 			let output = Path::new(required(&flags, "output")?);
 			let config = ModelConfig::read(&checkpoint.join("config.json"))?;
 			let state = read_checkpoint(checkpoint)?;
-			let model = build_model(&config, &state, &options)?;
-			let beside = output.parent().unwrap_or_else(|| Path::new("."));
+			let signer = provenance::signer_from_env()?;
+			let training = provenance::checkpoint_record(checkpoint)?;
+			// A commercial run's export refuses before it writes a byte when it can't sign the manifest.
+			provenance::preflight(training.as_ref().map(|(_, r)| r), signer.as_ref())?;
+			let mut model = build_model(&config, &state, &options)?;
+			let provenance_id = provenance::new_provenance_id()?;
+			provenance::stamp_provenance_id(&mut model, &provenance_id);
+			let beside = output
+				.parent()
+				.filter(|p| !p.as_os_str().is_empty())
+				.unwrap_or_else(|| Path::new("."));
 			// The decoder reads the span scorer's transitions from a sidecar, because the graph does not carry them.
 			if let Some(transitions) = semi_crf_transitions(&config, &state)? {
 				let sidecar = beside.join(SEMI_CRF_TRANSITIONS_FILE);
@@ -228,6 +245,10 @@ fn run(args: &[String]) -> Result<bool> {
 				println!("span transitions sidecar: {}", sidecar.display());
 			}
 			write_model(&model, output)?;
+			if let Some((path, _)) = &training {
+				let bytes = std::fs::read(path).map_err(|e| fail!("{}: {e}", path.display()))?;
+				write_bytes(&beside.join(TRAINING_RECORD_FILE), &bytes)?;
+			}
 			// The trainer writes its corpus record beside the checkpoints; a copy beside the model ties the export to its
 			// corpus.
 			let record = checkpoint.parent().map(|p| p.join(CORPUS_RECORD_FILE));
@@ -243,9 +264,32 @@ fn run(args: &[String]) -> Result<bool> {
 					checkpoint.display()
 				),
 			}
+			if training.is_none() {
+				println!(
+					"no {TRAINING_RECORD_FILE} beside {}; the manifest records no training provenance",
+					checkpoint.display()
+				);
+			}
+			let manifest = provenance::write_beside(
+				output,
+				&[SEMI_CRF_TRANSITIONS_FILE, CORPUS_RECORD_FILE, TRAINING_RECORD_FILE],
+				&provenance_id,
+				training.map(|(_, r)| r),
+				None,
+				signer.as_ref(),
+			)?;
+			println!("provenance manifest: {}", manifest.display());
 		}
 		"split-embeddings" => {
-			let model = read_model(Path::new(required(&flags, "input")?))?;
+			let input = Path::new(required(&flags, "input")?);
+			let parent = provenance::parent_of(input, "split-embeddings")?;
+			let signer = provenance::signer_from_env()?;
+			provenance::preflight(parent.as_ref().and_then(|(_, p)| p.training.as_ref()), signer.as_ref())?;
+			let mut model = read_model(input)?;
+			let provenance_id = provenance::new_provenance_id()?;
+			if parent.is_some() {
+				provenance::stamp_provenance_id(&mut model, &provenance_id);
+			}
 			let counts = flags.get("counts").map(|p| read_counts(Path::new(p))).transpose()?;
 			let coverage: f64 = match flags.get("coverage") {
 				Some(c) => c.parse().map_err(|_| fail!("--coverage {c} is not a number"))?,
@@ -270,11 +314,69 @@ fn run(args: &[String]) -> Result<bool> {
 				"{}",
 				serde_json::to_string_pretty(&summary).map_err(|error| fail!("{error}"))?
 			);
+			if let Some((parent, payload)) = parent {
+				let manifest = provenance::write_beside(
+					&summary.encoder,
+					&["embeddings.rows", "embeddings-hot.bin"],
+					&provenance_id,
+					payload.training,
+					Some(parent),
+					signer.as_ref(),
+				)?;
+				println!("provenance manifest: {}", manifest.display());
+			}
 		}
 		"inspect" => inspect(&read_model(Path::new(required(&flags, "model")?))?),
 		"quantize" => {
-			let model = quantize_dynamic_qint8(read_model(Path::new(required(&flags, "input")?))?)?;
-			write_model(&model, Path::new(required(&flags, "output")?))?;
+			let input = Path::new(required(&flags, "input")?);
+			let output = Path::new(required(&flags, "output")?);
+			let parent = provenance::parent_of(input, "quantize")?;
+			let signer = provenance::signer_from_env()?;
+			provenance::preflight(parent.as_ref().and_then(|(_, p)| p.training.as_ref()), signer.as_ref())?;
+			let mut model = quantize_dynamic_qint8(read_model(input)?)?;
+			let provenance_id = provenance::new_provenance_id()?;
+			if parent.is_some() {
+				provenance::stamp_provenance_id(&mut model, &provenance_id);
+			}
+			write_model(&model, output)?;
+			if let Some((parent, payload)) = parent {
+				// The sidecars bind again only when the derived graph sits beside them.
+				let same_dir = input.parent() == output.parent();
+				let sidecars: &[&str] = if same_dir {
+					&[SEMI_CRF_TRANSITIONS_FILE, CORPUS_RECORD_FILE, TRAINING_RECORD_FILE]
+				} else {
+					&[]
+				};
+				let manifest = provenance::write_beside(
+					output,
+					sidecars,
+					&provenance_id,
+					payload.training,
+					Some(parent),
+					signer.as_ref(),
+				)?;
+				println!("provenance manifest: {}", manifest.display());
+			}
+		}
+		"verify-provenance" => {
+			let manifest = Path::new(required(&flags, "manifest")?);
+			let require = flags.get("require-signature").is_some_and(|v| v == "true");
+			let result = verify_manifest(manifest, &provenance::trust()?, require);
+			let report = match &result {
+				ProvenanceVerification::Verified { kid, payload } => serde_json::json!({
+					"status": "verified",
+					"kid": kid,
+					"provenance_id": payload.provenance_id,
+					"attestation": payload.attestation,
+					"license_branch": payload.training.as_ref().map(|t| t.license_branch.clone()),
+					"grant": payload.training.as_ref().and_then(|t| t.grant.as_ref().map(|g| g.grant.clone())),
+				}),
+				ProvenanceVerification::Refused { refusal, reason } => {
+					serde_json::json!({ "status": "refused", "refusal": refusal, "reason": reason })
+				}
+			};
+			println!("{report}");
+			return Ok(matches!(result, ProvenanceVerification::Verified { .. }));
 		}
 		"tensors" => {
 			let state = read_checkpoint(Path::new(required(&flags, "checkpoint")?))?;

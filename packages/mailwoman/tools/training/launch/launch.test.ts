@@ -7,6 +7,7 @@
  */
 
 import { sleep } from "@mailwoman/core/utils/sleep"
+import type { EntitlementAdmission } from "@mailwoman/license/product/entitlement"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -31,6 +32,7 @@ import {
 	runKeyOf,
 	SandboxNameHeldError,
 	startLaunch,
+	TrainingAuthorizationError,
 } from "#tools/training/launch/launch"
 import { SUPERVISOR_REFUSED_EXIT } from "#tools/training/launch/supervisor"
 
@@ -55,7 +57,10 @@ const OPTIONS: LaunchOptions = {
 	timeoutSeconds: 3600,
 	failAtStep: 0,
 	dryRun: false,
+	license: "open-source",
 }
+
+const COMMERCIAL: LaunchOptions = { ...OPTIONS, license: "commercial", trainingSecret: "mailwoman-training-grant" }
 
 function harness() {
 	const sandboxes = new Map<string, SandboxState & { spec: TrainingSandboxSpec }>()
@@ -69,6 +74,8 @@ function harness() {
 	const locked = new Set<string>()
 	// The count of further starts Modal refuses for a name an exited sandbox hasn't yet released.
 	const releasing = { refusals: 0 }
+	// The training grant on the host, as the launch's host check reads it.
+	const host: { grant: EntitlementAdmission | null } = { grant: null }
 
 	const boundary: ModalBoundary = {
 		ensureTrainerImage: async (build) => `im-${build.name}`,
@@ -123,13 +130,14 @@ function harness() {
 				manifestSHA256: "m",
 			}
 		},
-		imageBuild: async (variant) => ({
-			name: `mailwoman-trainer-${variant}`,
+		imageBuild: async (variant, license) => ({
+			name: `mailwoman-trainer-${license === "commercial" ? "commercial-" : ""}${variant}`,
 			baseImage: "debian",
 			baseCommands: [],
 			buildScript: "",
 			bundle: new Uint8Array(),
 		}),
+		checkLocalGrant: async () => host.grant,
 		readRecord: async (key) => records.get(key) ?? null,
 		writeRecord: async (record) => {
 			records.set(record.runKey, record)
@@ -156,6 +164,7 @@ function harness() {
 		preflightTimeouts,
 		sleeps,
 		releasing,
+		host,
 	}
 }
 
@@ -338,6 +347,69 @@ describe("the training launch lifecycle", () => {
 		expect(preflights()).toBe(1)
 		expect(sandboxes.size).toBe(0)
 		expect(logs.at(-1)).toMatch(/^Dry run: would start mailwoman-trainer-cpu on cpu/)
+	})
+
+	it("starts a commercial run on the commercial image with its training secret, by name only", async () => {
+		const { deps, sandboxes, records } = harness()
+		const record = await startLaunch(CONFIG, COMMERCIAL, deps)
+		const spec = sandboxes.get(record.sandboxes[0]!)!.spec
+
+		expect(record.imageID).toBe("im-mailwoman-trainer-commercial-cpu")
+		expect(spec.secretNames).toEqual(["mailwoman-training-grant"])
+		expect(spec.env).toMatchObject({ MAILWOMAN_TRAINER_IMAGE: "mailwoman-trainer-commercial-cpu" })
+		expect(spec.env).not.toHaveProperty("MAILWOMAN_TRAINING_GRANT")
+		expect(records.get(runKey)).toMatchObject({ license: "commercial", trainingSecret: "mailwoman-training-grant" })
+	})
+
+	it("starts an open-source run with no training secret", async () => {
+		const { deps, sandboxes } = harness()
+		const record = await startLaunch(CONFIG, OPTIONS, deps)
+
+		expect(sandboxes.get(record.sandboxes[0]!)!.spec.secretNames).toEqual([])
+		expect(record).toMatchObject({ license: "open-source", trainingSecret: null })
+	})
+
+	it("refuses a commercial launch without a training secret, or with a host grant that refuses, before its preflight", async () => {
+		const { deps, sandboxes, preflights, host } = harness()
+
+		await expect(startLaunch(CONFIG, { ...COMMERCIAL, trainingSecret: undefined }, deps)).rejects.toBeInstanceOf(
+			TrainingAuthorizationError
+		)
+
+		host.grant = { admitted: false, refusal: "expired", reason: "training grant mtg_x expired" }
+
+		await expect(startLaunch(CONFIG, COMMERCIAL, deps)).rejects.toThrow(/does not admit the run \(expired\)/)
+		expect(preflights()).toBe(0)
+		expect(sandboxes.size).toBe(0)
+	})
+
+	it("attaches the training secret again on a restart and refuses a restart the host grant refuses", async () => {
+		const { deps, sandboxes, host } = harness()
+		const first = await startLaunch(CONFIG, COMMERCIAL, deps)
+
+		sandboxes.get(first.sandboxes[0]!)!.exitCode = 1
+
+		const second = await restartLaunch(runKey, deps)
+
+		expect(sandboxes.get(second.sandboxes[1]!)!.spec.secretNames).toEqual(["mailwoman-training-grant"])
+
+		sandboxes.get(second.sandboxes[1]!)!.exitCode = 1
+		host.grant = { admitted: false, refusal: "not_a_training_grant", reason: "a mwl1 platform key" }
+
+		await expect(restartLaunch(runKey, deps)).rejects.toBeInstanceOf(TrainingAuthorizationError)
+		expect(sandboxes.size).toBe(2)
+	})
+
+	it("restarts a commercial run the supervisor refused, once its grant is renewed, without clearing it", async () => {
+		const { deps, sandboxes } = harness()
+		const first = await startLaunch(CONFIG, COMMERCIAL, deps)
+
+		sandboxes.get(first.sandboxes[0]!)!.exitCode = SUPERVISOR_REFUSED_EXIT
+		await expect(launchStatus(runKey, deps)).resolves.toMatchObject({ state: LaunchState.Refused })
+
+		const second = await restartLaunch(runKey, deps)
+
+		expect(sandboxes.get(second.sandboxes[1]!)!.spec.env).toMatchObject({ MW_FRESH: "0" })
 	})
 
 	it("refuses a fault step on a GPU and a fresh start over a shared directory", async () => {

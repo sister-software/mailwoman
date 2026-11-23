@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { verifyLicenseKey } from "@mailwoman/core/license/key"
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import { env } from "cloudflare:workers"
 import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 
@@ -10,7 +11,6 @@ import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
 import { countTokens, findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
-import { AGREEMENT_VERSION } from "#shop/catalog"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
 import { envWithSigningKey } from "#test/support/keys"
@@ -296,7 +296,16 @@ describe("fulfillment", () => {
 	})
 
 	it("signs the agreement version the Checkout Session carried, on the first token and on a renewal after the environment moved on; a session without one is refused", async () => {
-		const { env: worker, deps, kid, publicKeyPEM } = await fixture("7", { renewalInvoiceID: "in_7b" })
+		// The session was bought under the agreement checkout sold before the current one.
+		const {
+			env: worker,
+			deps,
+			kid,
+			publicKeyPEM,
+		} = await fixture("7", {
+			renewalInvoiceID: "in_7b",
+			agreementVersion: "commercial-2026-10",
+		})
 
 		await fulfilInvoice(worker, deps, "in_7")
 		await fulfilInvoice(worker, deps, "in_7b")

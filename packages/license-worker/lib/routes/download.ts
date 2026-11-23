@@ -13,8 +13,9 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { publicKeyFromPrivateKey } from "@mailwoman/core/crypto/ed25519"
-import { scopeAdmits, verifyLicenseKey } from "@mailwoman/core/license/key"
-import { trustedLicenseSigningKeys } from "@mailwoman/core/license/register"
+import { verifyLicenseKey } from "@mailwoman/core/license/key"
+import { scopeAdmits } from "@mailwoman/license/product/token"
+import { trustedLicenseSigningKeys } from "@mailwoman/license/product/trust"
 
 import type { ArtifactCatalog } from "#artifacts/catalog"
 import { PRESIGN_SECONDS, presignConfigured, presignObject } from "#artifacts/presign"

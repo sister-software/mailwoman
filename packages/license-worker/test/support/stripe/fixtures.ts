@@ -9,6 +9,7 @@
  *   is typed. the assertion is the one place the fixture meets the SDK's union.
  */
 
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
 import type Stripe from "stripe"
 
 export interface InvoiceInit {
@@ -110,8 +111,7 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 		customer: init.customerID ?? `cus_${init.subscriptionID}`,
 		customer_details: { email: init.email, name: init.licensee },
 		consent: { terms_of_service: init.consent || "accepted" },
-		metadata:
-			init.agreementVersion === null ? {} : { agreement_version: init.agreementVersion ?? "commercial-2026-10" },
+		metadata: init.agreementVersion === null ? {} : { agreement_version: init.agreementVersion ?? AGREEMENT_VERSION },
 		custom_fields: [{ key: "licensee_legal_name", type: "text", text: { value: init.licensee } }],
 		line_items: init.priceID
 			? {

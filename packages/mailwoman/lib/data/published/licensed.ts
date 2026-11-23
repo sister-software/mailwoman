@@ -11,7 +11,8 @@
  */
 
 import { allKeyed } from "@mailwoman/core/async/promises"
-import { docsSiteURL, type LicenseKeyVerification, scopeAdmits } from "@mailwoman/core/license"
+import { docsSiteURL } from "@mailwoman/core/license"
+import { type LicenseKeyVerification, scopeAdmits } from "@mailwoman/license/product/token"
 
 import type { BundleArtifact, DataBundle } from "#data/published/bundles"
 
@@ -65,8 +66,13 @@ export function licensedArtifactName(bundle: DataBundle, artifact: BundleArtifac
  * Read only when a licensed bundle asks, so a free pull touches no key.
  */
 export async function readConfiguredKey(): Promise<ConfiguredKey | null> {
-	const { readConfiguredLicenseToken, trustedLicenseSigningKeys, verifyLicenseKey } =
-		await import("@mailwoman/core/license")
+	const {
+		license: { readConfiguredLicenseToken, verifyLicenseKey },
+		trust: { trustedLicenseSigningKeys },
+	} = await allKeyed({
+		license: import("@mailwoman/core/license"),
+		trust: import("@mailwoman/license/product/trust"),
+	})
 
 	const configured = await readConfiguredLicenseToken()
 

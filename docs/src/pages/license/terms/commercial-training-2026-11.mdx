@@ -1,0 +1,151 @@
+---
+title: Commercial Training Agreement, commercial-training-2026-11
+description: The standard terms of a Mailwoman commercial training agreement, incorporated by a signed order form. Version commercial-training-2026-11; this page is not edited after publication.
+---
+
+# Mailwoman Commercial Training Agreement
+
+**Version `commercial-training-2026-11`.** These are the standard terms of a Mailwoman commercial training
+agreement. They bind only when Licensor and Licensee sign an order form that incorporates them by this version. A
+training agreement is negotiated in writing and is never sold through checkout. The version is written into every
+training grant issued under the agreement. This page is not edited after publication; a later version is published
+at its own address.
+
+The [platform agreement](/license/terms/commercial-2026-11) excludes the training stack in its section 2a. These terms
+grant it.
+
+---
+
+## 1. Parties and order form
+
+Licensor: Nirrius LLC (d/b/a Sister Software)
+Contact: hello@sister.software
+
+Licensee: The legal entity named in the order form.
+
+The order form states the term, the fees, the training environment (section 3), whether Licensee holds a
+post-term deployment grant (section 6), and any limit on the models or model families the agreement covers. Where
+the order form and these terms conflict, the order form governs.
+
+---
+
+## 2. Covered training operations
+
+During the term, Licensor grants Licensee a worldwide, non-exclusive, non-transferable, non-sublicensable license to
+use the Mailwoman training stack without AGPL copyleft obligations to:
+
+- Train a model from scratch
+- Fine-tune or continue training a pretrained model Licensor publishes for Mailwoman, or a model Licensee trained
+  under this agreement
+- Retry, resume, or branch a training run from one of its checkpoints
+- Export, quantize, and split the resulting models with the Mailwoman export tools
+
+The training stack is the trainer (`packages/trainer`), the training launcher and its managed training service, the
+training configurations and corpus recipes, and the model export, quantization and embedding tools. A model
+produced by these operations during the term is a "Trained Model".
+
+The grant covers only the code and model artifacts that Licensor has authority to license, as section 2 of the
+platform agreement describes. It does not extend to the corpus sources, gazetteers, or other third-party inputs a
+training run reads. Their terms continue to apply to training on them and to any model trained on them, and
+Licensee is responsible for holding the rights a run's inputs require. A run's corpus must pass the corpus admission
+checks the training stack applies on either license branch.
+
+---
+
+## 3. Training grants
+
+Licensor issues Licensee a signed training grant, a credential with a stable grant ID, this agreement's version, an
+expiry date, and the permissions it carries. The commercial trainer verifies a grant before every start, retry and
+resume, and refuses a run its grant doesn't admit. A grant runs for at most one calendar quarter, and Licensor renews
+it under the same grant ID while the agreement is in force.
+
+The grant is a credential. Licensee keeps it confidential, stores it only in the secret store of its training
+environment, and doesn't place it in a log, a configuration file, a model artifact, or any file Licensee
+distributes.
+
+The order form names one training environment:
+
+- **Managed.** Licensor runs the training and export in its managed training service. Licensor signs each Trained
+  Model's provenance manifest, which records the run that produced the model and the grant that admitted it, and binds
+  the model's bytes.
+- **Licensee-operated.** Licensee runs the commercial trainer in its own environment. On request, Licensor signs a
+  manifest Licensee submits, after checking that the submitted files match the submitted digests. That signature
+  states only what Licensor verified, and the training record in the manifest remains Licensee's own statement.
+
+---
+
+## 4. Use and redistribution of Trained Models
+
+During the term, Licensee may, without AGPL copyleft obligations for the material Licensor licenses:
+
+- Use Trained Models internally and in Licensee's products and hosted services
+- Distribute Trained Models to Licensee's customers in binary form, as part of a Licensee product that does more than
+  serve the model
+
+Licensee may not distribute a Trained Model as a standalone model or model library, offer it to third parties to train
+or fine-tune further, or sublicense the training stack.
+
+A Trained Model keeps Licensor's copyright and provenance notices. Each published Trained Model's provenance
+manifest records the grant ID under which it was trained.
+
+---
+
+## 5. Fees
+
+The fees are those the order form states.
+
+---
+
+## 6. Term, expiry and post-term rights
+
+The agreement runs for the term the order form states and renews only by a signed renewal.
+
+When the agreement expires without renewal:
+
+- The training grant stops admitting new runs, retries, resumes and exports at the end of its expiry date in UTC. A
+  training process admitted before that time may run to completion.
+- The rights in section 4 end, unless the order form grants a post-term deployment grant. A post-term deployment
+  grant is a signed grant with the same grant ID that permits deployment; it covers continued use and distribution,
+  as section 4 describes, of the Trained Models whose provenance records that grant ID, for the period the order form
+  states.
+- Provenance records remain records of how a Trained Model was produced. A record is not a grant, and it permits no
+  use after the rights it records have ended.
+
+When Licensor terminates the agreement for Licensee's material breach, every right under it ends at termination,
+including any post-term deployment grant.
+
+After the rights under this agreement end, a Trained Model that qualifies as a covered work under AGPL-3.0-only may be
+used only under AGPL-3.0-only.
+
+---
+
+## 7. No Warranty
+
+The training stack and every Trained Model are provided "as is", without warranty of any kind, express or implied.
+Licensor makes no representation about the quality of a model Licensee trains.
+
+---
+
+## 8. Liability
+
+To the maximum extent permitted by law, Licensor shall not be liable for any damages arising from the training stack
+or a Trained Model.
+
+---
+
+## 9. Applicable Law
+
+These terms shall be governed by the laws of the State of Delaware, United States, without regard to conflict of law
+principles. The parties consent to the exclusive jurisdiction and venue of the state and federal courts located in
+Delaware for any dispute arising out of or relating to them.
+
+---
+
+## 10. Relationship to AGPL
+
+These terms are an alternative licensing option to AGPL-3.0-only for the training stack. Licensee may use the
+training stack under AGPL-3.0-only at any time, with or without this agreement.
+
+---
+
+END OF TERMS

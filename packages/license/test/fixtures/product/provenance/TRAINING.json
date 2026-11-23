@@ -1,0 +1,31 @@
+{
+	"format": "mailwoman-training-record/1",
+	"run_id": "mwrun_00112233445566778899aabb",
+	"license_branch": "LicenseRef-Commercial",
+	"grant": {
+		"grant": "mtg_0123456789abcdef01234567",
+		"agreement": "commercial-training-2026-11",
+		"kid": "v0-9652eafe",
+		"expires": "2027-01-31"
+	},
+	"trainer": {
+		"version": "0.1.0",
+		"build": "commercial",
+		"image": "mailwoman-trainer-cu130-1.99.1-0123456789abcdef"
+	},
+	"resolved_config_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	"corpus_manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+	"parent": null,
+	"verifications": [
+		{
+			"event": "start",
+			"at": "2026-11-02T10:00:00Z",
+			"grant": {
+				"grant": "mtg_0123456789abcdef01234567",
+				"agreement": "commercial-training-2026-11",
+				"kid": "v0-9652eafe",
+				"expires": "2027-01-31"
+			}
+		}
+	]
+}

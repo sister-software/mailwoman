@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
+import { encodeLicenseKey } from "@mailwoman/core/license/key"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { env } from "cloudflare:workers"
 import { beforeAll, describe, expect, it } from "vitest"
 

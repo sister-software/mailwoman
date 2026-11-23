@@ -11,15 +11,8 @@
  * again without storing its id in git.
  */
 
-import type { CommercialPlan } from "#plans"
-
-/**
- * The agreement version included as Payment Link metadata and recorded on every license.
- *
- * Bump it when the terms page changes.
- * Then create new Payment Links and update `AGREEMENT_VERSION` in each environment.
- */
-export const AGREEMENT_VERSION = "commercial-2026-10"
+import { AGREEMENT_VERSION, agreementPath } from "@mailwoman/license/product/agreement"
+import type { ShopPlanCode } from "@mailwoman/license/product/plans"
 
 /**
  * The Payment Link custom field that collects the licensee's legal name
@@ -77,7 +70,7 @@ export const RECONCILED_LINK_FIELDS = {
 	payment_method_collection: "if_required",
 } as const
 
-export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollection {
+export function checkoutCollection(planCode: ShopPlanCode): CheckoutCollection {
 	return {
 		custom_fields: [
 			{ key: LICENSEE_FIELD_KEY, label: { type: "custom", custom: "Licensee legal name" }, type: "text" },
@@ -97,32 +90,6 @@ export const SHOP_PRODUCT = {
 	description:
 		"Waives the AGPL share-alike and source-offer obligations for one legal entity. Renews with the subscription; the license key follows the paid period plus 14 days.",
 } as const
-
-export interface ShopPlan {
-	code: CommercialPlan["code"]
-	interval: "month" | "year"
-	/**
-	 * In the currency's minor unit: cents.
-	 */
-	unitAmount: number
-	currency: "usd"
-}
-
-/**
- * The published prices, also stated in `docs/articles/pricing.mdx`.
- */
-export const SHOP_PLANS: readonly ShopPlan[] = [
-	{ code: "commercial-monthly-v1", interval: "month", unitAmount: 25_000, currency: "usd" },
-	{ code: "commercial-yearly-v1", interval: "year", unitAmount: 240_000, currency: "usd" },
-]
-
-/**
- * The plan codes as a non-empty tuple, the shape a zod enum takes.
- */
-export const SHOP_PLAN_CODES = [
-	"commercial-monthly-v1",
-	"commercial-yearly-v1",
-] as const satisfies readonly ShopPlan["code"][]
 
 /**
  * The route the webhook destination posts to, on the worker's origin.
@@ -149,7 +116,7 @@ export function shopURLs(siteOrigin: string): ShopURLs {
 
 	return {
 		successURL: `${origin}/license/issued?session_id={CHECKOUT_SESSION_ID}`,
-		termsURL: `${origin}/license/terms/${AGREEMENT_VERSION}`,
+		termsURL: `${origin}${agreementPath(AGREEMENT_VERSION)}`,
 		licenseURL: `${origin}/license`,
 	}
 }

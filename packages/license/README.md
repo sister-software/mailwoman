@@ -5,13 +5,17 @@ the license-decision shape every register uses, the operations a decision permit
 expression imposes, the reading of a license string into separate facts, and the policies a corpus build or a
 data layer applies to them.
 
-Public library with no runtime dependencies. Install with `npm install @mailwoman/license`.
+Public library whose one runtime dependency is zod. Install with `npm install @mailwoman/license`.
 
-It holds no register. The address-source register is data in `@mailwoman/corpus`, and the structure register is
+It holds no source register. The address-source register is data in `@mailwoman/corpus`, and the structure register is
 in `@mailwoman/structures`. A caller reads its register and passes the decisions in.
 
-Mailwoman's own dual license, its key, its stamp and the branch an installation runs under, is
-`@mailwoman/core/license`.
+The `product/` modules hold Mailwoman's own product license as data: the wire format of the platform license key and
+the commercial training grant, the trust register of public signing keys, the entitlement checks, the model
+provenance manifest, and the published agreements and plans. The Rust crate in `crates/product-license` reads the same
+`product/trust-register.json` and the fixtures under `test/fixtures/product/`.
+`docs/engineering/reference/product-license-tokens.mdx` specifies the formats. The signatures themselves, the engine
+stamp and the branch an installation runs under are `@mailwoman/core/license`.
 
 ## Modules
 
@@ -30,6 +34,17 @@ Mailwoman's own dual license, its key, its stamp and the branch an installation 
 | `admission`   | A layer build's admission of its sources by their decisions                                       |
 | `refusals`    | A customer's refusal of an obligation class                                                       |
 | `mixed`       | The obligation class each source of a mixed layer counts under                                    |
+
+| Product module        | What it answers                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| `product/token`       | The `mwl1` platform key and `mwt1` training grant: prefixes, payload schemas, verification statuses |
+| `product/trust`       | The license and provenance signing keys of `trust-register.json`, and their trust maps              |
+| `product/entitlement` | Whether a verified grant admits a commercial training run, or commercial use of a trained model     |
+| `product/provenance`  | The training record (`TRAINING.json`) and the signed provenance manifest beside a model             |
+| `product/agreement`   | The published agreement versions and their pages                                                    |
+| `product/plans`       | The published platform plans, prices and grace period                                               |
+| `product/expiry`      | The expiry a declared or evaluation key takes from its intent                                       |
+| `product/dates`       | UTC calendar-date arithmetic for key dates                                                          |
 
 ## Quick start
 

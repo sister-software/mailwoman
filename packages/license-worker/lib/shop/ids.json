@@ -5,8 +5,8 @@
 			"commercial-yearly-v1": "price_1UCTF8ANyI6tE9BzmJnVxNiS"
 		},
 		"paymentLinks": {
-			"commercial-monthly-v1": "https://buy.stripe.com/test_bJe00iabDeqibfk9D90RG00",
-			"commercial-yearly-v1": "https://buy.stripe.com/test_bJeaEW4Rj4PI97c3eL0RG01"
+			"commercial-monthly-v1": "https://buy.stripe.com/test_9B6bJ01F7be6dns9D90RG02",
+			"commercial-yearly-v1": "https://buy.stripe.com/test_bJe6oGgA16XQbfk6qX0RG03"
 		},
 		"portalURL": "https://billing.stripe.com/p/login/test_bJe00iabDeqibfk9D90RG00"
 	},

@@ -24,10 +24,20 @@ import {
 /**
  * A `trainer` whose `train` follows `FAKE_PLAN`, one word per attempt: `ok`,
  * `crash` (exit 1 after one complete save), `die` (exit 1 before its first save),
- * `cuda` (reports the CUDA device) or `fail` (exit 2 before training).
+ * `cuda` (reports the CUDA device), `fail` (exit 2 before training) or `refused`
+ * (the authorization refusal, exit 3, before training).
+ *
+ * Its `authorize` admits unless `FAKE_AUTHORIZE` is `refuse`, and reports
+ * whether the training grant's variable reached it, never the value.
  */
 const FAKE_TRAINER = String.raw`#!/usr/bin/env bash
 [ "$1" = device ] && exit 0
+if [ "$1" = authorize ]; then
+	echo "authorize grant=${"$"}{MAILWOMAN_TRAINING_GRANT:+present}" >> "$FAKE_STATE/authorizations"
+	[ "$FAKE_AUTHORIZE" = refuse ] && { echo '{"admitted":false,"refusal":"expired"}'; exit 3; }
+	echo '{"admitted":true}'
+	exit 0
+fi
 count=$(cat "$FAKE_STATE/attempts" 2> /dev/null || echo 0)
 echo $((count + 1)) > "$FAKE_STATE/attempts"
 echo "train $4" >> "$FAKE_STATE/calls"
@@ -35,6 +45,7 @@ read -ra plan <<< "$FAKE_PLAN"
 mode=${"$"}{plan[$count]:-ok}
 [ "$mode" = cuda ] && { echo "device=Cuda(0) param_count=10"; sleep 5; exit 0; }
 [ "$mode" = fail ] && { echo "error: no corpus"; exit 2; }
+[ "$mode" = refused ] && { echo "training refused (expired)" >&2; exit 3; }
 echo "device=Cpu param_count=10"
 [ "$mode" = die ] && exit 1
 [ "$mode" = slow ] && sleep 1
@@ -56,7 +67,8 @@ async function runSupervisor(
 	plan: string,
 	overrides: Partial<SupervisorEnvironment> = {},
 	seedCheckpoint = false,
-	writeInputs = true
+	writeInputs = true,
+	fake: { authorize?: "refuse"; grant?: string } = {}
 ) {
 	await using scratch = await temporaryDirectory("mailwoman-supervisor-")
 	const config = "data:\n  corpus_dir: /data/corpus\n"
@@ -116,7 +128,15 @@ async function runSupervisor(
 	}
 
 	const { code, stdout } = await runFile("bash", ["-c", SUPERVISOR_SCRIPT], {
-		env: { ...environment, FAKE_STATE: scratch.path().toString(), FAKE_PLAN: plan, PATH: "/usr/bin:/bin" },
+		env: {
+			...environment,
+			FAKE_STATE: scratch.path().toString(),
+			FAKE_PLAN: plan,
+			FAKE_AUTHORIZE: fake.authorize ?? "",
+			// The training Secret's variable, as Modal injects it into the sandbox.
+			...(fake.grant ? { MAILWOMAN_TRAINING_GRANT: fake.grant } : {}),
+			PATH: "/usr/bin:/bin",
+		},
 	}).then(
 		(output) => ({ code: 0, stdout: output.stdout }),
 		(error: unknown) => {
@@ -135,6 +155,7 @@ async function runSupervisor(
 		stdout,
 		calls: await read("calls"),
 		syncs: await read("syncs"),
+		authorizations: await read("authorizations"),
 		checkpointKept: await pathExists(earlier),
 	}
 }
@@ -231,6 +252,33 @@ describe("the training sandbox supervisor", () => {
 		expect(config.calls).toEqual([])
 		expect(manifest.code).toBe(SUPERVISOR_REFUSED_EXIT)
 		expect(manifest.stdout).toContain("stage the corpus the receipt was written over")
+	})
+
+	it("authorizes once, with the training Secret's variable, before the first attempt", async () => {
+		const run = await runSupervisor("ok", {}, false, true, { grant: "mwt1.payload.signature" })
+
+		expect(run.code).toBe(0)
+		expect(run.authorizations).toEqual(["authorize grant=present"])
+		expect(run.stdout).not.toContain("mwt1.payload.signature")
+	})
+
+	it("refuses an unauthorized run before a fresh start clears its checkpoints, without a retry", async () => {
+		const run = await runSupervisor("ok", { MW_FRESH: "1" }, true, true, { authorize: "refuse" })
+
+		expect(run.code).toBe(SUPERVISOR_REFUSED_EXIT)
+		expect(run.calls).toEqual([])
+		expect(run.checkpointKept).toBe(true)
+		expect(run.stdout).not.toContain("fresh start")
+		expect(run.stdout).toContain("refused: trainer authorize refused the run's training grant")
+	})
+
+	it("refuses without a retry when the trainer refuses its grant on a later attempt", async () => {
+		const run = await runSupervisor("crash refused ok", { MW_RETRIES: "3" }, true)
+
+		expect(run.code).toBe(SUPERVISOR_REFUSED_EXIT)
+		expect(run.calls).toEqual(["train auto", "train auto"])
+		expect(run.checkpointKept).toBe(true)
+		expect(run.stdout).toContain("refused: trainer train refused its training grant")
 	})
 
 	it("refuses when the launch inputs never arrive", async () => {

@@ -12,10 +12,10 @@
 import {
 	buildEngineStamp,
 	type EngineStamp,
-	type LicenseKeyVerification,
 	licenseNoticeLines,
 	verifyConfiguredLicenseKey,
 } from "@mailwoman/core/license"
+import type { LicenseKeyVerification } from "@mailwoman/license/product/token"
 
 import { readMailwomanManifest } from "#package/metadata"
 

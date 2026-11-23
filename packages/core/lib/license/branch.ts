@@ -9,8 +9,8 @@
  */
 
 import { ExpressionOperator, licenseExpressionTerms } from "@mailwoman/license/expression"
+import type { LicenseKeyVerification } from "@mailwoman/license/product/token"
 
-import type { LicenseKeyVerification } from "#license/key"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**

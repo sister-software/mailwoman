@@ -5,9 +5,10 @@
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
 	},
-	"include": ["./lib/**/*"],
+	"include": ["./lib/**/*", "./lib/product/trust-register.json"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts"],
 	"references": []
 }

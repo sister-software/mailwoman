@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { LicenseKeyPayload } from "@mailwoman/license/product/token"
 import { describe, expect, it } from "vitest"
 
-import { appliedLicenseBranch, chooseLicenseBranch, type LicenseKeyPayload } from "#license"
+import { appliedLicenseBranch, chooseLicenseBranch } from "#license"
 
 describe("chooseLicenseBranch", () => {
 	const dual = "AGPL-3.0-only OR LicenseRef-Commercial"

@@ -16,12 +16,12 @@
  */
 
 import { sleep as defaultSleep } from "@mailwoman/core/utils/sleep"
+import { calendarDateUTC, plusDays } from "@mailwoman/license/product/dates"
+import { GRACE_DAYS, type ShopPlan } from "@mailwoman/license/product/plans"
 import type Stripe from "stripe"
 
 import { type ClaimResponse, parseClaimResponse } from "#claim-interface"
-import { calendarDateUTC, plusDays } from "#dates"
-import { GRACE_DAYS } from "#plans"
-import { checkoutCollection, type ShopPlan, shopURLs } from "#shop/catalog"
+import { checkoutCollection, shopURLs } from "#shop/catalog"
 import { idOf } from "#stripe/shapes"
 
 /**

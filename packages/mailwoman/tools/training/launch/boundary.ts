@@ -49,6 +49,13 @@ export interface TrainingSandboxSpec extends SandboxResources {
 	 */
 	files: Array<{ path: string; contents: Uint8Array }>
 	tags: Record<string, string>
+	/**
+	 * The names of the Modal secrets attached beside the R2 secret: a commercial run's training secret.
+	 *
+	 * A secret's values reach the sandbox's environment only.
+	 * The spec holds names, never values.
+	 */
+	secretNames: string[]
 }
 
 /**

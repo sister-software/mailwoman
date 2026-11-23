@@ -17,7 +17,7 @@
 
 import { publicKeyFromPrivateKey } from "@mailwoman/core/crypto/ed25519"
 import { encodeLicenseKey, licenseKeyID, verifyLicenseKey } from "@mailwoman/core/license/key"
-import { LICENSE_SIGNING_KEYS, LicenseKeyStatus } from "@mailwoman/core/license/register"
+import { LICENSE_SIGNING_KEYS, LicenseKeyStatus } from "@mailwoman/license/product/trust"
 
 import type { LicenseWorkerEnv } from "#env"
 

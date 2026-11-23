@@ -6,9 +6,14 @@
  *   the obligations an SPDX expression imposes, license strings read as records, and the build and
  *   layer policies that read them.
  *
- *   The package has no runtime dependency, so `@mailwoman/core` and every leaf can import it. It holds
- *   no register: a caller reads its own register and passes the decisions in. Mailwoman's own dual
- *   license, its key and its stamp, are `@mailwoman/core/license`.
+ *   The package's one runtime dependency is zod, so `@mailwoman/core` and every leaf can import it. It holds no
+ *   source register: a caller reads its own register and passes the decisions in.
+ *
+ *   `#product/*` holds Mailwoman's own product license: the token wire format, the trust register of
+ *   signing keys shared with the Rust verifier in `crates/product-license`, the entitlement checks, the
+ *   provenance manifest schema, and the published agreements and plans. Those modules are imported by
+ *   subpath and stay out of this barrel. The signatures themselves are checked in
+ *   `@mailwoman/core/license`, which owns the cryptography.
  */
 
 export * from "#actions"

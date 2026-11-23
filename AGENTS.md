@@ -84,6 +84,10 @@ Use repository skills for procedures rather than copying their steps into this f
   rows are split, the checks that admit a corpus manifest, the comparator, the three-run rule for a corpus
   or recipe change, and the checks a training run passes before launch. Read it before changing the split policy, a
   holdout table, an evaluation draw, or a training launch.
+- `docs/engineering/reference/product-license-tokens.mdx` specifies the platform license key, the commercial
+  training grant, the trust register and the model provenance manifest that `@mailwoman/license/product` and the
+  `product-license` crate both implement. Read it before changing a credential, the trainer's license check, or an
+  export's provenance.
 - `docs/engineering/reference/decoder-grammar.mdx` defines the decoder objective and constraint
   taxonomy. Read it before changing the decoder, a prior, or phrase cohesion.
 - `docs/engineering/reference/layer-interface.mdx` defines spatial-layer manifests, coverage, data

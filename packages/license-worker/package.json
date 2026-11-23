@@ -44,6 +44,7 @@
 	"dependencies": {
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/license": "workspace:*",
 		"@mailwoman/universe": "workspace:*",
 		"@react-email/components": "^1.0.12",
 		"aws4fetch": "^1.0.20",

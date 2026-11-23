@@ -6,7 +6,7 @@
  *   last day in UTC, so the arithmetic is on days, never on instants.
  *
  *   `isoDate` in `@mailwoman/core/utils/time` has the same shape and sits behind core's Node-only graph.
- *   This worker must stay outside that graph.
+ *   The license worker runs in a Cloudflare Worker and must stay outside that graph, so it reads these.
  */
 
 export function calendarDateUTC(unixSeconds: number): string {

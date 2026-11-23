@@ -10,7 +10,7 @@
  */
 
 import Link from "@docusaurus/Link"
-import { PRICE_MONTHLY, PRICE_YEARLY, PRICE_YEARLY_PER_MONTH } from "@mailwoman/license-worker/client/constants"
+import { PRICE_MONTHLY, PRICE_YEARLY, PRICE_YEARLY_PER_MONTH } from "@mailwoman/license/product/plans"
 import Heading from "@theme/Heading"
 import Layout from "@theme/Layout"
 import clsx from "clsx"

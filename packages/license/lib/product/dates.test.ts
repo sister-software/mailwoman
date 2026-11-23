@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { calendarDateUTC, plusDays } from "#dates"
+import { calendarDateUTC, plusDays } from "#product/dates"
 
 describe("calendar dates", () => {
 	it("reads a unix second as a UTC calendar date", () => {

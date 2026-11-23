@@ -9,7 +9,7 @@
  *   and the CLI's client in `status.ts` reads the same shapes.
  */
 
-import type { LicenseIntent } from "#license/key"
+import type { LicenseIntent } from "@mailwoman/license/product/token"
 
 /**
  * The number of days before a token's expiry at which the CLI notice announces it

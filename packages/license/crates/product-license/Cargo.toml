@@ -1,0 +1,17 @@
+[package]
+name = "product-license"
+description = "Verifies Mailwoman's product tokens (mwl1 platform keys, mwt1 training grants) and model provenance manifests against the trust register @mailwoman/license ships, and signs provenance manifests."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[dependencies]
+base64 = "0.22"
+ed25519-dalek = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

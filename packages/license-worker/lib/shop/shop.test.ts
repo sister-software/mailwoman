@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
+import { SHOP_PLANS } from "@mailwoman/license/product/plans"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
-import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
 import { withShopIDs } from "#shop/ids"
 import { provisionShop } from "#shop/provision"
 import { STRIPE_API_VERSION, stripeClient } from "#stripe/client"

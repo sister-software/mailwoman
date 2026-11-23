@@ -303,6 +303,7 @@ jobs:
       - name: Test the training encoder, sampler and export crates
         run: |
           cargo test -p trainer-export --locked
+          cargo test -p product-license --locked
           cargo test -p mtf-channels --locked
           cargo test -p mtf-channels --features finders --locked
           cargo test -p mtf-sampler --locked
@@ -358,6 +359,7 @@ jobs:
           MKL_CBWR: AVX2
         run: |
           cargo test -p trainer-model -p trainer-loop -p trainer-cli --locked
+          cargo test -p trainer-cli --features commercial --locked
 
       # `mtf-node` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`. Clippy checks every crate's code,
       # which links libtorch for the trainer crates, and the `panic-probe` feature's export once more.
@@ -368,6 +370,7 @@ jobs:
         run: |
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo clippy -p mtf-node --features panic-probe --locked -- -D warnings
+          cargo clippy -p trainer-cli --features commercial --all-targets --locked -- -D warnings
 
   # The root Vitest sweep runs as three concurrent legs. unit-fast runs the fast suite.
   # unit-slow-hosted runs the slow files that need no model or database, and unit-slow runs the rest.

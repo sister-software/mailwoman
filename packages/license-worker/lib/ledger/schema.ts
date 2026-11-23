@@ -10,7 +10,7 @@
  *   and a select always includes it.
  */
 
-import type { LicenseIntent } from "@mailwoman/core/license/key"
+import type { LicenseIntent } from "@mailwoman/license/product/token"
 import type { Generated, Insertable, Selectable } from "kysely"
 
 /**

@@ -12,20 +12,18 @@
  * A signing secret returned by Stripe at creation appears only in the report.
  */
 
+import { AGREEMENT_VERSION } from "@mailwoman/license/product/agreement"
+import { SHOP_PLAN_CODES, SHOP_PLANS, type ShopPlan } from "@mailwoman/license/product/plans"
 import type Stripe from "stripe"
 import { z } from "zod"
 
 import {
 	AGREEMENT_METADATA_KEY,
-	AGREEMENT_VERSION,
 	checkoutCollection,
 	RECONCILED_LINK_FIELDS,
 	SHOP_MARK,
 	SHOP_METADATA_KEY,
-	SHOP_PLAN_CODES,
-	SHOP_PLANS,
 	SHOP_PRODUCT,
-	type ShopPlan,
 	shopURLs,
 	WEBHOOK_PATH,
 } from "#shop/catalog"

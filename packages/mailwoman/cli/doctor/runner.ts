@@ -10,15 +10,10 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase, ServingRole } from "@mailwoman/core/layers"
-import {
-	docsSiteURL,
-	isSelfServicePayload,
-	type LicenseKeyVerification,
-	readInstallationID,
-	verifyConfiguredLicenseKey,
-} from "@mailwoman/core/license"
+import { docsSiteURL, readInstallationID, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
+import { isSelfServicePayload, type LicenseKeyVerification } from "@mailwoman/license/product/token"
 import { type ObligationRefusal, parseObligationRefusals } from "@mailwoman/license/refusals"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

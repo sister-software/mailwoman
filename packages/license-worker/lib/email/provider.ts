@@ -11,7 +11,7 @@
  *   The ledger's `email_state` is what keeps the window to that one crash.
  */
 
-import type { LicenseIntent } from "@mailwoman/core/license/key"
+import type { LicenseIntent } from "@mailwoman/license/product/token"
 
 export interface LicenseEmail {
 	to: string

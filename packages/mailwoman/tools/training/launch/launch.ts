@@ -20,6 +20,7 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import type { EntitlementAdmission } from "@mailwoman/license/product/entitlement"
 
 import {
 	type ModalBoundary,
@@ -28,6 +29,7 @@ import {
 	type SandboxState,
 	type TrainerImageBuild,
 } from "#tools/training/launch/boundary"
+import { TrainerLicense } from "#tools/training/launch/image"
 import { checkClearable, resolveRunPaths } from "#tools/training/launch/run-paths"
 import {
 	SUPERVISOR_REFUSED_EXIT,
@@ -48,8 +50,9 @@ export const LaunchState = {
 	Running: "running",
 	Completed: "completed",
 	/**
-	 * The supervisor refused inputs or a device.
-	 * A restart would repeat the refusal.
+	 * The supervisor refused inputs, a device, or the training grant.
+	 *
+	 * A restart would repeat the refusal, and the run's checkpoints stay as they were.
 	 */
 	Refused: "refused",
 	/**
@@ -131,9 +134,17 @@ export interface LaunchDependencies {
 	 */
 	preflight(config: ResolvedLaunchConfig, device: string, timeoutSeconds: number): Promise<PreflightResult>
 	/**
-	 * The trainer image build for `variant`, whose name hashes the sources.
+	 * The trainer image build for `variant` and the license branch.
+	 * Its name hashes the sources.
 	 */
-	imageBuild(variant: "cpu" | "cu130"): Promise<TrainerImageBuild>
+	imageBuild(variant: "cpu" | "cu130", license: TrainerLicense): Promise<TrainerImageBuild>
+	/**
+	 * Verifies the training grant held on the host, or answers `null` when the host holds none.
+	 *
+	 * A commercial launch refuses before its preflight when the answer is a refusal.
+	 * A grant held only in the run's Modal training secret is first checked inside the sandbox.
+	 */
+	checkLocalGrant(): Promise<EntitlementAdmission | null>
 	readRecord(runKey: string): Promise<LaunchRecord | null>
 	writeRecord(record: LaunchRecord): Promise<void>
 	/**
@@ -153,6 +164,17 @@ export interface LaunchRecord {
 	runKey: string
 	config: string
 	device: string
+	/**
+	 * The license branch the run's trainer image was built for.
+	 * A restart keeps it.
+	 */
+	license: TrainerLicense
+	/**
+	 * The name of the Modal secret that holds the commercial run's training grant,
+	 * or `null` on the open-source branch.
+	 * The record holds the name and never the token.
+	 */
+	trainingSecret: string | null
 	imageID: string
 	resources: SandboxResources
 	environment: SupervisorEnvironment
@@ -186,6 +208,27 @@ export interface LaunchOptions {
 	 * Run the preflight and print the sandbox, without starting it.
 	 */
 	dryRun: boolean
+	/**
+	 * The license branch to train under.
+	 *
+	 * A commercial launch runs the commercial trainer image and needs {@linkcode LaunchOptions.trainingSecret}.
+	 */
+	license: TrainerLicense
+	/**
+	 * The name of the Modal secret holding `MAILWOMAN_TRAINING_GRANT` (`MAILWOMAN_MODAL_TRAINING_SECRET`).
+	 */
+	trainingSecret?: string
+}
+
+/**
+ * A launch the license check refuses before any Modal call: a commercial launch without
+ * a training secret, or a training grant on the host that doesn't admit the run.
+ */
+export class TrainingAuthorizationError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = "TrainingAuthorizationError"
+	}
 }
 
 /**
@@ -276,6 +319,24 @@ export async function startLaunch(
 		checkClearable(paths.outputDir, options.mount)
 	}
 
+	const commercial = options.license === TrainerLicense.Commercial
+
+	if (commercial && !options.trainingSecret) {
+		throw new TrainingAuthorizationError(
+			"a commercial launch needs the named Modal secret that holds its training grant; set MAILWOMAN_MODAL_TRAINING_SECRET"
+		)
+	}
+
+	if (commercial) {
+		const local = await deps.checkLocalGrant()
+
+		if (local && !local.admitted) {
+			throw new TrainingAuthorizationError(
+				`the training grant on this host does not admit the run (${local.refusal}): ${local.reason}`
+			)
+		}
+	}
+
 	const runKey = runKeyOf(paths.outputDir)
 
 	await using _lock = await deps.lockRun(runKey)
@@ -297,26 +358,28 @@ export async function startLaunch(
 
 	const environment = supervisorEnvironment(config, preflight, options)
 
+	const build = await deps.imageBuild(variant, options.license)
+
 	const record: LaunchRecord = {
 		runKey,
 		config: config.name,
 		device: options.device,
+		license: options.license,
+		trainingSecret: commercial ? options.trainingSecret! : null,
 		imageID: "",
 		resources,
-		environment,
+		environment: { ...environment, MAILWOMAN_TRAINER_IMAGE: build.name },
 		inputs: { configBase64: Buffer.from(config.text).toString("base64"), resolved: config.resolvedJSON },
 		sandboxes: [],
 	}
 
 	if (options.dryRun) {
-		const build = await deps.imageBuild(variant)
-
 		deps.log(`Dry run: would start ${build.name} on ${options.device} for ${paths.outputDir} (run ${runKey})`)
 
 		return record
 	}
 
-	record.imageID = await deps.boundary.ensureTrainerImage(await deps.imageBuild(variant))
+	record.imageID = await deps.boundary.ensureTrainerImage(build)
 
 	// Awaited inside the lock's scope, so the lock is held until the sandbox has started.
 	return await startSandbox(record, deps)
@@ -365,6 +428,7 @@ async function startNamedSandbox(record: LaunchRecord, deps: LaunchDependencies)
 					{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
 				],
 				tags: { [RUN_TAG]: record.runKey, config: record.config },
+				secretNames: record.trainingSecret ? [record.trainingSecret] : [],
 			})
 		} catch (error) {
 			if (!(error instanceof SandboxNameTakenError)) throw error
@@ -413,16 +477,36 @@ export function launchStateOf(sandbox: SandboxState): LaunchState {
 
 /**
  * Starts a fresh sandbox for a stopped run, resuming from its newest complete checkpoint.
- * It never clears the run.
  *
- * @throws When the run is still running, completed, or was refused.
+ * It never clears the run, and it attaches the run's training secret again.
+ *
+ * @throws When the run is still running, completed, or was refused, or a commercial
+ * run's grant on the host doesn't admit it.
  */
 export async function restartLaunch(runKey: string, deps: LaunchDependencies): Promise<LaunchRecord> {
 	await using _lock = await deps.lockRun(runKey)
 
 	const { record, state } = await launchStatus(runKey, deps)
 
-	if (state !== LaunchState.Stopped) throw new Error(`run ${runKey} is ${state}; only a stopped run restarts`)
+	const commercial = record.license === TrainerLicense.Commercial
+
+	// A commercial run refused for its grant restarts once the grant is renewed: the renewed
+	// grant lives in the same Modal secret, and the new sandbox verifies it before it resumes.
+	if (state !== LaunchState.Stopped && !(commercial && state === LaunchState.Refused)) {
+		throw new Error(`run ${runKey} is ${state}; only a stopped run, or a refused commercial run, restarts`)
+	}
+
+	// A grant on the host is checked here.
+	// The new sandbox's supervisor verifies the grant again before it resumes.
+	if (commercial) {
+		const local = await deps.checkLocalGrant()
+
+		if (local && !local.admitted) {
+			throw new TrainingAuthorizationError(
+				`the training grant on this host does not admit the run (${local.refusal}): ${local.reason}`
+			)
+		}
+	}
 
 	return await startSandbox(
 		{

@@ -1,0 +1,19 @@
+{
+	"$comment": "The public halves of Mailwoman's product signing keys. `license_keys` sign platform license keys (mwl1) and training grants (mwt1); `provenance_keys` sign model provenance manifests (mwp1). The TypeScript verifiers read this file through @mailwoman/license/product/trust, and the Rust verifier embeds it with include_str!. A key moves active -> retired -> revoked and never back; a revoked key is left out of every trust map.",
+	"format": "mailwoman-trust-register/1",
+	"license_keys": [
+		{
+			"kid": "v9-ecec29be",
+			"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwPWLp1gjTRCSKjPqrS5q1jw5WP7SlofcVap390Z2Te4=\n-----END PUBLIC KEY-----\n",
+			"majorVersions": [9],
+			"status": "active"
+		},
+		{
+			"kid": "v9-e3d8105a",
+			"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAv0e7Yn028V/BS2AT0tW5a/reOLpWnGiaOxwoscegolQ=\n-----END PUBLIC KEY-----\n",
+			"majorVersions": [9],
+			"status": "active"
+		}
+	],
+	"provenance_keys": []
+}

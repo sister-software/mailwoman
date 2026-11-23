@@ -1,0 +1,18 @@
+{
+	"$comment": "Test-only Ed25519 signing keys for the shared product-token fixtures. No production trust register lists these key ids, so nothing they sign verifies outside a test that passes them in. `packages/core/tools/license/product-fixtures.run.ts` reads this file and writes tokens.json and the provenance fixture.",
+	"license": {
+		"kid": "v0-9652eafe",
+		"privateKeyPEM": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIJ37oHri5Y/agWrHTy43YxBKFUZqfEqprq1RRS/KwxeC\n-----END PRIVATE KEY-----\n",
+		"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA6PrsOiQnEfu8y6N3N1rzzgD9l1lnkUnBdWZ1aI5GdJE=\n-----END PUBLIC KEY-----\n"
+	},
+	"provenance": {
+		"kid": "p0-d6810381",
+		"privateKeyPEM": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIG6xlMPAdsolN4PrldR9O7OGyFioHFWJliZfAh73aHAW\n-----END PRIVATE KEY-----\n",
+		"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAdaPcJ+3EUpM2vBTdrng13UEUWzCdFO1ZdRpaAXVBMrY=\n-----END PUBLIC KEY-----\n"
+	},
+	"untrusted": {
+		"kid": "v0-ff7d5bce",
+		"privateKeyPEM": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIMtAFraU1WIizbQ6k1Ebzst/Zd1J0Q9JHEvg7yq2Sqvj\n-----END PRIVATE KEY-----\n",
+		"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAhSrAZ81hzTlZ+4zahc1jQ6jHkF47aWchmjq7kzbakFE=\n-----END PUBLIC KEY-----\n"
+	}
+}

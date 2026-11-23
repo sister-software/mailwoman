@@ -6832,6 +6832,7 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/react": "workspace:^"
@@ -7184,6 +7185,7 @@ __metadata:
     "@cloudflare/workers-types": "npm:^5.20261029.1"
     "@hono/zod-openapi": "npm:^1.6.3"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license": "workspace:*"
     "@mailwoman/universe": "workspace:*"
     "@react-email/components": "npm:^1.0.12"
     "@types/react": "npm:^19.3.0"
@@ -7205,6 +7207,8 @@ __metadata:
 "@mailwoman/license@workspace:*, @mailwoman/license@workspace:packages/license":
   version: 0.0.0-use.local
   resolution: "@mailwoman/license@workspace:packages/license"
+  dependencies:
+    zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
 
