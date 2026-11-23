@@ -9,8 +9,8 @@ owner: evaluation
 
 Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v14.json`
 exists beside v13, and `release/current-spec.ts` still names v13. Its confirmation pins name the three collections
-section 8 records, drawn on 2026-11-22 from rows no corpus holds. They replace `heldout-confirm-v0.8.22` of section 7,
-which held too few eligible groups to decide a release and was read by no model. The specification is registered when
+section 8 records, drawn on 2026-11-22 from rows no corpus holds. They replace `heldout-confirm-v0.8.22` of section 7.
+That collection held too few eligible groups to decide a release, and no model read it. The specification is registered when
 a candidate passes the development role, as v12 and v13 were. No model has read a v14 role.
 
 ## 1. What changes
@@ -280,15 +280,15 @@ Decided by the operator on 2026-11-22: the confirmation role is drawn from sourc
 
 | Country | Source                                                                        | Rows 11.2.0 didn't read                                                                                                            |
 | ------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| US      | NPPES weekly files `110226_110826` and `110926_111526`                        | NPIs absent from the `2026-11` monthly file, which v0.8.20-rebuild read (`builds/v0.8.20-rebuild/inputs.json`)                     |
+| US      | NPPES weekly files `110226_110826` and `110926_111526`                        | NPIs absent from the `2026-11` monthly file, the file v0.8.20-rebuild read (`builds/v0.8.20-rebuild/inputs.json`)                  |
 | FR      | BAN export of 2026-11-17, metropolitan France and Corsica                     | ids absent from `corpus/staging/ban-france.csv`, the file v0.8.19-rebuild read                                                     |
 | ES      | `es-bizkaia`, `es-gipuzkoa`, `es-navarra`, reserved for evaluation by #3353   | the whole publication: no training manifest reads them, and `evaluationSourceProblems` returns no problem for any of the three     |
 | AU      | a 60,000-tuple sample of G-NAF May 2026 (`mailwoman gnaf assemble --n 60000`) | tuples outside the corpus's 149,969 `gnaf` rows                                                                                    |
 | IN      | Geofabrik India of 2026-11-22                                                 | objects with a house number that are new (2,538) or changed by id and version (1,187) against the 2026-10-02 extract `osm-in` read |
 | GB      | recipe `locale --country GB`, render seed 2242, 40,000 rows                   | a render no corpus holds, from the OS Open tuples behind `rendered-gb-os-open`                                                     |
-| DE      | recipe `german`, render seed 2241, 40,000 rows                                | a render no corpus holds; v0.8.22's `rendered-de` used seed 42                                                                     |
+| DE      | recipe `german`, render seed 2241, 40,000 rows                                | a render no corpus holds. v0.8.22's `rendered-de` used seed 42                                                                     |
 | IT      | recipe `locale --country IT`, render seed 2244, 40,000 rows                   | a render of OpenAddresses `it/countrywide`, which no corpus renders                                                                |
-| NZ      | recipe `locale --country NZ`, render seed 2243, 40,000 rows                   | a render of OpenAddresses `nz/countrywide` (LINZ); v0.8.22 holds no `rendered-nz` file                                             |
+| NZ      | recipe `locale --country NZ`, render seed 2243, 40,000 rows                   | a render of OpenAddresses `nz/countrywide` (LINZ). v0.8.22 holds no `rendered-nz` file                                             |
 
 The capability collection renders `sub-venue` (seed 2245, 40,000 rows, the `house-venue-tuples-v6` skeletons the corpus
 file used) and `country-balanced` (seed 2246, 150,000 rows, so the head-of-file pool reaches past the 50,000-row corpus
@@ -334,7 +334,7 @@ training groups (7,764 prominent places) found none of its groups in either pool
 collection without US and IN (`@1dd562cb1290167a`) was read by no model and moved to `superseded/`.
 
 `overlap.run.ts --match-text --match-address --duckdb-memory-gib 4 --duckdb-threads 4` against corpora
-v0.8.21-retention-overlay and v0.8.22-retention-overlay (manifest sha256 `7d871702…386b`, the second re-split, whose
+v0.8.21-retention-overlay and v0.8.22-retention-overlay (manifest sha256 `7d871702…386b`, the second re-split: its
 1,104 data files and their sha256s are the ones the filter compared), with training configs
 `v8.9.0-base-c6-90k-v0821-s42.yaml` (11.2.0) and `v8.10.0-base-c6-90k-v0822-s42.yaml` (the candidate), on 2026-11-22
 22:20–23:51 UTC. The provenance files sit beside each manifest as `<collection>.provenance-11.2.0-v8.10.0.json`.
