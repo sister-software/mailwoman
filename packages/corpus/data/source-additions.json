@@ -1,5 +1,5 @@
 {
-	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. Every row here but two reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. The two exceptions, Poste Maroc's and 4-72's post-office lists, are official post-office lists no corpus source reads, because their share-alike grants are refused by the share-alike-free license policy; they read `Free` and record that outcome in their decisions. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
+	"$comment": "Source rows that no research pass recorded, added because a corpus source reads them. `buildSourceRegister` reads each row after the research CSV's rows, in the CSV's own columns, so its id and license scope come from the same derivation. A row a corpus source reads records `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision: the row exists so that the gap shows in the register rather than hiding as an absence. A row whose terms were read when it was added records the access label `Free` instead. Among them are publications no corpus source reads: Poste Maroc's and 4-72's post-office lists, whose share-alike grants the share-alike-free license policy refuses; UN/LOCODE, which `@mailwoman/un-locode-lookup` builds a lookup from; and OurAirports, which `@mailwoman/registry` compiles its airport codes from. Each records that outcome in its decision. A decision is recorded in `license-decisions.json` like any other. See `corpus-source-inputs.json` for which corpus source reads each one.",
 	"rows": [
 		{
 			"iso2": "GB",
@@ -2535,6 +2535,36 @@
 			"source_url": "https://www.datos.gov.co/d/ajs9-6i5i",
 			"notes": "No corpus source reads this list. Its grant is CC BY-SA 4.0, whose share-alike term the share-alike-free license policy refuses.",
 			"origin": "2026-10-17_rights_review"
+		},
+		{
+			"iso2": "CH",
+			"sector": "transport",
+			"source": "UN/LOCODE, the United Nations Code for Trade and Transport Locations (UNECE Recommendation 16)",
+			"owner": "United Nations Economic Commission for Europe (UNECE)",
+			"role": "OBSERVATION",
+			"authority_basis": "UNECE maintains UN/LOCODE through UN/CEFACT under Recommendation 16 and publishes each release on unlocode.unece.org",
+			"access": "Release archive linked from https://unlocode.unece.org/publications/ (MDB, CSV, TXT, XML and SKOS), no key; this host reads `code-list.csv` from the `datasets/un-locode` repackaging on GitHub",
+			"license": "Free",
+			"geometry": "Partial",
+			"status": "VERIFIED_AUTHORITY",
+			"source_url": "https://unlocode.unece.org/publications/",
+			"notes": "No corpus source reads this list. `$MAILWOMAN_DATA_ROOT/un-locode/un-locode.db`, built from it by `@mailwoman/un-locode-lookup`, feeds the UN_LOCODE annotation of the `nominatim` command. Each entry has a country, a three-character location code, a name, a subdivision, an eight-position function classifier (port, rail, road, airport, postal exchange, multimodal, fixed transport, border crossing) and, on most entries, coordinates in degrees and minutes. The terms read on 2026-11-23 limit use to personal, non-commercial use; the decision records each reading.",
+			"origin": "2026-11-23_rights_review"
+		},
+		{
+			"iso2": "CA",
+			"sector": "transport",
+			"source": "OurAirports open data downloads (airports.csv, runways.csv, countries.csv, regions.csv)",
+			"owner": "OurAirports",
+			"role": "OBSERVATION",
+			"authority_basis": "OurAirports, a volunteer-edited airport database founded by David Megginson, publishes a nightly CSV dump of its records",
+			"access": "CSV files at https://davidmegginson.github.io/ourairports-data/, to which `ourairports.com/data/*.csv` redirects, no key",
+			"license": "Free",
+			"geometry": "Y",
+			"status": "VERIFIED_AUTHORITY",
+			"source_url": "https://ourairports.com/data/",
+			"notes": "No corpus source reads these files. `@mailwoman/registry` compiles its IATA and ICAO location codes from `airports.csv` (profile `open-2026-11`), and `mailwoman corpus fetch ourairports` writes the four files for the sub-venue corpus arc. Each airport row has an ident, a type (large, medium and small airports, heliports, seaplane bases, balloon ports, closed sites), a name, a point, an ISO country and region, a municipality and the IATA, ICAO, GPS and local codes; no row has a street address. The site states no seat; the row is filed under CA because the founder's own career page lists the University of Ottawa and the Government of Canada.",
+			"origin": "2026-11-23_rights_review"
 		},
 		{
 			"iso2": "ES",

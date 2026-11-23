@@ -43,7 +43,7 @@ non-rail rows, and has no column for a personal-data review, so a review records
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323). It also
 holds each source's `reservation` for evaluation, which the research pass had no column for (#3352).
 
-`--additions` defaults to `source-additions.json` and holds 1,682 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 1,684 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
 OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, the 118 county and
 state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`), and one row per
@@ -54,6 +54,13 @@ coordinates reach `addresses-tw.parquet` and `address-points-tw.db` through Over
 `2026-11-21_rights_review`, #3267). Each reads `CORPUS INPUT, TERMS UNREAD`, which derives an `unchecked` decision
 until `license-decisions.json` records one. They sit in this repository because `corpus-source-inputs.json`,
 the table that names them, sits here (#2643).
+
+A few rows record publications no corpus source reads, each under the access label `Free` with its decision
+recorded beside it. Two of them, read on 2026-11-23 (origin `2026-11-23_rights_review`), are publications other
+packages read: UN/LOCODE (`ch-transport-1`), which `@mailwoman/un-locode-lookup` builds a lookup from, and
+OurAirports (`ca-transport-1`), which `@mailwoman/registry` compiles its airport codes from. The UN/LOCODE
+decision elects the UN site terms' personal, non-commercial grant over the site footer's unversioned CC BY 4.0
+statement, so it refuses every commercial purpose.
 
 An elected US decision from the 2026-11-21 and 2026-11-22 readings opens its `electedBecause` with its acceptance basis:
 `terms-read` (a page with terms text), `open-license` (an SPDX identifier) or `no-statement-found` (the
