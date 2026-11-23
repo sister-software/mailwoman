@@ -14,7 +14,7 @@
  *   A copy of a material drifts from it the first time the material changes.
  */
 
-import { MapSheet } from "@mailwoman/react/map/MapSheet"
+import { MapSheet } from "@mailwoman/react/map/chrome/MapSheet"
 
 import { formatCoordinates, formatDiameter, type SelectedFeature } from "#features/selected"
 

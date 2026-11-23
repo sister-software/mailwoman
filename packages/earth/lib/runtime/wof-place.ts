@@ -10,7 +10,7 @@
  */
 
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import { geomBounds, type PlaceGeometry } from "@mailwoman/react/map/geometry"
+import { geomBounds, type PlaceGeometry } from "@mailwoman/react/map/overlays/geometry"
 
 import { type Ancestor, type Gazetteer, placeByID } from "../explorers/Gazette/gazetteer.ts"
 import { gazettePlacePath } from "../routes.ts"

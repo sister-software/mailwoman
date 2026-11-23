@@ -1,0 +1,85 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { ReactNode } from "react"
+
+import { buildParsePayload } from "#pipeline/copy"
+
+import { CopyButton } from "../../common/CopyButton.tsx"
+import { KindBadge } from "../../common/KindBadge.tsx"
+import { CandidatePicker } from "../../pipeline/CandidatePicker.tsx"
+import { ComponentTable } from "../../pipeline/ComponentTable.tsx"
+import { MatchTable } from "../../pipeline/MatchTable.tsx"
+import { ResolvedPlace } from "../../pipeline/ResolvedPlace.tsx"
+
+export interface ResultPanelProps {
+	result: ParseResult
+	/**
+	 * The selected candidate (falls back to the first), used for the resolved-place detail + copy payload.
+	 */
+	selectedCandidate: ResolvedPlaceView | null
+	selectedCandidateIndex: number
+	onSelectCandidate: (index: number) => void
+	/**
+	 * Host-injected heavy visualizers (span highlight, tree, timing, …), rendered from the result.
+	 */
+	extras?: (result: ParseResult) => ReactNode
+	/**
+	 * Host-injected no-resolve diagnostic, rendered when no place resolved.
+	 */
+	failure?: (result: ParseResult) => ReactNode
+}
+
+/**
+ * The composed result block for the geocoder demo.
+ */
+export function ResultPanel({
+	result,
+	selectedCandidate,
+	selectedCandidateIndex,
+	onSelectCandidate,
+	extras,
+	failure,
+}: ResultPanelProps): ReactNode {
+	return (
+		<div className="mw-result">
+			<div className="mw-result__header">
+				<h2>Parsed components</h2>
+				<CopyButton
+					value={() => buildParsePayload(result, selectedCandidate)}
+					label="Copy JSON"
+					copiedLabel="✓ Copied"
+				/>
+			</div>
+
+			{result.kindResult ? <KindBadge kindResult={result.kindResult} /> : null}
+
+			{extras ? extras(result) : null}
+
+			<ComponentTable nodes={result.nodes} />
+
+			{result.matches?.length ? (
+				<>
+					<h2>Matched in the data</h2>
+					<MatchTable matches={result.matches} />
+				</>
+			) : null}
+
+			{selectedCandidate ? (
+				<>
+					<ResolvedPlace place={selectedCandidate} />
+					{result.candidates.length > 1 ? (
+						<CandidatePicker
+							candidates={result.candidates}
+							selectedIndex={selectedCandidateIndex}
+							onSelect={onSelectCandidate}
+						/>
+					) : null}
+				</>
+			) : failure ? (
+				failure(result)
+			) : null}
+		</div>
+	)
+}

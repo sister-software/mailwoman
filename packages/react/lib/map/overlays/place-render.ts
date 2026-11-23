@@ -1,0 +1,168 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { LatLonBounds } from "@mailwoman/spatial"
+
+import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/overlays/geometry"
+import type { BoundsTuple, PlaceGeometry } from "#map/overlays/geometry"
+
+/**
+ * A coordinate pair as `[longitude, latitude]`.
+ */
+export type LngLat = [number, number]
+
+/**
+ * How a street-level result was located: `address_point` is an exact building point
+ * and `interpolated` an estimate from a TIGER address range.
+ */
+export type PlaceTier = "address_point" | "interpolated"
+
+/**
+ * A resolved place with the extra fields the map uses to draw it.
+ */
+export interface ResolvedMapPlace extends ResolvedPlaceView {
+	/**
+	 * The place's bounding box.
+	 * Postcodes located by an anchor centroid have none.
+	 */
+	bbox: LatLonBounds | null
+
+	/**
+	 * The street-level tier, set only for results from address points or interpolation.
+	 */
+	tier: PlaceTier | null
+
+	/**
+	 * The uncertainty radius in meters of a street-level result, drawn as a circle when `tier` is set.
+	 */
+	uncertaintyM: number | null
+
+	/**
+	 * The admin polygon, if the host has already fetched it.
+	 * When present the outline and camera follow it.
+	 */
+	geometry?: PlaceGeometry
+}
+
+/**
+ * Only a `center` target can be applied declaratively through {@link cameraToViewState};
+ * fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
+ */
+export type MapCameraTarget =
+	| { kind: "center"; center: LngLat; zoom: number }
+	| {
+			kind: "bounds"
+			bounds: BoundsTuple
+			padding: number
+			/**
+			 * The closest the fit may zoom, for bounds a few meters across.
+			 */
+			maxZoom?: number
+	  }
+
+/**
+ * The markers, outline and camera target for one resolved place, as returned
+ * by {@link computeMapPlaceRenderSpec}.
+ */
+export interface MapPlaceRenderSpec {
+	/**
+	 * The marker positions as `[lon, lat]`; there's always exactly one marker.
+	 */
+	markers: LngLat[]
+
+	/**
+	 * The polygon or circle outline to draw, or `null` when the place renders as a bare point.
+	 */
+	outline: PlaceGeometry | null
+
+	camera: MapCameraTarget
+}
+
+const ZOOM = {
+	addressPoint: 17,
+	interpolated: 15,
+	postcode: 11,
+	point: 12,
+} as const
+
+const FIT_PADDING = 40
+
+const MIN_EXTENT_DEG = 0.001
+
+/**
+ * Computes the markers, outline and camera target for a resolved place without loading data,
+ * so the caller must put any fetched polygon in `place.geometry` first.
+ */
+export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
+	const markers: LngLat[] = [[place.lon, place.lat]]
+
+	// An uncertainty radius draws as a circle whether or not a street tier set it:
+	// a decoded plus code or H3 cell has one too.
+	// The two street tiers keep their fixed zooms.
+	// Any other radius fits its circle and stops at the address-point zoom.
+	if (place.uncertaintyM != null) {
+		const outline = radiusCircleGeometry(place.lat, place.lon, place.uncertaintyM)
+
+		return {
+			markers,
+			outline,
+			camera: place.tier
+				? {
+						kind: "center",
+						center: [place.lon, place.lat],
+						zoom: place.tier === "address_point" ? ZOOM.addressPoint : ZOOM.interpolated,
+					}
+				: {
+						kind: "bounds",
+						bounds: bboxToBounds(geomBounds(outline)),
+						padding: FIT_PADDING,
+						maxZoom: ZOOM.addressPoint,
+					},
+		}
+	}
+
+	if (place.geometry) {
+		return {
+			markers,
+			outline: place.geometry,
+			camera: { kind: "bounds", bounds: bboxToBounds(geomBounds(place.geometry)), padding: FIT_PADDING },
+		}
+	}
+
+	if (!place.bbox && place.placetype === "postcode") {
+		return {
+			markers,
+			outline: approxCircleGeometry(place.lat, place.lon),
+			camera: { kind: "center", center: [place.lon, place.lat], zoom: ZOOM.postcode },
+		}
+	}
+
+	const bbox = place.bbox
+
+	if (bbox && Math.max(bbox.maxLat - bbox.minLat, bbox.maxLon - bbox.minLon) > MIN_EXTENT_DEG) {
+		return {
+			markers,
+			outline: approxCircleGeometry(place.lat, place.lon, bbox),
+			camera: { kind: "bounds", bounds: bboxToBounds(bbox), padding: FIT_PADDING },
+		}
+	}
+
+	return {
+		markers,
+		outline: null,
+		camera: { kind: "center", center: [place.lon, place.lat], zoom: ZOOM.point },
+	}
+}
+
+/**
+ * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`,
+ * returning `null` for a `bounds` target that `<ResultCamera>` must fit imperatively.
+ */
+export function cameraToViewState(
+	camera: MapCameraTarget
+): { longitude: number; latitude: number; zoom: number } | null {
+	if (camera.kind !== "center") return null
+
+	return { longitude: camera.center[0], latitude: camera.center[1], zoom: camera.zoom }
+}

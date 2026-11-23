@@ -4,7 +4,7 @@
 import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import "maplibre-gl/dist/maplibre-gl.css"
-import { DebugControlBase } from "@mailwoman/react/map/map-debug"
+import { DebugControlBase } from "@mailwoman/react/map/chrome/map-debug"
 import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"

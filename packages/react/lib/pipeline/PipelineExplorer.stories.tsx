@@ -4,7 +4,7 @@
 import { prettyJSON } from "@mailwoman/core/values/json"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import { makePipelineRuntime } from "#map/fake-runtime"
+import { makePipelineRuntime } from "#map/geocoder/fake-runtime"
 
 import { PipelineExplorer } from "./PipelineExplorer.tsx"
 

@@ -49,7 +49,7 @@ describe("selectDeployTargets", () => {
 	})
 
 	it("a change in a shared dependency reaches every target whose closure carries it", () => {
-		expect(ids(["packages/react/lib/map/MapCanvas.tsx"])).toEqual(["earth", "moon", "mars"])
+		expect(ids(["packages/react/lib/map/canvas/MapCanvas.tsx"])).toEqual(["earth", "moon", "mars"])
 		expect(ids(["packages/core/lib/repo/git.ts"])).toEqual(["tiles", "license", "places", "earth", "moon", "mars"])
 	})
 
