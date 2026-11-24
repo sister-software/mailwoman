@@ -2,7 +2,7 @@
 title: Inspect the decisions behind a parse
 description: Capture one parser trace, check its tagged spans, and read its locale, query-kind, and score fields.
 role: tutorial
-verified-with: mailwoman v11.0.0
+verified-with: published mailwoman v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-24
 ---
 
 import { NodeRequirement } from "#partials/runtime"
@@ -14,7 +14,7 @@ You'll save a parser trace for the same address used in [the first-parse tutoria
 ## Prerequisites
 
 - <NodeRequirement />.
-- The project directory from [Install Mailwoman and inspect a first parse](../start.mdx), with `mailwoman@11.0.0`, `@mailwoman/neural@11.0.0`, and `@mailwoman/neural-weights-en-us@11.0.0` installed.
+- The project directory from [Install Mailwoman and inspect a first parse](../start.mdx), with `mailwoman` installed.
 - The exact input `apt 4b 350 5th ave new york ny 10118`. The printed spans and scores belong to that input and the stated package versions.
 
 ## 1. Save the parser trace
@@ -99,25 +99,25 @@ node inspect-trace.ts
 input: apt 4b 350 5th ave new york ny 10118
 tree.raw: Apt 4B 350 5TH Ave New York NY 10118
 path: full
-locale: en-US (caller)
+locale: en-US (detected)
 kind: structured_address
 shape: us_zip [31, 36): "10118"
 shape: fr_postcode [31, 36): "10118"
 shape: de_postcode [31, 36): "10118"
-region [28, 30): "NY" score 0.915
-  locality [19, 27): "New York" score 0.935
-    street [11, 14): "5TH" score 0.941
-      unit [0, 6): "Apt 4B" score 0.920
-      house_number [7, 10): "350" score 0.919
-      street_suffix [15, 18): "Ave" score 0.910
-    postcode [31, 36): "10118" score 0.917
+region [28, 30): "NY" score 0.913
+  locality [19, 27): "New York" score 0.937
+    street [11, 14): "5TH" score 0.935
+      unit [0, 6): "Apt 4B" score 0.921
+      house_number [7, 10): "350" score 0.916
+      street_suffix [15, 18): "Ave" score 0.915
+    postcode [31, 36): "10118" score 0.912
 ```
 
 Find `"New York"` in `tree.raw`. Its `[19, 27)` span starts at 19 and ends before 27. The script checks that slicing those positions returns the displayed value. Every other node passes the same check in this run.
 
 The three `shape` lines are proposed format matches for the same five-digit text. They show that `10118` fits several postcode shapes. These matches describe the token's form. The `locale` field records the parser's choice for the full input, and the final `postcode` node is its selected tag for that span.
 
-`path: full` records that the input used the full parser path. `kind: structured_address` is the query-kind decision. The CLI supplies `en-US` as its default `--locale`, so this trace records `locale.source` as `caller`. The library call in the first tutorial passed no locale. With `MW_LOCALE` unset, the pipeline detects the same locale from the five-digit postcode shape and records `locale.source` as `detected`.
+`path: full` records that the input used the full parser path. `kind: structured_address` is the query-kind decision. This CLI run supplied no locale. With `MW_LOCALE` unset, the parser selected `en-US` from the input and recorded `locale.source` as `detected`. The library call in the first tutorial also passed no locale and returned `en-US`.
 
 Each node's `score` is its returned `confidence` rounded to three decimal places for display. These values describe this model's output for this address, as opposed to the fraction of correct labels across other addresses. The trace also contains per-stage timing values. Those depend on the host and run conditions, so this exercise leaves them out of its fixed output.
 

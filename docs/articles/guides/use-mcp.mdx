@@ -55,8 +55,10 @@ Set `MAILWOMAN_DATA_ROOT` to your data directory as an absolute path, because a 
 Install the MCP TypeScript SDK and save this script as `mcp-check.ts`. It starts the server the way a client does, lists the tools, and calls the parse and geocode tools:
 
 ```sh npm2yarn
-npm install @modelcontextprotocol/sdk@1.32.2
+npm install @modelcontextprotocol/sdk
 ```
+
+The recorded client check below used `@modelcontextprotocol/sdk` 1.32.2. An unpinned install may resolve a later SDK release.
 
 ```ts
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"

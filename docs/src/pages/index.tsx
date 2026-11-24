@@ -13,7 +13,6 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react"
 import { CoverageTable } from "../components/CoverageTable/CoverageTable.tsx"
 import { TourStops } from "../components/HeroMap/tour.ts"
 import { HeroSearch } from "../components/HeroSearch/HeroSearch.tsx"
-import { useReleaseVersion } from "../hooks/release.ts"
 import { useSiteConfig } from "../hooks/site.ts"
 import { useCodeSnippet } from "../hooks/snippet.ts"
 
@@ -78,8 +77,8 @@ function HomepageHeader(): ReactNode {
 						Parse addresses. Find places. Run it yourself.
 					</Heading>
 					<p className={styles.heroSubtitle}>
-						Install the parser and model from npm. Add local geographic data when you need coordinates. Run both in your
-						own application or server.
+						Install Mailwoman from npm; it includes the English parser model. Add local geographic data when you need
+						coordinates. Run both in your own application or server.
 					</p>
 
 					<HeroSearch
@@ -354,7 +353,6 @@ function FeaturedWork(): ReactNode {
 }
 
 function QuickStart(): ReactNode {
-	const releaseVersion = useReleaseVersion()
 	const homeSnippet = useCodeSnippet("home")
 
 	return (
@@ -364,7 +362,7 @@ function QuickStart(): ReactNode {
 				<div className={clsx("row", styles.codeRow)}>
 					<div className="col col--6">
 						<h4>JavaScript &amp; TypeScript</h4>
-						<CodeBlock language="bash">{`npm install mailwoman@${releaseVersion}`}</CodeBlock>
+						<CodeBlock language="bash">npm install mailwoman</CodeBlock>
 						<CodeBlock language="ts">{homeSnippet}</CodeBlock>
 					</div>
 					<div className="col col--6">

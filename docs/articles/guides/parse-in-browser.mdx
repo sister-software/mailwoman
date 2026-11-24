@@ -3,7 +3,7 @@ title: Parse an address in a browser
 description: Serve the published model and runtime assets from your application and parse one address in a browser tab.
 role: guide
 source-of-truth: packages/neural/lib/web/loader.ts, packages/mailwoman/lib/browser-runtime/load-assets.ts, packages/neural-weights-en-us/model-card.json
-verified-with: published @mailwoman/neural, @mailwoman/neural-weights-en-us, and @mailwoman/core v11.0.0, onnxruntime-web 1.31.1, Vite 8.3.5, and Chromium 156.0.8078.4
+verified-with: published @mailwoman/neural, @mailwoman/neural-weights-en-us, and @mailwoman/core v11.3.0, onnxruntime-web 1.31.1, Vite 8.3.8, and Chromium 156.0.8078.4, checked 2026-11-24, with a prior asset transfer measurement from v11.0.0
 ---
 
 import { ECMAScriptModuleProject, NodeRequirement } from "#partials/runtime"
@@ -17,11 +17,13 @@ Use the browser loader when an application needs address components in the tab. 
 - <NodeRequirement />, for the build commands.
 - An <ECMAScriptModuleProject />.
 
-Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install these exact published versions in a fresh project:
+Node runs only the build. The browser runs the JavaScript and WebAssembly that Vite generates. Install the packages in a fresh project:
 
 ```sh npm2yarn
-npm install @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web@1.31.1 vite@8.3.5
+npm install @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web vite
 ```
+
+For the observed run below, this command resolved the three Mailwoman packages to 11.3.0, ONNX Runtime Web to 1.31.1, and Vite to 8.3.8.
 
 The model files must be served over HTTP. Copy the ten files used by this example into Vite's `public/mailwoman` directory. Keep the four lexicons beside `model.onnx`: the loader derives their URLs from the model URL and the published model card.
 
@@ -95,7 +97,7 @@ try {
 }
 ```
 
-Build the page with `npx vite build`, then serve the built files with `npx vite preview --host 127.0.0.1`. Open the preview address in a browser. Chromium 156.0.8078.4 returned this complete content inside the `pre` element for the published 11.0.0 assets:
+Build the page with `npx vite build`, then serve the built files with `npx vite preview --host 127.0.0.1`. Open the preview address in a browser. Chromium 156.0.8078.4 returned this complete content inside the `pre` element for the published 11.3.0 assets:
 
 ```json
 {
@@ -108,8 +110,8 @@ Build the page with `npx vite build`, then serve the built files with `npx vite 
 		"locality": "New York",
 		"postcode": "10118",
 		"street": "5th",
-		"house_number": "350",
-		"street_suffix": "Ave"
+		"street_suffix": "Ave",
+		"house_number": "350"
 	}
 }
 ```
@@ -118,6 +120,6 @@ Build the page with `npx vite build`, then serve the built files with `npx vite 
 
 ## Check the asset cost
 
-The ten copied model, tokenizer, lexicon, postcode, and pair-index files occupied 42,850,059 bytes on disk in the published 11.0.0 package. The copied ONNX Runtime `.mjs` and `.wasm` pair occupied another 14,873,590 bytes, for 57,723,649 copied asset bytes in this example. The production build was served from local Vite preview to headless Chromium 156.0.8078.4 with the cache disabled. Chrome DevTools Protocol reported 44,150,884 encoded transfer bytes across 16 completed requests, including the page, generated scripts, model files, and runtime files. A warm cache, a different server compression policy, or another runtime variant can change that transfer count. Browser memory use is unknown, because this run produced no reliable measurement of it.
+An earlier run measured the published 11.0.0 assets. Its ten copied model, tokenizer, lexicon, postcode, and pair-index files occupied 42,850,059 bytes on disk. The copied ONNX Runtime `.mjs` and `.wasm` pair occupied another 14,873,590 bytes. The sum is 42,850,059 + 14,873,590 = 57,723,649 copied asset bytes. The production build was served from local Vite preview to headless Chromium 156.0.8078.4 with the cache disabled. Chrome DevTools Protocol reported 44,150,884 encoded transfer bytes across 16 completed requests, including the page, generated scripts, model files, and runtime files. That transfer measurement doesn't describe the 11.3.0 install above. A warm cache, a different server compression policy, or another runtime variant can change the transfer count. Browser memory use is unknown, because that run produced no reliable measurement of it.
 
 This example loads one parser model and one <Country code="US" /> pair index. Geographic candidates and coordinates require separate data and resolver behavior. See [data and locale prerequisites](../reference/data-and-locales.mdx) before adding a geographic lookup.

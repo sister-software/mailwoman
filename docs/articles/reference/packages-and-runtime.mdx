@@ -1,21 +1,29 @@
 ---
 title: Packages and runtime
-description: Published 11.0.0 package roles, the current Node security floor, runtime variables, and measured local file sizes.
+description: Current first-parse installation, the Node requirement, and published 11.0.0 runtime and size records.
 role: reference
 source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, packages/neural-weights-en-us/package.json, packages/codex/package.json, packages/mailwoman/lib/env/schema.ts, packages/mailwoman/lib/engine/resolver-backend.ts, packages/mailwoman/lib/geocode/session.ts, packages/mailwoman/lib/engine/api.ts, packages/resolver-wof-sqlite/lib/env.ts, packages/core/lib/env/schema.ts, packages/core/lib/env/paths.ts
-verified-with: mailwoman v11.0.0
+verified-with: published mailwoman v11.3.0 for first-parse installation and published v11.0.0 for runtime paths and measured sizes
 ---
 
 import { NodeRequirement } from "#partials/runtime"
 
 # Packages and runtime
 
-This page describes the published 11.0.0 Node packages used by the first-parse exercise and the selected settings that affect their runtime. The package names and import surfaces below were checked against installed 11.0.0 manifests. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
+The current first-parse exercise installs one package. This page also keeps the package roles, runtime settings, and file sizes checked against published 11.0.0 manifests. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
 
 The [data and locales reference](./data-and-locales.mdx) lists bundle dependencies, model families, and scope classifications.
 The [CLI reference](./cli.mdx) lists the current checkout's generated command and flag tables with selected published 11.0.0 checks.
 
-## Packages to install directly
+## Install for a first parse
+
+```sh npm2yarn
+npm install mailwoman
+```
+
+The published `mailwoman@11.3.0` manifest depends on `@mailwoman/neural` and `@mailwoman/neural-weights-en-us`. The `mailwoman` entry point exports `createParser` and the tree readers used in the [first-parse tutorial](../start.mdx). Install a scoped package directly when your application imports its own entry point, as the [record-check guide](../guides/validate-records.mdx) does for `@mailwoman/codex`.
+
+## Package inventory checked with 11.0.0
 
 | Package                                  | Purpose                                       | Public surface used here                                                                         |
 | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -24,7 +32,7 @@ The [CLI reference](./cli.mdx) lists the current checkout's generated command an
 | `@mailwoman/neural-weights-en-us@11.0.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.            |
 | `@mailwoman/codex@11.0.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                          |
 
-The [first-parse tutorial](../start.mdx) installs the first three packages and runs a complete parse. The [record-check guide](../guides/validate-records.mdx) also installs `@mailwoman/codex` for `isZipCode`. `mailwoman` declares `@mailwoman/neural` and `onnxruntime-node` as dependencies. The tutorial installs `@mailwoman/neural` explicitly because its script imports `NeuralAddressClassifier` from that package. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
+These package roles and import surfaces were checked against the 11.0.0 release. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
 
 Mailwoman requires <NodeRequirement />. These are the patched release floors from the [November 2026 Node.js security release](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
 
@@ -60,5 +68,5 @@ On 18 November 2026, `npm view <package>@11.0.0 dist.unpackedSize` returned the 
 ## Published sources
 
 - [`mailwoman@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/package.json), [`@mailwoman/neural@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/package.json), [en-US weights manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/package.json), and [codex manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/package.json).
-- [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/engine/resolver-backend.ts).
-- [Published geocode session](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/geocode/session.ts), [resolver environment schema](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/lib/env.ts), and [native health report](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/engine/api.ts).
+- [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/resolver-backend.ts).
+- [Published geocode session](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/geocode/session.ts), [resolver environment schema](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/lib/env.ts), and [native health report](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/api-engine.ts).

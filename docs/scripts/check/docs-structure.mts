@@ -179,7 +179,7 @@ async function checkPathCitations(): Promise<string[]> {
 // #region Release version literals
 
 /**
- * Check that fenced code in the published article tree and the site pages installs the current release.
+ * Check that fenced code in the published article tree and site pages avoids literal release pins.
  */
 async function checkReleaseVersionLiterals(): Promise<string[]> {
 	const roots = [ARTICLES_DIR, path.join(path.dirname(ARTICLES_DIR), "src", "pages")]
@@ -189,7 +189,7 @@ async function checkReleaseVersionLiterals(): Promise<string[]> {
 		for (const file of await collectMarkdownFiles(root)) {
 			for (const { line, literal } of findReleaseVersionLiterals(await readFile(file, "utf8"))) {
 				failures.push(
-					`${path.relative(path.dirname(ARTICLES_DIR), file)}:${line}: \`${literal}\` in a code block — write {{release.version}}`
+					`${path.relative(path.dirname(ARTICLES_DIR), file)}:${line}: \`${literal}\` in a code block — use an unpinned install command or {{release.version}} for versioned output`
 				)
 			}
 		}
