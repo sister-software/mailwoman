@@ -54,6 +54,7 @@ import {
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
+import { UNADDRESSED_JURISDICTIONS } from "#address/layouts/unaddressed"
 import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
@@ -532,11 +533,15 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  *
  * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 22
  * read from a UPU description have a layout, and the rest answer `null`.
+ * A jurisdiction in `UNADDRESSED_JURISDICTIONS` answers `null` too.
+ * Its description states it has no permanent population.
  */
 export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
+
+	if (UNADDRESSED_JURISDICTIONS[code]) return null
 
 	if (script === "latin") {
 		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]

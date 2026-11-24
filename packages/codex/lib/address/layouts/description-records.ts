@@ -6,7 +6,8 @@
  *
  * Each record cites one country's UPU description and states the reason the table holds the country.
  * The records the L–Z review of 2026-11-24 added sit in `description-records/l-z.ts`,
- * which keeps each module under the repository's line ceiling.
+ * and the MO–ZW review's in `description-records/mo-zw.ts`, which keeps each
+ * module under the repository's line ceiling.
  */
 
 // oxlint-disable max-lines -- one record per country, each quoting its description's example lines
@@ -14,6 +15,7 @@
 import { ConventionSource } from "#address/convention-claims"
 import { upuDescription } from "#address/layouts/citations/upu-description"
 import { L_Z_DESCRIPTION_RECORDS } from "#address/layouts/description-records/l-z"
+import { MO_ZW_DESCRIPTION_RECORDS } from "#address/layouts/description-records/mo-zw"
 import { described, UPUAdmission, type UPUPostalAddressingRecord } from "#address/layouts/upu-pas"
 
 const { FormatContradictsOrder, FormatOmitsLocality, NoFormat } = UPUAdmission
@@ -960,4 +962,5 @@ export const UPU_PAS_LAYOUT_RECORDS: Readonly<Record<string, UPUPostalAddressing
 		],
 	},
 	...L_Z_DESCRIPTION_RECORDS,
+	...MO_ZW_DESCRIPTION_RECORDS,
 }

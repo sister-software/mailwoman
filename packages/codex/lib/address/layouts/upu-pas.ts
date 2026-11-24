@@ -842,6 +842,16 @@ ${dependent_locality}
 ${postcode} – ${locality}, ${region}
 ${country}`,
 
+	// addressee / building (Palazzo San Calisto) / thoroughfare (Piazza San Calisto)
+	// / postcode + locality (00120 Città del Vaticano) / country.
+	// The description adopts Italy's format, and Italy writes the number after the street name.
+	VA: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
 	// addressee / thoroughfare (HALIFAX STREET) / locality (KINGSTOWN) / postcode (VC0120) / country.
 	VC: withSoftBreakBefore(
 		addr`${attention}

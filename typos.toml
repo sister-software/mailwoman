@@ -441,6 +441,12 @@ extend-words = { centre = "centre", espace = "espace", objets = "objets", aout =
 extend-glob = ["citations.ts", "upu-pas.ts", "l-z.ts"]
 extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tema", residencial = "residencial", wel = "wel", sav = "sav", collet = "collet", thi = "thi", mose = "mose", tha = "tha", tto = "tto" }
 
+[type.layout-citations-mo-zw]
+# The MO–ZW readings in `mo-zw.ts`: the ISO 3166-1 alpha-3 file names `nam` and `som`, the Philippines'
+# barangay `Del Pilar`, Uganda's `Siad Barre Avenue` and Venezuela's `INSTITUTO CARDIÓLOGICO DEL CENTRO`.
+extend-glob = ["mo-zw.ts"]
+extend-words = { nam = "nam", som = "som", pilar = "pilar", siad = "siad", instituto = "instituto" }
+
 [type.german-board]
 extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
