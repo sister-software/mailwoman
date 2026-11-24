@@ -48,8 +48,9 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 		// Romania's examples print `060274 BUCHAREST`; libaddressinput's `%Z %S %C` put the county between them.
 		expect(rendered("RO")).toContain("ZZ1 1ZZ Springfield")
 		expect(rendered("RO")).not.toContain("Shelbyville")
-		// Latvia's national register writes the municipality between the locality and the postcode.
-		expect(rendered("LV")).toContain("Springfield, Shelbyville, ZZ1 1ZZ")
+		// Latvia's national register writes the municipality between the locality and the postcode,
+		// and the description prints `LV–` before the postcode (`RIGA, LV–1050`).
+		expect(rendered("LV")).toContain("Springfield, Shelbyville, LV-ZZ1 1ZZ")
 		// Kiribati's examples print the island with its postcode and never the island group.
 		expect(rendered("KI")).toContain("Springfield ZZ1 1ZZ")
 		expect(rendered("KI")).not.toContain("Shelbyville")

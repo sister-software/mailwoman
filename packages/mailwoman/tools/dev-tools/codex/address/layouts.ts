@@ -19,6 +19,7 @@ import { printedPostcodePrefix } from "@mailwoman/postcode/country-formats"
 import { Globerator } from "spliterator/node/fs"
 
 import { LATIN_DISTRICT_BEFORE_LOCALITY_COUNTRIES } from "#tools/dev-tools/codex/latin-district"
+import { POSTCODE_PREFIX_RECORDS } from "#tools/dev-tools/codex/postcode-prefix"
 import {
 	COMMA_JOINED_STREET_COUNTRIES,
 	LOCAL_STREET_NODES,
@@ -97,6 +98,43 @@ function regionCodeAsSlot(line: string, code: string): string {
 }
 
 /**
+ * Whether a generated layout prints a postcode prefix, so the emitted file imports `prefixedSlot`.
+ */
+let usesPrefixedSlot = false
+
+/**
+ * The fixed text written against the postcode at the start of a line or after white space,
+ * such as `HR-` in `HR-%Z %C` or `〒` in `〒%Z`.
+ *
+ * Text joined to a field on its left, as in `%C-%Z`, is a separator.
+ */
+const POSTCODE_PREFIX = /(^|\s)([^\s$}]*)\$\{postcode\}/u
+
+/**
+ * Rewrites the text printed against the postcode as a prefixed slot, so the prefix renders
+ * inside the postcode's piece and is left out when the value already starts with it.
+ *
+ * A country in {@linkcode POSTCODE_PREFIX_RECORDS} prints the prefix its operator's
+ * description states in place of the one `fmt` writes.
+ */
+function postcodePrefixAsSlot(line: string, code: string): string {
+	const match = POSTCODE_PREFIX.exec(line)
+
+	if (!match) return line
+
+	const prefix = POSTCODE_PREFIX_RECORDS[code]?.prefix ?? match[2]!
+
+	// Text holding no letter or symbol, such as a parenthesis, separates rather than prefixes.
+	if (!/[\p{L}\p{So}]/u.test(prefix)) {
+		return prefix === match[2] ? line : line.replace(POSTCODE_PREFIX, `$1${prefix}\${postcode}`)
+	}
+
+	usesPrefixedSlot = true
+
+	return line.replace(POSTCODE_PREFIX, `$1\${prefixedSlot("postcode", "${prefix}")}`)
+}
+
+/**
  * Render one `fmt` into template source, adding every slot it names to `slots`
  * so the emitted file destructures exactly what it uses.
  */
@@ -146,7 +184,7 @@ function layoutSource(
 		}
 
 		if (sawField) {
-			lines.push(regionCodeAsSlot(line.trim(), code))
+			lines.push(postcodePrefixAsSlot(regionCodeAsSlot(line.trim(), code), code))
 		}
 	}
 
@@ -258,7 +296,13 @@ for (const file of await Globerator.files("json", {
 		continue
 	}
 
-	entries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}\n\t${code}: addr\`${source}\`,`)
+	const prefixRecord = POSTCODE_PREFIX_RECORDS[code]
+
+	const prefixNote = prefixRecord
+		? `\n\t// The postcode prints ${prefixRecord.prefix ? `as \`${prefixRecord.prefix}\`` : "bare"}: ${prefixRecord.url} (${prefixRecord.documentDate}).`
+		: ""
+
+	entries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}${prefixNote}\n\t${code}: addr\`${source}\`,`)
 }
 
 const emitted = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
@@ -281,7 +325,7 @@ const emitted = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
 
-import { addr, ${usesFixedSlot ? "fixedSlot, " : ""}${[...streetNodes].toSorted().join(", ")}, SLOTS, type AddressLayout } from "#address/layout"
+import { addr, ${usesFixedSlot ? "fixedSlot, " : ""}${[...streetNodes].toSorted().join(", ")}, ${usesPrefixedSlot ? "prefixedSlot, " : ""}SLOTS, type AddressLayout } from "#address/layout"
 
 const { ${[...usedSlots].toSorted().join(", ")} } = SLOTS
 

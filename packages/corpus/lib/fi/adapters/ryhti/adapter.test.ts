@@ -85,7 +85,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		expect(numberOf("Kiviperäntie")).toBe("41a")
 		expect(numberOf("Majvikintie")).toBe("2-26")
 		expect(numberOf("Koppelontie")).toBe("184-183b")
-		expect(rows.find((r) => r.components.street === "Kiviperäntie")?.raw).toBe("Kiviperäntie 41a, FI-93800 KUUSAMO")
+		expect(rows.find((r) => r.components.street === "Kiviperäntie")?.raw).toBe("Kiviperäntie 41a, 93800 KUUSAMO")
 	})
 
 	it.each([
@@ -116,7 +116,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		const named = rows.find((r) => r.components.street === "Kalliosaari")
 
 		expect(named?.components.house_number).toBeUndefined()
-		expect(named?.raw).toBe("Kalliosaari, FI-40640 JYVÄSKYLÄ")
+		expect(named?.raw).toBe("Kalliosaari, 40640 JYVÄSKYLÄ")
 	})
 
 	it("refuses a row whose address text holds a bare number and names no street", async () => {
@@ -150,7 +150,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		// The record publishes `Maarintie 70` with `SILTAKYLÄ` and `Maarvägen 70` with `BROBY`.
 		expect(bilingual).toHaveLength(1)
 		expect(bilingual[0]!.locale).toBe("fi-FI")
-		expect(bilingual[0]!.raw).toBe("Maarintie 70, FI-49220 SILTAKYLÄ")
+		expect(bilingual[0]!.raw).toBe("Maarintie 70, 49220 SILTAKYLÄ")
 		expect(rows.some((r) => r.raw.includes("Maarvägen"))).toBe(false)
 	})
 
@@ -165,7 +165,7 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		expect(sipoo).toHaveLength(1)
 		expect(sipoo[0]!.country).toBe("FI")
 		expect(sipoo[0]!.locale).toBe("sv-FI")
-		expect(sipoo[0]!.raw).toBe("Luhtivägen 2, FI-04130 SIBBO")
+		expect(sipoo[0]!.raw).toBe("Luhtivägen 2, 04130 SIBBO")
 	})
 
 	it("reads an Åland row's Finnish columns as Swedish, because that is what they hold", async () => {

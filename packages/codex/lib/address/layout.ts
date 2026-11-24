@@ -26,6 +26,14 @@ export interface AddressSlot {
 	 * The rendered text then counts as that tag, so a corpus row labels it.
 	 */
 	readonly fallback?: string
+	/**
+	 * Fixed text printed against the value, as Croatia writes `HR-` before its postcode.
+	 *
+	 * It belongs to the written code, so it renders inside the slot's piece
+	 * and a corpus row labels it with the value.
+	 * A value that already starts with it doesn't get it twice.
+	 */
+	readonly prefix?: string
 }
 
 /**
@@ -33,6 +41,13 @@ export interface AddressSlot {
  */
 export function fixedSlot(tag: ComponentTag, text: string): AddressSlot {
 	return Object.freeze({ tag, fallback: text })
+}
+
+/**
+ * A slot for `tag` that prints `prefix` before its value, such as `prefixedSlot("postcode", "HR-")`.
+ */
+export function prefixedSlot(tag: ComponentTag, prefix: string): AddressSlot {
+	return Object.freeze({ tag, prefix })
 }
 
 /**

@@ -259,14 +259,49 @@ describe("formatAddressRow", () => {
 
 describe("a postcode written with its layout's prefix", () => {
 	it.each([
-		["FO", { street: "Á Heygnum", house_number: "8B", postcode: "600", locality: "Saltangará" }, "FO600"],
+		["FO", { street: "Á Heygnum", house_number: "8B", postcode: "600", locality: "Saltangará" }, "FO-600"],
 		["HT", { street: "Rue Alcius Charmant", house_number: "83", postcode: "9110", locality: "Jacmel" }, "HT9110"],
-		["CH", { street: "Bahnhofstrasse", house_number: "1", postcode: "8001", locality: "Zürich" }, "CH-8001"],
+		["HR", { street: "Krapinska", house_number: "17", postcode: "10000", locality: "Zagreb" }, "HR-10000"],
+		["LV", { street: "Kr. Barona iela", house_number: "7", postcode: "1050", locality: "Rīga" }, "LV-1050"],
 	] as const)("labels the whole written code in %s", (country, components, written) => {
 		const row = formatAddressRow(components as ComponentDict, country, { singleLine: true })!
 
 		expect(row.raw).toContain(written)
 		expect(row.components.postcode).toBe(written)
+	})
+
+	// Values as GLEIF, CORDIS and Who's On First publish them, with the prefix already inside.
+	it.each([
+		["FI", { street: "Vesimäentie", house_number: "4", postcode: "FI-15860", locality: "HOLLOLA" }, "FI-15860 HOLLOLA"],
+		[
+			"LU",
+			{ street: "Route d'Esch", house_number: "164", postcode: "L-1471", locality: "LUXEMBOURG" },
+			"L-1471 LUXEMBOURG",
+		],
+		[
+			"LT",
+			{ street: "P Zadeikos g", house_number: "20-1", postcode: "LT-LT-06321", locality: "VILNIUS" },
+			"LT-06321 VILNIUS",
+		],
+		["FO", { street: "Tróndargøta", house_number: "8", postcode: "FO100", locality: "Tórshavn" }, "FO100 Tórshavn"],
+		["JP", { postcode: "〒733-0025", region: "Hiroshima" }, "〒733-0025"],
+	] as const)("prints a %s postcode that carries its prefix once", (country, components, written) => {
+		const row = formatAddressRow(components as ComponentDict, country, { singleLine: true })!
+
+		expect(row.raw).toContain(written)
+	})
+
+	it.each(["CH", "LI", "MC", "SI", "FI", "SE"])("prints %s's postcode bare, as its operator does", (country) => {
+		const row = formatAddressRow(
+			{ street: "Landstrasse", house_number: "61", postcode: "9494", locality: "Schaan" },
+			country,
+			{
+				singleLine: true,
+			}
+		)!
+
+		expect(row.raw).toContain("9494 Schaan")
+		expect(row.raw).not.toMatch(/[A-Z]-9494/u)
 	})
 
 	it("places Puerto Rico's fixed `PR` as the region when the address gives none, and a given region over it", () => {

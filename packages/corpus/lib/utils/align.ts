@@ -345,7 +345,7 @@ function labelTokens(tokens: readonly TextFragment[], spans: readonly ComponentS
 	for (const token of tokens) {
 		// A token inside one span takes that span's tag.
 		// A token that overlaps exactly one span without lying inside it holds that component
-		// plus text a layout glued to it, such as `FL-9485` around the postcode `9485`,
+		// plus text a layout glued to it, such as `HR-10000` around the postcode `10000`,
 		// so it takes that span's tag too and the token labels agree with the span triple.
 		// A token across two spans stays `O`.
 		let index = spans.findIndex((s) => token.start >= s.start && token.end <= s.end)

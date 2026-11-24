@@ -38,6 +38,7 @@ import {
 	numberFirstStreet,
 	numberLastCommaStreet,
 	numberLastStreet,
+	prefixedSlot,
 	SLOTS,
 	withSoftBreakBefore,
 } from "#address/layout"
@@ -334,7 +335,7 @@ ${country}`,
 	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it: written on one line the
 	// whole admin run is unseparated and only the postcode takes a space (`〒100-0005 東京都千代田区丸の内1-9-1`).
 	JP: addr`${country}
-〒${postcode}
+${prefixedSlot("postcode", "〒")}
 ${region}${japaneseSubPrefecture}
 ${venue}
 ${attention}`,

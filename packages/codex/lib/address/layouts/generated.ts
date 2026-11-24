@@ -29,6 +29,7 @@ import {
 	numberFirstStreet,
 	numberLastCommaStreet,
 	numberLastStreet,
+	prefixedSlot,
 	SLOTS,
 	type AddressLayout,
 } from "#address/layout"
@@ -72,13 +73,14 @@ ${locality}
 ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%n%C%n%Z
+	// %N%n%O%n%A%n%C%n%Z The postcode prints as `AI-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/aiaEn.pdf (2017-09).
 	AI: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
 ${locality}
-${postcode}
+${prefixedSlot("postcode", "AI-")}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z%n%C
@@ -130,7 +132,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-AX-${postcode} ${locality}
+${prefixedSlot("postcode", "AX-")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nAZ %Z %C
@@ -270,12 +272,13 @@ ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nCH-%Z %C
+	// %O%n%N%n%A%nCH-%Z %C The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cheEn.pdf (2024-06).
 	CH: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-CH-${postcode} ${locality}
+${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%X %A %C %X
@@ -419,12 +422,13 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%nFI-%Z %C
+	// %O%n%N%n%A%nFI-%Z %C The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/finEn.pdf (2024-11).
 	FI: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-FI-${postcode} ${locality}
+${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -443,12 +447,13 @@ ${numberFirstStreet}
 ${locality} ${region} ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%nFO%Z %C
+	// %N%n%O%n%A%nFO%Z %C The postcode prints as `FO-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/froEn.pdf (2017-12).
 	FO: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-FO${postcode} ${locality}
+${prefixedSlot("postcode", "FO-")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -568,7 +573,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-HR-${postcode} ${locality}
+${prefixedSlot("postcode", "HR-")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nHT%Z %C
@@ -576,7 +581,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-HT${postcode} ${locality}
+${prefixedSlot("postcode", "HT")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%C%n%A%n%Z
@@ -786,12 +791,13 @@ ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nFL-%Z %C
+	// %O%n%N%n%A%nFL-%Z %C The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/lieEn.pdf (2002-07).
 	LI: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-FL-${postcode} ${locality}
+${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -824,7 +830,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-LT-${postcode} ${locality} ${region}
+${prefixedSlot("postcode", "LT-")} ${locality} ${region}
 ${country}`,
 
 	// %O%n%N%n%A%nL-%Z %C
@@ -832,7 +838,7 @@ ${country}`,
 ${attention}
 ${numberFirstStreet}
 ${dependent_locality}
-L-${postcode} ${locality}
+${prefixedSlot("postcode", "L-")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%S%n%C, %Z
@@ -852,12 +858,13 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %N%n%O%n%A%nMC-%Z %C %X
+	// %N%n%O%n%A%nMC-%Z %C %X The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mcoEn.pdf (2004-05).
 	MC: addr`${attention}
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-MC-${postcode} ${locality} ${cedex}
+${postcode} ${locality} ${cedex}
 ${country}`,
 
 	// %N%n%O%n%A%nMD-%Z %C
@@ -865,7 +872,7 @@ ${country}`,
 ${venue}
 ${numberLastCommaStreet}
 ${dependent_locality}
-MD-${postcode} ${locality}
+${prefixedSlot("postcode", "MD-")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -1261,12 +1268,13 @@ ${locality}
 ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nSE-%Z %C
+	// %O%n%N%n%A%nSE-%Z %C The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/sweEn.pdf (2024-11).
 	SE: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-SE-${postcode} ${locality}
+${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nSINGAPORE %Z
@@ -1285,12 +1293,13 @@ ${locality}
 ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%nSI-%Z %C
+	// %N%n%O%n%A%nSI-%Z %C The postcode prints bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/svnEn.pdf (2016-05).
 	SI: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-SI-${postcode} ${locality}
+${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -1665,7 +1674,7 @@ ${attention}`,
 
 	// 〒%Z%n%S%n%A%n%O%n%N
 	JP: addr`${country}
-〒${postcode}
+${prefixedSlot("postcode", "〒")}
 ${region}
 ${numberFirstStreet}
 ${venue}
@@ -1801,7 +1810,7 @@ ${country}`,
 
 	// 〒%Z%n%S%n%A%n%O%n%N
 	JP: addr`${country}
-〒${postcode}
+${prefixedSlot("postcode", "〒")}
 ${region}
 ${numberFirstStreet}
 ${venue}
