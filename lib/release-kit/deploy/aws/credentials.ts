@@ -54,7 +54,7 @@ export type AWSCredentialRoleID = (typeof AWSCredentialRoleID)[keyof typeof AWSC
 /**
  * One statement of an IAM policy document.
  */
-export interface AWSPolicyStatement {
+interface AWSPolicyStatement {
 	Sid: string
 	Effect: "Allow"
 	Action: string[]
@@ -62,7 +62,7 @@ export interface AWSPolicyStatement {
 	Condition?: Record<string, Record<string, string>>
 }
 
-export interface AWSPolicyDocument {
+interface AWSPolicyDocument {
 	Version: "2012-10-17"
 	Statement: AWSPolicyStatement[]
 }

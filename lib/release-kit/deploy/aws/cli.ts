@@ -9,10 +9,10 @@
  *   as an explicit access key, or as the shell's own session.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { isProcessError, runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/scripting/process"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 
-import { AWS_BUILD_REGION } from "#release-kit/deploy/aws-credentials"
+import { AWS_BUILD_REGION } from "#release-kit/deploy/aws/credentials"
 import { $private } from "#release-kit/env"
 
 /**
@@ -78,7 +78,7 @@ export async function aws<T>(caller: AWSCaller, args: readonly string[]): Promis
  *
  * Any other failure, such as a refused permission, is thrown: an unreadable entity isn't an absent one.
  */
-export async function readEntity<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
+export async function readIAMEntity<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
 	try {
 		return await aws<T>(caller, args)
 	} catch (error) {

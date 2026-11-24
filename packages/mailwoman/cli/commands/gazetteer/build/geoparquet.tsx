@@ -6,7 +6,7 @@
  *   gazetteer's places, as GeoParquet: the input of the overlay tile build.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { WOFGeoParquetCounts } from "@mailwoman/gazetteer/tools/pipeline/geoparquet"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"

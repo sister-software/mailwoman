@@ -15,7 +15,6 @@
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	GEONAMES_ID_BASE,
 	MAILWOMAN_WOF_ID_BASE,
@@ -23,6 +22,7 @@ import {
 	OVERTURE_ID_BASE,
 	SYNTHETIC_ID_RANGES,
 } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { geometryToWKB } from "@mailwoman/spatial/well-known-text"
@@ -30,15 +30,15 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { repositoryPatterns } from "#tools/pipeline/admin/polygons"
 import {
 	assignSyntheticIDs,
 	overtureCountryList,
 	overtureDivisionCondition,
 	overtureDivisionsGlob,
 } from "#tools/pipeline/admin/sources/overture"
-import { DEFAULT_ADMIN_DB, DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/defaults"
 import { DEFAULT_RELEASE } from "#tools/pipeline/poi/defaults"
-import { repositoryPatterns } from "#tools/pipeline/polygons"
+import { DEFAULT_ADMIN_DB, DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 import type { WOFFeature } from "#whosonfirst"
 
 export interface ExportWOFGeoParquetOptions {

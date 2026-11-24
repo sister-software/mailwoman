@@ -5,15 +5,15 @@
  *   The AWS credential operations: report each role's identity, and create the scoped
  *   identities with an access key written to a new file.
  *
- *   The roles live in `#release-kit/deploy/aws-credentials`, and every request
- *   runs through `#release-kit/deploy/aws-cli`.
+ *   The roles live in `#release-kit/deploy/aws/credentials`, and every request
+ *   runs through `#release-kit/deploy/aws/cli`.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { isProcessError } from "@mailwoman/core/process"
 import { OperationEffect } from "@mailwoman/core/scripting"
+import { isProcessError } from "@mailwoman/core/scripting/process"
+import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
@@ -22,9 +22,9 @@ import {
 	aws,
 	type AWSCaller,
 	callerIdentity,
-	readEntity,
+	readIAMEntity,
 	tileBuildKey,
-} from "#release-kit/deploy/aws-cli"
+} from "#release-kit/deploy/aws/cli"
 import {
 	AWS_CREDENTIAL_ROLES,
 	type AWSCredentialRole,
@@ -32,7 +32,7 @@ import {
 	type AWSServiceRole,
 	type AWSUserRole,
 	findAWSCredentialRole,
-} from "#release-kit/deploy/aws-credentials"
+} from "#release-kit/deploy/aws/credentials"
 import { defineOperation } from "#release-kit/operation"
 import { flag, list, text } from "#release-kit/operations/inputs"
 
@@ -139,7 +139,7 @@ async function writeServiceRole(
 	accountID: string,
 	log: (line: string) => void
 ): Promise<void> {
-	if (await readEntity(caller, ["iam", "get-role", "--role-name", role.name])) {
+	if (await readIAMEntity(caller, ["iam", "get-role", "--role-name", role.name])) {
 		await aws(caller, [
 			"iam",
 			"update-assume-role-policy",
@@ -182,7 +182,7 @@ async function writeServiceRole(
 
 	if (!role.instanceProfile) return
 
-	if (!(await readEntity(caller, ["iam", "get-instance-profile", "--instance-profile-name", role.name]))) {
+	if (!(await readIAMEntity(caller, ["iam", "get-instance-profile", "--instance-profile-name", role.name]))) {
 		await aws(caller, ["iam", "create-instance-profile", "--instance-profile-name", role.name])
 
 		await aws(caller, [
@@ -220,7 +220,7 @@ async function writeManagedPolicy(
 ): Promise<string> {
 	const arn = `arn:aws:iam::${accountID}:policy/${name}`
 
-	if (!(await readEntity(caller, ["iam", "get-policy", "--policy-arn", arn]))) {
+	if (!(await readIAMEntity(caller, ["iam", "get-policy", "--policy-arn", arn]))) {
 		await aws(caller, ["iam", "create-policy", "--policy-name", name, "--policy-document", document])
 
 		return arn
@@ -265,7 +265,7 @@ async function writeUser(
 	accountID: string,
 	log: (line: string) => void
 ): Promise<void> {
-	if (!(await readEntity(caller, ["iam", "get-user", "--user-name", role.name]))) {
+	if (!(await readIAMEntity(caller, ["iam", "get-user", "--user-name", role.name]))) {
 		await aws(caller, ["iam", "create-user", "--user-name", role.name])
 		log(`created user ${role.name}`)
 	}
@@ -338,7 +338,7 @@ export const mintAWSCredentials = defineOperation({
 		for (const role of roles) {
 			if (role.kind !== "user" || policiesOnly) continue
 
-			const user = await readEntity(caller, ["iam", "get-user", "--user-name", role.name])
+			const user = await readIAMEntity(caller, ["iam", "get-user", "--user-name", role.name])
 
 			const keys = user
 				? await aws<{ AccessKeyMetadata: Array<{ AccessKeyId: string }> }>(caller, [

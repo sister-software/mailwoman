@@ -13,17 +13,17 @@
  *   A launch whose schedule fails terminates the instance it started.
  */
 
+import { md5File } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
-import { gitHead } from "@mailwoman/core/git"
-import { md5File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
-import { isProcessError } from "@mailwoman/core/process"
+import { gitHead } from "@mailwoman/core/repo/git"
 import { OperationEffect } from "@mailwoman/core/scripting"
+import { isProcessError } from "@mailwoman/core/scripting/process"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { z } from "zod"
 
-import { aws, type AWSCaller, callerIdentity, tileBuildKey } from "#release-kit/deploy/aws-cli"
+import { aws, type AWSCaller, callerIdentity, tileBuildKey } from "#release-kit/deploy/aws/cli"
 import {
 	AWS_BUILD_PARAMETER_PATH,
 	AWS_BUILD_TAG,
@@ -31,7 +31,7 @@ import {
 	AWS_SCHEDULE_PREFIX,
 	AWS_SCHEDULER_ROLE_NAME,
 	awsInputsBucket,
-} from "#release-kit/deploy/aws-credentials"
+} from "#release-kit/deploy/aws/credentials"
 import {
 	OVERLAY_BUILD_DEFAULT_HOURS,
 	OVERLAY_BUILD_IMAGE,

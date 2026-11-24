@@ -25,7 +25,7 @@ tile-build access key in the environment against AWS STS. `mwops release mint-aw
 shell's AWS session, or under `--profile`, and that session needs IAM write access. It creates the
 `mailwoman-tile-build` user with one access key and the `mailwoman-tile-build-instance` role with its instance profile,
 and writes `AWS_TILE_BUILD_ACCESS_KEY_ID` and `AWS_TILE_BUILD_SECRET_ACCESS_KEY` to that new file, mode 0600.
-`--dry-run` prints each policy document before any IAM request. `lib/release-kit/deploy/aws-credentials.ts` holds the
+`--dry-run` prints each policy document before any IAM request. `lib/release-kit/deploy/aws/credentials.ts` holds the
 policies.
 
 `mwops check <name> [paths…]` runs one registered repository check (`lib/check-kit/registry.ts`) in this checkout

@@ -9,7 +9,7 @@
  *   user data an EC2 console shows stays free of them.
  */
 
-import { AWS_BUILD_PARAMETER_PATH, AWS_BUILD_REGION } from "#release-kit/deploy/aws-credentials"
+import { AWS_BUILD_PARAMETER_PATH, AWS_BUILD_REGION } from "#release-kit/deploy/aws/credentials"
 
 /**
  * The key prefix of every object a build reads or writes in the inputs bucket.
