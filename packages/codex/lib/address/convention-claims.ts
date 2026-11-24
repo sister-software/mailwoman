@@ -80,6 +80,57 @@ export const ConventionSource = {
 export type ConventionSource = (typeof ConventionSource)[keyof typeof ConventionSource]
 
 /**
+ * The sources whose own document a rendered layout may cite.
+ *
+ * Each publishes a document a reader can retrieve and hash: the operator's rules,
+ * UPU's description of them, or the S42 template the country approved. libaddressinput
+ * and the OpenCage templates are compiled datasets, and the locale board is this
+ * repository's own check, so none of the three is a citation.
+ */
+export type PrimaryConventionSource =
+	| typeof ConventionSource.NationalPostalAuthority
+	| typeof ConventionSource.PostalAddressingSystems
+	| typeof ConventionSource.PostalStandardS42
+
+/**
+ * The primary document a rendered layout rests on.
+ *
+ * A reader checks the layout by retrieving `url`, comparing its sha256 and reading the quoted examples.
+ * A layout that departs from the document in a detail it can't print, or doesn't yet print as
+ * the document does, lists that detail in `unexpressed` rather than dropping the citation.
+ */
+export interface LayoutCitation {
+	readonly source: PrimaryConventionSource
+	/**
+	 * Where the document was retrieved.
+	 */
+	readonly url: string
+	/**
+	 * The date the document prints, as `YYYY-M`.
+	 */
+	readonly documentDate: string
+	/**
+	 * The date the file was last retrieved and its sha256 compared, as `YYYY-MM-DD`.
+	 */
+	readonly retrievedAt: string
+	/**
+	 * The sha256 of the retrieved file.
+	 */
+	readonly sha256: string
+	/**
+	 * The document's example addresses the layout rests on, one array of printed lines per example, verbatim.
+	 *
+	 * A description that prints no address quotes the line that states its format,
+	 * such as a referral to another country's description.
+	 */
+	readonly examples: readonly (readonly string[])[]
+	/**
+	 * Details in the document this layout doesn't print as the document does.
+	 */
+	readonly unexpressed: readonly string[]
+}
+
+/**
  * What kind of authority an observation has.
  * It decides what a reader may conclude from it.
  */

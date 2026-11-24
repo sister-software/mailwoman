@@ -426,6 +426,12 @@ extend-words = { brocken = "brocken" }
 extend-glob = ["voie-type.ts", "voie-type.test.ts", "postal-lines.ts", "postal-lines.test.ts"]
 extend-words = { centre = "centre", espace = "espace", objets = "objets", aout = "aout", decembre = "decembre" }
 
+[type.layout-citations]
+# Example addresses quoted verbatim from UPU Postal Addressing Systems descriptions: Wallis and Futuna's and
+# Germany's `Appartment`, New Zealand's `Jollys Jewellery`, and Tema, a district of Ghana.
+extend-glob = ["citations.ts", "upu-pas.ts"]
+extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tema" }
+
 [type.german-board]
 extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }

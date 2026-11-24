@@ -24,6 +24,7 @@ import { exportNameAffixCheck } from "#repo-health/checks/export-name-affix"
 import { exportsCheck } from "#repo-health/checks/exports"
 import { testOnlyExportsCheck } from "#repo-health/checks/exports/test-only"
 import { licenseRegisterCheck } from "#repo-health/checks/license-register"
+import { layoutCitationsCheck } from "#repo-health/checks/locale/layout-citations"
 import { localeScopeCheck } from "#repo-health/checks/locale/scope"
 import { supportPromisesCheck } from "#repo-health/checks/locale/support-promises"
 import { localeTablesCheck } from "#repo-health/checks/locale/tables"
@@ -73,6 +74,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	localeTablesCheck,
 	localeScopeCheck,
 	supportPromisesCheck,
+	layoutCitationsCheck,
 	weightsFamilyCheck,
 	weightsRightsCheck,
 	weightsReconciliationCheck,

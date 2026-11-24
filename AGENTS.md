@@ -35,6 +35,7 @@ repository root must read the applicable file explicitly.
 - `packages/mailwoman/tools/training/AGENTS.md` covers Modal training launches and the host audits a launch requires.
 - `lib/release-kit/AGENTS.md` covers publish artifacts, workspace registration, CI releases, and
   partial-release recovery.
+- `packages/codex/AGENTS.md` covers address conventions and the primary document each rendered layout cites.
 - `packages/sqlite/AGENTS.md` covers database construction and the SQL that deliberately remains raw.
 - `docs/engineering/reference/training-row-encoder.mdx` covers the training loader's Rust encoder in
   `packages/mtf/crates/mtf-channels`, its sampler in `crates/mtf-sampler`, and the parity records a change to
