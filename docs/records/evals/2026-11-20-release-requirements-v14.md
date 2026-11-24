@@ -208,23 +208,23 @@ groups neither has read.
 Decided on 2026-11-21: the v14 candidate's graded arms run with these decoder settings (#3171, #3187). Each is off
 by default, so the release report states the arms' pins.
 
-| Decoder switch                | Graded arms | Reason                                                                                                                                                                               |
-| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pairPriorWordPieces`         | on          | The pair bias wrote `I-<tag>` on the `,` after a child: 386 of 466 held-out flips in #3165. The bias on word pieces alone fixed 368 rows (+385/−0 pieces) and changed no word label. |
-| `pairPriorChildPostcodeStrip` | on          | The child window took the postcode in GB (`Sutton Coldfield B72 1PU`, `Brighton BN1 1AH`), so the child bias fell on the postcode.                                                   |
-| `pairIndexOwnCountry`         | off         | The locale head misreads rows: the Lebanese rows read as GB, and on 400 US probes 220 word labels changed.                                                                           |
-| `fstCountryRouting`           | off         | It routes by the same locale-head read as `pairIndexOwnCountry`, so the same misreads choose another country's FST (inferred, and unmeasured on these probes).                       |
-| postal-children pair index    | not shipped | At least 97 of the 184 US pairs it drops decode as two adjacent localities.                                                                                                          |
+| Decoder switch                | Graded arms | Reason                                                                                                                                                                                              |
+| ----------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pairPriorWordPieces`         | on          | The pair bias wrote `I-<tag>` on the `,` after a child: 386 of 466 held-out flips in #3165. The bias applied only to word pieces and fixed 368 rows (+385/−0 pieces) without changing a word label. |
+| `pairPriorChildPostcodeStrip` | on          | The child window took the postcode in GB (`Sutton Coldfield B72 1PU`, `Brighton BN1 1AH`), so the child bias fell on the postcode.                                                                  |
+| `pairIndexOwnCountry`         | off         | The locale head misreads rows: the Lebanese rows read as GB, and on 400 US probes 220 word labels changed.                                                                                          |
+| `fstCountryRouting`           | off         | It routes by the same locale-head read as `pairIndexOwnCountry`, so the same misreads choose another country's FST (inferred, and unmeasured on these probes).                                      |
+| postal-children pair index    | not shipped | At least 97 of the 184 US pairs it drops decode as two adjacent localities.                                                                                                                         |
 
 ## 7. The draw, 2026-11-22
 
 Corpus v0.8.22 is an overlay on `v0.8.21-retention-overlay` (`packages/corpus/data/builds/v0.8.22-overlay/OVERLAY_PLAN.json`):
 `wof-admin` rebuilt, `rendered-de` re-rendered, and `rendered-former-divisions` and `rendered-prominent-places` added.
 The build's manifest, `v0.8.22-overlay`, is the `<build>` of section 4. Its test rows outside every frozen group are
-those four sources' held-out places. Every other file is carried from v0.8.21 with v0.8.21's split, whose test rows
+those four sources' held-out places. Every other file reuses its v0.8.21 contents and split. The test rows in those files
 are frozen groups only.
 
-The freeze excluded the nine collections section 4 lists and skipped two carried files,
+The freeze excluded the nine collections section 4 lists and skipped two unchanged v0.8.21 files,
 `invented-po-box-cedex-v0.8.20.parquet` and `invented-postal-unit-guideline-v0.8.20.parquet`. Their test rows are
 `v0.8.20-recipe-probe-text-collisions`' groups, a set the group list sends to test that no dataset manifest records,
 so `--exclude-dataset` can't name it. Without the skip, the draw took 50 of their rows (US 20, FR 13, CA 9, NZ 5, AU 3),
@@ -307,7 +307,7 @@ The prominent-place receipt fails four items:
 
 | Item                       | First split (`ddc5b111…`) | Second split (`7d871702…`) | Cause                                                                                                                                         |
 | -------------------------- | ------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| NZ Rotorua, `country` form | covered                   | 0 train rows               | its only such rows are group `wof-admin-1729238557-default-with-country-form`, another WOF record's, which the reserve drew                   |
+| NZ Rotorua, `country` form | covered                   | 0 train rows               | its only such rows are group `wof-admin-1729238557-default-with-country-form`, another WOF record's. The reserve drew that group              |
 | CA locality `region`       | 0.4203 against 0.4205     | 0.4177 against 0.4203      | the recipe's train rows rose 1.2%, so each draws 1.14% less. The cell already failed on the first split                                       |
 | CA locality `region_abbr`  | 0.4204 against 0.4205     | 0.4184 against 0.4203      | the same                                                                                                                                      |
 | PW locality `bare`         | 0.3316 against 0.3248     | 0.3295 against 0.3338      | the same dilution, and the target rises when the receipt leaves Babeldaob South – Airai State (decile 2, held out by design) out of the count |
@@ -333,12 +333,12 @@ it, so the receipt drops that row's 0.347 draws. The operator approved the fixes
 3. The reserve and the validation quota skip the groups of every decile-1 place the recipe may write. The quota had
    sent 14 recipe rows of 7 CA decile-1 places to validation after the recipe was sized, and those rows failed both CA
    cells.
-4. The reserve also skips every group whose short admin train rows write a required form, which keeps Rotorua's
+4. The reserve also skips every group whose short admin train rows write a required form. That keeps Rotorua's
    namesake group in training.
 
 Two other designs were measured on the candidate and not taken:
 
-- A fixed point, which releases a place whenever the recipe's text matches it, covers every required form. It leaves
+- The fixed-point design releases a place whenever the recipe's text matches it. It covers every required form and leaves
   the 21 places held out.
 - The place-level hold-out with the recipe rows dropped whose text matches a held-out place fails 2 of 20,892
   forms. Both are the namesake Huancayo in Lima (WOF 421177467), bare and `country`.
@@ -364,7 +364,7 @@ recipe-joined build. The re-split (`--jobs 8`, 8,679 s) wrote MANIFEST.json sha2
 collections read `verified_unseen` on every row (8,358, 7,800 and 5,000). The development collections read
 `verified_unseen` 83,278, 5,000 and 42,384, with 3,229 `known_overlap` and 2,932 `unseen_by_candidate` rows among
 them. The pass proof under spec 14 is proven for both roles: the arm at 0.95 against the published 0.85 passes every
-check, and the arm at 0.85 doesn't pass. Against this manifest alone, the reserve's rows overlap training by folded
+check, and the arm at 0.85 doesn't pass. With this manifest as the only comparison input, the reserve's rows overlap training by folded
 text in 1,168 of 20,500 rows, by identity, group and address in none. Those rows read `known_overlap` for the v15
 confirmation draw.
 

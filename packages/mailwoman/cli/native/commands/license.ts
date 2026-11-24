@@ -208,7 +208,7 @@ export const spec = {
 			default: "train,deploy",
 			hint: "train,deploy",
 			description:
-				"grant-training: the permissions the grant carries. `train` admits commercial training runs and their exports, and `deploy` commercial use of the models trained under the grant.",
+				"grant-training: the permissions recorded in the grant. `train` admits commercial training runs and their exports, and `deploy` commercial use of the models trained under the grant.",
 		},
 		agreement: {
 			type: "string",

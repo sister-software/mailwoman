@@ -39,7 +39,7 @@ the upper bound is below it. The smallest deciding G for an assumed rate p:
 | 1.000                           |                  40 | pass    | [0.8522, 1.0000] |
 
 A rate within a few points of 0.85 needs thousands of groups. The arithmetic is the normal approximation's
-`G ≈ z² p (1 − p) / (p − 0.85)²` with z = 2.935, which gives 1,176 at p = 0.878, and the exact interval adds about 200.
+`G ≈ z² p (1 − p) / (p − 0.85)²` uses z = 2.935. At p = 0.878, the formula gives 1,176, and the exact interval adds about 200.
 
 **Loss 0.05.** The paired-difference check passes when the lower bound on candidate minus published is at least
 −0.05. For a candidate equal to the published model on every unit, the stratum is degenerate, and the evaluator
@@ -95,11 +95,11 @@ training corpus holds the row. `heldout/probes/build.run.ts`:
    country, takes a fixed quota split across its rendered templates (`stratumQuotas`, floor 20), each template's
    rows taken in sha256(`<seed>:<row id>`) order, seeds 1820 and 1821.
 
-Why this source and not another. A fresh render is the one way to add rows of the registered capability without
-withholding training rows, which the operator's direction rules out. The rows keep the recipes' source names, so
+Why this source and not another. A fresh render adds rows of the registered capability while keeping the training rows.
+The operator ruled out withholding training rows. The rows keep the recipes' source names, so
 the v8 selectors read them unchanged. A later corpus render of the same components gets the same `source_id`, hence
 the same group, and the evaluation-group list sends that group to `test`. The recipes' `--golden` pools (Vermont and
-the hash-held-out localities) would add place novelty, but Vermont alone would stand for the US leg, and v0.8.19
+the hash-held-out localities) would add place novelty, but only Vermont would represent the US leg, and v0.8.19
 trains on both pools anyway. The draw is stratified by leg because a country mix set by which places happened to
 be held out (NZ above) measures that mix rather than the capability.
 
@@ -146,7 +146,7 @@ identity) as both arms, spec v8 as registered, Bonferroni over 15 checks. Report
 `/mnt/mw/models/arms/heldout-{dev,confirm}-v0.8.19-probes-published-10.8.0.json` and
 `/mnt/mw/models/arms/verdict-{dev,confirm}-v0.8.19-probes-10.8.0-self.json`.
 
-| Check                  | Probe rows alone, development  | Outcome | Pooled with v0.8.18 development | Outcome |
+| Check                  | Development probe rows         | Outcome | Pooled with v0.8.18 development | Outcome |
 | ---------------------- | ------------------------------ | ------- | ------------------------------- | ------- |
 | `po_box_cedex` minimum | 0.8283 [0.8101, 0.8454], 4,000 | fail    | 0.8294 [0.8116, 0.8463], 4,098  | fail    |
 | `po_box_cedex` loss    | 0.0000 [−0.0019, 0.0019]       | pass    | 0.0000 [−0.0018, 0.0018]        | pass    |
@@ -224,8 +224,8 @@ found three gold labels that disagreed with the schema rather than model errors.
    `street=ABBOTT PLZ`), where the schema and the scorer split it into `street_suffix`. 18 of the 20 sampled US
    misses had this shape. `splitUSStreet` now takes the terminal Pub-28 word with `matchTrailingSuffix`, joining a
    post-directional to it, and a leading directional with `matchLeadingDirectional`.
-2. **French named complexes.** The FR leg of `postal-unit-guideline` labeled `RESIDENCE …` and `LOTISSEMENT …`
-   `unit`. Decided: a named complex is `venue`, the schema's place with a proper name, and a designator with a
+2. **French complexes with proper names.** The FR leg of `postal-unit-guideline` labeled `RESIDENCE …` and `LOTISSEMENT …`
+   `unit`. Decided: a complex with a proper name is `venue`, the schema's place with a proper name, and a designator with a
    number or letter (`BATIMENT B`, `ETAGE 6`) stays `unit`.
 3. **PO-box lines in four register adapters.** The codex matcher reads `POB 1088`, `usgov-nppes` calls
    `splitUSStreetLine`, and `state-ny-notaries` takes a box written on either address line. These reach training
@@ -255,7 +255,7 @@ groups in place of r1's, 100,486 in all (commit `442a51ccec`). The r1 sets stay 
 
 10.8.0 against itself under spec v8, as in section 4. Reports:
 `/mnt/mw/models/arms/heldout-{dev,confirm}-v0.8.19-probes-r2-published-10.8.0.json`, verdicts
-`verdict-{dev,confirm}-v0.8.19-probes-r2-10.8.0-self.json` in the same directory. Probe rows alone, G = 4,000 and
+`verdict-{dev,confirm}-v0.8.19-probes-r2-10.8.0-self.json` in the same directory. For the probe-only read, G = 4,000 and
 1,000:
 
 | Check                  | r1 development                 | r2 development           | Outcome               | r2 confirmation                |
@@ -285,7 +285,7 @@ Exact rows per leg, r1 and r2 development. Only two cells moved, and each by its
 | `invented-postal-unit-guideline` | IT      |        200/200 |        200/200 |         200/200 |
 | `invented-postal-unit-guideline` | NZ      |        199/200 |        199/200 |         200/200 |
 
-FR rose from 15 to 59 exact rows only through the named-complex rows: 44 of 44 such rows are exact in each set, against 15 of 156 and 13 of
+FR rose from 15 to 59 exact rows only through the rows for complexes with proper names: 44 of 44 such rows are exact in each set, against 15 of 156 and 13 of
 156 numbered unit rows. The FR unit gap is therefore the model's, as is AU's in both recipes. Those 44 rows now test a
 `venue` span inside a check whose task reads "as one unit component". Whether the `postal_unit` selector should leave
 them out is open, and a v9 registration should decide it.

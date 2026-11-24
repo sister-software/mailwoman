@@ -50,13 +50,13 @@ rather than a guess.
 
 ## Approaches
 
-| Approach                                                                                            | Tradeoff                                                                                 |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides. The release verdict, already the deciding check, carries the promise   |
-| B. Declaration ships in codex, enforced by a separate test suite                                    | Two systems would decide whether a release may ship                                      |
-| C. Declaration in `scope.config.json` with generated copies                                         | Repository-only file, so the shipped copy is generated and every edit needs regeneration |
+| Approach                                                                                            | Tradeoff                                                                                   |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **A. Declaration ships in codex, enforced by a repository check and release requirements** (picked) | One file decides. The release verdict checks the declared promise against its requirements |
+| B. Declaration ships in codex, enforced by a separate test suite                                    | Two systems would decide whether a release may ship                                        |
+| C. Declaration in `scope.config.json` with generated copies                                         | Repository-only file, so the shipped copy is generated and every edit needs regeneration   |
 
-The operator picked A on 2026-11-14 and asked for the from-scratch form of it, which adds three things:
+The operator picked A on 2026-11-14 and asked for the from-scratch form of it. That design adds three things:
 
 1. The promise rows replace the locale tiers in `scope.config.json` as the declared claim.
 2. Release requirements are generated from the promise rows rather than restated.

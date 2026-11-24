@@ -102,8 +102,8 @@ groups), an epoch visits about 13 random groups. Over the 1,000,000-row epoch of
 estimate from the epoch's realized draws is 850 row-group visits per epoch against 180 file-by-file. At the 23 to 27 ms per row
 group `examples/read_profile.rs` measured, the 670 extra visits add about 17 s of decoding to an epoch of 7,813 steps. The plan
 draws from the epoch's generator (the group order, then one 64-bit pass seed) at the source's first row, so a seed
-still fixes every row, and a resumed run, which re-draws the batches it skips, reads the same rows. The audits'
-`RawRows` plans with the same limit, which `openRawRows` defaults to the config's `train_rows_per_epoch`.
+still fixes every row. A resumed run re-draws skipped batches and reads the same rows. The audits'
+`RawRows` plans use the same limit. `openRawRows` defaults that limit to the config's `train_rows_per_epoch`.
 
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
@@ -126,9 +126,9 @@ The Rust code reproduces the reference interpreter's string semantics rather tha
   that Python's `isalnum` rejects, and its `is_whitespace` rejects U+001C..U+001F.
 - `str.lower` applies CPython's final-sigma rule.
 - The postcode finders no longer read Python semantics. They read the `postal` family through `recognizer-core`.
-  A shape writes `\d` as `[0-9]` and matches either case by Unicode simple case folding, which also matches U+212A
+  A shape writes `\d` as `[0-9]` and matches either case by Unicode simple case folding. That folding also matches U+212A
   and U+017F, and the family states one case rule for serving and training. The one place the finder tests a
-  character itself is the white space after a printed prefix, which it reads as JavaScript's `\s`, the class the
+  character itself is the white space after a printed prefix. It reads that character as JavaScript's `\s`, the class the
   family writes.
 - The code-unit segmenter is written out by hand. It reproduces
   `(?<![A-Za-z0-9])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-(?=\d)[A-Za-z0-9]+)*(?![A-Za-z0-9])`, including the
@@ -206,7 +206,7 @@ broad sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train ro
 validation rows, where the validation draw exhausts below its 36,864-row limit.
 
 That result no longer holds on `origin/main`. On 2026-11-16, before the postal finders, fourteen of the fifteen older
-records differed in `address_system_ids` alone, and `aug-grouping-p50-250` matched. The address-system registry changed
+records differed only in `address_system_ids`, and `aug-grouping-p50-250` matched. The address-system registry changed
 after the records were captured, and TypeScript computes those ids. Every other tensor of every record still matched on
 `origin/main`. The table in The postal finders lists each record's count. This predates the postal finders, and no
 record was regenerated.
@@ -228,13 +228,13 @@ tests.
 
 The spread read changed the rows of every train record, because each draws a row-limited epoch in which most
 sources are read in part. On 2026-11-16 at `1e43fa4021`, before the `postal` finders, the 14 train records were
-re-drawn under the `shaped` anchor and written as `<record>-spread` beside each original, which stays as the
+re-drawn under the `shaped` anchor and written as `<record>-spread` beside each original. Each original remains the
 Python loader's record. Seven of them emit a different count after the astral skip, for example
 `c6-train-50k` 49,992 rows against 49,989. These records pin the Rust sampler and encoder at that revision. They're
 no oracle: each was captured from the code it checks. `c6-train-2k-spread` re-verified with 0 differing
 rows in a fresh process. The held-out record `c6-val-36864` reads no mixture, and its 31,951 row identities all
 still match. One row's `address_system_ids` differs (row 31,268), a value TypeScript computes from the
-address-system registry, which has changed since 2026-10-29.
+address-system registry. That registry has changed since 2026-10-29.
 
 ## The postal finders
 
@@ -324,7 +324,7 @@ records and the two records without an anchor channel ran as recorded.
 Every row that differs on `origin/main` differs in `address_system_ids`. The address-system registry changed after the
 records were captured, and TypeScript computes those ids. Two records differ from `origin/main` beyond that.
 `c6-val-36864` has one more row, a gazetteer row (`1461  AR  8  Highway  North,  Warren,  AR  71671-0000`). The
-suppression reads the anchor confidence, which this row's anchor change moved. `code-unit-train-5k` has 62 more rows,
+suppression reads the anchor confidence. This row's anchor change moved that confidence. `code-unit-train-5k` has 62 more rows,
 and the code-unit channel's change explains them. The draw holds 8,869 units, and 51 distinct units changed their
 acceptance count. 50 of them have the form `L-dddd`: Luxembourg prints the prefix `L-`, the retired syntax record held
 `null`, so 0 countries accepted the unit before and Luxembourg accepts it now. The other is `FO700`, because the Faroe
@@ -334,7 +334,7 @@ countries with `countriesAcceptingPostcode`, and its result is in `docs/records/
 
 `parity.run.ts capture --name <record> --config <yaml> --records-dir <directory>` writes a record in the format
 `verify` reads from the current sampler and encoder, and never under the data root. The Python capture is gone, and the
-independent second implementation is serving's finder, which the agreement above holds to the encoder's on 72,209 rows.
+independent second implementation is serving's finder. The agreement above compares its output with the encoder's on 72,209 rows.
 
 The three postal records were first captured on 2026-11-16 at `66631371cf`, on a branch that didn't hold the spread
 read (`283a1d64fb`, `243b23e881`). The spread read reached `origin/main` in `fbf505cc51`, so on `origin/main` the two
@@ -344,8 +344,8 @@ train records failed `verify` at row 0 (#3120). With only `mtf-sampler` restored
 2026-11-21 at `50bd12b983`, with the recognizer crates and the format identifiers renamed (#3217), and each verified with
 0 differing rows in a fresh process. The new train record shares 18 of its 5,000 row identities with the old one, and the
 code-unit record 13. The validation record's row identities and tensor digests are unchanged. Its header moved: the
-revision, the config file's sha256, and the sha256 of the postal artifact and definition, which the Eircode pattern of
-#3143 and the renamed format identifier changed. The register `encoder-parity-records.json` lists the old and new digests.
+revision, the config file's sha256, and the sha256 of the postal artifact and definition. The Eircode pattern of
+#3143 and the renamed format identifier changed those latter digests. The register `encoder-parity-records.json` lists the old and new digests.
 
 ## Measured cost
 

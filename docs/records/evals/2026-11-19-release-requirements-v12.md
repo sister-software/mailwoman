@@ -46,7 +46,7 @@ on. Verified-unseen ordinary address groups:
 | 96  | 193 | 0   | 3,038 | 0   | 3,756 | 3,987 | 730 | 0   |
 
 The earlier collections took every test group of GB, IN and NZ, so `heldout-dev-v0.8.18` stays in the role for those
-countries. The US and FR rows that remain are records 10.8.0 saw in no rendering, which may differ from the typical
+countries. The US and FR rows that remain are records 10.8.0 saw in no rendering. Their distribution may differ from the typical
 record.
 
 `evaluation-groups.v0.8.21.json` lists the collection's groups, and corpus `v0.8.21-retention-overlay`

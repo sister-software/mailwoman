@@ -62,7 +62,7 @@ rows added, removed or regrouped), `dataset/evaluation-groups.run.ts`, which reg
 `packages/corpus/data/holdout/evaluation-groups.v0.8.19.json` from the four v9 collections (100,486 groups, the
 same list, with new versions and manifest sha256s), and `dataset/coverage/register.run.ts`, which regenerated
 `evaluation-coverage.mdx` for development v3 (header lines only). The battery reads only the osm-suites rows
-files, whose bytes the restamp left unchanged.
+files. The restamp left those file bytes unchanged.
 
 ## 2. The county decision
 
@@ -151,9 +151,9 @@ audit files and the probe audits class the v3 rows. Section 5 lists the file eac
 ## 3. The 44 FR rows
 
 Decided: the rows leave `postal_unit`, and no check reads them. Each probe set holds 44 FR
-`invented-postal-unit-guideline` rows rendered as a named complex, such as
+`invented-postal-unit-guideline` rows rendered as a complex with a proper name, such as
 `LOTISSEMENT SILLINGY, 9 RUE DE PEYRIAT, 72800 LUCHÉ-PRINGÉ` with spans `venue`, `house_number`, `street`,
-`postcode` and `locality`. No row holds a `unit` span, so none tests the `postal_unit` task, which reads a
+`postcode` and `locality`. No row holds a `unit` span, so none tests the `postal_unit` task. That task reads a
 designator with its identifier as one unit component. v8's other checks:
 
 | Check           | Task                                                                    | Source selected                                      | Fits the rows                     |
@@ -164,11 +164,11 @@ designator with its identifier as one unit component. v8's other checks:
 
 The rows would also leave the FR country cell under any selector, because their source is a capability probe.
 V9 adds the selector field `withoutTags`, and `postal_unit` selects `withoutTags: ["venue"]`. The field reads each
-outcome's expected tags, which `heldout/per/country.ts` now records, and the evaluator refuses a row without them
+outcome's expected tags. `heldout/per/country.ts` now records those tags, and the evaluator refuses a row without them
 rather than reading it as unselected. The only rows it removes are these 88: a search of all four collections
 found a `venue` span in no other `invented-postal-unit-guideline` row, and the v0.8.18 collections hold no FR
 row of that source. `postal_unit` reads 956 groups of each probe set where it read 1,000 (1,017 and 965 with the
-v0.8.18 probe rows), and its threshold is unchanged. A named complex beside a street line would need its own capability, with its own task and minimum.
+v0.8.18 probe rows), and its threshold is unchanged. A complex with a proper name beside a street line would need its own capability, with its own task and minimum.
 None is registered.
 
 ## 4. What v9 changes
@@ -259,7 +259,7 @@ Every exact-parse check is identical to 5.1 by construction. The geocode check:
 Every moved row is a relabeled `usgov-nad` Carter or Johnston County row, `known_overlap` for 10.8.0, and no row in
 any other country moved. Of the 23 + 22 relabeled rows, 14 + 17 became exact. The others stay wrong on both arms:
 the `state-expand` rows, where 10.8.0 parses `Oklahoma` as the locality, the rows whose unit or venue the parse
-loses, and the 2 IE `co Dublin` rows, which the fallback doesn't resolve. 10.8.0 parses one as `locality=co Dublin`
+loses, and the 2 IE `co Dublin` rows. The fallback doesn't resolve those IE rows. 10.8.0 parses one as `locality=co Dublin`
 and the other as `venue=co`, `locality=Dublin`, on both arms.
 
 The verdict is `fail` on both roles, from `postal_unit`, a published-model miss the switch can't move. It also
@@ -292,8 +292,8 @@ misses −0.01 by 0.0001.
 | objective              | +0.045 [0.024, 0.066] pass        | +0.047 [0.031, 0.062] pass    | +0.043 [−0.029, 0.114] insufficient | +0.040 [−0.032, 0.111] insufficient |
 | **Verdict**            | insufficient evidence             | fail                          | fail                                | fail                                |
 
-Seed 42's confirmation `postal_unit` upper bound is 0.84990, below 0.85 by 0.0001. Under v8, which read only
-the v0.8.18 probe rows, it was insufficient evidence, and v9 reads 965 groups. Both seeds now decide
+Seed 42's confirmation `postal_unit` upper bound is 0.84990, below 0.85 by 0.0001. V8 read only
+the v0.8.18 probe rows and returned insufficient evidence. V9 reads 965 groups. Both seeds now decide
 `po_box_cedex` on both roles, where v8 read insufficient evidence. AU separates the seeds (0.989 and 0.927 on
 development).
 
@@ -315,7 +315,7 @@ Geocode rows moved against 10.8.0, fixed and broken:
   run needs a successor confirmation draw.
 - The IE `co Dublin` rows show the fallback doesn't reach Dublin, and lane Y's board convention expects IE counties
   as `region` (`Co. Westmeath`). Which tag an IE county takes in the answer key is a decision this record doesn't
-  make. The relabel follows the operator's rule, which assigns `subregion` to every county in the town position.
+  make. The relabel follows the operator's rule. That rule assigns `subregion` to every county in the town position.
 
 ## Reproduce
 

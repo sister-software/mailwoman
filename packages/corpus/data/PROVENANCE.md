@@ -41,7 +41,7 @@ access labels and applies the recorded ones over that, so a decision survives a 
 first three as the placeholders `varies`, `country-specific` and the empty string on all 426 of its
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323). It also
-holds each source's `reservation` for evaluation, which the research pass had no column for (#3352).
+holds each source's `reservation` for evaluation. The research pass had no column for that field (#3352).
 
 `--additions` defaults to `source-additions.json` and holds 1,684 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
@@ -72,8 +72,7 @@ with the publisher's words, for the others.
 `found: "site-terms-not-applied"` records a reading where the dataset's metadata states no terms and the
 publisher's website states site-wide terms that the decision doesn't read as the dataset's grant. Oneida and
 Waukesha counties in Wisconsin read that way. A noncommercial site policy over the site that leads to the file
-refuses `distribute-rows`, as on those two rows and on St. Mary's County, Maryland, whose file the policy's own site
-serves. The 2026-11-23 re-read found that each policy limits use as well as redistribution, so those three decisions
+refuses `distribute-rows`, as on those two rows and on St. Mary's County, Maryland. The policy's own site serves that county's file. The 2026-11-23 re-read found that each policy limits use as well as redistribution, so those three decisions
 refuse `commercial-use` with the clause in full, and no action that trains, evaluates or sells admits them.
 
 Each Taiwanese decision from the same day opens with `Acceptance basis: publisher-grant`: the body's data.gov.tw

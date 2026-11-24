@@ -21,7 +21,7 @@ Consumers use the same interface regardless of the source.
 This page describes the interface in prose for layer authors. The code lives in
 [`packages/core/lib/layers/`](https://github.com/sister-software/mailwoman/tree/main/packages/core/lib/layers)
 (`schema.ts` defines the tables, and `manifest.ts` handles read/write IO). The design
-rationale was the 2026-07-18 spatial-layers and POI design spec, which commit `0d8b2847a` deleted.
+rationale was the 2026-07-18 spatial-layers and POI design spec. Commit `0d8b2847a` deleted that file.
 Read it with
 `git show 0d8b2847a^:docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`. If you're
 building a specific layer,
@@ -293,7 +293,7 @@ The Overture part is:
 - every row whose place id falls in the Overture range, `8000000000000` to `8999999999999`
   (`isOverturePartID`), in `spr`, `names`, `concordances` and `place_population`, and in `candidate.db` its
   `candidate`, `candidate_ancestor` and `candidate_interval` rows;
-- the `overture_wof_match` table, which records the WOF record each matched division was matched to.
+- the `overture_wof_match` table. It records the WOF record matched to each Overture division.
 
 The part stays independent because no row outside it depends on it:
 
@@ -480,7 +480,7 @@ unrecognized on every machine that opens it.
 | `LicenseRef-Undeclared-Input`          | a contributing database that declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the database out of the expression                                | unknown     |
 | `LicenseRef-INEGI-Terms`               | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                      | attribution |
 | `LicenseRef-GEBCO-Operator-Election`   | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                          | attribution |
-| `LicenseRef-OurAirports-Public-Domain` | OurAirports' data dumps, which its data page releases "to the Public Domain" without naming an instrument. It asks for credit and states that credit isn't required                          | none        |
+| `LicenseRef-OurAirports-Public-Domain` | OurAirports' data dumps. Its data page releases them "to the Public Domain" without naming an instrument. It asks for credit and states that credit isn't required                           | none        |
 
 `LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
 publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only
@@ -549,15 +549,15 @@ Wikipedia is the `src:geom` of 14 records and the `src:population` of 2,338 (`wi
 Of those 2,352 records, 2,331 are in the admin build's `spr` table, 2,330 in its `place_population` table and
 2,330 in `candidate.db`, where they supply centroids, boxes and populations.
 
-Those values carry no share-alike term. The
+Those values impose no share-alike obligation. The
 [CC BY-SA 3.0 legal code](https://creativecommons.org/licenses/by-sa/3.0/legalcode) defines the Work as "the
 literary and/or artistic work offered under the terms of this License". Its Section 2, "Fair Dealing Rights", opens by stating that no part of the License is
 "intended to reduce, limit, or restrict any uses free from copyright". A population figure and a coordinate are facts rather than literary or artistic work. The license grants no
 right over them and imposes no condition on them, share-alike included. The 14 geometries are each a single `Point` with a `geom:area` of 0, read on 2026-11-21 from the
 WOF record store's located GeoJSON for the issue's record-ID list. They're airport and airfield `campus` records,
-such as Innsbruck Airport (`102556255`) and Istanbul Airport (`1779770747`). None is a drawn polygon, which
-would be the one Wikipedia contribution that could carry authorship. The table therefore records attribution
-alone.
+such as Innsbruck Airport (`102556255`) and Istanbul Airport (`1779770747`). None is a drawn polygon. A drawn polygon
+could embody original authorship in this set of Wikipedia contributions. The table therefore records attribution
+without a share-alike obligation.
 
 Issue #3163 records the scan's per-country and per-property tables.
 
@@ -589,7 +589,7 @@ of the regions' `ATTRIBUTION.json` ledgers to the register through `us-situs-sou
 A decision records each condition its terms set in its `obligations` field
 (`packages/license/lib/decision.ts`): `attribution`, `share_alike`, `use_restriction` (a limit on one use,
 such as a mailing-list ban), `notice_pass_through` (a text, such as a disclaimer, that must travel with the data)
-and `indemnity`. Each entry quotes the publisher and says whether the terms require it or only ask for it. An
+and `indemnity`. Each entry quotes the publisher and records whether the terms require it or only ask for it. An
 obligation decides no operation's permission: an indemnity allocates liability and restricts no use, so a decision
 recording one keeps its operations.
 
@@ -624,9 +624,9 @@ The source texts, retrieved 2026-11-21:
   OpenAddresses team does its best to summarize the source licenses in the source
   JSON for each source." A definition's recorded license is OpenAddresses' summary of the publisher's terms.
   A definition with no license field means no summary was written. It doesn't mean the publisher states no terms.
-- Overture's [attribution page](https://docs.overturemaps.org/attribution/) states that the addresses data "comes
-  from a variety of sources. All carry permissive open licenses. Some have special terms or require
-  attribution." It lists, for example, El Dorado County as "Public domain by judicial interpretation of the
+- Overture's [attribution page](https://docs.overturemaps.org/attribution/) describes addresses from varied sources
+  with permissive open licenses. It states that some sources have special terms or require attribution. It lists,
+  for example, El Dorado County as "Public domain by judicial interpretation of the
   Public Records Act". The register refuses El Dorado County after reading the county's own page, so Overture's
   labels are a third party's claim.
 
