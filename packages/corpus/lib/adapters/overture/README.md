@@ -68,6 +68,16 @@ The region prints only where Overture's first level reads as the form the operat
 abbreviation (`Michoacán de Ocampo` → `MICH`). Elsewhere the first level is a unit the operator doesn't print
 (Italy's `Sardegna`), so no region is rendered. A JSONL written before the ingest emitted `region` renders none.
 
+## `overture-latam` and its address key
+
+The BR, MX and CA runs stamp `overture-latam` (`corpus run overture --source-name overture-latam`), which training
+configs weight apart from `overture`. `packages/corpus/data/builds/v0.8.23-rebuild/inputs.json` records the three runs
+under `sourceRuns`, and `mailwoman corpus recorded-runs --inputs <that file>` runs them. A row's `source_id` hashes its
+aligned components, so a run that adds the region or regroups the postcode gives each row a new id. The split
+therefore also groups `overture-latam` rows by `overtureAddressKey` (`address-key.ts`), which leaves out the region
+and the country and folds the postcode to its letters and digits. The frozen evaluation rows keep their groups
+across the re-run through the keys the evaluation-group list records.
+
 License: **CDLA-Permissive-2.0** (attribution required, without a share-alike term). Per the #471 fill-rate requirement, check
 `fill-rates.md` before committing a locale. ES/NL/FR fill completely. IT postcode is ~0% (street+locality
 only). DE postcode is sparse in Overture (use GeoNames for DE postcodes).

@@ -27,6 +27,12 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
  */
 export const OVERTURE_ADAPTER_ID = "overture"
 /**
+ * The `source` the Brazilian, Mexican and Canadian runs of this adapter
+ * stamp on their rows (`corpus run overture --source-name overture-latam`),
+ * which training configs weight apart from `overture`.
+ */
+export const OVERTURE_LATAM_SOURCE = "overture-latam"
+/**
  * License assigned by this source (`cdla-Permissive-2.0`, attribution-only
  * rather than share-alike), attached to every row.
  */

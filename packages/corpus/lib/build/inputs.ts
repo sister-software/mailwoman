@@ -59,6 +59,33 @@ export interface BuildInputRecord {
 	 * A build reads the index built from the previous corpus version.
 	 */
 	streetIndex?: string
+	/**
+	 * The fraction of rows rendered with a country surface, for a country-implicit source.
+	 */
+	countryFraction?: number
+	/**
+	 * The seed of the {@linkcode BuildInputRecord.countryFraction} draw.
+	 */
+	seed?: number
+}
+
+/**
+ * One `corpus run` of an adapter under a source name of its own.
+ *
+ * A build's `adapters` map holds one entry per adapter id and can't state several runs of one adapter.
+ * The `overture` runs for BR, MX and CA stamped `overture-latam` are each a run here.
+ *
+ * Their rows join a corpus as an overlay (`corpus overlay-manifest --replace-source`).
+ */
+export interface SourceRunRecord extends BuildInputRecord {
+	/**
+	 * The adapter id `corpus run` resolves.
+	 */
+	adapter: string
+	/**
+	 * The `source` the run stamps on every row (`corpus run --source-name`).
+	 */
+	sourceName: string
 }
 
 /**
@@ -68,6 +95,20 @@ export interface BuildInputsRecord {
 	corpusVersion: string
 	builtAt?: string
 	adapters: Record<string, BuildInputRecord>
+	/**
+	 * The runs whose rows join the corpus as an overlay, run by `corpus recorded-runs`.
+	 * `corpus build` reads `adapters` only.
+	 */
+	sourceRuns?: SourceRunRecord[]
+}
+
+/**
+ * One recorded source run with its input resolved, as `corpus recorded-runs` runs it.
+ */
+export interface SourceRun {
+	adapter: string
+	sourceName: string
+	options: AdapterOptions
 }
 
 /**
@@ -93,35 +134,81 @@ export async function readBuildInputs(path: PathBuilderLike): Promise<Record<str
 		throw new Error(`${path.toString()} names no adapter under \`adapters\`, so the build would read nothing.`)
 	}
 
-	return Object.fromEntries(
-		entries.map(([id, input]) => {
-			if (typeof input?.inputPath !== "string" || !input.inputPath) {
-				throw new Error(`${path.toString()}: adapter ${id} has no \`inputPath\`.`)
-			}
+	return Object.fromEntries(entries.map(([id, input]) => [id, resolveBuildInput(path, `adapter ${id}`, input)]))
+}
 
-			const { inputPath, streetIndex, root = BuildInputRoot.data, ...options } = input
+/**
+ * One recorded input as {@linkcode AdapterOptions}, its paths resolved against their roots.
+ *
+ * @throws When the input has no `inputPath`, or its root is neither `cache` nor `data`.
+ */
+function resolveBuildInput(path: PathBuilderLike, label: string, input: BuildInputRecord): AdapterOptions {
+	if (typeof input?.inputPath !== "string" || !input.inputPath) {
+		throw new Error(`${path.toString()}: ${label} has no \`inputPath\`.`)
+	}
 
-			if (root !== BuildInputRoot.cache && root !== BuildInputRoot.data) {
-				throw new Error(`${path.toString()}: adapter ${id} names root "${String(root)}", not "cache" or "data".`)
-			}
+	const { inputPath, streetIndex, root = BuildInputRoot.data, ...options } = input
 
-			const under = (base: (relative: string) => PathBuilderLike, relative: string) =>
-				isAbsolute(relative) ? relative : base(relative).toString()
+	if (root !== BuildInputRoot.cache && root !== BuildInputRoot.data) {
+		throw new Error(`${path.toString()}: ${label} names root "${String(root)}", not "cache" or "data".`)
+	}
 
-			return [
-				id,
-				{
-					...options,
-					inputPath: under(
-						root === BuildInputRoot.cache
-							? (relative) => cacheRootPathBuilder(relative)
-							: (relative) => dataRootPath(relative),
-						inputPath
-					),
-					// The street index is built from the previous corpus, a built artifact under the data root.
-					...(streetIndex ? { streetIndex: under((relative) => dataRootPath(relative), streetIndex) } : {}),
-				} satisfies AdapterOptions,
-			]
-		})
-	)
+	const under = (base: (relative: string) => PathBuilderLike, relative: string) =>
+		isAbsolute(relative) ? relative : base(relative).toString()
+
+	return {
+		...options,
+		inputPath: under(
+			root === BuildInputRoot.cache
+				? (relative) => cacheRootPathBuilder(relative)
+				: (relative) => dataRootPath(relative),
+			inputPath
+		),
+		// The street index is built from the previous corpus, a built artifact under the data root.
+		...(streetIndex ? { streetIndex: under((relative) => dataRootPath(relative), streetIndex) } : {}),
+	}
+}
+
+/**
+ * Read a committed record's `sourceRuns`, each input resolved as {@linkcode readBuildInputs} resolves one.
+ *
+ * @throws When the record lists no source run, a run lacks its adapter or source name,
+ * or two runs would write one source and country.
+ */
+export async function readSourceRuns(path: PathBuilderLike): Promise<SourceRun[]> {
+	const record = await readLocalJSONFile<BuildInputsRecord>(path)
+	const runs = record.sourceRuns ?? []
+
+	if (!runs.length) throw new Error(`${path.toString()} lists no run under \`sourceRuns\`.`)
+
+	const seen = new Set<string>()
+
+	return runs.map((run, index) => {
+		const label = `source run ${index}`
+
+		if (typeof run?.adapter !== "string" || !run.adapter)
+			throw new Error(`${path.toString()}: ${label} names no adapter.`)
+
+		if (typeof run.sourceName !== "string" || !run.sourceName) {
+			throw new Error(`${path.toString()}: ${label} names no \`sourceName\`.`)
+		}
+
+		const slot = sourceRunDirectoryName(run)
+
+		if (seen.has(slot)) throw new Error(`${path.toString()}: ${label} repeats ${slot}.`)
+
+		seen.add(slot)
+
+		const { adapter, sourceName, ...input } = run
+
+		return { adapter, sourceName, options: resolveBuildInput(path, label, input) }
+	})
+}
+
+/**
+ * The directory a source run writes under the output root: its source name,
+ * and its country when it has one.
+ */
+export function sourceRunDirectoryName(run: { sourceName: string; country?: string }): string {
+	return run.country ? `${run.sourceName}-${run.country.toLowerCase()}` : run.sourceName
 }

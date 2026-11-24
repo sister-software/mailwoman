@@ -22,14 +22,8 @@ import {
 	US_STREET_SUFFIX_LOOKUP,
 	US_UNIT_DESIGNATOR_LOOKUP,
 } from "@mailwoman/codex/us"
-import { foldNFKCWhitespace, stripCombiningMarks } from "@mailwoman/normalize/fold"
 
-import type { ParquetRow } from "#parquet/schema"
-
-/**
- * The text and span triple an address key reads.
- */
-export type AddressKeyRow = Pick<ParquetRow, "raw" | "span_starts" | "span_ends" | "span_tags">
+import { type AddressKeyRow, aliasedSpanSQL, foldKeyText, labeledSpanText } from "#utils/address-key"
 
 /**
  * The street tags whose spans make up the street, in the order a row writes them.
@@ -40,30 +34,6 @@ const STREET_TAGS: ReadonlySet<string> = new Set(["street_prefix", "street", "st
  * The digits of a ZIP Code without its +4: every NAD rendering writes these, so the key compares them.
  */
 const ZIP_CODE_DIGITS = 5
-
-/**
- * Lower case, marks stripped, every run of characters other than letters and digits one space.
- */
-function foldKeyText(text: string): string {
-	return stripCombiningMarks(foldNFKCWhitespace(text))
-		.replaceAll(/[^\p{L}\p{N}]+/gu, " ")
-		.trim()
-}
-
-/**
- * Every span's text under `tags`, joined in the row's order.
- */
-function spanText(row: AddressKeyRow, tags: ReadonlySet<string>): string {
-	const parts: string[] = []
-
-	for (const [index, tag] of row.span_tags.entries()) {
-		if (tags.has(tag)) {
-			parts.push(row.raw.slice(row.span_starts[index], row.span_ends[index]))
-		}
-	}
-
-	return parts.join(" ")
-}
 
 /**
  * One folded street or unit word in its canonical form: a directional as its USPS
@@ -91,11 +61,11 @@ function canonicalWords(text: string): string {
  * @returns null when the row has no five-digit ZIP Code or no digit in its house number.
  */
 export function nadAddressBlock(row: AddressKeyRow): string | null {
-	const zip = spanText(row, new Set(["postcode"]))
+	const zip = labeledSpanText(row, new Set(["postcode"]))
 		.replaceAll(/\D/gu, "")
 		.slice(0, ZIP_CODE_DIGITS)
 
-	const number = spanText(row, new Set(["house_number"])).replaceAll(/\D/gu, "")
+	const number = labeledSpanText(row, new Set(["house_number"])).replaceAll(/\D/gu, "")
 
 	if (zip.length !== ZIP_CODE_DIGITS || !number) return null
 
@@ -109,16 +79,7 @@ export function nadAddressBlock(row: AddressKeyRow): string | null {
  * outside the Basic Multilingual Plane before its ZIP Code reads another block and is missed.
  */
 export function nadAddressBlockSQL(alias: string): string {
-	const span = (tag: string) => {
-		const at = `list_position(${alias}.span_tags, '${tag}')`
-
-		return (
-			`substr(${alias}.raw, ${alias}.span_starts[${at}] + 1, ` +
-			`${alias}.span_ends[${at}] - ${alias}.span_starts[${at}])`
-		)
-	}
-
-	const digits = (tag: string) => `regexp_replace(coalesce(${span(tag)}, ''), '[^0-9]', '', 'g')`
+	const digits = (tag: string) => `regexp_replace(coalesce(${aliasedSpanSQL(alias, tag)}, ''), '[^0-9]', '', 'g')`
 
 	return `(left(${digits("postcode")}, 5) || '|' || ${digits("house_number")})`
 }
@@ -130,15 +91,15 @@ export function nadAddressBlockSQL(alias: string): string {
  * or a street, because such a row identifies no single address.
  */
 export function nadAddressKey(row: AddressKeyRow): string | null {
-	const state = lookupUSState(spanText(row, new Set(["region"])) || null)
+	const state = lookupUSState(labeledSpanText(row, new Set(["region"])) || null)
 	const block = nadAddressBlock(row)
-	const number = foldKeyText(spanText(row, new Set(["house_number"])))
-	const street = canonicalWords(spanText(row, STREET_TAGS))
+	const number = foldKeyText(labeledSpanText(row, new Set(["house_number"])))
+	const street = canonicalWords(labeledSpanText(row, STREET_TAGS))
 
 	if (!state || !block || !number || !street) return null
 
 	const zip = block.slice(0, ZIP_CODE_DIGITS)
-	const unit = canonicalWords(spanText(row, new Set(["unit"])))
+	const unit = canonicalWords(labeledSpanText(row, new Set(["unit"])))
 
 	return `${state.toLowerCase()}|${zip}|${number}|${street}|${unit}`
 }

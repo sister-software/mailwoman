@@ -1,0 +1,35 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus recorded-runs --inputs <path>` runs each `sourceRuns` entry, and `corpus build --inputs <path>` reads `adapters`. Every `inputPath` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$draft-note": "The regeneration of `overture-latam` for the corpus after v0.8.22 (#3457), recorded before it runs. The three runs re-render the BR, MX and CA rows through the overture adapter that renders the region and writes each postcode in the operator's grouping (#3449), under the source name the v0.8.0 rows carry, so `source_weights` and the receipts keep addressing them. Their rows replace the four part-overture-latam-rooftops files in an overlay on v0.8.22-retention-overlay, and the overlay is re-split under evaluation-groups.v0.8.24.json, whose `addressKeys` hold the address key of every frozen overture-latam row: a re-rendered row's new `source_id` names no frozen group, and its address key sends it to `test` with the frozen row it repeats.",
+	"$input-note": "The inputs are the release 2026-05-20.0 corpus JSONLs the v0.8.0 rows were rendered from, written again with the region column. Step 2 below reads the local snapshot parquet (`--probe-only`), so it downloads nothing, and `--sample 1200000` matches the earlier files' 1,200,000 lines per country. The JSONLs of the earlier run, which hold no region, are kept beside them under no-region/. Those earlier JSONLs render 13,228 of the 14,577 frozen address keys through the current adapter. The other frozen CA rows came from the v0.13.0-latam extract, which no recorded input reproduces.",
+	"$country-fraction-note": "Each run renders a country surface on 0.2 of its rows. The v0.8.0 rows carry one on BR 239,056 of 1,146,913 rows (20.8%), MX 230,692 of 1,125,335 (20.5%) and CA 240,280 of 1,499,734 (16.0%). CA's 240,280 are 20.0% of the 1,199,993 lines of its 2026-05-20.0 JSONL, and the 299,809 CA rows of the v0.13.0-latam extract it also holds carry none (0 of 299,809), so each run drew at 0.2. The seed is the adapter's default. The current COUNTRY_SURFACE_FORMS still lists the bare alpha-2 code (`BR`, `CA`, `MX`) beside the three-letter and written forms, so a quarter of the surface rows write a two-letter code, as the v0.8.0 rows do (BR 59,954, CA 80,258, MX 57,868).",
+	"$commands-note": "The sequence, in order. (1) Keep the earlier JSONLs: move $MAILWOMAN_DATA_ROOT/corpus/staging/overture/2026-05-20.0/overture-{br,ca,mx}.corpus.jsonl and fill-rates.{json,md} into no-region/ beside them. (2) mailwoman gazetteer overture-ingest --release 2026-05-20.0 --countries BR,MX,CA --probe-only --corpus-jsonl --sample 1200000, which writes the region column. (3) mailwoman corpus recorded-runs --inputs packages/corpus/data/builds/v0.8.23-rebuild/inputs.json --out $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.8.23-rebuild/source-runs --corpus-version 0.8.23-rebuild, which writes source-runs/overture-latam-<cc>/overture/canonical.jsonl. (4) For each country, mailwoman corpus align-recipe --input <canonical.jsonl> --out <labeled.jsonl>, then mailwoman dev jsonl-to-parquet. (5) mailwoman corpus split-overlay on each parquet under the base holdout policy. (6) mailwoman corpus overlay-manifest --base /mnt/mw/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay/MANIFEST.json --replace-source overture-latam with the three parquet files and their split attributes, source overture-latam each. (7) Before the re-split, node packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts --match-address --preview-evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.24.json against the overlay manifest, once per frozen set holding overture-latam rows (heldout-dev-v0.8.18 v4, heldout-confirm-v0.8.18 v3, heldout-confirm-v0.8.20, heldout-dev-v0.8.21): every row must overlap training by no kind. Measured against v0.8.22-retention-overlay on 2026-11-24, heldout-dev-v0.8.21 overlapped training by address on 114 overture-latam rows under evaluation-groups.v0.8.23.json, whose keys hold no overture-latam row, and on none under the v0.8.24 preview, which holds out 573 overture-latam rows outside the frozen groups (BR 171, CA 21, MX 381) because they share a frozen row's address key. (8) The validation quota and resplit.run.ts under --evaluation-groups packages/corpus/data/holdout/evaluation-groups.v0.8.24.json, as the v0.8.22 overlay plan's `$resplit` commands run them.",
+	"corpusVersion": "v0.8.23-rebuild",
+	"adapters": {},
+	"sourceRuns": [
+		{
+			"adapter": "overture",
+			"sourceName": "overture-latam",
+			"country": "BR",
+			"inputPath": "corpus/staging/overture/2026-05-20.0/overture-br.corpus.jsonl",
+			"countryFraction": 0.2,
+			"seed": 20260922
+		},
+		{
+			"adapter": "overture",
+			"sourceName": "overture-latam",
+			"country": "MX",
+			"inputPath": "corpus/staging/overture/2026-05-20.0/overture-mx.corpus.jsonl",
+			"countryFraction": 0.2,
+			"seed": 20260922
+		},
+		{
+			"adapter": "overture",
+			"sourceName": "overture-latam",
+			"country": "CA",
+			"inputPath": "corpus/staging/overture/2026-05-20.0/overture-ca.corpus.jsonl",
+			"countryFraction": 0.2,
+			"seed": 20260922
+		}
+	]
+}

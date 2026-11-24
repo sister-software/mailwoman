@@ -6,7 +6,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { buildInputsPath, readBuildInputs } from "#build/inputs"
+import { buildInputsPath, readBuildInputs, readSourceRuns, sourceRunDirectoryName } from "#build/inputs"
 
 let scratch: TemporaryDirectory
 
@@ -101,5 +101,45 @@ describe("readBuildInputs", () => {
 		const inputs = await readBuildInputs(buildInputsPath("v0.7.0-de-holdout"))
 
 		expect(inputs["wof-admin"]!.inputPath).toBe(dataRootPath("src", "wof-repos").toString())
+	})
+})
+
+describe("readSourceRuns", () => {
+	it("reads the committed overture-latam runs, one per country, each under the latam source name", async () => {
+		const runs = await readSourceRuns(buildInputsPath("v0.8.23-rebuild"))
+
+		expect(
+			runs.map((run) => sourceRunDirectoryName({ sourceName: run.sourceName, country: run.options.country }))
+		).toEqual(["overture-latam-br", "overture-latam-mx", "overture-latam-ca"])
+
+		for (const run of runs) {
+			expect(run.adapter).toBe("overture")
+
+			expect(run.options.inputPath).toBe(
+				dataRootPath(
+					`corpus/staging/overture/2026-05-20.0/overture-${run.options.country!.toLowerCase()}.corpus.jsonl`
+				).toString()
+			)
+		}
+	})
+
+	it("refuses two runs that would write one source and country", async () => {
+		const path = scratch.path("repeated.json")
+		const run = { adapter: "overture", sourceName: "overture-latam", country: "BR", inputPath: "x.jsonl" }
+
+		await writeLocalJSONFile({ corpusVersion: "v0.0.0-test", adapters: {}, sourceRuns: [run, run] }, path)
+
+		await expect(readSourceRuns(path)).rejects.toThrow(/source run 1 repeats overture-latam-br/)
+	})
+
+	it("refuses a run that names no source name, whose rows would take the adapter's own id", async () => {
+		const path = scratch.path("unnamed.json")
+
+		await writeLocalJSONFile(
+			{ corpusVersion: "v0.0.0-test", adapters: {}, sourceRuns: [{ adapter: "overture", inputPath: "x.jsonl" }] },
+			path
+		)
+
+		await expect(readSourceRuns(path)).rejects.toThrow(/source run 0 names no `sourceName`/)
 	})
 })

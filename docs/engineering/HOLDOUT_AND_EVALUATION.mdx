@@ -210,17 +210,24 @@ overlap audit compares against training rows, so a base row, its case, comma and
 rendered rows of its record take one split.
 
 A source that issues one address a new record id on a re-ingest also keys its groups by address
-(`GROUP_ADDRESS_KEY_SOURCES` in `@mailwoman/corpus/utils/evaluation-groups`, #3125). NAD is the one such source:
-its release gave the addresses of earlier records new UUIDs, and 2,240 of `heldout-dev-v0.8.21`'s 4,000 US rows
+(`GROUP_ADDRESS_KEY_SOURCES` in `@mailwoman/corpus/utils/evaluation-groups`, #3125). Two sources do. NAD's
+release gave the addresses of earlier records new UUIDs, and 2,240 of `heldout-dev-v0.8.21`'s 4,000 US rows
 repeat the text of a v0.8.21 training row under another record. A NAD row's address key is its state, five-digit
 ZIP Code, house number, street and unit, folded so that every augmentation of one record gives one key
 (`nadAddressKey`). NAD rows hold no county column, and the ZIP Code within its state stands in for it. The frozen list
 records the address key of every frozen NAD row (`addressKeys`, written by `evaluation-groups.run.ts`), a row
 whose key the list holds is frozen with the group it repeats, and its record's other rows follow it to `test`.
 A list written before #3125 holds no keys, and `evaluation-groups.v0.8.22.json` is the first with them: v0.8.21's
-groups and the 5,553 keys of the frozen NAD rows. The overlap audit compares NAD rows by address key
-under `--match-address`, and `--preview-evaluation-groups <list>` audits a corpus as a re-split under that list
-would write it.
+groups and the 5,553 keys of the frozen NAD rows.
+
+`overture-latam` is the second (#3457). Its `source_id` hashes the row's aligned components, so the run that
+renders the Brazilian, Mexican and Canadian rows again with their region and the operator's postcode grouping
+gives every row a new id. Its address key is the postcode's letters and digits, the locality, the house number,
+the street and the unit, folded, without the region or the country (`overtureAddressKey`), so
+`225 County 2 RD, CARDINAL K0E1E0` and `225 County 2 RD, CARDINAL ON K0E 1E0` share one key.
+`evaluation-groups.v0.8.24.json` adds the 14,577 keys of the 14,675 frozen `overture-latam` rows to the v0.8.23
+list. The overlap audit compares a keyed source's rows by address key under `--match-address`, and
+`--preview-evaluation-groups <list>` audits a corpus as a re-split under that list would write it.
 
 Under the policy `splitForRow` decides each row by its group and the two lists:
 
