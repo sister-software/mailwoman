@@ -3,7 +3,7 @@ title: Annotate a result
 description: Compose coordinate and country annotators, choose a consumer shape, and retain source evidence.
 role: guide
 source-of-truth: packages/annotations/lib/index.ts, packages/spatial/lib/coordinate/formats.ts, packages/codex/lib/country/reference.ts, packages/core/lib/decoder/serialize/json.ts
-verified-with: published @mailwoman/annotations, spatial, codex, core v11.0.0
+verified-with: published @mailwoman/annotations, spatial, codex, core v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-24
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -52,7 +52,7 @@ const openCage = toOpenCage(set)
 console.log(JSON.stringify({ native, openCage }, null, 2))
 ```
 
-Run `node annotate.ts`. Published 11.0.0 produced the following complete output for this input:
+Run `node annotate.ts`. Published 11.3.0 produced the following complete output for this input:
 
 ```json
 {
@@ -146,7 +146,7 @@ const place = toSchemaOrg({
 console.log(JSON.stringify(place, null, 2))
 ```
 
-Run `node place.ts`. Published 11.0.0 returned:
+Run `node place.ts`. Published 11.3.0 returned:
 
 ```json
 {
@@ -210,7 +210,7 @@ console.log(
 )
 ```
 
-Run `node repeated.ts`. Published 11.0.0 returned:
+Run `node repeated.ts`. Published 11.3.0 returned:
 
 ```json
 {

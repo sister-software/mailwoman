@@ -3,7 +3,7 @@ title: Normalize an address before direct parsing
 description: Clean raw input with the published normalizer and retain source positions when the string length changes.
 role: guide
 source-of-truth: packages/normalize/lib/compute.ts, packages/normalize/lib/types.ts, packages/neural/lib/classifier.ts
-verified-with: published @mailwoman/normalize, neural, neural-weights-en-us v11.0.0
+verified-with: published @mailwoman/normalize, neural, neural-weights-en-us v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-24
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -54,7 +54,7 @@ const tree = await classifier.parse(result.normalized)
 console.log("parser text:", JSON.stringify(tree.raw))
 ```
 
-Run `node normalize-address.ts`. Published 11.0.0 returned this complete output:
+Run `node normalize-address.ts`. Published 11.3.0 returned this complete output:
 
 ```text
 raw: "  350   5th Ave,New York, NY 10118  "
