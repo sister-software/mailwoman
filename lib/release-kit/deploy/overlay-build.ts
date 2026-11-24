@@ -14,7 +14,7 @@ import { AWS_BUILD_PARAMETER_PATH, AWS_BUILD_REGION } from "#release-kit/deploy/
 /**
  * The key prefix of every object a build reads or writes in the inputs bucket.
  */
-export const OVERLAY_BUILD_PREFIX = "overlay-tiles"
+const OVERLAY_BUILD_PREFIX = "overlay-tiles"
 
 /**
  * The image every launch runs unless the caller names another.
@@ -55,9 +55,9 @@ export interface OverlayBuildScriptOptions {
 	image: string
 	tilesetVersion: string
 	/**
-	 * The admin database's key in the inputs bucket.
+	 * The row sets the run builds, as `tiles overlays --rowsets` takes them.
 	 */
-	adminKey: string
+	rowSets: readonly string[]
 	hours: number
 	countries?: readonly string[]
 	/**
@@ -99,8 +99,8 @@ export function overlayBuildScript(options: OverlayBuildScriptOptions): string {
 	const runArgs = [
 		"--tileset-version",
 		shellQuote(options.tilesetVersion),
-		"--admin",
-		s3(options.adminKey),
+		"--rowsets",
+		shellQuote(options.rowSets.join(",")),
 		"--repos-cache",
 		s3(`${OVERLAY_BUILD_PREFIX}/wof-repos/`),
 		"--export-copy",

@@ -21,7 +21,11 @@ export const spec = {
 	options: {
 		work: { type: "string", required: true, description: "Work directory for clones, exports and archives" },
 		"tileset-version": { type: "string", required: true, description: "Tile set version, such as v1 for wof.v1" },
-		admin: { type: "string", required: true, description: "Admin database: a local path or an s3:// URL" },
+		rowsets: { type: "string", description: "Comma-separated row sets to build: wof, gazetteer. Default both" },
+		admin: {
+			type: "string",
+			description: "Admin database, a local path or an s3:// URL. The gazetteer row set reads it",
+		},
 		countries: { type: "string", description: "Comma-separated lower-case country codes. Default every country" },
 		repos: { type: "string", description: "Directory of existing clones. Default: clone into the work directory" },
 		"repos-cache": {
@@ -41,12 +45,16 @@ const TilesOverlays: CommandComponent<typeof spec> = ({ options }) => {
 	const progress = useStageProgress<string>({ describe: String })
 
 	const state = useCommandTask(async () => {
-		const { buildOverlayTiles } = await import("#tools/tiles/overlays")
+		const [{ buildOverlayTiles }, { parseOverlayRowSets }] = await Promise.all([
+			import("#tools/tiles/overlays"),
+			import("#tools/tiles/overlay-row-sets"),
+		])
 
 		const report = await buildOverlayTiles({
 			work: options.work,
 			version: options.tilesetVersion,
-			admin: options.admin,
+			...(options.rowsets ? { rowSets: parseOverlayRowSets(options.rowsets) } : {}),
+			...(options.admin ? { admin: options.admin } : {}),
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,

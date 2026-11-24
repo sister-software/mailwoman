@@ -31,15 +31,8 @@ import { wofRepoName } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 
+import { OVERLAY_ROW_SETS, type OverlayRowSet } from "#tools/tiles/overlay-row-sets"
 import { publishTiles } from "#tools/tiles/publish"
-
-/**
- * The row sets that each get a tile set, in build order: the gazetteer export
- * reads the `wof` export's boundaries.
- */
-export const OVERLAY_ROW_SETS = ["wof", "gazetteer"] as const
-
-export type OverlayRowSet = (typeof OVERLAY_ROW_SETS)[number]
 
 export interface BuildOverlayTilesOptions {
 	/**
@@ -51,9 +44,17 @@ export interface BuildOverlayTilesOptions {
 	 */
 	version: string
 	/**
-	 * The admin database: a local path, or an `s3://` URL the run copies into the work directory.
+	 * The row sets to build and publish, in {@linkcode OVERLAY_ROW_SETS} order.
+	 *
+	 * @defaultValue every row set
 	 */
-	admin: string
+	rowSets?: readonly OverlayRowSet[]
+	/**
+	 * The admin database: a local path, or an `s3://` URL the run copies into the work directory.
+	 *
+	 * The `gazetteer` row set reads it, and a run without that row set needs none.
+	 */
+	admin?: string
 	/**
 	 * Lower-case country codes to build, or every country when absent.
 	 */
@@ -292,6 +293,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	const phase = options.onPhase ?? (() => {})
 	const report: string[] = []
 	const exportDir = PathBuilder.from(work, "export")
+	const rowSets = OVERLAY_ROW_SETS.filter((rowSet) => !options.rowSets || options.rowSets.includes(rowSet))
 
 	await makeDirectories(work)
 
@@ -319,18 +321,6 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		)
 	}
 
-	let adminPath = options.admin
-
-	if (adminPath.startsWith("s3://")) {
-		adminPath = PathBuilder.from(work, "admin.db").toString()
-
-		if (!(await pathExists(adminPath))) {
-			phase("admin", options.admin)
-
-			await runProcess("aws", ["s3", "cp", "--only-show-errors", options.admin, adminPath], ON_TERMINAL)
-		}
-	}
-
 	const { exportGazetteerGeoParquet, exportWOFGeoParquet } =
 		await import("@mailwoman/gazetteer/tools/pipeline/geoparquet")
 
@@ -338,6 +328,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 
 	phase("export wof")
 
+	// The `gazetteer` export reads the `wof` export's boundaries, so the `wof` export runs for either row set.
 	const wof = await exportWOFGeoParquet({ out: exportDir, reposDir, ...countries })
 
 	report.push(
@@ -345,21 +336,37 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 			`${wof.counts.unreadable} unreadable`
 	)
 
-	const gazetteer = await exportGazetteerGeoParquet({
-		out: exportDir,
-		adminPath,
-		...countries,
-		onPhase: (name, detail) => phase(`export gazetteer: ${name}`, detail),
-	})
+	if (rowSets.includes("gazetteer")) {
+		if (!options.admin) throw new CommandError("the gazetteer row set reads the admin database: pass --admin")
 
-	const boundaries = Object.entries(gazetteer.counts.boundaries)
-		.map(([source, count]) => `${count} ${source}`)
-		.join(", ")
+		let adminPath = options.admin
 
-	report.push(
-		`gazetteer export: ${gazetteer.counts.places} places, boundaries ${boundaries}, ${gazetteer.counts.extents} extents, ` +
-			`${gazetteer.counts.overturePlacesMapped} of ${gazetteer.counts.overturePlaces} Overture places mapped`
-	)
+		if (adminPath.startsWith("s3://")) {
+			adminPath = PathBuilder.from(work, "admin.db").toString()
+
+			if (!(await pathExists(adminPath))) {
+				phase("admin", options.admin)
+
+				await runProcess("aws", ["s3", "cp", "--only-show-errors", options.admin, adminPath], ON_TERMINAL)
+			}
+		}
+
+		const gazetteer = await exportGazetteerGeoParquet({
+			out: exportDir,
+			adminPath,
+			...countries,
+			onPhase: (name, detail) => phase(`export gazetteer: ${name}`, detail),
+		})
+
+		const boundaries = Object.entries(gazetteer.counts.boundaries)
+			.map(([source, count]) => `${count} ${source}`)
+			.join(", ")
+
+		report.push(
+			`gazetteer export: ${gazetteer.counts.places} places, boundaries ${boundaries}, ${gazetteer.counts.extents} extents, ` +
+				`${gazetteer.counts.overturePlacesMapped} of ${gazetteer.counts.overturePlaces} Overture places mapped`
+		)
+	}
 
 	if (options.exportCopy) {
 		phase("copy export", options.exportCopy)
@@ -369,7 +376,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		report.push(`export copied → ${options.exportCopy}`)
 	}
 
-	for (const rowSet of OVERLAY_ROW_SETS) {
+	for (const rowSet of rowSets) {
 		const archive = PathBuilder.from(work, `${rowSet}.${options.version}.pmtiles`).toString()
 
 		phase(`tiles ${rowSet}`)

@@ -77,12 +77,17 @@ export async function aws<T>(caller: AWSCaller, args: readonly string[]): Promis
 /**
  * Runs a read of one resource and answers null when AWS reports that the resource doesn't exist.
  *
- * A read of an existing resource with empty output answers `{}`, so null always means absent.
+ * The read must be one that prints the resource, as an IAM `get-*` or an S3
+ * `head-object` does, so null always means absent.
  * Any other failure, such as a refused permission, is thrown: an unreadable resource isn't an absent one.
  */
-export async function readAWSResource<T extends object>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
+export async function readAWSResource<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
 	try {
-		return (await aws<T>(caller, args)) ?? ({} as T)
+		const resource = await aws<T>(caller, args)
+
+		if (resource === null) throw new Error(`aws ${args.join(" ")} printed no resource`)
+
+		return resource
 	} catch (error) {
 		if (isProcessError(error) && ABSENT_RESOURCE.test(String(error.stderr))) return null
 

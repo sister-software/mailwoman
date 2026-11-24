@@ -32,7 +32,8 @@ publish either archive to `mailwoman-public`.
    With `--repos-cache s3://…`, each repository's `.git` is restored from the cache before the sync and
    stored again when the sync moved its head. With `--repos`, the run reads that directory's clones as they
    stand: on the lab, `gazetteer inspect sync` keeps them current.
-2. It copies the admin database when `--admin` is an `s3://` URL.
+2. With the `gazetteer` row set, it copies the admin database when `--admin` is an `s3://` URL.
+   `--rowsets wof` skips this step and step 4.
 3. `exportWOFGeoParquet` writes `export/rowset=wof/`.
 4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
    `s3://overturemaps-us-west-2`, recomputes each division's synthetic id with `assignSyntheticIDs`, and fails when no
@@ -119,22 +120,22 @@ The package is public, so an instance pulls it without a token.
 ### Launch
 
 ```sh
-yarn mwops release launch-overlay-build --tileset-version v1 --dry-run
-yarn mwops release launch-overlay-build --tileset-version v1
+yarn mwops release launch-overlay-build --tileset-version v1 --rowsets wof --dry-run
+yarn mwops release launch-overlay-build --tileset-version v1 --rowsets wof
 ```
 
-The launch runs under the tile-build key and does five things:
+The launch runs under the tile-build key and uploads no data from the lab host: the instance fetches every input
+itself. It does four things:
 
-1. It uploads the admin database to `overlay-tiles/inputs/admin-<md5>.db` unless that key exists.
-2. It writes the R2 upload keys, `RCLONE_S3_PUBLIC_*` from `.env`, as `SecureString` parameters under
+1. It writes the R2 upload keys, `RCLONE_S3_PUBLIC_*` from `.env`, as `SecureString` parameters under
    `/mailwoman/tile-build/`.
-3. It starts one instance tagged `mailwoman:purpose=tile-build`, with the instance profile and a shutdown behavior of
+2. It starts one instance tagged `mailwoman:purpose=tile-build`, with the instance profile and a shutdown behavior of
    `terminate`.
-4. It creates the EventBridge schedule `mailwoman-tile-build-<instance id>`, which terminates the instance at the
+3. It creates the EventBridge schedule `mailwoman-tile-build-<instance id>`, which terminates the instance at the
    deadline. A failed schedule terminates the instance at once.
-5. It prints the instance id, the deadline, the log key and the two tile set URLs.
+4. It prints the instance id, the deadline, the log key and the URL of each tile set.
 
-`--dry-run` hashes the admin database, prints the boot script, and makes only read requests.
+`--rowsets` selects the tile sets, both by default. `--dry-run` prints the boot script and makes only read requests.
 
 Three mechanisms end an instance:
 

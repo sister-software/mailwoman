@@ -4,26 +4,26 @@
 /**
  *   `release.launch-overlay-build`: run the overlay tile build on one EC2 instance under the tile-build key.
  *
- *   The launch stages the admin database in the inputs bucket, writes the R2 upload
- *   keys to Parameter Store, starts a tagged instance whose boot script runs the image,
- *   and sets the instance's termination deadline.
+ *   The launch writes the R2 upload keys to Parameter Store, starts a tagged instance
+ *   whose boot script runs the image, and sets the instance's termination deadline.
+ *   The instance fetches every input itself, so the launch uploads no data from this host.
+ *
  *   Two deadlines end the instance: the boot script's own halt timer, and an EventBridge
  *   Scheduler schedule that terminates it from outside.
  *
  *   A launch whose schedule fails terminates the instance it started.
  */
 
-import { md5File } from "@mailwoman/core/crypto/hash"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/repo/git"
 import { OperationEffect } from "@mailwoman/core/scripting"
 import { isProcessError } from "@mailwoman/core/scripting/process"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { OVERLAY_ROW_SETS } from "mailwoman/tools/tiles/overlay-row-sets"
 import { z } from "zod"
 
-import { aws, type AWSCaller, callerIdentity, readAWSResource, tileBuildKey } from "#release-kit/deploy/aws/cli"
+import { aws, type AWSCaller, callerIdentity, tileBuildKey } from "#release-kit/deploy/aws/cli"
 import {
 	AWS_BUILD_PARAMETER_PATH,
 	AWS_BUILD_TAG,
@@ -38,17 +38,11 @@ import {
 	OVERLAY_BUILD_IMAGE_PARAMETER,
 	OVERLAY_BUILD_INSTANCE_TYPE,
 	OVERLAY_BUILD_PARAMETERS,
-	OVERLAY_BUILD_PREFIX,
 	overlayBuildLogKey,
 	overlayBuildScript,
 } from "#release-kit/deploy/overlay-build"
 import { defineOperation } from "#release-kit/operation"
 import { flag, list, text } from "#release-kit/operations/inputs"
-
-/**
- * The admin database file a launch stages unless the caller names another.
- */
-const DEFAULT_ADMIN_FILE = "admin-global-priority.db"
 
 /**
  * The size of the instance's root volume.
@@ -59,27 +53,26 @@ const DEFAULT_ADMIN_FILE = "admin-global-priority.db"
 const ROOT_VOLUME_GB = 30
 
 /**
- * The R2 upload settings from the environment.
+ * The R2 upload settings from the environment, each under its Parameter Store name.
  * The launch copies them to Parameter Store.
  */
-async function r2Settings(): Promise<Record<keyof typeof OVERLAY_BUILD_PARAMETERS, string>> {
+async function r2Parameters(): Promise<Array<{ name: string; value: string }>> {
 	const { $private } = await import("mailwoman/env")
+	const endpoint = $private.RCLONE_S3_PUBLIC_ENDPOINT
+	const accessKeyID = $private.RCLONE_S3_PUBLIC_ACCESS_KEY_ID
+	const secretAccessKey = $private.RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY
 
-	const settings = {
-		endpoint: $private.RCLONE_S3_PUBLIC_ENDPOINT,
-		accessKeyID: $private.RCLONE_S3_PUBLIC_ACCESS_KEY_ID,
-		secretAccessKey: $private.RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY,
-	}
-
-	const missing = Object.entries(settings).filter(([, value]) => !value)
-
-	if (missing.length) {
+	if (!endpoint || !accessKeyID || !secretAccessKey) {
 		throw new Error(
 			"launch-overlay-build needs RCLONE_S3_PUBLIC_ENDPOINT, RCLONE_S3_PUBLIC_ACCESS_KEY_ID and RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY, the keys that write mailwoman-tiles"
 		)
 	}
 
-	return settings as Record<keyof typeof OVERLAY_BUILD_PARAMETERS, string>
+	return [
+		{ name: OVERLAY_BUILD_PARAMETERS.endpoint, value: endpoint },
+		{ name: OVERLAY_BUILD_PARAMETERS.accessKeyID, value: accessKeyID },
+		{ name: OVERLAY_BUILD_PARAMETERS.secretAccessKey, value: secretAccessKey },
+	]
 }
 
 /**
@@ -89,14 +82,18 @@ function atExpression(instant: Date): string {
 	return `at(${instant.toISOString().slice(0, 19)})`
 }
 
+/**
+ * The `--rowsets` list, each entry one of the build's row sets.
+ */
+const rowSetList = z.array(z.enum(OVERLAY_ROW_SETS))
+
 const launchReport = z.object({
 	instanceID: z.string().nullable(),
 	instanceType: z.string(),
 	image: z.string(),
 	deadline: z.string(),
 	schedule: z.string().nullable(),
-	adminKey: z.string(),
-	adminUploaded: z.boolean(),
+	rowSets: z.array(z.string()),
 	logURL: z.string().nullable(),
 	tileSets: z.array(z.string()),
 })
@@ -106,14 +103,14 @@ const launchReport = z.object({
  */
 export const launchOverlayBuild = defineOperation({
 	id: "release.launch-overlay-build",
-	description: `Run the overlay tile build on one tagged EC2 instance under the tile-build key (AWS_TILE_BUILD_*). Stages the admin database (--admin, default the data root's ${DEFAULT_ADMIN_FILE}) in the inputs bucket, copies the R2 upload keys to Parameter Store, and starts the image (--image, default ${OVERLAY_BUILD_IMAGE}:<HEAD>) on --instance-type (default ${OVERLAY_BUILD_INSTANCE_TYPE}). The instance terminates when the build exits, and in any case after --hours (default ${OVERLAY_BUILD_DEFAULT_HOURS}): its own halt timer and an EventBridge schedule both enforce the deadline. --tileset-version names the published tile sets. --countries limits the build, and --skip-publish builds without uploading. --dry-run prints the boot script and changes nothing.`,
+	description: `Run the overlay tile build on one tagged EC2 instance under the tile-build key (AWS_TILE_BUILD_*). Copies the R2 upload keys to Parameter Store and starts the image (--image, default ${OVERLAY_BUILD_IMAGE}:<HEAD>) on --instance-type (default ${OVERLAY_BUILD_INSTANCE_TYPE}). The instance fetches its own inputs, so the launch uploads no data. --rowsets selects the tile sets (default ${OVERLAY_ROW_SETS.join(",")}). The instance terminates when the build exits, and in any case after --hours (default ${OVERLAY_BUILD_DEFAULT_HOURS}): its own halt timer and an EventBridge schedule both enforce the deadline. --tileset-version names the published tile sets. --countries limits the build, and --skip-publish builds without uploading. --dry-run prints the boot script and changes nothing.`,
 	effect: OperationEffect.ExternalWrite,
 	options: {
 		"tileset-version": { type: "string" },
 		image: { type: "string" },
 		"instance-type": { type: "string" },
 		hours: { type: "string" },
-		admin: { type: "string" },
+		rowsets: { type: "string" },
 		countries: { type: "string" },
 		"skip-publish": { type: "boolean" },
 	},
@@ -123,7 +120,7 @@ export const launchOverlayBuild = defineOperation({
 			image: text,
 			"instance-type": text,
 			hours: z.coerce.number().positive().max(48).optional(),
-			admin: text,
+			rowsets: list.pipe(rowSetList),
 			countries: list,
 			"skip-publish": flag,
 		})
@@ -142,20 +139,13 @@ export const launchOverlayBuild = defineOperation({
 		const image = input.image ?? `${OVERLAY_BUILD_IMAGE}:${await gitHead(undefined, { short: true })}`
 		const instanceType = input["instance-type"] ?? OVERLAY_BUILD_INSTANCE_TYPE
 		const hours = input.hours ?? OVERLAY_BUILD_DEFAULT_HOURS
-		const adminPath = input.admin ?? wofDatabasePath(DEFAULT_ADMIN_FILE).toString()
-
-		context.log(`hashing ${adminPath}`)
-
-		const adminKey = `${OVERLAY_BUILD_PREFIX}/inputs/admin-${await md5File(adminPath)}.db`
-
-		const adminStaged =
-			(await readAWSResource(caller, ["s3api", "head-object", "--bucket", bucket, "--key", adminKey])) !== null
+		const rowSets = input.rowsets.length ? input.rowsets : OVERLAY_ROW_SETS
 
 		const script = overlayBuildScript({
 			bucket,
 			image,
 			tilesetVersion,
-			adminKey,
+			rowSets,
 			hours,
 			countries: input.countries,
 			skipPublish: input["skip-publish"],
@@ -163,44 +153,32 @@ export const launchOverlayBuild = defineOperation({
 
 		const deadline = new Date(Date.now() + hours * 3_600_000)
 
-		const tileSets = ["wof", "gazetteer"].map(
-			(rowSet) => `https://tiles.mailwoman.post/${rowSet}.${tilesetVersion}.json`
-		)
+		const tileSets = rowSets.map((rowSet) => `https://tiles.mailwoman.post/${rowSet}.${tilesetVersion}.json`)
 
 		const report = {
 			instanceType,
 			image,
 			deadline: deadline.toISOString(),
-			adminKey: `s3://${bucket}/${adminKey}`,
+			rowSets: [...rowSets],
 			tileSets: input["skip-publish"] ? [] : tileSets,
 		}
 
+		const parameters = await r2Parameters()
+
 		if (context.dryRun) {
-			context.log(`would ${adminStaged ? "reuse" : "upload"} s3://${bucket}/${adminKey}`)
-
-			context.log(
-				`would write ${Object.keys(OVERLAY_BUILD_PARAMETERS).length} parameters under ${AWS_BUILD_PARAMETER_PATH}`
-			)
-
+			context.log(`would write ${parameters.length} parameters under ${AWS_BUILD_PARAMETER_PATH}`)
 			context.log(`would launch ${instanceType} with this boot script:\n${script}`)
 
-			return { ...report, instanceID: null, schedule: null, adminUploaded: false, logURL: null }
-		}
-
-		if (!adminStaged) {
-			context.log(`uploading ${adminPath} to s3://${bucket}/${adminKey}`)
-			await aws(caller, ["s3", "cp", "--only-show-errors", adminPath, `s3://${bucket}/${adminKey}`])
+			return { ...report, instanceID: null, schedule: null, logURL: null }
 		}
 
 		await using scratch = await temporaryDirectory("overlay-build-")
 
-		const settings = await r2Settings()
-
-		for (const [field, name] of Object.entries(OVERLAY_BUILD_PARAMETERS)) {
+		for (const { name, value } of parameters) {
 			// The value goes through a file so it never appears on a command line.
 			const valueFile = scratch.path(`${name}.txt`)
 
-			await writePrivateTextFile(settings[field as keyof typeof settings], valueFile)
+			await writePrivateTextFile(value, valueFile)
 
 			await aws(caller, [
 				"ssm",
@@ -309,7 +287,6 @@ export const launchOverlayBuild = defineOperation({
 			...report,
 			instanceID,
 			schedule,
-			adminUploaded: !adminStaged,
 			logURL: `s3://${bucket}/${overlayBuildLogKey(tilesetVersion, instanceID)}`,
 		}
 	},
@@ -317,7 +294,7 @@ export const launchOverlayBuild = defineOperation({
 		return [
 			report.instanceID ? `instance ${report.instanceID} (${report.instanceType})` : `dry run: ${report.instanceType}`,
 			`image ${report.image}`,
-			`admin database ${report.adminKey}${report.adminUploaded ? " (uploaded)" : ""}`,
+			`row sets ${report.rowSets.join(", ")}`,
 			`terminates by ${report.deadline}${report.schedule ? ` (schedule ${report.schedule})` : ""}`,
 			...(report.logURL ? [`log, written when the build exits: ${report.logURL}`] : []),
 			...(report.tileSets.length ? ["tile sets:", ...report.tileSets.map((url) => `  ${url}`)] : []),
