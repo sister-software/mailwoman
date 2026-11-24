@@ -25,6 +25,11 @@ It also lists each detail the layout doesn't print as the document does. A UPU r
 `lib/address/layouts/description-records.ts` is its citation. Every other rendered layout's citation goes in
 `lib/address/layouts/citations.ts`. A board locale cites the operator document beside its board rows.
 
-`yarn mwops health layout-citations` lists every jurisdiction whose rendered layout cites no primary document. The
-`debt` check pins that count as `uncitedAddressLayouts` in `lib/repo-health/baseline.json`. A layout added without a
-citation fails `debt`. After a citation lowers the count, ratchet the baseline with `mwops health baseline debt`.
+A new citation goes into the existing range module for its code's letter: `layouts/citations/ac-ge.ts`, `g-m.ts`,
+`l-z.ts` or `mo-zw.ts`. A new module needs another import and spread line in `citations.ts`, an edit every
+concurrent change makes to the same lines.
+
+`yarn mwops health layout-citations` fails on a rendered layout that cites no primary document unless
+`lib/repo-health/uncited-address-layouts.json` lists its code with the search that found none. It also fails on a
+listed code that's now cited, so a change that cites one deletes its line. The list holds one code per line, so two
+changes that cite different jurisdictions merge without a conflict.

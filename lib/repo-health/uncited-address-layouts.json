@@ -1,0 +1,8 @@
+{
+	"$comment": "Jurisdictions whose rendered address layout may stay uncited, one per line. `layout-citations` fails on an uncited layout missing here and on a listed code that has since been cited, so the list only shrinks. Each code records the search that found no primary document.",
+	"uncited": {
+		"EH": "eshEn.pdf returned HTTP 500 and eshFr.pdf an error page on 2026-11-24; searches for a UPU or Barid Al-Maghrib document for Western Sahara found only postcode directories.",
+		"KP": "prkEn.pdf and prkFr.pdf (07/2002) print a contact block only; UPU's S42 inventory has no template; no operator addressing rules found.",
+		"XK": "kosEn.pdf returned HTTP 500; Post of Kosovo's site, ARKEP and Law No. 06/L-038 on Postal Services contain no addressing rules."
+	}
+}
