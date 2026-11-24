@@ -12,6 +12,7 @@ import type { AddressLayout } from "#address/layout"
 import {
 	defaultScriptForCountry,
 	layoutForCountry,
+	layoutWithRegionAfterLocality,
 	lineJoinForCountry,
 	namePairScriptForCountry,
 	regionLayoutForCountry,
@@ -65,6 +66,15 @@ export interface FormatAddressOptions {
 	 * A country with no region position renders with its ordinary layout and reports the region unplaced.
 	 */
 	withRegion?: boolean
+
+	/**
+	 * Print the region on its own line after the locality when the selected layout leaves it out.
+	 *
+	 * See {@linkcode layoutWithRegionAfterLocality}.
+	 * A corpus writer sets it on a share of rows, so the training rows of a country whose
+	 * postal layout omits the region still hold the region in the place writers put it.
+	 */
+	regionAfterLocality?: boolean
 
 	/**
 	 * Render through this layout in place of the one the country and script select,
@@ -283,12 +293,14 @@ export function formatAddressRow(
 	const derived = scriptIsFreeToDerive(country) ? scriptOfComponents(components, country) : null
 	const script = opts.script ?? derived ?? defaultScriptForCountry(country)
 
-	const layout =
+	const selected =
 		opts.layout ??
 		(opts.withRegion ? regionLayoutForCountry(country, script) : null) ??
 		layoutForCountry(country, script)
 
-	if (!layout) return null
+	if (!selected) return null
+
+	const layout = opts.regionAfterLocality ? layoutWithRegionAfterLocality(selected) : selected
 
 	const rendering = renderAddress(layout, components, { formDraw: opts.formDraw })
 

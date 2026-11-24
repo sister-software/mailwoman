@@ -571,3 +571,37 @@ describe("formatAddress withRegion", () => {
 		expect(row.unplaced).toContain("region")
 	})
 })
+
+describe("formatAddressRow regionAfterLocality", () => {
+	const trenqueLauquen: ComponentDict = {
+		street: "Juan José Paso",
+		house_number: "600",
+		postcode: "6400",
+		locality: "Trenque Lauquen",
+		region: "Buenos Aires",
+	}
+
+	it("prints a region the postal layout leaves out after the locality, and labels it", () => {
+		const postal = formatAddressRow(trenqueLauquen, "AR", { singleLine: true })!
+		const written = formatAddressRow(trenqueLauquen, "AR", { singleLine: true, regionAfterLocality: true })!
+
+		expect(postal.raw).toBe("Juan José Paso 600, 6400 Trenque Lauquen")
+		expect(postal.unplaced).toContain("region")
+		expect(written.raw).toBe("Juan José Paso 600, 6400 Trenque Lauquen, Buenos Aires")
+		expect(written.components.region).toBe("Buenos Aires")
+	})
+
+	it("leaves a layout that already prints the region as it is", () => {
+		const madrid: ComponentDict = {
+			street: "Calle Mayor",
+			house_number: "12",
+			locality: "Madrid",
+			region: "Madrid",
+			postcode: "28013",
+		}
+
+		expect(formatAddressRow(madrid, "ES", { singleLine: true, regionAfterLocality: true })!.raw).toBe(
+			formatAddressRow(madrid, "ES", { singleLine: true })!.raw
+		)
+	})
+})

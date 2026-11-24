@@ -452,6 +452,47 @@ export function regionLayoutForCountry(countryCode: string | null, script?: Addr
 }
 
 /**
+ * Returns a copy of `layout` that prints the region on its own line after the line that prints
+ * the locality, or `layout` itself when it already prints the region or prints no locality.
+ *
+ * A postal layout leaves the region out where the operator's examples don't print it,
+ * as Argentina's leaves out the province.
+ * Address writers in those countries still write it after the town
+ * (`Juan José Paso 600, 6400 Trenque Lauquen, Buenos Aires`), so a corpus
+ * renders this form beside the postal one.
+ */
+export function layoutWithRegionAfterLocality(layout: AddressLayout): AddressLayout {
+	if (layoutPrintsTag(layout, "region")) return layout
+
+	const at = layout.lines.findIndex((line) => printedTags({ lines: [line] }).includes("locality"))
+
+	if (at === -1) return layout
+
+	const shifted = [...(layout.softBreakBefore ?? [])].map((index) => (index > at ? index + 1 : index))
+
+	return {
+		lines: [...layout.lines.slice(0, at + 1), [SLOTS.region], ...layout.lines.slice(at + 1)],
+		...(shifted.length ? { softBreakBefore: new Set(shifted) } : {}),
+	}
+}
+
+/**
+ * Whether writers in `countryCode` print a region its postal layout leaves out.
+ *
+ * It holds where libaddressinput's layout prints the region and the cited layout doesn't, as for
+ * Argentina's province and Romania's county. libaddressinput records what address forms in use print.
+ * It's no citation for a postal layout, and it is evidence that writers print the region.
+ *
+ * France's and Great Britain's print none there, so a region never enters their rows.
+ */
+export function writersPrintRegionBesideLayout(countryCode: string, script?: AddressScript): boolean {
+	const generated = GENERATED_ADDRESS_LAYOUTS[countryCode.trim().toUpperCase()]
+	const layout = layoutForCountry(countryCode, script)
+
+	return Boolean(generated && layout && layoutPrintsTag(generated, "region") && !layoutPrintsTag(layout, "region"))
+}
+
+/**
  * An order a country's address writers use beside the postal layout {@linkcode layoutForCountry} answers.
  */
 export interface WrittenLayout {
