@@ -438,8 +438,9 @@ extend-words = { centre = "centre", espace = "espace", objets = "objets", aout =
 # Germany's `Appartment`, New Zealand's `Jollys Jewellery`, and Tema, a district of Ghana. The L–Z readings in
 # `l-z.ts` add Nicaragua's `Residencial`, Turkmenistan's `wel.` (welaýat), Lithuania's `R. SAV.`, South Africa's
 # `Collet Drive`, Viet Nam's `Le Thi Binh`, Tuvalu's `Mose Boreham`, and the ISO 3166-1 alpha-3 file names `tha` and `tto`.
-extend-glob = ["citations.ts", "upu-pas.ts", "l-z.ts"]
-extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tema", residencial = "residencial", wel = "wel", sav = "sav", collet = "collet", thi = "thi", mose = "mose", tha = "tha", tto = "tto" }
+# The AC–GE readings in `ac-ge.ts` add Brunei's postcode `BA1511`.
+extend-glob = ["citations.ts", "upu-pas.ts", "l-z.ts", "ac-ge.ts"]
+extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tema", residencial = "residencial", wel = "wel", sav = "sav", collet = "collet", thi = "thi", mose = "mose", tha = "tha", tto = "tto", ba = "ba" }
 
 [type.layout-citations-mo-zw]
 # The MO–ZW readings in `mo-zw.ts`: the ISO 3166-1 alpha-3 file names `nam` and `som`, the Philippines'
