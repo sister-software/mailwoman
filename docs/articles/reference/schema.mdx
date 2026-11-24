@@ -3,7 +3,7 @@ title: Parse and geocode result schema
 description: Look up component tags, parse spans, query kinds, coordinate tiers, and provenance fields.
 role: reference
 source-of-truth: packages/codex/lib/component.ts, packages/core/lib/decoder/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/geocode/result.ts, packages/annotations/lib/geo.ts, packages/evidence/lib/status.ts
-verified-with: mailwoman v11.0.0
+verified-with: published @mailwoman/codex and @mailwoman/core v11.3.0 for the vocabulary example, checked 2026-11-24 on Node.js v24.22.3 and Linux x64. Other schema claims retain their 11.0.0 source baseline
 ---
 
 import { ECMAScriptModuleProject, NodeRequirement } from "#partials/runtime"
@@ -173,7 +173,7 @@ console.log("BIO labels:", BIO_LABELS.length)
 console.log("query kinds:", QueryKindSchema.options.join(", "))
 ```
 
-Run it with `node schema.ts`. The following output was captured from the published 11.0.0 packages:
+Run it with `node schema.ts`. The following output was captured from the published 11.3.0 packages:
 
 ```text
 component tags: country, region, locality, dependent_locality, postcode, subregion, house_number, street, street_prefix, street_prefix_particle, street_suffix, intersection_a, intersection_b, unit, venue, attention, po_box, cedex, prefecture, municipality, district, block, sub_block, building_number, building_name, locality_unit

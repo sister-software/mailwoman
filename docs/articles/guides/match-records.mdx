@@ -3,7 +3,7 @@ title: Match candidate address records
 description: Score candidate address pairs, select an example threshold from separate labeled pairs, and inspect both error directions.
 role: guide
 source-of-truth: packages/match/lib/blocking.ts, packages/match/lib/fellegi-sunter.ts
-verified-with: published @mailwoman/match v11.0.0
+verified-with: published @mailwoman/match v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-24
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -139,7 +139,7 @@ The two comparison levels give an exact field agreement `log2(0.8 / 0.2) = 2` bi
 
 ## Run and inspect both error directions
 
-Run `node match-records.ts`. The published 11.0.0 package returned the complete output below:
+Run `node match-records.ts`. The published 11.3.0 package returned the complete output below:
 
 ```text
 Tuning: 4 pairs; highest negative 0 bits; lowest positive 4 bits; midpoint threshold 2 bits
