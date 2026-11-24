@@ -37,7 +37,11 @@ import {
 	readGroupingRequirements,
 	repositoryCoverageReport,
 } from "mailwoman/tools/coverage"
-import { readCoverageRegister } from "mailwoman/tools/eval-harness/heldout/dataset/coverage/register"
+import {
+	newestReleaseSpecVersion,
+	readRoleCollections,
+	type RoleCollections,
+} from "mailwoman/tools/eval-harness/heldout/dataset/coverage/collections"
 import { relative } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
@@ -59,7 +63,7 @@ function memberLine(member: GroupingMemberCoverage): string {
 	const cells = [
 		`layout ${member.cells.citedLayout ? "cited" : "MISSING"}`,
 		`address-form rows ${member.cells.addressFormRows ? sum((h) => h.addressFormRows).toLocaleString() : "MISSING"}`,
-		`held out ${member.cells.heldOut ? sum((h) => h.heldOutAddresses) : "MISSING"}`,
+		`held out ${member.cells.heldOut ? `${sum((h) => h.heldOutAddresses.confirmation)} confirmation / ${sum((h) => h.heldOutAddresses.development)} development` : "MISSING"}`,
 		`board ${member.cells.board ? `${sum((h) => h.boardPassedRows)}/${sum((h) => h.boardRows)}` : "MISSING"}`,
 		`promise ${member.cells.promise ? member.holdings.map((h) => h.promise).join("+") : "MISSING"}`,
 	]
@@ -88,7 +92,7 @@ export const groupingCoverageCheck: RepoCheck = {
 	async run(context) {
 		const requirementsFile = relative(context.repoRoot, GROUPING_REQUIREMENTS_PATH)
 
-		// A host without a corpus, such as a GitHub-hosted runner, can't measure the corpus columns.
+		// A host without a corpus, such as a GitHub-hosted runner, can't measure the corpus or held-out columns.
 		// It reports the coverage unmeasured rather than grading members against counts it never read.
 		if (!(await pathExists(corpusCensusPath())) && !(await pathExists(dataRootPath("corpus", "versioned")))) {
 			return [
@@ -103,11 +107,14 @@ export const groupingCoverageCheck: RepoCheck = {
 		}
 
 		let groupings: GroupingCoverage[]
+		let heldOut: RoleCollections
 
 		try {
+			heldOut = await readRoleCollections(await newestReleaseSpecVersion())
+
 			groupings = groupingCoverage({
 				report: await repositoryCoverageReport({ countWhenUncached: false }),
-				register: await readCoverageRegister(),
+				heldOut,
 				requirements: await readGroupingRequirements(),
 				at: isoDate(),
 			})
@@ -123,7 +130,15 @@ export const groupingCoverageCheck: RepoCheck = {
 			]
 		}
 
-		const diagnostics: Diagnostic[] = []
+		const diagnostics: Diagnostic[] = [
+			{
+				severity: DiagnosticSeverity.Warning,
+				file: requirementsFile,
+				line: null,
+				message: `The held-out column read the ${heldOut.collections.length} collections of release specification ${heldOut.specVersion}'s development and confirmation roles.`,
+				details: heldOut.collections.map((collection) => `${collection.role}: ${collection.id} (${collection.path})`),
+			},
+		]
 
 		for (const grouping of groupings) {
 			if (grouping.blockedBy.length) continue

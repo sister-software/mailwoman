@@ -25,6 +25,7 @@
 
 import { ISO2_TO_NAME, CountryISO2 } from "@mailwoman/codex/country"
 import { POSTAL_REGIMES } from "@mailwoman/codex/country/postal-regimes"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
@@ -50,7 +51,7 @@ import {
 	readGroupingRequirements,
 	repositoryCoverageReport,
 } from "#coverage"
-import { COVERAGE_REGISTER_JSON, readCoverageRegister } from "#tools/eval-harness/heldout/dataset/coverage/register"
+import { newestReleaseSpecVersion, readRoleCollections } from "#tools/eval-harness/heldout/dataset/coverage/collections"
 
 const { values } = parseArguments({
 	options: {
@@ -74,7 +75,7 @@ const scope = await readScopeConfig()
 const shippedFamilies = await admittedByShippedGraphs(scope)
 
 const report = await repositoryCoverageReport({ requested: values.config, refresh: values.refresh })
-const register = await readCoverageRegister()
+const heldOut = await readRoleCollections(await newestReleaseSpecVersion())
 const requirements = await readGroupingRequirements()
 
 /**
@@ -184,17 +185,29 @@ const groupingsByCode = new Map(sorted.map((code) => [code, groupingsOf(code, { 
 
 const rows = sorted.map((code) => {
 	const coverage = measured.get(code) ?? null
-	const held = jurisdictionHoldings(code, measured, register, deepestPromise)
+	const held = jurisdictionHoldings(code, measured, heldOut, deepestPromise)
+	const { development, confirmation } = held.heldOutAddresses
+	const heldOutCell = development + confirmation ? `${confirmation} / ${development}` : "—"
 	const name = ISO2_TO_NAME.get(code) ?? "—"
 	const street = coverage?.corpusStreetRows ? coverage.corpusStreetRows.toLocaleString() : "0"
 	const memberOf = groupingsByCode.get(code)!
 
 	const families = shippedFamilies.get(code)
 
-	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${held.addressFormRows.toLocaleString()} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${held.cells.citedLayout ? "cited" : "—"} | ${held.heldOutAddresses || "—"} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<Groupings ids="${memberOf.join(" ")}" />` : "—"} |`
+	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${held.addressFormRows.toLocaleString()} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${held.cells.citedLayout ? "cited" : "—"} | ${heldOutCell} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<Groupings ids="${memberOf.join(" ")}" />` : "—"} |`
 })
 
-const groupings = groupingCoverage({ report, register, requirements, at: membershipDate })
+const groupings = groupingCoverage({ report, heldOut, requirements, at: membershipDate })
+
+/**
+ * The collections the held-out column read, one list item each.
+ */
+const collectionLines = heldOut.collections
+	.map(
+		(collection) =>
+			`- ${collection.role}: \`${collection.id}\` (\`${relative(dataRootPath(), collection.path)}\` under the data root)`
+	)
+	.join("\n")
 
 /**
  * The heading each grouping column prints under.
@@ -345,9 +358,12 @@ shipped graph trains on, the corpus above plus ${
 **Cited layout** reads \`cited\` when the address layout the codex renders for the jurisdiction cites a primary
 document (\`layoutCitationForCountry\` in \`@mailwoman/codex/address/layouts\`).
 
-**Held out** counts the held-out address rows the evaluation coverage register (\`docs/engineering/reference/evaluation-coverage.mdx\`)
-samples for the jurisdiction from \`${register.dataset.datasetID}\`, read from \`${COVERAGE_REGISTER_JSON}\`.
-A place-name row isn't counted, and \`—\` means the register samples no address row.
+**Held out** reads the held-out address rows sampled for the jurisdiction as confirmation / development: the
+collections the development and confirmation roles of release specification version ${heldOut.specVersion}, the newest committed,
+score. Each count is the address cells of the collection's own manifest. A place-name row isn't counted, and \`—\`
+means no collection of either role samples an address row. The collections read:
+
+${collectionLines}
 
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
 trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
@@ -363,7 +379,8 @@ overlays that share the model graph of \`@mailwoman/neural-weights-en-us\` or
 
 **Board** reads checking rows over all the rows present. A checking row has \`status: pass\`, and
 any other row only tracks. A jurisdiction reading
-\`—\` has no board row. That jurisdiction is unmeasured rather than failing.
+\`—\` has no board row. That jurisdiction is unmeasured rather than failing. The board is the two-letter
+country directories under \`gauntlet/cases/\`, so a sweep row under \`generalization/\` isn't a board row.
 
 **Promise** is the deepest [support promise](./support.mdx) for the jurisdiction, in any input language and
 script.

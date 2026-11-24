@@ -5,27 +5,27 @@
 		{
 			"grouping": "g7",
 			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
-			"debt": 5
+			"debt": 2
 		},
 		{
 			"grouping": "g20",
 			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
-			"debt": 32
+			"debt": 24
 		},
 		{
 			"grouping": "imf-advanced",
 			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
-			"debt": 90
+			"debt": 75
 		},
 		{
 			"grouping": "oecd",
 			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
-			"debt": 69
+			"debt": 57
 		},
 		{
 			"grouping": "eu",
 			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
-			"debt": 55
+			"debt": 47
 		}
 	],
 	"$comment_memberJurisdictions": "A grouping member whose code is neither ISO 3166-1 alpha-2 nor a jurisdiction code the coverage page enumerates is read through the jurisdictions its publisher states it covers. A cell of such a member is held only when every one of those jurisdictions holds it. A member code absent from this table and from the jurisdiction list is reported as unreadable, and a tier counts each of its required cells as missing.",

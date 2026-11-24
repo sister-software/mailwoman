@@ -5,7 +5,7 @@ import { describe, expect, test } from "vitest"
 
 import { ADDRESS_FORM_TAG, type CountryCoverage, type CoverageReport } from "#tools/coverage/census"
 import { groupingCoverage, readGroupingRequirements } from "#tools/coverage/groupings"
-import type { CoverageRegister } from "#tools/eval-harness/heldout/dataset/coverage/register"
+import type { RoleCollections } from "#tools/eval-harness/heldout/dataset/coverage/collections"
 
 const AT = "2026-11-24"
 
@@ -28,13 +28,7 @@ function coverage(country: string, overrides: Partial<CountryCoverage> = {}): Co
 function inputs(countries: CountryCoverage[]) {
 	return {
 		report: { countries } as CoverageReport,
-		register: {
-			dataset: { datasetID: "fixture", version: "0", rowsSHA256: "", corpusVersion: null },
-			specVersion: "0",
-			verdict: null,
-			provenanceAudit: null,
-			rows: [],
-		} satisfies CoverageRegister,
+		heldOut: { specVersion: "0", collections: [] } satisfies RoleCollections,
 		at: AT,
 	}
 }
@@ -65,6 +59,30 @@ describe("groupingCoverage", () => {
 		expect(jg.readAs).toEqual(["GG", "JE"])
 		expect(jg.cells?.board).toBe(true)
 		expect(jg.cells?.addressFormRows).toBe(false)
+	})
+
+	test("holds the held-out column from a collection of either role, kept per role", async () => {
+		const requirements = await readGroupingRequirements()
+
+		const groupings = groupingCoverage({
+			...inputs([coverage("US"), coverage("CA")]),
+			heldOut: {
+				specVersion: "0",
+				collections: [
+					{ role: "confirmation", id: "c@1", path: "c.json", addressRows: { US: 1000 } },
+					{ role: "development", id: "d@1", path: "d.json", addressRows: { US: 5, CA: 500 } },
+				],
+			},
+			requirements,
+		})
+
+		const members = groupings.find((grouping) => grouping.id === "g7")!.members
+		const us = members.find((member) => member.code === "US")!
+		const ca = members.find((member) => member.code === "CA")!
+
+		expect(us.holdings[0]!.heldOutAddresses).toEqual({ confirmation: 1000, development: 5 })
+		expect(ca.cells?.heldOut).toBe(true)
+		expect(members.find((member) => member.code === "JP")!.cells?.heldOut).toBe(false)
 	})
 
 	test("counts every required cell of an unreadable member as a gap", async () => {

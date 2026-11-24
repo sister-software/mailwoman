@@ -7,8 +7,9 @@
  *   The coverage page (`jurisdiction-coverage.run.ts`) and the `grouping-coverage` health check both call
  *   {@linkcode groupingCoverage}, so the page and the check can't disagree.
  *   Each column reads its owner: the cited layout from `layoutCitationForCountry` in codex, the address-form
- *   rows and the board rows from {@linkcode censusCoverage}, held-out evaluation coverage from the committed
- *   evaluation coverage register, and the support promise from `SUPPORT_PROMISES`.
+ *   rows and the board rows from {@linkcode censusCoverage}, held-out evaluation coverage from the manifests of
+ *   the collections the newest release specification's development and confirmation roles score
+ *   (`readRoleCollections`), and the support promise from `SUPPORT_PROMISES`.
  *   The tiers' requirements and their debt are the data in `grouping-requirements.json`.
  */
 
@@ -22,7 +23,8 @@ import { GROUPING_IDS, type GroupingID } from "@mailwoman/registry/artifacts/gro
 import { getGrouping, groupingMembers } from "@mailwoman/registry/groupings"
 
 import type { CountryCoverage, CoverageReport } from "#tools/coverage/census"
-import type { CoverageRegister } from "#tools/eval-harness/heldout/dataset/coverage/register"
+import type { RoleCollections } from "#tools/eval-harness/heldout/dataset/coverage/collections"
+import type { EvaluationRole } from "#tools/eval-harness/release/requirements"
 
 /**
  * The holdings a grouping member is read for.
@@ -38,7 +40,8 @@ export const GroupingCoverageColumn = {
 	 */
 	AddressFormRows: "addressFormRows",
 	/**
-	 * The evaluation coverage register samples at least one held-out address row.
+	 * A collection of the newest specification's development or confirmation role
+	 * samples at least one address row.
 	 */
 	HeldOut: "heldOut",
 	/**
@@ -142,9 +145,9 @@ export interface JurisdictionHoldings {
 	cells: Record<GroupingCoverageColumn, boolean>
 	addressFormRows: number
 	/**
-	 * Held-out address rows the register samples, `0` when the register holds no row for the code.
+	 * Held-out address rows each evaluation role's collections sample, summed per role.
 	 */
-	heldOutAddresses: number
+	heldOutAddresses: Record<EvaluationRole, number>
 	boardRows: number
 	boardPassedRows: number
 	promise: SupportDepth | null
@@ -188,7 +191,7 @@ export interface GroupingCoverage {
  */
 export interface GroupingCoverageInputs {
 	report: CoverageReport
-	register: CoverageRegister
+	heldOut: RoleCollections
 	requirements: GroupingRequirements
 	/**
 	 * The membership date, `YYYY-MM-DD`.
@@ -209,11 +212,16 @@ const OPERATIONAL_CODES: ReadonlySet<string> = new Set(POSTAL_REGIMES.flatMap((r
 export function jurisdictionHoldings(
 	code: string,
 	measured: ReadonlyMap<string, CountryCoverage>,
-	register: CoverageRegister,
+	heldOut: RoleCollections,
 	promises: ReadonlyMap<string, SupportDepth>
 ): JurisdictionHoldings {
 	const coverage = measured.get(code) ?? null
-	const heldOutAddresses = register.rows.find((row) => row.country === code)?.addresses.sampled ?? 0
+	const heldOutAddresses: Record<EvaluationRole, number> = { development: 0, confirmation: 0 }
+
+	for (const collection of heldOut.collections) {
+		heldOutAddresses[collection.role] += collection.addressRows[code] ?? 0
+	}
+
 	const promise = promises.get(code) ?? null
 
 	return {
@@ -221,7 +229,7 @@ export function jurisdictionHoldings(
 		cells: {
 			citedLayout: layoutCitationForCountry(code) != null,
 			addressFormRows: (coverage?.addressFormRows ?? 0) > 0,
-			heldOut: heldOutAddresses > 0,
+			heldOut: heldOutAddresses.development + heldOutAddresses.confirmation > 0,
 			board: (coverage?.boardRows ?? 0) > 0,
 			promise: promise != null,
 		},
@@ -237,7 +245,7 @@ export function jurisdictionHoldings(
  * Reads every grouping's members on `at` and what each member holds, with each tier's gaps.
  */
 export function groupingCoverage(inputs: GroupingCoverageInputs): GroupingCoverage[] {
-	const { report, register, requirements, at } = inputs
+	const { report, heldOut, requirements, at } = inputs
 	const measured = new Map(report.countries.map((country) => [country.country, country]))
 	const promises = deepestSupportPromises()
 	const tiers = new Map(requirements.tiers.map((tier) => [tier.grouping, tier]))
@@ -261,7 +269,7 @@ export function groupingCoverage(inputs: GroupingCoverageInputs): GroupingCovera
 					? [code]
 					: (requirements.memberJurisdictions[code]?.jurisdictions ?? [])
 
-			const holdings = readAs.map((jurisdiction) => jurisdictionHoldings(jurisdiction, measured, register, promises))
+			const holdings = readAs.map((jurisdiction) => jurisdictionHoldings(jurisdiction, measured, heldOut, promises))
 
 			const cells = holdings.length
 				? (Object.fromEntries(
