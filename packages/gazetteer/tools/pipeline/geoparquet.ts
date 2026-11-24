@@ -9,6 +9,9 @@
  *   and hive directories that become tags too.
  *   A record's boundary goes under `type=boundary` and its label point under `type=point`.
  *
+ *   Each record's fields come from `pluckPlacetypeSpec` and its point from `wofRecordPoint`,
+ *   the readers the admin ingest uses, so the `wof` and `gazetteer` tiles agree on both.
+ *
  *   Geometry is written at the record's full resolution, because the tile build simplifies per zoom.
  */
 
@@ -22,10 +25,9 @@ import {
 	OVERTURE_ID_BASE,
 	SYNTHETIC_ID_RANGES,
 } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { geometryToWKB } from "@mailwoman/spatial/well-known-text"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -36,10 +38,13 @@ import {
 	overtureCountryList,
 	overtureDivisionCondition,
 	overtureDivisionsGlob,
+	OVERTURE_ANONYMOUS_SECRET,
 } from "#tools/pipeline/admin/sources/overture"
+import { wofRecordPoint } from "#tools/pipeline/admin/wof/feature"
 import { DEFAULT_RELEASE } from "#tools/pipeline/poi/defaults"
 import { DEFAULT_ADMIN_DB, DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 import type { WOFFeature } from "#whosonfirst"
+import { type ParsedWOFPlacetype, pluckPlacetypeSpec } from "#whosonfirst/placetypes/admin"
 
 export interface ExportWOFGeoParquetOptions {
 	/**
@@ -88,6 +93,9 @@ export interface WOFGeoParquetCounts {
 	 * Parquet files written, across both types.
 	 */
 	files: number
+	/**
+	 * The GeoJSON text length of the boundaries written, in characters.
+	 */
 	geometryBytes: number
 }
 
@@ -97,7 +105,8 @@ export interface WOFGeoParquetCounts {
 const FILE_ROW_LIMIT = 50_000
 
 /**
- * The WKB bytes one Parquet file holds at most, so a batch of country boundaries stays within memory.
+ * The GeoJSON characters one staged batch holds at most, so a batch of country
+ * boundaries stays within memory.
  */
 const FILE_GEOMETRY_BYTE_LIMIT = 256 * 1024 * 1024
 
@@ -109,11 +118,6 @@ const FILE_GEOMETRY_BYTE_LIMIT = 256 * 1024 * 1024
  */
 const ROW_GROUP_SIZE = 2000
 
-const STAGING_COLUMNS = /* sql */ `
-	id BIGINT, parent_id BIGINT, name VARCHAR, placetype VARCHAR, country VARCHAR, source VARCHAR,
-	is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN,
-	xmin DOUBLE, ymin DOUBLE, xmax DOUBLE, ymax DOUBLE, wkb BLOB`
-
 /**
  * The two row types an export writes, each to its own hive directory.
  */
@@ -122,157 +126,103 @@ const ROW_TYPES = ["boundary", "point"] as const
 type RowType = (typeof ROW_TYPES)[number]
 
 /**
- * A staged row, in the order of {@linkcode STAGING_COLUMNS}.
+ * One staged row: the record's fields as the admin ingest reads them, and its geometry as GeoJSON text.
  */
-interface PlaceRow {
-	id: number
-	parentID: number
-	name: string
-	placetype: string
-	country: string
-	isCurrent: boolean | null
-	isDeprecated: boolean
-	isSuperseded: boolean
-	bounds: readonly [xmin: number, ymin: number, xmax: number, ymax: number]
-	wkb: Uint8Array
-}
-
-/**
- * The extent of a geometry's positions as west, south, east and north.
- */
-function boundsOf(coordinates: unknown, bounds: [number, number, number, number]): [number, number, number, number] {
-	if (!Array.isArray(coordinates)) return bounds
-
-	if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
-		bounds[0] = Math.min(bounds[0], coordinates[0])
-		bounds[1] = Math.min(bounds[1], coordinates[1])
-		bounds[2] = Math.max(bounds[2], coordinates[0])
-		bounds[3] = Math.max(bounds[3], coordinates[1])
-
-		return bounds
-	}
-
-	for (const member of coordinates) {
-		boundsOf(member, bounds)
-	}
-
-	return bounds
-}
-
-/**
- * The record's label point as longitude and latitude.
- *
- * A curated label point outranks the computed centroid, and a point geometry stands in
- * when the record states neither.
- */
-function labelPointOf(feature: WOFFeature): [longitude: number, latitude: number] | null {
-	const properties = feature.properties
-
-	for (const prefix of ["lbl", "geom"] as const) {
-		const latitude = properties?.[`${prefix}:latitude`]
-		const longitude = properties?.[`${prefix}:longitude`]
-
-		if (typeof latitude === "number" && typeof longitude === "number") return [longitude, latitude]
-	}
-
-	const { geometry } = feature
-
-	if (geometry?.type === "Point") {
-		const [longitude, latitude] = geometry.coordinates as number[]
-
-		if (typeof latitude === "number" && typeof longitude === "number") return [longitude, latitude]
-	}
-
-	return null
+interface StagedRow {
+	place: ParsedWOFPlacetype
+	geometry: string
 }
 
 /**
  * The staging tables of one export, flushed to a Parquet file per type when either limit is reached.
+ *
+ * DuckDB parses each geometry and computes its extent, as the gazetteer export does.
  */
 class ParquetStage {
-	private readonly db: DisposableDuckDB
-	private readonly out: string
-	private rows: Record<RowType, PlaceRow[]> = { boundary: [], point: [] }
-	private geometryBytes = 0
-	private part = 0
+	readonly #db: DisposableDuckDB
+	readonly #out: string
+	#rows: Record<RowType, StagedRow[]> = { boundary: [], point: [] }
+	#geometryBytes = 0
+	#part = 0
 	files = 0
 
 	constructor(db: DisposableDuckDB, out: string) {
-		this.db = db
-		this.out = out
+		this.#db = db
+		this.#out = out
 	}
 
-	add(type: RowType, row: PlaceRow): void {
-		this.rows[type].push(row)
-		this.geometryBytes += row.wkb.byteLength
+	add(type: RowType, row: StagedRow): void {
+		this.#rows[type].push(row)
+		this.#geometryBytes += row.geometry.length
 	}
 
 	get full(): boolean {
 		return (
-			this.rows.boundary.length + this.rows.point.length >= FILE_ROW_LIMIT ||
-			this.geometryBytes >= FILE_GEOMETRY_BYTE_LIMIT
+			this.#rows.boundary.length + this.#rows.point.length >= FILE_ROW_LIMIT ||
+			this.#geometryBytes >= FILE_GEOMETRY_BYTE_LIMIT
 		)
 	}
 
 	async flush(): Promise<void> {
-		const part = String(this.part++).padStart(5, "0")
+		const part = String(this.#part++).padStart(5, "0")
 
 		for (const type of ROW_TYPES) {
-			const rows = this.rows[type]
+			const rows = this.#rows[type]
 
 			if (!rows.length) continue
 
-			await this.db.run(/* sql */ `CREATE OR REPLACE TEMP TABLE staged (${STAGING_COLUMNS})`)
+			await this.#db.run(/* sql */ `
+				CREATE OR REPLACE TEMP TABLE staged (
+					id BIGINT, parent_id BIGINT, name VARCHAR, placetype VARCHAR, country VARCHAR,
+					is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN, geojson VARCHAR
+				)
+			`)
 
-			const appender = await this.db.createAppender("staged")
+			const appender = await this.#db.createAppender("staged")
 
-			for (const row of rows) {
-				appender.appendBigInt(BigInt(row.id))
-				appender.appendBigInt(BigInt(row.parentID))
-				appender.appendVarchar(row.name)
-				appender.appendVarchar(row.placetype)
-				appender.appendVarchar(row.country)
-				appender.appendVarchar("whosonfirst")
+			for (const { place, geometry } of rows) {
+				appender.appendBigInt(BigInt(place.id))
+				appender.appendBigInt(BigInt(place.parent_id))
+				appender.appendVarchar(place.name ?? "")
+				appender.appendVarchar(place.placetype ?? "")
+				appender.appendVarchar(place.country ?? "")
 
-				if (row.isCurrent == null) {
+				if (place.isCurrent == null) {
 					appender.appendNull()
 				} else {
-					appender.appendBoolean(row.isCurrent)
+					appender.appendBoolean(place.isCurrent)
 				}
 
-				appender.appendBoolean(row.isDeprecated)
-				appender.appendBoolean(row.isSuperseded)
-
-				for (const edge of row.bounds) {
-					appender.appendDouble(edge)
-				}
-
-				appender.appendBlob(row.wkb)
+				appender.appendBoolean(place.isDeprecated)
+				appender.appendBoolean(place.isSuperseded)
+				appender.appendVarchar(geometry)
 				appender.endRow()
 			}
 
 			appender.closeSync()
 
-			const directory = PathBuilder.from(this.out, "rowset=wof", `type=${type}`)
+			const directory = PathBuilder.from(this.#out, "rowset=wof", `type=${type}`)
 
 			await makeDirectories(directory)
 
 			const file = PathBuilder.from(directory, `part-${part}.parquet`).toString()
 
-			await this.db.run(/* sql */ `
+			await this.#db.run(/* sql */ `
 				COPY (
-					SELECT id, parent_id, name, placetype, country, source, is_current, is_deprecated, is_superseded,
-						{'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax} AS bbox,
-						ST_GeomFromWKB(wkb) AS geometry
-					FROM staged
+					SELECT id, parent_id, name, placetype, country, 'whosonfirst' AS source,
+						is_current, is_deprecated, is_superseded,
+						{'xmin': ST_XMin(geometry), 'xmax': ST_XMax(geometry),
+						 'ymin': ST_YMin(geometry), 'ymax': ST_YMax(geometry)} AS bbox,
+						geometry
+					FROM (SELECT *, ST_GeomFromGeoJSON(geojson) AS geometry FROM staged)
 				) TO '${escapeSQLString(file)}' (FORMAT parquet, COMPRESSION zstd, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})
 			`)
 
 			this.files++
 		}
 
-		this.rows = { boundary: [], point: [] }
-		this.geometryBytes = 0
+		this.#rows = { boundary: [], point: [] }
+		this.#geometryBytes = 0
 	}
 }
 
@@ -385,6 +335,7 @@ export async function exportGazetteerGeoParquet(
 	await db.run(/* sql */ `
 		INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite; INSTALL httpfs; LOAD httpfs;
 		SET s3_region='us-west-2';
+		${OVERTURE_ANONYMOUS_SECRET}
 		ATTACH '${escapeSQLString(adminPath)}' AS admin (TYPE sqlite, READ_ONLY);
 		CREATE TEMP TABLE overture_area (id BIGINT, geometry GEOMETRY);
 		CREATE TEMP TABLE overture_ids (gers VARCHAR, id BIGINT);
@@ -526,15 +477,6 @@ export async function exportGazetteerGeoParquet(
 }
 
 /**
- * The record's `mz:is_current` as a boolean, or null when the record leaves it unknown.
- */
-function isCurrentOf(value: unknown): boolean | null {
-	const flag = Number(value)
-
-	return flag === 1 ? true : flag === 0 ? false : null
-}
-
-/**
  * Writes every record of the clones to GeoParquet and reports what it read.
  *
  * A superseded or deprecated record is written with its flag set, so the tiles can show it.
@@ -588,59 +530,37 @@ export async function exportWOFGeoParquet(
 			continue
 		}
 
-		const properties = feature.properties
-		const id = Number(properties?.["wof:id"] ?? feature.id)
+		const { properties, geometry } = feature
 
-		if (!Number.isSafeInteger(id)) {
+		if (!properties || !Number.isSafeInteger(properties["wof:id"])) {
 			counts.unreadable++
 
 			continue
 		}
 
-		const isSuperseded = Boolean(properties?.["wof:superseded_by"]?.length)
-		const isDeprecated = Boolean(properties?.["edtf:deprecated"])
+		const place = pluckPlacetypeSpec(properties)
 
-		counts.superseded += Number(isSuperseded)
-		counts.deprecated += Number(isDeprecated)
-
-		const parentID = Number(properties?.["wof:parent_id"])
-
-		const shared = {
-			id,
-			parentID: Number.isSafeInteger(parentID) ? parentID : -1,
-			name: String(properties?.["wof:name"] ?? ""),
-			placetype: String(properties?.["wof:placetype"] ?? ""),
-			country: String(properties?.["wof:country"] ?? ""),
-			isCurrent: isCurrentOf(properties?.["mz:is_current"]),
-			isDeprecated,
-			isSuperseded,
-		}
-
-		const { geometry } = feature
+		counts.superseded += Number(place.isSuperseded)
+		counts.deprecated += Number(place.isDeprecated)
 
 		if (geometry?.type === "Polygon" || geometry?.type === "MultiPolygon") {
-			const wkb = geometryToWKB(geometry)
+			const boundary = stringifyJSON(geometry)
 
-			stage.add("boundary", {
-				...shared,
-				bounds: boundsOf(geometry.coordinates, [Infinity, Infinity, -Infinity, -Infinity]),
-				wkb,
-			})
+			stage.add("boundary", { place, geometry: boundary })
 
 			counts.boundaries++
-			counts.geometryBytes += wkb.byteLength
+			counts.geometryBytes += boundary.length
 		}
 
-		const point = labelPointOf(feature)
+		const point = wofRecordPoint(properties)
 
 		if (point) {
-			const [longitude, latitude] = point
-			const wkb = geometryToWKB({ type: "Point", coordinates: point })
-
-			stage.add("point", { ...shared, bounds: [longitude, latitude, longitude, latitude], wkb })
+			stage.add("point", {
+				place,
+				geometry: stringifyJSON({ type: "Point", coordinates: [point.longitude, point.latitude] }),
+			})
 
 			counts.points++
-			counts.geometryBytes += wkb.byteLength
 		} else {
 			counts.withoutPoint++
 		}

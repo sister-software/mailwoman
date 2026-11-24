@@ -206,7 +206,13 @@ fn main() -> ExitCode {
 				path: PathBuf::from(&args[1]),
 				format: pipeline::SourceFormat::GeoParquet,
 			}];
-			build("-", bounds, &extra, &args[2], &overlay_profile::OverlayProfile { max_zoom })
+			build(
+				"-",
+				bounds,
+				&extra,
+				&args[2],
+				&overlay_profile::OverlayProfile { max_zoom },
+			)
 		}
 		Some("pgf-probe") if args.len() == 4 => {
 			match pgf_probe::probe(

@@ -24,6 +24,10 @@ export const spec = {
 		admin: { type: "string", required: true, description: "Admin database: a local path or an s3:// URL" },
 		countries: { type: "string", description: "Comma-separated lower-case country codes. Default every country" },
 		repos: { type: "string", description: "Directory of existing clones. Default: clone into the work directory" },
+		"repos-cache": {
+			type: "string",
+			description: "s3:// prefix that keeps the repos root between runs. Used without --repos",
+		},
 		"export-copy": { type: "string", description: "s3:// prefix that receives a copy of both exports" },
 		"max-zoom": { type: "string", description: "Highest zoom of each archive. Default 12" },
 		hrt: { type: "string", description: "The hrt program. Default hrt on the path" },
@@ -48,6 +52,7 @@ const TilesOverlays: CommandComponent<typeof spec> = ({ options }) => {
 			dryRun: options.dryRun,
 			...(options.countries ? { countries: options.countries.split(",") } : {}),
 			...(options.repos ? { reposDir: options.repos } : {}),
+			...(options.reposCache ? { reposCache: options.reposCache } : {}),
 			...(options.exportCopy ? { exportCopy: options.exportCopy } : {}),
 			...(options.maxZoom ? { maxZoom: Number(options.maxZoom) } : {}),
 			...(options.hrt ? { hrt: options.hrt } : {}),

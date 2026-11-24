@@ -7,7 +7,9 @@
  *
  *   The run fetches what its work directory lacks, so it starts from an empty disk:
  *
- *   1. It clones each admin repository from its `mailwoman` fork at depth 1.
+ *   1. It brings each admin repository current as the lab's `gazetteer inspect sync` does,
+ *      through `syncWOFRepo` with a read-only origin.
+ *      A repos cache in S3 keeps each clone's `.git` between runs.
  *   2. It copies the admin database from an `s3://` URL with the `aws` program.
  *   3. It exports both row sets to GeoParquet.
  *      The gazetteer export reads Overture from Overture's bucket.
@@ -19,10 +21,12 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { GitClient } from "@mailwoman/core/repo/git"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { runProcess } from "@mailwoman/core/scripting/process"
-import { FORK_ORG, repoReadURL } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { FORK_ORG } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
 import { wofRepoName } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
@@ -55,10 +59,18 @@ export interface BuildOverlayTilesOptions {
 	 */
 	countries?: readonly string[]
 	/**
-	 * A directory of existing clones.
-	 * The run clones into the work directory when absent.
+	 * A directory of existing clones, read as they stand.
+	 *
+	 * On the lab this is the repos root `gazetteer inspect sync` keeps current.
+	 * When absent, the run keeps its own root under the work directory and syncs it read-only.
 	 */
 	reposDir?: PathBuilderLike
+	/**
+	 * An `s3://` prefix that holds the run's repos root between runs, one `.git` archive per repository.
+	 *
+	 * Used only when `reposDir` is absent.
+	 */
+	reposCache?: string
 	/**
 	 * An `s3://` prefix that receives a copy of both exports, for a later run or another reader.
 	 */
@@ -130,43 +142,146 @@ export async function listAdminForks(client?: Pick<APIClient, "fetch">): Promise
 }
 
 /**
- * Runs a program with its output on this process's terminal, and throws when it exits non-zero.
+ * The process options of a step whose output belongs on this process's terminal.
+ *
+ * `runProcess` rejects on a non-zero exit by default, so a failed step stops the build.
  */
-async function runProgram(program: string, args: readonly string[]): Promise<void> {
-	const result = await runProcess(program, args, { reject: false, stdout: "inherit", stderr: "inherit" })
+const ON_TERMINAL = { stdout: "inherit", stderr: "inherit" } as const
 
-	if (result.exitCode !== 0) {
-		throw new CommandError(`${program} ${args.join(" ")} exited ${result.exitCode}`)
-	}
+/**
+ * What bringing the repos root current did, by repository count.
+ */
+export interface RepositorySyncCounts {
+	/**
+	 * Repositories whose `.git` came from the cache.
+	 */
+	restored: number
+	/**
+	 * Repositories the sync cloned, fast-forwarded or found current, by its action.
+	 */
+	actions: Record<string, number>
+	/**
+	 * Repositories whose `.git` was written to the cache because their head moved or the cache lacked them.
+	 */
+	stored: number
 }
 
 /**
- * Clones each repository in `names` that the directory lacks, at depth 1, and answers the count it cloned.
+ * The cache object of one repository's `.git` directory.
  */
-async function cloneRepositories(names: readonly string[], reposDir: PathBuilder): Promise<number> {
+function cacheObject(cache: string, name: string): string {
+	return `${cache.replace(/\/?$/u, "/")}${name}.git.tar`
+}
+
+/**
+ * The repositories the cache holds, read from one listing of its prefix.
+ */
+async function cachedRepositories(cache: string): Promise<Set<string>> {
+	const { host: bucket, pathname } = new URL(cache.replace(/\/?$/u, "/"))
+	const prefix = pathname.slice(1)
+
+	const { stdout } = await runProcess("aws", [
+		"s3api",
+		"list-objects-v2",
+		"--bucket",
+		bucket,
+		"--prefix",
+		prefix,
+		"--query",
+		"Contents[].Key",
+		"--output",
+		"json",
+	])
+
+	// The query answers `null` for a prefix that holds no objects: the cache is empty.
+	const keys = parseJSONStrict<string[] | null>(stdout) ?? []
+
+	return new Set(keys.flatMap((key) => /([^/]+)\.git\.tar$/u.exec(key)?.[1] ?? []))
+}
+
+/**
+ * Brings each repository in `names` current under `reposDir` the way the lab's `gazetteer inspect sync`
+ * does: `syncWOFRepo` clones a missing repository at depth 1 and fast-forwards an existing one.
+ *
+ * The sync reads through {@linkcode wofReadOnlyOrigin}, so it needs no key and makes no GitHub write.
+ * With `cache`, an `s3://` prefix, the repos root outlives the instance: each repository's `.git`
+ * is restored from the cache before the sync and stored again when the sync moved its head.
+ *
+ * A restored repository's working tree is rebuilt from its `.git` before the sync reads it.
+ * A sync that refuses a restored repository, as one with a damaged working tree, clones it afresh.
+ */
+async function syncRepositories(
+	names: readonly string[],
+	reposDir: PathBuilder,
+	cache: string | null,
+	onRepository: (name: string, action: string) => void
+): Promise<RepositorySyncCounts> {
+	const [{ inspectClone, syncWOFRepo }, { githubForkHost, wofReadOnlyOrigin }] = await Promise.all([
+		import("@mailwoman/gazetteer/tools/pipeline/repos/sync"),
+		import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"),
+	])
+
 	await makeDirectories(reposDir)
 
-	let cloned = 0
+	const cached = cache ? await cachedRepositories(cache) : new Set<string>()
+	const counts: RepositorySyncCounts = { restored: 0, actions: {}, stored: 0 }
 
-	const clones = parallelMap(
+	const syncs = parallelMap(
 		names,
 		async (name) => {
 			const directory = PathBuilder.from(reposDir, name)
+			const archive = PathBuilder.from(reposDir, `${name}.git.tar`)
 
-			if (await pathExists(directory)) return
+			await using client = new GitClient({ cwd: reposDir })
 
-			await runProgram("git", ["clone", "--quiet", "--depth", "1", repoReadURL(FORK_ORG, name), directory.toString()])
+			if (cache && cached.has(name) && !(await pathExists(directory))) {
+				await runProcess("aws", ["s3", "cp", "--only-show-errors", cacheObject(cache, name), archive], ON_TERMINAL)
+				await makeDirectories(directory)
+				await runProcess("tar", ["-xf", archive, "-C", directory], ON_TERMINAL)
+				await removePath(archive)
+				// The archive holds the `.git` directory and no working tree.
+				// The reset rebuilds the working tree, and the sync then reads the clone as clean.
+				await client.read(["-C", directory.toString(), "reset", "--hard", "--quiet"])
 
-			cloned++
+				counts.restored++
+			}
+
+			const sync = () =>
+				syncWOFRepo(name, { root: reposDir, host: githubForkHost, client, resolveOrigin: wofReadOnlyOrigin })
+
+			// The head comes from the reader whose `state.head` the sync reports, so the two compare as equals.
+			const headBefore = (await inspectClone(directory)).head
+
+			let result = await sync()
+
+			if (result.action.startsWith("refuse")) {
+				await removePath(directory)
+				result = await sync()
+			}
+
+			if (result.action.startsWith("refuse")) {
+				throw new CommandError(`${name}: ${result.reason}`)
+			}
+
+			counts.actions[result.action] = (counts.actions[result.action] ?? 0) + 1
+			onRepository(name, result.action)
+
+			if (cache && result.state.head && (result.state.head !== headBefore || !cached.has(name))) {
+				await runProcess("tar", ["-cf", archive, "-C", directory, ".git"], ON_TERMINAL)
+				await runProcess("aws", ["s3", "cp", "--only-show-errors", archive, cacheObject(cache, name)], ON_TERMINAL)
+				await removePath(archive)
+
+				counts.stored++
+			}
 		},
 		{ concurrency: CLONE_CONCURRENCY }
 	)
 
-	for await (const _ of clones) {
-		// The clones run for their effect.
+	for await (const _ of syncs) {
+		// Each sync runs for its effect on the repos root and the cache.
 	}
 
-	return cloned
+	return counts
 }
 
 /**
@@ -189,9 +304,19 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 			? options.countries.map((country) => wofRepoName("admin", country))
 			: await listAdminForks()
 
-		phase("clone", `${names.length} repositories`)
+		phase("sync", `${names.length} repositories${options.reposCache ? ` with the cache ${options.reposCache}` : ""}`)
 
-		report.push(`cloned ${await cloneRepositories(names, reposDir)} of ${names.length} repositories → ${reposDir}`)
+		const synced = await syncRepositories(names, reposDir, options.reposCache ?? null, (name, action) =>
+			phase("sync", `${name}: ${action}`)
+		)
+
+		const actions = Object.entries(synced.actions)
+			.map(([action, count]) => `${count} ${action}`)
+			.join(", ")
+
+		report.push(
+			`synced ${names.length} repositories → ${reposDir}: ${actions}; ${synced.restored} restored from and ${synced.stored} stored to the cache`
+		)
 	}
 
 	let adminPath = options.admin
@@ -202,7 +327,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		if (!(await pathExists(adminPath))) {
 			phase("admin", options.admin)
 
-			await runProgram("aws", ["s3", "cp", "--only-show-errors", options.admin, adminPath])
+			await runProcess("aws", ["s3", "cp", "--only-show-errors", options.admin, adminPath], ON_TERMINAL)
 		}
 	}
 
@@ -239,7 +364,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	if (options.exportCopy) {
 		phase("copy export", options.exportCopy)
 
-		await runProgram("aws", ["s3", "sync", "--only-show-errors", exportDir.toString(), options.exportCopy])
+		await runProcess("aws", ["s3", "sync", "--only-show-errors", exportDir, options.exportCopy], ON_TERMINAL)
 
 		report.push(`export copied → ${options.exportCopy}`)
 	}
@@ -249,12 +374,16 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 
 		phase(`tiles ${rowSet}`)
 
-		await runProgram(options.hrt ?? "hrt", [
-			"overlay",
-			PathBuilder.from(exportDir, `rowset=${rowSet}`).toString(),
-			archive,
-			...(typeof options.maxZoom === "number" ? [`max-zoom=${options.maxZoom}`] : []),
-		])
+		await runProcess(
+			options.hrt ?? "hrt",
+			[
+				"overlay",
+				PathBuilder.from(exportDir, `rowset=${rowSet}`),
+				archive,
+				...(typeof options.maxZoom === "number" ? [`max-zoom=${options.maxZoom}`] : []),
+			],
+			ON_TERMINAL
+		)
 
 		phase(`publish ${rowSet}`)
 

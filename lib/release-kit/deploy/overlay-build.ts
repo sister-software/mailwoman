@@ -101,6 +101,8 @@ export function overlayBuildScript(options: OverlayBuildScriptOptions): string {
 		shellQuote(options.tilesetVersion),
 		"--admin",
 		s3(options.adminKey),
+		"--repos-cache",
+		s3(`${OVERLAY_BUILD_PREFIX}/wof-repos/`),
 		"--export-copy",
 		s3(`${OVERLAY_BUILD_PREFIX}/exports/${options.tilesetVersion}/`),
 		...(options.countries?.length ? ["--countries", shellQuote(options.countries.join(","))] : []),

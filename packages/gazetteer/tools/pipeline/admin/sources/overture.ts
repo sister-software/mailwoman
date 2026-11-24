@@ -227,6 +227,20 @@ export function prepareInserts<DB extends WOFDatabase>(
 }
 
 /**
+ * The DuckDB statement that reads Overture's bucket without credentials.
+ *
+ * DuckDB signs an S3 request with the credentials the environment holds.
+ * A signed request needs the caller's own policy to grant the read, even on a public bucket,
+ * and the identities that run these builds grant reads on their own buckets only.
+ *
+ * A secret scoped to Overture's bucket with an empty key keeps every read of it
+ * anonymous, whatever the environment holds.
+ */
+export const OVERTURE_ANONYMOUS_SECRET = /* sql */ `CREATE OR REPLACE SECRET overture_anonymous (
+	TYPE s3, KEY_ID '', SECRET '', REGION 'us-west-2', SCOPE 's3://overturemaps-us-west-2'
+);`
+
+/**
  * The S3 glob of one type of the `divisions` theme at a release.
  */
 export function overtureDivisionsGlob(release: string, type: "division" | "division_area"): string {
@@ -287,7 +301,7 @@ export async function ingestOvertureDivisions(
 	const con = await instance.connect()
 
 	await con.run(
-		/* sql */ `install httpfs; load httpfs; install spatial; load spatial; install json; load json; SET s3_region='us-west-2';`
+		/* sql */ `install httpfs; load httpfs; install spatial; load spatial; install json; load json; SET s3_region='us-west-2'; ${OVERTURE_ANONYMOUS_SECRET}`
 	)
 
 	await con.run(/* sql */ `SET memory_limit='4GB'; SET threads=4;`)

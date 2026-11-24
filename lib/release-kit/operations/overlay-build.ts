@@ -23,7 +23,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { z } from "zod"
 
-import { aws, type AWSCaller, callerIdentity, tileBuildKey } from "#release-kit/deploy/aws/cli"
+import { aws, type AWSCaller, callerIdentity, readAWSResource, tileBuildKey } from "#release-kit/deploy/aws/cli"
 import {
 	AWS_BUILD_PARAMETER_PATH,
 	AWS_BUILD_TAG,
@@ -57,24 +57,6 @@ const DEFAULT_ADMIN_FILE = "admin-global-priority.db"
  * The image and the build run on the instance-store volume.
  */
 const ROOT_VOLUME_GB = 30
-
-/**
- * Whether an object exists in the inputs bucket.
- *
- * A missing object is a 404.
- * Any other failure, such as a refused permission, is thrown.
- */
-async function objectExists(caller: AWSCaller, bucket: string, key: string): Promise<boolean> {
-	try {
-		await aws(caller, ["s3api", "head-object", "--bucket", bucket, "--key", key])
-
-		return true
-	} catch (error) {
-		if (isProcessError(error) && /\b404\b|Not Found/u.test(String(error.stderr))) return false
-
-		throw error
-	}
-}
 
 /**
  * The R2 upload settings from the environment.
@@ -165,7 +147,9 @@ export const launchOverlayBuild = defineOperation({
 		context.log(`hashing ${adminPath}`)
 
 		const adminKey = `${OVERLAY_BUILD_PREFIX}/inputs/admin-${await md5File(adminPath)}.db`
-		const adminStaged = await objectExists(caller, bucket, adminKey)
+
+		const adminStaged =
+			(await readAWSResource(caller, ["s3api", "head-object", "--bucket", bucket, "--key", adminKey])) !== null
 
 		const script = overlayBuildScript({
 			bucket,

@@ -35,9 +35,10 @@ export type AWSCaller = { profile: string } | { key: AccessKey } | null
 const SESSION_VARIABLES: ReadonlySet<string> = new Set(["AWS_PROFILE", "AWS_DEFAULT_PROFILE", "AWS_SESSION_TOKEN"])
 
 /**
- * The error text IAM answers for a user, role or instance profile that doesn't exist.
+ * The error text AWS answers for a resource that doesn't exist: the NoSuchEntity error IAM gives
+ * for a user, role, policy or instance profile, and the 404 status S3 gives for an object.
  */
-const NO_SUCH_ENTITY = "NoSuchEntity"
+const ABSENT_RESOURCE = /NoSuchEntity|\b404\b|Not Found/u
 
 /**
  * Runs one `aws` request and answers its JSON output, or null when the request prints none.
@@ -74,15 +75,16 @@ export async function aws<T>(caller: AWSCaller, args: readonly string[]): Promis
 }
 
 /**
- * Runs a read of one IAM entity and answers null when IAM reports that the entity doesn't exist.
+ * Runs a read of one resource and answers null when AWS reports that the resource doesn't exist.
  *
- * Any other failure, such as a refused permission, is thrown: an unreadable entity isn't an absent one.
+ * A read of an existing resource with empty output answers `{}`, so null always means absent.
+ * Any other failure, such as a refused permission, is thrown: an unreadable resource isn't an absent one.
  */
-export async function readIAMEntity<T>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
+export async function readAWSResource<T extends object>(caller: AWSCaller, args: readonly string[]): Promise<T | null> {
 	try {
-		return await aws<T>(caller, args)
+		return (await aws<T>(caller, args)) ?? ({} as T)
 	} catch (error) {
-		if (isProcessError(error) && String(error.stderr).includes(NO_SUCH_ENTITY)) return null
+		if (isProcessError(error) && ABSENT_RESOURCE.test(String(error.stderr))) return null
 
 		throw error
 	}

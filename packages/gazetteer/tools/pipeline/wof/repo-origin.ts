@@ -69,6 +69,20 @@ export function repoReadURL(org: string, repo: string): string {
 }
 
 /**
+ * The remotes for a clone that only reads: the fork over HTTPS, with no upstream.
+ *
+ * `syncWOFRepo` given this origin clones a missing repository, fetches and fast-forwards
+ * an existing one, and re-shallows it, all without a key or a GitHub request.
+ * With no `upstreamOrg` it never creates a fork or merges upstream into one.
+ *
+ * A clone the operator pushes from keeps {@linkcode wofRepoOrigin}: a sync with this
+ * origin would repoint its `origin` to HTTPS and remove its `upstream` remote.
+ */
+export function wofReadOnlyOrigin(repo: string): RepoOrigin {
+	return { repo, forkURL: repoReadURL(FORK_ORG, repo), upstreamOrg: null, upstreamURL: null }
+}
+
+/**
  * The organization holding a repository's original.
  *
  * The placetypes repository is the one Who's On First repository outside `whosonfirst-data`,

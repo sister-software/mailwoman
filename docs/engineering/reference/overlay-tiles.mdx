@@ -26,7 +26,12 @@ publish either archive to `mailwoman-public`.
 
 `mailwoman tiles overlays` runs the whole build from an empty work directory:
 
-1. It clones each admin repository from its `mailwoman` fork over HTTPS at depth 1.
+1. It brings each admin repository current with `syncWOFRepo`, the function behind the lab's
+   `gazetteer inspect sync`. The sync reads through `wofReadOnlyOrigin`: it clones a missing repository from
+   its `mailwoman` fork over HTTPS at depth 1, fast-forwards an existing one, and makes no GitHub write.
+   With `--repos-cache s3://…`, each repository's `.git` is restored from the cache before the sync and
+   stored again when the sync moved its head. With `--repos`, the run reads that directory's clones as they
+   stand: on the lab, `gazetteer inspect sync` keeps them current.
 2. It copies the admin database when `--admin` is an `s3://` URL.
 3. `exportWOFGeoParquet` writes `export/rowset=wof/`.
 4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
@@ -81,12 +86,12 @@ After a policy change, `mint-aws-credentials --policies-only` rewrites every pol
 
 ### Inputs
 
-| Input                       | Size                                                    | Where the run reads it                         |
-| --------------------------- | ------------------------------------------------------- | ---------------------------------------------- |
-| `admin-global-priority.db`  | 7.3 GB (built 2026-11-21)                               | `s3://mailwoman-basemaps-inputs-<account>/`    |
-| Who's On First admin clones | Below 68 GB, the size of all 271 clones on the lab host | GitHub, cloned by the run                      |
-| Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region |
-| R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store    |
+| Input                       | Size                                                    | Where the run reads it                                                               |
+| --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `admin-global-priority.db`  | 7.3 GB (built 2026-11-21)                               | `s3://mailwoman-basemaps-inputs-<account>/`                                          |
+| Who's On First admin clones | Below 68 GB, the size of all 271 clones on the lab host | `overlay-tiles/wof-repos/` in the inputs bucket, then GitHub for any fork that moved |
+| Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region                                       |
+| R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store                                          |
 
 The 68 GB figure covers every clone, postcode and other repositories included. The admin clones alone are unmeasured.
 

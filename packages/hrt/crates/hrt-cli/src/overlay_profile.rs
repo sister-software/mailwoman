@@ -79,14 +79,19 @@ impl Profile for OverlayProfile {
 			if !input.is_point() {
 				return Vec::new();
 			}
-			collector.point(POINTS).set_zoom_range(point_zoom.min(max_zoom), max_zoom)
+			collector
+				.point(POINTS)
+				.set_zoom_range(point_zoom.min(max_zoom), max_zoom)
 		};
 		let id = input.tag("id").and_then(|text| text.parse::<i64>().ok());
 		if let Some(id) = id {
 			feature.set_id(id);
 		}
 		feature.set_attr("id", id);
-		feature.set_attr("parent_id", input.tag("parent_id").and_then(|text| text.parse::<i64>().ok()));
+		feature.set_attr(
+			"parent_id",
+			input.tag("parent_id").and_then(|text| text.parse::<i64>().ok()),
+		);
 		for key in TEXT_ATTRIBUTES {
 			feature.set_attr(key, input.tag(key).filter(|text| !text.is_empty()));
 		}

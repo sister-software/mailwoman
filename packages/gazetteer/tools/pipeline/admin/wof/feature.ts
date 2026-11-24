@@ -90,6 +90,22 @@ export interface ExtractedWOFFeature {
 }
 
 /**
+ * A WOF record's point: its label point, else its geometry point, else null.
+ *
+ * A point counts only when the record holds both of its coordinates.
+ */
+export function wofRecordPoint(props: WOFProperties): GeoCoordinate | null {
+	const lbl = { latitude: props["lbl:latitude"], longitude: props["lbl:longitude"] }
+	const geom = { latitude: props["geom:latitude"], longitude: props["geom:longitude"] }
+
+	for (const { latitude, longitude } of [lbl, geom]) {
+		if (typeof latitude === "number" && typeof longitude === "number") return { latitude, longitude }
+	}
+
+	return null
+}
+
+/**
  * Extracts the stored fields from one WOF record's text.
  *
  * @returns `null` for a record with no properties, a superseded record, or a placetype outside `placetypes`.
@@ -122,15 +138,9 @@ export function extractParsedWOFFeature(
 
 	const mzIsCurrent = props["mz:is_current"]
 
-	// The label point is preferred over the geometry point.
-	// Either point counts only with both coordinates.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
-
-	const point: GeoCoordinate = {
-		latitude: hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0,
-		longitude: hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0,
-	}
+	const point: GeoCoordinate = wofRecordPoint(props) ?? { latitude: 0, longitude: 0 }
 
 	// Only localities use GeoNames adjudication.
 	// GeoNames anchors for regions and counties are centroids.

@@ -22,7 +22,7 @@ import {
 	aws,
 	type AWSCaller,
 	callerIdentity,
-	readIAMEntity,
+	readAWSResource,
 	tileBuildKey,
 } from "#release-kit/deploy/aws/cli"
 import {
@@ -139,7 +139,7 @@ async function writeServiceRole(
 	accountID: string,
 	log: (line: string) => void
 ): Promise<void> {
-	if (await readIAMEntity(caller, ["iam", "get-role", "--role-name", role.name])) {
+	if (await readAWSResource(caller, ["iam", "get-role", "--role-name", role.name])) {
 		await aws(caller, [
 			"iam",
 			"update-assume-role-policy",
@@ -182,7 +182,7 @@ async function writeServiceRole(
 
 	if (!role.instanceProfile) return
 
-	if (!(await readIAMEntity(caller, ["iam", "get-instance-profile", "--instance-profile-name", role.name]))) {
+	if (!(await readAWSResource(caller, ["iam", "get-instance-profile", "--instance-profile-name", role.name]))) {
 		await aws(caller, ["iam", "create-instance-profile", "--instance-profile-name", role.name])
 
 		await aws(caller, [
@@ -220,7 +220,7 @@ async function writeManagedPolicy(
 ): Promise<string> {
 	const arn = `arn:aws:iam::${accountID}:policy/${name}`
 
-	if (!(await readIAMEntity(caller, ["iam", "get-policy", "--policy-arn", arn]))) {
+	if (!(await readAWSResource(caller, ["iam", "get-policy", "--policy-arn", arn]))) {
 		await aws(caller, ["iam", "create-policy", "--policy-name", name, "--policy-document", document])
 
 		return arn
@@ -265,7 +265,7 @@ async function writeUser(
 	accountID: string,
 	log: (line: string) => void
 ): Promise<void> {
-	if (!(await readIAMEntity(caller, ["iam", "get-user", "--user-name", role.name]))) {
+	if (!(await readAWSResource(caller, ["iam", "get-user", "--user-name", role.name]))) {
 		await aws(caller, ["iam", "create-user", "--user-name", role.name])
 		log(`created user ${role.name}`)
 	}
@@ -338,7 +338,7 @@ export const mintAWSCredentials = defineOperation({
 		for (const role of roles) {
 			if (role.kind !== "user" || policiesOnly) continue
 
-			const user = await readIAMEntity(caller, ["iam", "get-user", "--user-name", role.name])
+			const user = await readAWSResource(caller, ["iam", "get-user", "--user-name", role.name])
 
 			const keys = user
 				? await aws<{ AccessKeyMetadata: Array<{ AccessKeyId: string }> }>(caller, [
