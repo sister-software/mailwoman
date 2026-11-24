@@ -9,7 +9,7 @@
  *   tokens of each field, labeled `B-<tag>` then `I-<tag>`.
  */
 
-import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
+import { COUNTRY_SURFACE_FORMS, countryRenderForms, ISO2_TO_NAME } from "@mailwoman/codex/country"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
@@ -54,13 +54,13 @@ export const FRAGMENT_COUNTRY_NAMES: Readonly<Record<string, string>> = {
 const MIN_COUNTRY_SURFACE_CHARS = 3
 
 /**
- * Each country's word-form surfaces in the codex's order: its curated forms,
- * or its ISO English name, keeping those of at least three characters.
+ * Each country's word-form surfaces in the codex's order: its curated forms without the two-letter
+ * codes (`countryRenderForms`), or its ISO English name, keeping those of at least three characters.
  * A country left with none is absent.
  */
 export function codexCountrySurfaces(): Map<string, string[]> {
 	const all = new Map<string, string[]>(
-		Object.entries(COUNTRY_SURFACE_FORMS).map(([iso2, forms]) => [iso2, [...forms]])
+		Object.keys(COUNTRY_SURFACE_FORMS).map((iso2) => [iso2, [...countryRenderForms(iso2)]])
 	)
 
 	for (const [iso2, name] of ISO2_TO_NAME) {

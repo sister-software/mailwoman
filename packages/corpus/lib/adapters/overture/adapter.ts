@@ -9,7 +9,7 @@
  */
 
 import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
-import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { countryRenderForms } from "@mailwoman/codex/country"
 import { writtenPostcode } from "@mailwoman/codex/labels/postcode/written-groups"
 import { mxStatePostalAbbreviation } from "@mailwoman/codex/mx/state"
 import { sample } from "@mailwoman/core/math/random"
@@ -35,15 +35,15 @@ export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
 const DEFAULT_COUNTRY_SEED = 20_260_922
 
 /**
- * One attested written form of a country's name.
+ * One attested written form of a country's name, never a two-letter code (`countryRenderForms`).
  *
  * Raises rather than returning empty when the codex has no entry, so a requested
  * fraction cannot silently produce no country rows.
  */
 function countrySurfaceForm(country: string, random: () => number): string {
-	const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
+	const forms = countryRenderForms(country)
 
-	if (!forms?.length) {
+	if (!forms.length) {
 		throw new Error(
 			`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 		)

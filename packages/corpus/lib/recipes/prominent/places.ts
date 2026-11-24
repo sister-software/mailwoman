@@ -27,7 +27,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { countrySurfaceForms } from "@mailwoman/codex/country/country"
+import { countryRenderForms } from "@mailwoman/codex/country/country"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { JSONSpliterator } from "spliterator"
 
@@ -146,8 +146,8 @@ export interface ProminentPlaceTuple {
 /**
  * The shortest country form a row writes.
  *
- * A two-letter code reads as a region abbreviation (`CA`), as `packages/corpus/AGENTS.md`
- * records for country-implicit sources.
+ * `countryRenderForms` already leaves out a two-letter code (`CA`, `U.S.`).
+ * The floor also applies to the display name and to the WOF name of a country the codex lists no forms for.
  */
 const COUNTRY_FORM_MIN_LENGTH = 3
 
@@ -172,7 +172,7 @@ function secondForms(
 		case "country": {
 			const forms = [
 				COUNTRY_DISPLAY_NAME[tuple.country] ?? tuple.country_name,
-				...countrySurfaceForms(tuple.country),
+				...countryRenderForms(tuple.country),
 			].filter((form): form is string => typeof form === "string" && form.length >= COUNTRY_FORM_MIN_LENGTH)
 
 			return forms.length ? { tag: "country", forms: [...new Set(forms)] } : null

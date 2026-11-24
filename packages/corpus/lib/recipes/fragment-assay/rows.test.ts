@@ -98,17 +98,10 @@ describe("renderFragment", () => {
 })
 
 describe("codexCountrySurfaces", () => {
-	it("keeps the forms of three characters or more, in the codex's order", () => {
+	it("keeps the forms of three characters or more that aren't a two-letter code, in the codex's order", () => {
 		const surfaces = codexCountrySurfaces()
 
-		expect(surfaces.get("US")).toEqual([
-			"United States",
-			"USA",
-			"U.S.A.",
-			"U.S.",
-			"United States of America",
-			"America",
-		])
+		expect(surfaces.get("US")).toEqual(["United States", "USA", "U.S.A.", "United States of America", "America"])
 
 		expect(surfaces.get("CZ")?.length).toBeGreaterThan(0)
 	})
