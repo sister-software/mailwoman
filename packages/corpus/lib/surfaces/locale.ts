@@ -16,6 +16,7 @@
  */
 
 import { formatAddress } from "@mailwoman/codex/address/format"
+import { writtenPostcode } from "@mailwoman/codex/labels/postcode/written-groups"
 import { mulberry32 } from "@mailwoman/core/utils"
 
 import type { CanonicalRow } from "#types"
@@ -117,25 +118,6 @@ const LOCALE_TAG: Record<string, string> = {
 }
 
 /**
- * Canonicalize a postcode to the form the country's template renders,
- * so the stored component aligns verbatim against `raw`.
- *
- * NL is the main case: OA may store `1011AB`, while the NL template emits `1011 AB`.
- * Other countries pass through unchanged.
- */
-function normalizePostcode(postcode: string, country: string): string {
-	// country-branch: the NL postcode is the one whose source spells it without the space the layout writes.
-	// The codex postal regimes' canonical spacing per country would replace this.
-	if (country === "NL") {
-		const m = /^(\d{4})\s*([A-Za-z]{2})$/.exec(postcode)
-
-		if (m) return `${m[1]} ${m[2]!.toUpperCase()}`
-	}
-
-	return postcode
-}
-
-/**
  * True when `value` appears verbatim and as a standalone token.
  */
 function tokenPresent(raw: string, value: string): boolean {
@@ -185,7 +167,8 @@ export function renderLocaleRow(
 	// Canonicalization uses the country's rendered form.
 	// `postcodeShape: "as-source"` is applied after rendering.
 	if (base.postcode && random() < 0.85) {
-		components.postcode = normalizePostcode(base.postcode, country)
+		// The written form aligns verbatim against `raw`: OA may store `1011AB` where the NL template writes `1011 AB`.
+		components.postcode = writtenPostcode(base.postcode, country)
 	}
 
 	// The region costs no random draw, so a row without one renders exactly as before.

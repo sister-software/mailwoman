@@ -52,13 +52,21 @@ mailwoman corpus run overture \
 | ---------- | ---------------------------------------------------------------------------------------------- |
 | `street`   | `street` — keyword included (`CALLE`/`VIA`/…); affix-relabel splits `street_prefix` downstream |
 | `number`   | `house_number` — skipped when `S-N` / `S/N` (sin número)                                       |
-| `unit`     | `unit` (if non-empty)                                                                          |
-| `postcode` | `postcode`                                                                                     |
+| `unit`     | `unit` (if a designator), or joined into `house_number` where `OVERTURE_UNIT_FIELD_ROLES` says |
+| `postcode` | `postcode`, in the groups the operator writes (`writtenPostcode`: `384 73`, `4524 JH`)         |
 | `locality` | `locality` — Overture `address_levels` municipality, or `postal_city`                          |
+| `region`   | `region` — the first `address_levels` value, only where `OVERTURE_REGION_FORMS` maps it        |
 
-Overture's admin levels stop at the municipality. This street/locality corpus subset needs no deeper level. The
-few in-text-region locales (DE Bundesland, FR département) are covered by the `geonames-postal` adapter
-(it already emits `{ postcode, locality, region }`) — don't duplicate that here.
+The adapter renders every row through the country's codex layout, so a row takes the operator's order. It emits
+no query-style order (postcode or town first).
+
+Overture's `unit` field means different things per country. In Czechia it holds the orientation number, joined as
+`320/28`. In Germany it holds a letter suffix, joined as `28a`. Elsewhere it is a secondary unit.
+
+The region prints only where Overture's first level reads as the form the operator prints: the Brazilian UF
+(`RS`), the Canadian province code (`QC`), and the Mexican state name mapped to the Correos de México
+abbreviation (`Michoacán de Ocampo` → `MICH`). Elsewhere the first level is a unit the operator doesn't print
+(Italy's `Sardegna`), so no region is rendered. A JSONL written before the ingest emitted `region` renders none.
 
 License: **CDLA-Permissive-2.0** (attribution required, without a share-alike term). Per the #471 fill-rate requirement, check
 `fill-rates.md` before committing a locale. ES/NL/FR fill completely. IT postcode is ~0% (street+locality
