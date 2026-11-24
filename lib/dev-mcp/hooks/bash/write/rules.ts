@@ -260,6 +260,18 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		guidance: DETACHED_LAUNCH_GUIDANCE,
 	},
 	{
+		head: "node",
+		// The head skips assignments and wrappers, but the segment still holds them.
+		// A `timeout` anywhere in that prefix runs the script under a shell deadline.
+		pattern: /^\s*(?:(?:[A-Za-z_]\w*=\S*|(?:\S*\/)?(?:env|nohup|command|time)|-\S*|\d\S*)\s+)*(?:\S*\/)?timeout\s/u,
+		because:
+			"a shell `timeout` around `node` kills the script at the deadline without letting it report or clean up, and a wait script under it blocks the session for the whole deadline",
+		guidance:
+			"Run a long `node` command with `run_in_background`, which notifies the session when it exits. To wait for a " +
+			"condition, use the Monitor tool with an until-loop. A script that needs a deadline takes one as a flag and " +
+			"enforces it itself, so it can report what it saw before exiting.",
+	},
+	{
 		head: "gh",
 		pattern: /(?:^|\s)issue\s+(?:create|edit|comment)\b/u,
 		because: "the development MCP owns this GitHub issue mutation",

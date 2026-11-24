@@ -6,35 +6,53 @@ import { describe, expect, it } from "vitest"
 import { layoutForCountry, layoutPrintsTag } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
-import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPUAdmission, UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
 import { joinRendering, renderAddress } from "#address/render"
 
-const rendered = (code: string): string =>
-	joinRendering(
-		renderAddress(layoutForCountry(code)!, {
-			house_number: "1",
-			street: "Main",
-			street_suffix: "Road",
-			dependent_locality: "Elmside",
-			locality: "Springfield",
-			region: "Shelbyville",
-			postcode: "ZZ1 1ZZ",
-			country: "Nowhere",
-		})
-	)
+const SAMPLE = {
+	house_number: "1",
+	street: "Main",
+	street_suffix: "Road",
+	dependent_locality: "Elmside",
+	locality: "Springfield",
+	region: "Shelbyville",
+	postcode: "ZZ1 1ZZ",
+	country: "Nowhere",
+}
+
+const rendered = (code: string): string => joinRendering(renderAddress(layoutForCountry(code)!, SAMPLE))
 
 describe("layouts read from a UPU Postal Addressing Systems description", () => {
-	it("holds a country only where libaddressinput states no order or omits the locality line", () => {
-		// The table fills a gap rather than offering a second reading of a stated order:
-		// either the country has no `fmt`, or its `fmt` leaves out the locality the operator prints.
+	it("holds a country only for the reason its record states, checked against the skeleton", () => {
+		// The country has no `fmt`, its `fmt` leaves out the locality the operator prints,
+		// or its `fmt` orders the locality line differently from the operator's examples.
 		for (const [code, layout] of Object.entries(UPU_PAS_ADDRESS_LAYOUTS)) {
 			const generated = GENERATED_ADDRESS_LAYOUTS[code]
+			const reason = UPU_PAS_LAYOUT_RECORDS[code]!.admittedBecause
 
-			if (!generated) continue
-
-			expect(layoutPrintsTag(generated, "locality"), code).toBe(false)
 			expect(layoutPrintsTag(layout, "locality"), code).toBe(true)
+
+			if (reason === UPUAdmission.NoFormat) {
+				expect(generated, code).toBeUndefined()
+			} else if (reason === UPUAdmission.FormatOmitsLocality) {
+				expect(layoutPrintsTag(generated!, "locality"), code).toBe(false)
+			} else {
+				// The skeleton prints the locality, and the description's rendering differs from it.
+				expect(layoutPrintsTag(generated!, "locality"), code).toBe(true)
+				expect(rendered(code), code).not.toBe(joinRendering(renderAddress(generated!, SAMPLE)))
+			}
 		}
+	})
+
+	it("writes the locality right after the postcode where the description prints `postcode locality`", () => {
+		// Romania's examples print `060274 BUCHAREST`; libaddressinput's `%Z %S %C` put the county between them.
+		expect(rendered("RO")).toContain("ZZ1 1ZZ Springfield")
+		expect(rendered("RO")).not.toContain("Shelbyville")
+		// Latvia's national register writes the municipality between the locality and the postcode.
+		expect(rendered("LV")).toContain("Springfield, Shelbyville, ZZ1 1ZZ")
+		// Kiribati's examples print the island with its postcode and never the island group.
+		expect(rendered("KI")).toContain("Springfield ZZ1 1ZZ")
+		expect(rendered("KI")).not.toContain("Shelbyville")
 	})
 
 	it("never states a second order for a country a SAFD already covers", () => {
