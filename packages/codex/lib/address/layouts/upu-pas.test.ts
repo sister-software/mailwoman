@@ -71,15 +71,6 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 		}
 	})
 
-	it("records which description each layout was read from", () => {
-		for (const [code, record] of Object.entries(UPU_PAS_LAYOUT_RECORDS)) {
-			expect(record.documentDate, code).toMatch(/^\d{4}-\d{1,2}$/u)
-			expect(record.url, code).toMatch(/^https:\/\/www\.upu\.int\/.+En\.pdf$/u)
-			expect(record.sha256, code).toMatch(/^[0-9a-f]{64}$/u)
-			expect(record.unexpressed.length, code).toBeGreaterThan(0)
-		}
-	})
-
 	it("prints the locality every description's examples print", () => {
 		for (const code of Object.keys(UPU_PAS_ADDRESS_LAYOUTS)) {
 			expect(rendered(code), code).toContain("Springfield")

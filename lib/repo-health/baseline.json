@@ -13,5 +13,6 @@
 	"synchronousFilesystemCalls": 0,
 	"rawNULBytes": 0,
 	"bannedVocabulary": 0,
-	"handRolledTreeWalks": 0
+	"handRolledTreeWalks": 0,
+	"uncitedAddressLayouts": 173
 }

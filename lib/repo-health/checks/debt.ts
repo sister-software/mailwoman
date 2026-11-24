@@ -9,6 +9,7 @@
  * Lower counts warn so the baseline can be ratcheted.
  */
 
+import { uncitedLayoutJurisdictions } from "@mailwoman/codex/address/layouts"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -72,6 +73,11 @@ export interface DebtCounters {
 	 * `stack.push(...node.children)` style manual tree walks.
 	 */
 	handRolledTreeWalks: number
+	/**
+	 * Jurisdictions whose rendered address layout cites no primary document,
+	 * as `layout-citations` lists them.
+	 */
+	uncitedAddressLayouts: number
 }
 
 /**
@@ -216,6 +222,7 @@ function createDebtRecord(): DebtCounters {
 		rawNULBytes: 0,
 		bannedVocabulary: 0,
 		handRolledTreeWalks: 0,
+		uncitedAddressLayouts: 0,
 	}
 }
 
@@ -697,6 +704,10 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 		if (!finding.publicEntry) {
 			note(ledger, "testOnlyExports", `${finding.file}:${finding.line} ${finding.name}`)
 		}
+	}
+
+	for (const jurisdiction of uncitedLayoutJurisdictions()) {
+		note(ledger, "uncitedAddressLayouts", jurisdiction)
 	}
 
 	return ledger
