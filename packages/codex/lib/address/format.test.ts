@@ -486,7 +486,7 @@ describe("the script a row renders in", () => {
 		expect(formatAddressRow(HK_LOCAL, "HK", { singleLine: true, script: "latin" })?.script).toBe("latin")
 	})
 
-	it("holds Japan at its own order, because the Latin one would drop two components", () => {
+	it("flips Japan to the romanized order, smallest first, without dropping the town", () => {
 		const romanized: ComponentDict = {
 			region: "Tokyo",
 			locality: "Chiyoda",
@@ -495,21 +495,12 @@ describe("the script a row renders in", () => {
 			postcode: "100-0005",
 		}
 
-		// Seven of the eight two-order countries place slot for slot.
-		// Japan's Latin skeleton has no slot below the prefecture, so deriving there would
-		// trade an unsupported order for `locality` and `dependent_locality`.
+		// Japan Post's UPU description writes the Latin form `4-3-2, Hakusan` / `Bunkyo-ku, TOKYO`
+		// / `112-0001`. libaddressinput's Latin skeleton had no slot below the prefecture.
+		// The reading places every component.
 		const derived = formatAddressRow(romanized, "JP", { singleLine: true })
 
-		expect(derived?.script).toBe("local")
-		expect(derived?.unplaced).toEqual([])
-
-		// The caller can still ask for it.
-		// The output makes the loss visible.
-		// It is reported rather than silent.
-		expect(formatAddressRow(romanized, "JP", { singleLine: true, script: "latin" })?.unplaced).toEqual([
-			"locality",
-			"dependent_locality",
-		])
+		expect(derived).toMatchObject({ script: "latin", raw: "1-9-1, Marunouchi, Chiyoda, Tokyo, 100-0005", unplaced: [] })
 	})
 
 	it("abstains on a dict with no letters rather than reading digits as Latin", () => {

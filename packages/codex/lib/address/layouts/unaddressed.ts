@@ -20,6 +20,13 @@ import { upuDescription } from "#address/layouts/citations/upu-description"
  * Citations by ISO 3166-1 alpha-2.
  */
 export const UNADDRESSED_JURISDICTIONS: Readonly<Record<string, LayoutCitation>> = {
+	HM: upuDescription(
+		"hmd",
+		"2004-9",
+		"481e6f38dadbb55d589f3f21197e5b1ef8d67da96d669fa395743ca1b521db2c",
+		[["Heard Island and McDonald Islands", "Australian External Territory", "Uninhabited"]],
+		[]
+	),
 	UM: upuDescription(
 		"umi",
 		"2005-3",
