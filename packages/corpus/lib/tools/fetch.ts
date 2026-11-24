@@ -42,6 +42,7 @@ import { fetchGeonamesPostal } from "#tools/fetch/geonames/postal"
 import { fetchGLEIF } from "#tools/fetch/gleif"
 import { fetchOpenAddresses } from "#tools/fetch/openaddresses"
 import { fetchOurAirports } from "#tools/fetch/ourairports"
+import { fetchOverturePlacesIN } from "#tools/fetch/overture-places-in"
 import { fetchVlaanderenAD } from "#tools/fetch/vlaanderen-ad"
 import { fetchWikidataSubVenue } from "#tools/fetch/wikidata/subvenue"
 import { fetchWikidataVitalPlaces } from "#tools/fetch/wikidata/vital-places"
@@ -102,6 +103,7 @@ export const FETCH_SOURCES = {
 	"nga-wpi": fetchNGAWPI,
 	openaddresses: fetchOpenAddresses,
 	ourairports: fetchOurAirports,
+	"overture-places-in": fetchOverturePlacesIN,
 	vlaanderen: fetchVlaanderenAD,
 	wallonie: fetchWallonie,
 	"state-sources": fetchStateSources,

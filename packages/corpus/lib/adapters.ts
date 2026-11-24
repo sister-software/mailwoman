@@ -54,6 +54,7 @@ import { gleifAdapter } from "#adapters/gleif/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
 import { osmAdapter } from "#adapters/osm/adapter"
 import { overtureAdapter } from "#adapters/overture/adapter"
+import { overturePlacesINAdapter } from "#adapters/overture/places-in/adapter"
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { wofPostalcodeAdapter } from "#adapters/wof/postalcode-json/adapter"
@@ -155,6 +156,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	tigerAdapter,
 	openaddressesAdapter,
 	overtureAdapter,
+	overturePlacesINAdapter,
 	osmAdapter,
 	gnafAdapter,
 	fccBdcAdapter,

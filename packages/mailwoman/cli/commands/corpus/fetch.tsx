@@ -67,6 +67,7 @@ const sources = [
 	"nppes",
 	"openaddresses",
 	"ourairports",
+	"overture-places-in",
 	"state-sources",
 	"state-hi-schools",
 	"tiger-full",
@@ -314,6 +315,9 @@ const FETCHERS = {
 	},
 	ourairports: async (base) =>
 		(await import("@mailwoman/corpus/tools/fetch/ourairports")).fetchOurAirports(base, reportToStderr),
+	// The Overture release copied is --vintage, or the release the gazetteer's places build pins when it is absent.
+	"overture-places-in": async (base) =>
+		(await import("@mailwoman/corpus/tools/fetch/overture-places-in")).fetchOverturePlacesIN(base, reportToStderr),
 	"state-sources": async (base) =>
 		(await import("@mailwoman/corpus/us/tools/fetch/state/sources")).fetchStateSources(base, reportToStderr),
 	"state-hi-schools": async (base) =>
