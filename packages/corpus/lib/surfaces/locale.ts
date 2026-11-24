@@ -190,7 +190,13 @@ export function renderLocaleRow(
 
 	// The region costs no random draw, so a row without one renders exactly as before.
 	// A region the country's layout cannot place, or that doesn't align, falls back to the row without it.
-	if (opts.withRegion && base.region) {
+	// A region that's the locality itself, as the city-state Berlin is, would write the name twice.
+	// Such a row (`12347 Berlin, Berlin`) renders without it.
+	if (
+		opts.withRegion &&
+		base.region &&
+		base.region.localeCompare(base.locality, undefined, { sensitivity: "base" }) !== 0
+	) {
 		const withRegion = finishLocaleRow({ ...components, region: base.region }, base, country, opts)
 
 		if (withRegion) return withRegion

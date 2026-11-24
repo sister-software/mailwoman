@@ -307,6 +307,14 @@ describe("withRegion: the region in the native order (#2676)", () => {
 		})
 	})
 
+	it("leaves out a region that is the locality itself, as the city-state Berlin is", () => {
+		const berlin: LocaleBaseTuple = { ...DRESDEN, locality: "Berlin", region: "Berlin", postcode: "12347" }
+		const row = renderGermanRow(berlin, { random: keepAll, withRegion: true })!
+
+		expect(row.raw).toBe("Hauptstraße 5, 12347 Berlin")
+		expect(row.components.region).toBeUndefined()
+	})
+
 	it("renders a row without a region exactly as without the option", () => {
 		for (const [base, country] of [
 			[{ ...PRESTON, region: undefined }, "GB"],

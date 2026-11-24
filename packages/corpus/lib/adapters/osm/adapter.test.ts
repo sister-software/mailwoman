@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/license/policy"
@@ -35,11 +36,21 @@ async function writeFixture(name: string, rows: Record<string, unknown>[]): Prom
 
 describe("housenumberIsDesignator", () => {
 	it("keeps the designator shapes and refuses a mapper's line", () => {
-		for (const ok of ["12", "188a", "14/E", "1/1146", "167-c", "B-77", "L58", "R 948", "A 90"]) {
+		for (const ok of ["12", "188a", "14/E", "1/1146", "167-c", "B-77", "L58", "R 948", "A 90", "129504", "1020-1022"]) {
 			expect(housenumberIsDesignator(ok), ok).toBe(true)
 		}
 
-		for (const no of ["House 34, Road 4, Sector 9", "Plot #27", "-", "Near Askari Towers 2", "B-S-1", "Shehzad Town"]) {
+		for (const no of [
+			"House 34, Road 4, Sector 9",
+			"Plot #27",
+			"-",
+			"Near Askari Towers 2",
+			"B-S-1",
+			"Shehzad Town",
+			"22796800",
+			"07505156040",
+			"105/55118422",
+		]) {
 			expect(housenumberIsDesignator(no), no).toBe(false)
 		}
 	})
@@ -116,6 +127,22 @@ describe("componentsForOSMRow", () => {
 			house_number: "L 271",
 			locality: "Karachi",
 		})
+	})
+
+	it("reads a raion in addr:district as the subregion above the settlement, which the layout leaves off", () => {
+		const raion = { street: "улица Калинина", number: "4", city: "Правдинский Поселок", district: "Пушкинский район" }
+
+		expect(componentsForOSMRow(raion, "RU")).toEqual({
+			street: "улица Калинина",
+			house_number: "4",
+			locality: "Правдинский Поселок",
+			subregion: "Пушкинский район",
+		})
+
+		const rendered = formatAddressRow(componentsForOSMRow(raion, "RU")!, "RU", { singleLine: true })!
+
+		expect(rendered.raw).toBe("улица Калинина, 4, Правдинский Поселок")
+		expect(rendered.unplaced).toEqual(["subregion"])
 	})
 
 	it("keeps a row with a district and no city", () => {

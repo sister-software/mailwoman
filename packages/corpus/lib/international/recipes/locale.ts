@@ -227,6 +227,9 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// The share of rows #2676 shipped in v0.7.10: 52,103 of 786,626 train rows (6.6%) labeled the county
 		// or constituent country. The run skips a row whose text it already wrote (#2765), and a row with a
 		// region rarely repeats, so 5.7% of draws yields 6.6% of written rows.
+		// Royal Mail prints no county.
+		// Its description: "The county name is no longer required in the address if the post town and postcode
+		// are provided". The share stays a minority of typed rows that write the county.
 		regionFraction: 0.057,
 		// OS Open Names writes a Welsh county as `<Welsh> - <English>`, as in `Caerdydd - Cardiff`
 		// or `Gwynedd - Gwynedd`, and an address writes one of the two.

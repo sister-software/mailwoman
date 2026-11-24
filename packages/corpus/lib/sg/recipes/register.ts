@@ -42,7 +42,12 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
-// The official form receives the probability left after the block, bracketed-postcode and building-led forms.
+// The official form receives the probability left after the block,
+// bracketed-postcode and building-led forms.
+// SingPost prints `SINGAPORE <postcode>` after the
+// street: `Blk 35 Mandalay Road / # 13–37 Mandalay Towers / SINGAPORE 308215`.
+// The block, building-led and official forms write it.
+// The bracketed `S(308215)` form is typed rather than printed, so it stays a minority.
 const P_BLOCK = 0.4
 const P_BRACKET_POSTCODE = 0.25
 const P_BUILDING_LED = 0.15
