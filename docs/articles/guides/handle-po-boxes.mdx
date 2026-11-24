@@ -10,7 +10,7 @@ import { CommonPrerequisites } from "#partials/runtime"
 
 # Route PO box records for mailing review
 
-Use this guide when a <Country code="US" /> mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. The example records a complete PO box parse as a mailing-address candidate for review and requests more input when the box has no locality, region, or postcode. These are application choices. Whether the box exists and accepts mail is a question for the postal service.
+Use this guide when a <Country code="US" /> mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. When you finish, the script routes a complete PO box to mailing review, asks for missing place fields on an incomplete PO box, and sends other address kinds to their own intake path. A parser fault goes to technical review. These are application choices. Whether the box exists and accepts mail is a question for the postal service.
 
 ## Prerequisites
 
@@ -33,19 +33,32 @@ const required = ["po_box", "locality", "region", "postcode"] as const
 
 await using parser = await createParser()
 
-for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
+for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234", "350 5th Ave, New York, NY 10118"]) {
 	const result = await parser.parse(input)
 	const components = decodeAsJSON(result.tree)
 	const missing = required.filter((tag) => !components[tag])
-	const mailingCandidate = result.kind.kind === "po_box" && !result.faults.length && !missing.length
-	const route = mailingCandidate ? "mailing-address-review" : "request-more-input"
 
-	console.log(`${input}\nkind: ${result.kind.kind}, route: ${route}, missing: ${missing.join(", ") || "none"}`)
+	const route = result.faults.length
+		? "review-stage-fault"
+		: result.kind.kind !== "po_box"
+			? "other-address-flow"
+			: missing.length
+				? "request-more-input"
+				: "mailing-address-review"
+
+	console.log(
+		`${input}\nkind: ${result.kind.kind}, route: ${route}, missing: ${route === "request-more-input" ? missing.join(", ") : "none"}`
+	)
+
+	if (result.faults.length) {
+		console.error(`parser faults: ${JSON.stringify(result.faults)}`)
+	}
+
 	console.table(flattenTreeNodes(result.tree), ["tag", "value", "start", "end"])
 }
 ```
 
-`decodeAsJSON` gives one value per tag for the required-field check. `flattenTreeNodes` lists the returned components in source order, and `console.table` prints each one's tag, value, and offsets. The rule requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
+`decodeAsJSON` gives one value per tag for the required-field check. `flattenTreeNodes` lists the returned components in source order, and `console.table` prints each one's tag, value, and offsets. The rule sends a stage fault to technical review and prints the fault before it considers the query kind. It sends a non-PO-box kind to the ordinary address flow. For a `po_box` kind, it requires the `po_box`, `locality`, `region`, and `postcode` components before placing a record in this application's mailing-review queue. A missing field triggers a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
 
 Run `node route-po-box.ts`. The script prints this complete output:
 
@@ -67,8 +80,22 @@ kind: po_box, route: request-more-input, missing: locality, region, postcode
 ├─────────┼──────────┼───────────────┼───────┼─────┤
 │ 0       │ 'po_box' │ 'PO Box 1234' │ 0     │ 11  │
 └─────────┴──────────┴───────────────┴───────┴─────┘
+350 5th Ave, New York, NY 10118
+kind: structured_address, route: other-address-flow, missing: none
+┌─────────┬─────────────────┬────────────┬───────┬─────┐
+│ (index) │ tag             │ value      │ start │ end │
+├─────────┼─────────────────┼────────────┼───────┼─────┤
+│ 0       │ 'house_number'  │ '350'      │ 0     │ 3   │
+│ 1       │ 'street'        │ '5th'      │ 4     │ 7   │
+│ 2       │ 'street_suffix' │ 'Ave'      │ 8     │ 11  │
+│ 3       │ 'locality'      │ 'New York' │ 13    │ 21  │
+│ 4       │ 'region'        │ 'NY'       │ 23    │ 25  │
+│ 5       │ 'postcode'      │ '10118'    │ 26    │ 31  │
+└─────────┴─────────────────┴────────────┴───────┴─────┘
 ```
 
-For `PO Box 1234, Springfield, IL 62701`, the parser returned kind `po_box` and a `po_box` component containing `PO Box 1234`. The first record has the four components this intake requires, so the application routes it to mailing-address review. For `PO Box 1234`, the parse has the box component and lacks the three place fields, so the application requests more input. In both cases, delivery status and the location of a building remain unknown.
+For `PO Box 1234, Springfield, IL 62701`, the parser returned kind `po_box` and a `po_box` component containing `PO Box 1234`. The first record has the four components this intake requires, so the application routes it to mailing-address review. For `PO Box 1234`, the parse has the box component and lacks the three place fields, so the application requests more input. The `350 5th Ave, New York, NY 10118` record has kind `structured_address`, so it follows the ordinary address flow. Delivery status and building location remain unknown for these records.
+
+Send `mailing-address-review` to a reviewer who can check the box number and delivery requirements. Ask the sender for the listed fields on `request-more-input`. Send `other-address-flow` to the street-address intake, and investigate `review-stage-fault` before making a mailing decision. [The record-validation guide](./validate-records.mdx) gives an example street-address policy.
 
 The script makes no geocode call. A coordinate returned for a city or post office needs its own source and precision evidence before any location use, and a PO box parse or a coarse place coordinate isn't a building destination. When you need a coordinate, first install and verify a [geographic data bundle](../reference/data-and-locales.mdx), then inspect the returned `resolution_tier`, `epistemic_status`, and coordinate provenance in the [result schema](../reference/schema.mdx). The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) explains why a parser score answers neither the coordinate question nor the deliverability question.

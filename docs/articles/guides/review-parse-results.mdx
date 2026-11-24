@@ -10,7 +10,7 @@ import { CommonPrerequisites } from "#partials/runtime"
 
 # Route parse results to review
 
-Use this procedure when a <Country code="US" /> street-address intake needs a consistent rule for sending parser output to a review queue. Define what your downstream workflow requires first. This example requires a `structured_address` kind, an empty `faults` array, and nodes tagged `house_number`, `street`, `locality`, `region`, and `postcode`. A row meeting those conditions moves to a separate validation step. Whether the address exists or receives mail needs postal or geographic evidence beyond this rule.
+Use this procedure when a <Country code="US" /> street-address intake needs a consistent rule for sending parser output to a review queue. When you finish, the script marks rows with a complete street-address parse as `ready` for a separate validation step and marks other rows for review. Define what your downstream workflow requires first. This example requires a `structured_address` kind, an empty `faults` array, and nodes tagged `house_number`, `street`, `locality`, `region`, and `postcode`. Whether the address exists or receives mail needs postal or geographic evidence beyond this rule.
 
 ## Prerequisites
 
@@ -54,6 +54,10 @@ for (const [id, expected, input] of examples) {
 	const result = await parser.parse(input)
 	const components = decodeAsJSON(result.tree)
 	const missing = required.filter((tag) => !components[tag])
+
+	if (result.faults.length) {
+		console.error(`${id}: parser faults: ${JSON.stringify(result.faults)}`)
+	}
 
 	const route: Route =
 		result.faults.length || result.kind.kind !== "structured_address" || missing.length ? "review" : "ready"
@@ -111,6 +115,10 @@ Labeled review routed review: 4/4
 
 The rule sent the three rows labeled `ready` to downstream validation and the four rows labeled `review` to review. This is an executed result for seven selected example strings, without a production accuracy estimate or a confidence cutoff. For `42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000`, the observed reason is the missing `region` tag. The parser reads the text and leaves the question of whether that address exists to a later check.
 
+## Use each route
+
+Send `ready` rows with their original input and an application-established <Country code="US" /> country field to the [record validation policy](./validate-records.mdx). The example script doesn't store a country field, so add one to your intake record before connecting the two procedures. For a `review` row, inspect `faults` first. Investigate a stage fault before using the returned components. If the kind is `po_box` or `intersection`, use the corresponding [PO box](./handle-po-boxes.mdx) or [intersection](./handle-intersections.mdx) intake. Ask the sender for a missing component when the kind is `structured_address`, as in `R4`. Keep the input and the observed kind, missing tags, and faults with the review record. The `weakest` column is diagnostic information. It doesn't select a route in this rule.
+
 The PO box row's weakest node score is `0.914`, the same rounded value as the first ready row. A cutoff chosen from these seven scores would mix different query kinds and score origins. The bundled calibration metadata identifies a model version older than the published 10.8.0 English model, so these raw values have no established probability interpretation. The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) gives the version evidence. Use a separate, representative labeled set to evaluate any score-based policy for your model, locale, and application costs.
 
-For production intake, label records that cover your actual input sources before evaluating this rule. Count false ready decisions and unnecessary reviews with denominators, inspect the exact failed inputs, then change the condition that caused each error. Send rows marked ready through a separate [record validation policy](./validate-records.mdx). The [result schema](../reference/schema.mdx) defines the kind, fault, tag, and score fields used here.
+For production intake, label records that cover your actual input sources before evaluating this rule. Count false ready decisions and unnecessary reviews with denominators, inspect the exact failed inputs, then change the condition that caused each error. The [result schema](../reference/schema.mdx) defines the kind, fault, tag, and score fields used here.
