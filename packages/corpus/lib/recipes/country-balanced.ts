@@ -9,7 +9,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
+import { COUNTRY_SURFACE_FORMS, CountryNames, countryRenderForms } from "@mailwoman/codex/country"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -28,9 +28,9 @@ import { alignRow } from "#utils"
 
 // Country names are drawn without regard to the address's own country.
 const COUNTRY_FORM_POOL = (() => {
-	// `surface` holds curated endonyms and abbreviations.
+	// `surface` holds curated endonyms and abbreviations, without the two-letter codes.
 	// `names` holds canonical English names.
-	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat()
+	const surface = Object.keys(COUNTRY_SURFACE_FORMS).flatMap((iso2) => countryRenderForms(iso2))
 	const names = [...CountryNames]
 
 	return { surface, names }

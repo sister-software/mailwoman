@@ -11,7 +11,7 @@
  *   `postcode_move` augmentation's job (#2750).
  */
 
-import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { countryRenderForms } from "@mailwoman/codex/country"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
@@ -549,9 +549,9 @@ export function applyCountryAppend(
 	random: () => number
 ): void {
 	if (countryFraction > 0 && random() < countryFraction) {
-		const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
+		const forms = countryRenderForms(country)
 
-		if (!forms?.length) {
+		if (!forms.length) {
 			throw new Error(
 				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 			)

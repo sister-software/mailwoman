@@ -132,8 +132,10 @@ Overture address rows contain no country token, so training on them at real weig
 emission on rows that do name one (measured at −1.6 pp with 456k CA/MX rows, and −5.3 pp with 666k BR
 rows added). A country-implicit source needs a fraction of its rows rendered with a trailing country
 surface (`components.country` set and aligned), using surfaces of three or more characters because a
-bare alpha-2 code collides with US state abbreviations. `renderCountry()` in `country-balanced.ts` is
-the precedent.
+bare alpha-2 code collides with US state abbreviations. A renderer draws a country's forms from
+`countryRenderForms` in `@mailwoman/codex/country`, which leaves out every two-letter code (`CA`, `U.S.`)
+for every country. The matcher still reads those codes. `renderCountry()` in `country-balanced.ts` is the
+precedent for the country append.
 
 ## Base corpus build cost
 

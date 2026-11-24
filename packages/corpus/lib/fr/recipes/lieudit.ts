@@ -30,7 +30,7 @@
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { countryRenderForms } from "@mailwoman/codex/country"
 import { currentSourcePath } from "@mailwoman/core/data-root"
 import { sample, shuffleWith } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -249,10 +249,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 			// This keeps the byte-stream a function of `countryFraction` rather than of
 			// the mixture of jurisdictions in the input files.
 			if (countryFraction > 0 && random() < countryFraction) {
-				const forms: readonly string[] | undefined =
-					COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
+				const forms = countryRenderForms(country)
 
-				if (forms) {
+				if (forms.length) {
 					const form = sample(forms, random)
 					raw = `${raw}, ${form}`
 					components.country = form

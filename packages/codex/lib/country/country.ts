@@ -249,3 +249,23 @@ export function isCountryToken(token: unknown): boolean {
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []
 }
+
+/**
+ * Whether a country form is a two-letter code, with or without periods: `CA`, `US`, `U.K.`.
+ *
+ * A two-letter code also reads as a region abbreviation (`CA` is California's),
+ * so `packages/corpus/AGENTS.md` keeps a rendered country to three or more characters.
+ */
+export function isTwoLetterCountryCode(form: string): boolean {
+	return /^(?:[A-Za-z]\.?){2}$/u.test(form.trim())
+}
+
+/**
+ * The forms a corpus renderer writes for a country: its curated surface forms without
+ * the two-letter codes ({@linkcode isTwoLetterCountryCode}).
+ *
+ * The matcher still reads every surface form, so a parsed `CA` resolves to Canada.
+ */
+export function countryRenderForms(iso2: string): readonly string[] {
+	return countrySurfaceForms(iso2).filter((form) => !isTwoLetterCountryCode(form))
+}

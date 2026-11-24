@@ -5,10 +5,13 @@ import { expect, test } from "vitest"
 
 import {
 	Alpha3ToCountryRecord,
+	COUNTRY_SURFACE_FORMS,
+	countryRenderForms,
 	countrySurfaceForms,
 	formatAsCountryISO2,
 	isAlpha2CodeShape,
 	isCountryToken,
+	isTwoLetterCountryCode,
 	matchCountry,
 } from "#country"
 
@@ -101,4 +104,19 @@ test("isAlpha2CodeShape refuses a case or length a country filter would match no
 	expect(isAlpha2CodeShape("")).toBe(false)
 	expect(isAlpha2CodeShape(undefined)).toBe(false)
 	expect(isAlpha2CodeShape(42)).toBe(false)
+})
+
+test("countryRenderForms writes every curated country in a form other than a two-letter code", () => {
+	for (const iso2 of Object.keys(COUNTRY_SURFACE_FORMS)) {
+		const forms = countryRenderForms(iso2)
+
+		expect(forms.length, iso2).toBeGreaterThan(0)
+		expect(forms.filter(isTwoLetterCountryCode), iso2).toEqual([])
+	}
+
+	expect(countryRenderForms("CA")).toEqual(["Canada", "CAN"])
+	expect(countryRenderForms("US")).not.toContain("U.S.")
+	expect(countryRenderForms("JP")).toContain("日本")
+	// The matcher still reads the codes a renderer leaves out.
+	expect(matchCountry("CA")?.iso2).toBe("CA")
 })

@@ -46,7 +46,7 @@
 
 import { layoutForCountry, layoutPrintsLargestFirst, lineJoinForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { countrySurfaceForms } from "@mailwoman/codex/country/country"
+import { countryRenderForms } from "@mailwoman/codex/country/country"
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
 import { postalTownPlacetypeForCountry } from "@mailwoman/codex/labels/placetype-map"
 import { foldToken } from "@mailwoman/codex/names/normalize"
@@ -419,8 +419,8 @@ function isStructuralSlot(slot: NameSlot): boolean {
 /**
  * The forms one ancestor level is written in, its canonical form first.
  *
- * - A country is written in its OpenCage-canonical display name, then each
- *   surface form the codex lists for it (`United States`, `USA`, `US`, `U.S.A.`),
+ * - A country is written in its OpenCage-canonical display name, then each surface form
+ *   the codex lists for it except a two-letter code (`United States`, `USA`, `U.S.A.`),
  *   or its own `wof:name` when the codex lists none.
  * - A region is written in its name, then in the code the country's addresses
  *   write for it (`NY`), from libaddressinput.
@@ -442,7 +442,7 @@ function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): st
 	if (level === "country") {
 		add(COUNTRY_DISPLAY_NAME[ancestor.country] ?? ancestor.name)
 
-		const curated = countrySurfaceForms(ancestor.country)
+		const curated = countryRenderForms(ancestor.country)
 
 		if (curated.length) {
 			curated.forEach(add)
