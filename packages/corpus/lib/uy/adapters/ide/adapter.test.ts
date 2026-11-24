@@ -138,7 +138,8 @@ describe("ide-uy adapter", () => {
 		const rows = await readCanonicalRows(scratch.path, IDE_UY_ADAPTER_ID)
 
 		expect(rows.every((row) => row.license === IDE_UY_LICENSE && row.country === "UY")).toBe(true)
-		expect(rows.map((row) => row.raw)).toContain("ORDOÑEZ 1234 BIS, 11200 MONTEVIDEO")
+		// The UY layout writes the dash Uruguay's UPU description prints between the postcode and the locality.
+		expect(rows.map((row) => row.raw)).toContain("ORDOÑEZ 1234 BIS, 11200 – MONTEVIDEO")
 		expect(rows.some((row) => row.components.street === `AVENIDA JOSE "PEPE" D' ELIA`)).toBe(true)
 		expect(rows.find((row) => row.components.venue)?.components.venue).toBe("SUC CORREO ARTIGAS")
 	})

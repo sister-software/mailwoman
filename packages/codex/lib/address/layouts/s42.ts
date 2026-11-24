@@ -195,11 +195,12 @@ ${postcode} ${locality} ${dependent_locality}
 ${region}, ${country}`,
 
 	// SAFD lines: PO-BOX, BLDG, STREET-ADDRESS, TOWN, POST OFFICE, POSTCODE, COUNTRY.
-	// `POSTCODE-LINE` prints `town & postcode`.
+	// `POSTCODE-LINE` prints `town & postcode`, with the comma the UPU description's
+	// examples print between them (`CASTRIES, LC04  101`).
 	LC: addr`${attention}
 ${venue}
 ${numberFirstStreet}
-${locality} ${postcode}
+${locality}, ${postcode}
 ${country}`,
 
 	// SAFD lines: post office box, building, street, district, TEL NO, TOWN, country.

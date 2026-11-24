@@ -1080,7 +1080,7 @@ ${country}`,
 	// %N%n%O%n%A%n%C %Z
 	NP: addr`${attention}
 ${venue}
-${numberLastStreet}
+${numberFirstCommaStreet}
 ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
@@ -1195,7 +1195,7 @@ ${country}`,
 	// %N%n%O%n%A%n%C %S %Z
 	PW: addr`${attention}
 ${venue}
-${numberLastStreet}
+${numberFirstStreet}
 ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,

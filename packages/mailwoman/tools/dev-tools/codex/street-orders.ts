@@ -36,6 +36,8 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 	"MR",
 	"MU",
 	"MZ",
+	// Nepal's UPU description prints `102, Mitery Marg`.
+	"NP",
 	"RU",
 	// San Marino writes the comma, unlike the Italy that surrounds it.
 	// Measured on its own institutions' published addresses: `Via del Voltone, 120` from the central
@@ -265,7 +267,9 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	NI: "number-last",
 	NL: "number-last",
 	NO: "number-last",
-	NP: "number-last",
+	// The UPU description (`nplEn.pdf`, 06/2012) prints the number first with a comma: `102, Mitery Marg`.
+	// OpenCage's template states `number-last`.
+	NP: "number-first",
 	NR: "number-first",
 	NU: "number-first",
 	NZ: "number-first",
@@ -277,7 +281,10 @@ export const STREET_ORDERS: Readonly<Record<string, StreetOrder>> = {
 	PK: "number-first",
 	PL: "number-last",
 	PT: "number-last",
-	PW: "number-last",
+	// The UPU description (`plwEn.pdf`, 09/2014): `Palau follows the United States of America
+	// postal system`, whose examples print the number first (`123 MAGNOLIA ST`).
+	// OpenCage's template states `number-last`.
+	PW: "number-first",
 	PY: "number-last",
 	QA: "number-last",
 	RO: "number-last",
