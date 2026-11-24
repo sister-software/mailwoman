@@ -7,6 +7,7 @@ import {
 	Alpha3ToCountryRecord,
 	COUNTRY_SURFACE_FORMS,
 	countryRenderForms,
+	isTwoLetterCountryCode,
 	countrySurfaceForms,
 	formatAsCountryISO2,
 	isAlpha2CodeShape,
@@ -110,15 +111,13 @@ test("countryRenderForms writes every curated country in a form other than a two
 		const forms = countryRenderForms(iso2)
 
 		expect(forms.length, iso2).toBeGreaterThan(0)
-
-		expect(
-			forms.filter((form) => /^(?:[A-Za-z]\.?){2}$/u.test(form.trim())),
-			iso2
-		).toEqual([])
+		expect(forms.filter(isTwoLetterCountryCode), iso2).toEqual([])
 	}
 
 	expect(countryRenderForms("CA")).toEqual(["Canada", "CAN"])
+	expect(countryRenderForms("US")).not.toContain("US")
 	expect(countryRenderForms("US")).not.toContain("U.S.")
+	expect(countryRenderForms("GB")).toEqual(["United Kingdom", "Great Britain", "Britain"])
 	expect(countryRenderForms("JP")).toContain("日本")
 	// The matcher still reads the codes a renderer leaves out.
 	expect(matchCountry("CA")?.iso2).toBe("CA")
