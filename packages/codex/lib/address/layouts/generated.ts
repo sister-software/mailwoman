@@ -1462,14 +1462,6 @@ ${region}
 ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%n%C %S %Z
-	UM: addr`${attention}
-${venue}
-${numberFirstStreet}
-${dependent_locality}
-${locality} ${region} ${postcode}
-${country}`,
-
 	// %N%n%O%n%A%n%Z %C %S
 	UY: addr`${attention}
 ${venue}

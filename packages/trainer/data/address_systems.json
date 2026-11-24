@@ -1398,11 +1398,6 @@
 			"system": 38
 		},
 		{
-			"country": "UM",
-			"script": "local",
-			"system": 7
-		},
-		{
 			"country": "US",
 			"script": "local",
 			"system": 14
@@ -1420,7 +1415,7 @@
 		{
 			"country": "VA",
 			"script": "local",
-			"system": 1
+			"system": 8
 		},
 		{
 			"country": "VC",
