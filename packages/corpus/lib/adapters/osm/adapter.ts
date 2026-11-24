@@ -11,7 +11,6 @@
  * That's why `defaultLicense` isn't an option on this adapter.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import { countriesDeclaredBy, hasCountry } from "@mailwoman/codex/country/sets"
@@ -25,6 +24,7 @@ import { TextSpliterator } from "spliterator"
 import { OSM_LICENSE } from "#adapters/osm/license"
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -436,7 +436,7 @@ export function createOSMAdapter(): CorpusAdapter {
 
 				if (!components) continue
 
-				const rendered = formatAddressRow(components, country, { singleLine: true })
+				const rendered = formatCorpusRow(components, country, { singleLine: true })
 
 				if (!rendered) {
 					countDropped(opts, "row:render-failed")

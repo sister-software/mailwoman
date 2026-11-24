@@ -127,7 +127,8 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%nAX-%Z %C%nÅLAND
+	// %O%n%N%n%A%nAX-%Z %C%nÅLAND The postcode prints as `AX-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/alaEn.pdf (2019-02).
 	AX: addr`${venue}
 ${attention}
 ${numberLastStreet}
@@ -272,13 +273,13 @@ ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nCH-%Z %C The postcode prints bare:
+	// %O%n%N%n%A%nCH-%Z %C The postcode prints bare or as `CH-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cheEn.pdf (2024-06).
 	CH: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "CH-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%X %A %C %X
@@ -339,12 +340,13 @@ ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%n%Z %C
+	// %N%n%O%n%A%n%Z %C The postcode prints bare or as `CY-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cypEn.pdf (2023-03).
 	CY: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "CY-", share: 0.5 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -422,13 +424,13 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%nFI-%Z %C The postcode prints bare:
+	// %O%n%N%n%A%nFI-%Z %C The postcode prints bare or as `FI-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/finEn.pdf (2024-11).
 	FI: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "FI-", share: 0.25 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -568,15 +570,17 @@ ${locality}, ${region}
 ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%nHR-%Z %C
+	// %N%n%O%n%A%nHR-%Z %C The postcode prints as `HR-` or bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/hrvEn.pdf (2014-05).
 	HR: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "HR-")} ${locality}
+${prefixedSlot("postcode", "HR-", [{ prefix: "", share: 0.5 }])} ${locality}
 ${country}`,
 
-	// %N%n%O%n%A%nHT%Z %C
+	// %N%n%O%n%A%nHT%Z %C The postcode prints as `HT`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/htiEn.pdf (2017-09).
 	HT: addr`${attention}
 ${venue}
 ${numberLastStreet}
@@ -791,13 +795,13 @@ ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nFL-%Z %C The postcode prints bare:
+	// %O%n%N%n%A%nFL-%Z %C The postcode prints bare or as `FL-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/lieEn.pdf (2002-07).
 	LI: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "FL-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -825,15 +829,17 @@ ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nLT-%Z %C %S
+	// %O%n%N%n%A%nLT-%Z %C %S The postcode prints as `LT-` or bare:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/ltuEn.pdf (2018-06).
 	LT: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "LT-")} ${locality} ${region}
+${prefixedSlot("postcode", "LT-", [{ prefix: "", share: 0.5 }])} ${locality} ${region}
 ${country}`,
 
-	// %O%n%N%n%A%nL-%Z %C
+	// %O%n%N%n%A%nL-%Z %C The postcode prints as `L-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/luxEn.pdf (2013-06).
 	LU: addr`${venue}
 ${attention}
 ${numberFirstStreet}
@@ -858,16 +864,17 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %N%n%O%n%A%nMC-%Z %C %X The postcode prints bare:
+	// %N%n%O%n%A%nMC-%Z %C %X The postcode prints bare or as `MC-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mcoEn.pdf (2004-05).
 	MC: addr`${attention}
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-${postcode} ${locality} ${cedex}
+${prefixedSlot("postcode", "", [{ prefix: "MC-", share: 0.02 }])} ${locality} ${cedex}
 ${country}`,
 
-	// %N%n%O%n%A%nMD-%Z %C
+	// %N%n%O%n%A%nMD-%Z %C The postcode prints as `MD-`:
+	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/mdaEn.pdf (2019-04).
 	MD: addr`${attention}
 ${venue}
 ${numberLastCommaStreet}
@@ -1268,13 +1275,13 @@ ${locality}
 ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%nSE-%Z %C The postcode prints bare:
+	// %O%n%N%n%A%nSE-%Z %C The postcode prints bare or as `SE-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/sweEn.pdf (2024-11).
 	SE: addr`${venue}
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "SE-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nSINGAPORE %Z
@@ -1293,13 +1300,13 @@ ${locality}
 ${postcode}
 ${country}`,
 
-	// %N%n%O%n%A%nSI-%Z %C The postcode prints bare:
+	// %N%n%O%n%A%nSI-%Z %C The postcode prints bare or as `SI-` (its publishers' form):
 	// https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/svnEn.pdf (2016-05).
 	SI: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${postcode} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "SI-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C

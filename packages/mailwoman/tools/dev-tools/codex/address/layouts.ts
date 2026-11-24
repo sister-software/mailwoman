@@ -122,7 +122,15 @@ function postcodePrefixAsSlot(line: string, code: string): string {
 
 	if (!match) return line
 
-	const prefix = POSTCODE_PREFIX_RECORDS[code]?.prefix ?? match[2]!
+	const [first, ...otherForms] = POSTCODE_PREFIX_RECORDS[code]?.forms ?? []
+	const prefix = first?.prefix ?? match[2]!
+
+	if (otherForms.length) {
+		usesPrefixedSlot = true
+		const forms = otherForms.map((form) => `{ prefix: "${form.prefix}", share: ${form.share} }`).join(", ")
+
+		return line.replace(POSTCODE_PREFIX, `$1\${prefixedSlot("postcode", "${prefix}", [${forms}])}`)
+	}
 
 	// Text holding no letter or symbol, such as a parenthesis, separates rather than prefixes.
 	if (!/[\p{L}\p{So}]/u.test(prefix)) {
@@ -299,7 +307,8 @@ for (const file of await Globerator.files("json", {
 	const prefixRecord = POSTCODE_PREFIX_RECORDS[code]
 
 	const prefixNote = prefixRecord
-		? `\n\t// The postcode prints ${prefixRecord.prefix ? `as \`${prefixRecord.prefix}\`` : "bare"}: ${prefixRecord.url} (${prefixRecord.documentDate}).`
+		? // The URL sits on its own comment line, the form comment-reflow sets a line too long to hold it.
+			` The postcode prints ${prefixRecord.forms.map((form) => `${form.prefix ? `as \`${form.prefix}\`` : "bare"}${form.writtenBy === "publishers" ? " (its publishers' form)" : ""}`).join(" or ")}:\n\t// ${prefixRecord.url} (${prefixRecord.documentDate}).`
 		: ""
 
 	entries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}${prefixNote}\n\t${code}: addr\`${source}\`,`)
@@ -339,30 +348,35 @@ ${entries.join("\n\n")}
 /**
  * latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
- * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
- * country-keyed layout serves both. The \`lfmt\` each was derived from is quoted above it.
+ * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes
+ * one order in both scripts, so its country-keyed layout serves both.
+ * The \`lfmt\` each was derived from is quoted above it.
  */
 export const GENERATED_LATIN_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 ${latinEntries.join("\n\n")}
 }
 
 /**
- * local-script layouts for the same countries — the \`fmt\` skeleton, emitted even where the country is hand-authored.
+ * local-script layouts for the same countries — the \`fmt\` skeleton, emitted even
+ * where the country is hand-authored.
  *
- * A hand-authored entry states one order, and for Hong Kong that order is the Latin one, so its own script's order has
- * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
+ * A hand-authored entry states one order, and for Hong Kong that order is the Latin one,
+ * so its own script's order has nowhere else to live.
+ * Sparse for the same reason as the Latin table: a country absent here writes one order in both.
  */
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 ${localEntries.join("\n\n")}
 }
 
 /**
- * The \`fmt\` skeleton for the countries whose printed layout is hand-authored, for comparison rather than for
- * rendering.
+ * The \`fmt\` skeleton for the countries whose printed layout is hand-authored,
+ * for comparison rather than for rendering.
  *
- * \`layoutForCountry\` never reads this table. It exists so that libaddressinput's statement about a board locale can be
- * set against the board's own. The other tables cannot supply that statement, because the rendering tables stay
- * disjoint and a hand-authored country therefore appears in none of them.
+ * \`layoutForCountry\` never reads this table.
+ * It exists so that libaddressinput's statement about a board locale can be set against the board's own.
+ *
+ * The other tables cannot supply that statement, because the rendering tables stay disjoint
+ * and a hand-authored country therefore appears in none of them.
  */
 export const HAND_AUTHORED_FORMAT_SKELETONS: Readonly<Record<string, AddressLayout>> = {
 ${handAuthoredEntries.join("\n\n")}

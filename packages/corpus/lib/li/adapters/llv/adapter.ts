@@ -31,7 +31,6 @@
  * Every row records that license.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { decodeBytes } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -43,6 +42,7 @@ import { UnsupportedCountryError } from "#adapters/errors"
 import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -203,7 +203,7 @@ export function createLLVLiechtensteinAdapter(): CorpusAdapter {
 
 				if (!components) continue
 
-				const rendered = formatAddressRow(components, "LI", {
+				const rendered = formatCorpusRow(components, "LI", {
 					singleLine: true,
 				})
 

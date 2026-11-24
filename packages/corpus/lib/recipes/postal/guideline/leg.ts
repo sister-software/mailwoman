@@ -7,9 +7,10 @@
  *   Each leg lives under its country's directory and renders only the forms its codex rule table cites.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
 import type { PostalGuidelineRule } from "@mailwoman/codex/designators/guideline"
+
+import { formatCorpusRow } from "#surfaces/corpus-row"
 
 /**
  * The longest GeoNames place name a leg writes, the same cap the `po-box-cedex` place readers apply.
@@ -167,7 +168,7 @@ export function renderGuidelineLine(
 	components: Record<string, string>,
 	separator: string
 ): Pick<PostalGuidelineRendering, "raw" | "components"> {
-	const row = formatAddressRow(components as ComponentDict, country, { separator })
+	const row = formatCorpusRow(components as ComponentDict, country, { separator })
 
 	if (!row || row.unplaced.length) {
 		throw new Error(

@@ -18,7 +18,7 @@ import {
 	type AddressSlot,
 } from "#address/layout"
 import type { ComponentTag } from "#component"
-import { withoutRepeatedPrefix, withPrintedPrefix } from "#labels/postcode/printed-prefix"
+import { withoutPrintedPrefix, withoutRepeatedPrefix, withPrintedPrefix } from "#labels/postcode/printed-prefix"
 
 /**
  * Component values keyed by tag.
@@ -67,26 +67,78 @@ function rendered(result: readonly AddressPiece[] | null): boolean {
 }
 
 /**
+ * Options accepted by {@linkcode renderAddress}.
+ */
+export interface RenderAddressOptions {
+	/**
+	 * A number in [0, 1) that picks which documented form a slot with
+	 * {@linkcode AddressSlot.otherForms} prints, each form taking its share of the interval.
+	 *
+	 * A corpus writer derives it from the row's identity, so one row always renders one form.
+	 * Unset, every slot adds its first form's prefix to a value that lacks one,
+	 * and prints a value that already holds a prefix as given.
+	 */
+	formDraw?: number | null
+}
+
+/**
+ * What one render reads: the components and the form draw.
+ */
+interface RenderInput {
+	readonly components: ComponentDict
+	readonly formDraw: number | null
+}
+
+/**
+ * The prefix `slot` prints in this render: the form whose share of [0, 1) holds `formDraw`,
+ * the other forms taking the interval's start in order and the slot's own prefix the remainder.
+ */
+function chosenPrefix(slot: AddressSlot, formDraw: number | null): string | undefined {
+	if (typeof formDraw !== "number" || !slot.otherForms) return slot.prefix
+
+	let edge = 0
+
+	for (const form of slot.otherForms) {
+		edge += form.share
+
+		if (formDraw < edge) return form.prefix
+	}
+
+	return slot.prefix
+}
+
+/**
  * The text a slot prints for `value`: its prefix written once, and a postcode's repeated
  * country code, such as GLEIF's `FI-FI-15860`, written once even where the layout prints none.
+ *
+ * In a drawn render, a slot whose drawn form is bare prints the value without the marks
+ * of its other forms, so the domestic form of GLEIF's `HR-10000` is `10000`.
+ * An undrawn render prints a value that holds a prefix as given.
  */
-function printedValue(slot: AddressSlot, value: string): string {
-	if (slot.prefix) return withPrintedPrefix(slot.prefix, value)
+function printedValue(slot: AddressSlot, value: string, formDraw: number | null): string {
+	const prefix = chosenPrefix(slot, formDraw)
+
+	if (prefix) return withPrintedPrefix(prefix, value)
+
+	// Only a drawn render removes a prefix: a caller's `FI-15860` prints as given.
+	if (slot.otherForms && typeof formDraw === "number") {
+		return withoutPrintedPrefix([slot.prefix ?? "", ...slot.otherForms.map((form) => form.prefix)], value)
+	}
 
 	return slot.tag === "postcode" ? withoutRepeatedPrefix(value) : value
 }
 
-function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly AddressPiece[] | null {
+function evaluateAtom(atom: AddressAtom, input: RenderInput): readonly AddressPiece[] | null {
 	if (isSlot(atom)) {
-		const value = components[atom.tag]?.trim()
-		const text = value ? printedValue(atom, value) : atom.fallback
+		const value = input.components[atom.tag]?.trim()
+		const text = value ? printedValue(atom, value, input.formDraw) : atom.fallback
 
 		return text ? [{ tag: atom.tag, text, softBreak: false }] : null
 	}
 
 	if (isAlternation(atom)) {
 		for (const alternative of atom.alternatives) {
-			const pieces = evaluateLines(alternative, components)
+			const pieces = evaluateLines(alternative, input)
 
 			if (pieces.length) return pieces
 		}
@@ -95,7 +147,7 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
 	}
 
 	if (isLayout(atom)) {
-		const pieces = evaluateLines(atom, components)
+		const pieces = evaluateLines(atom, input)
 
 		return pieces.length ? pieces : null
 	}
@@ -112,8 +164,8 @@ function strongestConnector(run: readonly string[]): string {
 	return run.find((text) => /\S/u.test(text)) ?? run[0]!
 }
 
-function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict): readonly AddressPiece[] {
-	const results = atoms.map((atom) => (isConnector(atom) ? null : evaluateAtom(atom, components)))
+function evaluateLine(atoms: readonly AddressAtom[], input: RenderInput): readonly AddressPiece[] {
+	const results = atoms.map((atom) => (isConnector(atom) ? null : evaluateAtom(atom, input)))
 	const out: AddressPiece[] = []
 	let pending: string[] = []
 
@@ -156,10 +208,10 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 	return out.some((piece) => piece.tag !== null) ? out : []
 }
 
-function evaluateLines(layout: AddressLayout, components: ComponentDict): readonly AddressPiece[] {
+function evaluateLines(layout: AddressLayout, input: RenderInput): readonly AddressPiece[] {
 	// Each line keeps its layout index because `softBreakBefore` uses indices from before empty lines are removed.
 	const lines = layout.lines
-		.map((line, index) => ({ index, pieces: evaluateLine(line, components) }))
+		.map((line, index) => ({ index, pieces: evaluateLine(line, input) }))
 		.filter((line) => line.pieces.length)
 
 	return lines.flatMap((line, position) => {
@@ -176,8 +228,12 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
 /**
  * Renders `components` through `layout` into tagged pieces.
  */
-export function renderAddress(layout: AddressLayout, components: ComponentDict): AddressRendering {
-	const pieces = evaluateLines(layout, components)
+export function renderAddress(
+	layout: AddressLayout,
+	components: ComponentDict,
+	opts: RenderAddressOptions = {}
+): AddressRendering {
+	const pieces = evaluateLines(layout, { components, formDraw: opts.formDraw ?? null })
 	const placed = [...new Set(pieces.map((piece) => piece.tag).filter((tag): tag is ComponentTag => tag !== null))]
 	const placedSet = new Set<ComponentTag>(placed)
 

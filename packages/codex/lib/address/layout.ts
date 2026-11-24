@@ -34,6 +34,29 @@ export interface AddressSlot {
 	 * A value that already starts with it doesn't get it twice.
 	 */
 	readonly prefix?: string
+	/**
+	 * The other forms the postal operator documents for the value, each printed in its
+	 * share of renders that pass a form draw, as Croatia's domestic `10000 ZAGREB`
+	 * beside the `HR-10000 ZAGREB` it prints on mail from abroad.
+	 *
+	 * A render without a draw prints {@linkcode prefix} before a value that lacks one,
+	 * and a value that already holds a prefix as given.
+	 */
+	readonly otherForms?: readonly PrefixForm[]
+}
+
+/**
+ * One printed form of a prefixed value and the share of drawn renders that print it.
+ */
+export interface PrefixForm {
+	/**
+	 * The text printed against the value, or the empty string for the bare value.
+	 */
+	readonly prefix: string
+	/**
+	 * The share of renders that pass a form draw and print this form, between 0 and 1.
+	 */
+	readonly share: number
 }
 
 /**
@@ -44,10 +67,14 @@ export function fixedSlot(tag: ComponentTag, text: string): AddressSlot {
 }
 
 /**
- * A slot for `tag` that prints `prefix` before its value, such as `prefixedSlot("postcode", "HR-")`.
+ * A slot for `tag` that prints `prefix` before its value, such as
+ * `prefixedSlot("postcode", "HR-")`, and in a drawn render each of `otherForms` in its share,
+ * such as `prefixedSlot("postcode", "HR-", [{ prefix: "", share: 0.5 }])`.
  */
-export function prefixedSlot(tag: ComponentTag, prefix: string): AddressSlot {
-	return Object.freeze({ tag, prefix })
+export function prefixedSlot(tag: ComponentTag, prefix: string, otherForms?: readonly PrefixForm[]): AddressSlot {
+	return otherForms?.length
+		? Object.freeze({ tag, prefix, otherForms: Object.freeze(otherForms.map((form) => Object.freeze({ ...form }))) })
+		: Object.freeze({ tag, prefix })
 }
 
 /**

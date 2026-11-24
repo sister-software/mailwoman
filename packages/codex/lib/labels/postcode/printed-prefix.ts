@@ -46,11 +46,39 @@ export function withoutRepeatedPrefix(postcode: string): string {
  */
 export function withPrintedPrefix(prefix: string, postcode: string): string {
 	const value = withoutRepeatedPrefix(postcode)
-	const mark = prefix.replace(/[\s\-–—]+$/u, "")
+	const carried = carriedMark(prefix)
 
-	if (!mark) return prefix + value
-
-	const carried = new RegExp(`^${RegExp.escape(mark)}${SEPARATOR}(?=\\p{N})`, "iu")
+	if (!carried) return prefix + value
 
 	return carried.test(value) ? value : prefix + value
+}
+
+/**
+ * Returns `postcode` without the mark of each of `prefixes` it starts with, and with a
+ * repeated code written once, so Croatia's bare domestic form of `HR-10000` is `10000`.
+ */
+export function withoutPrintedPrefix(prefixes: readonly string[], postcode: string): string {
+	let value = withoutRepeatedPrefix(postcode)
+
+	for (const prefix of prefixes) {
+		const carried = carriedMark(prefix)
+
+		if (carried) {
+			value = value.replace(carried, "")
+		}
+	}
+
+	return value
+}
+
+/**
+ * The pattern of a value that starts with `prefix`'s mark and a separator
+ * before its digits, or null for a prefix holding no mark.
+ *
+ * The mark is the prefix without its trailing separator, so `CH-` matches `CH-2000`, `ch 2000` and `CH2000`.
+ */
+function carriedMark(prefix: string): RegExp | null {
+	const mark = prefix.replace(/[\s\-–—]+$/u, "")
+
+	return mark ? new RegExp(`^${RegExp.escape(mark)}${SEPARATOR}(?=\\p{N})`, "iu") : null
 }

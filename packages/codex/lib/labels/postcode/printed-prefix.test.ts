@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { withoutRepeatedPrefix, withPrintedPrefix } from "#labels/postcode/printed-prefix"
+import { withoutPrintedPrefix, withoutRepeatedPrefix, withPrintedPrefix } from "#labels/postcode/printed-prefix"
 
 describe("withPrintedPrefix", () => {
 	it("prints the prefix before a bare value", () => {
@@ -27,6 +27,20 @@ describe("withPrintedPrefix", () => {
 
 	it("reads the prefix only when digits follow it", () => {
 		expect(withPrintedPrefix("L-", "LU1471")).toBe("L-LU1471")
+	})
+})
+
+describe("withoutPrintedPrefix", () => {
+	it("removes each listed prefix's mark before the digits", () => {
+		expect(withoutPrintedPrefix(["HR-"], "HR-10000")).toBe("10000")
+		expect(withoutPrintedPrefix(["LT-"], "LT–04340")).toBe("04340")
+		expect(withoutPrintedPrefix(["", "CY-"], "cy 2008")).toBe("2008")
+		expect(withoutPrintedPrefix(["HR-"], "HR-HR-10000")).toBe("10000")
+	})
+
+	it("leaves a value that carries no listed mark", () => {
+		expect(withoutPrintedPrefix(["HR-"], "10000")).toBe("10000")
+		expect(withoutPrintedPrefix(["L-"], "LU1471")).toBe("LU1471")
 	})
 })
 

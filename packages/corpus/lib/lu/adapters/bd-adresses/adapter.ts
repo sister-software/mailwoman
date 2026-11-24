@@ -78,12 +78,12 @@
  * It honors `opts.limit`, `opts.signal` and `opts.country`.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
@@ -201,7 +201,7 @@ export function createBDAdressesAdapter(): CorpusAdapter {
 						components.locality = locality
 					}
 
-					const rendered = formatAddressRow(components, "LU", { singleLine: true })
+					const rendered = formatCorpusRow(components, "LU", { singleLine: true })
 
 					if (!rendered) continue
 

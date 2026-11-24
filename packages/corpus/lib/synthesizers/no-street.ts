@@ -9,11 +9,11 @@
  *   Output components never include street-side tags.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/math/random"
 
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { countryToLocale } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -186,7 +186,7 @@ export function synthesizeNoStreetRow(
 			dict.postcode = base.postcode
 		}
 
-		const rendered = formatAddressRow(dict, iso2, { singleLine: true })
+		const rendered = formatCorpusRow(dict, iso2, { singleLine: true })
 
 		if (!rendered) return null
 

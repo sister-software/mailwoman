@@ -1928,17 +1928,17 @@
 			"automata": [
 				{
 					"backend": "sparse",
-					"bytes": 45978,
-					"patterns": 98,
+					"bytes": 47252,
+					"patterns": 99,
 					"role": "whole",
-					"states": 1241
+					"states": 1291
 				},
 				{
 					"backend": "sparse",
-					"bytes": 73763,
-					"patterns": 98,
+					"bytes": 75043,
+					"patterns": 99,
 					"role": "embedded",
-					"states": 1562
+					"states": 1612
 				}
 			],
 			"equivalent": [],
@@ -4853,6 +4853,13 @@
 				{
 					"handler": null,
 					"id": "printed.ch",
+					"scope": "whole_or_embedded",
+					"unreachable": null,
+					"validator": null
+				},
+				{
+					"handler": null,
+					"id": "printed.cy",
 					"scope": "whole_or_embedded",
 					"unreachable": null,
 					"validator": null

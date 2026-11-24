@@ -321,6 +321,14 @@ export function translateBody(country: string, rewrites: Rewrite[] = []): string
 }
 
 /**
+ * The characters a printed prefix's hyphen matches: the hyphen, the en dash and the em dash.
+ *
+ * Lithuania's and Latvia's operators print the en dash, as `LT–04340 Vilnius` and `RIGA, LV–1050`
+ * (UPU ltuEn.pdf 06/2018, lvaEn.pdf 09/2023), and the codex renderer reads the three as one separator.
+ */
+const PREFIX_DASH_CLASS = classOf(["-", "–", "—"].map((character) => character.codePointAt(0)!))
+
+/**
  * The printed form of `country`'s postcode as a regular expression, or null
  * when its layout prints no prefix.
  *
@@ -332,7 +340,9 @@ export function translatePrinted(country: string): string | null {
 
 	if (!prefix) return null
 
-	const classes = [...prefix].map((character) => upperCaseClass(character)).join("")
+	const classes = [...prefix]
+		.map((character) => (character === "-" ? PREFIX_DASH_CLASS : upperCaseClass(character)))
+		.join("")
 
 	return `${classes}${whitespaceClass()}*(?:${translateBody(country)})`
 }

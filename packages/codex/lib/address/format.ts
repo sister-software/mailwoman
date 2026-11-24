@@ -89,6 +89,17 @@ export interface FormatAddressOptions {
 	 * Unset, the postal form takes the country's recorded casing, and the ordinary form keeps the given case.
 	 */
 	casing?: AddressCasing
+
+	/**
+	 * A number in [0, 1) that picks which of a slot's documented forms prints, such as
+	 * Croatia's bare domestic `10000 ZAGREB` beside `HR-10000 ZAGREB`.
+	 *
+	 * Each form takes its share of the interval, so a corpus writer that derives the draw
+	 * from the row's identity renders one form per row and each form in its share of rows.
+	 * Unset, a postcode that already holds a prefix prints as given, and the layout's
+	 * own prefix is added only to a value that lacks it.
+	 */
+	formDraw?: number | null
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
@@ -279,7 +290,7 @@ export function formatAddressRow(
 
 	if (!layout) return null
 
-	const rendering = renderAddress(layout, components)
+	const rendering = renderAddress(layout, components, { formDraw: opts.formDraw })
 
 	if (!rendering.placed.length) return null
 

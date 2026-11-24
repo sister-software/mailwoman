@@ -424,6 +424,10 @@
 			"countries": ["CH"]
 		},
 		{
+			"shape": "printed.cy",
+			"countries": ["CY"]
+		},
+		{
 			"shape": "printed.fi",
 			"countries": ["FI"]
 		},

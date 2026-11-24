@@ -76,7 +76,7 @@ export const COUNTRY_POSTCODE_FORMAT_SOURCES: Readonly<Record<string, CountryPos
 	CU: { pattern: "\\d{5}", postcodePlacement: "after_locality" },
 	CV: { pattern: "\\d{4}", postcodePlacement: "before_locality" },
 	CX: { pattern: "6798", postcodePlacement: "after_locality" },
-	CY: { pattern: "\\d{4}", postcodePlacement: "before_locality" },
+	CY: { pattern: "\\d{4}", prefix: "CY-", postcodePlacement: "before_locality" },
 	CZ: { pattern: "\\d{3} ?\\d{2}", postcodePlacement: "before_locality" },
 	DE: { pattern: "\\d{5}", postcodePlacement: "before_locality" },
 	DK: { pattern: "\\d{4}", postcodePlacement: "before_locality" },

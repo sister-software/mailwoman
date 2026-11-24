@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "ee69a384964adaf15ee1fdd7a223c15bb5593bf8d5ae2738448da9e80adfa614",
+	"hash": "00a073b926de5a29a1a44b2afdb95c7053dc86e6defce3db21e70ce2f086611a",
 	"family": "postal",
 	"terms": [],
 	"shapes": [
@@ -1209,7 +1209,7 @@
 			"id": "postal.lv",
 			"grammar": {
 				"op": "pattern",
-				"regex": "(?i:(?:LV-[0-9]{4}))"
+				"regex": "(?i:(?:LV-[0-9]{4})|(?:LV[–—][0-9]{4}))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2130,7 +2130,7 @@
 			"id": "printed.ax",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{41}\\x{61}][\\x{58}\\x{78}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:22[0-9]{3})))"
+				"regex": "[\\x{41}\\x{61}][\\x{58}\\x{78}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:22[0-9]{3})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2168,7 +2168,7 @@
 			"id": "printed.ch",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{43}\\x{63}][\\x{48}\\x{68}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+				"regex": "[\\x{43}\\x{63}][\\x{48}\\x{68}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2184,10 +2184,10 @@
 			}
 		},
 		{
-			"id": "printed.fi",
+			"id": "printed.cy",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{46}\\x{66}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+				"regex": "[\\x{43}\\x{63}][\\x{59}\\x{79}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2200,6 +2200,25 @@
 			"source": {
 				"file": "postal.definition.json",
 				"line": 1883
+			}
+		},
+		{
+			"id": "printed.fi",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{46}\\x{66}][\\x{49}\\x{69}\\x{131}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "alnum",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1898
 			}
 		},
 		{
@@ -2218,14 +2237,14 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1898
+				"line": 1913
 			}
 		},
 		{
 			"id": "printed.hr",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{48}\\x{68}][\\x{52}\\x{72}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+				"regex": "[\\x{48}\\x{68}][\\x{52}\\x{72}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2237,7 +2256,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1913
+				"line": 1928
 			}
 		},
 		{
@@ -2256,7 +2275,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1928
+				"line": 1943
 			}
 		},
 		{
@@ -2275,33 +2294,14 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1943
+				"line": 1958
 			}
 		},
 		{
 			"id": "printed.li",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{46}\\x{66}][\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:948[5-9]|949[0-8])))"
-			},
-			"captures": [],
-			"scope": "whole_or_embedded",
-			"validator": null,
-			"handler": null,
-			"ambiguity": {
-				"policy": "exclusive"
-			},
-			"boundary": "alnum",
-			"source": {
-				"file": "postal.definition.json",
-				"line": 1958
-			}
-		},
-		{
-			"id": "printed.lt",
-			"grammar": {
-				"op": "pattern",
-				"regex": "[\\x{4c}\\x{6c}][\\x{54}\\x{74}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
+				"regex": "[\\x{46}\\x{66}][\\x{4c}\\x{6c}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:948[5-9]|949[0-8])))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2317,10 +2317,10 @@
 			}
 		},
 		{
-			"id": "printed.lu",
+			"id": "printed.lt",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{4c}\\x{6c}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+				"regex": "[\\x{4c}\\x{6c}][\\x{54}\\x{74}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2336,10 +2336,10 @@
 			}
 		},
 		{
-			"id": "printed.mc",
+			"id": "printed.lu",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{4d}\\x{6d}][\\x{43}\\x{63}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:980[0-9]{2})))"
+				"regex": "[\\x{4c}\\x{6c}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2355,10 +2355,10 @@
 			}
 		},
 		{
-			"id": "printed.md",
+			"id": "printed.mc",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{4d}\\x{6d}][\\x{44}\\x{64}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+				"regex": "[\\x{4d}\\x{6d}][\\x{43}\\x{63}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:980[0-9]{2})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2374,10 +2374,10 @@
 			}
 		},
 		{
-			"id": "printed.se",
+			"id": "printed.md",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{45}\\x{65}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2})))"
+				"regex": "[\\x{4d}\\x{6d}][\\x{44}\\x{64}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2393,10 +2393,10 @@
 			}
 		},
 		{
-			"id": "printed.si",
+			"id": "printed.se",
 			"grammar": {
 				"op": "pattern",
-				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{45}\\x{65}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{3}[\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*[0-9]{2})))"
 			},
 			"captures": [],
 			"scope": "whole_or_embedded",
@@ -2409,6 +2409,25 @@
 			"source": {
 				"file": "postal.definition.json",
 				"line": 2048
+			}
+		},
+		{
+			"id": "printed.si",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{53}\\x{73}\\x{17f}][\\x{49}\\x{69}\\x{131}][\\x{2d}\\x{2013}-\\x{2014}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "alnum",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 2063
 			}
 		}
 	]

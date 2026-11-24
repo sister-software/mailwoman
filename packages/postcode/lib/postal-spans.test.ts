@@ -5,12 +5,34 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
-import { findPostcodeSpans } from "#postal-spans"
+import { findPostcodeHits, findPostcodeSpans } from "#postal-spans"
 import { disjointSpans } from "#recognizer/postal"
 
 function texts(raw: string, spans: ReadonlyArray<{ start: number; end: number }>): string[] {
 	return spans.map((span) => raw.slice(span.start, span.end))
 }
+
+describe("a postcode its operator documents in two forms", () => {
+	// Croatia, Lithuania and Cyprus print the code with the country prefix on mail from abroad
+	// and bare at home, and the corpus trains on both.
+	test.each([
+		["HR", "HR-10000 ZAGREB", "HR-10000", "10000"],
+		["HR", "10000 ZAGREB", "10000", "10000"],
+		["LT", "LT-04340 Vilnius", "LT-04340", "04340"],
+		["LT", "04340 Vilnius", "04340", "04340"],
+		["CY", "CY-2008 Strovolos", "CY-2008", "2008"],
+		// The en dash Lithuania Post and Latvijas Pasts print (UPU ltuEn.pdf 06/2018, lvaEn.pdf 09/2023).
+		["LT", "LT–04340 Vilnius", "LT–04340", "04340"],
+		["LV", "RIGA, LV–1050", "LV–1050", "LV–1050"],
+		["LV", "RIGA, LV-1050", "LV-1050", "LV-1050"],
+	])("reads %s's %s as a postcode", (country, line, written, code) => {
+		const hit = findPostcodeHits(line).find((candidate) => line.slice(candidate.start, candidate.end) === written)
+
+		expect(hit, `${line} holds no hit on ${written}`).toBeDefined()
+		expect(line.slice(hit!.codeStart, hit!.end)).toBe(code)
+		expect([...hit!.countries]).toContain(country)
+	})
+})
 
 describe("findPostcodeSpans", () => {
 	test("finds a lower-case postcode, which the family's one case rule admits", () => {

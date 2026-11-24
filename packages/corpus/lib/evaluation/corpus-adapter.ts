@@ -16,12 +16,12 @@
  *   under {@linkcode EvaluationAdapterRefusal.Duplicate}.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { PathBuilderLike } from "path-ts"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import type { EvaluationRecordReading, EvaluationSource } from "#evaluation/source"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { type AddressRole, type CanonicalRow, type CorpusAdapter, countDropped, SurfaceOrigin } from "#types"
 
 /**
@@ -78,7 +78,7 @@ export function evaluationRecordRow(
 	if ("refused" in reading) return reading
 
 	const { country } = spec.source
-	const rendered = formatAddressRow(reading.components, country, { singleLine: true })
+	const rendered = formatCorpusRow(reading.components, country, { singleLine: true })
 
 	if (!rendered || rendered.unplaced.length) return { refused: EvaluationAdapterRefusal.Unrenderable }
 
