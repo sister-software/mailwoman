@@ -25,6 +25,7 @@ import {
 	UnderseaTileSetID,
 } from "@mailwoman/cartographer/base/undersea"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
+import { gazetteerOverlayLayers } from "@mailwoman/cartographer/gazetteer-overlay"
 import {
 	createJurisdictionSource,
 	JurisdictionLayers,
@@ -238,6 +239,46 @@ function buildingsTileJSONURL(config: EarthConfig): URL | null {
 }
 
 /**
+ * The source layer every protomaps basemap holds: land.
+ *
+ * A requested tile set whose TileJSON lists other layers and not this one is an overlay,
+ * such as a gazetteer overlay, and draws over the configured basemap.
+ */
+const BASEMAP_SOURCE_LAYER = "earth"
+
+/**
+ * The style source of a requested tile set that draws as an overlay.
+ */
+const PAGE_OVERLAY_SOURCE_ID = "page-overlay"
+
+/**
+ * The basemap the style draws and the overlay drawn over it, each with the source layers its TileJSON lists.
+ */
+interface BasemapSources {
+	baseURL: string
+	baseLayers: ReadonlySet<string>
+	overlay: { url: string; layers: ReadonlySet<string> } | null
+}
+
+/**
+ * Reads the requested tile set's TileJSON and decides whether it is the basemap or an overlay.
+ *
+ * An unreadable TileJSON keeps the requested tile set as the basemap, as before the overlay case existed.
+ */
+async function readBasemapSources(config: EarthConfig): Promise<BasemapSources> {
+	const requested = basemapTileJSONURL(config).href
+	const requestedLayers = await readVectorLayers(requested)
+
+	if (!requestedLayers.size || requestedLayers.has(BASEMAP_SOURCE_LAYER)) {
+		return { baseURL: requested, baseLayers: requestedLayers, overlay: null }
+	}
+
+	const baseURL = config.basemapTileJSONURL.href
+
+	return { baseURL, baseLayers: await readVectorLayers(baseURL), overlay: { url: requested, layers: requestedLayers } }
+}
+
+/**
  * Source layers only a `mailwoman/basemaps` build holds.
  *
  * When the basemap's TileJSON is unreadable, the style keeps the other basemap layers and drops these.
@@ -319,31 +360,33 @@ function basemapHasSourceLayer(
  * A changed style makes MapLibre rebuild the style from scratch and request every loaded tile again.
  */
 export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle | null {
-	const tileJSONURL = useMemo(() => basemapTileJSONURL(config).href, [config])
 	const buildingsURL = useMemo(() => buildingsTileJSONURL(config)?.href ?? null, [config])
 
-	const [vectorLayers, setVectorLayers] = useState<ReadonlySet<string> | null>(null)
+	const [sources, setSources] = useState<BasemapSources | null>(null)
 
 	useEffect(() => {
 		let current = true
 
-		void readVectorLayers(tileJSONURL).then((layers) => {
+		void readBasemapSources(config).then((read) => {
 			if (current) {
-				setVectorLayers(layers)
+				setSources(read)
 			}
 		})
 
 		return () => {
 			current = false
 		}
-	}, [tileJSONURL])
+	}, [config])
 
 	return useMemo<MapCanvasStyle | null>(() => {
-		if (vectorLayers === null) return null
+		if (sources === null) return null
+
+		const { baseURL, baseLayers, overlay } = sources
 
 		const style = new StyleSpecificationComposer({
 			sources: {
-				[MailwomanBaseTileSetID]: { type: "vector", url: tileJSONURL },
+				[MailwomanBaseTileSetID]: { type: "vector", url: baseURL },
+				...(overlay ? { [PAGE_OVERLAY_SOURCE_ID]: { type: "vector", url: overlay.url } as const } : {}),
 				...(buildingsURL ? { [MailwomanBuildingsTileSetID]: { type: "vector", url: buildingsURL } as const } : {}),
 				[UnderseaTileSetID]: createUnderseaLabelSource(config.underseaFeaturesURL.href),
 			},
@@ -355,9 +398,13 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle | null {
 
 		return {
 			...style,
-			layers: style.layers.filter((layer) => basemapHasSourceLayer(layer, vectorLayers)),
+			layers: [
+				...style.layers.filter((layer) => basemapHasSourceLayer(layer, baseLayers)),
+				// The overlay draws above every basemap layer, labels included.
+				...(overlay ? gazetteerOverlayLayers(PAGE_OVERLAY_SOURCE_ID, overlay.layers) : []),
+			],
 		}
-	}, [tileJSONURL, buildingsURL, vectorLayers, config.underseaFeaturesURL])
+	}, [sources, buildingsURL, config.underseaFeaturesURL])
 }
 
 /**
