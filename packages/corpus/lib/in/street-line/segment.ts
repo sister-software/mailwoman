@@ -239,7 +239,10 @@ export interface INStreetLineContext {
 	region?: string | null
 }
 
-function wordsOf(part: string): string[] {
+/**
+ * A part's words in lower case, with the punctuation at either end of each word removed (`Rd.` → `rd`).
+ */
+function foldedWords(part: string): string[] {
 	return part
 		.toLowerCase()
 		.split(/\s+/u)
@@ -253,7 +256,7 @@ function wordsOf(part: string): string[] {
 function isINThoroughfare(part: string): boolean {
 	if (NUMBERED_HIGHWAY.test(part.trim())) return true
 
-	const words = wordsOf(part)
+	const words = foldedWords(part)
 
 	return words.length >= MIN_NAME_WORDS && THOROUGHFARE_WORDS.has(words.at(-1)!)
 }
@@ -262,7 +265,7 @@ function isINThoroughfare(part: string): boolean {
  * Whether a part is a building's name: its last word a building word, and no digit.
  */
 function isINBuilding(part: string): boolean {
-	const words = wordsOf(part)
+	const words = foldedWords(part)
 
 	return words.length >= MIN_NAME_WORDS && BUILDING_WORDS.has(words.at(-1)!) && !/\d/u.test(part)
 }

@@ -15,8 +15,10 @@
  *   AU, BR, CA, ES, HK, IT, KR, MX, SO and US in the vendored specs.
  */
 
+import { layoutCitationForCountry, layoutForCountry, layoutPrintsTag } from "@mailwoman/codex/address/layouts"
 import { readLocalTextFileSync } from "@mailwoman/core/fs/readers"
 import { isFileSync } from "@mailwoman/core/fs/readers/stat"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
@@ -158,7 +160,7 @@ const ISO_SUBDIVISION_CODES_REPLACED: Readonly<Record<string, string>> = {
  * The United States keys New York as `NY`, so `US`, `NY` returns `NY`.
  * The comparison ignores case.
  */
-export function writtenSubdivisionForISO(country: string, isoSuffix: string): string | null {
+function writtenSubdivisionForISO(country: string, isoSuffix: string): string | null {
 	const code = country.toUpperCase()
 	const spec = specFor(code)
 	const keys = spec?.sub_keys?.split("~") ?? []
@@ -171,6 +173,49 @@ export function writtenSubdivisionForISO(country: string, isoSuffix: string): st
 	const at = isoIDs.findIndex((isoID) => isoID.toUpperCase() === listed)
 
 	return at === -1 ? null : keys[at]!
+}
+
+const CITED_KEY_FORM_BY_COUNTRY = new Map<string, boolean>()
+
+/**
+ * Whether `country`'s codex layout prints a region, has a primary citation, and one of
+ * the citation's example lines writes a libaddressinput key as a word of its own.
+ *
+ * libaddressinput is a compiled dataset, so its key is the written form only where the postal operator's
+ * own example agrees: Italy's description writes `00122 ROMA RM`, and its key for Rome is `RM`.
+ * Chile's writes `REGION METROPOLITANA`, which isn't a Chilean key, so Chile reads no key.
+ */
+function citationWritesKeys(country: string): boolean {
+	const cached = CITED_KEY_FORM_BY_COUNTRY.get(country)
+
+	if (typeof cached === "boolean") return cached
+
+	const layout = layoutForCountry(country)
+	const citation = layoutCitationForCountry(country)
+	const keys = specFor(country)?.sub_keys?.split("~").filter(isPresent) ?? []
+	const lines = citation?.examples.flat() ?? []
+
+	const writes =
+		Boolean(layout && layoutPrintsTag(layout, "region")) &&
+		keys.some((key) => {
+			const word = new RegExp(`(?:^|[\\s,])${escapeRegExp(key)}(?:$|[\\s,])`, "iu")
+
+			return lines.some((line) => word.test(line))
+		})
+
+	CITED_KEY_FORM_BY_COUNTRY.set(country, writes)
+
+	return writes
+}
+
+/**
+ * {@link writtenSubdivisionForISO}, for a country whose cited layout writes libaddressinput's
+ * keys (`citationWritesKeys`), or `null` for any other country.
+ */
+export function citedSubdivisionForISO(country: string, isoSuffix: string): string | null {
+	const code = country.toUpperCase()
+
+	return citationWritesKeys(code) ? writtenSubdivisionForISO(code, isoSuffix) : null
 }
 
 /**

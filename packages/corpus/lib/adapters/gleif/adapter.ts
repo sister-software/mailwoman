@@ -97,10 +97,13 @@
  * It reaches a row as the form the country's addresses write for it.
  *
  * `matchSubdivisionIn` answers for the United States, Canada and Australia, where addresses write the code.
- * For every other country, `writtenSubdivisionForISO` reads the libaddressinput key
+ * For every other country, `citedSubdivisionForISO` reads the libaddressinput key
  * listed beside the ISO id: `IN-MH` becomes `Maharashtra`.
  *
- * A country whose spec lists no ISO ids gets no region.
+ * It answers only where the country's codex layout prints a region and its primary citation writes
+ * one of those keys in an example, because libaddressinput is a dataset rather than a citation.
+ *
+ * Any other country gets no region.
  * A code whose country prefix differs from `Country` refuses the address as contradicting it.
  *
  * ## One row per address
@@ -130,7 +133,7 @@ import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
 import { joinRepetitionIndex, withoutRepetitionIndex } from "#adapters/street/repetition"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
-import { writtenSubdivisionForISO } from "#adapters/wof/admin/json/region-codes"
+import { citedSubdivisionForISO } from "#adapters/wof/admin/json/region-codes"
 import { FingerprintSet } from "#fingerprints"
 import { isPlaceholderValue } from "#it/adapters/anac/adapter"
 import { SourceRegister } from "#registers"
@@ -625,7 +628,7 @@ export function readGLEIFAddress(
 	if (regionCode) {
 		const suffix = regionCode.slice(country.length + 1)
 
-		const written = matchSubdivisionIn(country, suffix) ? suffix : writtenSubdivisionForISO(country, suffix)
+		const written = matchSubdivisionIn(country, suffix) ? suffix : citedSubdivisionForISO(country, suffix)
 
 		if (written) {
 			components.region = written

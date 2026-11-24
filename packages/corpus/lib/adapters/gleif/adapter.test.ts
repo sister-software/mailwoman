@@ -298,6 +298,22 @@ describe("readGLEIFAddress", () => {
 		expect(admitted(readGLEIFAddress(hyderabad, GLEIFAddressBlock.Legal, units)).components.region).toBe("Telangana")
 	})
 
+	it("writes no region where the country's cited layout writes no libaddressinput key", () => {
+		// Chile's UPU description writes `REGION METROPOLITANA`, and the libaddressinput key is another spelling.
+		const santiago = record({
+			name: "EMPRESA DE PRUEBA SPA",
+			legal: {
+				FirstAddressLine: "Moneda 1152",
+				City: "SANTIAGO",
+				Region: "CL-RM",
+				Country: "CL",
+				PostalCode: "8340648",
+			},
+		})
+
+		expect(admitted(readGLEIFAddress(santiago, GLEIFAddressBlock.Legal, units)).components.region).toBeUndefined()
+	})
+
 	it("leaves out a region whose ISO 3166-2 code is not how an address writes it", () => {
 		expect(admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal, units)).components.region).toBeUndefined()
 	})
