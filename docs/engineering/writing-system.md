@@ -197,12 +197,13 @@ rather than by reordering the negation.
    neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
    benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
    never at one particular project.
-10. **Use the current release in instructions. Keep the tested version in records.** A fenced
-    command writes `mailwoman`, which `docs/plugins/release-version/remark.ts`
-    replaces with the `mailwoman` manifest's version at build time. A sentence that records a check, such
-    as "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. The
-    `Release version literals` step of `docs/scripts/check/docs-structure.mts` rejects a literal version in
-    fenced code under `articles/` and `src/pages/`. TSX pages read the version with `useReleaseVersion`.
+10. **Use unpinned package names in copyable install commands. Keep tested versions in records.**
+    A fenced install command writes `npm install mailwoman`. A sentence that records a check, such as
+    "checked with published `mailwoman@11.0.0` on 9 November 2026", keeps its literal version. A code
+    block that reports the current release can use `{{release.version}}`, which
+    `docs/plugins/release-version/remark.ts` replaces at build time. The `Release version literals`
+    step of `docs/scripts/check/docs-structure.mts` rejects literal Mailwoman versions in fenced code
+    under `articles/` and `src/pages/`. A TSX install block also uses an unpinned package name.
 11. **Code blocks pass the same lint as other code.** `yarn lint:code-blocks` (`mwops code-blocks`) writes
     each `js`, `jsx`, `ts` or `tsx` block of `articles/` and `src/pages/` to `.cache/code-blocks/` and
     lints it with the repository's oxlint config. The `.cache/code-blocks/**` override in

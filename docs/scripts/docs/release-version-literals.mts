@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Finds Mailwoman release versions written as literals in fenced code blocks.
+ * Finds literal Mailwoman release versions in fenced code blocks.
  *
- *   A fenced block in a published page is an instruction a reader copies,
- *   so it installs or runs the current release through `{{release.version}}`,
- *   which `docs/plugins/release-version/remark.ts` substitutes at build time.
+ * Copyable install commands use unpinned package names.
+ * Versioned output can use `{{release.version}}` in a code block.
  *
- *   The check skips prose and inline code.
- *   A sentence such as "checked with published `mailwoman@11.0.0` on 9 November
- *   2026" records which release a check ran against.
+ * The docs build substitutes that token from the current manifest.
+ *
+ * The check skips prose and inline code.
+ * Dated check records keep the literal tested version.
  */
 
 /**

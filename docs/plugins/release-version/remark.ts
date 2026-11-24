@@ -2,15 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Replaces `{{release.<key>}}` tokens in fenced and inline code with the current release values.
+ * Replaces release tokens in fenced and inline code with current manifest values.
  *
- *   An install or run instruction writes `npm install mailwoman@{{release.version}}`,
- *   and the built page shows the version the `mailwoman` manifest declares.
- *   MDX evaluates braces in prose as expressions, so the tokens work only inside code.
- *   The instructions are in code blocks.
+ * Copyable install instructions use unpinned package names.
+ * Versioned output can use `{{release.version}}` in a code block.
+ * MDX evaluates braces in prose as expressions.
  *
- *   A sentence that records a check against a specific release keeps its literal version,
- *   because the check ran against that version and no other.
+ * Dated check records keep the literal tested version.
  */
 
 import type { Node } from "unist"

@@ -1,9 +1,9 @@
 ---
 title: Node library API
-description: Look up Mailwoman 11.0.0 library imports, parse and geocode calls, options, return types, and errors.
+description: Look up the published 11.3.0 parser API and the documented geocode calls, options, return types, and errors.
 role: reference
 source-of-truth: packages/mailwoman/lib/index.ts, packages/mailwoman/lib/engine/parser.ts, packages/mailwoman/lib/engine/runtime-pipeline.ts, packages/mailwoman/lib/geocode.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/batch/stream.ts, packages/entity-resolution/lib/geocode-handler.ts, packages/neural/lib/classifier.ts, packages/neural/lib/classifier/loader.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/serialize/json.ts
-verified-with: mailwoman v11.0.0
+verified-with: published mailwoman v11.3.0 first-parse run on Node.js v24.22.3 and Linux x64, checked 2026-11-24, and dated 11.0.0 checks in the neural and geocode sections
 ---
 
 import { ECMAScriptModuleProject, NodeRequirement } from "#partials/runtime"
@@ -22,9 +22,11 @@ This page describes the principal Node library calls. A parser from `createParse
 | `@mailwoman/neural`                 | `NeuralAddressClassifier`                                                                |
 | `@mailwoman/core/decoder`           | `createCalibrator`                                                                       |
 
-The `mailwoman` package installs the classifier and the en-US model, so a parse needs no other package.
+The published `mailwoman@11.3.0` package installs the classifier and the en-US model. A first parse needs only `npm install mailwoman`.
 
 ## Parse calls
+
+The published 11.3.0 package exports `createParser` and the tree readers from `mailwoman`. The [first-parse exercise](../start.mdx) ran this import and its complete output after an unpinned npm install on Node.js 24.22.3 and Linux x64.
 
 ```ts fragment
 function createParser(options?: ParserOptions): Promise<Parser>
