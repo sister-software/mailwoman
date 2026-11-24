@@ -19,7 +19,7 @@ import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
+import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 
 /**
  * A count of train rows sharing one source, country and span-tag sequence.
@@ -54,7 +54,7 @@ export async function countTrainShapes(
 	manifestPath: string,
 	options: TrainShapeOptions = {}
 ): Promise<TrainShapeCount[]> {
-	const manifest = await readLocalJSONFile<{ files: ManifestFile[]; deletions?: unknown[] }>(manifestPath)
+	const manifest = await readLocalJSONFile<{ deletions?: unknown[] }>(manifestPath)
 
 	if (manifest.deletions?.length) {
 		throw new Error(
@@ -62,7 +62,9 @@ export async function countTrainShapes(
 		)
 	}
 
-	const files = manifest.files.filter((file) => file.split === "train" || file.split_attribute)
+	const files = baseManifestFiles<ManifestFile>(manifest).filter(
+		(file) => file.split === "train" || file.split_attribute
+	)
 
 	if (!files.length) throw new Error(`${manifestPath} lists no train file`)
 

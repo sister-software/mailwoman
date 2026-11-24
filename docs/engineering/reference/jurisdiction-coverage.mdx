@@ -9,7 +9,7 @@ owner: operations
 
 # What this repository has, per jurisdiction
 
-One row per jurisdiction, over 255 of them: every ISO 3166-1 alpha-2 code in
+One row per jurisdiction, over 259 of them: every ISO 3166-1 alpha-2 code in
 `@mailwoman/codex/country` plus the non-ISO operational codes that `@mailwoman/codex/postal-regimes`
 defines. Regenerate with:
 
@@ -17,9 +17,9 @@ defines. Regenerate with:
 node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
 ```
 
-Corpus counts were taken over `0.7.6-venue-gb-region`, cached 2026-10-17T20:27:11.109Z, 705,765,591 rows.
+Corpus counts were taken over `0.8.22-retention-overlay`, counted in this run, 889,226,116 rows.
 **Admitted by** shows each shipped graph whose training config admits the jurisdiction. Admission is per
-graph, and 4 jurisdictions (`CN`, `JP`, `KR`, `TW`) are admitted by more than one, so the column reads the union
+graph, and 4 jurisdictions (`JP`, `CN`, `KR`, `TW`) are admitted by more than one, so the column reads the union
 of `scope.config.json`'s registered configs rather than any one of them. `packages/corpus/data/training-configs/v7.2.0-address-systems-60k.yaml`
 is the one `censusCoverage` read for its own mismatch findings.
 
@@ -31,7 +31,7 @@ what the counted corpus holds rather than establishing that the source has none.
 
 **Corpus rows** counts rows in the training corpus. **Street rows** counts those with a `street`
 or `house_number` label. Those rows teach an address rather than a name.
-A jurisdiction can hold rows while its street-row count reads 0. The largest such jurisdiction, `BO`, reads 20,523 and 0.
+A jurisdiction can hold rows while its street-row count reads 0. The largest such jurisdiction, `ML`, reads 24,811 and 0.
 
 **Admission** is `country_weights` in the training config, a hard filter. A code absent from it
 trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
@@ -53,14 +53,14 @@ any other row only tracks. A jurisdiction reading
 
 | reading                                 | jurisdictions |
 | --------------------------------------- | ------------: |
-| declared in this table                  |           255 |
-| corpus holds at least one row           |           198 |
-| of those, at least one street row       |           185 |
+| declared in this table                  |           259 |
+| corpus holds at least one row           |           258 |
+| of those, at least one street row       |           193 |
 | admitted by `country_weights`           |           215 |
-| admitted, zero corpus rows              |            24 |
-| corpus rows no shipped graph admits     |             7 |
-| declined by every shipped config        |            39 |
-| absent from every layer                 |             1 |
+| admitted, zero corpus rows              |             0 |
+| corpus rows no shipped graph admits     |            43 |
+| declined by every shipped config        |            44 |
+| absent from every layer                 |             0 |
 | rooftop geocoding a consumer can obtain |             2 |
 | has a weights package                   |            11 |
 
@@ -68,265 +68,269 @@ any other row only tracks. A jurisdiction reading
 
 | code | name                                         | corpus rows           | street rows | admitted by | gazetteer | weights |   board |
 | ---- | -------------------------------------------- | --------------------- | ----------: | ----------- | --------: | ------- | ------: |
-| `US` | United States                                | 487,703,147 rows      | 475,084,876 | en-us       |   rooftop | en-us   | 204/233 |
-| `FR` | France                                       | 147,870,846 rows      | 143,493,734 | en-us       |   rooftop | fr-fr   |   57/69 |
-| `IN` | India                                        | 18,283,231 rows       |      70,581 | en-us       | 1,568,989 | en-in   |     7/7 |
-| `GB` | United Kingdom                               | 13,921,058 rows       |     873,440 | en-us       | 3,638,087 | en-gb   | 162/213 |
-| `CN` | China                                        | 7,705,484 rows        |       6,484 | cjk, en-us  | 1,657,972 | zh-cn   |    7/28 |
-| `NL` | Netherlands                                  | 3,472,342 rows        |     330,169 | en-us       |   412,432 | —       |     2/2 |
-| `DE` | Germany                                      | 3,471,907 rows        |     548,748 | en-us       |   280,538 | de-de   |   17/20 |
-| `IT` | Italy                                        | 3,157,259 rows        |     319,815 | en-us       |   310,866 | it-it   |   12/13 |
-| `RU` | Russian Federation                           | 2,033,443 rows        |   1,996,746 | en-us       |   812,986 | —       |     8/9 |
-| `ES` | Spain                                        | 1,824,779 rows        |     247,037 | en-us       |   176,939 | es-es   |   19/26 |
-| `JP` | Japan                                        | 1,796,248 rows        |         123 | cjk, en-us  |   329,357 | ja-jp   |    8/14 |
-| `CA` | Canada                                       | 1,594,024 rows        |   1,531,947 | en-us       |   945,211 | —       |   26/26 |
-| `BR` | Brazil                                       | 1,187,971 rows        |   1,148,833 | en-us       |   315,143 | —       |    7/15 |
-| `MX` | Mexico                                       | 1,173,433 rows        |   1,134,282 | en-us       |   709,914 | —       |     3/7 |
-| `PT` | Portugal                                     | 1,009,962 rows        |     970,147 | en-us       |   451,449 | —       |     6/7 |
-| `KR` | Korea, Republic of                           | 1,003,532 rows        |         234 | cjk, en-us  |   176,636 | —       |       — |
-| `CH` | Switzerland                                  | 717,055 rows          |     675,327 | en-us       |    75,001 | —       |     2/2 |
-| `LV` | Latvia                                       | 529,615 rows          |     300,605 | en-us       |    31,127 | —       |       — |
-| `TW` | Taiwan (Province of China)                   | 529,073 rows          |          28 | cjk, en-us  |    85,349 | —       |       — |
-| `HR` | Croatia                                      | 503,625 rows          |     461,560 | en-us       |    45,839 | —       |       — |
-| `SK` | Slovakia                                     | 353,904 rows          |     310,781 | en-us       |    34,051 | —       |     2/2 |
-| `RE` | Reunion                                      | 317,976 rows          |     311,579 | en-us       |     1,415 | —       |       — |
-| `NO` | Norway                                       | 290,508 rows          |     248,218 | en-us       |    65,301 | —       |       — |
-| `CZ` | Czech Republic                               | 285,297 rows          |     227,752 | en-us       |    74,900 | —       |     2/3 |
-| `PK` | Pakistan                                     | 278,834 rows          |     239,496 | en-us       |   285,104 | —       |     1/2 |
-| `DK` | Denmark                                      | 263,415 rows          |     223,967 | en-us       |    28,135 | —       |       — |
-| `BE` | Belgium                                      | 241,289 rows          |     204,103 | en-us       |    44,119 | —       |     1/2 |
-| `AU` | Australia                                    | 232,136 rows          |     182,764 | en-us       |    95,798 | en-au   |   24/25 |
-| `FI` | Finland                                      | 229,614 rows          |     188,460 | en-us       |    68,088 | —       |     0/1 |
-| `AT` | Austria                                      | 229,054 rows          |     190,514 | en-us       |    78,550 | —       |     3/3 |
-| `PL` | Poland                                       | 226,040 rows          |     184,189 | en-us       |   388,557 | —       |     1/2 |
-| `SI` | Slovenia                                     | 196,874 rows          |     169,290 | en-us       |    36,963 | —       |     5/5 |
-| `LU` | Luxembourg                                   | 178,204 rows          |     156,816 | en-us       |    11,326 | —       |       — |
-| `VN` | Viet Nam                                     | 171,115 rows          |     131,444 | en-us       |    85,095 | —       |     3/7 |
-| `GP` | Guadeloupe                                   | 152,582 rows          |     149,548 | en-us       |     4,861 | —       |       — |
-| `SG` | Singapore                                    | 143,972 rows          |     143,972 | en-us       |   125,221 | —       | 166/249 |
-| `MQ` | Martinique                                   | 127,789 rows          |     124,987 | en-us       |     3,107 | —       |       — |
-| `SE` | Sweden                                       | 108,945 rows          |      68,637 | en-us       |   125,499 | —       |     1/1 |
-| `ID` | Indonesia                                    | 92,687 rows           |      53,305 | en-us       |   488,996 | —       |     1/2 |
-| `BD` | Bangladesh                                   | 66,116 rows           |      26,859 | en-us       |    94,930 | —       |     1/2 |
-| `RO` | Romania                                      | 60,096 rows           |      21,623 | en-us       |   110,702 | —       |       — |
-| `GF` | French Guiana                                | 54,198 rows           |      54,183 | en-us       |     1,717 | —       |       — |
-| `HU` | Hungary                                      | 52,616 rows           |      14,207 | en-us       |    35,510 | —       |     2/2 |
-| `NZ` | New Zealand                                  | 52,364 rows           |       8,340 | en-us       |    23,474 | en-nz   |   14/14 |
-| `NC` | New Caledonia                                | 50,822 rows           |      48,793 | en-us       |     1,971 | —       |       — |
-| `EE` | Estonia                                      | 48,442 rows           |      20,697 | en-us       |    44,737 | —       |       — |
-| `YT` | Mayotte                                      | 45,799 rows           |      45,741 | en-us       |       491 | —       |       — |
-| `IE` | Ireland                                      | 43,906 rows           |       4,952 | en-us       |    26,205 | —       |    6/12 |
-| `GR` | Greece                                       | 42,541 rows           |       5,087 | en-us       |    90,573 | —       |       — |
-| `ZA` | South Africa                                 | 40,725 rows           |       1,268 | en-us       |    43,644 | —       |     6/8 |
-| `BG` | Bulgaria                                     | 40,291 rows           |       2,139 | en-us       |    54,244 | —       |       — |
-| `PE` | Peru                                         | 40,115 rows           |         898 | en-us       |   149,011 | —       |       — |
-| `PH` | Philippines                                  | 39,641 rows           |         119 | en-us       |   166,045 | —       |     1/1 |
-| `IL` | Israel                                       | 39,452 rows           |       1,278 | en-us       |    13,790 | —       |     2/2 |
-| `PR` | Puerto Rico                                  | 39,268 rows           |         154 | en-us       |    11,340 | —       |     0/4 |
-| `CL` | Chile                                        | 39,201 rows           |         658 | en-us       |    35,502 | —       |       — |
-| `EG` | Egypt                                        | 38,994 rows           |         155 | en-us       |    51,489 | —       |     1/1 |
-| `CR` | Costa Rica                                   | 38,988 rows           |          26 | en-us       |    21,217 | —       |   13/18 |
-| `MY` | Malaysia                                     | 38,961 rows           |         131 | en-us       |    49,667 | —       |     1/2 |
-| `AR` | Argentina                                    | 38,938 rows           |         524 | en-us       |    42,471 | —       |     5/5 |
-| `NP` | Nepal                                        | 38,877 rows           |          19 | en-us       |   138,336 | —       |       — |
-| `AE` | United Arab Emirates                         | 38,858 rows           |           9 | en-us       |     5,802 | —       |   17/20 |
-| `CO` | Colombia                                     | 38,836 rows           |          99 | en-us       |   183,148 | —       |     2/3 |
-| `LK` | Sri Lanka                                    | 38,732 rows           |          79 | en-us       |    34,736 | —       |       — |
-| `RS` | Serbia                                       | 38,509 rows           |         580 | en-us       |    33,133 | —       |       — |
-| `EC` | Ecuador                                      | 38,270 rows           |          21 | en-us       |    45,353 | —       |   15/15 |
-| `NG` | Nigeria                                      | 38,014 rows           |       7,205 | en-us       |   102,140 | —       |     1/3 |
-| `UA` | Ukraine                                      | 37,034 rows           |         398 | en-us       |   288,716 | —       |     1/1 |
-| `TR` | Turkey                                       | 36,952 rows           |       1,006 | en-us       |   184,893 | —       |     1/1 |
-| `LT` | Lithuania                                    | 35,887 rows           |       4,643 | en-us       |    65,923 | —       |       — |
-| `HK` | Hong Kong                                    | 33,727 rows           |           5 | en-us       |     6,689 | —       |     2/5 |
-| `TH` | Thailand                                     | 33,393 rows           |         174 | en-us       |   225,321 | —       |     4/5 |
-| `CY` | Cyprus                                       | 31,541 rows           |       4,466 | en-us       |     9,602 | —       |     2/2 |
-| `PY` | Paraguay                                     | 29,289 rows           |          45 | en-us       |    13,917 | —       |       — |
-| `KE` | Kenya                                        | 28,676 rows           |         103 | en-us       |    17,930 | —       |       — |
-| `GT` | Guatemala                                    | 27,613 rows           |          17 | en-us       |    34,541 | —       |     0/1 |
-| `SA` | Saudi Arabia                                 | 23,952 rows           |         220 | en-us       |    23,664 | —       |     5/5 |
-| `MA` | Morocco                                      | 23,426 rows           |         133 | en-us       |   111,967 | —       |     1/1 |
-| `DO` | Dominican Republic                           | 23,265 rows           |          76 | en-us       |    23,444 | —       |     0/1 |
-| `UY` | Uruguay                                      | 20,674 rows           |         266 | en-us       |     6,456 | —       |       — |
-| `BO` | Bolivia                                      | 20,523 rows, declined |           0 | —           |    72,435 | —       |       — |
-| `SV` | El Salvador                                  | 19,476 rows           |          14 | en-us       |    18,010 | —       |     0/1 |
-| `BA` | Bosnia and Herzegovina                       | 19,066 rows           |         213 | en-us       |    42,732 | —       |     2/2 |
-| `KH` | Cambodia                                     | 17,973 rows           |           7 | en-us       |    34,020 | —       |     1/1 |
-| `TN` | Tunisia                                      | 17,085 rows           |          96 | en-us       |    14,416 | —       |       — |
-| `MM` | Myanmar                                      | 16,918 rows           |           2 | en-us       |   163,664 | —       |       — |
-| `JO` | Jordan                                       | 16,224 rows           |         704 | en-us       |     8,466 | —       |     1/1 |
-| `LB` | Lebanon                                      | 15,719 rows           |         731 | en-us       |    18,580 | —       |     1/1 |
-| `NI` | Nicaragua                                    | 15,389 rows           |           5 | en-us       |    16,304 | —       |     3/4 |
-| `HN` | Honduras                                     | 14,036 rows           |           4 | en-us       |    42,829 | —       |       — |
-| `AL` | Albania                                      | 13,800 rows           |          65 | en-us       |    23,421 | —       |    9/11 |
-| `GE` | Georgia                                      | 13,675 rows           |         739 | en-us       |    19,757 | —       |     2/2 |
-| `VE` | Venezuela                                    | 13,303 rows           |          20 | en-us       |    87,694 | —       |    4/13 |
-| `MK` | Macedonia, the Former Yugoslav Republic of   | 11,846 rows           |         127 | en-us       |    20,072 | —       |       — |
-| `IS` | Iceland                                      | 11,553 rows           |       4,401 | en-us       |     2,845 | —       |     1/1 |
-| `MT` | Malta                                        | 11,250 rows           |         859 | en-us       |     5,128 | —       |       — |
-| `PA` | Panama                                       | 11,137 rows           |         175 | en-us       |    22,794 | —       |       — |
-| `MD` | Moldova, Republic of                         | 9,768 rows            |          87 | en-us       |    18,213 | —       |       — |
-| `TT` | Trinidad and Tobago                          | 9,607 rows            |          48 | en-us       |     4,115 | —       |     1/2 |
-| `UG` | Uganda                                       | 9,392 rows            |          31 | en-us       |    75,012 | —       |   14/15 |
-| `KZ` | Kazakhstan                                   | 9,009 rows            |          94 | en-us       |    68,083 | —       |       — |
-| `IQ` | Iraq                                         | 8,918 rows            |           7 | en-us       |   111,990 | —       |       — |
-| `QA` | Qatar                                        | 8,904 rows            |          11 | en-us       |     1,851 | —       |   15/15 |
-| `BY` | Belarus                                      | 8,462 rows            |          54 | en-us       |   154,703 | —       |     1/1 |
-| `AZ` | Azerbaijan                                   | 8,087 rows            |          28 | en-us       |    48,469 | —       |       — |
-| `DZ` | Algeria                                      | 7,915 rows            |          30 | en-us       |    65,394 | —       |       — |
-| `TZ` | Tanzania, United Republic of                 | 7,830 rows            |          37 | en-us       |    26,451 | —       |       — |
-| `LA` | Lao People's Democratic Republic             | 7,747 rows            |           8 | en-us       |    25,520 | —       |       — |
-| `ZW` | Zimbabwe                                     | 7,708 rows            |          58 | en-us       |     5,507 | —       |   12/15 |
-| `GH` | Ghana                                        | 7,606 rows, 0 street  |           0 | en-us       |    32,150 | —       |     1/2 |
-| `JM` | Jamaica                                      | 7,452 rows            |          39 | en-us       |    19,413 | —       |   15/15 |
-| `MF` | Saint Martin (French part)                   | 7,436 rows            |       7,431 | en-us       |       178 | —       |       — |
-| `AM` | Armenia                                      | 6,999 rows            |          31 | en-us       |    29,397 | —       |   14/15 |
-| `MO` | Macao                                        | 6,544 rows            |          27 | en-us       |       334 | —       |       — |
-| `ME` | Montenegro                                   | 6,333 rows            |          88 | en-us       |     9,865 | —       |       — |
-| `ZM` | Zambia                                       | 6,262 rows            |          20 | en-us       |    22,207 | —       |       — |
-| `CU` | Cuba                                         | 5,886 rows            |           6 | en-us       |    54,418 | —       |       — |
-| `MU` | Mauritius                                    | 5,601 rows            |         189 | en-us       |     3,084 | —       |     1/1 |
-| `BH` | Bahrain                                      | 5,596 rows            |           5 | en-us       |     1,364 | —       |       — |
-| `BL` | Saint Barthélemy                             | 5,565 rows            |       5,560 | en-us       |       146 | —       |       — |
-| `NA` | Namibia                                      | 5,545 rows            |          39 | en-us       |     2,900 | —       |     1/1 |
-| `PF` | French Polynesia                             | 5,431 rows            |       5,307 | en-us       |     1,304 | —       |       — |
-| `UZ` | Uzbekistan                                   | 5,212 rows            |          44 | en-us       |    24,268 | —       |       — |
-| `KW` | Kuwait                                       | 5,175 rows            |           6 | en-us       |     1,798 | —       |     1/2 |
-| `OM` | Oman                                         | 4,764 rows            |           7 | en-us       |    13,318 | —       |     8/8 |
-| `PS` | Palestine, State of                          | 4,470 rows, declined  |           0 | —           |    10,984 | —       |       — |
-| `BZ` | Belize                                       | 4,096 rows, 0 street  |           0 | en-us       |     2,901 | —       |     2/2 |
-| `BW` | Botswana                                     | 4,016 rows            |           8 | en-us       |     4,118 | —       |   13/13 |
-| `IR` | Iran, Islamic Republic of                    | 3,582 rows            |          10 | en-us       |   379,775 | —       |       — |
-| `FJ` | Fiji                                         | 3,558 rows, declined  |           0 | —           |     4,273 | —       |       — |
-| `LY` | Libya                                        | 3,431 rows, declined  |           0 | —           |     6,232 | —       |       — |
-| `BS` | Bahamas                                      | 3,377 rows, 0 street  |           0 | en-us       |     3,201 | —       |     1/2 |
-| `MZ` | Mozambique                                   | 3,333 rows            |          20 | en-us       |    40,243 | —       |       — |
-| `MN` | Mongolia                                     | 3,003 rows            |           6 | en-us       |    12,293 | —       |     0/3 |
-| `KY` | Cayman Islands                               | 2,992 rows            |         351 | en-us       |       452 | —       |     1/1 |
-| `BN` | Brunei Darussalam                            | 2,934 rows            |           1 | en-us       |     1,419 | —       |     2/2 |
-| `MV` | Maldives                                     | 2,874 rows            |           6 | en-us       |     1,412 | —       |       — |
-| `SY` | Syrian Arab Republic                         | 2,841 rows, declined  |           0 | —           |    63,480 | —       |       — |
-| `BB` | Barbados                                     | 2,827 rows            |          20 | en-us       |     3,285 | —       |     1/1 |
-| `PM` | Saint Pierre and Miquelon                    | 2,731 rows            |       2,729 | en-us       |       141 | —       |     1/1 |
-| `MG` | Madagascar                                   | 2,686 rows            |          15 | en-us       |    37,203 | —       |       — |
-| `CI` | Cote DIvoire                                 | 2,679 rows            |          20 | en-us       |    24,135 | —       |   11/15 |
-| `CM` | Cameroon                                     | 2,670 rows, declined  |           0 | —           |    33,555 | —       |       — |
-| `JE` | Jersey                                       | 2,613 rows            |         457 | en-us       |       535 | —       |       — |
-| `IM` | Isle of Man                                  | 2,461 rows            |         260 | en-us       |       624 | —       |     0/3 |
-| `GU` | Guam                                         | 2,275 rows            |          20 | en-us       |       281 | —       |       — |
-| `VI` | Virgin Islands (U.S.)                        | 2,203 rows            |          24 | en-us       |     1,902 | —       |     0/3 |
-| `SR` | Suriname                                     | 2,194 rows            |          24 | en-us       |     2,745 | —       |     1/1 |
-| `PG` | Papua New Guinea                             | 2,142 rows            |           4 | en-us       |    22,872 | —       |     1/1 |
-| `AD` | Andorra                                      | 2,125 rows            |          15 | en-us       |       870 | —       |     2/2 |
-| `SN` | Senegal                                      | 2,120 rows            |          39 | en-us       |    26,408 | —       |       — |
-| `MW` | Malawi                                       | 2,093 rows            |          13 | en-us       |    12,672 | —       |   15/16 |
-| `AO` | Angola                                       | 2,028 rows, 0 street  |           0 | en-us       |    34,616 | —       |     0/1 |
-| `GY` | Guyana                                       | 1,971 rows, declined  |           0 | —           |     3,803 | —       |       — |
-| `LI` | Liechtenstein                                | 828 rows              |         824 | en-us       |     1,165 | —       |       — |
-| `VG` | Virgin Islands (British)                     | 531 rows              |         139 | en-us       |       244 | —       |     1/1 |
-| `FO` | Faroe Islands                                | 469 rows              |         469 | en-us       |     1,174 | —       |     0/1 |
-| `MC` | Monaco                                       | 451 rows              |         451 | en-us       |       433 | —       |       — |
-| `GG` | Guernsey                                     | 309 rows              |          82 | en-us       |     1,290 | —       |       — |
-| `BM` | Bermuda                                      | 179 rows              |         167 | en-us       |       604 | —       |     1/3 |
-| `GI` | Gibraltar                                    | 125 rows              |         112 | en-us       |        34 | —       |       — |
-| `SM` | San Marino                                   | 95 rows               |          95 | en-us       |       955 | —       |     1/1 |
-| `GL` | Greenland                                    | 84 rows               |          84 | en-us       |     2,108 | —       |       — |
-| `ET` | Ethiopia                                     | 51 rows               |          50 | en-us       |    26,275 | —       |       — |
-| `KG` | Kyrgyzstan                                   | 50 rows               |          50 | en-us       |    13,537 | —       |       — |
-| `KN` | Saint Kitts and Nevis                        | 39 rows               |          11 | en-us       |     1,674 | —       |       — |
-| `TC` | Turks and Caicos Islands                     | 37 rows               |          14 | en-us       |       326 | —       |       — |
-| `SC` | Seychelles                                   | 34 rows               |           7 | en-us       |     1,253 | —       |     0/1 |
-| `CV` | Cape Verde                                   | 23 rows               |          22 | en-us       |     5,751 | —       |     3/3 |
-| `VC` | Saint Vincent and the Grenadines             | 22 rows               |          10 | en-us       |     1,294 | —       |       — |
-| `WF` | Wallis and Futuna                            | 22 rows, 0 street     |           0 | en-us       |       327 | —       |       — |
-| `AI` | Anguilla                                     | 21 rows               |           4 | en-us       |       985 | —       |     1/1 |
-| `BF` | Burkina Faso                                 | 18 rows               |          18 | en-us       |    20,578 | —       |   10/11 |
-| `TJ` | Tajikistan                                   | 13 rows               |          13 | en-us       |    10,244 | —       |       — |
-| `LC` | Saint Lucia                                  | 11 rows               |           8 | en-us       |     1,461 | —       |       — |
-| `LR` | Liberia                                      | 11 rows               |          11 | en-us       |    15,639 | —       |       — |
-| `AX` | Åland Islands                                | 8 rows                |           8 | en-us       |     1,696 | —       |       — |
-| `MH` | Marshall Islands                             | 8 rows                |           5 | en-us       |     1,482 | —       |     1/1 |
-| `FK` | Falkland Islands (Malvinas)                  | 6 rows                |           6 | en-us       |       229 | —       |     0/1 |
-| `GW` | Guinea-Bissau                                | 6 rows                |           6 | en-us       |     8,034 | —       |     0/1 |
-| `SD` | Sudan                                        | 6 rows                |           6 | en-us       |    19,860 | —       |       — |
-| `SZ` | Swaziland                                    | 6 rows                |           4 | en-us       |     1,653 | —       |       — |
-| `BT` | Bhutan                                       | 5 rows                |           4 | en-us       |     2,630 | —       |     2/2 |
-| `GN` | Guinea                                       | 5 rows                |           5 | en-us       |    13,350 | —       |     1/1 |
-| `DJ` | Djibouti                                     | 4 rows                |           4 | en-us       |     1,264 | —       |     1/1 |
-| `KM` | Comoros                                      | 4 rows                |           2 | en-us       |     1,423 | —       |       — |
-| `SO` | Somalia                                      | 4 rows                |           4 | en-us       |     9,759 | —       |     2/2 |
-| `TM` | Turkmenistan                                 | 4 rows                |           4 | en-us       |     5,387 | —       |     1/1 |
-| `AS` | American Samoa                               | 3 rows, 0 street      |           0 | en-us       |       277 | —       |     1/1 |
-| `LS` | Lesotho                                      | 3 rows                |           3 | en-us       |     1,592 | —       |       — |
-| `FM` | Micronesia, Federated States of              | 2 rows                |           2 | en-us       |     2,709 | —       |     0/1 |
-| `HT` | Haiti                                        | 2 rows                |           2 | en-us       |    29,195 | —       |       — |
-| `IO` | British Indian Ocean Territory               | 2 rows                |           1 | en-us       |        12 | —       |     1/1 |
-| `AF` | Afghanistan                                  | 1 rows                |           1 | en-us       |   192,971 | —       |     2/2 |
-| `MP` | Northern Mariana Islands                     | 1 rows                |           1 | en-us       |       356 | —       |     1/1 |
-| `NE` | Niger                                        | 1 rows                |           1 | en-us       |    21,874 | —       |     0/1 |
-| `UM` | United States Minor Outlying Islands         | 1 rows                |           1 | en-us       |       492 | —       |       — |
-| `VA` | Holy See (Vatican City State)                | 1 rows                |           1 | en-us       |       438 | —       |       — |
-| `AG` | Antigua and Barbuda                          | admitted, 0 rows      |           0 | en-us       |     1,338 | —       |     0/1 |
-| `AQ` | Antarctica                                   | declined              |           0 | —           |     1,351 | —       |       — |
-| `AW` | Aruba                                        | admitted, 0 rows      |           0 | en-us       |       532 | —       |     1/1 |
-| `BI` | Burundi                                      | admitted, 0 rows      |           0 | en-us       |    11,153 | —       |     1/1 |
-| `BJ` | Benin                                        | admitted, 0 rows      |           0 | en-us       |     8,066 | —       |     2/2 |
-| `BQ` | Bonaire, Sint Eustatius and Saba             | admitted, 0 rows      |           0 | en-us       |       481 | —       |     1/1 |
-| `BV` | Bouvet Island                                | absent                |           0 | —           |    absent | —       |       — |
-| `CC` | Cocos (Keeling) Islands                      | declined              |           0 | —           |        10 | —       |       — |
-| `CD` | Congo, the Democratic Republic of the        | admitted, 0 rows      |           0 | en-us       |    63,167 | —       |     2/2 |
-| `CF` | Central African Republic                     | admitted, 0 rows      |           0 | en-us       |    12,190 | —       |     2/2 |
-| `CG` | Congo                                        | admitted, 0 rows      |           0 | en-us       |    11,734 | —       |     1/2 |
-| `CK` | Cook Islands                                 | admitted, 0 rows      |           0 | en-us       |       410 | —       |     2/2 |
-| `CW` | Curaçao                                      | admitted, 0 rows      |           0 | en-us       |       522 | —       |     1/1 |
-| `CX` | Christmas Island                             | declined              |           0 | —           |       175 | —       |       — |
-| `DM` | Dominica                                     | admitted, 0 rows      |           0 | en-us       |     1,169 | —       |     1/1 |
-| `EH` | Western Sahara                               | declined              |           0 | —           |       702 | —       |       — |
-| `ER` | Eritrea                                      | admitted, 0 rows      |           0 | en-us       |     3,462 | —       |     1/1 |
-| `GA` | Gabon                                        | declined              |           0 | —           |     7,288 | —       |       — |
-| `GD` | Grenada                                      | admitted, 0 rows      |           0 | en-us       |     2,155 | —       |     1/1 |
-| `GM` | Gambia                                       | admitted, 0 rows      |           0 | en-us       |     4,708 | —       |     1/1 |
-| `GQ` | Equatorial Guinea                            | declined              |           0 | —           |     6,974 | —       |       — |
-| `GS` | South Georgia and the South Sandwich Islands | declined              |           0 | —           |       111 | —       |       — |
-| `HM` | Heard Island and Mcdonald Islands            | declined              |           0 | —           |         1 | —       |       — |
-| `KI` | Kiribati                                     | declined              |           0 | —           |     2,580 | —       |       — |
-| `KP` | Korea, Democratic People's Republic of       | declined              |           0 | —           |   156,205 | —       |       — |
-| `ML` | Mali                                         | admitted, 0 rows      |           0 | en-us       |    31,122 | —       |     1/1 |
-| `MR` | Mauritania                                   | declined              |           0 | —           |    17,400 | —       |       — |
-| `MS` | Montserrat                                   | admitted, 0 rows      |           0 | en-us       |       628 | —       |     0/1 |
-| `NF` | Norfolk Island                               | declined              |           0 | —           |        74 | —       |       — |
-| `NR` | Nauru                                        | declined              |           0 | —           |       707 | —       |       — |
-| `NU` | Niue                                         | declined              |           0 | —           |       158 | —       |       — |
-| `PN` | Pitcairn                                     | declined              |           0 | —           |        35 | —       |       — |
-| `PW` | Palau                                        | declined              |           0 | —           |     1,580 | —       |       — |
-| `RW` | Rwanda                                       | admitted, 0 rows      |           0 | en-us       |    16,045 | —       |     1/1 |
-| `SB` | Solomon Islands                              | admitted, 0 rows      |           0 | en-us       |     5,624 | —       |     1/1 |
-| `SH` | Saint Helena, Ascension and Tristan da Cunha | admitted, 0 rows      |           0 | en-us       |       351 | —       |     0/1 |
-| `SJ` | Svalbard and Jan Mayen                       | declined              |           0 | —           |       204 | —       |       — |
-| `SL` | Sierra Leone                                 | declined              |           0 | —           |    25,148 | —       |       — |
-| `SS` | South Sudan                                  | declined              |           0 | —           |    11,782 | —       |       — |
-| `ST` | Sao Tome and Principe                        | admitted, 0 rows      |           0 | en-us       |     1,594 | —       |     0/1 |
-| `SX` | Sint Maarten (Dutch part)                    | admitted, 0 rows      |           0 | en-us       |       589 | —       |     1/2 |
-| `TD` | Chad                                         | declined              |           0 | —           |    24,361 | —       |       — |
-| `TF` | French Southern Territories                  | declined              |           0 | —           |       252 | —       |       — |
-| `TG` | Togo                                         | declined              |           0 | —           |     7,645 | —       |       — |
-| `TK` | Tokelau                                      | admitted, 0 rows      |           0 | en-us       |        48 | —       |     0/1 |
-| `TL` | Timor-Leste                                  | declined              |           0 | —           |     5,654 | —       |       — |
-| `TO` | Tonga                                        | admitted, 0 rows      |           0 | en-us       |       690 | —       |     0/1 |
-| `TV` | Tuvalu                                       | declined              |           0 | —           |       839 | —       |       — |
-| `UN` | —                                            | declined              |           0 | —           |       293 | —       |       — |
-| `VU` | Vanuatu                                      | admitted, 0 rows      |           0 | en-us       |     3,644 | —       |     1/1 |
-| `WS` | Samoa                                        | declined              |           0 | —           |     1,291 | —       |       — |
-| `XK` | —                                            | declined              |           0 | —           |    11,757 | —       |       — |
-| `XN` | —                                            | declined              |           0 | —           |        37 | —       |       — |
-| `XS` | —                                            | declined              |           0 | —           |       548 | —       |       — |
+| `US` | United States                                | 721,199,223 rows      | 719,770,996 | en-us       |   rooftop | en-us   | 204/233 |
+| `FR` | France                                       | 142,599,127 rows      | 142,392,457 | en-us       |   rooftop | fr-fr   |   57/69 |
+| `RU` | Russian Federation                           | 2,052,841 rows        |   2,000,612 | en-us       |   812,986 | —       |     8/9 |
+| `CA` | Canada                                       | 1,738,325 rows        |   1,673,576 | en-us       |   945,211 | —       |   26/26 |
+| `GB` | United Kingdom                               | 1,536,763 rows        |   1,158,048 | en-us       | 3,638,087 | en-gb   | 162/213 |
+| `DE` | Germany                                      | 1,425,909 rows        |   1,339,428 | en-us       |   280,538 | de-de   |   17/20 |
+| `NL` | Netherlands                                  | 1,331,913 rows        |     959,739 | en-us       |   412,432 | —       |     2/2 |
+| `MX` | Mexico                                       | 1,188,903 rows        |   1,144,340 | en-us       |   709,914 | —       |     3/7 |
+| `BR` | Brazil                                       | 1,186,275 rows        |   1,149,294 | en-us       |   315,143 | —       |    7/15 |
+| `IT` | Italy                                        | 998,679 rows          |     942,816 | en-us       |   310,866 | it-it   |   12/13 |
+| `PT` | Portugal                                     | 972,145 rows          |     942,454 | en-us       |   451,449 | —       |     6/7 |
+| `CH` | Switzerland                                  | 720,057 rows          |     690,591 | en-us       |    75,001 | —       |     2/2 |
+| `ES` | Spain                                        | 589,785 rows          |     527,914 | en-us       |   176,939 | es-es   |   19/26 |
+| `LV` | Latvia                                       | 580,779 rows          |     333,522 | en-us       |    31,127 | —       |       — |
+| `AU` | Australia                                    | 492,535 rows          |     437,436 | en-us       |    95,798 | en-au   |   24/25 |
+| `HR` | Croatia                                      | 459,072 rows          |     429,155 | en-us       |    45,839 | —       |       — |
+| `DK` | Denmark                                      | 457,308 rows          |     431,565 | en-us       |    28,135 | —       |       — |
+| `NO` | Norway                                       | 428,399 rows          |     387,107 | en-us       |    65,301 | —       |       — |
+| `BE` | Belgium                                      | 414,481 rows          |     391,936 | en-us       |    44,119 | —       |     1/2 |
+| `CZ` | Czech Republic                               | 360,967 rows          |     322,176 | en-us       |    74,900 | —       |     2/3 |
+| `SK` | Slovakia                                     | 359,595 rows          |     337,140 | en-us       |    34,051 | —       |     2/2 |
+| `RE` | Reunion                                      | 355,121 rows          |     347,279 | en-us       |     1,415 | —       |       — |
+| `SE` | Sweden                                       | 345,467 rows          |     314,654 | en-us       |   125,499 | —       |     1/1 |
+| `FI` | Finland                                      | 305,414 rows          |     262,970 | en-us       |    68,088 | —       |     0/1 |
+| `AT` | Austria                                      | 292,290 rows          |     262,714 | en-us       |    78,550 | —       |     3/3 |
+| `PK` | Pakistan                                     | 274,992 rows          |     238,869 | en-us       |   285,104 | —       |     1/2 |
+| `PL` | Poland                                       | 261,360 rows          |     232,278 | en-us       |   388,557 | —       |     1/2 |
+| `JP` | Japan                                        | 227,877 rows          |         548 | cjk, en-us  |   329,357 | ja-jp   |    8/14 |
+| `LU` | Luxembourg                                   | 195,711 rows          |     182,363 | en-us       |    11,326 | —       |       — |
+| `EE` | Estonia                                      | 175,878 rows          |     124,194 | en-us       |    44,737 | —       |       — |
+| `GP` | Guadeloupe                                   | 172,062 rows          |     157,753 | en-us       |     4,861 | —       |       — |
+| `SG` | Singapore                                    | 170,061 rows          |     155,537 | en-us       |   125,221 | —       | 166/249 |
+| `SI` | Slovenia                                     | 162,960 rows          |     142,677 | en-us       |    36,963 | —       |     5/5 |
+| `IN` | India                                        | 162,830 rows          |     120,619 | en-us       | 1,568,989 | en-in   |     7/7 |
+| `VN` | Viet Nam                                     | 157,598 rows          |     131,527 | en-us       |    85,095 | —       |     3/7 |
+| `MQ` | Martinique                                   | 148,970 rows          |     134,535 | en-us       |     3,107 | —       |       — |
+| `NZ` | New Zealand                                  | 123,481 rows          |      92,734 | en-us       |    23,474 | en-nz   |   14/14 |
+| `ID` | Indonesia                                    | 93,013 rows           |      55,973 | en-us       |   488,996 | —       |     1/2 |
+| `CN` | China                                        | 90,217 rows           |      52,637 | cjk, en-us  | 1,657,972 | zh-cn   |    7/28 |
+| `HU` | Hungary                                      | 89,447 rows           |      72,083 | en-us       |    35,510 | —       |     2/2 |
+| `EG` | Egypt                                        | 83,366 rows           |      50,742 | en-us       |    51,489 | —       |     1/1 |
+| `AR` | Argentina                                    | 79,236 rows           |      47,871 | en-us       |    42,471 | —       |     5/5 |
+| `RO` | Romania                                      | 75,047 rows           |      45,320 | en-us       |   110,702 | —       |       — |
+| `RS` | Serbia                                       | 72,499 rows           |      52,172 | en-us       |    33,133 | —       |       — |
+| `GF` | French Guiana                                | 72,216 rows           |      58,056 | en-us       |     1,717 | —       |       — |
+| `NC` | New Caledonia                                | 65,649 rows           |      51,086 | en-us       |     1,971 | —       |       — |
+| `MD` | Moldova, Republic of                         | 64,614 rows           |      49,914 | en-us       |    18,213 | —       |       — |
+| `CL` | Chile                                        | 62,614 rows           |      31,684 | en-us       |    35,502 | —       |       — |
+| `YT` | Mayotte                                      | 53,601 rows           |      49,555 | en-us       |       491 | —       |       — |
+| `IE` | Ireland                                      | 52,629 rows           |      24,146 | en-us       |    26,205 | —       |    6/12 |
+| `GR` | Greece                                       | 52,425 rows           |      22,258 | en-us       |    90,573 | —       |       — |
+| `BD` | Bangladesh                                   | 47,574 rows           |      26,700 | en-us       |    94,930 | —       |     1/2 |
+| `BY` | Belarus                                      | 47,402 rows           |      25,250 | en-us       |   154,703 | —       |     1/1 |
+| `IS` | Iceland                                      | 46,715 rows           |      22,582 | en-us       |     2,845 | —       |     1/1 |
+| `IR` | Iran, Islamic Republic of                    | 43,542 rows           |       3,743 | en-us       |   379,775 | —       |       — |
+| `KZ` | Kazakhstan                                   | 43,504 rows           |      12,972 | en-us       |    68,083 | —       |       — |
+| `AE` | United Arab Emirates                         | 43,480 rows           |      22,594 | en-us       |     5,802 | —       |   17/20 |
+| `LT` | Lithuania                                    | 42,790 rows           |      23,452 | en-us       |    65,923 | —       |       — |
+| `TR` | Turkey                                       | 41,821 rows           |       3,750 | en-us       |   184,893 | —       |     1/1 |
+| `UA` | Ukraine                                      | 40,721 rows           |      13,538 | en-us       |   288,716 | —       |     1/1 |
+| `PE` | Peru                                         | 39,740 rows           |       8,563 | en-us       |   149,011 | —       |       — |
+| `UY` | Uruguay                                      | 39,710 rows           |      21,770 | en-us       |     6,456 | —       |       — |
+| `PH` | Philippines                                  | 39,369 rows           |       7,760 | en-us       |   166,045 | —       |     1/1 |
+| `MY` | Malaysia                                     | 38,767 rows           |       6,511 | en-us       |    49,667 | —       |     1/2 |
+| `CY` | Cyprus                                       | 37,325 rows           |      21,837 | en-us       |     9,602 | —       |     2/2 |
+| `ZA` | South Africa                                 | 37,305 rows           |       5,864 | en-us       |    43,644 | —       |     6/8 |
+| `TT` | Trinidad and Tobago                          | 36,207 rows           |      21,015 | en-us       |     4,115 | —       |     1/2 |
+| `MA` | Morocco                                      | 35,371 rows           |       2,475 | en-us       |   111,967 | —       |     1/1 |
+| `CO` | Colombia                                     | 35,231 rows           |       6,745 | en-us       |   183,148 | —       |     2/3 |
+| `TH` | Thailand                                     | 34,916 rows           |       9,403 | en-us       |   225,321 | —       |     4/5 |
+| `DZ` | Algeria                                      | 34,549 rows           |       6,257 | en-us       |    65,394 | —       |       — |
+| `BG` | Bulgaria                                     | 32,565 rows           |      10,855 | en-us       |    54,244 | —       |       — |
+| `NG` | Nigeria                                      | 32,455 rows           |       8,893 | en-us       |   102,140 | —       |     1/3 |
+| `BA` | Bosnia and Herzegovina                       | 32,432 rows           |       6,133 | en-us       |    42,732 | —       |     2/2 |
+| `VE` | Venezuela                                    | 31,992 rows           |       1,006 | en-us       |    87,694 | —       |    4/13 |
+| `IL` | Israel                                       | 30,270 rows           |       6,029 | en-us       |    13,790 | —       |     2/2 |
+| `SA` | Saudi Arabia                                 | 30,262 rows           |       2,028 | en-us       |    23,664 | —       |     5/5 |
+| `CU` | Cuba                                         | 29,759 rows           |       2,370 | en-us       |    54,418 | —       |       — |
+| `IQ` | Iraq                                         | 29,295 rows           |       1,325 | en-us       |   111,990 | —       |       — |
+| `KR` | Korea, Republic of                           | 28,030 rows           |         961 | cjk, en-us  |   176,636 | —       |       — |
+| `AF` | Afghanistan                                  | 27,334 rows           |           4 | en-us       |   192,971 | —       |     2/2 |
+| `LB` | Lebanon                                      | 26,864 rows           |       1,270 | en-us       |    18,580 | —       |     1/1 |
+| `KE` | Kenya                                        | 26,116 rows           |         915 | en-us       |    17,930 | —       |       — |
+| `AM` | Armenia                                      | 26,032 rows           |       6,026 | en-us       |    29,397 | —       |   14/15 |
+| `PA` | Panama                                       | 25,974 rows           |       1,441 | en-us       |    22,794 | —       |       — |
+| `AO` | Angola                                       | 25,880 rows           |         475 | en-us       |    34,616 | —       |     0/1 |
+| `SD` | Sudan                                        | 25,712 rows           |          29 | en-us       |    19,860 | —       |       — |
+| `LK` | Sri Lanka                                    | 25,337 rows           |       2,254 | en-us       |    34,736 | —       |       — |
+| `DO` | Dominican Republic                           | 24,876 rows           |       1,358 | en-us       |    23,444 | —       |     0/1 |
+| `ML` | Mali                                         | 24,811 rows, 0 street |           0 | en-us       |    31,122 | —       |     1/1 |
+| `PG` | Papua New Guinea                             | 24,785 rows           |          23 | en-us       |    22,872 | —       |     1/1 |
+| `SY` | Syrian Arab Republic                         | 24,730 rows, declined |           0 | —           |    63,480 | —       |       — |
+| `NE` | Niger                                        | 24,597 rows           |           5 | en-us       |    21,874 | —       |     0/1 |
+| `MM` | Myanmar                                      | 24,497 rows           |         906 | en-us       |   163,664 | —       |       — |
+| `MK` | Macedonia, the Former Yugoslav Republic of   | 24,481 rows           |       1,993 | en-us       |    20,072 | —       |       — |
+| `EC` | Ecuador                                      | 24,435 rows           |       1,836 | en-us       |    45,353 | —       |   15/15 |
+| `TW` | Taiwan (Province of China)                   | 24,432 rows           |         143 | cjk, en-us  |    85,349 | —       |       — |
+| `YE` | Yemen                                        | 24,258 rows, declined |           0 | —           |   215,926 | —       |       — |
+| `CR` | Costa Rica                                   | 24,182 rows           |         724 | en-us       |    21,217 | —       |   13/18 |
+| `TD` | Chad                                         | 23,912 rows, declined |           0 | —           |    24,361 | —       |       — |
+| `TZ` | Tanzania, United Republic of                 | 23,839 rows           |       1,096 | en-us       |    26,451 | —       |       — |
+| `AL` | Albania                                      | 23,838 rows           |       1,296 | en-us       |    23,421 | —       |    9/11 |
+| `NP` | Nepal                                        | 23,675 rows           |       1,161 | en-us       |   138,336 | —       |       — |
+| `GT` | Guatemala                                    | 23,454 rows           |       1,606 | en-us       |    34,541 | —       |     0/1 |
+| `UZ` | Uzbekistan                                   | 23,059 rows           |       4,063 | en-us       |    24,268 | —       |       — |
+| `MZ` | Mozambique                                   | 22,944 rows           |         418 | en-us       |    40,243 | —       |       — |
+| `CD` | Congo, the Democratic Republic of the        | 22,860 rows           |       1,100 | en-us       |    63,167 | —       |     2/2 |
+| `SO` | Somalia                                      | 22,797 rows           |          17 | en-us       |     9,759 | —       |     2/2 |
+| `OM` | Oman                                         | 22,782 rows           |         239 | en-us       |    13,318 | —       |     8/8 |
+| `BO` | Bolivia                                      | 22,628 rows, declined |           0 | —           |    72,435 | —       |       — |
+| `ET` | Ethiopia                                     | 22,575 rows           |         249 | en-us       |    26,275 | —       |       — |
+| `AZ` | Azerbaijan                                   | 22,345 rows           |       2,960 | en-us       |    48,469 | —       |       — |
+| `TN` | Tunisia                                      | 22,305 rows           |       1,590 | en-us       |    14,416 | —       |       — |
+| `MG` | Madagascar                                   | 22,242 rows           |         408 | en-us       |    37,203 | —       |       — |
+| `KP` | Korea, Democratic People's Republic of       | 21,987 rows, declined |           0 | —           |   156,205 | —       |       — |
+| `HN` | Honduras                                     | 21,966 rows           |          22 | en-us       |    42,829 | —       |       — |
+| `ZM` | Zambia                                       | 21,961 rows           |         391 | en-us       |    22,207 | —       |       — |
+| `GE` | Georgia                                      | 21,913 rows           |       3,805 | en-us       |    19,757 | —       |     2/2 |
+| `CM` | Cameroon                                     | 21,903 rows, declined |           0 | —           |    33,555 | —       |       — |
+| `NI` | Nicaragua                                    | 21,408 rows           |          25 | en-us       |    16,304 | —       |     3/4 |
+| `CI` | Cote DIvoire                                 | 21,365 rows           |       1,439 | en-us       |    24,135 | —       |   11/15 |
+| `HT` | Haiti                                        | 21,151 rows           |         406 | en-us       |    29,195 | —       |       — |
+| `KG` | Kyrgyzstan                                   | 21,148 rows           |       2,734 | en-us       |    13,537 | —       |       — |
+| `UG` | Uganda                                       | 21,107 rows           |         690 | en-us       |    75,012 | —       |   14/15 |
+| `KH` | Cambodia                                     | 21,068 rows           |         536 | en-us       |    34,020 | —       |     1/1 |
+| `SN` | Senegal                                      | 21,060 rows           |         590 | en-us       |    26,408 | —       |       — |
+| `MR` | Mauritania                                   | 20,952 rows, declined |           0 | —           |    17,400 | —       |       — |
+| `JO` | Jordan                                       | 20,812 rows           |       1,261 | en-us       |     8,466 | —       |     1/1 |
+| `LY` | Libya                                        | 20,520 rows, declined |           0 | —           |     6,232 | —       |       — |
+| `SV` | El Salvador                                  | 19,778 rows           |         995 | en-us       |    18,010 | —       |     0/1 |
+| `ZW` | Zimbabwe                                     | 19,758 rows           |         716 | en-us       |     5,507 | —       |   12/15 |
+| `SS` | South Sudan                                  | 19,688 rows, declined |           0 | —           |    11,782 | —       |       — |
+| `KW` | Kuwait                                       | 19,679 rows           |       6,250 | en-us       |     1,798 | —       |     1/2 |
+| `GH` | Ghana                                        | 19,666 rows           |       1,322 | en-us       |    32,150 | —       |     1/2 |
+| `JM` | Jamaica                                      | 19,543 rows           |         882 | en-us       |    19,413 | —       |   15/15 |
+| `ME` | Montenegro                                   | 19,513 rows           |       1,269 | en-us       |     9,865 | —       |       — |
+| `LA` | Lao People's Democratic Republic             | 19,428 rows           |          36 | en-us       |    25,520 | —       |       — |
+| `TM` | Turkmenistan                                 | 19,339 rows           |         821 | en-us       |     5,387 | —       |     1/1 |
+| `GN` | Guinea                                       | 19,292 rows           |          29 | en-us       |    13,350 | —       |     1/1 |
+| `SL` | Sierra Leone                                 | 18,871 rows, declined |           0 | —           |    25,148 | —       |       — |
+| `MN` | Mongolia                                     | 18,774 rows           |       1,031 | en-us       |    12,293 | —       |     0/3 |
+| `CG` | Congo                                        | 18,755 rows, 0 street |           0 | en-us       |    11,734 | —       |     1/2 |
+| `PY` | Paraguay                                     | 18,636 rows           |         982 | en-us       |    13,917 | —       |       — |
+| `MT` | Malta                                        | 18,568 rows           |       4,947 | en-us       |     5,128 | —       |       — |
+| `LR` | Liberia                                      | 18,531 rows           |         107 | en-us       |    15,639 | —       |       — |
+| `GL` | Greenland                                    | 18,505 rows           |       1,222 | en-us       |     2,108 | —       |       — |
+| `RW` | Rwanda                                       | 18,467 rows           |         286 | en-us       |    16,045 | —       |     1/1 |
+| `FJ` | Fiji                                         | 18,367 rows, declined |           0 | —           |     4,273 | —       |       — |
+| `GA` | Gabon                                        | 18,080 rows, declined |           0 | —           |     7,288 | —       |       — |
+| `BF` | Burkina Faso                                 | 17,942 rows           |          89 | en-us       |    20,578 | —       |   10/11 |
+| `PF` | French Polynesia                             | 17,935 rows           |       6,997 | en-us       |     1,304 | —       |       — |
+| `ER` | Eritrea                                      | 17,781 rows, 0 street |           0 | en-us       |     3,462 | —       |     1/1 |
+| `BZ` | Belize                                       | 17,777 rows           |       1,232 | en-us       |     2,901 | —       |     2/2 |
+| `TJ` | Tajikistan                                   | 17,588 rows           |       1,010 | en-us       |    10,244 | —       |       — |
+| `CF` | Central African Republic                     | 17,344 rows, 0 street |           0 | en-us       |    12,190 | —       |     2/2 |
+| `VU` | Vanuatu                                      | 17,115 rows, 0 street |           0 | en-us       |     3,644 | —       |     1/1 |
+| `PR` | Puerto Rico                                  | 16,932 rows           |       2,258 | en-us       |    11,340 | —       |     0/4 |
+| `BI` | Burundi                                      | 16,857 rows, 0 street |           0 | en-us       |    11,153 | —       |     1/1 |
+| `NA` | Namibia                                      | 16,534 rows           |         601 | en-us       |     2,900 | —       |     1/1 |
+| `GW` | Guinea-Bissau                                | 16,396 rows           |          28 | en-us       |     8,034 | —       |     0/1 |
+| `BS` | Bahamas                                      | 16,338 rows           |         373 | en-us       |     3,201 | —       |     1/2 |
+| `XK` | —                                            | 16,294 rows, declined |           0 | —           |    11,757 | —       |       — |
+| `GY` | Guyana                                       | 16,293 rows, declined |           0 | —           |     3,803 | —       |       — |
+| `QA` | Qatar                                        | 15,972 rows           |         353 | en-us       |     1,851 | —       |   15/15 |
+| `BN` | Brunei Darussalam                            | 15,882 rows           |       3,996 | en-us       |     1,419 | —       |     2/2 |
+| `CV` | Cape Verde                                   | 15,838 rows           |         100 | en-us       |     5,751 | —       |     3/3 |
+| `SB` | Solomon Islands                              | 15,725 rows, 0 street |           0 | en-us       |     5,624 | —       |     1/1 |
+| `MU` | Mauritius                                    | 15,652 rows           |         991 | en-us       |     3,084 | —       |     1/1 |
+| `LI` | Liechtenstein                                | 15,632 rows           |       5,310 | en-us       |     1,165 | —       |       — |
+| `TG` | Togo                                         | 15,626 rows, declined |           0 | —           |     7,645 | —       |       — |
+| `SR` | Suriname                                     | 15,587 rows           |         507 | en-us       |     2,745 | —       |     1/1 |
+| `FM` | Micronesia, Federated States of              | 15,496 rows           |           9 | en-us       |     2,709 | —       |     0/1 |
+| `PS` | Palestine, State of                          | 15,282 rows, declined |           0 | —           |    10,984 | —       |       — |
+| `HK` | Hong Kong                                    | 15,248 rows           |       2,449 | en-us       |     6,689 | —       |     2/5 |
+| `GM` | Gambia                                       | 14,925 rows, 0 street |           0 | en-us       |     4,708 | —       |     1/1 |
+| `TL` | Timor-Leste                                  | 14,892 rows, declined |           0 | —           |     5,654 | —       |       — |
+| `GQ` | Equatorial Guinea                            | 14,795 rows, declined |           0 | —           |     6,974 | —       |       — |
+| `BW` | Botswana                                     | 14,621 rows           |         211 | en-us       |     4,118 | —       |   13/13 |
+| `BJ` | Benin                                        | 14,398 rows, 0 street |           0 | en-us       |     8,066 | —       |     2/2 |
+| `DJ` | Djibouti                                     | 14,219 rows           |          19 | en-us       |     1,264 | —       |     1/1 |
+| `BB` | Barbados                                     | 13,745 rows           |       1,007 | en-us       |     3,285 | —       |     1/1 |
+| `KI` | Kiribati                                     | 13,575 rows, declined |           0 | —           |     2,580 | —       |       — |
+| `GG` | Guernsey                                     | 13,480 rows           |         506 | en-us       |     1,290 | —       |       — |
+| `FO` | Faroe Islands                                | 13,473 rows           |       5,022 | en-us       |     1,174 | —       |     0/1 |
+| `KM` | Comoros                                      | 13,175 rows           |          10 | en-us       |     1,423 | —       |       — |
+| `MW` | Malawi                                       | 12,439 rows           |          61 | en-us       |    12,672 | —       |   15/16 |
+| `AQ` | Antarctica                                   | 12,233 rows, declined |           0 | —           |     1,351 | —       |       — |
+| `GD` | Grenada                                      | 12,176 rows, 0 street |           0 | en-us       |     2,155 | —       |     1/1 |
+| `PW` | Palau                                        | 12,143 rows, declined |           0 | —           |     1,580 | —       |       — |
+| `LC` | Saint Lucia                                  | 12,001 rows           |          41 | en-us       |     1,461 | —       |       — |
+| `ST` | Sao Tome and Principe                        | 11,961 rows, 0 street |           0 | en-us       |     1,594 | —       |     0/1 |
+| `BH` | Bahrain                                      | 11,631 rows           |         239 | en-us       |     1,364 | —       |       — |
+| `SZ` | Swaziland                                    | 11,595 rows           |          22 | en-us       |     1,653 | —       |       — |
+| `VI` | Virgin Islands (U.S.)                        | 11,585 rows           |         303 | en-us       |     1,902 | —       |     0/3 |
+| `IM` | Isle of Man                                  | 11,562 rows           |       5,226 | en-us       |       624 | —       |     0/3 |
+| `AD` | Andorra                                      | 11,451 rows           |          72 | en-us       |       870 | —       |     2/2 |
+| `BT` | Bhutan                                       | 11,448 rows           |         343 | en-us       |     2,630 | —       |     2/2 |
+| `KN` | Saint Kitts and Nevis                        | 11,376 rows           |          59 | en-us       |     1,674 | —       |       — |
+| `WS` | Samoa                                        | 10,819 rows, declined |           0 | —           |     1,291 | —       |       — |
+| `LS` | Lesotho                                      | 10,809 rows           |          16 | en-us       |     1,592 | —       |       — |
+| `AG` | Antigua and Barbuda                          | 10,494 rows, 0 street |           0 | en-us       |     1,338 | —       |     0/1 |
+| `AX` | Åland Islands                                | 10,378 rows           |       2,399 | en-us       |     1,696 | —       |       — |
+| `VC` | Saint Vincent and the Grenadines             | 9,920 rows            |          52 | en-us       |     1,294 | —       |       — |
+| `DM` | Dominica                                     | 9,013 rows, 0 street  |           0 | en-us       |     1,169 | —       |     1/1 |
+| `MH` | Marshall Islands                             | 8,603 rows            |          31 | en-us       |     1,482 | —       |     1/1 |
+| `SC` | Seychelles                                   | 8,565 rows            |          35 | en-us       |     1,253 | —       |     0/1 |
+| `SJ` | Svalbard and Jan Mayen                       | 8,519 rows, declined  |           0 | —           |       204 | —       |       — |
+| `MF` | Saint Martin (French part)                   | 8,509 rows            |       7,451 | en-us       |       178 | —       |       — |
+| `JE` | Jersey                                       | 8,439 rows            |       2,298 | en-us       |       535 | —       |       — |
+| `MV` | Maldives                                     | 8,104 rows            |         257 | en-us       |     1,412 | —       |       — |
+| `TO` | Tonga                                        | 7,384 rows, 0 street  |           0 | en-us       |       690 | —       |     0/1 |
+| `SM` | San Marino                                   | 7,199 rows            |       1,509 | en-us       |       955 | —       |     1/1 |
+| `SX` | Sint Maarten (Dutch part)                    | 6,824 rows, 0 street  |           0 | en-us       |       589 | —       |     1/2 |
+| `BL` | Saint Barthélemy                             | 6,280 rows            |       5,568 | en-us       |       146 | —       |       — |
+| `MP` | Northern Mariana Islands                     | 6,012 rows            |          10 | en-us       |       356 | —       |     1/1 |
+| `CW` | Curaçao                                      | 5,996 rows            |       1,567 | en-us       |       522 | —       |     1/1 |
+| `BM` | Bermuda                                      | 5,868 rows            |       1,473 | en-us       |       604 | —       |     1/3 |
+| `EH` | Western Sahara                               | 5,744 rows, declined  |           0 | —           |       702 | —       |       — |
+| `GU` | Guam                                         | 5,676 rows            |       1,967 | en-us       |       281 | —       |       — |
+| `AW` | Aruba                                        | 5,672 rows            |         519 | en-us       |       532 | —       |     1/1 |
+| `KY` | Cayman Islands                               | 5,477 rows            |       1,807 | en-us       |       452 | —       |     1/1 |
+| `PM` | Saint Pierre and Miquelon                    | 5,343 rows            |       3,108 | en-us       |       141 | —       |     1/1 |
+| `TV` | Tuvalu                                       | 4,841 rows, declined  |           0 | —           |       839 | —       |       — |
+| `MC` | Monaco                                       | 4,769 rows            |       2,136 | en-us       |       433 | —       |       — |
+| `MS` | Montserrat                                   | 4,477 rows, 0 street  |           0 | en-us       |       628 | —       |     0/1 |
+| `BQ` | Bonaire, Sint Eustatius and Saba             | 4,449 rows, 0 street  |           0 | en-us       |       481 | —       |     1/1 |
+| `SH` | Saint Helena, Ascension and Tristan da Cunha | 4,417 rows, 0 street  |           0 | en-us       |       351 | —       |     0/1 |
+| `TF` | French Southern Territories                  | 4,372 rows, declined  |           0 | —           |       252 | —       |       — |
+| `VG` | Virgin Islands (British)                     | 4,370 rows            |         682 | en-us       |       244 | —       |     1/1 |
+| `NR` | Nauru                                        | 4,275 rows, declined  |           0 | —           |       707 | —       |       — |
+| `XS` | —                                            | 3,930 rows, declined  |           0 | —           |       548 | —       |       — |
+| `AS` | American Samoa                               | 3,774 rows, 0 street  |           0 | en-us       |       277 | —       |     1/1 |
+| `VA` | Holy See (Vatican City State)                | 3,717 rows            |           6 | en-us       |       438 | —       |       — |
+| `TC` | Turks and Caicos Islands                     | 3,042 rows            |          72 | en-us       |       326 | —       |       — |
+| `UM` | United States Minor Outlying Islands         | 3,029 rows            |           4 | en-us       |       492 | —       |       — |
+| `FK` | Falkland Islands (Malvinas)                  | 2,932 rows            |          28 | en-us       |       229 | —       |     0/1 |
+| `AI` | Anguilla                                     | 2,504 rows            |          21 | en-us       |       985 | —       |     1/1 |
+| `GS` | South Georgia and the South Sandwich Islands | 2,341 rows, declined  |           0 | —           |       111 | —       |       — |
+| `WF` | Wallis and Futuna                            | 2,312 rows, 0 street  |           0 | en-us       |       327 | —       |       — |
+| `CK` | Cook Islands                                 | 2,217 rows, 0 street  |           0 | en-us       |       410 | —       |     2/2 |
+| `MO` | Macao                                        | 1,461 rows            |         233 | en-us       |       334 | —       |       — |
+| `CX` | Christmas Island                             | 1,317 rows, declined  |           0 | —           |       175 | —       |       — |
+| `UN` | —                                            | 967 rows, declined    |           0 | —           |       293 | —       |       — |
+| `GI` | Gibraltar                                    | 906 rows              |         496 | en-us       |        34 | —       |       — |
+| `TK` | Tokelau                                      | 850 rows, 0 street    |           0 | en-us       |        48 | —       |     0/1 |
+| `NU` | Niue                                         | 770 rows, declined    |           0 | —           |       158 | —       |       — |
+| `XZ` | —                                            | 647 rows, declined    |           0 | —           |       208 | —       |       — |
+| `HM` | Heard Island and Mcdonald Islands            | 479 rows, declined    |           0 | —           |         1 | —       |       — |
+| `IO` | British Indian Ocean Territory               | 421 rows              |           4 | en-us       |        12 | —       |     1/1 |
+| `NF` | Norfolk Island                               | 309 rows, declined    |           0 | —           |        74 | —       |       — |
+| `PN` | Pitcairn                                     | 287 rows, declined    |           0 | —           |        35 | —       |       — |
+| `CC` | Cocos (Keeling) Islands                      | 274 rows, declined    |           0 | —           |        10 | —       |       — |
+| `BV` | Bouvet Island                                | 227 rows, declined    |           0 | —           |         0 | —       |       — |
+| `XN` | —                                            | 75 rows, declined     |           0 | —           |        37 | —       |       — |
+| `SU` | —                                            | 66 rows, declined     |           0 | —           |         0 | —       |       — |
+| `DD` | —                                            | 17 rows, declined     |           0 | —           |         0 | —       |       — |
+| `YU` | —                                            | 10 rows, declined     |           0 | —           |         0 | —       |       — |
+| `AN` | —                                            | 3 rows, declined      |           0 | —           |         0 | —       |       — |
 | `XX` | —                                            | declined              |           0 | —           |    24,351 | —       |       — |
-| `XZ` | —                                            | declined              |           0 | —           |       208 | —       |       — |
-| `YE` | Yemen                                        | declined              |           0 | —           |   215,926 | —       |       — |
 
 ## Corpus rows no shipped graph admits
 
-`BO` (20,523), `PS` (4,470), `FJ` (3,558), `LY` (3,431), `SY` (2,841), `CM` (2,670), `GY` (1,971)
+`SY` (24,730), `YE` (24,258), `TD` (23,912), `BO` (22,628), `KP` (21,987), `CM` (21,903), `MR` (20,952), `LY` (20,520), `SS` (19,688), `SL` (18,871), `FJ` (18,367), `GA` (18,080), `XK` (16,294), `GY` (16,293), `TG` (15,626), `PS` (15,282), `TL` (14,892), `GQ` (14,795), `KI` (13,575), `AQ` (12,233), `PW` (12,143), `WS` (10,819), `SJ` (8,519), `EH` (5,744), `TV` (4,841), `TF` (4,372), `NR` (4,275), `XS` (3,930), `GS` (2,341), `CX` (1,317), `UN` (967), `NU` (770), `XZ` (647), `HM` (479), `NF` (309), `PN` (287), `CC` (274), `BV` (227), `XN` (75), `SU` (66), `DD` (17), `YU` (10), `AN` (3)
 
 Each of these holds corpus rows and appears in neither shipped graph's `country_weights`, so those
 rows train no shipped model. A jurisdiction here that also has a weights package is served by a data-only overlay
@@ -354,4 +358,4 @@ it is the ISO 3166-1 user-assigned range, the register enumerates no jurisdictio
 `mailwoman data coverage` reports its rows under `countryLess` rather than as a jurisdiction. A reader
 counting the census's countries mustn't count it as one.
 
-- `ZZ` — 4,765 rows, 0 street. The ISO 3166-1 user-assigned range. In `v0.6.0-register-surface` these are bare place names from the retired `synth-fragment` recipe, every one `locale: und`. Measured 2026-09-28 against the candidate gazetteer: 3,115 resolve to exactly one country, 1,646 to several, and 4 to none. An assembly can attribute the 3,115 to their country. The other 1,650 stay country-less because the gazetteer doesn't settle them (#2358).
+- `ZZ` — 4,678 rows, 0 street. The ISO 3166-1 user-assigned range. In `v0.6.0-register-surface` these are bare place names from the retired `synth-fragment` recipe, every one `locale: und`. Measured 2026-09-28 against the candidate gazetteer: 3,115 resolve to exactly one country, 1,646 to several, and 4 to none. An assembly can attribute the 3,115 to their country. The other 1,650 stay country-less because the gazetteer doesn't settle them (#2358).
