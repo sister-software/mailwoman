@@ -17,9 +17,10 @@
  *   records beside the postal one.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { lineJoinForCountry, WRITTEN_LAYOUTS, writtenLayoutForCountry } from "@mailwoman/codex/address/layouts"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
+
+import { formatCorpusRow } from "#surfaces/corpus-row"
 
 /**
  * The admin parts a synthesizer has for a row.
@@ -73,7 +74,7 @@ export function layoutAdminTail(
 
 	const code = country.trim().toUpperCase()
 	const layout = opts.random && WRITTEN_LAYOUTS[code] ? writtenLayoutForCountry(code, opts.random()) : null
-	const row = formatAddressRow(components, country, layout ? { layout } : {})
+	const row = formatCorpusRow(components, country, layout ? { layout } : {})
 
 	if (!row || !row.raw.trim()) return null
 

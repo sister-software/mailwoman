@@ -5,7 +5,6 @@
  * @file Deterministic canonical-row emission shared by WOF GeoJSON adapters.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import {
 	adminRunJoinForCountry,
 	isLargestFirstSystem,
@@ -17,6 +16,7 @@ import { isPresent } from "@mailwoman/core/values/objects"
 import { textScript } from "@mailwoman/recognizer/query-shape/script-run"
 
 import type { RowSampler, SampledRow } from "#adapters/wof/sample"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import type { AdapterOptions, CanonicalRow } from "#types"
 import { nameValues, normalizeNameKey, type WOFRecord } from "#utils"
 
@@ -359,7 +359,7 @@ function* renderWOFRows<A extends object>(
 			for (const variant of variantsFor(record, ancestors, slot)) {
 				const rendered = variant.hierarchy
 					? renderHierarchy(variant.components, variant.layoutCountry ?? record.country)
-					: formatAddressRow(variant.components, record.country, { singleLine: true })
+					: formatCorpusRow(variant.components, record.country, { singleLine: true })
 
 				if (!rendered) continue
 

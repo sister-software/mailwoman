@@ -1584,6 +1584,19 @@
 			}
 		},
 		{
+			"id": "printed.cy",
+			"pattern": "[\\x{43}\\x{63}][\\x{59}\\x{79}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))",
+			"scope": "whole_or_embedded",
+			"boundary": "alnum",
+			"metadata": {
+				"kind": "printed",
+				"form": "designated",
+				"countries": ["CY"],
+				"prefix": "CY-",
+				"bare": "postal.af"
+			}
+		},
+		{
 			"id": "printed.fi",
 			"pattern": "[\\x{46}\\x{66}][\\x{49}\\x{69}\\x{131}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{5})))",
 			"scope": "whole_or_embedded",

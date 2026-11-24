@@ -130,6 +130,7 @@ import { FingerprintSet } from "#fingerprints"
 import { isPlaceholderValue } from "#it/adapters/anac/adapter"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -625,7 +626,7 @@ export function readGLEIFAddress(
 		}
 	}
 
-	const rendered = formatAddressRow(components, country, { singleLine: true, script })
+	const rendered = formatCorpusRow(components, country, { singleLine: true, script })
 
 	if (!rendered) return { refused: GLEIFRefusal.Unrenderable }
 

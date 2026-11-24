@@ -13,13 +13,13 @@
  * The adapter omits that field because mapping it would inflate alignment quarantine.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { createLicenseVerdictCache, LicensePolicy } from "@mailwoman/license/policy"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
@@ -209,7 +209,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 						components.postcode = postcode
 					}
 
-					const rendered = formatAddressRow(components, country, { singleLine: true })
+					const rendered = formatCorpusRow(components, country, { singleLine: true })
 
 					if (!rendered) continue
 

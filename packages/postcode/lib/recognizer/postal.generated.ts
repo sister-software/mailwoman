@@ -22,7 +22,7 @@ export const POSTAL_FAMILY_ID = "postal"
  *
  * The artifact embeds the same value, and the loader refuses an artifact whose hash differs.
  */
-export const POSTAL_DECLARATIONS_HASH = "0d69452b0205fd7cd7115a132d1eb73d7b96e76c34e622ed35c785e071dfb8ac"
+export const POSTAL_DECLARATIONS_HASH = "fd82868a58a92ce29cde7678516bf3b83d05eca76d02c0c55e630fbf2673c17a"
 
 /**
  * Every shape of the family by name.
@@ -115,6 +115,7 @@ export const PostalKind = {
 	PrintedAx: "printed.ax",
 	PrintedAz: "printed.az",
 	PrintedCh: "printed.ch",
+	PrintedCy: "printed.cy",
 	PrintedFi: "printed.fi",
 	PrintedFo: "printed.fo",
 	PrintedHr: "printed.hr",
@@ -656,6 +657,13 @@ export const PostalMetadata = {
 			form: "designated",
 			kind: "printed",
 			prefix: "CH-",
+		},
+		"printed.cy": {
+			bare: "postal.af",
+			countries: ["CY"],
+			form: "designated",
+			kind: "printed",
+			prefix: "CY-",
 		},
 		"printed.fi": {
 			bare: "postal.ba",

@@ -15,10 +15,10 @@
  *   and the `synth-*` spelling it retired on 2026-09-26.
  */
 
-import { formatAddress } from "@mailwoman/codex/address/format"
 import { writtenPostcode } from "@mailwoman/codex/labels/postcode/written-groups"
 import { mulberry32 } from "@mailwoman/core/utils"
 
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -198,9 +198,16 @@ function finishLocaleRow(
 	opts: LocaleRenderOpts
 ): RenderedLocaleRow | null {
 	const separator = opts.separator ?? ", "
-	let raw = formatAddress(components, country, { separator, withRegion: Boolean(components.region) })
+	const rendered = formatCorpusRow(components, country, { separator, withRegion: Boolean(components.region) })
 
-	if (!raw) return null
+	if (!rendered?.raw) return null
+
+	let raw = rendered.raw
+
+	// The postcode is labeled as the layout printed it: `HR-10000` with its prefix, or the bare domestic `10000`.
+	if (components.postcode && rendered.components.postcode) {
+		components.postcode = rendered.components.postcode
+	}
 
 	// Optional rewrite: `<street>, <hn>` -> `<street> <hn>`.
 	if (separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {

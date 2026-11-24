@@ -5,7 +5,6 @@
  * Synthesis and augmentation utilities.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
@@ -19,6 +18,7 @@ import { isPresent } from "@mailwoman/core/values/objects"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { matchCase } from "spliterator"
 
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"
 import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
@@ -141,7 +141,7 @@ export const lineBreaks: Augmentation = (row) => {
 
 	if (mulberry32(hashString(`${row.source_id}:line-breaks`))() >= LINE_BREAK_SHARE) return null
 
-	const rendered = formatAddressRow(row.components, row.country)
+	const rendered = formatCorpusRow(row.components, row.country)
 
 	if (!rendered?.raw.includes("\n")) return null
 

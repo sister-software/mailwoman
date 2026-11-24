@@ -29,7 +29,6 @@
  * Every row records those terms.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
@@ -42,6 +41,7 @@ import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street/line"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -195,7 +195,7 @@ export function createAdressurFaroeAdapter(): CorpusAdapter {
 
 					if (!components) continue
 
-					const rendered = formatAddressRow(components, "FO", {
+					const rendered = formatCorpusRow(components, "FO", {
 						singleLine: true,
 					})
 

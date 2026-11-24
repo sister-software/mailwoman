@@ -23,13 +23,13 @@
  * It honors `opts.limit`, `opts.signal` and `opts.country`.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street/line"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
@@ -148,7 +148,7 @@ export function createMatrikkelenAdapter(): CorpusAdapter {
 						components.locality = locality
 					}
 
-					const rendered = formatAddressRow(components, country, { singleLine: true })
+					const rendered = formatCorpusRow(components, country, { singleLine: true })
 
 					if (!rendered) continue
 

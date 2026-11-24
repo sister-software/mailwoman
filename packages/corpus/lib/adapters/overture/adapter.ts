@@ -8,7 +8,6 @@
  * The downstream affix-relabel step splits `street_prefix` from that value.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { writtenPostcode } from "@mailwoman/codex/labels/postcode/written-groups"
@@ -20,6 +19,7 @@ import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
 import { SourceRegister } from "#registers"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
@@ -235,7 +235,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 					components.country = countrySurfaceForm(country, random)
 				}
 
-				const rendered = formatAddressRow(components, country, { singleLine: true })
+				const rendered = formatCorpusRow(components, country, { singleLine: true })
 
 				if (!rendered) continue
 

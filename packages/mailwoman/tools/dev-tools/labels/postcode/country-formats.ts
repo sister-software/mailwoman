@@ -18,6 +18,8 @@ import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
 
+import { POSTCODE_PREFIX_RECORDS } from "#tools/dev-tools/codex/postcode-prefix"
+
 import {
 	type PostcodeAdminBlockSide,
 	placementInFormat,
@@ -68,6 +70,18 @@ function postcodePrefix(metadata: AddressMetadata): string | null {
 	const match = fmt.match(/(?:^|%n|%[A-Z]|\s)([A-Z]{2}-|\p{So})%Z/u)
 
 	return match ? match[1]! : null
+}
+
+/**
+ * The prefix a country's postal operator documents for a printed form of its postcode
+ * where `fmt` prints none, such as Cyprus's `CY-` on inbound mail beside its bare
+ * domestic code, so the recognizer reads both forms.
+ */
+function documentedPostcodePrefix(code: string): string | null {
+	const forms = POSTCODE_PREFIX_RECORDS[code]?.forms ?? []
+
+	// A country with one documented form, such as Anguilla's `AI-2640`, states it in its `zip` pattern.
+	return forms.length > 1 ? (forms.find((form) => form.prefix)?.prefix ?? null) : null
 }
 
 /**
@@ -128,7 +142,7 @@ for (const file of await Globerator.files("json", {
 		}
 	}
 
-	const prefix = postcodePrefix(metadata)
+	const prefix = postcodePrefix(metadata) ?? documentedPostcodePrefix(code)
 	const pattern = stringifyJSON(metadata.zip)
 	const placement = placementInFormat(metadata.fmt)
 

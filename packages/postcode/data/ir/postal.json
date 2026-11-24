@@ -1,7 +1,7 @@
 {
 	"format": "mailwoman.recognizer.ir",
 	"version": 1,
-	"hash": "ee69a384964adaf15ee1fdd7a223c15bb5593bf8d5ae2738448da9e80adfa614",
+	"hash": "e9d1150e352ce932ec9ad992b06f253b54914fb4b7e9101eda9f63442156111b",
 	"family": "postal",
 	"terms": [],
 	"shapes": [
@@ -2184,6 +2184,25 @@
 			}
 		},
 		{
+			"id": "printed.cy",
+			"grammar": {
+				"op": "pattern",
+				"regex": "[\\x{43}\\x{63}][\\x{59}\\x{79}][\\x{2d}][\\x{9}-\\x{d}\\x{20}\\x{a0}\\x{1680}\\x{2000}-\\x{200a}\\x{2028}-\\x{2029}\\x{202f}\\x{205f}\\x{3000}\\x{feff}]*(?:(?i:(?:[0-9]{4})))"
+			},
+			"captures": [],
+			"scope": "whole_or_embedded",
+			"validator": null,
+			"handler": null,
+			"ambiguity": {
+				"policy": "exclusive"
+			},
+			"boundary": "alnum",
+			"source": {
+				"file": "postal.definition.json",
+				"line": 1883
+			}
+		},
+		{
 			"id": "printed.fi",
 			"grammar": {
 				"op": "pattern",
@@ -2199,7 +2218,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1883
+				"line": 1898
 			}
 		},
 		{
@@ -2218,7 +2237,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1898
+				"line": 1913
 			}
 		},
 		{
@@ -2237,7 +2256,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1913
+				"line": 1928
 			}
 		},
 		{
@@ -2256,7 +2275,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1928
+				"line": 1943
 			}
 		},
 		{
@@ -2275,7 +2294,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1943
+				"line": 1958
 			}
 		},
 		{
@@ -2294,7 +2313,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1958
+				"line": 1973
 			}
 		},
 		{
@@ -2313,7 +2332,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1973
+				"line": 1988
 			}
 		},
 		{
@@ -2332,7 +2351,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 1988
+				"line": 2003
 			}
 		},
 		{
@@ -2351,7 +2370,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 2003
+				"line": 2018
 			}
 		},
 		{
@@ -2370,7 +2389,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 2018
+				"line": 2033
 			}
 		},
 		{
@@ -2389,7 +2408,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 2033
+				"line": 2048
 			}
 		},
 		{
@@ -2408,7 +2427,7 @@
 			"boundary": "alnum",
 			"source": {
 				"file": "postal.definition.json",
-				"line": 2048
+				"line": 2063
 			}
 		}
 	]

@@ -123,7 +123,7 @@
  */
 
 import { ConventionClaimID, ObservationStance } from "@mailwoman/codex/address/convention-claims"
-import { formatAddressRow, scriptOfComponents } from "@mailwoman/codex/address/format"
+import { scriptOfComponents } from "@mailwoman/codex/address/format"
 import { conventionClaimForCountry, layoutForCountry } from "@mailwoman/codex/address/layouts"
 import { CountryISO2 } from "@mailwoman/codex/country/codes"
 import { matchCountry } from "@mailwoman/codex/country/country"
@@ -139,6 +139,7 @@ import { joinRepetitionIndex } from "#adapters/street/repetition"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -609,7 +610,7 @@ export function readCORDISRecord(
 	// That keeps a country's local order whenever its Latin order has fewer slots:
 	// `Weixing Road` and `Changchun` would otherwise print run together in China's
 	// Han-script line, with no separator between them.
-	const rendered = formatAddressRow(components, country, {
+	const rendered = formatCorpusRow(components, country, {
 		singleLine: true,
 		script: scriptOfComponents(components, country),
 	})

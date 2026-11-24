@@ -6,11 +6,11 @@
  *   and number form one `po_box` span.
  */
 
-import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
 import { countryCodeForTable } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/math/random"
 
+import { formatCorpusRow } from "#surfaces/corpus-row"
 import { countryToLocale as baseCountryToLocale, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -213,7 +213,7 @@ export function synthesizePoBoxRow(
 			dict.house_number = base.houseNumber
 		}
 
-		const rendered = formatAddressRow(dict, iso2, { singleLine: true })
+		const rendered = formatCorpusRow(dict, iso2, { singleLine: true })
 
 		if (!rendered) return null
 
@@ -225,7 +225,7 @@ export function synthesizePoBoxRow(
 		}
 	}
 
-	const rendered = formatAddressRow({ ...adminTail, po_box: poBoxPhrase }, iso2, { singleLine: true })
+	const rendered = formatCorpusRow({ ...adminTail, po_box: poBoxPhrase }, iso2, { singleLine: true })
 
 	if (!rendered) return null
 

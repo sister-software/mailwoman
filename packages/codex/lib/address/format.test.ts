@@ -330,6 +330,31 @@ describe("a postcode written with its layout's prefix", () => {
 		expect(row.components.region).toBeUndefined()
 	})
 
+	// Croatia, Lithuania and Cyprus document a prefixed form for mail from abroad and a bare domestic one.
+	it.each([
+		["HR", "HR-10000", "HR-10000 ZAGREB", "10000 ZAGREB"],
+		["HR", "10000", "HR-10000 ZAGREB", "10000 ZAGREB"],
+		["LT", "LT-04340", "LT-04340 VILNIUS", "04340 VILNIUS"],
+		["CY", "CY-2008", "2008 STROVOLOS", "CY-2008 STROVOLOS"],
+	] as const)("prints %s's postcode %s in the form a draw picks", (country, postcode, first, other) => {
+		const locality = { HR: "ZAGREB", LT: "VILNIUS", CY: "STROVOLOS" }[country]
+		const components: ComponentDict = { postcode, locality }
+		const undrawn = formatAddressRow(components, country, { singleLine: true })!
+		const drawnOther = formatAddressRow(components, country, { singleLine: true, formDraw: 0.25 })!
+		const drawnFirst = formatAddressRow(components, country, { singleLine: true, formDraw: 0.75 })!
+
+		expect(undrawn.raw).toBe(first)
+		expect(drawnFirst.raw).toBe(first)
+		expect(drawnOther.raw).toBe(other)
+		expect(drawnOther.components.postcode).toBe(other.split(" ")[0])
+	})
+
+	it("ignores a draw in a country with one documented form", () => {
+		const components: ComponentDict = { postcode: "1471", locality: "LUXEMBOURG" }
+
+		expect(formatAddressRow(components, "LU", { singleLine: true, formDraw: 0.1 })!.raw).toBe("L-1471 LUXEMBOURG")
+	})
+
 	it("leaves a postcode with no glued prefix as given", () => {
 		const row = formatAddressRow(
 			{ street: "Hauptstraße", house_number: "1", postcode: "10115", locality: "Berlin" },
