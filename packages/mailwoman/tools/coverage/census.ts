@@ -12,6 +12,7 @@ import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
 import {
+	readScopeConfig,
 	type ScopeConfig,
 	shippedTrainingConfig,
 	shippedTrainingConfigs,
@@ -26,6 +27,9 @@ import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { DEFAULT_LABEL_SET } from "@mailwoman/neural/labels"
+
+import { loadTrainingConfig } from "#tools/training/config"
 import { countTrainShapes } from "#tools/training/exposure/train-shapes"
 
 /**
@@ -46,6 +50,15 @@ export interface CountryCoverage {
 	 * Counts rows labeled with a street or house number.
 	 */
 	corpusStreetRows: number
+	/**
+	 * Counts train rows written in the country's own address form, across the main corpus
+	 * and every graph corpus the census read: a span tagged as {@linkcode ADDRESS_FORM_TAG} matches.
+	 *
+	 * A block-addressed country writes no street.
+	 * Its rows label `block`, `sub_block` and `building_number`, or a compact `house_number`,
+	 * and they train the graph whose label set holds those tags, so `corpusStreetRows` undercounts it.
+	 */
+	addressFormRows: number
 	/**
 	 * Reports whether `country_weights` admits this country.
 	 */
@@ -166,6 +179,11 @@ export interface CoverageReport {
 	 * Holds the cached census timestamp, or `null` when the corpus was recounted in this run.
 	 */
 	corpusCensusTakenAt: string | null
+	/**
+	 * The corpus of each graph whose config declares its own label set,
+	 * counted beside the main corpus for `addressFormRows`.
+	 */
+	graphCorpora: GraphCorpusReading[]
 	configPath: string
 	gazetteerPath: string
 	notes: string[]
@@ -186,6 +204,10 @@ interface CorpusCensus {
 	rows: Record<string, number>
 	streetRows: Record<string, number>
 	/**
+	 * Rows with a span tagged as {@linkcode ADDRESS_FORM_TAG} matches, per country.
+	 */
+	addressFormRows: Record<string, number>
+	/**
 	 * These file counts and unreadable paths show when a total covers only part of the corpus.
 	 */
 	filesRead: number
@@ -199,6 +221,18 @@ interface CorpusCensus {
  * The tags are `street`, a `street_*` affix, and `house_number`.
  */
 const STREET_TAG = /^street($|_)|^house_number$/
+
+/**
+ * Matches a span tag that writes a row in its country's own address form:
+ * a street tag, or one of the block-address tags `block`, `sub_block`
+ * and `building_number` (`docs/engineering/reference/SCHEMA.mdx`).
+ *
+ * One tag set serves every country without a per-country table, because only the label
+ * sets of block-addressed locales hold the block-address tags.
+ * A Japanese row writes `2-3-16` as one compact `house_number` and `2丁目3番16号` as the three
+ * block tags, and a Korean lot-number row writes its number as `house_number` with no street.
+ */
+export const ADDRESS_FORM_TAG = /^street($|_)|^house_number$|^block$|^sub_block$|^building_number$/
 
 /**
  * Counts train-split rows and street rows per country.
@@ -250,6 +284,7 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 
 	const rows: Record<string, number> = {}
 	const streetRows: Record<string, number> = {}
+	const addressFormRows: Record<string, number> = {}
 	let total = 0
 
 	for (const shape of parquetFiles.length ? await countTrainShapes(manifestPath.toString()) : []) {
@@ -260,6 +295,10 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 
 		if (shape.spanTags?.some((tag) => STREET_TAG.test(tag))) {
 			streetRows[country] = (streetRows[country] ?? 0) + shape.rows
+		}
+
+		if (shape.spanTags?.some((tag) => ADDRESS_FORM_TAG.test(tag))) {
+			addressFormRows[country] = (addressFormRows[country] ?? 0) + shape.rows
 		}
 	}
 
@@ -278,6 +317,7 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 		total,
 		rows,
 		streetRows,
+		addressFormRows,
 		filesRead,
 		filesListed: parquetFiles.length,
 		unreadableFiles,
@@ -565,6 +605,31 @@ export async function newestManifest(): Promise<string> {
 }
 
 /**
+ * Runs {@linkcode censusCoverage} on this repository's inputs: the registered config (or `requested`),
+ * the newest corpus manifest, every shipped graph's config, and the gauntlet cases tree.
+ *
+ * The coverage page and the `grouping-coverage` health check both read their
+ * report through this, so they read the same corpora.
+ */
+export async function repositoryCoverageReport(
+	options: { requested?: string | undefined; refresh?: boolean; countWhenUncached?: boolean } = {}
+): Promise<CoverageReport> {
+	const scope = await readScopeConfig()
+
+	return censusCoverage({
+		configPath: resolveTrainingConfig(scope, { requested: options.requested }).path,
+		manifestPath: await newestManifest(),
+		graphConfigs: shippedTrainingConfigs(scope).map((entry) => ({
+			family: entry.family,
+			path: repoRootPath(...entry.config.split("/")).toString(),
+		})),
+		casesRoot: repoRootPath("packages", "mailwoman", "tools", "eval-harness", "gauntlet", "cases"),
+		refresh: options.refresh ?? false,
+		countWhenUncached: options.countWhenUncached ?? true,
+	})
+}
+
+/**
  * Configures `censusCoverage`.
  */
 export interface CensusCoverageOptions {
@@ -593,23 +658,122 @@ export interface CensusCoverageOptions {
 	 * This takes minutes.
 	 */
 	refresh?: boolean
+	/**
+	 * The shipped graphs' training configs.
+	 *
+	 * The census also counts the corpus of each one whose `data.label_set` isn't the default
+	 * label set, because that graph trains on its own corpus rather than on `manifestPath`'s.
+	 */
+	graphConfigs?: ReadonlyArray<{ family: string; path: string }>
+	/**
+	 * Counts a corpus whose cached census is absent or predates a field the report reads.
+	 *
+	 * With `false` such a corpus throws, naming the cache, so a caller that must stay fast
+	 * never starts a count of minutes and never reads a missing count as zero.
+	 *
+	 * @defaultValue true
+	 */
+	countWhenUncached?: boolean
+}
+
+/**
+ * One graph corpus the census counted beside the main corpus.
+ */
+export interface GraphCorpusReading {
+	family: string
+	labelSet: string
+	corpusVersion: string
+	manifest: string
+	/**
+	 * The cached census timestamp, or `null` when the corpus was recounted in this run.
+	 */
+	takenAt: string | null
+}
+
+/**
+ * Returns the path of the cached census of one graph's own corpus.
+ */
+export function graphCorpusCensusPath(family: string): PathBuilder {
+	return dataRootPath("corpus", "coverage-census", `${family}.json`)
+}
+
+/**
+ * Reads the cached census at `cachePath` when it holds every field the report reads and,
+ * with `matchManifest`, counts `manifestPath`; otherwise counts the corpus.
+ *
+ * The main census leaves `matchManifest` off because its manifest is the newest one on the data root.
+ * A later corpus build moves that manifest without invalidating the count already taken.
+ *
+ * @throws When the cache can't serve and `countWhenUncached` is false.
+ */
+async function readOrCountCensus(
+	cachePath: PathBuilder,
+	manifestPath: string,
+	options: { refresh: boolean; countWhenUncached: boolean; matchManifest: boolean }
+): Promise<{ census: CorpusCensus; takenAt: string | null }> {
+	const cached = !options.refresh && (await pathExists(cachePath)) ? await readLocalJSONFile<CorpusCensus>(cachePath) : null
+
+	const stale = !cached
+		? "absent"
+		: !cached.addressFormRows
+			? "written before the census counted address-form rows"
+			: options.matchManifest && cached.manifest !== manifestPath
+				? `a census of ${cached.manifest}`
+				: null
+
+	if (cached && !stale) return { census: cached, takenAt: cached.takenAt }
+
+	if (!options.countWhenUncached && !options.refresh) {
+		throw new Error(
+			`The corpus census at ${cachePath} is ${stale}, and this caller doesn't count a corpus. Run ` +
+				"`node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh` on a host that holds it."
+		)
+	}
+
+	const census = await buildCorpusCensus(manifestPath)
+
+	await writeLocalJSONFile(census, cachePath)
+
+	return { census, takenAt: null }
 }
 
 /**
  * Combines the coverage sources into one per-country report and lists where they disagree.
  */
 export async function censusCoverage(options: CensusCoverageOptions): Promise<CoverageReport> {
-	const cachePath = corpusCensusPath()
-	let census: CorpusCensus
-	let takenAt: string | null
+	const counting = { refresh: options.refresh ?? false, countWhenUncached: options.countWhenUncached ?? true }
 
-	if (!options.refresh && (await pathExists(cachePath))) {
-		census = await readLocalJSONFile<CorpusCensus>(cachePath)
-		takenAt = census.takenAt
-	} else {
-		census = await buildCorpusCensus(options.manifestPath)
-		await writeLocalJSONFile(census, cachePath)
-		takenAt = null
+	const { census, takenAt } = await readOrCountCensus(corpusCensusPath(), options.manifestPath, {
+		...counting,
+		matchManifest: false,
+	})
+
+	const graphCorpora: GraphCorpusReading[] = []
+	const addressFormRows = new Map<string, number>(Object.entries(census.addressFormRows))
+
+	for (const graph of options.graphConfigs ?? []) {
+		const { data } = await loadTrainingConfig(graph.path)
+
+		if (data.label_set === DEFAULT_LABEL_SET) continue
+
+		const manifest = localManifestFilePath(`${data.corpus_dir}/MANIFEST.json`)
+
+		const counted = await readOrCountCensus(graphCorpusCensusPath(graph.family), manifest, {
+			...counting,
+			matchManifest: true,
+		})
+
+		graphCorpora.push({
+			family: graph.family,
+			labelSet: data.label_set,
+			corpusVersion: counted.census.corpusVersion,
+			manifest,
+			takenAt: counted.takenAt,
+		})
+
+		for (const [country, rows] of Object.entries(counted.census.addressFormRows)) {
+			addressFormRows.set(country, (addressFormRows.get(country) ?? 0) + rows)
+		}
 	}
 
 	const admitted = await readAdmittedCountries(options.configPath)
@@ -653,6 +817,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			country: cc,
 			corpusRows: census.rows[cc] ?? 0,
 			corpusStreetRows: census.streetRows[cc] ?? 0,
+			addressFormRows: addressFormRows.get(cc) ?? 0,
 			admitted: admitted.has(cc),
 			weightsPackage: weightsPackages.get(cc) ?? null,
 			gazetteerPlaces,
@@ -697,6 +862,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		corpusMismatch,
 		corpusRowsTotal: census.total,
 		corpusCensusTakenAt: takenAt,
+		graphCorpora,
 		configPath: options.configPath,
 		gazetteerPath: gazetteerPath.toString(),
 		notes: [

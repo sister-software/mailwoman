@@ -553,8 +553,9 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
  * an uppercase `code` with no script chosen, or `null` when that layout lacks a citation.
  *
  * A UPU reading's record is its citation, and every other table's citation is in `LAYOUT_CITATIONS`.
+ * A code with no rendered layout returns `null` too.
  */
-function layoutCitationForCountry(code: string): LayoutCitation | null {
+export function layoutCitationForCountry(code: string): LayoutCitation | null {
 	const layout = layoutForCountry(code)
 
 	if (!layout) return null

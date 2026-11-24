@@ -113,12 +113,18 @@ export async function countTrainShapes(
 
 	const paths = quoted(files.map((file) => localManifestFilePath(file.path)))
 
+	// With no file under a split attribute, every row of every listed train file is a train row,
+	// and the query reads no `source_id`: a corpus such as `v8-cjk-regs-2026-09-08` writes no such column.
+	const heldOut = attributed.length
+		? `LEFT JOIN held h ON h.file = p.filename AND h.source_id = p.source_id
+		WHERE h.source_id IS NULL
+			AND (p.source_id IS NOT NULL OR p.filename NOT IN (SELECT file FROM attributed))`
+		: ""
+
 	const reader = await db.runAndReadAll(`
 		SELECT p.source AS source, p.country AS country, p.span_tags AS span_tags, count(*)::BIGINT AS rows
 		FROM read_parquet([${paths}], union_by_name = true, filename = true) p
-		LEFT JOIN held h ON h.file = p.filename AND h.source_id = p.source_id
-		WHERE h.source_id IS NULL
-			AND (p.source_id IS NOT NULL OR p.filename NOT IN (SELECT file FROM attributed))
+		${heldOut}
 		GROUP BY ALL`)
 
 	return (reader.getRowObjectsJson() as Array<Record<string, unknown>>).map((row) => ({

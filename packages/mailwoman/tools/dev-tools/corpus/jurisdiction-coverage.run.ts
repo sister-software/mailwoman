@@ -11,6 +11,8 @@
  *
  *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls,
  *   so this page and that tool cannot disagree.
+ *   The grouping table and its tiers come from `groupingCoverage`, which the
+ *   `grouping-coverage` health check also reads.
  *
  *   This writes markdown tables with single-space padding, so a regeneration shows
  *   every table row as changed until the repository's formatter runs.
@@ -23,29 +25,33 @@
 
 import { ISO2_TO_NAME, CountryISO2 } from "@mailwoman/codex/country"
 import { POSTAL_REGIMES } from "@mailwoman/codex/country/postal-regimes"
-import { countriesOfGrouping } from "@mailwoman/codex/country/sets"
-import { SUPPORT_DEPTHS, SUPPORT_PROMISES, type SupportDepth } from "@mailwoman/codex/support"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
-import { GROUPING_IDS } from "@mailwoman/registry/artifacts/groupings/groupings"
-import { getGrouping, groupingMembers, groupingsOf } from "@mailwoman/registry/groupings"
+import { groupingsOf } from "@mailwoman/registry/groupings"
 import { type PathBuilderLike, relative } from "path-ts"
 
 import {
 	admittedByShippedGraphs,
-	censusCoverage,
 	type CountryCoverage,
+	deepestSupportPromises,
 	GeocodeReading,
 	geocodeReading,
-	newestManifest,
+	GROUPING_COVERAGE_COLUMNS,
+	GROUPING_REQUIREMENTS_PATH,
+	groupingCoverage,
+	type GroupingCoverageColumn,
+	jurisdictionHoldings,
 	ParseReading,
 	parseReading,
 	readAdmittedCountries,
-	resolveTrainingConfig,
+	readGroupingRequirements,
+	repositoryCoverageReport,
 } from "#coverage"
+import { newestReleaseSpecVersion, readRoleCollections } from "#tools/eval-harness/heldout/dataset/coverage/collections"
 
 const { values } = parseArguments({
 	options: {
@@ -62,20 +68,15 @@ const { values } = parseArguments({
 const relativeToRepo = (path: PathBuilderLike): string => relative(repoRootPath(), path)
 
 const scope = await readScopeConfig()
-const configPath = resolveTrainingConfig(scope, { requested: values.config }).path
-const manifestPath = await newestManifest()
 /**
  * Which shipped graph's training config admits each jurisdiction, read as the union
  * of both graphs because `censusCoverage` reads only one config.
  */
 const shippedFamilies = await admittedByShippedGraphs(scope)
 
-const report = await censusCoverage({
-	configPath,
-	manifestPath,
-	refresh: values.refresh,
-	casesRoot: repoRootPath("packages", "mailwoman", "tools", "eval-harness", "gauntlet", "cases"),
-})
+const report = await repositoryCoverageReport({ requested: values.config, refresh: values.refresh })
+const heldOut = await readRoleCollections(await newestReleaseSpecVersion())
+const requirements = await readGroupingRequirements()
 
 /**
  * Every jurisdiction the page reports on, whether or not any layer holds it: the ISO list
@@ -175,15 +176,7 @@ const membershipDate = isoDate()
 /**
  * The deepest support promise per country, across every input language and script.
  */
-const deepestPromise = new Map<string, SupportDepth>()
-
-for (const promise of SUPPORT_PROMISES) {
-	const earlier = deepestPromise.get(promise.country)
-
-	if (!earlier || SUPPORT_DEPTHS.indexOf(promise.depth) < SUPPORT_DEPTHS.indexOf(earlier)) {
-		deepestPromise.set(promise.country, promise.depth)
-	}
-}
+const deepestPromise = deepestSupportPromises()
 
 /**
  * The answering groupings each jurisdiction belongs to on the membership date.
@@ -192,44 +185,95 @@ const groupingsByCode = new Map(sorted.map((code) => [code, groupingsOf(code, { 
 
 const rows = sorted.map((code) => {
 	const coverage = measured.get(code) ?? null
+	const held = jurisdictionHoldings(code, measured, heldOut, deepestPromise)
+	const { development, confirmation } = held.heldOutAddresses
+	const heldOutCell = development + confirmation ? `${confirmation} / ${development}` : "—"
 	const name = ISO2_TO_NAME.get(code) ?? "—"
 	const street = coverage?.corpusStreetRows ? coverage.corpusStreetRows.toLocaleString() : "0"
 	const memberOf = groupingsByCode.get(code)!
 
 	const families = shippedFamilies.get(code)
 
-	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<Groupings ids="${memberOf.join(" ")}" />` : "—"} |`
+	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${held.addressFormRows.toLocaleString()} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${held.cells.citedLayout ? "cited" : "—"} | ${heldOutCell} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<Groupings ids="${memberOf.join(" ")}" />` : "—"} |`
 })
+
+const groupings = groupingCoverage({ report, heldOut, requirements, at: membershipDate })
+
+/**
+ * The collections the held-out column read, one list item each.
+ */
+const collectionLines = heldOut.collections
+	.map(
+		(collection) =>
+			`- ${collection.role}: \`${collection.id}\` (\`${relative(dataRootPath(), collection.path)}\` under the data root)`
+	)
+	.join("\n")
+
+/**
+ * The heading each grouping column prints under.
+ */
+const COLUMN_HEADINGS: Record<GroupingCoverageColumn, string> = {
+	citedLayout: "cited layout",
+	addressFormRows: "address-form rows",
+	heldOut: "held out",
+	board: "board",
+	promise: "promise",
+}
 
 /**
  * One row per grouping: its members on the membership date, and the count of
  * those members each layer covers.
  */
-const groupingTableRows = GROUPING_IDS.map((id) => {
-	const grouping = getGrouping(id)
-
+const groupingTableRows = groupings.map((grouping) => {
 	if (grouping.blockedBy.length) {
-		return `| \`${id}\` | ${grouping.name} | blocked: ${grouping.blockedBy.join("; ")} | | | | | | |`
+		return `| \`${grouping.id}\` | ${grouping.name} | blocked: ${grouping.blockedBy.join("; ")} | | | | | | | | | |`
 	}
 
-	// A publisher's own code, such as the World Bank's `XK` and `JG`, stays a member and is listed in the members cell.
-	const { set, outside } = countriesOfGrouping(id, membershipDate, groupingMembers(id, { at: membershipDate }))
-	const members = [...set, ...outside]
-	const count = (test: (code: string) => boolean): string => `${members.filter(test).length} of ${members.length}`
+	const { members } = grouping
+	// A member outside ISO 3166-1 that the jurisdiction list doesn't hold is read through `memberJurisdictions`.
+	const readThrough = members.filter((member) => member.readAs.length !== 1 || member.readAs[0] !== member.code)
+
+	const count = (test: (code: string) => boolean): string =>
+		`${members.filter((member) => member.readAs.length && member.readAs.every(test)).length} of ${members.length}`
+
+	const column = (name: GroupingCoverageColumn): string =>
+		`${members.filter((member) => member.cells?.[name]).length} of ${members.length}`
 
 	const cells = [
-		`\`${id}\``,
+		`\`${grouping.id}\``,
 		grouping.name,
-		outside.length ? `${members.length} (outside ISO 3166-1: ${outside.join(", ")})` : String(members.length),
+		readThrough.length
+			? `${members.length} (${readThrough.map((member) => (member.readAs.length ? `${member.code} read as ${member.readAs.join(" + ")}` : `${member.code} unreadable`)).join(", ")})`
+			: String(members.length),
 		count((code) => (measured.get(code)?.corpusRows ?? 0) > 0),
 		count((code) => (measured.get(code)?.corpusStreetRows ?? 0) > 0),
+		column("addressFormRows"),
 		count((code) => shippedFamilies.has(code)),
 		count((code) => (measured.get(code)?.gazetteerPlaces ?? 0) > 0),
-		count((code) => (measured.get(code)?.boardRows ?? 0) > 0),
-		count((code) => deepestPromise.has(code)),
+		column("citedLayout"),
+		column("heldOut"),
+		column("board"),
+		column("promise"),
 	]
 
 	return `| ${cells.join(" | ")} |`
+})
+
+const tiered = groupings.filter((grouping) => grouping.tier)
+
+const tierLines = tiered.map((grouping) => {
+	const tier = grouping.tier!
+
+	const byColumn = GROUPING_COVERAGE_COLUMNS.filter((column) => tier.requires.includes(column)).map((column) => {
+		const missing = grouping.gaps.filter((gap) => gap.column === column).map((gap) => `\`${gap.code}\``)
+
+		return `  - ${COLUMN_HEADINGS[column]}: ${missing.length ? `${missing.length} missing, ${missing.join(" ")}` : "none missing"}`
+	})
+
+	return [
+		`- \`${grouping.id}\` (${grouping.name}): ${grouping.gaps.length} of ${grouping.members.length * tier.requires.length} required cells missing, against a debt of ${tier.debt}.`,
+		...byColumn,
+	].join("\n")
 })
 
 /**
@@ -256,7 +300,7 @@ const page = `---
 title: Coverage by jurisdiction
 description: What this repository holds for each of ${sorted.length} jurisdictions and each country grouping, from training rows to support promises.
 role: reference
-source-of-truth: packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts, packages/mailwoman/tools/coverage/census.ts, packages/registry/definitions/groupings.json, packages/codex/lib/support/promises.json
+source-of-truth: packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts, packages/mailwoman/tools/coverage/census.ts, packages/mailwoman/tools/coverage/groupings.ts, packages/mailwoman/tools/coverage/grouping-requirements.json, packages/registry/definitions/groupings.json, packages/codex/lib/support/promises.json
 ---
 
 {/* Generated by packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts. Edit that file. */}
@@ -300,6 +344,27 @@ ${
 		: "A jurisdiction can hold rows while its street-row count reads 0."
 }
 
+**Address-form rows** counts train rows written in the jurisdiction's own address form: a span labeled
+\`street\`, a \`street_*\` affix or \`house_number\`, or one of the block-address labels \`block\`, \`sub_block\` and
+\`building_number\` that a block-addressed locale writes in place of a street. It reads every training corpus a
+shipped graph trains on, the corpus above plus ${
+	report.graphCorpora.length
+		? report.graphCorpora
+				.map((graph) => `\`${graph.corpusVersion}\` (the \`${graph.family}\` graph, label set \`${graph.labelSet}\`)`)
+				.join(", ")
+		: "none"
+}, so a Japanese or Korean address that its own graph trains on counts here though the street-row column omits it.
+
+**Cited layout** reads \`cited\` when the address layout the codex renders for the jurisdiction cites a primary
+document (\`layoutCitationForCountry\` in \`@mailwoman/codex/address/layouts\`).
+
+**Held out** reads the held-out address rows sampled for the jurisdiction as confirmation / development: the
+collections the development and confirmation roles of release specification version ${heldOut.specVersion}, the newest committed,
+score. Each count is the address cells of the collection's own manifest. A place-name row isn't counted, and \`—\`
+means no collection of either role samples an address row. The collections read:
+
+${collectionLines}
+
 **Admission** is \`country_weights\` in the training config, a hard filter. A code absent from it
 trains on no rows whatever the corpus holds. A code present in it with no corpus row trains on
 no rows either, by the other route.
@@ -314,7 +379,8 @@ overlays that share the model graph of \`@mailwoman/neural-weights-en-us\` or
 
 **Board** reads checking rows over all the rows present. A checking row has \`status: pass\`, and
 any other row only tracks. A jurisdiction reading
-\`—\` has no board row. That jurisdiction is unmeasured rather than failing.
+\`—\` has no board row. That jurisdiction is unmeasured rather than failing. The board is the two-letter
+country directories under \`gauntlet/cases/\`, so a sweep row under \`generalization/\` isn't a board row.
 
 **Promise** is the deepest [support promise](./support.mdx) for the jurisdiction, in any input language and
 script.
@@ -344,14 +410,29 @@ An organization's members come from Wikidata, and a classification's from its pu
 \`packages/registry/data/manifests/coverage.json\` records each grouping's Wikidata statements that state no
 role or no start date, and the members whose Wikidata item holds no ISO 3166-1 code.
 
-| grouping | name | members | corpus rows | street rows | admitted | gazetteer | board | promise |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| grouping | name | members | corpus rows | street rows | address-form rows | admitted | gazetteer | cited layout | held out | board | promise |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 ${groupingTableRows.join("\n")}
+
+A member code outside ISO 3166-1 that the jurisdiction table doesn't hold is read through the jurisdictions its
+publisher states it covers, listed in \`memberJurisdictions\` of \`${relativeToRepo(GROUPING_REQUIREMENTS_PATH)}\`
+with the publisher's words: the World Bank's \`JG\`, its Channel Islands economy, is read as \`GG\` and \`JE\`,
+and it holds a column only when both do. The World Bank's \`XK\` is a jurisdiction code the table holds, so it is
+read as itself. A code in neither place prints as unreadable.
+
+### Grouping tiers
+
+The members of a tier grouping must hold every column the tier requires. \`${relativeToRepo(GROUPING_REQUIREMENTS_PATH)}\`
+lists the tiers, the columns each requires and each tier's debt: the missing cells measured on
+${requirements.debtMeasuredOn}. \`yarn mwops health grouping-coverage\` fails when a tier's missing cells rise above its
+debt, so the count can only fall. A grouping without a tier is reported above and holds no requirement.
+
+${tierLines.join("\n")}
 
 ## Every jurisdiction
 
-| code | name | corpus rows | street rows | admitted by | gazetteer | weights | board | promise | groupings |
-| --- | --- | --- | ---: | --- | ---: | --- | ---: | --- | --- |
+| code | name | corpus rows | street rows | address-form rows | admitted by | gazetteer | weights | cited layout | held out | board | promise | groupings |
+| --- | --- | --- | ---: | ---: | --- | ---: | --- | --- | ---: | ---: | --- | --- |
 ${rows.join("\n")}
 
 ${
