@@ -8,8 +8,17 @@
  *   `layout.ts` describes connector rules.
  */
 
-import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"
+import {
+	isAlternation,
+	isConnector,
+	isLayout,
+	isSlot,
+	type AddressAtom,
+	type AddressLayout,
+	type AddressSlot,
+} from "#address/layout"
 import type { ComponentTag } from "#component"
+import { withoutRepeatedPrefix, withPrintedPrefix } from "#labels/postcode/printed-prefix"
 
 /**
  * Component values keyed by tag.
@@ -57,9 +66,20 @@ function rendered(result: readonly AddressPiece[] | null): boolean {
 	return result !== null && result.some((piece) => piece.tag !== null)
 }
 
+/**
+ * The text a slot prints for `value`: its prefix written once, and a postcode's repeated
+ * country code, such as GLEIF's `FI-FI-15860`, written once even where the layout prints none.
+ */
+function printedValue(slot: AddressSlot, value: string): string {
+	if (slot.prefix) return withPrintedPrefix(slot.prefix, value)
+
+	return slot.tag === "postcode" ? withoutRepeatedPrefix(value) : value
+}
+
 function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly AddressPiece[] | null {
 	if (isSlot(atom)) {
-		const text = components[atom.tag]?.trim() || atom.fallback
+		const value = components[atom.tag]?.trim()
+		const text = value ? printedValue(atom, value) : atom.fallback
 
 		return text ? [{ tag: atom.tag, text, softBreak: false }] : null
 	}
@@ -154,40 +174,10 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
 }
 
 /**
- * Folds a line-leading connector written against the postcode, such as `FO` in `FO600`
- * or `CH-` in `CH-8001`, into the postcode piece.
- *
- * The prefix belongs to the written code, so a label that stops at `600` marks a
- * span that doesn't appear in the reader's input.
- * A connector that holds whitespace separates two values and stays a connector.
- */
-function absorbPostcodePrefixes(pieces: readonly AddressPiece[]): readonly AddressPiece[] {
-	const out: AddressPiece[] = []
-
-	for (let index = 0; index < pieces.length; index++) {
-		const piece = pieces[index]!
-		const next = pieces[index + 1]
-		const lineLeading = index === 0 || pieces[index - 1]!.text === "\n"
-
-		if (piece.tag === null && next?.tag === "postcode" && lineLeading && /^\S+$/u.test(piece.text)) {
-			out.push({ tag: "postcode", text: piece.text + next.text, softBreak: false })
-
-			index++
-
-			continue
-		}
-
-		out.push(piece)
-	}
-
-	return out
-}
-
-/**
  * Renders `components` through `layout` into tagged pieces.
  */
 export function renderAddress(layout: AddressLayout, components: ComponentDict): AddressRendering {
-	const pieces = absorbPostcodePrefixes(evaluateLines(layout, components))
+	const pieces = evaluateLines(layout, components)
 	const placed = [...new Set(pieces.map((piece) => piece.tag).filter((tag): tag is ComponentTag => tag !== null))]
 	const placedSet = new Set<ComponentTag>(placed)
 

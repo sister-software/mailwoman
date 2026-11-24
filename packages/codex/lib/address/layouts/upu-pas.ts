@@ -29,6 +29,7 @@ import {
 	numberFirstCommaStreet,
 	numberFirstStreet,
 	numberLastStreet,
+	prefixedSlot,
 	SLOTS,
 	type AddressLayout,
 } from "#address/layout"
@@ -181,6 +182,7 @@ export const UPU_PAS_LAYOUT_RECORDS: Readonly<Record<string, UPUPostalAddressing
 		unexpressed: [
 			"the sub-locality example's line break: `Valdemāra street 42, Ainaži,` then `SALACGRIVAS NOV., LV–4035`; the national register's one-line form (`Dzirnavu iela 1, Mazsalaca, Valmieras nov., LV-4215`) is the one kept",
 			"the apartment after the number (`dz. 1`)",
+			"the en dash in `LV–1050`; the postcode's `LV-` is written with the hyphen the national register prints (`LV-4215`)",
 		],
 	},
 	RO: {
@@ -291,7 +293,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${locality}, ${region}, ${postcode}
+${locality}, ${region}, ${prefixedSlot("postcode", "LV-")}
 ${country}`,
 
 	// Posta Romana S.A. / Calea Giulesti 6–8 / 060274 BUCHAREST / ROMANIA.

@@ -115,7 +115,7 @@ describe("llv-li adapter", () => {
 		const rows = await readCanonicalRows(scratch.path, LLV_LI_ADAPTER_ID)
 
 		expect(rows.every((row) => row.license === LLV_LI_LICENSE && row.country === "LI")).toBe(true)
-		expect(rows.map((row) => row.raw)).toContain("Valünastrasse 65, FL-9497 Triesenberg")
+		expect(rows.map((row) => row.raw)).toContain("Valünastrasse 65, 9497 Triesenberg")
 		expect(new Set(rows.map((row) => row.source_id)).size).toBe(4)
 	})
 
@@ -138,7 +138,7 @@ describe("llv-li adapter", () => {
 			rows.push(row.raw)
 		}
 
-		expect(rows).toEqual(["Am Schrägen Weg 16, FL-9490 Vaduz", "Schulstrasse 42b, FL-9485 Nendeln"])
+		expect(rows).toEqual(["Am Schrägen Weg 16, 9490 Vaduz", "Schulstrasse 42b, 9485 Nendeln"])
 	})
 
 	it("refuses another country", async () => {

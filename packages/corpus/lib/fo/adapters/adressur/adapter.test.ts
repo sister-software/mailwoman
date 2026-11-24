@@ -151,7 +151,7 @@ describe("adressur-fo adapter", () => {
 		const rows = await readCanonicalRows(scratch.path, ADRESSUR_FO_ADAPTER_ID)
 
 		expect(rows.every((row) => row.license === ADRESSUR_FO_LICENSE && row.country === "FO")).toBe(true)
-		expect(rows.map((row) => row.raw)).toContain("Suðuri á Bø 15, FO780 Kunoy")
+		expect(rows.map((row) => row.raw)).toContain("Suðuri á Bø 15, FO-780 Kunoy")
 		expect(new Set(rows.map((row) => row.source_id)).size).toBe(RECORDS.length)
 		expect(dropped.size).toBe(0)
 	})
