@@ -81,6 +81,20 @@ describe("segmentINStreetLine", () => {
 		})
 
 		expect(segmentINStreetLine("Bazullah Road, T")).toEqual({ refused: INStreetLineRefusal.SubLocalityUnread })
+
+		expect(segmentINStreetLine("20/24, MORARJEE VELJEE BLDGR 16 KOLBHAT LANE KALBADEVI ROAD")).toEqual({
+			refused: INStreetLineRefusal.StreetHoldsNumber,
+		})
+	})
+
+	it("keeps the numbers a street's name holds", () => {
+		expect(segmentINStreetLine("Sector 11 Road")).toEqual({ street: "Sector 11 Road", omitted: 0 })
+
+		expect(segmentINStreetLine("12, NH 48 Highway")).toEqual({
+			house_number: "12",
+			street: "NH 48 Highway",
+			omitted: 0,
+		})
 	})
 })
 

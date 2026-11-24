@@ -178,6 +178,17 @@ function writtenSubdivisionForISO(country: string, isoSuffix: string): string | 
 const CITED_KEY_FORM_BY_COUNTRY = new Map<string, boolean>()
 
 /**
+ * Countries whose cited example matches a libaddressinput key on a line that
+ * isn't the region's, with the line.
+ *
+ * Suriname's one example writes `PARAMARIBO` as the locality.
+ * Paramaribo is also a district key, so the match is the city's name rather than a written region.
+ */
+const CITED_KEY_MATCH_ON_ANOTHER_LINE: Readonly<Record<string, string>> = {
+	SR: "PARAMARIBO",
+}
+
+/**
  * Whether `country`'s codex layout prints a region, has a primary citation, and one of
  * the citation's example lines writes a libaddressinput key as a word of its own.
  *
@@ -193,7 +204,8 @@ function citationWritesKeys(country: string): boolean {
 	const layout = layoutForCountry(country)
 	const citation = layoutCitationForCountry(country)
 	const keys = specFor(country)?.sub_keys?.split("~").filter(isPresent) ?? []
-	const lines = citation?.examples.flat() ?? []
+	const otherLine = CITED_KEY_MATCH_ON_ANOTHER_LINE[country]
+	const lines = (citation?.examples.flat() ?? []).filter((line) => line !== otherLine)
 
 	const writes =
 		Boolean(layout && layoutPrintsTag(layout, "region")) &&

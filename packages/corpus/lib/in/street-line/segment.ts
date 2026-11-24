@@ -172,6 +172,21 @@ export function isINSubProvince(value: string): boolean {
 const SUB_LOCALITY = /^[\p{L}\p{M}][\p{L}\p{M} .'-]{2,}$/u
 
 /**
+ * The numbers a street's name holds: an ordinal (`2nd Main Road`), a numbered highway (`NH 17`),
+ * a measure (`100 Ft. Road`, `12th KM`) and a sector, phase or stage (`Sector 11 Road`).
+ */
+const NUMBER_IN_STREET_NAME =
+	/\b\d+(?:st|nd|rd|th)\b|\b(?:NH|SH)[\s-]?\d+[A-Z]?\b|\b\d+\s*(?:ft|feet|km|kms|mtrs?|met(?:er|re)s?)\b|\b(?:sector|phase|stage)[\s-]?\d+[A-Z]?\b/giu
+
+/**
+ * Whether a street holds a digit its name doesn't account for,
+ * as `MORARJEE VELJEE BLDGR 16 KOLBHAT LANE` holds a building's number.
+ */
+function streetHoldsNumber(street: string): boolean {
+	return /\d/u.test(street.replaceAll(NUMBER_IN_STREET_NAME, ""))
+}
+
+/**
  * A PIN code written into the street line: six digits, with an optional space after the third.
  */
 const PIN_IN_LINE = /(?<!\d)\d{3}\s?\d{3}(?!\d)/u
@@ -205,6 +220,10 @@ export const INStreetLineRefusal = {
 	 * removed, or the one that remains isn't a building name (`RS No 514/4`, a village name).
 	 */
 	PremiseUnread: "premise-unread",
+	/**
+	 * The street holds a digit its name doesn't account for, such as a building's number inside it.
+	 */
+	StreetHoldsNumber: "street-holds-number",
 	/**
 	 * More than one part follows the street, or the part that does isn't a name of three letters or more.
 	 */
@@ -330,6 +349,8 @@ export function segmentINStreetLine(
 			before.splice(at, 1)
 		}
 	}
+
+	if (streetHoldsNumber(street)) return { refused: INStreetLineRefusal.StreetHoldsNumber }
 
 	if (before.length > 1 || (before.length === 1 && !isINBuilding(before[0]!))) {
 		return { refused: INStreetLineRefusal.PremiseUnread }

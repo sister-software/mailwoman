@@ -91,6 +91,13 @@
  * when it holds a letter, as `Suite 4` does.
  * A bare number there would render as a second house number.
  *
+ * Where the split refuses a line as `street-number-unplaced` or `street-line-segmented`,
+ * a country with its own street-line reader (`streetLineReaderFor`) reads the line instead.
+ * India's reader labels `NO. 1034, 3RD FLOOR, 1ST MAIN ROAD` as the premise
+ * number `1034` and the street `1ST MAIN ROAD`.
+ *
+ * A reading that needs a building name is refused, because the legal name holds the row's `venue`.
+ *
  * ## Region
  *
  * `Region` is an ISO 3166-2 code such as `SK-KI`, which isn't how an address writes the region.
@@ -130,6 +137,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
+import { type CountryStreetLineContext, streetLineReaderFor } from "#adapters/street/country-line"
 import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
 import { joinRepetitionIndex, withoutRepetitionIndex } from "#adapters/street/repetition"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
@@ -353,7 +361,15 @@ export type GLEIFRecord = Readonly<Record<string, string | undefined>>
 /**
  * What one address block yielded: a row, or the reason it yielded none.
  */
-export type GLEIFAddressReading = { readonly admitted: CanonicalRow } | { readonly refused: GLEIFRefusal }
+export type GLEIFAddressReading =
+	| {
+			readonly admitted: CanonicalRow
+			/**
+			 * Whether the country's own street-line reader read the line after the generic split refused it.
+			 */
+			readonly byCountryReader: boolean
+	  }
+	| { readonly refused: GLEIFRefusal }
 
 /**
  * The address fields a block holds, in the order the CDF lists them.
@@ -585,6 +601,10 @@ export function readGLEIFAddress(
 	}
 
 	const script = scriptOfComponents({ street: line, locality: city }, country)
+	const regionSuffix = regionCode ? regionCode.slice(country.length + 1) : ""
+	const codedRegion = regionSuffix && matchSubdivisionIn(country, regionSuffix) ? regionSuffix : null
+	const lookedUpRegion = regionSuffix && !codedRegion ? citedSubdivisionForISO(country, regionSuffix) : null
+	let byCountryReader = false
 
 	if (PO_BOX_LINE.test(line)) {
 		components.po_box = line
@@ -600,20 +620,27 @@ export function readGLEIFAddress(
 			script
 		)
 
-		if ("refused" in placed) return placed
+		if ("refused" in placed) {
+			const read = readByCountryReader(placed.refused, line, country, { locality: city, region: lookedUpRegion })
 
-		if (placed.house_number) {
-			components.house_number = placed.house_number
-		}
+			if (!read) return placed
 
-		components.street = placed.street
+			Object.assign(components, read)
+			byCountryReader = true
+		} else {
+			if (placed.house_number) {
+				components.house_number = placed.house_number
+			}
 
-		const unit = addressField(record, block, "AddressNumberWithinBuilding")
+			components.street = placed.street
 
-		if (lineUnit) {
-			components.unit = lineUnit.unit
-		} else if (unit && /\p{L}/u.test(unit) && !unit.includes(",") && !line.includes(unit)) {
-			components.unit = unit
+			const unit = addressField(record, block, "AddressNumberWithinBuilding")
+
+			if (lineUnit) {
+				components.unit = lineUnit.unit
+			} else if (unit && /\p{L}/u.test(unit) && !unit.includes(",") && !line.includes(unit)) {
+				components.unit = unit
+			}
 		}
 	}
 
@@ -625,14 +652,10 @@ export function readGLEIFAddress(
 
 	components.locality = city
 
-	if (regionCode) {
-		const suffix = regionCode.slice(country.length + 1)
+	const region = codedRegion ?? lookedUpRegion
 
-		const written = matchSubdivisionIn(country, suffix) ? suffix : citedSubdivisionForISO(country, suffix)
-
-		if (written) {
-			components.region = written
-		}
+	if (region) {
+		components.region = region
 	}
 
 	const rendered = formatAddressRow(components, country, { singleLine: true, script })
@@ -645,16 +668,57 @@ export function readGLEIFAddress(
 		return { refused: GLEIFRefusal.ComponentsTooFew }
 	}
 
+	// A region read through `citedSubdivisionForISO` stays out of the id, so a row built
+	// before that lookup existed keeps the id the evaluation groups hold it under.
+	const { region: _region, ...withoutLookedUpRegion } = aligned
+	const identity = lookedUpRegion ? withoutLookedUpRegion : aligned
+
 	return {
 		admitted: {
 			raw,
 			components: aligned,
 			country,
 			source: GLEIF_ADAPTER_ID,
-			source_id: stableSourceID(GLEIF_ADAPTER_ID, { country, ...aligned }),
+			source_id: stableSourceID(GLEIF_ADAPTER_ID, { country, ...identity }),
 			license: GLEIF_LICENSE,
 			addressRole: block === GLEIFAddressBlock.Legal ? AddressRole.RegisteredOffice : AddressRole.Facility,
 		},
+		byCountryReader,
+	}
+}
+
+/**
+ * The refusals of the generic split that a country's own street-line reader may still read:
+ * a digit the split couldn't place, and a line that joins several comma-separated parts.
+ */
+const COUNTRY_READER_REFUSALS: ReadonlySet<GLEIFRefusal> = new Set([
+	GLEIFRefusal.StreetNumberUnplaced,
+	GLEIFRefusal.StreetLineSegmented,
+])
+
+/**
+ * Read a line the generic split refused through the country's own street-line reader
+ * (`streetLineReaderFor`), or return `null` when the country has none or the reader refuses it too.
+ *
+ * A line whose reading needs a building name is refused as well, because the entity's
+ * legal name already holds the row's one `venue` slot.
+ */
+function readByCountryReader(
+	refusal: GLEIFRefusal,
+	line: string,
+	country: string,
+	context: CountryStreetLineContext
+): Pick<CanonicalRow["components"], "house_number" | "street" | "dependent_locality"> | null {
+	if (!COUNTRY_READER_REFUSALS.has(refusal)) return null
+
+	const read = streetLineReaderFor(country)?.(line, context)
+
+	if (!read || "refused" in read || read.building) return null
+
+	return {
+		...(read.house_number ? { house_number: read.house_number } : {}),
+		street: read.street,
+		...(read.dependent_locality ? { dependent_locality: read.dependent_locality } : {}),
 	}
 }
 
@@ -790,6 +854,8 @@ export function createGLEIFAdapter(): CorpusAdapter {
 			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
 			let count = 0
 			let checkedHeader = false
+			// The rows a country's street-line reader read, held in memory: 12,722 for India over the 2026-10-03 golden copy.
+			const countryReaderRows: CanonicalRow[] = []
 
 			for await (const record of readGLEIFRecords(opts.inputPath)) {
 				if (opts.signal?.aborted) break
@@ -832,6 +898,12 @@ export function createGLEIFAdapter(): CorpusAdapter {
 
 					if (wanted && row.country !== wanted) continue
 
+					if (reading.byCountryReader) {
+						countryReaderRows.push(row)
+
+						continue
+					}
+
 					if (!emitted.add(addressKey(row))) {
 						countDropped(opts, "row:address-already-emitted")
 
@@ -842,6 +914,25 @@ export function createGLEIFAdapter(): CorpusAdapter {
 
 					count++
 				}
+			}
+
+			// A row a country's reader read is held until every row of the generic split has
+			// claimed its address, so it never takes the address of a row that corpora built
+			// before the reader existed already hold.
+			for (const row of countryReaderRows) {
+				if (opts.signal?.aborted) break
+
+				if (typeof opts.limit === "number" && count >= opts.limit) break
+
+				if (!emitted.add(addressKey(row))) {
+					countDropped(opts, "row:address-already-emitted")
+
+					continue
+				}
+
+				yield row
+
+				count++
 			}
 		},
 	}
