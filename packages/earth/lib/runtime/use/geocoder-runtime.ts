@@ -25,7 +25,11 @@ import {
 	UnderseaTileSetID,
 } from "@mailwoman/cartographer/base/undersea"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
-import { gazetteerOverlayLayers } from "@mailwoman/cartographer/gazetteer-overlay"
+import {
+	gazetteerOverlayLayers,
+	gazetteerPostcodeLayers,
+	hideReplacedLayers,
+} from "@mailwoman/cartographer/gazetteer-overlay"
 import {
 	createJurisdictionSource,
 	JurisdictionLayers,
@@ -83,6 +87,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { EarthConfig } from "#config"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import type { PolygonDB } from "#runtime/basemap"
+import { type BasemapSources, BUILD_ONLY_SOURCE_LAYERS, readBasemapSources } from "#runtime/basemap-sources"
 import { ClosingLRU } from "#runtime/closing-lru"
 import { createPageScope, GazetteerService, PolygonDatabaseService, retireFailedHandle } from "#runtime/page-services"
 import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
@@ -222,12 +227,6 @@ function landmarkLayer(baseURL: URL, source: LandmarkSource): LandmarkLookup {
 	}
 }
 
-function basemapTileJSONURL(config: EarthConfig): URL {
-	const name = pageTilesetParam("basemap")
-
-	return name ? new URL(`${name}.json`, config.tileWorkerURL) : config.basemapTileJSONURL
-}
-
 /**
  * The TileJSON of the separate buildings tileset that `?buildings=` asks for,
  * or `null` to draw the footprints from the basemap's own `buildings` layer.
@@ -239,72 +238,14 @@ function buildingsTileJSONURL(config: EarthConfig): URL | null {
 }
 
 /**
- * The source layer every protomaps basemap holds: land.
- *
- * A requested tile set whose TileJSON lists other layers and not this one is an overlay,
- * such as a gazetteer overlay, and draws over the configured basemap.
- */
-const BASEMAP_SOURCE_LAYER = "earth"
-
-/**
  * The style source of a requested tile set that draws as an overlay.
  */
 const PAGE_OVERLAY_SOURCE_ID = "page-overlay"
 
 /**
- * The basemap the style draws and the overlay drawn over it, each with the source layers its TileJSON lists.
+ * The style source of the postcode tile set published beside a requested overlay.
  */
-interface BasemapSources {
-	baseURL: string
-	baseLayers: ReadonlySet<string>
-	overlay: { url: string; layers: ReadonlySet<string> } | null
-}
-
-/**
- * Reads the requested tile set's TileJSON and decides whether it is the basemap or an overlay.
- *
- * An unreadable TileJSON keeps the requested tile set as the basemap, as before the overlay case existed.
- */
-async function readBasemapSources(config: EarthConfig): Promise<BasemapSources> {
-	const requested = basemapTileJSONURL(config).href
-	const requestedLayers = await readVectorLayers(requested)
-
-	if (!requestedLayers.size || requestedLayers.has(BASEMAP_SOURCE_LAYER)) {
-		return { baseURL: requested, baseLayers: requestedLayers, overlay: null }
-	}
-
-	const baseURL = config.basemapTileJSONURL.href
-
-	return { baseURL, baseLayers: await readVectorLayers(baseURL), overlay: { url: requested, layers: requestedLayers } }
-}
-
-/**
- * Source layers only a `mailwoman/basemaps` build holds.
- *
- * When the basemap's TileJSON is unreadable, the style keeps the other basemap layers and drops these.
- */
-const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
-
-/**
- * The source layers a TileJSON lists in `vector_layers`.
- *
- * An unreadable TileJSON answers an empty set and logs the failure.
- */
-async function readVectorLayers(tileJSONURL: string): Promise<ReadonlySet<string>> {
-	try {
-		const response = await fetch(tileJSONURL)
-
-		if (!response.ok) throw new Error(`${tileJSONURL} answered ${response.status}`)
-
-		const tileJSON = (await response.json()) as { vector_layers?: Array<{ id: string }> }
-
-		return new Set((tileJSON.vector_layers ?? []).map((layer) => layer.id))
-	} catch (error) {
-		console.warn("[mailwoman earth] basemap TileJSON unreadable; drawing without the build-only layers", error)
-
-		return new Set()
-	}
-}
+const PAGE_POSTCODES_SOURCE_ID = "page-overlay-postcodes"
 
 /**
  * Rethrows a range-read failure with its cause stated.
@@ -381,12 +322,13 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle | null {
 	return useMemo<MapCanvasStyle | null>(() => {
 		if (sources === null) return null
 
-		const { baseURL, baseLayers, overlay } = sources
+		const { baseURL, baseLayers, overlay, postcodes } = sources
 
 		const style = new StyleSpecificationComposer({
 			sources: {
 				[MailwomanBaseTileSetID]: { type: "vector", url: baseURL },
 				...(overlay ? { [PAGE_OVERLAY_SOURCE_ID]: { type: "vector", url: overlay.url } as const } : {}),
+				...(postcodes ? { [PAGE_POSTCODES_SOURCE_ID]: { type: "vector", url: postcodes.url } as const } : {}),
 				...(buildingsURL ? { [MailwomanBuildingsTileSetID]: { type: "vector", url: buildingsURL } as const } : {}),
 				[UnderseaTileSetID]: createUnderseaLabelSource(config.underseaFeaturesURL.href),
 			},
@@ -396,13 +338,16 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle | null {
 			sky: GuideMapSky,
 		}).toJSON()
 
+		const basemap = style.layers.filter((layer) => basemapHasSourceLayer(layer, baseLayers))
+
 		return {
 			...style,
-			layers: [
-				...style.layers.filter((layer) => basemapHasSourceLayer(layer, baseLayers)),
-				// The overlay draws above every basemap layer, labels included.
-				...(overlay ? gazetteerOverlayLayers(PAGE_OVERLAY_SOURCE_ID, overlay.layers) : []),
-			],
+			// The overlay draws above every basemap layer, labels included, and hides the basemap place names it redraws.
+			layers: hideReplacedLayers([
+				...basemap,
+				...(overlay ? gazetteerOverlayLayers(PAGE_OVERLAY_SOURCE_ID, overlay.layers, basemap) : []),
+				...(postcodes ? gazetteerPostcodeLayers(PAGE_POSTCODES_SOURCE_ID, postcodes.layers) : []),
+			]),
 		}
 	}, [sources, buildingsURL, config.underseaFeaturesURL])
 }
