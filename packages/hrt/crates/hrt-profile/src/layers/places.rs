@@ -23,6 +23,15 @@ use crate::{feature_id, Collector, CollectorConfig, Emitted, Input};
 pub const LAYER_NAME: &str = "places";
 
 /// Population thresholds for the population rank, which counts the thresholds a population reaches.
+/// The fork's `population_rank`: one more than the index of the highest break `population` reaches, so a place of
+/// any population ranks at least 1. The basemap style sizes a place label by this rank.
+pub fn population_rank(population: i64) -> i32 {
+	POPULATION_BREAKS
+		.iter()
+		.rposition(|threshold| population >= *threshold)
+		.map_or(0, |index| index as i32 + 1)
+}
+
 const POPULATION_BREAKS: [i64; 18] = [
 	0,
 	200,
@@ -297,10 +306,7 @@ pub fn process_osm(
 	let mut min_zoom = get_integer(input, &zoom_matches, "pm:minzoom", Some(99)).unwrap_or(99);
 	let mut max_zoom = get_integer(input, &zoom_matches, "pm:maxzoom", Some(99)).unwrap_or(99);
 	let kind_rank = get_integer(input, &zoom_matches, "pm:kindRank", Some(99)).unwrap_or(99);
-	let mut population_rank = POPULATION_BREAKS
-		.iter()
-		.rposition(|threshold| i64::from(population) >= *threshold)
-		.map_or(0, |index| index as i32 + 1);
+	let mut population_rank = population_rank(i64::from(population));
 	if let Some(curated) = input.tag("wikidata").and_then(|id| wikidata.0.get(id)) {
 		if kind == "country" || kind == "region" {
 			min_zoom = curated.min_zoom;

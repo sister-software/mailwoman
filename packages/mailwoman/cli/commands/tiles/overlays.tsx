@@ -27,6 +27,7 @@ export const spec = {
 			description: "Admin database, a local path or an s3:// URL. The gazetteer row set reads it",
 		},
 		countries: { type: "string", description: "Comma-separated lower-case country codes. Default every country" },
+		postcodes: { type: "boolean", description: "Also read each country's postalcode repository" },
 		repos: { type: "string", description: "Directory of existing clones. Default: clone into the work directory" },
 		"repos-cache": {
 			type: "string",
@@ -59,6 +60,7 @@ const TilesOverlays: CommandComponent<typeof spec> = ({ options }) => {
 			prefix: options.prefix,
 			dryRun: options.dryRun,
 			...(options.countries ? { countries: options.countries.split(",") } : {}),
+			postcodes: options.postcodes === true,
 			...(options.repos ? { reposDir: options.repos } : {}),
 			...(options.reposCache ? { reposCache: options.reposCache } : {}),
 			...(options.exportCopy ? { exportCopy: options.exportCopy } : {}),

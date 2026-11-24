@@ -174,7 +174,7 @@ class ParquetStage {
 			await this.#db.run(/* sql */ `
 				CREATE OR REPLACE TEMP TABLE staged (
 					id BIGINT, parent_id BIGINT, name VARCHAR, placetype VARCHAR, country VARCHAR,
-					is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN, geojson VARCHAR
+					is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN, population BIGINT, geojson VARCHAR
 				)
 			`)
 
@@ -195,6 +195,13 @@ class ParquetStage {
 
 				appender.appendBoolean(place.isDeprecated)
 				appender.appendBoolean(place.isSuperseded)
+
+				if (typeof place.population === "number" && Number.isSafeInteger(place.population)) {
+					appender.appendBigInt(BigInt(place.population))
+				} else {
+					appender.appendNull()
+				}
+
 				appender.appendVarchar(geometry)
 				appender.endRow()
 			}
@@ -210,7 +217,7 @@ class ParquetStage {
 			await this.#db.run(/* sql */ `
 				COPY (
 					SELECT id, parent_id, name, placetype, country, 'whosonfirst' AS source,
-						is_current, is_deprecated, is_superseded,
+						is_current, is_deprecated, is_superseded, population,
 						{'xmin': ST_XMin(geometry), 'xmax': ST_XMax(geometry),
 						 'ymin': ST_YMin(geometry), 'ymax': ST_YMax(geometry)} AS bbox,
 						geometry

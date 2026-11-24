@@ -60,6 +60,11 @@ export interface BuildOverlayTilesOptions {
 	 */
 	countries?: readonly string[]
 	/**
+	 * Reads each country's `postalcode` repository as well as its `admin` repository,
+	 * and writes the postcodes to the `wof-postcodes` tile set.
+	 */
+	postcodes?: boolean
+	/**
 	 * A directory of existing clones, read as they stand.
 	 *
 	 * On the lab this is the repos root `gazetteer inspect sync` keeps current.
@@ -119,13 +124,21 @@ const GITHUB_PAGE_SIZE = 100
 const GITHUB_PAGE_LIMIT = 20
 
 /**
- * The names of the admin repositories the fork organization holds, one per country.
+ * The Who's On First repository themes an overlay build reads.
  */
-export async function listAdminForks(client?: Pick<APIClient, "fetch">): Promise<string[]> {
+export type OverlayRepositoryTheme = "admin" | "postalcode"
+
+/**
+ * The names of the per-country repositories of `themes` that the fork organization holds.
+ */
+export async function listWOFForks(
+	themes: readonly OverlayRepositoryTheme[],
+	client?: Pick<APIClient, "fetch">
+): Promise<string[]> {
 	const api =
 		client ?? new APIClient({ displayName: "github-fork-listing", axios: { baseURL: "https://api.github.com" } })
 
-	const admin = new RegExp(`^${wofRepoName("admin", "[a-z]{2}")}$`)
+	const patterns = themes.map((theme) => new RegExp(`^${wofRepoName(theme, "[a-z]{2}")}$`))
 	const names: string[] = []
 
 	for (let page = 1; page <= GITHUB_PAGE_LIMIT; page++) {
@@ -134,7 +147,9 @@ export async function listAdminForks(client?: Pick<APIClient, "fetch">): Promise
 			params: { per_page: GITHUB_PAGE_SIZE, page },
 		})
 
-		names.push(...data.map((repository) => repository.name).filter((name) => admin.test(name)))
+		names.push(
+			...data.map((repository) => repository.name).filter((name) => patterns.some((pattern) => pattern.test(name)))
+		)
 
 		if (data.length < GITHUB_PAGE_SIZE) return names.toSorted()
 	}
@@ -297,6 +312,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	const report: string[] = []
 	const exportDir = PathBuilder.from(work, "export")
 	const rowSets = OVERLAY_ROW_SETS.filter((rowSet) => !options.rowSets || options.rowSets.includes(rowSet))
+	const themes: OverlayRepositoryTheme[] = options.postcodes ? ["admin", "postalcode"] : ["admin"]
 
 	await makeDirectories(work)
 
@@ -306,8 +322,8 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		reposDir = PathBuilder.from(work, "wof-repos")
 
 		const names = options.countries
-			? options.countries.map((country) => wofRepoName("admin", country))
-			: await listAdminForks()
+			? options.countries.flatMap((country) => themes.map((theme) => wofRepoName(theme, country)))
+			: await listWOFForks(themes)
 
 		phase("sync", `${names.length} repositories${options.reposCache ? ` with the cache ${options.reposCache}` : ""}`)
 
@@ -332,7 +348,12 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	phase("export wof")
 
 	// The `gazetteer` export reads the `wof` export's boundaries, so the `wof` export runs for either row set.
-	const wof = await exportWOFGeoParquet({ out: exportDir, reposDir, ...countries })
+	const wof = await exportWOFGeoParquet({
+		out: exportDir,
+		reposDir,
+		...countries,
+		postcodes: options.postcodes === true,
+	})
 
 	report.push(
 		`wof export: ${wof.counts.read} records, ${wof.counts.boundaries} boundaries, ${wof.counts.points} points, ` +
@@ -379,10 +400,19 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		report.push(`export copied → ${options.exportCopy}`)
 	}
 
-	for (const rowSet of rowSets) {
-		const archive = PathBuilder.from(work, `${rowSet}.${options.version}.pmtiles`).toString()
+	// The `wof` postcodes go to a tile set of their own, `wof-postcodes`, because they
+	// outnumber every other placetype and a client downloads every layer of a tile it requests.
+	const archives = rowSets.flatMap((rowSet) => [
+		{ rowSet, name: rowSet, flags: [] as string[] },
+		...(rowSet === "wof" && options.postcodes
+			? [{ rowSet, name: `${rowSet}-postcodes`, flags: ["postcodes-only"] }]
+			: []),
+	])
 
-		phase(`tiles ${rowSet}`)
+	for (const { rowSet, name, flags } of archives) {
+		const archive = PathBuilder.from(work, `${name}.${options.version}.pmtiles`).toString()
+
+		phase(`tiles ${name}`)
 
 		await runProcess(
 			options.hrt ?? "hrt",
@@ -391,16 +421,17 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 				PathBuilder.from(exportDir, `rowset=${rowSet}`),
 				archive,
 				...(typeof options.maxZoom === "number" ? [`max-zoom=${options.maxZoom}`] : []),
+				...flags,
 			],
 			ON_TERMINAL
 		)
 
-		phase(`publish ${rowSet}`)
+		phase(`publish ${name}`)
 
 		report.push(
 			await publishTiles({
 				file: archive,
-				tileset: `${rowSet}.${options.version}`,
+				tileset: `${name}.${options.version}`,
 				bucket: options.bucket,
 				prefix: options.prefix,
 				dryRun: options.dryRun,

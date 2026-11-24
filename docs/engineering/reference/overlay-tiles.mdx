@@ -14,10 +14,18 @@ visible on the map. Earth's Gazette explorer reads them.
 | `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`   | The `wof` export by id, or the union of an Overture division's land areas |
 
 Each archive holds three layers: `boundaries`, `points` and `extents`. `extents` is the rectangle the gazetteer stores
-for each place. The resolver reads that rectangle in place of a boundary. Each feature's id is the place id, and its attributes
-are `name`, `placetype`, `country`, `source`, `parent_id`, `is_current`, `is_deprecated` and `is_superseded`. A
-`gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames publishes
-no boundaries.
+for each place. The resolver reads that rectangle in place of a boundary. Each feature's id is the place id, and its
+attributes are `name`, `placetype`, `country`, `source`, `parent_id`, `is_current`, `is_deprecated`, `is_superseded`,
+`population`, `population_rank` and `min_zoom`. `population_rank` is the basemap's rank of the same population, and
+`min_zoom` is the zoom the point first draws at. A style reads both to size an overlay label as the basemap sizes its
+own. A `gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames
+publishes no boundaries.
+
+With `--postcodes`, the build also reads each country's `whosonfirst-data-postalcode-*` repository and writes its
+postcodes to a third tile set, `wof-postcodes.<version>`, with the layers `postcode_boundaries` and `postcode_points`.
+Postcodes stay out of `wof.<version>` because they outnumber every other placetype: in the Amsterdam tile at zoom 12
+of a Netherlands build on 2026-11-24, postcodes were 6,501 of 6,748 points. A client downloads every layer of each
+tile it requests.
 
 The tile worker serves each archive as XYZ tiles at `https://tiles.mailwoman.post/<tileset>/{z}/{x}/{y}.mvt`. Never
 publish either archive to `mailwoman-public`.
@@ -135,7 +143,7 @@ itself. It does four things:
    deadline. A failed schedule terminates the instance at once.
 4. It prints the instance id, the deadline, the log key and the URL of each tile set.
 
-`--rowsets` selects the tile sets, both by default. `--dry-run` prints the boot script and makes only read requests.
+`--rowsets` selects the tile sets, both by default, and `--postcodes` adds `wof-postcodes`. `--dry-run` prints the boot script and makes only read requests.
 
 Three mechanisms end an instance:
 

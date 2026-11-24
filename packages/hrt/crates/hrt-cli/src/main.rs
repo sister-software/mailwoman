@@ -21,7 +21,8 @@
 //!   tile. With an OpenStreetMap file, buildings join its tags and walls are classified against its roads.
 //! - `hrt overlay <export directory> <output.pmtiles> [max-zoom=<zoom>] [bounds=<west,south,east,north>]` builds the
 //!   gazetteer overlay from a `mailwoman gazetteer build geoparquet` export: its boundaries and label points, each
-//!   with the place's id and columns. The archive covers the world unless `bounds` limits it.
+//!   with the place's id and columns. The archive covers the world unless `bounds` limits it. With `postcodes-only`
+//!   it holds only the export's postcodes, and without it every other placetype.
 //! - `hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>` writes each name beside its `pgf:` encoding, for
 //!   comparison with `packages/hrt/parity/PgfProbe.java`.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
@@ -96,7 +97,7 @@ fn usage() -> ExitCode {
 	eprintln!(
 		"       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>] [osm=<file.osm.pbf>]"
 	);
-	eprintln!("       hrt overlay <export dir> <output.pmtiles> [max-zoom=<zoom>] [bounds=<w,s,e,n>]");
+	eprintln!("       hrt overlay <export dir> <output.pmtiles> [max-zoom=<zoom>] [bounds=<w,s,e,n>] [postcodes-only]");
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -178,8 +179,9 @@ fn main() -> ExitCode {
 				}
 			}
 		}
-		Some("overlay") if (3..=5).contains(&args.len()) => {
+		Some("overlay") if (3..=6).contains(&args.len()) => {
 			let mut bounds = None;
+			let mut postcodes_only = false;
 			let mut max_zoom = overlay_profile::DEFAULT_MAX_ZOOM;
 			for option in &args[3..] {
 				if let Some(text) = option.strip_prefix("bounds=") {
@@ -196,8 +198,12 @@ fn main() -> ExitCode {
 							return ExitCode::FAILURE;
 						}
 					}
+				} else if option == "postcodes-only" {
+					postcodes_only = true;
 				} else {
-					eprintln!("overlay takes max-zoom=<zoom> and bounds=<w,s,e,n>, but was given {option}");
+					eprintln!(
+						"overlay takes max-zoom=<zoom>, bounds=<w,s,e,n> and postcodes-only, but was given {option}"
+					);
 					return ExitCode::FAILURE;
 				}
 			}
@@ -211,7 +217,10 @@ fn main() -> ExitCode {
 				bounds,
 				&extra,
 				&args[2],
-				&overlay_profile::OverlayProfile { max_zoom },
+				&overlay_profile::OverlayProfile {
+					max_zoom,
+					postcodes_only,
+				},
 			)
 		}
 		Some("pgf-probe") if args.len() == 4 => {

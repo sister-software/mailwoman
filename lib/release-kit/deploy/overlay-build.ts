@@ -61,6 +61,10 @@ export interface OverlayBuildScriptOptions {
 	hours: number
 	countries?: readonly string[]
 	/**
+	 * Reads each country's `postalcode` repository as well as its `admin` repository.
+	 */
+	postcodes: boolean
+	/**
 	 * Builds both archives and prints their publish targets in place of the upload.
 	 */
 	skipPublish: boolean
@@ -106,6 +110,7 @@ export function overlayBuildScript(options: OverlayBuildScriptOptions): string {
 		"--export-copy",
 		s3(`${OVERLAY_BUILD_PREFIX}/exports/${options.tilesetVersion}/`),
 		...(options.countries?.length ? ["--countries", shellQuote(options.countries.join(","))] : []),
+		...(options.postcodes ? ["--postcodes"] : []),
 		...(options.skipPublish ? ["--dry-run"] : []),
 	]
 

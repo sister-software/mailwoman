@@ -103,7 +103,7 @@ const launchReport = z.object({
  */
 export const launchOverlayBuild = defineOperation({
 	id: "release.launch-overlay-build",
-	description: `Run the overlay tile build on one tagged EC2 instance under the tile-build key (AWS_TILE_BUILD_*). Copies the R2 upload keys to Parameter Store and starts the image (--image, default ${OVERLAY_BUILD_IMAGE}:<HEAD>) on --instance-type (default ${OVERLAY_BUILD_INSTANCE_TYPE}). The instance fetches its own inputs, so the launch uploads no data. --rowsets selects the tile sets (default ${OVERLAY_ROW_SETS.join(",")}). The instance terminates when the build exits, and in any case after --hours (default ${OVERLAY_BUILD_DEFAULT_HOURS}): its own halt timer and an EventBridge schedule both enforce the deadline. --tileset-version names the published tile sets. --countries limits the build, and --skip-publish builds without uploading. --dry-run prints the boot script and changes nothing.`,
+	description: `Run the overlay tile build on one tagged EC2 instance under the tile-build key (AWS_TILE_BUILD_*). Copies the R2 upload keys to Parameter Store and starts the image (--image, default ${OVERLAY_BUILD_IMAGE}:<HEAD>) on --instance-type (default ${OVERLAY_BUILD_INSTANCE_TYPE}). The instance fetches its own inputs, so the launch uploads no data. --rowsets selects the tile sets (default ${OVERLAY_ROW_SETS.join(",")}). The instance terminates when the build exits, and in any case after --hours (default ${OVERLAY_BUILD_DEFAULT_HOURS}): its own halt timer and an EventBridge schedule both enforce the deadline. --tileset-version names the published tile sets. --countries limits the build, --postcodes adds each country's postalcode repository, and --skip-publish builds without uploading. --dry-run prints the boot script and changes nothing.`,
 	effect: OperationEffect.ExternalWrite,
 	options: {
 		"tileset-version": { type: "string" },
@@ -112,6 +112,7 @@ export const launchOverlayBuild = defineOperation({
 		hours: { type: "string" },
 		rowsets: { type: "string" },
 		countries: { type: "string" },
+		postcodes: { type: "boolean" },
 		"skip-publish": { type: "boolean" },
 	},
 	inputSchema: z
@@ -122,6 +123,7 @@ export const launchOverlayBuild = defineOperation({
 			hours: z.coerce.number().positive().max(48).optional(),
 			rowsets: list.pipe(rowSetList),
 			countries: list,
+			postcodes: flag,
 			"skip-publish": flag,
 		})
 		.strict(),
@@ -148,6 +150,7 @@ export const launchOverlayBuild = defineOperation({
 			rowSets,
 			hours,
 			countries: input.countries,
+			postcodes: input.postcodes,
 			skipPublish: input["skip-publish"],
 		})
 
