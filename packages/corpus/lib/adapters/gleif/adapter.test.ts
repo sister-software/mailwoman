@@ -17,6 +17,7 @@ import {
 	readGLEIFAddress,
 	readGLEIFEntity,
 } from "#adapters/gleif/adapter"
+import { stableSourceID } from "#adapters/source-id"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
@@ -263,6 +264,93 @@ describe("readGLEIFAddress", () => {
 		expect(row.components.street).toBe("AVENUE OF THE AMERICAS")
 		expect(row.components.region).toBe("NY")
 		expect(row.raw).toBe("TWO SIGMA INVESTMENTS, LP, 100 AVENUE OF THE AMERICAS, NEW YORK, NY 10013")
+	})
+
+	it("writes an Indian state's name for its ISO 3166-2 code, as the libaddressinput key beside that id", () => {
+		const shivangi = record({
+			name: "SHIVANGI POLYSACK PRIVATE LIMITED",
+			legal: {
+				FirstAddressLine: "78, BENTICK STREET",
+				City: "KOLKATA",
+				Region: "IN-WB",
+				Country: "IN",
+				PostalCode: "700001",
+			},
+		})
+
+		const row = admitted(readGLEIFAddress(shivangi, GLEIFAddressBlock.Legal, units))
+
+		expect(row.components.region).toBe("West Bengal")
+		expect(row.raw).toContain("West Bengal")
+		// The looked-up region stays out of the id, so the row keeps the id it had before the lookup.
+		const { region: _region, ...withoutRegion } = row.components
+		expect(row.source_id).toBe(stableSourceID(GLEIF_ADAPTER_ID, { country: "IN", ...withoutRegion }))
+	})
+
+	it("reads an Indian line the split refuses through India's street-line reader", () => {
+		const bangalore = record({
+			name: "SAMPLE SOFTWARE PRIVATE LIMITED",
+			legal: {
+				FirstAddressLine: "NO. 1034, 3RD FLOOR, 1ST MAIN ROAD",
+				City: "BANGALORE",
+				Region: "IN-KA",
+				Country: "IN",
+				PostalCode: "560010",
+			},
+		})
+
+		expect(admitted(readGLEIFAddress(bangalore, GLEIFAddressBlock.Legal, units)).components).toMatchObject({
+			house_number: "1034",
+			street: "1ST MAIN ROAD",
+			locality: "BANGALORE",
+			region: "Karnataka",
+		})
+	})
+
+	it("keeps refusing an Indian line whose reading needs a building name beside the legal name", () => {
+		const mumbai = record({
+			name: "SAMPLE CAPITAL LIMITED",
+			legal: {
+				FirstAddressLine: "4C, SIDDHIVINAYAK CHAMBERS, 3RD FLOOR, GANDHI ROAD",
+				City: "MUMBAI",
+				Region: "IN-MH",
+				Country: "IN",
+				PostalCode: "400051",
+			},
+		})
+
+		expect(readGLEIFAddress(mumbai, GLEIFAddressBlock.Legal, units)).toHaveProperty("refused")
+	})
+
+	it("reads a current ISO 3166-2 code whose earlier code the libaddressinput spec lists", () => {
+		const hyderabad = record({
+			name: "SAMPLE TECHNOLOGIES PRIVATE LIMITED",
+			legal: {
+				FirstAddressLine: "115, HOODI MAIN ROAD",
+				City: "HYDERABAD",
+				Region: "IN-TS",
+				Country: "IN",
+				PostalCode: "500033",
+			},
+		})
+
+		expect(admitted(readGLEIFAddress(hyderabad, GLEIFAddressBlock.Legal, units)).components.region).toBe("Telangana")
+	})
+
+	it("writes no region where the country's cited layout writes no libaddressinput key", () => {
+		// Chile's UPU description writes `REGION METROPOLITANA`, and the libaddressinput key is another spelling.
+		const santiago = record({
+			name: "EMPRESA DE PRUEBA SPA",
+			legal: {
+				FirstAddressLine: "Moneda 1152",
+				City: "SANTIAGO",
+				Region: "CL-RM",
+				Country: "CL",
+				PostalCode: "8340648",
+			},
+		})
+
+		expect(admitted(readGLEIFAddress(santiago, GLEIFAddressBlock.Legal, units)).components.region).toBeUndefined()
 	})
 
 	it("leaves out a region whose ISO 3166-2 code is not how an address writes it", () => {

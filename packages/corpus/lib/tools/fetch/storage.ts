@@ -102,6 +102,8 @@ export const SOURCE_STORAGE_CLASSES = {
 	"nga-wpi": StorageClass.current,
 	openaddresses: StorageClass.current,
 	ourairports: StorageClass.current,
+	// One Overture release's Indian places, under the release id as the vintage.
+	"overture-places-in": StorageClass.snapshot,
 	"ro-retea-scolara": StorageClass.current,
 	ryhti: StorageClass.current,
 	"sk-inspire": StorageClass.current,
@@ -221,6 +223,7 @@ export const FETCH_SOURCE_DIRECTORIES = {
 	nppes: ["usgov-nppes"],
 	openaddresses: ["openaddresses"],
 	ourairports: ["ourairports"],
+	"overture-places-in": ["overture-places-in"],
 	"ro-retea-scolara": ["ro-retea-scolara"],
 	ryhti: ["ryhti"],
 	"sk-inspire": ["sk-inspire"],

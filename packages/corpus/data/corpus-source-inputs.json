@@ -2903,6 +2903,18 @@
 				"@mailwoman/codex COUNTRY_SURFACE_FORMS and CountryNames, a curated table whose comment cites Wikipedia's List of countries, when --country-fraction is set"
 			]
 		},
+		"overture-places-in": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Places theme rows in India: the first address's street line, locality, region and postcode, never the place's name"
+				}
+			],
+			"authored": [
+				"`segmentINStreetLine` in packages/corpus/lib/in/street-line/segment.ts, a thoroughfare-word table drawn from libpostal's en and hi street_types.txt, which labels the street line's parts and decides which are kept"
+			]
+		},
 		"overture-jp": {
 			"inputs": [
 				{

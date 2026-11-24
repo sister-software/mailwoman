@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "214e11b87d6d85aaa395ae81aceeb582f81932cb2c7ad67e20884cc3f9cc847c",
+	"contentDigest": "50cc45b5f696727314d6bcb438dbc6c37d770d27b9ec26efb8d660d29ee0a8e8",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -83250,10 +83250,10 @@
 			"note": "The research pass recorded the register and did not open its terms. Scoped to Isle of Man Companies Registry in IM, so electing it grants that publisher's sources in that jurisdiction alone."
 		},
 		{
-			"licenseID": "unchecked-national-terms-in-ministry-of-corporate-affairs",
-			"state": "unchecked",
+			"state": "refused",
 			"publisherStatement": "CHECK NATIONAL / DATASET TERMS",
-			"note": "The research pass recorded the register and did not open its terms. Scoped to Ministry of Corporate Affairs in IN, so electing it grants that publisher's sources in that jurisdiction alone."
+			"refusedBecause": "The Ministry of Corporate Affairs' own website terms refuse reproduction and modification of everything on mca.gov.in. `https://www.mca.gov.in/content/dam/mca/documents/Website_Policies.pdf`, 49,831 bytes, sha256 `8358c04197cd046029bc3434b13cf9d01666912a50dff53df5ec5996e093b633`, read on 2026-11-24 and linked from the site footer as its policies, states under `Copyright policy of MCA`: `The contents hereof are the sole and exclusive property Ministry of Corporate Affairs ('MCA'), Government of India. Unless otherwise indicated and may not be, for whatsoever purpose, reproduced, stored, copied or archived in any manner, format or medium whatsoever either in full or in parts without the prior express written consent of MCA.` and `No other person shall at any time modify, alter or change these materials (or any part thereof) nor attempt to do so under whatsoever circumstances.` Its `Acceptable use of MCA Searchable Databases` adds that the databases `are not intended to be a source for bulk downloads`. Copying, extracting and fitting a model are each among the acts it reserves. The refusal covers the company master data as mca.gov.in serves it (the `Master Details of Companies Registered` lists under `Data & Reports`). The same register is also published on data.gov.in, whose datasets are released under the Government Open Data License – India, a different publication with its own decision; neither data.gov.in nor api.data.gov.in answered from this host on 2026-11-24 (`www.data.gov.in` returned an Akamai `503` error page, `data.gov.in` and `api.data.gov.in` were unreachable at the network layer), so that route is unread rather than refused.",
+			"licenseID": "unchecked-national-terms-in-ministry-of-corporate-affairs"
 		},
 		{
 			"licenseID": "unchecked-national-terms-iq-ministry-of-trade-registrar-of-companies",
