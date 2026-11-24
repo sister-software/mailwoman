@@ -15,9 +15,9 @@
  *     [--preview-evaluation-groups <evaluation-groups.json>] [--refuse-overlap identity,group]
  *     [--duckdb-memory-gib 4] [--duckdb-threads 4]
  *
- *   `--match-address` compares the rows of a source whose group identity holds an address
- *   key (`GROUP_ADDRESS_KEY_SOURCES`, NAD) with that source's training rows by address key,
- *   so an address a re-ingest wrote under a new record id overlaps as `address`.
+ *   `--match-address` compares the rows of a source whose group identity holds an address key
+ *   (`GROUP_ADDRESS_KEY_SOURCES`, NAD and overture-latam) with that source's training rows by
+ *   address key, so an address a re-ingest wrote under a new record id overlaps as `address`.
  *
  *   `--preview-evaluation-groups` leaves out every training row whose group or address
  *   key the list holds, as a re-split under that list would send it to `test`.

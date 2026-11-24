@@ -22,14 +22,12 @@ import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 
+import { OVERTURE_LATAM_SOURCE } from "#adapters/overture/adapter"
+import { overtureAddressBlock, overtureAddressBlockSQL, overtureAddressKey } from "#adapters/overture/address-key"
 import { recordIDOf } from "#adapters/record-id"
 import { USGOV_NAD_ADAPTER_ID } from "#us/adapters/usgov/nad/adapter"
-import {
-	type AddressKeyRow,
-	nadAddressBlock,
-	nadAddressBlockSQL,
-	nadAddressKey,
-} from "#us/adapters/usgov/nad/address-key"
+import { nadAddressBlock, nadAddressBlockSQL, nadAddressKey } from "#us/adapters/usgov/nad/address-key"
+import type { AddressKeyRow } from "#utils/address-key"
 
 /**
  * The attribute name an evaluation-group file declares.
@@ -63,9 +61,18 @@ export interface GroupAddressKeySource {
  * The sources whose group identity includes an address key, by corpus `source`.
  *
  * Every other source groups by record id only.
+ *
+ * NAD's releases issue a resubmitted address a new UUID (#3125).
+ * An `overture-latam` row's id hashes its components, so the re-run that adds the region
+ * and regroups the postcode issues every row a new id (#3457).
  */
 export const GROUP_ADDRESS_KEY_SOURCES: Readonly<Record<string, GroupAddressKeySource>> = {
 	[USGOV_NAD_ADAPTER_ID]: { key: nadAddressKey, block: nadAddressBlock, blockSQL: nadAddressBlockSQL },
+	[OVERTURE_LATAM_SOURCE]: {
+		key: overtureAddressKey,
+		block: overtureAddressBlock,
+		blockSQL: overtureAddressBlockSQL,
+	},
 }
 
 /**
