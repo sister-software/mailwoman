@@ -127,6 +127,26 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	})
 })
 
+describe("bash-write-guard: a node script under a shell timeout", () => {
+	it.each([
+		["a timed wait script", `timeout 570 node packages/mailwoman/tools/dev-tools/wait.run.ts`],
+		["a timed script with a kill-after flag", `timeout -k 5 60 node x.ts`],
+		["a timed script behind an assignment", `FOO=1 timeout 60 node x.ts`],
+		["a timed script by absolute path", `/usr/bin/timeout 60 /usr/bin/node x.ts`],
+		["a timed script behind a directory change", `cd packages/core && timeout 60 node x.ts`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+		expect(guidanceFor(command)).toContain("run_in_background")
+	})
+
+	it.each([
+		["an untimed script", `node x.ts`],
+		["a script whose own flag carries a deadline", `node x.ts --timeout 570`],
+	])("admits %s", (_label, command) => {
+		expect(refusalFor(command)).toBeNull()
+	})
+})
+
 describe("bash-write-guard: GitHub mutations owned by the development MCP", () => {
 	it.each([
 		["creating an issue", `gh issue create --title "Feature" --body "Body"`],
