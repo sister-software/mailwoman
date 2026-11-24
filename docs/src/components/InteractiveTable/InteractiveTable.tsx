@@ -57,8 +57,8 @@ const elements = (node: ReactNode): ElementWithChildren[] =>
 /**
  * The text a reader sees in a node.
  *
- * A component with no children, such as `<Country code="US" />`, renders its `code`
- * or `codes` prop, so that prop is its text.
+ * A component with no children, such as `<Country code="US" />` or `<Groupings ids="eu nato" />`,
+ * renders its `code`, `codes` or `ids` prop, so that prop is its text.
  */
 function textOf(node: ReactNode): string {
 	if (node == null || typeof node === "boolean") return ""
@@ -67,12 +67,12 @@ function textOf(node: ReactNode): string {
 
 	if (Array.isArray(node)) return node.map(textOf).join("")
 
-	if (isValidElement<{ children?: ReactNode; code?: unknown; codes?: unknown }>(node)) {
-		const { children, code, codes } = node.props
+	if (isValidElement<{ children?: ReactNode; code?: unknown; codes?: unknown; ids?: unknown }>(node)) {
+		const { children, code, codes, ids } = node.props
 
 		if (children != null) return textOf(children)
 
-		return typeof code === "string" ? code : typeof codes === "string" ? codes : ""
+		return [code, codes, ids].find((value): value is string => typeof value === "string") ?? ""
 	}
 
 	return ""

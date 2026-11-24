@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Countries, Country } from "@site/src/components/CountryCodes/CountryCodes"
+import { Groupings } from "@site/src/components/Groupings/Groupings"
 import InteractiveTable from "@site/src/components/InteractiveTable/InteractiveTable"
 import MDXComponents from "@theme-original/MDXComponents"
 
@@ -15,4 +16,5 @@ export default {
 	table: InteractiveTable,
 	Country,
 	Countries,
+	Groupings,
 }

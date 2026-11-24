@@ -1,0 +1,17 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
+/**
+ * Grouping tags: a wrapping row wide enough for about six tags per line.
+ */
+.list {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	min-width: 24rem;
+}
+
+.id {
+	white-space: nowrap;
+	font-size: 0.8em;
+}

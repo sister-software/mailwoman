@@ -190,9 +190,6 @@ for (const promise of SUPPORT_PROMISES) {
  */
 const groupingsByCode = new Map(sorted.map((code) => [code, groupingsOf(code, { at: membershipDate })]))
 
-// The groupings cell renders on one line.
-// A member of a dozen groupings otherwise wraps in a narrow column and stretches
-// every cell of its row, and the table already scrolls sideways.
 const rows = sorted.map((code) => {
 	const coverage = measured.get(code) ?? null
 	const name = ISO2_TO_NAME.get(code) ?? "—"
@@ -201,7 +198,7 @@ const rows = sorted.map((code) => {
 
 	const families = shippedFamilies.get(code)
 
-	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<span style={{ whiteSpace: "nowrap" }}>${memberOf.join(", ")}</span>` : "—"} |`
+	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<Groupings ids="${memberOf.join(" ")}" />` : "—"} |`
 })
 
 /**
