@@ -150,7 +150,8 @@ describe("ryhti adapter against fixture sample.csv", () => {
 		// The record publishes `Maarintie 70` with `SILTAKYLÄ` and `Maarvägen 70` with `BROBY`.
 		expect(bilingual).toHaveLength(1)
 		expect(bilingual[0]!.locale).toBe("fi-FI")
-		expect(bilingual[0]!.raw).toBe("Maarintie 70, 49220 SILTAKYLÄ")
+		// The postcode prints in the operator's bare form or the publishers' `FI-` form, as the row's draw picks.
+		expect(bilingual[0]!.raw).toMatch(/^Maarintie 70, (?:FI-)?49220 SILTAKYLÄ$/u)
 		expect(rows.some((r) => r.raw.includes("Maarvägen"))).toBe(false)
 	})
 

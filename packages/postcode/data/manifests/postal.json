@@ -5,24 +5,24 @@
 			"automata": [
 				{
 					"backend": "sparse",
-					"bytes": 46364,
+					"bytes": 47252,
 					"patterns": 99,
 					"role": "whole",
-					"states": 1257
+					"states": 1291
 				},
 				{
 					"backend": "sparse",
-					"bytes": 74155,
+					"bytes": 75043,
 					"patterns": 99,
 					"role": "embedded",
-					"states": 1578
+					"states": 1612
 				}
 			],
-			"bytes": 290848,
+			"bytes": 295344,
 			"compilerVersion": "0.1.0",
 			"declarationsHash": "fd82868a58a92ce29cde7678516bf3b83d05eca76d02c0c55e630fbf2673c17a",
-			"irHash": "e9d1150e352ce932ec9ad992b06f253b54914fb4b7e9101eda9f63442156111b",
-			"sha256": "a9b49e0100171b37460d5b251ff0e48e53f2efe47a7a885fd7f277a8baac38b6",
+			"irHash": "00a073b926de5a29a1a44b2afdb95c7053dc86e6defce3db21e70ce2f086611a",
+			"sha256": "b212834419bcba142dbfb33b90d17875b642733b35763179af360d9648f4ff81",
 			"unicodeVersion": "16.0.0"
 		}
 	},

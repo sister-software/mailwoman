@@ -272,7 +272,6 @@ describe("a postcode written with its layout's prefix", () => {
 
 	// Values as GLEIF, CORDIS and Who's On First publish them, with the prefix already inside.
 	it.each([
-		["FI", { street: "Vesimäentie", house_number: "4", postcode: "FI-15860", locality: "HOLLOLA" }, "FI-15860 HOLLOLA"],
 		[
 			"LU",
 			{ street: "Route d'Esch", house_number: "164", postcode: "L-1471", locality: "LUXEMBOURG" },
@@ -336,12 +335,15 @@ describe("a postcode written with its layout's prefix", () => {
 		["HR", "10000", "HR-10000 ZAGREB", "10000 ZAGREB"],
 		["LT", "LT-04340", "LT-04340 VILNIUS", "04340 VILNIUS"],
 		["CY", "CY-2008", "2008 STROVOLOS", "CY-2008 STROVOLOS"],
+		// Finland's operator prints the code bare, and GLEIF's `FI-15860` is its publishers' form.
+		["FI", "FI-15860", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
+		["FI", "15860", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
 	] as const)("prints %s's postcode %s in the form a draw picks", (country, postcode, first, other) => {
-		const locality = { HR: "ZAGREB", LT: "VILNIUS", CY: "STROVOLOS" }[country]
+		const locality = { HR: "ZAGREB", LT: "VILNIUS", CY: "STROVOLOS", FI: "HOLLOLA" }[country]
 		const components: ComponentDict = { postcode, locality }
 		const undrawn = formatAddressRow(components, country, { singleLine: true })!
-		const drawnOther = formatAddressRow(components, country, { singleLine: true, formDraw: 0.25 })!
-		const drawnFirst = formatAddressRow(components, country, { singleLine: true, formDraw: 0.75 })!
+		const drawnOther = formatAddressRow(components, country, { singleLine: true, formDraw: 0.1 })!
+		const drawnFirst = formatAddressRow(components, country, { singleLine: true, formDraw: 0.9 })!
 
 		expect(undrawn.raw).toBe(first)
 		expect(drawnFirst.raw).toBe(first)

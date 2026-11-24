@@ -28,4 +28,9 @@ export const COUNTRY_POSTCODE_WRITTEN_FORMS: Readonly<Record<string, readonly st
 	 * In those sets and the gauntlet board, every other country whose pattern has a separator writes it.
 	 */
 	US: ["\\d{5}\\d{4}"],
+	/**
+	 * The code with an en or em dash after `LV`, as Latvijas Pasts prints it: `RIGA, LV–1050`
+	 * (UPU lvaEn.pdf 09/2023, sha256 251b08b0…), where the `zip` pattern writes a hyphen.
+	 */
+	LV: ["LV[–—]\\d{4}"],
 }

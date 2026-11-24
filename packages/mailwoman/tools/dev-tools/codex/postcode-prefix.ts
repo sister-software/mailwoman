@@ -4,20 +4,39 @@
 /**
  *   The printed forms of the postcode each country's postal operator documents,
  *   where they differ from the one fixed prefix libaddressinput's `fmt` writes
- *   before `%Z`, or where the operator documents more than one form.
+ *   before `%Z`, or where more than one form reaches the corpus.
  *
  *   Each record cites the operator's UPU Postal Addressing Systems description,
  *   retrieved 2026-11-24, with the sha256 of the PDF, the sentence the forms are
  *   read from and the example lines of each form.
  *   A country absent here prints the prefix its `fmt` states.
  *
- *   A record with two forms is a description that states both: the prefixed form
- *   on mail from abroad and the bare form on domestic mail.
+ *   A record with two operator forms is a description that states both: the prefixed
+ *   form on mail from abroad and the bare form on domestic mail.
  *   The layout prints the first form, and a corpus writer renders each form in
  *   its share of rows, because the parser reads both.
  *
  *   No description states the share of mail written in each form, so the two forms take equal shares.
+ *
+ *   A country whose operator documents only the bare form records the prefixed form its
+ *   publishers write second, as the publishers' own, at a stated quarter of rows.
+ *   The rendered share then no longer follows each publisher's habit.
+ *
+ *   Its `measured` line gives the share of each publisher's raw values that start with the
+ *   prefix, read from the GLEIF golden copy of 2026-10-03 and the CORDIS organization files.
  */
+
+/**
+ * Who writes a printed postcode form.
+ */
+const PostcodeFormAuthor = {
+	Operator: "operator",
+	Publishers: "publishers",
+} as const
+
+type PostcodeFormAuthor = (typeof PostcodeFormAuthor)[keyof typeof PostcodeFormAuthor]
+
+const { Operator, Publishers } = PostcodeFormAuthor
 
 /**
  * One printed form of a country's postcode.
@@ -33,9 +52,18 @@ interface PostcodeFormRecord {
 	 */
 	readonly share: number
 	/**
+	 * Who writes this form: the postal operator's description, or the publishers whose rows reach the corpus.
+	 */
+	readonly writtenBy: PostcodeFormAuthor
+	/**
 	 * Verbatim postcode lines from the description's examples of this form.
+	 * A publishers' form has none.
 	 */
 	readonly examples: readonly string[]
+	/**
+	 * For a publishers' form, the measured share of each publisher's raw values that start with the prefix.
+	 */
+	readonly measured?: string
 }
 
 /**
@@ -43,7 +71,7 @@ interface PostcodeFormRecord {
  */
 interface PostcodePrefixRecord {
 	/**
-	 * The documented forms, the one the layout prints first.
+	 * The forms, the one the layout prints first.
 	 */
 	readonly forms: readonly PostcodeFormRecord[]
 	readonly url: string
@@ -53,12 +81,31 @@ interface PostcodePrefixRecord {
 	readonly documentDate: string
 	readonly sha256: string
 	/**
-	 * The description's sentence that states the forms, verbatim.
+	 * The description's sentence that states the operator's forms, verbatim.
 	 */
 	readonly statement: string
 }
 
 const UPU_PAS = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit"
+
+/**
+ * The share of rows a publishers' form takes beside the operator's bare form.
+ */
+const PUBLISHERS_FORM_SHARE = 0.25
+
+/**
+ * The operator's bare form at the share a publishers' form leaves it, then that publishers' form.
+ */
+function bareWithPublishersForm(
+	examples: readonly string[],
+	prefix: string,
+	measured: string
+): readonly PostcodeFormRecord[] {
+	return [
+		{ prefix: "", share: 1 - PUBLISHERS_FORM_SHARE, writtenBy: Operator, examples },
+		{ prefix, share: PUBLISHERS_FORM_SHARE, writtenBy: Publishers, examples: [], measured },
+	]
+}
 
 // country-branch: each record is one operator's printed postcode forms, read from its own description.
 /**
@@ -66,21 +113,26 @@ const UPU_PAS = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressin
  */
 export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixRecord>> = {
 	AI: {
-		forms: [{ prefix: "AI-", share: 1, examples: ["The Valley / AI-2640 / ANGUILLA, BWI"] }],
+		forms: [{ prefix: "AI-", share: 1, writtenBy: Operator, examples: ["The Valley / AI-2640 / ANGUILLA, BWI"] }],
 		url: `${UPU_PAS}/aiaEn.pdf`,
 		documentDate: "2017-09",
 		sha256: "6c7d3ec9cad17c159e4b66d85e319bbef9518edab4f1fde6f2a4bf136b9c8218",
 		statement: "6 alphanumeric characters below the name of the locality, with a dash before the numeric part.",
 	},
 	AX: {
-		forms: [{ prefix: "AX-", share: 1, examples: ["AX-22100 MARIEHAMN"] }],
+		forms: [{ prefix: "AX-", share: 1, writtenBy: Operator, examples: ["AX-22100 MARIEHAMN"] }],
 		url: `${UPU_PAS}/alaEn.pdf`,
 		documentDate: "2019-02",
 		sha256: "4ecbef7cd8b746d75c5d4a04afc8575eb5db56172403137908be719e766c428c",
 		statement: 'Finland requests to add the ISO alpha-2 country code "AX" before the postcode.',
 	},
 	CH: {
-		forms: [{ prefix: "", share: 1, examples: ["2544 BETTLACH", "1211 GENEVA 6", "1556 CERNIAZ VD"] }],
+		forms: bareWithPublishersForm(
+			["2544 BETTLACH", "1211 GENEVA 6", "1556 CERNIAZ VD"],
+			"CH-",
+			"GLEIF 30 of 28,284 legal and 58 of 30,837 headquarters postcodes (0.1%, 0.2%); " +
+				"CORDIS 43 of 1,989 organization records (2.2%)."
+		),
 		url: `${UPU_PAS}/cheEn.pdf`,
 		documentDate: "2024-06",
 		sha256: "530a9a37c2b0e953bf2c78e9d61d1d632438b0bbd69d71596b7ae7ffb1ddf7e6",
@@ -88,8 +140,8 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 	},
 	CY: {
 		forms: [
-			{ prefix: "", share: 0.5, examples: ["6036 Larnaka", "3304 Limassol"] },
-			{ prefix: "CY-", share: 0.5, examples: ["CY-2008 Strovolos", "CY-3304 Limassol"] },
+			{ prefix: "", share: 0.5, writtenBy: Operator, examples: ["6036 Larnaka", "3304 Limassol"] },
+			{ prefix: "CY-", share: 0.5, writtenBy: Operator, examples: ["CY-2008 Strovolos", "CY-3304 Limassol"] },
 		],
 		url: `${UPU_PAS}/cypEn.pdf`,
 		documentDate: "2023-03",
@@ -99,20 +151,19 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 			"For domestic mail, the ISO-2 code and country name are not required.",
 	},
 	FI: {
-		forms: [
-			{
-				prefix: "",
-				share: 1,
-				examples: ["00550 HELSINKI", "00380 HELSINKI", "50100 MIKKELI", "01620 VANTAA", "00101 HELSINKI"],
-			},
-		],
+		forms: bareWithPublishersForm(
+			["00550 HELSINKI", "00380 HELSINKI", "50100 MIKKELI", "01620 VANTAA", "00101 HELSINKI"],
+			"FI-",
+			"GLEIF 46,681 of 55,806 legal and 46,703 of 55,892 headquarters postcodes (83.6% each); " +
+				"CORDIS 19 of 1,615 organization records (1.2%), and 4 more as `FIN`."
+		),
 		url: `${UPU_PAS}/finEn.pdf`,
 		documentDate: "2024-11",
 		sha256: "2f1ce8f45d3eb4bc116d49e08458ac5c0bb30d39fda8645fe54996e4c4def754",
 		statement: "5 digits to the left of the locality name",
 	},
 	FO: {
-		forms: [{ prefix: "FO-", share: 1, examples: ["FO-100 Tórshavn", "FO-100 TORSHAVN"] }],
+		forms: [{ prefix: "FO-", share: 1, writtenBy: Operator, examples: ["FO-100 Tórshavn", "FO-100 TORSHAVN"] }],
 		url: `${UPU_PAS}/froEn.pdf`,
 		documentDate: "2017-12",
 		sha256: "171683b9a9331dc7c6c16132d6217daa9003ab67bf3d728e054b3e6f4224a863",
@@ -120,8 +171,13 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 	},
 	HR: {
 		forms: [
-			{ prefix: "HR-", share: 0.5, examples: ["HR-10000 ZAGREB", "HR-52341 ŽMINJ", "HR-21001 SPLIT"] },
-			{ prefix: "", share: 0.5, examples: [] },
+			{
+				prefix: "HR-",
+				share: 0.5,
+				writtenBy: Operator,
+				examples: ["HR-10000 ZAGREB", "HR-52341 ŽMINJ", "HR-21001 SPLIT"],
+			},
+			{ prefix: "", share: 0.5, writtenBy: Operator, examples: [] },
 		],
 		url: `${UPU_PAS}/hrvEn.pdf`,
 		documentDate: "2014-05",
@@ -131,7 +187,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 			"by a dash for mail sent from other countries.",
 	},
 	HT: {
-		forms: [{ prefix: "HT", share: 1, examples: ["HT6120 DELMAS"] }],
+		forms: [{ prefix: "HT", share: 1, writtenBy: Operator, examples: ["HT6120 DELMAS"] }],
 		url: `${UPU_PAS}/htiEn.pdf`,
 		documentDate: "2017-09",
 		sha256: "a4a406e751ed2bd169db92547c1c398b63188f2ba58849018703561c319661a6",
@@ -140,7 +196,12 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 			'The "HT" code forms an integral part of the postcode, even for domestic mail.',
 	},
 	LI: {
-		forms: [{ prefix: "", share: 1, examples: ["2544 BETTLACH (cheEn.pdf, 2024-06)"] }],
+		forms: bareWithPublishersForm(
+			["2544 BETTLACH (cheEn.pdf, 2024-06)"],
+			"FL-",
+			"GLEIF 14 of 15,507 legal and 11 of 16,351 headquarters postcodes as `FL` (0.1% each); " +
+				"CORDIS 0 of 12 organization records."
+		),
 		url: `${UPU_PAS}/lieEn.pdf`,
 		documentDate: "2002-07",
 		sha256: "5384521a986e76e6e68532f4fddadcc7fe91bb96a0879a0c1d2c27e462426138",
@@ -150,8 +211,8 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 	},
 	LT: {
 		forms: [
-			{ prefix: "LT-", share: 0.5, examples: ["LT–04340 Vilnius", "LT–52002 Kaunas"] },
-			{ prefix: "", share: 0.5, examples: [] },
+			{ prefix: "LT-", share: 0.5, writtenBy: Operator, examples: ["LT–04340 Vilnius", "LT–52002 Kaunas"] },
+			{ prefix: "", share: 0.5, writtenBy: Operator, examples: [] },
 		],
 		url: `${UPU_PAS}/ltuEn.pdf`,
 		documentDate: "2018-06",
@@ -161,28 +222,45 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 			"mail items being delivered to Lithuania. For domestic mail, country code is not required.",
 	},
 	LU: {
-		forms: [{ prefix: "L-", share: 1, examples: ["L-1234 DUDELANGE", "L-9874 REMICH", "L-2998 LUXEMBOURG"] }],
+		forms: [
+			{
+				prefix: "L-",
+				share: 1,
+				writtenBy: Operator,
+				examples: ["L-1234 DUDELANGE", "L-9874 REMICH", "L-2998 LUXEMBOURG"],
+			},
+		],
 		url: `${UPU_PAS}/luxEn.pdf`,
 		documentDate: "2013-06",
 		sha256: "294c81d3309097243d7312a7b02958fe0f235f264ce7ccec282ccb71710f105d",
 		statement: "4 digits to the left of the locality name and preceded by «L».",
 	},
 	MC: {
-		forms: [{ prefix: "", share: 1, examples: ["98000 MONACO", "98020 MONACO CEDEX"] }],
+		forms: bareWithPublishersForm(
+			["98000 MONACO", "98020 MONACO CEDEX"],
+			"MC-",
+			"GLEIF 10 of 965 legal and 105 of 1,453 headquarters postcodes (1.0%, 7.2%); " +
+				"CORDIS 0 of 7 organization records."
+		),
 		url: `${UPU_PAS}/mcoEn.pdf`,
 		documentDate: "2004-05",
 		sha256: "c7843837a62d54c23d3bdd4946507868a43aa8c6d55c8e1442da4a060955996f",
 		statement: "5 digits to the left of the locality name.",
 	},
 	MD: {
-		forms: [{ prefix: "MD-", share: 1, examples: ["MD-2012, CHISINAU"] }],
+		forms: [{ prefix: "MD-", share: 1, writtenBy: Operator, examples: ["MD-2012, CHISINAU"] }],
 		url: `${UPU_PAS}/mdaEn.pdf`,
 		documentDate: "2019-04",
 		sha256: "48420c0a8ec3d20c4ebba4e7b2b133a2d28f834961448be94dae951ffcea058f",
 		statement: "4 digits to the left of the locality name and preceded by “MD-”.",
 	},
 	SE: {
-		forms: [{ prefix: "", share: 1, examples: ["123 45 LILLBYN", "111 81 STOCKHOLM", "120 35 TYRESÖ"] }],
+		forms: bareWithPublishersForm(
+			["123 45 LILLBYN", "111 81 STOCKHOLM", "120 35 TYRESÖ"],
+			"SE-",
+			"GLEIF 28 of 119,869 legal and 31 of 120,058 headquarters postcodes (0.0% each); " +
+				"CORDIS 54 of 2,332 organization records (2.3%), and 14 more as `S`."
+		),
 		url: `${UPU_PAS}/sweEn.pdf`,
 		documentDate: "2024-11",
 		sha256: "f91a01689813522df9e00caadda573abdff6d1d9082d1941b90eec93f3bf822b",
@@ -190,7 +268,11 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		statement: "5 digits to left of the locality name, with a space between 3rd and 4th digits",
 	},
 	SI: {
-		forms: [{ prefix: "", share: 1, examples: ["4000 KRANJ", "1001 LJUBLJANA", "2500 MARIBOR"] }],
+		forms: bareWithPublishersForm(
+			["4000 KRANJ", "1001 LJUBLJANA", "2500 MARIBOR"],
+			"SI-",
+			"GLEIF 0 of 5,119 legal and 0 of 5,110 headquarters postcodes; CORDIS 3 of 780 organization records (0.4%)."
+		),
 		url: `${UPU_PAS}/svnEn.pdf`,
 		documentDate: "2016-05",
 		sha256: "9758df597eb7749fe22b8fb7d65ae11aecb695694b19235758eaa218ecc2e9c9",

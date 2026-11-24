@@ -308,7 +308,7 @@ for (const file of await Globerator.files("json", {
 
 	const prefixNote = prefixRecord
 		? // The URL sits on its own comment line, the form comment-reflow sets a line too long to hold it.
-			` The postcode prints ${prefixRecord.forms.map((form) => (form.prefix ? `as \`${form.prefix}\`` : "bare")).join(" or ")}:\n\t// ${prefixRecord.url} (${prefixRecord.documentDate}).`
+			` The postcode prints ${prefixRecord.forms.map((form) => `${form.prefix ? `as \`${form.prefix}\`` : "bare"}${form.writtenBy === "publishers" ? " (its publishers' form)" : ""}`).join(" or ")}:\n\t// ${prefixRecord.url} (${prefixRecord.documentDate}).`
 		: ""
 
 	entries.push(`\t// ${metadata.fmt.replaceAll("\n", "\\n")}${prefixNote}\n\t${code}: addr\`${source}\`,`)
