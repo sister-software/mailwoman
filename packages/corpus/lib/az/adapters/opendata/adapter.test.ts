@@ -311,10 +311,11 @@ describe("opendata-az adapter", () => {
 		const rows = await readCanonicalRows(scratch.path, OPENDATA_AZ_ADAPTER_ID)
 
 		expect(rows.every((row) => row.license === OPENDATA_AZ_LICENSE && row.country === "AZ")).toBe(true)
-		expect(rows.map((row) => row.raw)).toContain("Busniss centre, 100 Yusif Vazir Chamanzaminli, Narimanov, Baku")
+		// Azerpost's UPU description writes the number after the street (`Rashid Behbudov küç. 55`).
+		expect(rows.map((row) => row.raw)).toContain("Busniss centre, Yusif Vazir Chamanzaminli 100, Narimanov, Baku")
 
 		expect(rows.find((row) => row.locale === "az-AZ")?.raw).toBe(
-			"Biznes mərkəzi, 100 Yusif Vəzir Çəmənzəminli, Nərimanov, Bakı"
+			"Biznes mərkəzi, Yusif Vəzir Çəmənzəminli 100, Nərimanov, Bakı"
 		)
 	})
 })

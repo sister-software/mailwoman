@@ -136,7 +136,8 @@ describe("ban adapter against fixture sample.csv", () => {
 
 		const [row] = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
-		expect(row?.raw).toBe("2 Rue du General Charles de Gaulle Bat B, 20110 Propriano")
+		// La Poste prints the delivery point above the street, so the rendered row leads with it.
+		expect(row?.raw).toBe("Bat B, 2 Rue du General Charles de Gaulle, 20110 Propriano")
 
 		expect(row?.components).toEqual({
 			house_number: "2",

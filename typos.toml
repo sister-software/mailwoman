@@ -17,6 +17,9 @@ extend-exclude = [
 	"**/*.fixture.*",
 	# Postal designators spelled as each country's operator writes them: `Blok`, `lok.`, `Chambre`.
 	"packages/codex/lib/*/designators.ts",
+	# Layout citations quote each postal operator's example lines verbatim, misspellings included (`183 /185 Marja Bulding`).
+	"packages/codex/lib/address/layouts/citations.ts",
+	"packages/codex/lib/address/layouts/description-records.ts",
 	"packages/poi-taxonomy/data/",
 	"THIRD_PARTY_NOTICES.md",
 	# Address datasets, frozen evaluations, and published provenance retain source spelling.

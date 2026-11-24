@@ -585,6 +585,54 @@
 			{
 				"id": 41,
 				"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality subregion locality region postcode"
+			},
+			{
+				"id": 42,
+				"key": "po_box (intersection_a intersection_b|unit house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality region postcode"
+			},
+			{
+				"id": 43,
+				"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality postcode locality subregion region"
+			},
+			{
+				"id": 44,
+				"key": "po_box unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality postcode"
+			},
+			{
+				"id": 45,
+				"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region locality dependent_locality postcode"
+			},
+			{
+				"id": 46,
+				"key": "(intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) po_box dependent_locality postcode locality region"
+			},
+			{
+				"id": 47,
+				"key": "unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) po_box dependent_locality postcode locality"
+			},
+			{
+				"id": 48,
+				"key": "po_box (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix unit) dependent_locality locality postcode subregion region"
+			},
+			{
+				"id": 49,
+				"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region subregion locality"
+			},
+			{
+				"id": 50,
+				"key": "po_box unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality region"
+			},
+			{
+				"id": 51,
+				"key": "locality dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region postcode"
+			},
+			{
+				"id": 52,
+				"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) locality postcode"
+			},
+			{
+				"id": 53,
+				"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) postcode locality"
 			}
 		]
 	},

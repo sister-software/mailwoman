@@ -168,6 +168,54 @@
 		{
 			"id": 41,
 			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality subregion locality region postcode"
+		},
+		{
+			"id": 42,
+			"key": "po_box (intersection_a intersection_b|unit house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality region postcode"
+		},
+		{
+			"id": 43,
+			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) dependent_locality postcode locality subregion region"
+		},
+		{
+			"id": 44,
+			"key": "po_box unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality postcode"
+		},
+		{
+			"id": 45,
+			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region locality dependent_locality postcode"
+		},
+		{
+			"id": 46,
+			"key": "(intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) po_box dependent_locality postcode locality region"
+		},
+		{
+			"id": 47,
+			"key": "unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) po_box dependent_locality postcode locality"
+		},
+		{
+			"id": 48,
+			"key": "po_box (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix unit) dependent_locality locality postcode subregion region"
+		},
+		{
+			"id": 49,
+			"key": "po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region subregion locality"
+		},
+		{
+			"id": 50,
+			"key": "po_box unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality region"
+		},
+		{
+			"id": 51,
+			"key": "locality dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) region postcode"
+		},
+		{
+			"id": 52,
+			"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) locality postcode"
+		},
+		{
+			"id": 53,
+			"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) postcode locality"
 		}
 	],
 	"members": [
@@ -184,12 +232,12 @@
 		{
 			"country": "AE",
 			"script": "local",
-			"system": 20
+			"system": 13
 		},
 		{
 			"country": "AF",
 			"script": "local",
-			"system": 3
+			"system": 34
 		},
 		{
 			"country": "AI",
@@ -204,7 +252,7 @@
 		{
 			"country": "AM",
 			"script": "local",
-			"system": 5
+			"system": 8
 		},
 		{
 			"country": "AO",
@@ -214,7 +262,7 @@
 		{
 			"country": "AR",
 			"script": "local",
-			"system": 6
+			"system": 8
 		},
 		{
 			"country": "AS",
@@ -229,7 +277,7 @@
 		{
 			"country": "AU",
 			"script": "local",
-			"system": 7
+			"system": 42
 		},
 		{
 			"country": "AW",
@@ -244,7 +292,7 @@
 		{
 			"country": "AZ",
 			"script": "local",
-			"system": 1
+			"system": 43
 		},
 		{
 			"country": "BA",
@@ -269,7 +317,7 @@
 		{
 			"country": "BF",
 			"script": "local",
-			"system": 9
+			"system": 1
 		},
 		{
 			"country": "BG",
@@ -282,6 +330,16 @@
 			"system": 0
 		},
 		{
+			"country": "BI",
+			"script": "local",
+			"system": 20
+		},
+		{
+			"country": "BJ",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "BL",
 			"script": "local",
 			"system": 10
@@ -289,12 +347,17 @@
 		{
 			"country": "BM",
 			"script": "local",
-			"system": 0
+			"system": 44
 		},
 		{
 			"country": "BN",
 			"script": "local",
 			"system": 0
+		},
+		{
+			"country": "BO",
+			"script": "local",
+			"system": 39
 		},
 		{
 			"country": "BR",
@@ -342,6 +405,16 @@
 			"system": 22
 		},
 		{
+			"country": "CF",
+			"script": "local",
+			"system": 13
+		},
+		{
+			"country": "CG",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "CH",
 			"script": "local",
 			"system": 8
@@ -352,9 +425,19 @@
 			"system": 15
 		},
 		{
+			"country": "CK",
+			"script": "local",
+			"system": 20
+		},
+		{
 			"country": "CL",
 			"script": "local",
 			"system": 6
+		},
+		{
+			"country": "CM",
+			"script": "local",
+			"system": 13
 		},
 		{
 			"country": "CN",
@@ -369,22 +452,22 @@
 		{
 			"country": "CO",
 			"script": "local",
-			"system": 11
+			"system": 36
 		},
 		{
 			"country": "CR",
 			"script": "local",
-			"system": 17
+			"system": 45
 		},
 		{
 			"country": "CU",
 			"script": "local",
-			"system": 11
+			"system": 8
 		},
 		{
 			"country": "CV",
 			"script": "local",
-			"system": 6
+			"system": 46
 		},
 		{
 			"country": "CW",
@@ -422,6 +505,11 @@
 			"system": 8
 		},
 		{
+			"country": "DM",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "DO",
 			"script": "local",
 			"system": 8
@@ -434,7 +522,7 @@
 		{
 			"country": "EC",
 			"script": "local",
-			"system": 4
+			"system": 8
 		},
 		{
 			"country": "EE",
@@ -452,6 +540,11 @@
 			"system": 8
 		},
 		{
+			"country": "ER",
+			"script": "local",
+			"system": 39
+		},
+		{
 			"country": "ES",
 			"script": "local",
 			"system": 6
@@ -465,6 +558,11 @@
 			"country": "FI",
 			"script": "local",
 			"system": 8
+		},
+		{
+			"country": "FJ",
+			"script": "local",
+			"system": 13
 		},
 		{
 			"country": "FK",
@@ -484,12 +582,22 @@
 		{
 			"country": "FR",
 			"script": "local",
+			"system": 47
+		},
+		{
+			"country": "GA",
+			"script": "local",
 			"system": 1
 		},
 		{
 			"country": "GB",
 			"script": "local",
 			"system": 0
+		},
+		{
+			"country": "GD",
+			"script": "local",
+			"system": 13
 		},
 		{
 			"country": "GE",
@@ -509,7 +617,7 @@
 		{
 			"country": "GH",
 			"script": "local",
-			"system": 22
+			"system": 48
 		},
 		{
 			"country": "GI",
@@ -522,6 +630,11 @@
 			"system": 8
 		},
 		{
+			"country": "GM",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "GN",
 			"script": "local",
 			"system": 19
@@ -530,6 +643,11 @@
 			"country": "GP",
 			"script": "local",
 			"system": 10
+		},
+		{
+			"country": "GQ",
+			"script": "local",
+			"system": 49
 		},
 		{
 			"country": "GR",
@@ -557,9 +675,14 @@
 			"system": 8
 		},
 		{
+			"country": "GY",
+			"script": "local",
+			"system": 0
+		},
+		{
 			"country": "HK",
 			"script": "local",
-			"system": 20
+			"system": 50
 		},
 		{
 			"country": "HK",
@@ -574,7 +697,7 @@
 		{
 			"country": "HN",
 			"script": "local",
-			"system": 11
+			"system": 6
 		},
 		{
 			"country": "HR",
@@ -594,7 +717,7 @@
 		{
 			"country": "ID",
 			"script": "local",
-			"system": 11
+			"system": 3
 		},
 		{
 			"country": "IE",
@@ -604,7 +727,7 @@
 		{
 			"country": "IL",
 			"script": "local",
-			"system": 3
+			"system": 8
 		},
 		{
 			"country": "IM",
@@ -614,7 +737,7 @@
 		{
 			"country": "IN",
 			"script": "local",
-			"system": 22
+			"system": 7
 		},
 		{
 			"country": "IO",
@@ -629,7 +752,7 @@
 		{
 			"country": "IR",
 			"script": "local",
-			"system": 23
+			"system": 51
 		},
 		{
 			"country": "IS",
@@ -654,7 +777,7 @@
 		{
 			"country": "JO",
 			"script": "local",
-			"system": 3
+			"system": 52
 		},
 		{
 			"country": "JP",
@@ -669,12 +792,12 @@
 		{
 			"country": "KE",
 			"script": "local",
-			"system": 0
+			"system": 1
 		},
 		{
 			"country": "KG",
 			"script": "local",
-			"system": 8
+			"system": 34
 		},
 		{
 			"country": "KH",
@@ -694,7 +817,7 @@
 		{
 			"country": "KN",
 			"script": "local",
-			"system": 20
+			"system": 7
 		},
 		{
 			"country": "KP",
@@ -719,7 +842,7 @@
 		{
 			"country": "KW",
 			"script": "local",
-			"system": 8
+			"system": 53
 		},
 		{
 			"country": "KY",
@@ -729,7 +852,7 @@
 		{
 			"country": "KZ",
 			"script": "local",
-			"system": 29
+			"system": 43
 		},
 		{
 			"country": "LA",

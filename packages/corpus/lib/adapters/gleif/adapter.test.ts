@@ -404,12 +404,12 @@ describe("readGLEIFAddress", () => {
 	})
 
 	it("refuses a country codex has no layout for", () => {
-		const benin = record({
-			name: "COTONOU SARL",
-			legal: { FirstAddressLine: "25 Rue du Commerce", City: "Cotonou", Country: "BJ" },
+		const antigua = record({
+			name: "ST JOHNS LTD",
+			legal: { FirstAddressLine: "25 High Street", City: "St. John's", Country: "AG" },
 		})
 
-		expect(readGLEIFAddress(benin, GLEIFAddressBlock.Legal, units)).toEqual({
+		expect(readGLEIFAddress(antigua, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.CountryWithoutLayout,
 		})
 	})
@@ -536,6 +536,6 @@ describe("gleif-lei adapter", () => {
 	})
 
 	it("refuses a country codex holds no layout for", async () => {
-		await expect(run([SLADOVNA], { country: "BJ" })).rejects.toThrow(/gleif-lei/)
+		await expect(run([SLADOVNA], { country: "AG" })).rejects.toThrow(/gleif-lei/)
 	})
 })
