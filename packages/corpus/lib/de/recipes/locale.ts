@@ -44,9 +44,15 @@ import { alignRow } from "#utils"
 /**
  * The share of rows that write the Bundesland as `region` after the postcode and locality.
  *
- * It is the share the retired international order printed in v0.7.10 (`--intl-fraction` 0.4).
+ * Deutsche Post prints no Land.
+ * Every example in its UPU description ends `<postcode> <TOWN>` (`Wacholderweg 52a / 26133 OLDENBURG`).
+ *
+ * A typed query still writes one (`04860 Torgau, Sachsen`).
+ * A minority of rows keep it, so the operator's form stays the majority.
+ *
+ * A Berlin row never takes one, because the Land is the city (see `renderLocaleRow`).
  */
-const BUNDESLAND_REGION_FRACTION = 0.4
+const BUNDESLAND_REGION_FRACTION = 0.2
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's region column is empty for DE).
@@ -169,7 +175,7 @@ export const germanRecipe: CorpusRecipe = {
 		},
 		{
 			flag: "--region-fraction <f>",
-			description: "Fraction of rows that write the Bundesland as region after the locality. Default 0.4",
+			description: "Fraction of rows that write the Bundesland as region after the locality. Default 0.2",
 		},
 		{
 			flag: "--ortsteil-fraction <f>",

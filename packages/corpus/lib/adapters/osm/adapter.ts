@@ -14,6 +14,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
+import { countriesDeclaredBy, hasCountry } from "@mailwoman/codex/country/sets"
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
@@ -112,6 +113,23 @@ interface OSMCorpusRow {
 const MAX_STREET_WORDS = 8
 
 /**
+ * The countries whose mappers write the raion that contains the settlement in `addr:district`.
+ *
+ * Over the October 2026 extracts, every Moldovan `addr:district` value spans more than
+ * three settlements (880,282 rows: `Raionul Ialoveni`, `Municipiul Chișinău`).
+ * The Russian and Belarusian values do so on 182,210 and 3,042 rows (`Аксайский район`, `Кобрынскі раён`).
+ *
+ * In other countries the tag holds a part of the city: `Hoàn Kiếm` in Hà Nội,
+ * `越秀区` in 广州, `Արաբկիր` in Yerevan.
+ * A count of distinct settlements can't separate the two by itself.
+ *
+ * A city written several ways spans several names too (`黄浦区` under five spellings of Shanghai).
+ */
+// country-branch: what `addr:district` denotes is a per-country mapping convention of OpenStreetMap.
+// A WOF ancestry lookup of the district's name above the row's locality would replace this list.
+const OSM_DISTRICT_CONTAINS_LOCALITY = countriesDeclaredBy("OSM addr:district raion convention", ["BY", "MD", "RU"])
+
+/**
  * Whether `addr:housenumber` holds a street designator — digits with an optional letter,
  * fraction or dash suffix (`12`, `188a`, `14/E`, `1/1146`, `167-c`) or a one-
  * or two-letter block prefix (`B-77`, `L58`, `R 948`) — rather than free text such
@@ -120,7 +138,29 @@ const MAX_STREET_WORDS = 8
 export function housenumberIsDesignator(value: string): boolean {
 	const trimmed = value.trim()
 
+	if (longestDigitRun(trimmed) > MAX_HOUSE_NUMBER_DIGITS) return false
+
 	return /^\d+[A-Za-z]?(?:[/-]\d*[A-Za-z]?)?$/u.test(trimmed) || /^[A-Za-z]{1,2}[-\s]?\d+[A-Za-z]?$/u.test(trimmed)
+}
+
+/**
+ * The most digits in a row a house number holds.
+ *
+ * The longest the national registers write are six, the rural grid numbers of the US
+ * National Address Database (`129504 US 65 Highway North, Gould, AR`).
+ * A run of seven or more in `addr:housenumber` is a telephone number
+ * (`22796800` in Costa Rica, `07505156040` in Iraq) or a postcode, in every country's extract alike.
+ */
+const MAX_HOUSE_NUMBER_DIGITS = 6
+
+function longestDigitRun(value: string): number {
+	let longest = 0
+
+	for (const run of value.match(/\d+/gu) ?? []) {
+		longest = Math.max(longest, run.length)
+	}
+
+	return longest
 }
 
 /**
@@ -259,10 +299,26 @@ export function componentsForOSMRow(
 		}
 	}
 
+	// Where `addr:district` holds the raion that contains the locality, it is the locality's `subregion`.
+	// The country's layout then places it, or drops it and counts the drop.
+	const district = clean(row.district)
+	const districtContainsLocality = hasCountry(OSM_DISTRICT_CONTAINS_LOCALITY, country)
+
+	if (district && districtContainsLocality && (!components.locality || !sameName(district, components.locality))) {
+		components.subregion = district
+	}
+
 	// Dependent-locality candidates in priority order (suburb, subdistrict, district, place,
 	// city head, then the containing boundary's name); `district` never becomes `region`,
 	// because Vietnam's country template renders it only when no city is present.
-	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head, row.boundary_dependent_locality]
+	const dependent = [
+		row.suburb,
+		row.subdistrict,
+		districtContainsLocality ? null : row.district,
+		row.place,
+		split?.head,
+		row.boundary_dependent_locality,
+	]
 		.map((value) => clean(value))
 		.find(
 			(value) =>
@@ -292,7 +348,9 @@ export function componentsForOSMRow(
 
 	// An address row needs another component alongside the street or the streetless house number.
 	// Coarse adapters already teach bare names.
-	if (Object.keys(components).length === 1) {
+	// A subregion doesn't count.
+	// The layouts of the countries that write one in `addr:district` print none.
+	if (Object.keys(components).filter((tag) => tag !== "subregion").length === 1) {
 		countDropped(tally, street ? "row:street-only" : "row:house-number-only")
 
 		return null

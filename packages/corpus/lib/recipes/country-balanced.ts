@@ -303,6 +303,11 @@ const HOMOGRAPHS: readonly Homograph[] = [
 	},
 ]
 
+/**
+ * US street names for the US side of the contrasts.
+ *
+ * They're American English vocabulary, so no row in another country takes one.
+ */
 const STREET_POOL: readonly string[] = [
 	"Main Street",
 	"Oak Avenue",
@@ -318,11 +323,19 @@ const STREET_POOL: readonly string[] = [
 
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
-// The share of country-reading homograph rows that include a street address.
+// The share of US-reading homograph rows that include a street address.
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
  * Renders a homograph as either the country or the US place, with the matching country code.
+ *
+ * The country reading writes the city and the country only.
+ * The recipe holds no street of Tbilisi, Amman or Beirut.
+ *
+ * A US street name in front of one (`289 Main Street, Rustavi, Georgia`) writes
+ * an address no such country has.
+ * The US reading writes the bare form on the share without a street.
+ * A street then isn't what tells the two readings apart.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -332,36 +345,37 @@ function renderHomograph(random: () => number): {
 } {
 	const h = sample(HOMOGRAPHS, random)
 
-	const hn = houseNo(random),
-		street = sample(STREET_POOL, random)
-
 	if (random() < 0.5) {
 		const city = sample(h.cities, random)
-		const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
-		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
 
-		const components: Partial<Record<ComponentTag, string>> = withStreet
-			? { house_number: hn, street, locality: city, country: h.surface }
-			: { locality: city, country: h.surface }
-
-		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
+		return {
+			fmt: "homograph-country",
+			raw: `${city}, ${h.surface}`,
+			components: { locality: city, country: h.surface },
+			iso2: h.iso2,
+		}
 	}
 
 	const pc = sample(h.us.postcodes, random)
+	const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
+	const hn = houseNo(random)
+	const street = sample(STREET_POOL, random)
+	const lead = withStreet ? `${hn} ${street}, ` : ""
+	const streetComponents: Partial<Record<ComponentTag, string>> = withStreet ? { house_number: hn, street } : {}
 
 	if (h.us.role === "region") {
 		return {
 			fmt: "homograph-us-region",
-			raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`,
-			components: { house_number: hn, street, locality: h.us.locality, region: h.surface, postcode: pc },
+			raw: `${lead}${h.us.locality}, ${h.surface} ${pc}`,
+			components: { ...streetComponents, locality: h.us.locality, region: h.surface, postcode: pc },
 			iso2: "US",
 		}
 	}
 
 	return {
 		fmt: "homograph-us-locality",
-		raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`,
-		components: { house_number: hn, street, locality: h.surface, region: h.us.region, postcode: pc },
+		raw: `${lead}${h.surface}, ${h.us.region} ${pc}`,
+		components: { ...streetComponents, locality: h.surface, region: h.us.region, postcode: pc },
 		iso2: "US",
 	}
 }

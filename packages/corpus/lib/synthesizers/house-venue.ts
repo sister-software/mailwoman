@@ -13,7 +13,8 @@ import type { CanonicalRow } from "#types"
 
 /**
  * The address context for one row.
- * The synthesizer fills a missing street or house number.
+ *
+ * The synthesizer draws a missing house number and refuses a tuple without a street.
  */
 export interface HouseVenueBaseTuple {
 	locality: string
@@ -116,28 +117,6 @@ const GB_VENUES: ReadonlyArray<string> = [
 
 // #endregion
 
-// #region Fallback street pool
-
-const FALLBACK_STREETS: ReadonlyArray<string> = [
-	"Main St",
-	"Oak Ave",
-	"Pine Rd",
-	"Elm Dr",
-	"Cedar Ln",
-	"Maple Blvd",
-	"Birch Ct",
-	"Walnut Pl",
-	"Cherry Way",
-	"Spruce St",
-	"Park Ave",
-	"Lake Dr",
-	"Hill Rd",
-	"River Ln",
-	"Forest Blvd",
-]
-
-// #endregion
-
 // #region House-number generator
 
 function randomHouseNumber(random: () => number): string {
@@ -152,6 +131,15 @@ function randomHouseNumber(random: () => number): string {
 // #endregion
 
 // #region Synthesis
+
+/**
+ * The share of rows that write the venue after the street, as a typed query does.
+ *
+ * An example of that order is `23 St Aelreds Way, The Royal Oak, York`.
+ * The postal operators print the building or business name above the thoroughfare
+ * (Royal Mail: `Victoria House / 15 The Street`), so the venue-first order is the majority.
+ */
+const VENUE_AFTER_STREET_SHARE = 0.25
 
 const GB_VENUE_POOL_RATE = 0.7
 
@@ -170,9 +158,13 @@ const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
 }
 
 /**
- * Synthesizes one row with a house number, a street, a venue and the tuple's admin tail,
- * rendered through the country's codex layout.
- * A country with no layout yields `null`.
+ * Synthesizes one row with a house number, a street, a venue and the tuple's admin tail.
+ *
+ * The row renders through the country's codex layout.
+ * A country with no layout yields `null`, and so does a tuple without a street of its own.
+ *
+ * A drawn street would write one language's vocabulary into another country's address,
+ * as `8 Pine Rd, Le Petit Bistrot, Srikakulam` did.
  *
  * GB rows sometimes use British venue names and ranged house numbers.
  */
@@ -180,16 +172,21 @@ export function synthesizeHouseVenueRow(
 	base: HouseVenueBaseTuple,
 	opts: HouseVenueSynthesisOpts = {}
 ): SynthesizedHouseVenueRow | null {
+	const street = base.street?.trim()
+
+	if (!street) return null
+
 	const random = opts.random ?? Math.random
 	const locale = countryToLocale(base.country)
-	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
+
+	const template =
+		opts.forceTemplate ?? (random() < VENUE_AFTER_STREET_SHARE ? "venue-after-street" : "venue-before-street")
 
 	// country-branch: the British venue pool and the ranged house number are GB English data.
 	// A per-country venue pool from the Overture names file would replace the branch.
 	const gbPools = base.country === "GB"
 
 	const venue = gbPools && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
-	const street = base.street ?? sample(FALLBACK_STREETS, random)
 	let houseNumber = base.houseNumber ?? randomHouseNumber(random)
 
 	if (gbPools && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {

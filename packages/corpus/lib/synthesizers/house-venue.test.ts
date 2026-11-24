@@ -12,6 +12,7 @@ const TUPLE: HouseVenueBaseTuple = {
 	region: "MA",
 	postcode: "02101",
 	country: "US",
+	street: "Tremont St",
 }
 
 describe("synthesizeHouseVenueRow", () => {
@@ -51,12 +52,24 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(row!.raw).toMatch(/^234 Newbury St/)
 	})
 
-	it("falls back to internal pool when tuple lacks street + houseNumber", () => {
+	it("draws a house number for a tuple without one", () => {
 		const row = synthesizeHouseVenueRow(TUPLE, { random: makeLcg(4) })
 		expect(row).not.toBeNull()
-		expect(row!.components.street).toBeDefined()
-		expect(row!.components.house_number).toBeDefined()
+		expect(row!.components.street).toBe("Tremont St")
 		expect(row!.components.house_number!).toMatch(/^\d+$/)
+	})
+
+	it("refuses a tuple without a street, so no row writes a street from another country's vocabulary", () => {
+		const { street: _street, ...streetless } = TUPLE
+
+		expect(synthesizeHouseVenueRow(streetless, { random: makeLcg(4) })).toBeNull()
+
+		expect(
+			synthesizeHouseVenueRow(
+				{ locality: "Srikakulam", region: "Andhra Pradesh", postcode: "532001", country: "IN", street: " " },
+				{ random: makeLcg(4) }
+			)
+		).toBeNull()
 	})
 
 	it("FR renders postcode-before-locality with NO region (the run-2 contingency shape)", () => {
@@ -143,7 +156,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 		for (let i = 0; i < rows; i++) {
 			const row = synthesizeHouseVenueRow(
-				{ locality: "Bengaluru", region: "Karnataka", postcode: "560100", country: "IN" },
+				{ locality: "Bengaluru", region: "Karnataka", postcode: "560100", country: "IN", street: "Hosur Road" },
 				{ random }
 			)
 
@@ -186,7 +199,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 		for (let i = 0; i < 2000; i++) {
 			const row = synthesizeHouseVenueRow(
-				{ locality: "London", region: "Greater London", postcode: "N1 7AA", country: "GB" },
+				{ locality: "London", region: "Greater London", postcode: "N1 7AA", country: "GB", street: "Essex Road" },
 				{ random }
 			)
 
@@ -208,8 +221,8 @@ describe("synthesizeHouseVenueRow", () => {
 		for (let i = 0; i < 2000; i++) {
 			const row = synthesizeHouseVenueRow(
 				i % 2 === 0
-					? { locality: "London", region: "Greater London", postcode: "E2 8AX", country: "GB" }
-					: { locality: "Paris", region: "", postcode: "75004", country: "FR" },
+					? { locality: "London", region: "Greater London", postcode: "E2 8AX", country: "GB", street: "Hackney Road" }
+					: { locality: "Paris", region: "", postcode: "75004", country: "FR", street: "Rue de Rivoli" },
 				{ random }
 			)
 
@@ -261,7 +274,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 		for (let i = 0; i < 2000; i++) {
 			const row = synthesizeHouseVenueRow(
-				{ locality: "London", region: "Greater London", postcode: "SW1Y 4LH", country: "GB" },
+				{ locality: "London", region: "Greater London", postcode: "SW1Y 4LH", country: "GB", street: "Pall Mall" },
 				{ random }
 			)
 
@@ -295,14 +308,14 @@ describe("synthesizeHouseVenueRow", () => {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
 			expect(row).not.toBeNull()
 			expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
-			expect(row!.components.street).toBeDefined()
+			expect(row!.components.street).toBe("Tremont St")
 			expect(row!.components.locality).toBe("Boston")
 			expect(row!.components.region).toBe("MA")
 			expect(row!.components.postcode).toBe("02101")
 		}
 	})
 
-	it("template distribution is balanced across 1000 invocations", () => {
+	it("writes the venue above the street, the operators' order, on most rows", () => {
 		const rng = makeLcg(99)
 		const counts = { "venue-after-street": 0, "venue-before-street": 0 }
 
@@ -312,9 +325,7 @@ describe("synthesizeHouseVenueRow", () => {
 			counts[row!.template]++
 		}
 
-		expect(counts["venue-after-street"]).toBeGreaterThan(400)
-		expect(counts["venue-after-street"]).toBeLessThan(600)
-		expect(counts["venue-before-street"]).toBeGreaterThan(400)
-		expect(counts["venue-before-street"]).toBeLessThan(600)
+		expect(counts["venue-before-street"]).toBeGreaterThan(counts["venue-after-street"])
+		expect(counts["venue-after-street"]).toBeGreaterThan(0)
 	})
 })
