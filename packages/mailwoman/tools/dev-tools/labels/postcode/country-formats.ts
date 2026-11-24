@@ -9,6 +9,7 @@
  *   Usage: `node packages/mailwoman/tools/dev-tools/labels/postcode/country-formats.ts`
  */
 
+import { POSTCODE_PREFIX_RECORDS } from "@mailwoman/codex/labels/postcode/documented-forms"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
@@ -17,8 +18,6 @@ import { SourceHeaderSyntax, spdxHeaderText } from "@mailwoman/core/repo/spdx-he
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/values/json"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
 import { Globerator } from "spliterator/node/fs"
-
-import { POSTCODE_PREFIX_RECORDS } from "#tools/dev-tools/codex/postcode-prefix"
 
 import {
 	type PostcodeAdminBlockSide,

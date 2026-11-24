@@ -33,6 +33,7 @@ import {
 	SLOTS,
 	type AddressLayout,
 } from "#address/layout"
+import { documentedPostcodeSlot } from "#labels/postcode/documented-forms"
 
 const { attention, cedex, country, dependent_locality, locality, postcode, region, subregion, venue } = SLOTS
 
@@ -80,7 +81,7 @@ ${venue}
 ${numberLastStreet}
 ${dependent_locality}
 ${locality}
-${prefixedSlot("postcode", "AI-")}
+${documentedPostcodeSlot("AI")}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z%n%C
@@ -133,7 +134,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "AX-")} ${locality}
+${documentedPostcodeSlot("AX")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nAZ %Z %C
@@ -279,7 +280,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "CH-", share: 0.02 }])} ${locality}
+${documentedPostcodeSlot("CH")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%X %A %C %X
@@ -346,7 +347,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "CY-", share: 0.5 }])} ${locality}
+${documentedPostcodeSlot("CY")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -430,7 +431,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "FI-", share: 0.25 }])} ${locality}
+${documentedPostcodeSlot("FI")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -455,7 +456,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "FO-")} ${locality}
+${documentedPostcodeSlot("FO")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -576,7 +577,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "HR-", [{ prefix: "", share: 0.5 }])} ${locality}
+${documentedPostcodeSlot("HR")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nHT%Z %C The postcode prints as `HT`:
@@ -585,7 +586,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "HT")} ${locality}
+${documentedPostcodeSlot("HT")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%C%n%A%n%Z
@@ -801,7 +802,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "FL-", share: 0.02 }])} ${locality}
+${documentedPostcodeSlot("LI")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -835,7 +836,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "LT-", [{ prefix: "", share: 0.5 }])} ${locality} ${region}
+${documentedPostcodeSlot("LT")} ${locality} ${region}
 ${country}`,
 
 	// %O%n%N%n%A%nL-%Z %C The postcode prints as `L-`:
@@ -844,7 +845,7 @@ ${country}`,
 ${attention}
 ${numberFirstStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "L-")} ${locality}
+${documentedPostcodeSlot("LU")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%S%n%C, %Z
@@ -870,7 +871,7 @@ ${country}`,
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "MC-", share: 0.02 }])} ${locality} ${cedex}
+${documentedPostcodeSlot("MC")} ${locality} ${cedex}
 ${country}`,
 
 	// %N%n%O%n%A%nMD-%Z %C The postcode prints as `MD-`:
@@ -879,7 +880,7 @@ ${country}`,
 ${venue}
 ${numberLastCommaStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "MD-")} ${locality}
+${documentedPostcodeSlot("MD")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
@@ -1281,7 +1282,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "SE-", share: 0.02 }])} ${locality}
+${documentedPostcodeSlot("SE")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nSINGAPORE %Z
@@ -1306,7 +1307,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "SI-", share: 0.02 }])} ${locality}
+${documentedPostcodeSlot("SI")} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C
