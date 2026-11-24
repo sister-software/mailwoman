@@ -12,35 +12,14 @@
  *
  * Each example is transcribed from the description's PDF text layer, one string per
  * printed line, with the description's line labels left out.
+ *
+ * The citations the L–Z review of 2026-11-24 added sit in `citations/l-z.ts`,
+ * which keeps each module under the repository's line ceiling.
  */
 
-import { ConventionSource, type LayoutCitation } from "#address/convention-claims"
-
-/**
- * The date every description below was retrieved and hashed.
- */
-const RETRIEVED_AT = "2026-11-24"
-
-/**
- * A citation of the UPU Postal Addressing Systems description filed under `iso3`.
- */
-export function upuDescription(
-	iso3: string,
-	documentDate: string,
-	sha256: string,
-	examples: readonly (readonly string[])[],
-	unexpressed: readonly string[]
-): LayoutCitation {
-	return {
-		source: ConventionSource.PostalAddressingSystems,
-		url: `https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/${iso3}En.pdf`,
-		documentDate,
-		retrievedAt: RETRIEVED_AT,
-		sha256,
-		examples,
-		unexpressed,
-	}
-}
+import type { LayoutCitation } from "#address/convention-claims"
+import { L_Z_LAYOUT_CITATIONS } from "#address/layouts/citations/l-z"
+import { upuDescription } from "#address/layouts/citations/upu-description"
 
 /**
  * The description France's overseas departments and collectivities defer to with `See France`.
@@ -635,4 +614,5 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			"the P.O. box line below the street (`BP 42`)",
 		]
 	),
+	...L_Z_LAYOUT_CITATIONS,
 }

@@ -24,7 +24,7 @@
  * of the Netherlands Antilles and print no address.
  */
 
-import type { ConventionSource, LayoutCitation } from "#address/convention-claims"
+import { ConventionSource, type LayoutCitation } from "#address/convention-claims"
 import {
 	addr,
 	fixedSlot,
@@ -36,6 +36,7 @@ import {
 	SLOTS,
 	unitLineNumberFirstStreet,
 	withPoBoxBelow,
+	withSoftBreakBefore,
 	type AddressLayout,
 } from "#address/layout"
 
@@ -70,6 +71,69 @@ export interface UPUPostalAddressingRecord extends LayoutCitation {
 	 */
 	postcode: "before-locality" | "after-locality" | "after-region" | "absent"
 }
+
+/**
+ * A record read from the description `citation` cites, admitted for `admittedBecause`.
+ */
+export function described(
+	admittedBecause: UPUAdmission,
+	postcodeAt: UPUPostalAddressingRecord["postcode"],
+	citation: LayoutCitation
+): UPUPostalAddressingRecord {
+	return { ...citation, source: ConventionSource.PostalAddressingSystems, admittedBecause, postcode: postcodeAt }
+}
+
+/**
+ * The addressee, the street with its number after the name, the district and the locality:
+ * the lines of every description below that prints no postcode and no region.
+ */
+const NUMBER_LAST_LOCALITY = addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${country}`
+
+/**
+ * {@linkcode NUMBER_LAST_LOCALITY} with the number before the street name.
+ */
+const NUMBER_FIRST_LOCALITY = addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`
+
+/**
+ * {@linkcode NUMBER_LAST_LOCALITY} with the number before the street name and a comma after it.
+ */
+const NUMBER_FIRST_COMMA_LOCALITY = addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality}
+${country}`
+
+/**
+ * The locality followed by its postcode on one line, below a number-first street.
+ */
+const LOCALITY_THEN_POSTCODE = addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality} ${postcode}
+${country}`
+
+/**
+ * The postcode before the locality on one line, the region below them.
+ */
+const POSTCODE_LOCALITY_REGION = addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode} ${locality}
+${region}
+${country}`
 
 /**
  * Layouts by ISO 3166-1 alpha-2, read from each country's description.
@@ -518,6 +582,15 @@ ${subregion}
 ${region}
 ${country}`,
 
+	// addressee / street + premises ‘- ’ door (Laisvės pr. 40-12) / country code -
+	// postcode + locality (LT–04340 Vilnius) / country.
+	LT: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${prefixedSlot("postcode", "LT-")} ${locality}
+${country}`,
+
 	// addressee / street + premises (Kr. Barona street 7, dz. 1) / locality + postcode (RIGA, LV–1050)
 	// / country. addressee / street + premises + sub-locality (Valdemāra street 42, Ainaži,)
 	// / locality + postcode (SALACGRIVAS NOV., LV–4035) / country.
@@ -526,6 +599,114 @@ ${venue}
 ${numberLastStreet}
 ${dependent_locality}
 ${locality}, ${region}, ${prefixedSlot("postcode", "LV-")}
+${country}`,
+
+	// Mr. Mohamed Ali Khalifa / Av.
+	// Al Ghazaly 12 / TRIPOLI / LIBYA.
+	LY: NUMBER_LAST_LOCALITY,
+
+	// M. Kalilou Sissoko / Rue 406 – porte 39 / Magnabougou / BAMAKO / MALI.
+	ML: NUMBER_LAST_LOCALITY,
+
+	// addressee / house number + street (No. 5/60, Aye Myittar street,) / quarter name / town
+	// (or) township name + "," postcode (Pyigyitagon Township, 0505001) / state or region / country.
+	MM: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality}, ${postcode}
+${region}
+${country}`,
+
+	// B.P. 35 / NOUAKCHOTT / MAURITANIA.
+	MR: NUMBER_FIRST_COMMA_LOCALITY,
+
+	// addressee / premise + street (38 Triq it-Tempji Neolitici) / locality
+	// (IL-HAMRUN) / postcode (HMR 1428) / country.
+	MT: withSoftBreakBefore(
+		addr`${attention}
+${venue}
+${numberFirstStreet}
+${locality}
+${postcode}
+${country}`,
+		"postcode"
+	),
+
+	// addressee / premises "," + street (10, rue Claude Delaître) / sub-locality
+	// (Les Guibies) / locality + postcode (PORT LOUIS 11213) / country.
+	MU: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality} ${postcode}
+${country}`,
+
+	// addressee / street + premises (21 Dunduzu Avenue) / postcode + locality (102010 KASUNGU) / country.
+	MW: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// José Matola / Av.
+	// Mártires da Machava / 252, 5o andar, flat 3 / 1100 MAPUTO / MAPUTO / MOZAMBIQUE.
+	MZ: addr`${attention}
+${venue}
+${numberLastCommaStreet}
+${dependent_locality}
+${postcode} ${locality}
+${region}
+${country}`,
+
+	// addressee / sub-locality (Bello Horizonte C-IV-45) / postcode (11147) / locality,
+	// province (Managua, Managua) / country.
+	NI: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode}
+${locality}, ${region}
+${country}`,
+
+	// addressee / district (BOE DISTRICT) / postcode (NRU68) / country.
+	NR: addr`${attention}
+${venue}
+${numberFirstStreet}
+${locality}
+${region}
+${postcode}
+${country}`,
+
+	// addressee / street (Tapeu-Porritt Rd) / locality (Alofi) / postcode (9974) / country.
+	NU: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${postcode}
+${country}`,
+
+	// addressee / street, premise, sub-locality (Av. Larco 1301, Miraflores) /
+	// postcode (15074) / province (LIMA) / country.
+	PE: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${postcode}
+${region}
+${country}`,
+
+	// addressee / locality (Dahiyat al Bareed) / thoroughfare (Gabriel Almataran) / town
+	// (Ar Ram) / locality + postcode (JERUSALEM P126xxxx) / country.
+	PS: addr`${attention}
+${venue}
+${dependent_locality}
+${numberFirstStreet}
+${locality}
+${region} ${postcode}
 ${country}`,
 
 	// Posta Romana S.A. / Calea Giulesti 6–8 / 060274 BUCHAREST / ROMANIA.
@@ -537,4 +718,159 @@ ${numberLastStreet}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
+
+	// addressee / building number + street (3909 Abdullhamid Alkatib St) / additional number +
+	// district name (7318 Azahrah Dist.) / postcode (12987) / locality (RIYADH) / country.
+	SA: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode}
+${locality}
+${country}`,
+
+	// Ms. R. Pana / P.O. Box 1925 / HONIARA / SOLOMON ISLANDS.
+	SB: NUMBER_LAST_LOCALITY,
+
+	// Mr. Mohamed Ahmed Ali / Immeuble de la fraternité / Rue Al-Comhouriya /
+	// B.P. 211 / 11111 / KHARTOUM / SUDAN.
+	SD: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode}
+${locality}
+${country}`,
+
+	// Mr. John Kamara / 7A Ross Road Cline / FREETOWN / SIERRA LEONE.
+	SL: NUMBER_FIRST_LOCALITY,
+
+	// The operator's contact block: POST OFFICE BOX 33 / JUBA / SOUTH SUDAN (REP.).
+	SS: NUMBER_LAST_LOCALITY,
+
+	// Sra.
+	// Eugenia Fernandes / RIBEIRA AFONSO / SAO TOME AND PRINCIPE.
+	ST: NUMBER_LAST_LOCALITY,
+
+	// addressee / street + premises (6a AVENIDA NORTE 165) / postcode + locality
+	// (2201 SAN SALVADOR) / country.
+	// The envelope prints the department after the locality: `1120 SOYAPANGO, SAN SALVADOR`.
+	SV: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}, ${region}
+${country}`,
+
+	// addressee / floor, apartment, building / street name and number (`Rue Youssef Al Azamah, no 25`)
+	// / district number and name (06/Saroufa) / 0100 DAMASCUS / SYRIAN ARAB REP.
+	SY: addr`${attention}
+${venue}
+${numberLastCommaStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// Ms HALIME ABDELKADER / BP 4148 / NDJAMENA / CHAD.
+	TD: NUMBER_LAST_LOCALITY,
+
+	// M. Nicolas Ayi Patatu / B.P. 526 / LOME / TOGO.
+	TG: NUMBER_FIRST_COMMA_LOCALITY,
+
+	// addressee / house No. + street name, sub-district / district, province
+	// (Amphoe Tanyaburi, Pathumthani) / postcode (12130) / country.
+	TH: withSoftBreakBefore(
+		addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}, ${region}
+${postcode}
+${country}`,
+		"postcode"
+	),
+
+	// `See New Zealand.`: New Zealand's lines without a postcode, because Tokelau has none.
+	TK: NUMBER_FIRST_LOCALITY,
+
+	// addressee / thoroughfare + no. of thoroughfare (TRAVESSA LAVANDARIA NO.12) / region +
+	// locality + postcode (BAIRO PITE – DILI TL11212) / P.O. box / country.
+	TL: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality} – ${locality} ${postcode}
+${country}`,
+
+	// addressee / street + premise (koche Amyderya, j. 24) / locality / province (LEBAP) / postcode (746150).
+	TM: addr`${attention}
+${venue}
+${numberLastCommaStreet}
+${dependent_locality}
+${locality}
+${region}
+${postcode}
+${country}`,
+
+	// The operator's contact block: Tonga Post / General Post Office / NUKU’ALOFA / TONGA.
+	TO: NUMBER_FIRST_LOCALITY,
+
+	// addressee / sub-locality (Doğanbey Mah.) / street + premise (Şehitteğmenkalmaz Cad. 28/A)
+	// / postcode + locality/province (06101 ULUS/ANKARA) / country.
+	TR: addr`${attention}
+${venue}
+${dependent_locality}
+${numberLastStreet}
+${postcode} ${locality}/${region}
+${country}`,
+
+	// addressee / road name (Te Vao Road) / postcode + locality (TUV150 Vaiaku)
+	// / island name (Funafuti) / country.
+	TV: POSTCODE_LOCALITY_REGION,
+
+	// addressee / premise + street (22 Ally Hassan Mwinyi) / postcode + locality
+	// (14111 MSASANI) / province (DAR ES SALAM) / country.
+	TZ: POSTCODE_LOCALITY_REGION,
+
+	// addressee / street + premises + door (Chaná 1215, apto. 152) / postcode –
+	// locality + province (70200 – ROSARIO, COLONIA) / country.
+	// `The locality is separated from the postcode by a dash`.
+	UY: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} – ${locality}, ${region}
+${country}`,
+
+	// addressee / thoroughfare (HALIFAX STREET) / locality (KINGSTOWN) / postcode (VC0120) / country.
+	VC: withSoftBreakBefore(
+		addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${postcode}
+${country}`,
+		"postcode"
+	),
+
+	// addressee / P.O. Box number / building number + thoroughfare (#10 Road Town)
+	// / post town + postcode (TORTOLA VG1110) / country.
+	VG: LOCALITY_THEN_POSTCODE,
+
+	// The operator's contact block: Vanuatu Post Limited / P.O. Box 43 / PORT VILA / VANUATU.
+	VU: NUMBER_LAST_LOCALITY,
+
+	// addressee / sub-locality (Manono Tai) / locality + postcode (Manono WS1190) / country.
+	WS: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality} ${prefixedSlot("postcode", "WS")}
+${country}`,
+
+	// `See contact address`: Organisme général des postes / B.P. 1993 / SANA'A / YEMEN.
+	YE: NUMBER_FIRST_COMMA_LOCALITY,
+
+	// addressee / premise + street (21 Independence Avenue) / locality + postcode (KITWE 23456) / country.
+	ZM: LOCALITY_THEN_POSTCODE,
 }

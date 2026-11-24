@@ -5,24 +5,16 @@
  * The citation behind each layout `UPU_PAS_ADDRESS_LAYOUTS` renders.
  *
  * Each record cites one country's UPU description and states the reason the table holds the country.
+ * The records the L–Z review of 2026-11-24 added sit in `description-records/l-z.ts`,
+ * which keeps each module under the repository's line ceiling.
  */
 
 // oxlint-disable max-lines -- one record per country, each quoting its description's example lines
 
-import { ConventionSource, type LayoutCitation } from "#address/convention-claims"
-import { upuDescription } from "#address/layouts/citations"
-import { UPUAdmission, type UPUPostalAddressingRecord } from "#address/layouts/upu-pas"
-
-/**
- * A record read from the description `upuDescription` cites, admitted for `admittedBecause`.
- */
-function described(
-	admittedBecause: UPUAdmission,
-	postcodeAt: UPUPostalAddressingRecord["postcode"],
-	citation: LayoutCitation
-): UPUPostalAddressingRecord {
-	return { ...citation, source: ConventionSource.PostalAddressingSystems, admittedBecause, postcode: postcodeAt }
-}
+import { ConventionSource } from "#address/convention-claims"
+import { upuDescription } from "#address/layouts/citations/upu-description"
+import { L_Z_DESCRIPTION_RECORDS } from "#address/layouts/description-records/l-z"
+import { described, UPUAdmission, type UPUPostalAddressingRecord } from "#address/layouts/upu-pas"
 
 const { FormatContradictsOrder, FormatOmitsLocality, NoFormat } = UPUAdmission
 
@@ -967,4 +959,5 @@ export const UPU_PAS_LAYOUT_RECORDS: Readonly<Record<string, UPUPostalAddressing
 			"the block, staircase, floor and apartment after the number (`bl. F5, sc. 2, parter, ap. 23`)",
 		],
 	},
+	...L_Z_DESCRIPTION_RECORDS,
 }

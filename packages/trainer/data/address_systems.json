@@ -216,6 +216,14 @@
 		{
 			"id": 53,
 			"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) postcode locality"
+		},
+		{
+			"id": 54,
+			"key": "dependent_locality po_box (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix unit) locality region postcode"
+		},
+		{
+			"id": 55,
+			"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) postcode locality region"
 		}
 	],
 	"members": [
@@ -892,7 +900,7 @@
 		{
 			"country": "LT",
 			"script": "local",
-			"system": 6
+			"system": 8
 		},
 		{
 			"country": "LU",
@@ -903,6 +911,11 @@
 			"country": "LV",
 			"script": "local",
 			"system": 11
+		},
+		{
+			"country": "LY",
+			"script": "local",
+			"system": 39
 		},
 		{
 			"country": "MA",
@@ -945,9 +958,14 @@
 			"system": 8
 		},
 		{
+			"country": "ML",
+			"script": "local",
+			"system": 39
+		},
+		{
 			"country": "MM",
 			"script": "local",
-			"system": 0
+			"system": 22
 		},
 		{
 			"country": "MN",
@@ -975,6 +993,11 @@
 			"system": 10
 		},
 		{
+			"country": "MR",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "MT",
 			"script": "local",
 			"system": 30
@@ -982,7 +1005,7 @@
 		{
 			"country": "MU",
 			"script": "local",
-			"system": 33
+			"system": 0
 		},
 		{
 			"country": "MV",
@@ -992,7 +1015,7 @@
 		{
 			"country": "MW",
 			"script": "local",
-			"system": 9
+			"system": 1
 		},
 		{
 			"country": "MX",
@@ -1037,7 +1060,7 @@
 		{
 			"country": "NI",
 			"script": "local",
-			"system": 35
+			"system": 6
 		},
 		{
 			"country": "NL",
@@ -1052,12 +1075,17 @@
 		{
 			"country": "NP",
 			"script": "local",
-			"system": 3
+			"system": 0
 		},
 		{
 			"country": "NR",
 			"script": "local",
-			"system": 2
+			"system": 14
+		},
+		{
+			"country": "NU",
+			"script": "local",
+			"system": 0
 		},
 		{
 			"country": "NZ",
@@ -1120,6 +1148,11 @@
 			"system": 0
 		},
 		{
+			"country": "PS",
+			"script": "local",
+			"system": 54
+		},
+		{
 			"country": "PT",
 			"script": "local",
 			"system": 8
@@ -1127,7 +1160,7 @@
 		{
 			"country": "PW",
 			"script": "local",
-			"system": 11
+			"system": 7
 		},
 		{
 			"country": "PY",
@@ -1167,7 +1200,12 @@
 		{
 			"country": "SA",
 			"script": "local",
-			"system": 0
+			"system": 1
+		},
+		{
+			"country": "SB",
+			"script": "local",
+			"system": 39
 		},
 		{
 			"country": "SC",
@@ -1177,7 +1215,7 @@
 		{
 			"country": "SD",
 			"script": "local",
-			"system": 3
+			"system": 8
 		},
 		{
 			"country": "SE",
@@ -1210,6 +1248,11 @@
 			"system": 8
 		},
 		{
+			"country": "SL",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "SM",
 			"script": "local",
 			"system": 8
@@ -1230,9 +1273,24 @@
 			"system": 12
 		},
 		{
+			"country": "SS",
+			"script": "local",
+			"system": 39
+		},
+		{
+			"country": "ST",
+			"script": "local",
+			"system": 39
+		},
+		{
 			"country": "SV",
 			"script": "local",
 			"system": 6
+		},
+		{
+			"country": "SY",
+			"script": "local",
+			"system": 8
 		},
 		{
 			"country": "SZ",
@@ -1250,6 +1308,16 @@
 			"system": 0
 		},
 		{
+			"country": "TD",
+			"script": "local",
+			"system": 39
+		},
+		{
+			"country": "TG",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "TH",
 			"script": "local",
 			"system": 7
@@ -1265,9 +1333,19 @@
 			"system": 8
 		},
 		{
+			"country": "TK",
+			"script": "local",
+			"system": 13
+		},
+		{
+			"country": "TL",
+			"script": "local",
+			"system": 3
+		},
+		{
 			"country": "TM",
 			"script": "local",
-			"system": 1
+			"system": 11
 		},
 		{
 			"country": "TN",
@@ -1275,9 +1353,14 @@
 			"system": 1
 		},
 		{
+			"country": "TO",
+			"script": "local",
+			"system": 13
+		},
+		{
 			"country": "TR",
 			"script": "local",
-			"system": 6
+			"system": 55
 		},
 		{
 			"country": "TT",
@@ -1287,7 +1370,7 @@
 		{
 			"country": "TV",
 			"script": "local",
-			"system": 20
+			"system": 34
 		},
 		{
 			"country": "TW",
@@ -1302,7 +1385,7 @@
 		{
 			"country": "TZ",
 			"script": "local",
-			"system": 1
+			"system": 34
 		},
 		{
 			"country": "UA",
@@ -1365,14 +1448,29 @@
 			"system": 7
 		},
 		{
+			"country": "VU",
+			"script": "local",
+			"system": 39
+		},
+		{
 			"country": "WF",
 			"script": "local",
 			"system": 10
 		},
 		{
+			"country": "WS",
+			"script": "local",
+			"system": 3
+		},
+		{
 			"country": "XK",
 			"script": "local",
 			"system": 1
+		},
+		{
+			"country": "YE",
+			"script": "local",
+			"system": 13
 		},
 		{
 			"country": "YT",
@@ -1387,7 +1485,7 @@
 		{
 			"country": "ZM",
 			"script": "local",
-			"system": 1
+			"system": 0
 		},
 		{
 			"country": "ZW",
