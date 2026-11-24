@@ -17,7 +17,7 @@ import { PathBuilder } from "path-ts"
 
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { adapterRunInputs, runAdapterPhase } from "#build/adapters"
-import { runAlignPhase } from "#build/align"
+import { runAlignPhase, trainSharesOf } from "#build/align"
 import { alignTotalsOf } from "#build/align/totals"
 import { planWorkerBudget } from "#build/budget"
 import { readSourceDecisionTable, readSourceEligibility } from "#build/eligibility"
@@ -164,6 +164,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		licensePolicy,
 		excludeLicenses: settings.excludeLicenses,
 		holdouts,
+		trainShares: trainSharesOf(opts.adapterInputs),
 		eligibility: profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null,
 		labeledPaths,
 		sourceIDPaths,

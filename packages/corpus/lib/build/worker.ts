@@ -21,6 +21,7 @@ import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { LicensePolicy } from "@mailwoman/license/policy"
 import { PathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { alignSettings } from "#build/align"
 import {
@@ -36,7 +37,6 @@ import { mergeAlignTotals, serializeAlignTotals } from "#build/align/totals"
 import type { WorkerResources } from "#build/budget"
 import { loadAdapterFromModule } from "#build/code-hash"
 import { readSourceEligibility } from "#build/eligibility"
-import { streamJSONL } from "#build/rows"
 import {
 	recordFile,
 	SOURCE_RECORD_FILE,
@@ -46,9 +46,16 @@ import {
 import { BuildProfile } from "#build/types"
 import { resolveDerivation, type FileDerivation } from "#parquet/record"
 import { shuffleSplitRows, SPLIT_SHUFFLE_SALT } from "#parquet/shuffle"
-import { writeParquetSplits, type ParquetManifest } from "#parquet/writers"
-import { runAdapter, type AdapterRunManifest } from "#runner"
-import type { AdapterOptions, LabeledRow } from "#types"
+import { decodeStagedRow, writeStagedParquetSplits, type ParquetManifest, type StagedRow } from "#parquet/writers"
+import {
+	mergeAdapterPartitions,
+	runAdapter,
+	runAdapterPartition,
+	type AdapterPartitionRecord,
+	type AdapterRunManifest,
+} from "#runner"
+import { committedRowLicenses } from "#source-register/row-license"
+import type { AdapterOptions } from "#types"
 import { SPLIT_NAMES, sortLines, type CountryHoldout, type SplitName } from "#utils/split"
 
 /**
@@ -61,6 +68,7 @@ export interface AlignTaskSettings {
 	licensePolicy: LicensePolicy
 	excludeLicenses: { source: string; flags: string }[]
 	holdouts: Record<string, CountryHoldout>
+	trainShares: Record<string, number>
 }
 
 interface TaskBase {
@@ -93,6 +101,15 @@ export interface AdapterTask extends TaskBase {
 	 */
 	inputs: string
 	intermediateDir: string
+	/**
+	 * Set for one partition of a partitioned run: the rows to read and the files
+	 * to write them and their record to.
+	 */
+	partition?: { rowRange: { start: number; end: number }; outputPath: string; recordPath: string } | null
+	/**
+	 * Set for the task that merges a partitioned run: each partition's record, in input order.
+	 */
+	mergeRecords?: string[] | null
 }
 
 export interface AlignTask extends TaskBase {
@@ -145,6 +162,7 @@ function alignInputs(settings: AlignTaskSettings) {
 		licensePolicy: settings.licensePolicy,
 		excludeLicenses: compileTaskLicensePatterns(settings),
 		holdouts: settings.holdouts,
+		trainShares: settings.trainShares,
 	}
 }
 
@@ -161,13 +179,46 @@ export function workerModulePath(): string {
 async function runAdapterTask(task: AdapterTask): Promise<void> {
 	const adapter = await loadAdapterFromModule(task.adapterModule, task.source)
 
-	await runAdapter({
+	if (task.partition) {
+		const record = await runAdapterPartition({
+			adapter,
+			adapterOptions: {
+				...task.adapterOptions,
+				rowRange: task.partition.rowRange,
+				duckdb: { memoryLimitBytes: task.resources.duckdbBytes, threads: task.resources.duckdbThreads },
+			},
+			outputPath: task.partition.outputPath,
+		})
+
+		// The record is written last, so a record on disk means its partition file is complete.
+		await writeLocalJSONFile(record, task.partition.recordPath)
+
+		return
+	}
+
+	const options = {
 		adapter,
 		adapterOptions: task.adapterOptions,
 		outputDir: task.intermediateDir,
 		corpusVersion: task.corpusVersion,
 		inputs: task.inputs,
-	})
+	}
+
+	if (task.mergeRecords) {
+		const partitions = await Promise.all(
+			task.mergeRecords.map((path) => readLocalJSONFile<AdapterPartitionRecord>(path))
+		)
+
+		await mergeAdapterPartitions(options, partitions)
+
+		for (const partition of partitions) {
+			await removePathIfPresent(partition.path)
+		}
+
+		return
+	}
+
+	await runAdapter(options)
 }
 
 async function runAlignTask(task: AlignTask): Promise<void> {
@@ -201,9 +252,18 @@ async function finishedPartProblem(manifestPath: PathBuilder): Promise<string | 
 	return null
 }
 
-async function* concatenated<T>(paths: readonly PathBuilder[]): AsyncGenerator<T> {
+/**
+ * The staged rows of one source's files, in order.
+ */
+async function* concatenatedStagedRows(
+	paths: readonly PathBuilder[],
+	source: string,
+	license: string
+): AsyncGenerator<StagedRow> {
 	for (const path of paths) {
-		yield* streamJSONL<T>(path)
+		for await (const line of TextSpliterator.fromAsync(path)) {
+			yield decodeStagedRow(line, source, license)
+		}
 	}
 }
 
@@ -254,12 +314,15 @@ async function runFinishTask(task: FinishTask, report: (message: string) => void
 	report("writing parquet files")
 
 	const derivation = task.derivation
+	// Every row of one source holds its register license id.
+	// The align range stamped that id on each staged line.
+	const license = (await committedRowLicenses()).require(task.source, `worker ${task.id}`)
 
-	const parquet = await writeParquetSplits(
+	const parquet = await writeStagedParquetSplits(
 		Object.fromEntries(
 			SPLIT_NAMES.map((split) => [
 				split,
-				shuffleSplitRows(concatenated<LabeledRow>(files[split].labeled), {
+				shuffleSplitRows(concatenatedStagedRows(files[split].staged, task.source, license), {
 					seed: task.buildSettings.shuffleSeed,
 					salt: SPLIT_SHUFFLE_SALT[split],
 					window: task.buildSettings.shuffleWindow,

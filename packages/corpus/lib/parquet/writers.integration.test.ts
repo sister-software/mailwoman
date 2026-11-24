@@ -242,7 +242,8 @@ describe("writeParquetSplits staging", () => {
 		)
 
 		expect(stagedCounts).toHaveLength(sources.length * maxParts)
-		expect(Math.max(...stagedCounts)).toBeLessThanOrEqual(sources.length)
+		// One open part per source, plus the closed part whose conversion runs while the row loop continues.
+		expect(Math.max(...stagedCounts)).toBeLessThanOrEqual(sources.length + 1)
 		expect(manifest.total_rows).toBe(sources.length * perSource)
 	})
 })

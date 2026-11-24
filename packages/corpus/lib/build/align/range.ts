@@ -24,13 +24,15 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { createUnitSplitter } from "#adapters/street/unit"
-import { alignSettings, createRowAligner, emptyAlignResult, type AlignTally } from "#build/align"
+import { alignSettings, createRowAligner, emptyAlignResult, labeledSourceID, type AlignTally } from "#build/align"
 import { alignTotalsOf, serializeAlignTotals, type AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
 import { createIneligibilityReader } from "#build/eligibility"
 import { tryReadDefaultRegionNames } from "#build/region-names"
 import type { BuildProfile } from "#build/types"
+import { encodeStagedRow, stageRow } from "#parquet/writers"
 import { flushStream, once } from "#runner"
+import { committedRowLicenses } from "#source-register/row-license"
 import type { CanonicalRow } from "#types"
 import { SPLIT_NAMES, type CountryHoldout, type SplitName } from "#utils/split"
 
@@ -56,11 +58,14 @@ export interface AlignRangePlan {
 
 /**
  * The files one range's task writes, by name.
+ *
+ * `staged-<split>.txt` holds each labeled row as {@linkcode encodeStagedRow} writes it, so the finish
+ * worker shuffles and writes the parquet staging lines without parsing a row or serializing it again.
  */
 export const ALIGN_RANGE_OUTPUTS = [
-	"labeled-train.jsonl",
-	"labeled-val.jsonl",
-	"labeled-test.jsonl",
+	"staged-train.txt",
+	"staged-val.txt",
+	"staged-test.txt",
 	"quarantine.jsonl",
 	"source-ids-train.txt",
 	"source-ids-val.txt",
@@ -169,6 +174,7 @@ export interface AlignRangeOptions {
 	licensePolicy: LicensePolicy
 	excludeLicenses: readonly RegExp[]
 	holdouts: Record<string, CountryHoldout>
+	trainShares?: Readonly<Record<string, number>>
 	eligibility: ReadonlyMap<string, readonly string[]> | null
 }
 
@@ -215,6 +221,7 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 
 	const ineligibility = createIneligibilityReader(opts.eligibility)
 	const licenses = createLicenseVerdictCache(opts.licensePolicy, opts.excludeLicenses)
+	const rowLicenses = await committedRowLicenses()
 	const result = emptyAlignResult(licenses, ineligibility.refused)
 
 	const tally: AlignTally = {
@@ -242,6 +249,7 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 	const alignOne = createRowAligner({
 		synthesize: opts.synthesize,
 		holdouts: opts.holdouts,
+		trainShares: opts.trainShares,
 		licenses,
 		ineligibility,
 		units: await createUnitSplitter(),
@@ -249,8 +257,10 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 		result,
 		tally,
 		sinks: {
-			labeled: (split: SplitName, line, sourceID) => {
-				write(`labeled-${split}.jsonl`, line)
+			labeled: (split: SplitName, row) => {
+				write(`staged-${split}.txt`, encodeStagedRow(stageRow(row, rowLicenses, "align range")))
+
+				const sourceID = labeledSourceID(row)
 
 				if (sourceID != null) {
 					write(`source-ids-${split}.txt`, `${sourceID}\n`)
@@ -291,19 +301,19 @@ export async function runAlignRange(opts: AlignRangeOptions): Promise<AlignRange
 }
 
 /**
- * Each split's labeled files and source-id lists across a source's ranges, in range order.
+ * Each split's staged-row files and source-id lists across a source's ranges, in range order.
  */
 export function alignRangeSplitFiles(
 	sourceDir: PathBuilderLike,
 	plans: readonly AlignRangePlan[]
-): Record<SplitName, { labeled: PathBuilder[]; sourceIDs: PathBuilder[] }> {
+): Record<SplitName, { staged: PathBuilder[]; sourceIDs: PathBuilder[] }> {
 	return Object.fromEntries(
 		SPLIT_NAMES.map((split) => [
 			split,
 			{
-				labeled: plans.map((plan) => alignRangeDirectory(sourceDir, plan)(`labeled-${split}.jsonl`)),
+				staged: plans.map((plan) => alignRangeDirectory(sourceDir, plan)(`staged-${split}.txt`)),
 				sourceIDs: plans.map((plan) => alignRangeDirectory(sourceDir, plan)(`source-ids-${split}.txt`)),
 			},
 		])
-	) as Record<SplitName, { labeled: PathBuilder[]; sourceIDs: PathBuilder[] }>
+	) as Record<SplitName, { staged: PathBuilder[]; sourceIDs: PathBuilder[] }>
 }

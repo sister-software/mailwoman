@@ -9,7 +9,14 @@ import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { FingerprintSet } from "#fingerprints"
-import { DedupStore, runAdapter, type RunnerProgress } from "#runner"
+import {
+	DedupStore,
+	mergeAdapterPartitions,
+	runAdapter,
+	runAdapterPartition,
+	type AdapterRunManifest,
+	type RunnerProgress,
+} from "#runner"
 import { readCanonicalRows } from "#test-kit"
 import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -608,5 +615,81 @@ describe("FingerprintSet", () => {
 	it("sizes its allocation from the slot count, outside the V8 heap", () => {
 		expect(new FingerprintSet(10).bytes).toBe(2 ** 10 * 16)
 		expect(new FingerprintSet(10).slots).toBe(1024)
+	})
+})
+
+describe("mergeAdapterPartitions", () => {
+	it("writes the canonical bytes and manifest of one unpartitioned run when duplicates and drops span partitions", async () => {
+		const row = (index: number): CanonicalRow => ({
+			// Rows 2 and 5 repeat row 0's address, so the duplicates sit in later partitions than their first copy.
+			raw: index % 3 === 2 && index < 6 ? "1 Rue de Rivoli, Paris" : `${index} Rue de Rivoli, Paris`,
+			components: { house_number: index % 3 === 2 && index < 6 ? "1" : String(index), street: "Rue de Rivoli" },
+			country: "FR",
+			source: "parts",
+			source_id: `parts-${index}`,
+			license: "CC0-1.0",
+		})
+
+		const rows = Array.from({ length: 10 }, (_, index) => row(index))
+
+		const adapter: CorpusAdapter = {
+			...makeAdapter({ id: "parts", rows }),
+			async inputRowCount() {
+				return rows.length
+			},
+			async *rows(opts) {
+				const { start, end } = opts.rowRange ?? { start: 0, end: rows.length }
+
+				for (const [index, each] of rows.entries()) {
+					if (index < start || index >= end) continue
+
+					// A dropped record between rows, counted under two reasons that first appear in different partitions.
+					opts.dropped?.set(
+						index < 4 ? "row:early" : "row:late",
+						(opts.dropped.get(index < 4 ? "row:early" : "row:late") ?? 0) + 1
+					)
+
+					yield each
+				}
+			},
+		}
+
+		const whole = await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path("whole"),
+			corpusVersion: "0.1.0",
+		})
+
+		const partitions = await Promise.all(
+			[
+				{ start: 0, end: 4 },
+				{ start: 4, end: 7 },
+				{ start: 7, end: 10 },
+			].map((rowRange, index) =>
+				runAdapterPartition({
+					adapter,
+					adapterOptions: { inputPath: "ignored", rowRange },
+					outputPath: scratch.path(`part-${index}.tsv`),
+				})
+			)
+		)
+
+		const merged = await mergeAdapterPartitions(
+			{ adapter, adapterOptions: { inputPath: "ignored" }, outputDir: scratch.path("merged"), corpusVersion: "0.1.0" },
+			partitions
+		)
+
+		const comparable = ({
+			jsonl_path: _path,
+			started_at: _s,
+			ended_at: _e,
+			elapsed_ms: _ms,
+			...rest
+		}: AdapterRunManifest) => rest
+
+		expect(whole.deduped).toBe(2)
+		expect(comparable(merged)).toEqual(comparable(whole))
+		await expect(readLocalTextFile(merged.jsonl_path)).resolves.toBe(await readLocalTextFile(whole.jsonl_path))
 	})
 })

@@ -10,8 +10,9 @@
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/values/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { canonicalDedupKey } from "#adapters/dedup-key"
 import type { AdapterRegistry } from "#adapters/registry"
@@ -207,11 +208,144 @@ export interface AdapterRunManifest {
  * Drive a single adapter to completion, writing its jsonl and manifest under `outputDir/<adapter.id>/`.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
-	const { adapter, outputDir, corpusVersion } = opts
 	// A caller that passes its own map reads the counts back from it.
 	// Otherwise the runner supplies one, so every manifest records the adapter's drop reasons.
 	const dropped = opts.adapterOptions.dropped ?? new Map<string, number>()
 	const adapterOptions: AdapterOptions = { ...opts.adapterOptions, dropped }
+
+	return writeAdapterRun(
+		opts,
+		emittedLines(opts.adapter, adapterOptions, opts.sourceName),
+		dropped,
+		adapterOptions.signal
+	)
+}
+
+/**
+ * One emitted row as the run loop reads it: its dedup key and its canonical JSONL line.
+ */
+interface EmittedLine {
+	key: string
+	line: string
+}
+
+/**
+ * The adapter's rows, each held to its own id and stamped with the runner's fields.
+ */
+async function* emittedLines(
+	adapter: CorpusAdapter,
+	adapterOptions: AdapterOptions,
+	sourceName: string | undefined
+): AsyncGenerator<EmittedLine> {
+	for await (const row of adapter.rows(adapterOptions)) {
+		if (adapterOptions.signal?.aborted) {
+			throw new DOMException("Adapter run aborted by signal", "AbortError")
+		}
+
+		assertEmittedRow(adapter, row)
+
+		const stamped: CanonicalRow = {
+			...row,
+			// The rename is the runner's, after `assertEmittedRow` has held the adapter to emitting its own id.
+			source: sourceName ?? row.source,
+			addressRole: row.addressRole ?? adapter.addressRole,
+			// `register` is nullable and null is a statement rather than an absence,
+			// so only an undefined field takes the adapter's declaration.
+			register: row.register || adapter.register,
+			surface: row.surface ?? adapter.surface,
+		}
+
+		yield { key: canonicalDedupKey(stamped), line: `${stringifyJSON(stamped)}\n` }
+	}
+}
+
+/**
+ * Run one partition of an adapter's input, the rows `adapterOptions.rowRange` selects, into `outputPath`.
+ *
+ * Each line holds a row's dedup key as a JSON string, a tab, and its canonical line.
+ * The partition writes every row it reads. {@linkcode mergeAdapterPartitions} reads
+ * every partition in input order and deduplicates across them.
+ *
+ * The merged run therefore writes the bytes one unpartitioned run writes.
+ */
+export async function runAdapterPartition(opts: {
+	adapter: CorpusAdapter
+	adapterOptions: AdapterOptions
+	sourceName?: string
+	outputPath: PathBuilderLike
+}): Promise<AdapterPartitionRecord> {
+	const dropped = new Map<string, number>()
+	const adapterOptions: AdapterOptions = { ...opts.adapterOptions, dropped }
+	const stream = openWriteStream(opts.outputPath, { encoding: "utf8" })
+	let yielded = 0
+
+	try {
+		for await (const { key, line } of emittedLines(opts.adapter, adapterOptions, opts.sourceName)) {
+			yielded++
+
+			// JSON escapes a tab inside the key, so the first tab ends it.
+			if (!stream.write(`${stringifyJSON(key)}\t${line}`)) {
+				await once(stream, "drain")
+			}
+		}
+	} finally {
+		stream.end()
+		await once(stream, "close")
+	}
+
+	adapterOptions.signal?.throwIfAborted()
+
+	return { path: opts.outputPath.toString(), yielded, dropped: [...dropped] }
+}
+
+/**
+ * What one partition of an adapter run wrote.
+ */
+export interface AdapterPartitionRecord {
+	path: string
+	yielded: number
+	dropped: [string, number][]
+}
+
+/**
+ * Merge an adapter's partitions, in input order, into the canonical file
+ * and manifest one unpartitioned run writes.
+ */
+export async function mergeAdapterPartitions(
+	opts: RunAdapterOptions,
+	partitions: readonly AdapterPartitionRecord[]
+): Promise<AdapterRunManifest> {
+	const dropped = new Map<string, number>()
+
+	for (const partition of partitions) {
+		for (const [reason, count] of partition.dropped) {
+			dropped.set(reason, (dropped.get(reason) ?? 0) + count)
+		}
+	}
+
+	async function* lines(): AsyncGenerator<EmittedLine> {
+		for (const partition of partitions) {
+			for await (const text of TextSpliterator.fromAsync(partition.path)) {
+				const tab = text.indexOf("\t")
+
+				yield { key: parseJSONStrict<string>(text.slice(0, tab)), line: `${text.slice(tab + 1)}\n` }
+			}
+		}
+	}
+
+	return writeAdapterRun(opts, lines(), dropped, opts.adapterOptions.signal)
+}
+
+/**
+ * Deduplicate emitted lines into `<outputDir>/<adapter.id>/canonical.jsonl` and write the run's manifest.
+ */
+async function writeAdapterRun(
+	opts: RunAdapterOptions,
+	emitted: AsyncIterable<EmittedLine>,
+	dropped: ReadonlyMap<string, number>,
+	signal: AbortSignal | undefined
+): Promise<AdapterRunManifest> {
+	const { adapter, outputDir, corpusVersion } = opts
 	const progressEvery = opts.progressEvery ?? 1000
 
 	const adapterDir = resolvePathBuilder(outputDir, adapter.id)
@@ -252,26 +386,12 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	}
 
 	try {
-		for await (const row of adapter.rows(adapterOptions)) {
-			if (adapterOptions.signal?.aborted) {
+		for await (const { key, line } of emitted) {
+			if (signal?.aborted) {
 				throw new DOMException("Adapter run aborted by signal", "AbortError")
 			}
 
 			yielded++
-			assertEmittedRow(adapter, row)
-
-			const stamped: CanonicalRow = {
-				...row,
-				// The rename is the runner's, after `assertEmittedRow` has held the adapter to emitting its own id.
-				source: opts.sourceName ?? row.source,
-				addressRole: row.addressRole ?? adapter.addressRole,
-				// `register` is nullable and null is a statement rather than an absence,
-				// so only an undefined field takes the adapter's declaration.
-				register: row.register || adapter.register,
-				surface: row.surface ?? adapter.surface,
-			}
-
-			const key = canonicalDedupKey(stamped)
 
 			if (fingerprints) {
 				// The table holds every key the run has seen, so a duplicate is refused wherever it arrives.
@@ -313,7 +433,6 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				}
 			}
 
-			const line = `${stringifyJSON(stamped)}\n`
 			hasher.update(line)
 			bytes += Buffer.byteLength(line, "utf8")
 
@@ -334,7 +453,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 	// Every adapter honors `signal` by returning instead, so without this a truncated
 	// `canonical.jsonl` would be recorded as a finished run.
-	adapterOptions.signal?.throwIfAborted()
+	signal?.throwIfAborted()
 
 	const endedAt = new Date()
 	const elapsed_ms = performance.now() - t0

@@ -73,6 +73,15 @@ export interface ParquetRowStreamOptions {
 	 */
 	where?: string
 	/**
+	 * Read DuckDB's `file_row_number`, each row's position in its file,
+	 * and yield it as a `file_row_number` field.
+	 *
+	 * `where` may then select a range of positions.
+	 * DuckDB skips the row groups outside such a range, so reading the last million rows
+	 * of a 99-million-row file costs what reading the first million does.
+	 */
+	fileRowNumber?: boolean
+	/**
 	 * A DuckDB `ORDER BY` expression, interpolated as written.
 	 *
 	 * Without one, rows arrive in file order.
@@ -106,15 +115,21 @@ export async function* openParquetRowStream<T>(
 	path: PathBuilderLike | readonly PathBuilderLike[],
 	options: ParquetRowStreamOptions = {}
 ): AsyncGenerator<T> {
-	const { columns, limit, where, orderBy, limits } = options
+	const { columns, limit, where, orderBy, limits, fileRowNumber } = options
 	// Disposed when this generator finishes or a consumer abandons it,
 	// since `for await` calls `.return()` on break.
 	using db = await openDuckDB(limits)
-	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
+	const projected = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
+	const projection = fileRowNumber && columns?.length ? `${projected}, file_row_number` : projected
 	const limitClause = typeof limit !== "number" ? "" : ` LIMIT ${validateRowLimit(limit)}`
 	const whereClause = where ? ` WHERE ${where}` : ""
 	const orderClause = orderBy ? ` ORDER BY ${orderBy}` : ""
-	const sql = `SELECT ${projection} FROM ${readParquetSQL(path)}${whereClause}${orderClause}${limitClause}`
+
+	const source = fileRowNumber
+		? readParquetSQL(path).replace(/\)$/u, ", file_row_number = true)")
+		: readParquetSQL(path)
+
+	const sql = `SELECT ${projection} FROM ${source}${whereClause}${orderClause}${limitClause}`
 
 	try {
 		const stream = await db.stream(sql)

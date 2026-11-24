@@ -42,6 +42,10 @@ export interface AlignSettings {
 	exclude_licenses: readonly string[]
 	profile: string
 	holdout_digest: string
+	/**
+	 * Each capped source's `trainShare`, present only when one is capped.
+	 */
+	train_shares?: Record<string, number>
 }
 
 /**
@@ -87,6 +91,11 @@ export interface AlignCheckpoint {
 	 * rather than restarting it at zero and understating the refusal in its manifest.
 	 */
 	refused_by_source: Record<string, number>
+	/**
+	 * Training rows each source's `trainShare` left out.
+	 * A checkpoint written before the share existed has none.
+	 */
+	train_rows_left_out_by_source?: Record<string, number>
 	excluded_by_license: number
 	admitted_unresolved_license_rows: number
 	excluded_by_eligibility: number

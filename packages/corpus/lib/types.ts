@@ -388,6 +388,34 @@ export interface AdapterOptions {
 	sample?: RowSample | null
 
 	/**
+	 * The share of the source's training rows a build keeps, from 0 to 1, or no value to keep them all.
+	 *
+	 * Align applies it after each row's split is decided, so validation and test keep every row.
+	 * A training row is kept when a salted hash of its record id falls under the share,
+	 * so every variant of a kept record stays.
+	 * The adapter ignores it.
+	 */
+	trainShare?: number | null
+
+	/**
+	 * The input rows to read, by position in the input file from `start` up to `end`,
+	 * for an adapter that declares {@linkcode CorpusAdapter.inputRowCount}.
+	 *
+	 * A parallel build runs one partition of a large input per range and merges them in order,
+	 * so a row's output must depend only on the row: its id comes from its own fields
+	 * or its position in the file, never from a count of the rows before it.
+	 */
+	rowRange?: { start: number; end: number } | null
+
+	/**
+	 * Limits for the DuckDB instance an adapter reading parquet opens, set by a parallel
+	 * build's partition worker so several partitions fit the host at once.
+	 *
+	 * An adapter without DuckDB ignores it, and it changes no row.
+	 */
+	duckdb?: { memoryLimitBytes: number; threads: number } | null
+
+	/**
 	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
@@ -535,4 +563,13 @@ export interface CorpusAdapter {
 	 * They mustn't mutate rows already yielded.
 	 */
 	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
+
+	/**
+	 * The number of rows in the input `opts.inputPath` names, for an adapter that
+	 * reads {@linkcode AdapterOptions.rowRange}.
+	 *
+	 * Its presence declares that the adapter can read its input in row ranges,
+	 * so a parallel build may split a large input across workers.
+	 */
+	inputRowCount?(opts: AdapterOptions): Promise<number>
 }

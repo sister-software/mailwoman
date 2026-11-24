@@ -158,6 +158,12 @@ export const spec = {
 				"With --resume and --jobs above 1: comma-separated sources whose finished work is discarded and built " +
 				"again, while every other finished source is reused",
 		},
+		"reuse-from": {
+			type: "string",
+			description:
+				"With --jobs above 1: comma-separated earlier build --out directories. A source whose finished files there " +
+				"match this build's input, code, data files and settings is cloned instead of built",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -249,6 +255,16 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			throw new CommandError("--fresh-sources applies to a parallel build resumed with --resume and --jobs above 1.")
 		}
 
+		if (options.reuseFrom && jobs <= 1) {
+			throw new CommandError("--reuse-from applies to a parallel build with --jobs above 1.")
+		}
+
+		const commaList = (value: string): string[] =>
+			value
+				.split(",")
+				.map((entry) => entry.trim())
+				.filter((entry) => entry.length > 0)
+
 		const m = await buildCorpus({
 			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
@@ -265,12 +281,8 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			priorOutput: options.resume ? PriorOutput.Resume : options.fresh ? PriorOutput.Fresh : PriorOutput.Refuse,
 			jobs,
 			alignRangeBytes: options.alignRangeMib ? options.alignRangeMib * 1024 ** 2 : undefined,
-			freshSources: options.freshSources
-				? options.freshSources
-						.split(",")
-						.map((source) => source.trim())
-						.filter((source) => source.length > 0)
-				: undefined,
+			freshSources: options.freshSources ? commaList(options.freshSources) : undefined,
+			reuseFrom: options.reuseFrom ? commaList(options.reuseFrom) : undefined,
 			onProgress: progress.report,
 		})
 

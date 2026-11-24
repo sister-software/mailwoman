@@ -36,13 +36,14 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { adapterRunInputs, reusableRun } from "#build/adapters"
-import { alignSettings } from "#build/align"
+import { alignSettings, trainSharesOf } from "#build/align"
 import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align/range"
 import { mergeAlignTotals } from "#build/align/totals"
 import { WORKER_CLASSES, workerReservationBytes, type WorkerBudget, type WorkerClass } from "#build/budget"
 import { readSourceDecisionTable } from "#build/eligibility"
 import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
+import { importPriorSource } from "#build/reuse"
 import { adapterDerivations, derivationConfig, type ResolvedBuildSettings } from "#build/settings"
 import {
 	readReusableSource,
@@ -57,7 +58,7 @@ import { corpusDirectoryName } from "#directory"
 import { resolveDerivation } from "#parquet/record"
 import { parquetManifestOf } from "#parquet/writers"
 import type { SourceRightsAdmission } from "#source-register/corpus-inputs"
-import type { CorpusAdapter } from "#types"
+import type { AdapterOptions, CorpusAdapter } from "#types"
 import { defaultHoldouts, SPLIT_NAMES, writeSplitManifestsFromLabeledFiles, type SplitName } from "#utils/split"
 
 /**
@@ -332,6 +333,38 @@ export function alignRangeCount(bytes: number, rangeBytes: number, jobs: number)
 }
 
 /**
+ * Input rows per adapter partition.
+ *
+ * NAD's adapter reads about 14,700 rows a second on one core, so a partition
+ * of this size runs in about 11 minutes.
+ */
+export const PARTITION_ROWS = 10_000_000
+
+/**
+ * The row ranges a source's adapter run is split into, or `null` to run it in one worker.
+ *
+ * A source splits when its adapter declares `inputRowCount`, no `limit` caps the run,
+ * and its input holds more than one partition's rows.
+ * A capped run stops at a count of the rows before it, and a partition can't know that count.
+ */
+export async function partitionRanges(
+	adapter: CorpusAdapter,
+	options: AdapterOptions,
+	partitionRows: number
+): Promise<{ start: number; end: number }[] | null> {
+	if (!adapter.inputRowCount || typeof options.limit === "number") return null
+
+	const rows = await adapter.inputRowCount(options)
+
+	if (rows <= partitionRows) return null
+
+	return Array.from({ length: Math.ceil(rows / partitionRows) }, (_, index) => ({
+		start: index * partitionRows,
+		end: Math.min(rows, (index + 1) * partitionRows),
+	}))
+}
+
+/**
  * Concatenate files in order into `destination`.
  *
  * One pipeline reads every source in order and writes the one write stream.
@@ -378,6 +411,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		licensePolicy: settings.licensePolicy,
 		excludeLicenses: settings.excludeLicenses.map((pattern) => ({ source: pattern.source, flags: pattern.flags })),
 		holdouts,
+		trainShares: trainSharesOf(opts.adapterInputs),
 	}
 
 	const buildSettings: SourceBuildSettings = {
@@ -445,6 +479,26 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 			onProgress("adapter-run", `[${source}] not complete: ${reusable.problem}`)
 		}
 
+		for (const priorOutputDir of opts.reuseFrom ?? []) {
+			const imported = await importPriorSource({
+				source,
+				priorOutputDir,
+				outputDir,
+				expected: { settings: buildSettings, derivation: await resolveDerivation(await sourceDerivation()) },
+			})
+
+			if (imported.record) {
+				onProgress(
+					"adapter-run",
+					`[${source}] cloned the complete source from ${priorOutputDir.toString()} (${imported.record.parts.length} parts)`
+				)
+
+				return imported.record
+			}
+
+			onProgress("adapter-run", `[${source}] not reusable from ${priorOutputDir.toString()}: ${imported.problem}`)
+		}
+
 		const inputStat = await tryStat(options.inputPath)
 		// A directory input's size doesn't predict its rows, so it is ranked first and starts early.
 		const inputWeight = inputStat?.isFile() ? inputStat.size : Number.MAX_SAFE_INTEGER
@@ -460,22 +514,67 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		} else {
 			const { signal: _signal, dropped: _dropped, ...serializable } = options
 
-			await pool.run(
-				{
-					kind: "adapter",
-					id: `${source}/adapter`,
-					source,
-					resources: WORKER_CLASSES.standard,
-					temporaryRoot: temporaryRoot("adapter"),
-					adapterModule: derivationFor.modules.get(source)!,
-					adapterOptions: { ...serializable, inputPath: options.inputPath.toString() },
-					corpusVersion: opts.corpusVersion,
-					inputs,
-					intermediateDir: intermediateDir.toString(),
-				},
-				"standard",
-				inputWeight
-			)
+			const adapterTask = {
+				kind: "adapter" as const,
+				source,
+				adapterModule: derivationFor.modules.get(source)!,
+				adapterOptions: { ...serializable, inputPath: options.inputPath.toString() },
+				corpusVersion: opts.corpusVersion,
+				inputs,
+				intermediateDir: intermediateDir.toString(),
+			}
+
+			const ranges = await partitionRanges(adapter, options, opts.partitionRows ?? PARTITION_ROWS)
+
+			if (ranges) {
+				const partitionDir = adapterDir("partitions")
+
+				await removePathIfPresent(partitionDir)
+				await makeDirectories(partitionDir)
+
+				const records = await Promise.all(
+					ranges.map(async (rowRange, index) => {
+						const recordPath = partitionDir(`part-${index}.json`).toString()
+
+						await pool.run(
+							{
+								...adapterTask,
+								id: `${source}/adapter-${index + 1}-of-${ranges.length}`,
+								resources: WORKER_CLASSES.partition,
+								temporaryRoot: temporaryRoot(`adapter-${index}`),
+								partition: { rowRange, outputPath: partitionDir(`part-${index}.tsv`).toString(), recordPath },
+							},
+							"partition",
+							inputWeight
+						)
+
+						return recordPath
+					})
+				)
+
+				await pool.run(
+					{
+						...adapterTask,
+						id: `${source}/adapter-merge`,
+						resources: WORKER_CLASSES.adapter,
+						temporaryRoot: temporaryRoot("adapter"),
+						mergeRecords: records,
+					},
+					"adapter",
+					inputWeight
+				)
+			} else {
+				await pool.run(
+					{
+						...adapterTask,
+						id: `${source}/adapter`,
+						resources: WORKER_CLASSES.adapter,
+						temporaryRoot: temporaryRoot("adapter"),
+					},
+					"adapter",
+					inputWeight
+				)
+			}
 
 			run = await readLocalJSONFile(adapterDir("MANIFEST.json"))
 		}
@@ -497,14 +596,14 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 						kind: "align",
 						id: `${source}/align-${plan.index + 1}-of-${plan.count}`,
 						source,
-						resources: WORKER_CLASSES.standard,
+						resources: WORKER_CLASSES.align,
 						temporaryRoot: temporaryRoot(`align-${plan.index}`),
 						canonicalPath,
 						plan,
 						sourceDir: sourceDir.toString(),
 						settings: taskSettings,
 					},
-					"standard",
+					"align",
 					weight
 				)
 			})
@@ -515,7 +614,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 				kind: "finish",
 				id: `${source}/finish`,
 				source,
-				resources: WORKER_CLASSES.standard,
+				resources: WORKER_CLASSES.finish,
 				temporaryRoot: temporaryRoot("finish"),
 				sourceDir: sourceDir.toString(),
 				outputDir: outputDir.toString(),
@@ -526,7 +625,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 				derivation: await sourceDerivation(),
 				resume: settings.resume,
 			},
-			"standard",
+			"finish",
 			weight
 		)
 

@@ -1,18 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
-import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { recordIDOf } from "#adapters/record-id"
-import { useScratchDir } from "#test-kit"
+import { NAD_FIXTURE, useScratchDir, writeNADReleaseParquet } from "#test-kit"
 import type { CanonicalRow } from "#types"
 import {
 	createUsgovNADAdapter,
-	NAD_RECORD_COLUMNS,
 	nadAddressComponents,
 	nadUnitText,
 	normalizeNADRecord,
@@ -20,39 +16,17 @@ import {
 	USGOV_NAD_ADAPTER_ID,
 	USGOV_NAD_DEFAULT_LICENSE,
 } from "#us/adapters/usgov/nad/adapter"
-import { convertNADToParquet } from "#us/tools/fetch/nad/parquet"
 
-const FIXTURE = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures", "fixture.ndjson")
+const FIXTURE = NAD_FIXTURE
 
 const scratch = useScratchDir("usgov-nad")
 
-/**
- * Writes `records` as release text with every column the adapter reads,
- * and converts it the way the fetcher does.
- */
-async function writeReleaseParquet(records: ReadonlyArray<Record<string, unknown>>): Promise<PathBuilder> {
-	const cell = (value: unknown) => {
-		const text = value == null ? "" : String(value)
-
-		return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text
-	}
-
-	const lines = [
-		NAD_RECORD_COLUMNS.join(","),
-		...records.map((record) => NAD_RECORD_COLUMNS.map((column) => cell(record[column])).join(",")),
-	]
-
-	const textPath = scratch.path("NAD_test.txt")
-	const parquetPath = scratch.path("NAD_test.parquet")
-
-	await writeLocalTextFile(`${lines.join("\n")}\n`, textPath)
-	await convertNADToParquet({ textPath, parquetPath, sourceSHA256: "test", member: "NAD_test.txt" })
-
-	return parquetPath
+function writeReleaseParquet(records: ReadonlyArray<Record<string, unknown>>): Promise<PathBuilder> {
+	return writeNADReleaseParquet(scratch.path, records)
 }
 
-async function fixtureParquet(): Promise<PathBuilder> {
-	return writeReleaseParquet(await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(FIXTURE)))
+function fixtureParquet(): Promise<PathBuilder> {
+	return writeNADReleaseParquet(scratch.path)
 }
 
 async function collect(
@@ -282,6 +256,23 @@ describe("usgov-nad adapter", () => {
 		expect(recordIDs.size).toBe(records.length)
 		expect(byNumber("6804")!.source_id).toMatch(/^usgov-nad-79461b5e-7d9f-4fb2-baad-310a014e4bda-[0-9a-f]{12}$/u)
 		expect(byNumber("10")!.source_id).toMatch(/^usgov-nad-1-[0-9a-f]{12}$/u)
+	})
+
+	it("yields, across consecutive row ranges, the rows of one full read in the same order", async () => {
+		const adapter = createUsgovNADAdapter()
+		const parquetPath = await fixtureParquet()
+		const rows = await adapter.inputRowCount!({ inputPath: parquetPath })
+		const full = await collect(adapter, {}, parquetPath)
+		const ranged: CanonicalRow[] = []
+
+		for (let start = 0; start < rows; start += 3) {
+			for await (const row of adapter.rows({ inputPath: parquetPath, rowRange: { start, end: start + 3 } })) {
+				ranged.push(row)
+			}
+		}
+
+		expect(rows).toBeGreaterThan(6)
+		expect(ranged).toEqual(full)
 	})
 
 	it("honors opts.limit (soft cap)", async () => {

@@ -27,6 +27,7 @@ export interface AlignTotals extends AlignTally {
 	licenseCounts: Map<string, number>
 	refusedByKind: Map<LicenseRefusalKind, number>
 	refusedBySource: Map<string, number>
+	trainRowsLeftOutBySource: Map<string, number>
 	rowsBySource: Map<string, { rows: number; license: string }>
 	ineligibleSources: Map<string, readonly string[]>
 	/**
@@ -50,6 +51,10 @@ export interface AlignTotalsRecord {
 	license_counts: [string, number][]
 	refused_by_kind: [LicenseRefusalKind, number][]
 	refused_by_source: [string, number][]
+	/**
+	 * Absent from a record written before `trainShare` existed.
+	 */
+	train_rows_left_out_by_source?: [string, number][]
 	rows_by_source: [string, { rows: number; license: string }][]
 	ineligible_sources: [string, readonly string[]][]
 	refused_license_values: [string, LicenseRefusalKind][]
@@ -71,6 +76,7 @@ export function alignTotalsOf(result: AlignPhaseResult): AlignTotals {
 		licenseCounts: result.licenseCounts,
 		refusedByKind: result.refusedByKind,
 		refusedBySource: result.refusedBySource,
+		trainRowsLeftOutBySource: result.trainRowsLeftOutBySource,
 		rowsBySource: result.rowsBySource,
 		ineligibleSources: result.ineligibleSources,
 		refusedValues: result.licenses.refusedValues(),
@@ -90,6 +96,7 @@ export function serializeAlignTotals(totals: AlignTotals): AlignTotalsRecord {
 		license_counts: [...totals.licenseCounts],
 		refused_by_kind: [...totals.refusedByKind],
 		refused_by_source: [...totals.refusedBySource],
+		train_rows_left_out_by_source: [...totals.trainRowsLeftOutBySource],
 		rows_by_source: [...totals.rowsBySource],
 		ineligible_sources: [...totals.ineligibleSources],
 		refused_license_values: [...totals.refusedValues],
@@ -132,6 +139,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		licenseCounts: new Map(),
 		refusedByKind: new Map(),
 		refusedBySource: new Map(),
+		trainRowsLeftOutBySource: new Map(),
 		rowsBySource: new Map(),
 		ineligibleSources: new Map(),
 		refusedValues: new Map(),
@@ -153,6 +161,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		addCounts(totals.licenseCounts, record.license_counts)
 		addCounts(totals.refusedByKind, record.refused_by_kind)
 		addCounts(totals.refusedBySource, record.refused_by_source)
+		addCounts(totals.trainRowsLeftOutBySource, record.train_rows_left_out_by_source ?? [])
 
 		for (const [source, contributed] of record.rows_by_source) {
 			const before = totals.rowsBySource.get(source)

@@ -67,6 +67,10 @@ export interface BuildInputRecord {
 	 * The seed of the {@linkcode BuildInputRecord.countryFraction} draw.
 	 */
 	seed?: number
+	/**
+	 * The share of the source's training rows the build keeps (`AdapterOptions.trainShare`).
+	 */
+	trainShare?: number
 }
 
 /**

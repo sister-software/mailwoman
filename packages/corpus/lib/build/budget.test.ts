@@ -4,18 +4,27 @@
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import { describe, expect, it } from "vitest"
 
-import { defaultBuildJobs, HOST_RESERVE_BYTES, workerReservationBytes } from "#build/budget"
+import { defaultBuildJobs, HOST_RESERVE_BYTES, planWorkerBudget, workerReservationBytes } from "#build/budget"
 
 describe("defaultBuildJobs", () => {
-	const standard = workerReservationBytes("standard")
+	const adapter = workerReservationBytes("adapter")
+	const align = workerReservationBytes("align")
 
-	it("builds serially when fewer than two standard workers fit", () => {
-		expect(defaultBuildJobs({ hostMemoryBytes: HOST_RESERVE_BYTES + standard })).toBe(1)
+	it("builds serially when only one adapter worker fits", () => {
+		expect(defaultBuildJobs({ hostMemoryBytes: HOST_RESERVE_BYTES + adapter })).toBe(1)
 	})
 
-	it("runs as many workers as memory holds, capped at the CPU count", () => {
-		const jobs = defaultBuildJobs({ hostMemoryBytes: HOST_RESERVE_BYTES + 2 * standard })
+	it("fills the memory beside one adapter worker with align workers, capped at the CPU count", () => {
+		const jobs = defaultBuildJobs({ hostMemoryBytes: HOST_RESERVE_BYTES + adapter + 3 * align })
 
-		expect(jobs).toBe(availableParallelism() >= 2 ? 2 : 1)
+		expect(jobs).toBe(Math.min(availableParallelism(), 4))
+	})
+})
+
+describe("planWorkerBudget", () => {
+	it("refuses a host that holds no adapter worker", () => {
+		expect(() =>
+			planWorkerBudget({ jobs: 2, hostMemoryBytes: HOST_RESERVE_BYTES + workerReservationBytes("adapter") / 2 })
+		).toThrow(/No parallel build fits this host/u)
 	})
 })

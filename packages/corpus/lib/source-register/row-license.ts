@@ -184,10 +184,20 @@ let committed: Promise<RowLicenses> | null = null
  * It reads both files without auditing them, because the audit runs where a build admits its sources.
  */
 export function committedRowLicenses(): Promise<RowLicenses> {
+	const inputs = committedRowLicenseInputs()
+
 	committed ??= Promise.all([
-		readLocalJSONFile<AddressSourceRegister>(addressSourceRegisterPath()),
-		readLocalJSONFile<CorpusSourceInputsFile>(corpusSourceInputsPath()),
+		readLocalJSONFile<AddressSourceRegister>(inputs.register),
+		readLocalJSONFile<CorpusSourceInputsFile>(inputs.corpusSourceInputs),
 	]).then(([register, file]) => createRowLicenses(register, indexCorpusSourceInputs(file)))
 
 	return committed
+}
+
+/**
+ * The two committed files {@linkcode committedRowLicenses} reads, so a build
+ * can fingerprint the license ids it stamped.
+ */
+export function committedRowLicenseInputs(): { register: string; corpusSourceInputs: string } {
+	return { register: addressSourceRegisterPath().toString(), corpusSourceInputs: corpusSourceInputsPath().toString() }
 }

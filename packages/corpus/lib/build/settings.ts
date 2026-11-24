@@ -9,14 +9,17 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { canonicalJSON } from "@mailwoman/core/values/json"
 import { LicensePolicy } from "@mailwoman/license/policy"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
+import { defaultRegionNameInputs } from "#build/region-names"
 import { BuildProfile, PriorOutput, type BuildCorpusOptions } from "#build/types"
 import { extractFingerprint, type FileDerivation, inputCheckouts } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
 import { DEFAULT_SHUFFLE_SEED, DEFAULT_SHUFFLE_WINDOW } from "#parquet/shuffle"
+import { committedRowLicenseInputs } from "#source-register/row-license"
 import type { AdapterOptions, CorpusAdapter } from "#types"
 import type { CountryHoldout } from "#utils/split"
 
@@ -77,12 +80,60 @@ export function derivationConfig(
  * row keeps its ancestor's `source`, and the runner deduplicates within one adapter's run.
  * A source's files therefore read only that adapter's input.
  *
+ * A street index enters as its file's fingerprint, because a rebuilt index at the
+ * same path changes how the unit splitter reads a street.
+ *
  * `outputDir` is left out: it locates an adapter's side state and doesn't change a row.
+ * A partition's `rowRange` and `duckdb` limits are left out because a partitioned
+ * run writes the bytes of one unpartitioned run.
+ *
+ * `trainShare` is left out because align applies it after the adapter,
+ * so the adapter run stays reusable when it changes.
+ * It enters the source's parquet derivation instead.
  */
 export async function adapterExtractHash(options: AdapterOptions): Promise<string> {
-	const { inputPath, outputDir: _outputDir, ...rest } = options
+	const {
+		inputPath,
+		outputDir: _outputDir,
+		trainShare: _trainShare,
+		rowRange: _rowRange,
+		duckdb: _duckdb,
+		streetIndex,
+		...rest
+	} = options
 
-	return sha256Hex(canonicalJSON({ ...rest, input: await extractFingerprint(inputPath) }))
+	return sha256Hex(
+		canonicalJSON({
+			...rest,
+			...(streetIndex ? { streetIndex: await extractFingerprint(streetIndex) } : {}),
+			input: await extractFingerprint(inputPath),
+		})
+	)
+}
+
+/**
+ * The fingerprint of each data file the align phase reads, keyed by its role.
+ *
+ * The code hash follows module imports and so misses a file read at run time.
+ * A rebuilt WOF admin database or an edited license table changes aligned rows,
+ * so each one enters every source's derivation.
+ *
+ * An absent database records `absent`, because align then reads no region names.
+ */
+export async function alignDataFingerprints(): Promise<Record<string, string>> {
+	const regions = defaultRegionNameInputs()
+	const licenses = committedRowLicenseInputs()
+
+	const fingerprintOf = async (path: string): Promise<string> =>
+		(await pathExists(path)) ? extractFingerprint(path) : "absent"
+
+	return {
+		regionDatabase: await fingerprintOf(regions.database),
+		geonames: await fingerprintOf(regions.geonamesDirectory),
+		secondLevelRegions: await fingerprintOf(regions.secondLevelTable),
+		sourceRegister: await fingerprintOf(licenses.register),
+		corpusSourceInputs: await fingerprintOf(licenses.corpusSourceInputs),
+	}
 }
 
 /**
@@ -108,6 +159,7 @@ export async function adapterDerivations(
 	)
 
 	const derived = new Map<string, Promise<FileDerivation>>()
+	const alignData = alignDataFingerprints()
 
 	return Object.assign(derivationOf, { modules })
 
@@ -132,7 +184,11 @@ export async function adapterDerivations(
 		return {
 			extractHash: await adapterExtractHash(options),
 			codeHash,
-			config,
+			config: {
+				...config,
+				alignData: await alignData,
+				...(typeof options.trainShare === "number" ? { trainShare: options.trainShare } : {}),
+			},
 			...(await inputCheckouts(options.inputPath)),
 		}
 	}

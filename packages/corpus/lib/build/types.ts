@@ -223,6 +223,22 @@ export interface BuildCorpusOptions {
 	freshSources?: readonly string[]
 
 	/**
+	 * Input rows per adapter partition when `jobs` is above `1`, for an adapter that declares `inputRowCount`.
+	 *
+	 * @defaultValue `PARTITION_ROWS`
+	 */
+	partitionRows?: number
+
+	/**
+	 * Earlier builds' output directories, searched in order for each source a
+	 * parallel build would otherwise build.
+	 *
+	 * A source whose `SOURCE_COMPLETE.json` there matches this build's derivation and settings, apart
+	 * from the corpus and builder versions, is cloned into this build instead of built (`#build/reuse`).
+	 */
+	reuseFrom?: readonly PathBuilderLike[]
+
+	/**
 	 * Cancels a parallel build: the coordinator stops its workers, keeps every finished
 	 * source's record for a later `--resume`, releases the output lock and rejects.
 	 */
@@ -316,6 +332,12 @@ export interface BuildCorpusManifest {
 	 * provenance may be absent from model provenance, and this field is where the difference reads.
 	 */
 	refused_rows_by_source: Record<string, number>
+	/**
+	 * Training rows each source's `trainShare` left out, so a reader can tell
+	 * a capped source from a small one.
+	 * Validation and test rows are never left out.
+	 */
+	train_rows_left_out_by_source: Record<string, number>
 	/**
 	 * Admitted rows whose license resolves to no SPDX expression.
 	 * Their obligations are unknown rather than empty.

@@ -598,12 +598,24 @@ async function readSecondLevelRegionCountries(): Promise<string[]> {
  * @throws When the database is on this host and the GeoNames first-level file isn't.
  */
 export async function tryReadDefaultRegionNames(): Promise<RegionNames | null> {
-	const path = wofDatabasePath("admin-global-priority.db")
+	const inputs = defaultRegionNameInputs()
 
-	if (!(await pathExists(path))) return null
+	if (!(await pathExists(inputs.database))) return null
 
-	return readRegionNames(path, {
+	return readRegionNames(inputs.database, {
 		secondLevelCountries: await readSecondLevelRegionCountries(),
-		geonamesDirectory: dataRootPath("geonames"),
+		geonamesDirectory: inputs.geonamesDirectory,
 	})
+}
+
+/**
+ * The files {@linkcode tryReadDefaultRegionNames} reads, so a build can
+ * fingerprint what its align phase read.
+ */
+export function defaultRegionNameInputs(): { database: string; geonamesDirectory: string; secondLevelTable: string } {
+	return {
+		database: wofDatabasePath("admin-global-priority.db").toString(),
+		geonamesDirectory: dataRootPath("geonames").toString(),
+		secondLevelTable: SECOND_LEVEL_REGION_TABLE_PATH.toString(),
+	}
 }

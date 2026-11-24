@@ -25,7 +25,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import type { UnitSplitter } from "@mailwoman/corpus/adapters/street/unit"
-import { type AlignTally, createRowAligner, emptyAlignResult } from "@mailwoman/corpus/build/align"
+import { type AlignTally, createRowAligner, emptyAlignResult, labeledLine } from "@mailwoman/corpus/build/align"
 import { createIneligibilityReader } from "@mailwoman/corpus/build/eligibility"
 import type { RegionNames } from "@mailwoman/corpus/build/region-names"
 import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
@@ -159,7 +159,7 @@ export async function writeUnreadRows(input: {
 		regions: input.regions,
 		result,
 		tally,
-		sinks: { labeled: (_split, line) => labeled.write(line), quarantine: (line) => quarantine.write(line) },
+		sinks: { labeled: (_split, row) => labeled.write(labeledLine(row)), quarantine: (line) => quarantine.write(line) },
 	})
 
 	for (const options of input.adapterOptions) {

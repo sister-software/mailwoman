@@ -12,6 +12,7 @@ import { isPresent } from "@mailwoman/core/values/objects"
 import type { PathBuilderLike } from "path-ts"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
+import { countParquetRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
@@ -36,6 +37,10 @@ export const NAD_PLACEHOLDER_UUID = /^0{8}-0{4}-0{4}-0{4}-0{12}$/u
  * The release's text file is read with every column as text.
  */
 export interface NADRecord {
+	/**
+	 * The row's position in the release file, read by {@linkcode readNADRecords}.
+	 */
+	file_row_number?: number | bigint | null
 	OID_?: string | null
 	UUID?: string | null
 	AddNum_Pre?: string | null
@@ -175,16 +180,32 @@ export function normalizeNADRecord(record: NADRecord): NADRecord {
  * Streams the NAD records of one release Parquet file in file order,
  * each passed through {@linkcode normalizeNADRecord}.
  *
+ * Each record holds its `file_row_number`.
+ *
  * @param where A DuckDB condition rows must satisfy, built with `escapeSQLString` for every literal.
+ * @param rowRange The positions to read, from `start` up to `end`.
  * @throws When the file lacks a column of {@link NAD_RECORD_COLUMNS}.
  */
 export async function* readNADRecords(
 	parquetPath: PathBuilderLike,
-	options: { where?: string } = {}
+	options: {
+		where?: string
+		rowRange?: { start: number; end: number } | null
+		limits?: { memoryLimitBytes: number; threads: number } | null
+	} = {}
 ): AsyncGenerator<NADRecord> {
+	const conditions = [
+		options.where,
+		options.rowRange
+			? `file_row_number >= ${Math.trunc(options.rowRange.start)} AND file_row_number < ${Math.trunc(options.rowRange.end)}`
+			: null,
+	].filter(isPresent)
+
 	const rows = openParquetRowStream<NADRecord>(parquetPath, {
 		columns: NAD_RECORD_COLUMNS,
-		...(options.where ? { where: options.where } : {}),
+		fileRowNumber: true,
+		...(options.limits ? { limits: options.limits } : {}),
+		...(conditions.length ? { where: conditions.map((condition) => `(${condition})`).join(" AND ") } : {}),
 	})
 
 	for await (const row of rows) {
@@ -428,6 +449,10 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 		description:
 			"US DOT National Address Database — ~97M structured US address points (911-grade). Single largest US source.",
 
+		async inputRowCount(opts: AdapterOptions): Promise<number> {
+			return countParquetRows(opts.inputPath)
+		},
+
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
@@ -436,7 +461,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 
 			// The row stream closes its DuckDB connection when the loop exits early.
-			for await (const record of readNADRecords(opts.inputPath)) {
+			for await (const record of readNADRecords(opts.inputPath, { rowRange: opts.rowRange, limits: opts.duckdb })) {
 				if (opts.signal?.aborted) break
 
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
@@ -459,9 +484,12 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				// and 82 addresses share the all-zero placeholder UUID (#2894).
 				// The id therefore adds a digest of the rendered address to the UUID.
 				// Two points of one address stay one record, and two addresses under one UUID become two.
+				// A row with neither falls back to its position in the file, so a partition
+				// reading a row range writes the id an unpartitioned run writes.
+				// Release r24 has no such row in 99,226,272.
 				const key = record.UUID && !NAD_PLACEHOLDER_UUID.test(record.UUID) ? record.UUID : record.OID_
 
-				const sourceID = `${USGOV_NAD_ADAPTER_ID}-${key ?? `row${emitted}`}-${rawTextDiscriminator(raw)}`
+				const sourceID = `${USGOV_NAD_ADAPTER_ID}-${key ?? `row${Number(record.file_row_number)}`}-${rawTextDiscriminator(raw)}`
 
 				yield {
 					raw,

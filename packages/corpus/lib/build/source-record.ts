@@ -74,6 +74,11 @@ export interface SourceCompletionRecord {
 	quarantine: RecordedFile[]
 	totals: AlignTotalsRecord
 	completed_at: string
+	/**
+	 * The earlier build's output directory the source's files were cloned from,
+	 * when `--reuse-from` imported it.
+	 */
+	reusedFrom?: string
 }
 
 /**
@@ -112,21 +117,34 @@ async function fileProblem(file: RecordedFile): Promise<string | null> {
  * Why a source's completion record cannot be reused, or `null` with the record when it can.
  *
  * Every listed file is re-hashed, so a reused source is one whose bytes were read back in this build.
+ *
+ * `acrossBuilds` compares a record from another build's output directory.
+ * It leaves out the corpus version, because no row holds it.
+ *
+ * It also leaves out the builder version: that moves at each release,
+ * and the code hash already covers the code.
  */
 export async function readReusableSource(
 	sourceDir: PathBuilderLike,
-	expected: { settings: SourceBuildSettings; derivation: DerivationInputs }
+	expected: { settings: SourceBuildSettings; derivation: DerivationInputs },
+	opts: { acrossBuilds?: boolean } = {}
 ): Promise<{ record: SourceCompletionRecord; problem: null } | { record: null; problem: string }> {
 	const path = PathBuilder.from(sourceDir)(SOURCE_RECORD_FILE)
 	const record = await tryReadLocalJSONFile<SourceCompletionRecord>(path).catch(() => null)
 
 	if (!record) return { record: null, problem: `${path.toString()} is absent or unreadable` }
 
-	if (canonicalJSON(record.settings) !== canonicalJSON(expected.settings)) {
+	const settingsOf = (settings: SourceBuildSettings): unknown =>
+		opts.acrossBuilds ? { ...settings, align: { ...settings.align, corpus_version: null } } : settings
+
+	const derivationOf = (derivation: DerivationInputs): unknown =>
+		opts.acrossBuilds ? { ...derivation, builderVersion: null } : derivation
+
+	if (canonicalJSON(settingsOf(record.settings)) !== canonicalJSON(settingsOf(expected.settings))) {
 		return { record: null, problem: `${path.toString()} was written under other build settings` }
 	}
 
-	if (canonicalJSON(record.derivation) !== canonicalJSON(expected.derivation)) {
+	if (canonicalJSON(derivationOf(record.derivation)) !== canonicalJSON(derivationOf(expected.derivation))) {
 		return { record: null, problem: `${path.toString()} was written from another input, code or config` }
 	}
 

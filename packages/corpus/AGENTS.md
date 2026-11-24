@@ -141,7 +141,9 @@ precedent for the country append.
 
 A base corpus build,
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
-takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
+took about 11.5 hours for roughly 680 M rows at `--jobs 3` before the worker classes below. Most of that
+time went to the align fan-out, about 6.75 rows per NAD base row, and to the single-process sort and
+parquet write of NAD's 607 M aligned rows, rather than to the adapter. The committed `inputs.json` records each adapter and its
 input path relative to `$MAILWOMAN_DATA_ROOT`, or to `$MAILWOMAN_CACHE_ROOT` when the entry states
 `"root": "cache"`, as a current source under `sources/` does. A record from before the storage classes
 identifies no root and keeps the paths it recorded. Budget a day, run the build in the background with
@@ -150,7 +152,7 @@ change end to end. `wof-admin` and `wof-postalcode` read the WOF record store
 (`@mailwoman/gazetteer/whosonfirst/record-store`), which the first run builds from the GeoJSON clones and
 later runs refresh one repository at a time. Over the lab's full clone set on 2026-11-14, a full
 `wof-admin` run peaked at 1,862 MiB and a full `wof-postalcode` run at 636 MiB, by kernel `maxRSS`. Both
-fit the standard worker. A first run leaves `canonical.jsonl` empty while the store is built, about
+fit the adapter worker. A first run leaves `canonical.jsonl` empty while the store is built, about
 40 minutes over the 121 GB of clones, and isn't hung.
 
 A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
@@ -170,11 +172,30 @@ digest existed records none and is refused the same way.
 
 `--jobs K` above 1 runs each source's adapter, align and parquet work in worker processes
 (`lib/build/parallel.ts`) and writes the same parquet, split and manifest bytes as `--jobs 1`; only
-the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root, and
-`planWorkerBudget` in `lib/build/budget.ts` refuses a K whose workers do not fit in host memory.
+the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root.
+`WORKER_CLASSES` in `lib/build/budget.ts` reserves memory per task kind: 8 GiB for an adapter or finish
+worker, 4 GiB for an adapter partition and 2 GiB for an align range. `planWorkerBudget` refuses a K
+whose workers don't fit beside one adapter worker, and the default K on a 31 GiB host is 10.
+
+An adapter that declares `inputRowCount` reads its input in row ranges. NAD does. Under `--jobs` above 1,
+a run of more than `PARTITION_ROWS` input rows is split into partitions that run at once. One worker
+then merges them in input order and deduplicates across them, writing the bytes of one run. A
+`limit` keeps the run whole.
+
 A source is reused under `--resume` only through its `intermediate/sources/<id>/SOURCE_COMPLETE.json`,
-re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources only. A parallel build
-writes no top-level `labeled-*.jsonl`: each source's labeled rows stay under its own state directory.
+re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources only.
+`--reuse-from <earlier --out>[,…]` clones a finished source from an earlier build at any corpus version
+when its derivation and settings match. Clones on btrfs share the earlier files' blocks. The match
+covers the adapter's input and options (a street index by its contents), the code the source reaches,
+and the fingerprints of the data files align reads (`alignDataFingerprints` in `lib/build/settings.ts`).
+It leaves out the corpus and builder versions, because no row holds either.
+
+`trainShare` on an adapter's `inputs.json` entry keeps that share of the source's training rows. A
+training row is kept when a salted hash of its record id falls under the share. Validation and test
+keep every row, so the frozen evaluation rows are unaffected, and the manifest's
+`train_rows_left_out_by_source` counts what the share left out. The share enters the source's parquet
+derivation and leaves its adapter run reusable. A parallel build writes no top-level
+`labeled-*.jsonl`: each source's rows stay under its own state directory, staged in their parquet form.
 A lock directory, `.corpus-build.lock` under `--out`, refuses a second build of the same output in
 either mode.
 

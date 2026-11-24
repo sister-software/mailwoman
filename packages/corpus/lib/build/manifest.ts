@@ -116,6 +116,7 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 		refused_by_license_kind: Object.fromEntries(totals.refusedByKind),
 		refused_license_values: Object.fromEntries(refusedValues),
 		refused_rows_by_source: Object.fromEntries(totals.refusedBySource),
+		train_rows_left_out_by_source: Object.fromEntries(totals.trainRowsLeftOutBySource),
 		admitted_unresolved_license_rows: totals.admittedUnresolved,
 		profile: inputs.profile,
 		excluded_by_eligibility: totals.excludedByEligibility,

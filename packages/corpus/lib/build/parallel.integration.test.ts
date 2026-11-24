@@ -25,7 +25,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { buildCorpus, PriorOutput, type BuildCorpusOptions } from "#build"
 import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align/range"
-import { planWorkerBudget, workerReservationBytes } from "#build/budget"
+import { planWorkerBudget, WORKER_CLASSES, workerReservationBytes, type WorkerClass } from "#build/budget"
 import { acquireBuildLock, BUILD_LOCK_DIRECTORY } from "#build/lock"
 import { concatenateFiles } from "#build/parallel"
 import { sourceStateDirectory, SOURCE_RECORD_FILE, type SourceCompletionRecord } from "#build/source-record"
@@ -33,7 +33,9 @@ import { SOURCE_PARQUET_MANIFEST_FILE } from "#build/worker"
 import { banAdapter } from "#fr/adapters/ban/adapter"
 import { readParquetRecord } from "#parquet/record"
 import type { ParquetManifest } from "#parquet/writers"
+import { writeNADReleaseParquet } from "#test-kit"
 import { usgovHrsaFqhcAdapter } from "#us/adapters/usgov/hrsa-fqhc/adapter"
+import { usgovNADAdapter } from "#us/adapters/usgov/nad/adapter"
 
 const GiB = 1024 ** 3
 
@@ -73,7 +75,7 @@ const baseOptions = (outputDir: PathBuilder, extra: Partial<BuildCorpusOptions> 
 	// Small enough that every source writes several parts in train and the shuffle window spans parts.
 	rowsPerFile: 7,
 	shuffleWindow: 5,
-	// Leaves room for three standard workers whatever the test host's memory.
+	// Leaves room for three adapter workers whatever the test host's memory.
 	hostMemoryBytes: 64 * GiB,
 	...extra,
 })
@@ -179,9 +181,9 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		expect(record.derivation.codeHash).toMatch(/^[0-9a-f]{64}$/u)
 		expect(record.sourceIDs.train.bytes).toBeGreaterThan(0)
 
-		const runs = await readLocalJSONFile<{ task: string; heapLimitBytes: number; maxRSSBytes: number }[]>(
-			outDir("intermediate", "workers", "WORKERS.json")
-		)
+		const runs = await readLocalJSONFile<
+			{ task: string; workerClass: WorkerClass; heapLimitBytes: number; maxRSSBytes: number }[]
+		>(outDir("intermediate", "workers", "WORKERS.json"))
 
 		expect(runs.map((run) => run.task).toSorted()).toEqual(
 			["ban", "usgov-hrsa-fqhc", "wof-admin"]
@@ -190,7 +192,11 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		)
 
 		// Each worker ran under the ceiling it was given rather than the parent's.
-		expect(runs.every((run) => run.heapLimitBytes >= 6 * GiB)).toBe(true)
+		expect(runs.map((run) => run.workerClass).toSorted()).toEqual(
+			["adapter", "align", "finish"].flatMap((workerClass) => [workerClass, workerClass, workerClass])
+		)
+
+		expect(runs.every((run) => run.heapLimitBytes >= WORKER_CLASSES[run.workerClass].heapBytes)).toBe(true)
 		expect(runs.every((run) => run.maxRSSBytes > 0)).toBe(true)
 	})
 
@@ -375,6 +381,95 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
+	it("keeps every validation and test row under a train share and counts the training rows it leaves out", async () => {
+		const outDir = scratch.path("train-share")
+
+		const capped = Object.fromEntries(
+			Object.entries(fixtureInputs()).map(([source, options]) => [source, { ...options, trainShare: 0.5 }])
+		)
+
+		await buildCorpus(baseOptions(outDir, { jobs: 2, adapterInputs: capped }))
+
+		const filesOf = async (dir: PathBuilder) =>
+			(await readLocalJSONFile<ParquetManifest>(dir("corpus-v0.1.0", "MANIFEST.json"))).files
+
+		const shaBySplit = (files: ParquetManifest["files"], split: string) =>
+			files.filter((file) => file.split === split).map((file) => `${file.source} ${file.sha256}`)
+
+		const rowsIn = (files: ParquetManifest["files"], split: string) =>
+			files.filter((file) => file.split === split).reduce((sum, file) => sum + file.rows, 0)
+
+		const full = await filesOf(scratch.path("serial"))
+		const kept = await filesOf(outDir)
+
+		expect(rowsIn(full, "val") + rowsIn(full, "test")).toBeGreaterThan(0)
+		expect(shaBySplit(kept, "val")).toEqual(shaBySplit(full, "val"))
+		expect(shaBySplit(kept, "test")).toEqual(shaBySplit(full, "test"))
+
+		const leftOut = Object.values(
+			(await readLocalJSONFile<{ train_rows_left_out_by_source: Record<string, number> }>(outDir("MANIFEST.json")))
+				.train_rows_left_out_by_source
+		).reduce((sum, count) => sum + count, 0)
+
+		expect(leftOut).toBeGreaterThan(0)
+		expect(rowsIn(kept, "train") + leftOut).toBe(rowsIn(full, "train"))
+	})
+
+	it("clones every source from an earlier build at another corpus version and writes its parquet bytes", async () => {
+		const earlier = scratch.path("reuse-earlier")
+		const later = scratch.path("reuse-later")
+
+		await buildCorpus(baseOptions(earlier, { jobs: 2 }))
+		await buildCorpus(baseOptions(later, { jobs: 2, corpusVersion: "0.2.0", reuseFrom: [earlier] }))
+
+		for (const source of ["ban", "usgov-hrsa-fqhc", "wof-admin"]) {
+			const record = await readLocalJSONFile<SourceCompletionRecord>(
+				sourceStateDirectory(later("intermediate"), source)(SOURCE_RECORD_FILE)
+			)
+
+			expect(record.reusedFrom, source).toBe(earlier.toString())
+		}
+
+		const parts = async (dir: PathBuilder, version: string) =>
+			(await readLocalJSONFile<ParquetManifest>(dir(`corpus-v${version}`, "MANIFEST.json"))).files.map(
+				(file) => `${file.path.replace(dir.toString(), "<out>")} ${file.sha256} ${file.rows}`
+			)
+
+		await expect(parts(later, "0.2.0")).resolves.toEqual(await parts(earlier, "0.1.0"))
+	})
+
+	it("splits an adapter run into row-range partitions and writes the serial build's canonical and parquet bytes", async () => {
+		const nadInput = await writeNADReleaseParquet(scratch.path)
+
+		const nadOptions = (outDir: PathBuilder, extra: Partial<BuildCorpusOptions>) =>
+			baseOptions(outDir, {
+				adapters: [usgovNADAdapter],
+				adapterInputs: { "usgov-nad": { inputPath: nadInput } },
+				...extra,
+			})
+
+		const serialDir = scratch.path("nad-serial")
+		const partitionedDir = scratch.path("nad-partitioned")
+
+		await buildCorpus(nadOptions(serialDir, {}))
+		await buildCorpus(nadOptions(partitionedDir, { jobs: 2, partitionRows: 3 }))
+
+		const runs = await readLocalJSONFile<{ task: string }[]>(partitionedDir("intermediate", "workers", "WORKERS.json"))
+
+		expect(runs.filter((run) => /^usgov-nad\/adapter-\d+-of-\d+$/u.test(run.task)).length).toBeGreaterThan(1)
+
+		await expect(sha256File(partitionedDir("intermediate", "usgov-nad", "canonical.jsonl"))).resolves.toBe(
+			await sha256File(serialDir("intermediate", "usgov-nad", "canonical.jsonl"))
+		)
+
+		const parts = async (dir: PathBuilder) =>
+			(await readLocalJSONFile<ParquetManifest>(dir("corpus-v0.1.0", "MANIFEST.json"))).files.map(
+				(file) => `${file.path.replace(dir.toString(), "<out>")} ${file.sha256}`
+			)
+
+		await expect(parts(partitionedDir)).resolves.toEqual(await parts(serialDir))
+	})
+
 	it("refuses a second build into an output directory a live build holds, and takes over a dead one's lock", async () => {
 		const outDir = scratch.path("locked")
 
@@ -440,7 +535,8 @@ describe("parallel build concatenation", () => {
 
 describe("parallel build budget", () => {
 	it("refuses a job count whose workers do not fit and names the count that does", () => {
-		const host = 4.5 * GiB + 2.5 * workerReservationBytes("standard")
+		// One adapter worker and one and a half align workers.
+		const host = 4.5 * GiB + workerReservationBytes("adapter") + 1.5 * workerReservationBytes("align")
 
 		expect(() => planWorkerBudget({ jobs: 3, hostMemoryBytes: host })).toThrow(/--jobs 3 needs .*--jobs 2 fits\./su)
 
@@ -450,7 +546,7 @@ describe("parallel build budget", () => {
 	it("refuses through buildCorpus before any work begins", async () => {
 		await using dir = await temporaryDirectory("mailwoman-parallel-budget-")
 
-		await expect(buildCorpus(baseOptions(dir.path("out"), { jobs: 4, hostMemoryBytes: 16 * GiB }))).rejects.toThrow(
+		await expect(buildCorpus(baseOptions(dir.path("out"), { jobs: 4, hostMemoryBytes: 12 * GiB }))).rejects.toThrow(
 			/corpus build refused: --jobs 4 needs/u
 		)
 

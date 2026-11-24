@@ -10,6 +10,7 @@
 import {
 	appendFile,
 	chmod,
+	constants,
 	copyFile,
 	cp,
 	mkdir,
@@ -380,6 +381,22 @@ export async function copyFileTo(source: PathBuilderLike, destination: PathBuild
 	await rm(target, { force: true })
 
 	return copyFile(source.toString(), target)
+}
+
+/**
+ * Copies one file as {@linkcode copyFileTo} does, sharing the source's blocks where the filesystem can.
+ *
+ * On btrfs and XFS the copy is a clone.
+ * A clone writes metadata only, so a multi-gigabyte copy finishes at once.
+ * On a filesystem without clones the bytes are copied.
+ */
+export async function cloneFileTo(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
+	const target = destination.toString()
+
+	await mkdir(dirname(target), { recursive: true })
+	await rm(target, { force: true })
+
+	return copyFile(source.toString(), target, constants.COPYFILE_FICLONE)
 }
 
 /**

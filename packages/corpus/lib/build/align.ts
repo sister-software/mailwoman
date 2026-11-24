@@ -21,6 +21,7 @@ import {
 } from "@mailwoman/license/policy"
 import type { PathBuilder } from "path-ts"
 
+import { recordIDOf } from "#adapters/record-id"
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import {
 	ALIGN_OUTPUTS,
@@ -43,10 +44,10 @@ import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
 import { flushStream, once, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
-import type { CanonicalRow } from "#types"
+import type { AdapterOptions, CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
 import type { SplitRetention } from "#utils/retention"
-import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
+import { hashBucket, SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
 
 export interface AlignPhaseOptions {
 	/**
@@ -60,6 +61,11 @@ export interface AlignPhaseOptions {
 	licensePolicy: LicensePolicy
 	excludeLicenses: readonly RegExp[]
 	holdouts: Record<string, CountryHoldout>
+
+	/**
+	 * Each capped source's `trainShare`, from {@linkcode trainSharesOf}.
+	 */
+	trainShares?: Readonly<Record<string, number>>
 
 	/**
 	 * The retention table applied to every aligned row, when one was registered
@@ -111,6 +117,11 @@ export interface AlignPhaseResult {
 	 * and one present in model provenance.
 	 */
 	refusedBySource: Map<string, number>
+	/**
+	 * Training rows each source's `trainShare` left out.
+	 * Validation and test rows are never left out.
+	 */
+	trainRowsLeftOutBySource: Map<string, number>
 	excludedByLicense: number
 	admittedUnresolved: number
 	excludedByEligibility: number
@@ -186,6 +197,10 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 		result.refusedByKind.set(kind as LicenseRefusalKind, count)
 	}
 
+	for (const [source, count] of Object.entries(checkpoint.train_rows_left_out_by_source ?? {})) {
+		result.trainRowsLeftOutBySource.set(source, count)
+	}
+
 	for (const [source, count] of Object.entries(checkpoint.refused_by_source)) {
 		result.refusedBySource.set(source, count)
 	}
@@ -223,13 +238,18 @@ function restoreTally(checkpoint: AlignCheckpoint, result: AlignPhaseResult): Al
 
 /**
  * The settings an align checkpoint or completion record is written under.
+ *
+ * `train_shares` is present only when a source is capped, so a build without
+ * one writes the settings it always has.
  */
 export function alignSettings(
 	opts: Pick<
 		AlignPhaseOptions,
-		"corpusVersion" | "synthesize" | "licensePolicy" | "excludeLicenses" | "profile" | "holdouts"
+		"corpusVersion" | "synthesize" | "licensePolicy" | "excludeLicenses" | "profile" | "holdouts" | "trainShares"
 	>
 ): AlignSettings {
+	const shares = Object.entries(opts.trainShares ?? {}).toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+
 	return {
 		corpus_version: opts.corpusVersion,
 		synthesize: opts.synthesize,
@@ -237,7 +257,59 @@ export function alignSettings(
 		exclude_licenses: opts.excludeLicenses.map((pattern) => pattern.source).toSorted(),
 		profile: opts.profile,
 		holdout_digest: sha256Hex(stringifyJSON(opts.holdouts)),
+		...(shares.length ? { train_shares: Object.fromEntries(shares) } : {}),
 	}
+}
+
+/**
+ * The salt that separates the `trainShare` draw from the hash that sends a
+ * held-out record to validation or test.
+ */
+const TRAIN_SHARE_SALT = "train-share"
+
+/**
+ * Hash buckets the `trainShare` draw resolves a share to: one per million.
+ */
+const TRAIN_SHARE_BUCKETS = 1_000_000
+
+/**
+ * Whether a training row whose source keeps `share` of its training rows is kept.
+ *
+ * The draw reads the row's record id, so every variant synthesized from one
+ * record is kept or left out together.
+ */
+export function keepsTrainRow(sourceID: string, share: number): boolean {
+	if (share >= 1) return true
+
+	return hashBucket(`${TRAIN_SHARE_SALT}|${recordIDOf(sourceID)}`, TRAIN_SHARE_BUCKETS) < share * TRAIN_SHARE_BUCKETS
+}
+
+/**
+ * Each configured source's `trainShare`, for the align phase.
+ */
+export function trainSharesOf(adapterInputs: Readonly<Record<string, AdapterOptions>>): Record<string, number> {
+	return Object.fromEntries(
+		Object.entries(adapterInputs).flatMap(([source, options]) =>
+			typeof options.trainShare === "number" ? [[source, options.trainShare]] : []
+		)
+	)
+}
+
+/**
+ * One labeled row as a line of a labeled JSONL file.
+ */
+export function labeledLine(row: LabeledRow): string {
+	return `${stringifyJSON(row)}\n`
+}
+
+/**
+ * The `source_id` a labeled row contributes to its split's id list, or `null` when it has none.
+ *
+ * The split phase once parsed every labeled row back for its `source_id`.
+ * The same guard it applied keeps the list identical to what that parse produced.
+ */
+export function labeledSourceID(row: LabeledRow): string | null {
+	return typeof row.source_id === "string" ? row.source_id : null
 }
 
 /**
@@ -245,9 +317,12 @@ export function alignSettings(
  */
 export interface RowAlignerSinks {
 	/**
-	 * One labeled JSONL line for `split`, with the row's `source_id`, or `null` when the row has none.
+	 * One labeled row for `split`.
+	 *
+	 * A sink that writes labeled JSONL calls {@linkcode labeledLine} and {@linkcode labeledSourceID}.
+	 * A parallel build's align range stages the row for its parquet part instead.
 	 */
-	labeled: (split: SplitName, line: string, sourceID: string | null) => void
+	labeled: (split: SplitName, row: LabeledRow) => void
 	/**
 	 * One quarantine JSONL line.
 	 */
@@ -262,6 +337,10 @@ export interface RowAlignerOptions {
 	 * (HOLDOUT_AND_EVALUATION section 5.1).
 	 */
 	retention?: SplitRetention
+	/**
+	 * Each capped source's `trainShare` (`AdapterOptions.trainShare`).
+	 */
+	trainShares?: Readonly<Record<string, number>>
 	licenses: LicenseVerdictCache
 	ineligibility: ReturnType<typeof createIneligibilityReader>
 	/**
@@ -397,14 +476,18 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 
 			if (aligned.kind === "labeled") {
 				const split = splitForRow(aligned.row, opts.holdouts, undefined, opts.retention)
+				const share = opts.trainShares?.[aligned.row.source]
 
-				// The split phase used to parse every labeled row back for its `source_id`.
-				// The same guard it applied keeps the list identical to what that parse produced.
-				sinks.labeled(
-					split,
-					`${stringifyJSON(aligned.row)}\n`,
-					typeof aligned.row.source_id === "string" ? aligned.row.source_id : null
-				)
+				if (split === "train" && typeof share === "number" && !keepsTrainRow(aligned.row.source_id, share)) {
+					result.trainRowsLeftOutBySource.set(
+						aligned.row.source,
+						(result.trainRowsLeftOutBySource.get(aligned.row.source) ?? 0) + 1
+					)
+
+					continue
+				}
+
+				sinks.labeled(split, aligned.row)
 
 				result.counts[split]++
 
@@ -435,6 +518,7 @@ export function emptyAlignResult(
 		admittedUnresolved: 0,
 		excludedByEligibility: 0,
 		refusedBySource: new Map(),
+		trainRowsLeftOutBySource: new Map(),
 		rowsBySource: new Map(),
 		ineligibleSources,
 		componentFindingsBySource: new Map(),
@@ -536,6 +620,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		synthesize: opts.synthesize,
 		holdouts: opts.holdouts,
 		retention: opts.retention,
+		trainShares: opts.trainShares,
 		licenses,
 		ineligibility,
 		units: await createUnitSplitter(),
@@ -543,8 +628,10 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		result,
 		tally,
 		sinks: {
-			labeled: (split, line, sourceID) => {
-				writeLine(split, line)
+			labeled: (split, row) => {
+				writeLine(split, labeledLine(row))
+
+				const sourceID = labeledSourceID(row)
 
 				if (sourceID != null) {
 					writeSourceID(split, sourceID)
@@ -584,6 +671,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 			license_counts: Object.fromEntries(result.licenseCounts),
 			refused_by_kind: Object.fromEntries(result.refusedByKind),
 			refused_by_source: Object.fromEntries(result.refusedBySource),
+			train_rows_left_out_by_source: Object.fromEntries(result.trainRowsLeftOutBySource),
 			excluded_by_license: tally.excludedByLicense,
 			admitted_unresolved_license_rows: tally.admittedUnresolved,
 			excluded_by_eligibility: tally.excludedByEligibility,

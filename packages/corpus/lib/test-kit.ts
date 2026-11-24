@@ -13,7 +13,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { workspacePath } from "@mailwoman/core/paths"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
@@ -21,6 +22,8 @@ import { afterEach, beforeEach, expect } from "vitest"
 
 import type { ParquetRow } from "#parquet/schema"
 import type { CanonicalRow } from "#types"
+import { NAD_RECORD_COLUMNS } from "#us/adapters/usgov/nad/adapter"
+import { convertNADToParquet } from "#us/tools/fetch/nad/parquet"
 
 /**
  * A per-test scratch directory.
@@ -189,6 +192,52 @@ export class ReferenceFixture<T extends object> {
 			await writeLocalJSONFile(this.values, this.path)
 		}
 	}
+}
+
+/**
+ * The NAD adapter's fixture records, one JSON object per line.
+ */
+export const NAD_FIXTURE = workspacePath(
+	"corpus",
+	"lib",
+	"us",
+	"adapters",
+	"usgov",
+	"nad",
+	"fixtures",
+	"fixture.ndjson"
+)
+
+/**
+ * Writes `records` as NAD release text with every column the adapter reads into `dir`,
+ * and converts it to `NAD_test.parquet` there the way the fetcher does.
+ *
+ * Without `records`, it writes {@linkcode NAD_FIXTURE}'s.
+ */
+export async function writeNADReleaseParquet(
+	dir: PathBuilder,
+	records?: ReadonlyArray<Record<string, unknown>>
+): Promise<PathBuilder> {
+	const rows = records ?? (await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(NAD_FIXTURE)))
+
+	const cell = (value: unknown) => {
+		const text = value == null ? "" : String(value)
+
+		return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+	}
+
+	const lines = [
+		NAD_RECORD_COLUMNS.join(","),
+		...rows.map((record) => NAD_RECORD_COLUMNS.map((column) => cell(record[column])).join(",")),
+	]
+
+	const textPath = dir("NAD_test.txt")
+	const parquetPath = dir("NAD_test.parquet")
+
+	await writeLocalTextFile(`${lines.join("\n")}\n`, textPath)
+	await convertNADToParquet({ textPath, parquetPath, sourceSHA256: "test", member: "NAD_test.txt" })
+
+	return parquetPath
 }
 
 /**
