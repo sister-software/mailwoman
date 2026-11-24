@@ -10,7 +10,7 @@ import { CommonPrerequisites } from "#partials/runtime"
 
 # Route intersection descriptions for review
 
-Use this guide when a location-intake workflow receives a possible street intersection and needs the two street descriptions before a person checks the location. The parser identifies text spans. This example routes the description for review and leaves the crossing coordinate unknown.
+Use this guide when a location-intake workflow receives a possible street intersection and needs the two street descriptions before a person checks the location. When you finish, the script sends a parse with both crossing streets to location review and asks for clarification when an intersection parse lacks either street. The parser identifies text spans and leaves the crossing coordinate unknown.
 
 ## Prerequisites
 
@@ -75,5 +75,7 @@ kind: intersection (alternatives: landmark, structured_address, vague), route: r
 ```
 
 For `5th Avenue and Main Street, Springfield, IL`, the returned kind is `structured_address`, and the tree contains `intersection_a: "5th Avenue"` and `intersection_b: "Main Street"`. The application sends those two strings for crossing-description review. For `5th and Main`, the returned kind is `intersection`, and the tree contains only `venue: "5th and Main"`. The application asks for clarification.
+
+Give the reviewer the original input and both returned street spans for `crossing-description-review`. Ask the sender to name both streets and the locality for `request-clarification`. Send `other-address-flow` to the ordinary address intake, and investigate `review-stage-fault` before using any returned spans. The route identifies the application's next action. It doesn't verify that the streets cross.
 
 The script ran no geographic lookup, so the crossing coordinate stays unknown for both results. A locality and a pair of street names describe a crossing. A verified crossing point needs a supported geographic source, a tested lookup for the exact input, and evidence that the point represents the crossing. Check the [data prerequisites](../reference/data-and-locales.mdx), [result schema](../reference/schema.mdx), and the [confidence and limits explanation](../explanation/confidence-and-limits.mdx) before adding that workflow.
