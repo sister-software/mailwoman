@@ -46,6 +46,7 @@ import {
 	withSoftBreakBefore,
 } from "#address/layout"
 import { LAYOUT_CITATIONS } from "#address/layouts/citations"
+import { LATIN_LAYOUT_CITATIONS } from "#address/layouts/citations/latin"
 import { UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/description-records"
 import {
 	GENERATED_ADDRESS_LAYOUTS,
@@ -53,7 +54,9 @@ import {
 	GENERATED_LOCAL_ADDRESS_LAYOUTS,
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
+import { READ_LATIN_ADDRESS_LAYOUTS } from "#address/layouts/latin-readings"
 import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
+import { UNADDRESSED_JURISDICTIONS } from "#address/layouts/unaddressed"
 import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
@@ -148,6 +151,14 @@ export function namePairScriptForCountry(countryCode: string): AddressScript | n
 }
 
 /**
+ * The Latin-script layout of an uppercase `code`: a reading of the postal operator's document
+ * where one replaces the libaddressinput `lfmt` skeleton, else that skeleton.
+ */
+function latinLayoutFor(code: string): AddressLayout | undefined {
+	return READ_LATIN_ADDRESS_LAYOUTS[code] ?? GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+}
+
+/**
  * Whether the country selected by `countryCode` prints the largest unit first, in `script`.
  *
  * Every country carrying a distinct Latin order writes it smallest-first,
@@ -159,7 +170,7 @@ export function isLargestFirstSystem(countryCode: string | null, script?: Addres
 	const code = countryCode.trim().toUpperCase()
 
 	if (script === "latin") {
-		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+		const latin = latinLayoutFor(code)
 
 		if (latin) return layoutPrintsLargestFirst(latin) === true
 	}
@@ -532,14 +543,18 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  *
  * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 22
  * read from a UPU description have a layout, and the rest answer `null`.
+ * A jurisdiction in `UNADDRESSED_JURISDICTIONS` answers `null` too.
+ * Its description states it has no permanent population.
  */
 export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
 
 	const code = countryCode.trim().toUpperCase()
 
+	if (UNADDRESSED_JURISDICTIONS[code]) return null
+
 	if (script === "latin") {
-		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+		const latin = latinLayoutFor(code)
 
 		if (latin) return latin
 	}
@@ -567,8 +582,13 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
  *
  * A UPU reading's record is its citation, and every other table's citation is in `LAYOUT_CITATIONS`.
  * A code with no rendered layout returns `null` too.
+ *
+ * With `script` set to `latin`, the citation is the one behind the country's separate
+ * Latin-script layout, from `LATIN_LAYOUT_CITATIONS`.
  */
-export function layoutCitationForCountry(code: string): LayoutCitation | null {
+export function layoutCitationForCountry(code: string, script?: AddressScript): LayoutCitation | null {
+	if (script === "latin" && latinLayoutFor(code)) return LATIN_LAYOUT_CITATIONS[code] ?? null
+
 	const layout = layoutForCountry(code)
 
 	if (!layout) return null
@@ -859,7 +879,7 @@ export function addressSystemMembers(): AddressSystemMember[] {
 			members.push({ country: code, script: "local", key: addressSystemKey(local) })
 		}
 
-		const latin = GENERATED_LATIN_ADDRESS_LAYOUTS[code]
+		const latin = latinLayoutFor(code)
 
 		if (latin) {
 			members.push({ country: code, script: "latin", key: addressSystemKey(latin) })

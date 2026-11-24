@@ -10,6 +10,7 @@
  */
 
 import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address/layouts"
+import { UNADDRESSED_JURISDICTIONS } from "@mailwoman/codex/address/layouts/unaddressed"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
@@ -256,6 +257,10 @@ for (const file of await Globerator.files("json", {
 	recursive: false,
 }).toSorted()) {
 	const code = file.replace(/\.json$/, "")
+
+	// A jurisdiction whose description states no permanent population gets no layout to print.
+	if (UNADDRESSED_JURISDICTIONS[code]) continue
+
 	const metadata = await readLocalJSONFile<AddressMetadata>(specsDirectory(file))
 	const order = STREET_ORDERS[code] ?? "number-first"
 

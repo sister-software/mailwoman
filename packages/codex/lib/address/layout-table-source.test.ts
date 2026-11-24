@@ -33,6 +33,7 @@ import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout }
 import { ADDRESS_LAYOUTS, layoutForCountry } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
+import { UNADDRESSED_JURISDICTIONS } from "#address/layouts/unaddressed"
 import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 
 /**
@@ -154,6 +155,13 @@ describe("the generated layout table matches libaddressinput", () => {
 
 		for (const [country, fmt] of countryFormats) {
 			if (!fmt || !skeletonOfFormat(fmt).length) continue
+
+			// A description that states no permanent population leaves the code without a layout on purpose.
+			if (UNADDRESSED_JURISDICTIONS[country]) {
+				expect(layoutForCountry(country), `${country} is unaddressed`).toBeNull()
+
+				continue
+			}
 
 			if (!layoutForCountry(country)) {
 				missing.push(`${country}: fmt ${stringifyJSON(fmt)}`)

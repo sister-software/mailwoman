@@ -13,11 +13,13 @@
  * Each example is transcribed from the description's PDF text layer, one string per
  * printed line, with the description's line labels left out.
  *
- * The citations the L–Z review of 2026-11-24 added sit in `citations/l-z.ts`,
- * which keeps each module under the repository's line ceiling.
+ * The citations the L–Z review of 2026-11-24 added sit in `citations/l-z.ts`, and the GG–MN
+ * review's in `citations/g-m.ts`, which keeps each module under the repository's line ceiling.
+ * A country's separate Latin-script layout is cited in `citations/latin.ts`.
  */
 
 import type { LayoutCitation } from "#address/convention-claims"
+import { G_M_LAYOUT_CITATIONS } from "#address/layouts/citations/g-m"
 import { L_Z_LAYOUT_CITATIONS } from "#address/layouts/citations/l-z"
 import { upuDescription } from "#address/layouts/citations/upu-description"
 
@@ -615,4 +617,5 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 		]
 	),
 	...L_Z_LAYOUT_CITATIONS,
+	...G_M_LAYOUT_CITATIONS,
 }

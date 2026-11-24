@@ -553,14 +553,6 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%n%C %S %Z
-	HM: addr`${venue}
-${attention}
-${numberFirstStreet}
-${dependent_locality}
-${locality} ${region} ${postcode}
-${country}`,
-
 	// %N%n%O%n%A%n%C, %S%n%Z
 	HN: addr`${attention}
 ${venue}

@@ -641,6 +641,14 @@
 			{
 				"id": 55,
 				"key": "dependent_locality po_box (intersection_a intersection_b|street_prefix street_prefix_particle street street_suffix house_number unit) postcode locality region"
+			},
+			{
+				"id": 56,
+				"key": "po_box house_number street_prefix street_prefix_particle street street_suffix dependent_locality locality subregion region postcode"
+			},
+			{
+				"id": 57,
+				"key": "po_box unit (intersection_a intersection_b|house_number street_prefix street_prefix_particle street street_suffix) dependent_locality locality region postcode"
 			}
 		]
 	},
