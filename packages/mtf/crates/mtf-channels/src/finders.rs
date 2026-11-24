@@ -34,7 +34,7 @@ pub const POSTAL_FAMILY: &str = "postal";
 ///
 /// `packages/postcode/data/manifests/postal.json` records the hash of the committed artifact, and a test compares the
 /// two, so regenerating the family under other declarations fails the crate's tests and not a training run.
-pub const POSTAL_DECLARATIONS_HASH: &str = "0d69452b0205fd7cd7115a132d1eb73d7b96e76c34e622ed35c785e071dfb8ac";
+pub const POSTAL_DECLARATIONS_HASH: &str = "fd82868a58a92ce29cde7678516bf3b83d05eca76d02c0c55e630fbf2673c17a";
 
 /// What a span of a shape may do, in the order candidates of equal extent compete.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
