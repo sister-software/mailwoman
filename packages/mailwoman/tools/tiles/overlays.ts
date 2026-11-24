@@ -238,7 +238,10 @@ async function syncRepositories(
 			if (cache && cached.has(name) && !(await pathExists(directory))) {
 				await runProcess("aws", ["s3", "cp", "--only-show-errors", cacheObject(cache, name), archive], ON_TERMINAL)
 				await makeDirectories(directory)
-				await runProcess("tar", ["-xf", archive, "-C", directory], ON_TERMINAL)
+				// An archive stored on another host records that host's owner. git
+				// refuses a repository whose owner differs from the user running it,
+				// so the files are extracted as the restoring user's own.
+				await runProcess("tar", ["-xf", archive, "-C", directory, "--no-same-owner"], ON_TERMINAL)
 				await removePath(archive)
 				// The archive holds the `.git` directory and no working tree.
 				// The reset rebuilds the working tree, and the sync then reads the clone as clean.
