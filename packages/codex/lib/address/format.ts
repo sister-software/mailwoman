@@ -96,7 +96,8 @@ export interface FormatAddressOptions {
 	 *
 	 * Each form takes its share of the interval, so a corpus writer that derives the draw
 	 * from the row's identity renders one form per row and each form in its share of rows.
-	 * Unset, every slot prints its first form.
+	 * Unset, a postcode that already holds a prefix prints as given, and the layout's
+	 * own prefix is added only to a value that lacks it.
 	 */
 	formDraw?: number | null
 }

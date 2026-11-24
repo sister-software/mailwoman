@@ -39,7 +39,8 @@ export interface AddressSlot {
 	 * share of renders that pass a form draw, as Croatia's domestic `10000 ZAGREB`
 	 * beside the `HR-10000 ZAGREB` it prints on mail from abroad.
 	 *
-	 * A render without a draw prints {@linkcode prefix}.
+	 * A render without a draw prints {@linkcode prefix} before a value that lacks one,
+	 * and a value that already holds a prefix as given.
 	 */
 	readonly otherForms?: readonly PrefixForm[]
 }

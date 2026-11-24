@@ -75,7 +75,8 @@ export interface RenderAddressOptions {
 	 * {@linkcode AddressSlot.otherForms} prints, each form taking its share of the interval.
 	 *
 	 * A corpus writer derives it from the row's identity, so one row always renders one form.
-	 * Unset, every slot prints its first form.
+	 * Unset, every slot adds its first form's prefix to a value that lacks one,
+	 * and prints a value that already holds a prefix as given.
 	 */
 	formDraw?: number | null
 }
@@ -110,15 +111,17 @@ function chosenPrefix(slot: AddressSlot, formDraw: number | null): string | unde
  * The text a slot prints for `value`: its prefix written once, and a postcode's repeated
  * country code, such as GLEIF's `FI-FI-15860`, written once even where the layout prints none.
  *
- * A slot whose chosen form is bare prints the value without the marks of its other forms,
- * so the domestic form of GLEIF's `HR-10000` is `10000`.
+ * In a drawn render, a slot whose drawn form is bare prints the value without the marks
+ * of its other forms, so the domestic form of GLEIF's `HR-10000` is `10000`.
+ * An undrawn render prints a value that holds a prefix as given.
  */
 function printedValue(slot: AddressSlot, value: string, formDraw: number | null): string {
 	const prefix = chosenPrefix(slot, formDraw)
 
 	if (prefix) return withPrintedPrefix(prefix, value)
 
-	if (slot.otherForms) {
+	// Only a drawn render removes a prefix: a caller's `FI-15860` prints as given.
+	if (slot.otherForms && typeof formDraw === "number") {
 		return withoutPrintedPrefix([slot.prefix ?? "", ...slot.otherForms.map((form) => form.prefix)], value)
 	}
 

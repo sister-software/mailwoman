@@ -528,6 +528,29 @@ test("POST /v1/format: round-trips components into a formatted string + a non-em
 	expect(body.canonicalKey.length).toBeGreaterThan(0)
 })
 
+// A postcode the client sends with a prefix prints as sent, and the layout's prefix
+// is added only where the layout prints one and the value lacks it.
+test.each([
+	["FI", "FI-15860", "FI-15860 HOLLOLA"],
+	["FI", "15860", "15860 HOLLOLA"],
+	["CY", "CY-2008", "CY-2008 STROVOLOS"],
+	["HR", "HR-10000", "HR-10000 ZAGREB"],
+	["HR", "10000", "HR-10000 ZAGREB"],
+])("POST /v1/format: prints %s's postcode %s as %s", async (country, postcode, line) => {
+	const app = createMailwomanAPI({})
+	const locality = line.split(" ")[1]
+
+	const res = await app.request("/v1/format", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: stringifyJSON({ components: { postcode, locality }, country }),
+	})
+
+	expect(res.status).toBe(200)
+	const body = (await res.json()) as { formatted: string }
+	expect(body.formatted).toBe(line)
+})
+
 test("POST /v1/format: a multi-span component value collapses to its first span", async () => {
 	const app = createMailwomanAPI({})
 

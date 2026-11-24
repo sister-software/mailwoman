@@ -330,22 +330,25 @@ describe("a postcode written with its layout's prefix", () => {
 	})
 
 	// Croatia, Lithuania and Cyprus document a prefixed form for mail from abroad and a bare domestic one.
+	// An undrawn render prints a caller's prefix as given and adds the layout's
+	// prefix only where the value lacks it.
 	it.each([
-		["HR", "HR-10000", "HR-10000 ZAGREB", "10000 ZAGREB"],
-		["HR", "10000", "HR-10000 ZAGREB", "10000 ZAGREB"],
-		["LT", "LT-04340", "LT-04340 VILNIUS", "04340 VILNIUS"],
-		["CY", "CY-2008", "2008 STROVOLOS", "CY-2008 STROVOLOS"],
+		["HR", "HR-10000", "HR-10000 ZAGREB", "HR-10000 ZAGREB", "10000 ZAGREB"],
+		["HR", "10000", "HR-10000 ZAGREB", "HR-10000 ZAGREB", "10000 ZAGREB"],
+		["LT", "LT-04340", "LT-04340 VILNIUS", "LT-04340 VILNIUS", "04340 VILNIUS"],
+		["CY", "CY-2008", "CY-2008 STROVOLOS", "2008 STROVOLOS", "CY-2008 STROVOLOS"],
+		["CY", "2008", "2008 STROVOLOS", "2008 STROVOLOS", "CY-2008 STROVOLOS"],
 		// Finland's operator prints the code bare, and GLEIF's `FI-15860` is its publishers' form.
-		["FI", "FI-15860", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
-		["FI", "15860", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
-	] as const)("prints %s's postcode %s in the form a draw picks", (country, postcode, first, other) => {
+		["FI", "FI-15860", "FI-15860 HOLLOLA", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
+		["FI", "15860", "15860 HOLLOLA", "15860 HOLLOLA", "FI-15860 HOLLOLA"],
+	] as const)("prints %s's postcode %s in the form a draw picks", (country, postcode, given, first, other) => {
 		const locality = { HR: "ZAGREB", LT: "VILNIUS", CY: "STROVOLOS", FI: "HOLLOLA" }[country]
 		const components: ComponentDict = { postcode, locality }
 		const undrawn = formatAddressRow(components, country, { singleLine: true })!
 		const drawnOther = formatAddressRow(components, country, { singleLine: true, formDraw: 0.1 })!
 		const drawnFirst = formatAddressRow(components, country, { singleLine: true, formDraw: 0.9 })!
 
-		expect(undrawn.raw).toBe(first)
+		expect(undrawn.raw).toBe(given)
 		expect(drawnFirst.raw).toBe(first)
 		expect(drawnOther.raw).toBe(other)
 		expect(drawnOther.components.postcode).toBe(other.split(" ")[0])
