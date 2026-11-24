@@ -38,7 +38,7 @@ const { attention, country, dependent_locality, locality, postcode, region, venu
 /**
  * The three reasons a UPU description replaces a country's libaddressinput skeleton.
  */
-export const UPUAdmission = {
+const UPUAdmission = {
 	NoFormat: "no-fmt",
 	FormatOmitsLocality: "fmt-omits-locality",
 	FormatContradictsOrder: "fmt-contradicts-order",

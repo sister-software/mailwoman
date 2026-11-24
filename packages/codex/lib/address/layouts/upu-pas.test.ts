@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 import { layoutForCountry, layoutPrintsTag } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
-import { UPUAdmission, UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
 import { joinRendering, renderAddress } from "#address/render"
 
 const SAMPLE = {
@@ -32,9 +32,9 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 
 			expect(layoutPrintsTag(layout, "locality"), code).toBe(true)
 
-			if (reason === UPUAdmission.NoFormat) {
+			if (reason === "no-fmt") {
 				expect(generated, code).toBeUndefined()
-			} else if (reason === UPUAdmission.FormatOmitsLocality) {
+			} else if (reason === "fmt-omits-locality") {
 				expect(layoutPrintsTag(generated!, "locality"), code).toBe(false)
 			} else {
 				// The skeleton prints the locality, and the description's rendering differs from it.
