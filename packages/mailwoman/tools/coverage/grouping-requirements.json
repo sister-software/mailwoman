@@ -1,0 +1,39 @@
+{
+	"$comment": "The coverage each country grouping's members must hold, read by `readGroupingRequirements` in `groupings.ts`. A tier lists the columns every member must have; `debt` is the count of missing member cells measured on the date in `debtMeasuredOn`, and the `grouping-coverage` health check fails when a tier's count rises above it and warns when it falls, so the number can only fall. A grouping with no tier is reported and holds no requirement.",
+	"debtMeasuredOn": "2026-11-24",
+	"tiers": [
+		{
+			"grouping": "g7",
+			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
+			"debt": 5
+		},
+		{
+			"grouping": "g20",
+			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
+			"debt": 32
+		},
+		{
+			"grouping": "imf-advanced",
+			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
+			"debt": 90
+		},
+		{
+			"grouping": "oecd",
+			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
+			"debt": 69
+		},
+		{
+			"grouping": "eu",
+			"requires": ["citedLayout", "addressFormRows", "heldOut", "board", "promise"],
+			"debt": 55
+		}
+	],
+	"$comment_memberJurisdictions": "A grouping member whose code is neither ISO 3166-1 alpha-2 nor a jurisdiction code the coverage page enumerates is read through the jurisdictions its publisher states it covers. A cell of such a member is held only when every one of those jurisdictions holds it. A member code absent from this table and from the jurisdiction list is reported as unreadable, and a tier counts each of its required cells as missing.",
+	"memberJurisdictions": {
+		"JG": {
+			"name": "Channel Islands",
+			"jurisdictions": ["GG", "JE"],
+			"source": "World Bank WDI country metadata for CHI (iso2Code JG), https://api.worldbank.org/v2/sources/2/country/CHI/metadata?format=json, read 2026-11-24: \"Latestpopulationcensus: Guernsey: 2015; Jersey: 2011.\" and \"Vitalregistrationcomplete: Yes. Vital registration for Guernsey and Jersey.\""
+		}
+	}
+}

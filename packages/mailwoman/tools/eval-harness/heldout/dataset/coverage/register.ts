@@ -17,6 +17,8 @@
  *   An experimental country stays visibly unqualified.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -64,6 +66,24 @@ export interface CoverageRegister {
 	verdict: { outcome: ReleaseOutcome } | null
 	provenanceAudit: string | null
 	rows: CoverageRegisterRow[]
+}
+
+/**
+ * The committed register's JSON, repository-relative, as `register.run.ts` writes it by default.
+ */
+export const COVERAGE_REGISTER_JSON = "docs/engineering/reference/evaluation-coverage.json"
+
+/**
+ * Reads the committed register.
+ *
+ * @throws When the file holds no `rows` array, so a missing register never reads as one with no country.
+ */
+export async function readCoverageRegister(path = repoRootPath(COVERAGE_REGISTER_JSON)): Promise<CoverageRegister> {
+	const register = await readLocalJSONFile<CoverageRegister>(path)
+
+	if (!Array.isArray(register.rows)) throw new Error(`${path} holds no rows array, so it isn't a coverage register`)
+
+	return register
 }
 
 const SEVERITY: Record<ReleaseOutcome, number> = {

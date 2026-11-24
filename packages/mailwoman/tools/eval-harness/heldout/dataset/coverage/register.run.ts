@@ -22,6 +22,7 @@ import { type FormatConfig, format } from "oxfmt"
 
 import {
 	buildCoverageRegister,
+	COVERAGE_REGISTER_JSON,
 	renderCoverageRegisterMarkdown,
 } from "#tools/eval-harness/heldout/dataset/coverage/register"
 import { readHeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -52,7 +53,7 @@ const { values } = parseArguments({
 		},
 		json: {
 			type: "string",
-			default: "docs/engineering/reference/evaluation-coverage.json",
+			default: COVERAGE_REGISTER_JSON,
 			description: "Where to write the register JSON",
 		},
 	},
