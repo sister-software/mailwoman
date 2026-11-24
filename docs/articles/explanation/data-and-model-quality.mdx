@@ -1,36 +1,29 @@
 ---
-title: How data and evaluation support quality claims
-description: How source records, training lineage, held-out addresses, and release checks contribute different evidence.
+title: What supports a model-quality claim?
+description: Why source lineage, independent evaluation addresses, and a paired release comparison answer different questions.
 role: explanation
-verified-with: mailwoman v11.0.0 and release specification v7, inspected 2026-11-10
+source-of-truth: packages/corpus/data/address-source-register.json, docs/engineering/HOLDOUT_AND_EVALUATION.mdx, docs/engineering/CONTRIBUTING_MODEL_WORK.mdx
+verified-with: published mailwoman v11.0.0 model records and repository evaluation procedure, inspected 2026-11-24
 ---
 
-# How data and evaluation support quality claims
+# What supports a model-quality claim?
 
-A parser can produce a plausible answer for an address it has seen during training. That answer doesn't show how it handles an independent address. Mailwoman records where training examples came from, what reached a model, and which evaluation addresses can support a release comparison.
+A plausible parse of one address shows what Mailwoman returned for that input. It doesn't show how frequently the parser is right on addresses it hasn't learned from. A quality claim needs the training lineage, an independent evaluation set, and a comparison with the published model.
 
-## Source records and training lineage
+## Where the training examples came from
 
-The [address-source register](https://github.com/sister-software/mailwoman/blob/main/packages/corpus/data/address-source-register.json) records publishers, source URLs, research decisions, and terms. A corpus row stores source provenance, including a source ID, corpus version, and license. Its address role distinguishes, for example, a premise from a mailing address. Field-level assertion metadata distinguishes a publisher's claim about an address from a claim about identity or geometry. These distinctions matter because an accurately copied string can still be unsuitable evidence for a building location or a postal-delivery claim.
+The [address-source register](https://github.com/sister-software/mailwoman/blob/main/packages/corpus/data/address-source-register.json) records publishers, source URLs, decisions about use, and terms. Corpus rows retain source identifiers, versions, licenses, and address roles. A row marked as a mailing address can be accurate source data without identifying a building point. Source lineage tells a reader what evidence the model learned from and which terms apply. It doesn't measure whether the trained model will parse a new address correctly.
 
-The corpus build also records which sources its training draw used. For the published `@mailwoman/neural-weights-en-us@11.0.0` package, the [model card](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/model-card.json) identifies model version `10.8.0` and corpus `v0.8.18-retention-overlay`. The [effective training manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/corpus/data/training-manifests/v0.8.18-retention-overlay.effective.json) records what reached the trainer. The package's [provenance record](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/PROVENANCE.json) connects that corpus version to effective sources and attribution. These records establish lineage and obligations. An evaluation measures how accurately the model parses new addresses.
+The published `@mailwoman/neural-weights-en-us@11.0.0` [model card](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/model-card.json) identifies model `10.8.0` and corpus `v0.8.18-retention-overlay`. The [effective training manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/corpus/data/training-manifests/v0.8.18-retention-overlay.effective.json) records the sources that reached the trainer. The package's [provenance record](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/PROVENANCE.json) connects the published weights to that corpus. These identifiers let a reviewer check whether a later evaluation overlaps the model's training inputs.
 
-## Held-out evaluation addresses
+## Why evaluation addresses must be independent
 
-An evaluation address supports a generalization claim only when its relationship to training data is known. Mailwoman's [held-out specification](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx) calls for frozen samples, grouping variants of one address, label inspection, and an overlap audit against both the published and candidate training lineages. It distinguishes `verified_unseen`, `unseen_by_candidate`, `known_overlap`, and `unknown`. Minimum checks may use the first two classes. A comparison between models uses `verified_unseen` rows only.
+If training and evaluation contain variants of the same address, the score can reward recognition of a familiar example. Mailwoman's [held-out specification](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx) groups related address rows, freezes evaluation collections, checks their labels, and audits overlap with the published and candidate training lineages. It distinguishes `verified_unseen`, `unseen_by_candidate`, `known_overlap`, and `unknown`. A paired comparison between models uses `verified_unseen` rows, where both models are being tested on addresses outside their training lineages.
 
-The same specification marks some safeguards as implemented and others as open. For example, its current-state table records a held-out span check in the manifest writer, while policy identity and loader rejections remain specified with implementation open. A check's specification describes the rule. The check must run on the dataset before its result can be recorded. Likewise, a country or address form with no admitted evaluation rows has unmeasured quality, rather than a measured score of zero.
+The evaluation must also state which places, address forms, and sources its rows cover. A result for one country or form cannot establish a rate for another. A country with no admitted rows has unmeasured quality. A score of zero would require admitted rows and measured failures.
 
-## Release comparisons
+## What a release comparison adds
 
-The release procedure compares a candidate with the weights in the published package users install, identified by the `model.onnx` SHA-256 digest. It scores paired rows from one frozen dataset and reports exact-parse outcomes by required country and capability. A release report also records measured losses against the published model. The [model-work runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) identifies the freeze, overlap, per-country scoring, and verdict tools.
+A candidate model is compared with the weights users can install, identified by the published `model.onnx` SHA-256 digest. The release procedure scores both models on the same frozen rows and reports the required country and capability outcomes, including measured losses. Its verdict applies to the candidate artifact and the registered release specification used for that read. The [model-work runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) defines the procedure. Dated [evaluation records](https://github.com/sister-software/mailwoman/tree/main/docs/records/evals) give the actual artifacts, rows, results, and verdicts.
 
-The [current v8 specification](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v8.json) registers nine country minima, four capability minima, an equal-country objective, confidence settings, and frozen development and confirmation collections. It identifies model 10.8.0 from the 11.1.0 packages as the published comparator. The candidate digest is unset. No release verdict has returned `pass` under it. Until then, the earlier promotion checks still decide `mwdev_promotion_eval`.
-
-The [held-out specification's current-state table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx#10-current-state-against-this-specification) also records proposed or incomplete work, including a first split under its registered retention floor. Those entries describe unfinished work rather than measurements of the published model. Dated simulations report how the evaluator responds to chosen inputs. Their rates describe the evaluator rather than a release.
-
-## Release evidence for `mailwoman@11.0.0`
-
-The published model's source and training records identify its lineage. The release specification states the acceptance rules. A release-quality claim for an exact candidate needs admitted, versioned evaluation rows and a verdict tied to that candidate's digest. The inspected records hold no such verdict for `mailwoman@11.0.0`.
-
-This account concerns parsing quality. Coordinate accuracy needs separate geographic evaluation and data provenance. [Current product limits](/product/limits-and-status) report which release-matched evidence is available, and [confidence and ambiguity](./confidence-and-limits.mdx) explains why each of those evaluations needs its own evidence beyond a node score.
+The source register answers where training data came from. The held-out collection answers which independent addresses were tested. The paired release report answers how a particular candidate performed against a particular published model under stated requirements. These records measure parsing. Building existence, mail deliverability, and coordinate accuracy need other evidence. Geographic quality needs its own data identity and independently known positions. [Current product limits](/product/limits-and-status) separate published capabilities from release-matched evidence. [Confidence and ambiguity](./confidence-and-limits.mdx) explains why one node score cannot replace those evaluations.
