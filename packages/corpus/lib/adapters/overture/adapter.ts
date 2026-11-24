@@ -9,7 +9,10 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import { CA_PROVINCES } from "@mailwoman/codex/ca/province"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { writtenPostcode } from "@mailwoman/codex/labels/postcode/written-groups"
+import { mxStatePostalAbbreviation } from "@mailwoman/codex/mx/state"
 import { sample } from "@mailwoman/core/math/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
@@ -50,14 +53,77 @@ function countrySurfaceForm(country: string, random: () => number): string {
 }
 
 /**
- * The flattened per-row shape emitted by `ingest-overture-addresses.ts --corpus-jsonl`.
+ * The flattened per-row shape `mailwoman gazetteer overture-ingest --corpus-jsonl` emits.
+ *
+ * `region` is Overture's first address level.
+ * A file written before the ingest emitted it has none.
  */
 interface OvertureCorpusRow {
-	street?: string
-	number?: string
-	unit?: string
-	postcode?: string
-	locality?: string
+	street?: string | null
+	number?: string | null
+	unit?: string | null
+	postcode?: string | null
+	locality?: string | null
+	region?: string | null
+}
+
+/**
+ * What Overture's `unit` field holds in a country where it isn't a secondary unit.
+ *
+ * - `orientation-number`: the street number (`číslo orientační`) of a building whose
+ *   `number` is its district-wide descriptive number (`číslo popisné`).
+ *   The two are written `descriptive/orientation`.
+ * - `number-suffix`: a letter written against the house number.
+ */
+type OvertureUnitFieldRole = "orientation-number" | "number-suffix"
+
+/**
+ * The role of Overture's `unit` field in each country where it isn't a secondary unit.
+ *
+ * Read off the 2026-06-17.0 per-country corpus JSONL: every filled Czech `unit` is digits
+ * beside a digit `number` (101,127 of 394,880 rows, such as `Nad Stadiónem` `320` `28`),
+ * and in the first 400,000 German rows 17,250 of the 17,304 filled ones are one
+ * or two letters (`Neutrale Straße` `28` `a`).
+ */
+const OVERTURE_UNIT_FIELD_ROLES: Readonly<Record<string, OvertureUnitFieldRole>> = {
+	// UPU, Czech Rep. (02/2018): `The street number often consists of two numbers separated by a slash.
+	// The first number is a unique district-related building number [...], the second number is the
+	// street number`, as in `Hrušovská 455/10`.
+	CZ: "orientation-number",
+	// UPU, Germany (01/2015): `Wacholderweg 52a`.
+	DE: "number-suffix",
+}
+
+/**
+ * The house number with the `unit` field joined into it as the country's role for that
+ * field states, or `null` when the field doesn't belong in the number.
+ */
+function joinUnitIntoNumber(number: string, unit: string, role: OvertureUnitFieldRole | null): string | null {
+	if (!role || !/^\d/u.test(number)) return null
+
+	if (role === "orientation-number") return /^\d+\p{Letter}?$/u.test(unit) ? `${number}/${unit}` : null
+
+	return /^\p{Letter}{1,2}$/u.test(unit) ? `${number}${unit}` : null
+}
+
+/**
+ * How a region value in Overture's first address level becomes the form the country's
+ * operator prints, for each country where Overture's value can be read as that form.
+ *
+ * A country absent here renders no region from Overture.
+ * Its first level is a unit the operator doesn't print: Italy's is `Sardegna`,
+ * where the operator prints the province `RM`.
+ */
+const OVERTURE_REGION_FORMS: Readonly<Record<string, (value: string) => string | null>> = {
+	// UPU, Brazil (03/2012): `The state abbreviation (two characters) must follow the town's name separated
+	// by a dash`, as in `GUARAPUAVA – PR`. Overture writes the two-letter UF (`RS`).
+	BR: (value) => (/^[A-Z]{2}$/u.test(value) ? value : null),
+	// UPU, Canada (09/2014): `MONTREAL QC H3Z 2Y7`, `QC is the province abbreviation`.
+	// Overture writes the ISO 3166-2:CA code, and the code is that abbreviation.
+	CA: (value) => (Object.hasOwn(CA_PROVINCES, value) ? value : null),
+	// UPU, Mexico (03/2017): `02860 MEXICO, CDMX`.
+	// Overture writes the state's name (`Michoacán de Ocampo`).
+	MX: mxStatePostalAbbreviation,
 }
 
 /**
@@ -106,6 +172,9 @@ export function createOvertureAdapter(): CorpusAdapter {
 			const country = opts.country
 			const countryFraction = opts.countryFraction ?? 0
 			const random = makeMulberry32(opts.seed ?? DEFAULT_COUNTRY_SEED)
+			const code = country.toUpperCase()
+			const unitRole = Object.hasOwn(OVERTURE_UNIT_FIELD_ROLES, code) ? OVERTURE_UNIT_FIELD_ROLES[code]! : null
+			const regionForm = Object.hasOwn(OVERTURE_REGION_FORMS, code) ? OVERTURE_REGION_FORMS[code]! : null
 
 			// The path string lets `TextSpliterator` own and dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(opts.inputPath)
@@ -133,24 +202,31 @@ export function createOvertureAdapter(): CorpusAdapter {
 				if (!postcode && !locality) continue
 
 				const components: CanonicalRow["components"] = {}
+				const joined = unit ? joinUnitIntoNumber(number, unit, unitRole) : null
 
 				// Overture "S-N" / "S/N" = sin número; only keep a real numeric house number.
 				if (/^\d/.test(number)) {
-					components.house_number = number
+					components.house_number = joined ?? number
 				}
 
 				components.street = street
 
-				if (unitFieldIsDesignator(unit)) {
+				if (!joined && unitFieldIsDesignator(unit)) {
 					components.unit = unit
 				}
 
 				if (postcode) {
-					components.postcode = postcode
+					components.postcode = writtenPostcode(postcode, country)
 				}
 
 				if (locality) {
 					components.locality = locality
+				}
+
+				const region = regionForm && r.region?.trim() ? regionForm(r.region.trim()) : null
+
+				if (region) {
+					components.region = region
 				}
 
 				// Overture rows are country-implicit, so the surface form goes into `components`

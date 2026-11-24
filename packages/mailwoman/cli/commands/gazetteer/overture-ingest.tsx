@@ -179,6 +179,10 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		 * so `@mailwoman/corpus` doesn't need DuckDB.
 		 *
 		 * The `locality` field is `postal_city` when present and otherwise the deepest `address_levels` value.
+		 * The `region` field is the first `address_levels` value when a deeper level follows it,
+		 * so a row whose only level is its municipality writes no region.
+		 *
+		 * The adapter decides per country whether that value is a form the operator prints.
 		 *
 		 * Overture stores a country's rows in spatial order, so the first n rows cover one region.
 		 * The `--sample` option therefore draws a reservoir sample across the whole file.
@@ -195,7 +199,8 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 						number,
 						unit,
 						postcode,
-						COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS locality
+						COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS locality,
+						CASE WHEN len(address_levels) > 1 THEN address_levels[1].value END AS region
 					FROM read_parquet('${src}')
 					WHERE street IS NOT NULL AND trim(street) <> ''
 						AND (

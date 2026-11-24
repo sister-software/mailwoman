@@ -438,6 +438,11 @@ extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tem
 extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
 
+[type.mexican-states]
+# The abbreviations Correos de México prints for Aguascalientes and Morelos, copied from its UPU sheet.
+extend-glob = ["state.ts"]
+extend-words = { AGS = "AGS", MOR = "MOR" }
+
 [type.fcc-notes]
 extend-glob = ["notes.ts", "notes.test.ts"]
 # The upstream FCC text contains this typo and the parser matches it verbatim.
