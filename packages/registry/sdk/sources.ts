@@ -13,6 +13,8 @@
  */
 
 import { currentSourcePath } from "@mailwoman/core/data-root"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { workspacePath } from "@mailwoman/core/paths"
 import type { PathBuilder } from "path-ts"
 
 /**
@@ -59,6 +61,10 @@ export const SOURCE_IDS = [
 	"ourairports-airports",
 	"ourairports-countries",
 	"wikidata-iso3166-1",
+	"wikidata-memberships-p463",
+	"wikidata-memberships-p527",
+	"worldbank-countries",
+	"wikipedia-developed-country",
 ] as const
 
 export type SourceID = (typeof SOURCE_IDS)[number]
@@ -85,6 +91,81 @@ ORDER BY ?alpha2 ?item`
  * The Wikidata Query Service endpoint the ISO 3166-1 query is sent to.
  */
 export const WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+
+/**
+ * The grouping declarations, read for the organization items the membership query asks about.
+ */
+export interface GroupingDefinitions {
+	schemaVersion: number
+	groupings: Array<{
+		id: string
+		name: string
+		kind: "organization" | "classification"
+		source:
+			| { type: "wikidata"; item: string; property: "P463" | "P527" | "both" }
+			| { type: "worldbank-income"; level: string }
+			| { type: "wikipedia-imf-advanced"; aliases: Record<string, string> }
+	}>
+	/**
+	 * Wikidata items that hold a membership for an ISO entry whose code sits on
+	 * another item, mapped to that code.
+	 */
+	entities: Record<string, string>
+	/**
+	 * Wikidata role items mapped to the role they give a membership statement.
+	 */
+	roles: Record<string, "member" | "associate" | "observer" | "suspended" | "other">
+}
+
+// The definitions decide the query text, and the query text is part of the locked URL,
+// so a changed definition list is a changed source that a fetch refuses until `--repin`.
+const GROUPING_DEFINITIONS = await readLocalJSONFile<GroupingDefinitions>(
+	workspacePath("registry", "definitions", "groupings.json")
+)
+
+const ORGANIZATION_VALUES = GROUPING_DEFINITIONS.groupings
+	.flatMap((grouping) => (grouping.source.type === "wikidata" ? [`wd:${grouping.source.item}`] : []))
+	.join(" ")
+
+/**
+ * A SPARQL query that reads every membership statement of the declared organizations through one property.
+ *
+ * P463 ("member of") sits on the member and P527 ("has part(s)") sits on the organization.
+ * Both are read so the normalizer can take membership from the property a definition names
+ * and report where the other disagrees.
+ *
+ * Each row is one statement and one of its role values, with its rank and its start
+ * and end times at their stated precision.
+ * A statement with no role yields one row with `?role` unbound.
+ *
+ * Each property is its own query: on 2026-11-24 the query service answered each
+ * in under 4 s and timed out at 65 s on their UNION.
+ */
+export function membershipsQuery(property: "P463" | "P527"): string {
+	const pattern =
+		property === "P463"
+			? "?member p:P463 ?statement . ?statement ps:P463 ?org ."
+			: "?org p:P527 ?statement . ?statement ps:P527 ?member ."
+
+	return `SELECT ?org ?member ?statement ?rank ?role ?start ?startPrecision ?end ?endPrecision WHERE {
+  VALUES ?org { ${ORGANIZATION_VALUES} }
+  ${pattern}
+  ?statement wikibase:rank ?rank .
+  OPTIONAL { ?statement pq:P2868 ?role . }
+  OPTIONAL { ?statement pqv:P580 ?startNode . ?startNode wikibase:timeValue ?start ; wikibase:timePrecision ?startPrecision . }
+  OPTIONAL { ?statement pqv:P582 ?endNode . ?endNode wikibase:timeValue ?end ; wikibase:timePrecision ?endPrecision . }
+}
+ORDER BY ?org ?member ?statement ?role`
+}
+
+/**
+ * The revision of the English Wikipedia article "Developed country" whose "IMF
+ * advanced economies" section the IMF classification is read from.
+ *
+ * The section lists the economies of the IMF World Economic Outlook statistical appendix it cites.
+ * A revision is immutable, so the pinned bytes change only when this number does.
+ */
+export const DEVELOPED_COUNTRY_REVISION = 1_387_385_587
 
 /**
  * The open profile's sources.
@@ -146,6 +227,44 @@ export const SOURCES: readonly SourceDefinition[] = [
 			elected: true,
 		},
 		feeds: ["iso3166-1-alpha2", "iso3166-1-alpha3", "iso3166-1-numeric"],
+	},
+	...(["P463", "P527"] as const).map((property): SourceDefinition => ({
+		id: `wikidata-memberships-${property.toLowerCase() as "p463" | "p527"}`,
+		url: `${WIKIDATA_SPARQL_ENDPOINT}?format=json&query=${encodeURIComponent(membershipsQuery(property))}`,
+		file: `wikidata-memberships-${property.toLowerCase()}.json`,
+		terms: {
+			statement:
+				"Wikidata publishes its structured data under the Creative Commons CC0 1.0 Universal public domain dedication.",
+			readAt: "https://www.wikidata.org/wiki/Wikidata:Licensing",
+			elected: true,
+		},
+		feeds: ["country-grouping"],
+	})),
+	{
+		id: "worldbank-countries",
+		url: "https://api.worldbank.org/v2/country?format=json&per_page=400",
+		file: "worldbank-countries.json",
+		terms: {
+			statement:
+				"Unless otherwise noted, these Datasets are provided to you under a Creative Commons Attribution 4.0 " +
+				"International License (CC BY 4.0). Attribution: The World Bank: Dataset name: Data source (if known).",
+			readAt: "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+			elected: true,
+		},
+		feeds: ["country-grouping"],
+	},
+	{
+		id: "wikipedia-developed-country",
+		url: `https://en.wikipedia.org/w/index.php?title=Developed_country&oldid=${DEVELOPED_COUNTRY_REVISION}&action=raw`,
+		file: "wikipedia-developed-country.wikitext",
+		terms: {
+			statement:
+				"The source is read for the list of economies the IMF classifies as advanced, which is a list of facts. " +
+				"The article's prose is CC BY-SA 4.0 and isn't redistributed.",
+			readAt: "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+			elected: true,
+		},
+		feeds: ["country-grouping"],
 	},
 ]
 

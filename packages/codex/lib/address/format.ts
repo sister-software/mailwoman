@@ -298,7 +298,8 @@ export function formatAddressRow(
 		}
 	}
 
-	// A postcode printed with its layout's prefix (`FO600`, `CH-8001`) is labeled as written.
+	// A postcode printed with its layout's prefix (`FO-600`, `HR-10000`), or with a repeated
+	// code written once (`LT-LT-06321` as `LT-06321`), is labeled as written.
 	const writtenPostcode = rendering.pieces.find((piece) => piece.tag === "postcode")?.text
 
 	if (writtenPostcode && placed.postcode && writtenPostcode !== placed.postcode.trim()) {

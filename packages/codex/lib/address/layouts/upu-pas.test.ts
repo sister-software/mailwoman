@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 import { layoutForCountry, layoutPrintsTag } from "#address/layouts"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
-import { UPUAdmission, UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
 import { joinRendering, renderAddress } from "#address/render"
 
 const SAMPLE = {
@@ -32,9 +32,9 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 
 			expect(layoutPrintsTag(layout, "locality"), code).toBe(true)
 
-			if (reason === UPUAdmission.NoFormat) {
+			if (reason === "no-fmt") {
 				expect(generated, code).toBeUndefined()
-			} else if (reason === UPUAdmission.FormatOmitsLocality) {
+			} else if (reason === "fmt-omits-locality") {
 				expect(layoutPrintsTag(generated!, "locality"), code).toBe(false)
 			} else {
 				// The skeleton prints the locality, and the description's rendering differs from it.
@@ -48,8 +48,9 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 		// Romania's examples print `060274 BUCHAREST`; libaddressinput's `%Z %S %C` put the county between them.
 		expect(rendered("RO")).toContain("ZZ1 1ZZ Springfield")
 		expect(rendered("RO")).not.toContain("Shelbyville")
-		// Latvia's national register writes the municipality between the locality and the postcode.
-		expect(rendered("LV")).toContain("Springfield, Shelbyville, ZZ1 1ZZ")
+		// Latvia's national register writes the municipality between the locality and the postcode,
+		// and the description prints `LV–` before the postcode (`RIGA, LV–1050`).
+		expect(rendered("LV")).toContain("Springfield, Shelbyville, LV-ZZ1 1ZZ")
 		// Kiribati's examples print the island with its postcode and never the island group.
 		expect(rendered("KI")).toContain("Springfield ZZ1 1ZZ")
 		expect(rendered("KI")).not.toContain("Shelbyville")
@@ -68,15 +69,6 @@ describe("layouts read from a UPU Postal Addressing Systems description", () => 
 	it("is the layout a country renders with", () => {
 		for (const code of Object.keys(UPU_PAS_ADDRESS_LAYOUTS)) {
 			expect(layoutForCountry(code), code).toBe(UPU_PAS_ADDRESS_LAYOUTS[code])
-		}
-	})
-
-	it("records which description each layout was read from", () => {
-		for (const [code, record] of Object.entries(UPU_PAS_LAYOUT_RECORDS)) {
-			expect(record.documentDate, code).toMatch(/^\d{4}-\d{1,2}$/u)
-			expect(record.url, code).toMatch(/^https:\/\/www\.upu\.int\/.+En\.pdf$/u)
-			expect(record.sha256, code).toMatch(/^[0-9a-f]{64}$/u)
-			expect(record.unexpressed.length, code).toBeGreaterThan(0)
 		}
 	})
 

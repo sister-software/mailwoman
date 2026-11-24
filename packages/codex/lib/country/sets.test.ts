@@ -8,6 +8,7 @@ import { OFFICIAL_LANGUAGES } from "#country/official-languages"
 import {
 	countriesDeclaredBy,
 	countriesOfAddressSystem,
+	countriesOfGrouping,
 	countriesOfScript,
 	countriesOfWeightsFamily,
 	type CountrySet,
@@ -115,6 +116,20 @@ describe("countriesDeclaredBy", () => {
 	it("keeps the declaration's order and refuses a non-ISO code", () => {
 		expect([...countriesDeclaredBy("test", ["NL", "DE"])]).toEqual(["NL", "DE"])
 		expect(() => countriesDeclaredBy("test", ["NL", "QQ", "ZZ"])).toThrow(/test lists .*QQ, ZZ/)
+	})
+})
+
+describe("countriesOfGrouping", () => {
+	it("returns the ISO members as a set and the codes CountryISO2 can't hold in outside", () => {
+		const { set, outside } = countriesOfGrouping("wb-high-income", "2026-11-24", [
+			{ code: "NL" },
+			{ code: "JG" },
+			{ code: "SU" },
+		])
+
+		expect([...set]).toEqual(["NL"])
+		expect(outside).toEqual(["JG", "SU"])
+		expect(() => countriesOfGrouping("eu", "2026", [])).toThrow(TypeError)
 	})
 })
 

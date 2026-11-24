@@ -142,8 +142,8 @@ describe("cordis adapter over published participation rows", () => {
 			// The participant entered a private mail bag in the postcode column.
 			// The adapter keeps it because it contains a digit.
 			"FORUM FOR AGRICULTURAL RESEARCH IN AFRICA, GHANA, 12 ANMEDA STREET, ROMAN RIDGE, Accra PMB CT173",
-			// Switzerland's layout prints the `CH-` prefix itself.
-			"LUDWIG INSTITUT FUR KREBSFORSCHUNG AG, STADELHOFERSTRASSE 22, CH-8001 Zurich",
+			// Swiss Post prints the postcode bare, so the layout adds no `CH-` to the published `8001`.
+			"LUDWIG INSTITUT FUR KREBSFORSCHUNG AG, STADELHOFERSTRASSE 22, 8001 Zurich",
 			"THE UNIVERSITY OF HONG KONG, Pokfulam Road, Pokfulam",
 		])
 

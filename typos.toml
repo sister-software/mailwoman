@@ -46,7 +46,7 @@ extend-exclude = [
 	"config/vale/styles/Grammar/SloganAssertions.yml",
 	"packages/mailwoman/tools/eval-harness/**/*receipt*.json",
 	"packages/mailwoman/tools/eval-harness/**/*definition*.json",
-	"docs/engineering/reference/jurisdiction-coverage.mdx",
+	"docs/articles/reference/coverage.mdx",
 	# The page prints each country's postcode pattern, whose character classes such as `[ABD-HJLN-UW-Z]` come from the
 	# libaddressinput syntax that `@mailwoman/postcode` compiles. They are data and not words.
 	"docs/engineering/reference/recognizer-shapes/postal.mdx",
@@ -186,6 +186,8 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
+# The OECD's own name, "Organisation for Economic Co-operation and Development", as packages/registry spells it.
+organisation = "organisation"
 # ISO 15924 script codes, as packages/codex/lib/country/writing-systems.ts emits them (`Beng` is Bengali).
 arab = "arab"
 armn = "armn"
@@ -426,9 +428,20 @@ extend-words = { brocken = "brocken" }
 extend-glob = ["voie-type.ts", "voie-type.test.ts", "postal-lines.ts", "postal-lines.test.ts"]
 extend-words = { centre = "centre", espace = "espace", objets = "objets", aout = "aout", decembre = "decembre" }
 
+[type.layout-citations]
+# Example addresses quoted verbatim from UPU Postal Addressing Systems descriptions: Wallis and Futuna's and
+# Germany's `Appartment`, New Zealand's `Jollys Jewellery`, and Tema, a district of Ghana.
+extend-glob = ["citations.ts", "upu-pas.ts"]
+extend-words = { appartment = "appartment", jewellery = "jewellery", tema = "tema" }
+
 [type.german-board]
 extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
+
+[type.mexican-states]
+# The abbreviations Correos de México prints for Aguascalientes and Morelos, copied from its UPU sheet.
+extend-glob = ["state.ts"]
+extend-words = { AGS = "AGS", MOR = "MOR" }
 
 [type.fcc-notes]
 extend-glob = ["notes.ts", "notes.test.ts"]

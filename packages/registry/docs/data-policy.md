@@ -26,6 +26,8 @@ marker the server stated, and the publisher's statement of terms with the page i
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | Wikidata (SPARQL)          | Structured data under CC0 1.0 (https://www.wikidata.org/wiki/Wikidata:Licensing)                                                                                                  | yes     |
 | OurAirports                | "All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use." (https://ourairports.com/data/)                                          | yes     |
+| World Bank country API     | Datasets under CC BY 4.0, attributed as "The World Bank: Dataset name: Data source (if known)." (https://www.worldbank.org/ext/en/legal/terms-conditions/datasets)                | yes     |
+| Wikipedia, one revision    | The IMF advanced-economy list in "Developed country" is read as a list of facts. The article's prose is CC BY-SA 4.0 and stays out of every artifact.                             | yes     |
 | UN Statistics Division M49 | "personal, non-commercial use, without any right to resell or redistribute them or to compile or create derivative works therefrom" (https://www.un.org/en/about-us/terms-of-use) | no      |
 
 The lock records the UN crosswalk under `$notElected`. The repository's rule
@@ -50,6 +52,14 @@ pinned bytes. At the pinned publication:
 - An airport's country is the `iso_country` column as the source spells it, with a status: `iso3166-1`
   when the code is a current alpha-2 entry, `source-extension` for a code such as `XK`, `unstated` when
   the column is empty. The `airport-located-in-country` relation holds only the first kind.
+
+- `country-grouping`: the groupings `definitions/groupings.json` declares. An organization's members are
+  Wikidata statements through P463 ("member of") or P527 ("has part(s)"), with their role, start and end
+  qualifiers, read by two pinned queries. The World Bank income groups come from the World Bank country API, and
+  the IMF advanced economies from a pinned Wikipedia revision whose section cites the IMF World Economic Outlook
+  statistical appendix. `data/manifests/coverage.json` records, per grouping, the statements without a role or a
+  start, the Wikidata members with no ISO record, and the codes on which P463 and P527 disagree. A defect there is
+  corrected on Wikidata and repinned.
 
 A miss means `not-found-in-snapshot`: the source holds no such code. It doesn't claim that the issuing
 authority never assigned the code.

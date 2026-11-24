@@ -32,6 +32,10 @@ export {
 	getCountryByNumeric,
 } from "#iso3166/records"
 
+export type { GroupingID } from "#artifacts/groupings/groupings"
+export { GROUPING_IDS } from "#artifacts/groupings/groupings"
+export type { GroupingMember } from "#groupings"
+export { BlockedGroupingError, getGrouping, groupingMembers, groupingsOf, isGroupingID } from "#groupings"
 export { alpha2ForAlpha3, alpha2ForNumeric, alpha3ForAlpha2 } from "#iso3166/relations"
 export type { LanguageRecord } from "#iso639/languages"
 export { getLanguage, isLanguageSubtag, parseLanguageSubtag } from "#iso639/languages"
@@ -39,5 +43,18 @@ export type { Normalization } from "#normalize"
 export { canonicalSpelling } from "#normalize"
 export type { CodeMatch } from "#overlap/country-airport"
 export { interpretCountryOrAirportCode, isCountryAirportCollision } from "#overlap/country-airport"
-export type { AirportRecord, BCP47, CountryRecord, IATA, ICAO, ISO, SubtagRow } from "#types"
-export { AirportCountryStatus, CountryStatus, SubtagType } from "#types"
+
+export type {
+	AirportRecord,
+	BCP47,
+	CountryRecord,
+	GroupingRecord,
+	IATA,
+	ICAO,
+	ISO,
+	MembershipRow,
+	StatedDate,
+	SubtagRow,
+} from "#types"
+
+export { AirportCountryStatus, CountryStatus, GroupingKind, MemberCodeStatus, MembershipRole, SubtagType } from "#types"

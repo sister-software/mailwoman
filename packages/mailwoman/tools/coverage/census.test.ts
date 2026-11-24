@@ -19,7 +19,6 @@ import {
 	ConfigProvenance,
 	DEFAULT_ADMISSION_FAMILY,
 	newestManifest,
-	normalizeArrowListColumn,
 	readAdmittedCountries,
 	readBoardCoverage,
 	readConfiguredCorpusVersion,
@@ -39,23 +38,6 @@ let root: PathBuilder
 
 beforeAll(async () => {
 	root = fixtures.use(await temporaryDirectory("mw-coverage-")).path
-})
-
-describe("normalizeArrowListColumn", () => {
-	it("normalizes both plain and nested Arrow list representations", () => {
-		expect(normalizeArrowListColumn(["B-street", "I-street"], "labels")).toEqual(["B-street", "I-street"])
-
-		expect(normalizeArrowListColumn({ list: [{ element: "B-street" }, { element: "I-street" }] }, "labels")).toEqual([
-			"B-street",
-			"I-street",
-		])
-	})
-
-	it("refuses an absent or unreadable requested column", () => {
-		expect(() => normalizeArrowListColumn(undefined, "labels")).toThrow(/absent or unreadable/)
-		expect(() => normalizeArrowListColumn({ list: {} }, "labels")).toThrow(/partial row/)
-		expect(() => normalizeArrowListColumn({ list: [{ value: "B-street" }] }, "labels")).toThrow(/partial row/)
-	})
 })
 
 describe("readAdmittedCountries", () => {
@@ -191,10 +173,10 @@ const CORPUS = dataRootPath(
 )
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
-	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
- // `getCursor(["country", "labels"])` returns only `{country}` on the v0.17.0-era writer's
-				// databases, so a dropped label column mustn't read as "this country has no street rows".
-												const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
+	it("counts street rows on a v0.17.0-era file", async () => {
+		// The street count reads `span_tags`.
+		// A file that predates the column fails the query, so its absence surfaces as an error.
+		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
 				// The manifest key has two live spellings on disk, so the test accepts either
 				// rather than skipping on the ones it cannot name.
@@ -222,6 +204,36 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 	}, 120_000)
 })
 
+const ATTRIBUTE_SPLIT_CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.8.22-retention-overlay",
+	"corpus-v0.8.22-retention-overlay",
+	"MANIFEST.json"
+)
+
+describe.skipIf(!(await pathExists(ATTRIBUTE_SPLIT_CORPUS)))("buildCorpusCensus on an attribute-split corpus", () => {
+	it("counts the train rows of a file whose split an attribute file decides", async () => {
+		// Such a file records `split_attribute` and no `split`, and holds every split's rows.
+		// A census that keeps only files whose `split` is "train" selects 0 files here.
+		const manifest = await readLocalJSONFile<Record<string, unknown>>(ATTRIBUTE_SPLIT_CORPUS)
+		const entries = manifest["files"] as Array<{ path: string; split_attribute?: { counts: { train: number } } }>
+		const one = entries.filter((file) => file.split_attribute).slice(0, 1)
+
+		expect(one).toHaveLength(1)
+
+		await using directory = await temporaryDirectory("mw-census-attribute-")
+		const scratch = directory.path("MANIFEST.json")
+		const train = one[0]!.split_attribute!.counts.train
+
+		await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], files: one, counts: { train } }, scratch)
+
+		const census = await buildCorpusCensus(scratch)
+
+		expect(census.total).toBe(train)
+	}, 120_000)
+})
+
 describe("buildCorpusCensus refuses an empty count", () => {
 	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
 			// A manifest naming train files and a total of zero cannot both be true,
@@ -237,7 +249,7 @@ describe("buildCorpusCensus refuses an empty count", () => {
 			scratch
 		)
 
-		await expect(buildCorpusCensus(scratch)).rejects.toThrow(/Refusing to report an empty corpus/)
+		await expect(buildCorpusCensus(scratch)).rejects.toThrow(/Refusing to report a partial corpus/)
 	})
 
 	it("refuses to pick between two manifests sharing the newest modification time", async () => {

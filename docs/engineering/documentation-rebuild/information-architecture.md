@@ -46,6 +46,7 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | R04            | `/docs/reference/schema`                    | reference   | Component tags, spans, result fields, kinds, tiers, and provenance.                                 |
 | R05            | `/docs/reference/packages-and-runtime`      | reference   | Published packages, runtime flags, footprints, and compatibility.                                   |
 | R06            | `/docs/reference/data-and-locales`          | reference   | Data bundles, locale support, layer availability, and prerequisites.                                |
+| R07            | `/docs/reference/coverage`                  | reference   | Generated holdings per jurisdiction and per country grouping: corpus, admission, gazetteer, board.  |
 | E01            | `/docs/explanation/address-systems`         | explanation | Why worldwide addresses resist one format and one validation rule.                                  |
 | E02            | `/docs/explanation/parsing`                 | explanation | How tokens, labels, decoder constraints, and gazetteer priors interact.                             |
 | E03            | `/docs/explanation/geocoding`               | explanation | How geocoding sources and precision tiers affect a coordinate.                                      |
@@ -57,7 +58,7 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                          |
 | A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                                      |
 
-This revised architecture proposes 45 routes: 6 product/solution landing pages + 24 learning/work pages + 6 reference pages + 6 explanation pages + 2 evidence pages + 1 about page = 45. The guide destinations split the former D10 brief by reader outcome and add a provenance review task. `V02` keeps its ID without a route. `V01` indexes the France BAN and Belgium panels with their versions, samples, denominators, methods, and caveats. A separate panel page would repeat the index. Add panels rerun against a published release to `V01`.
+This revised architecture proposes 46 routes: 6 product/solution landing pages + 24 learning/work pages + 7 reference pages + 6 explanation pages + 2 evidence pages + 1 about page = 46. The guide destinations split the former D10 brief by reader outcome and add a provenance review task. `V02` keeps its ID without a route. `V01` indexes the France BAN and Belgium panels with their versions, samples, denominators, methods, and caveats. A separate panel page would repeat the index. Add panels rerun against a published release to `V01`.
 
 ## Navigation and cross-links
 

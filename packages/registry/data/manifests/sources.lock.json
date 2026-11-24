@@ -48,6 +48,54 @@
 				"elected": true
 			},
 			"feeds": ["iso3166-1-alpha2", "iso3166-1-alpha3", "iso3166-1-numeric"]
+		},
+		"wikidata-memberships-p463": {
+			"url": "https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Forg%20%3Fmember%20%3Fstatement%20%3Frank%20%3Frole%20%3Fstart%20%3FstartPrecision%20%3Fend%20%3FendPrecision%20WHERE%20%7B%0A%20%20VALUES%20%3Forg%20%7B%20wd%3AQ1764511%20wd%3AQ19771%20wd%3AQ458%20wd%3AQ8268%20wd%3AQ1969730%20wd%3AQ8932%20wd%3AQ166546%20wd%3AQ8908%20wd%3AQ41550%20wd%3AQ7184%20wd%3AQ1065%20wd%3AQ7825%20wd%3AQ7785%20wd%3AQ243630%20wd%3AQ170481%20wd%3AQ7768%20wd%3AQ4264%20wd%3AQ471690%20wd%3AQ205995%20wd%3AQ123759%20wd%3AQ7159%20wd%3AQ193272%20wd%3AQ816706%20wd%3AQ7172%20wd%3AQ217172%20wd%3AQ7795%20wd%3AQ7779%20%7D%0A%20%20%3Fmember%20p%3AP463%20%3Fstatement%20.%20%3Fstatement%20ps%3AP463%20%3Forg%20.%0A%20%20%3Fstatement%20wikibase%3Arank%20%3Frank%20.%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pq%3AP2868%20%3Frole%20.%20%7D%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pqv%3AP580%20%3FstartNode%20.%20%3FstartNode%20wikibase%3AtimeValue%20%3Fstart%20%3B%20wikibase%3AtimePrecision%20%3FstartPrecision%20.%20%7D%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pqv%3AP582%20%3FendNode%20.%20%3FendNode%20wikibase%3AtimeValue%20%3Fend%20%3B%20wikibase%3AtimePrecision%20%3FendPrecision%20.%20%7D%0A%7D%0AORDER%20BY%20%3Forg%20%3Fmember%20%3Fstatement%20%3Frole",
+			"sha256": "b0e48a804b6957a5df50efbed1c4edefc9cb74540aa64b3216d67d6fdb1bffea",
+			"bytes": 708146,
+			"publication": "unstated",
+			"terms": {
+				"statement": "Wikidata publishes its structured data under the Creative Commons CC0 1.0 Universal public domain dedication.",
+				"readAt": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+				"elected": true
+			},
+			"feeds": ["country-grouping"]
+		},
+		"wikidata-memberships-p527": {
+			"url": "https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Forg%20%3Fmember%20%3Fstatement%20%3Frank%20%3Frole%20%3Fstart%20%3FstartPrecision%20%3Fend%20%3FendPrecision%20WHERE%20%7B%0A%20%20VALUES%20%3Forg%20%7B%20wd%3AQ1764511%20wd%3AQ19771%20wd%3AQ458%20wd%3AQ8268%20wd%3AQ1969730%20wd%3AQ8932%20wd%3AQ166546%20wd%3AQ8908%20wd%3AQ41550%20wd%3AQ7184%20wd%3AQ1065%20wd%3AQ7825%20wd%3AQ7785%20wd%3AQ243630%20wd%3AQ170481%20wd%3AQ7768%20wd%3AQ4264%20wd%3AQ471690%20wd%3AQ205995%20wd%3AQ123759%20wd%3AQ7159%20wd%3AQ193272%20wd%3AQ816706%20wd%3AQ7172%20wd%3AQ217172%20wd%3AQ7795%20wd%3AQ7779%20%7D%0A%20%20%3Forg%20p%3AP527%20%3Fstatement%20.%20%3Fstatement%20ps%3AP527%20%3Fmember%20.%0A%20%20%3Fstatement%20wikibase%3Arank%20%3Frank%20.%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pq%3AP2868%20%3Frole%20.%20%7D%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pqv%3AP580%20%3FstartNode%20.%20%3FstartNode%20wikibase%3AtimeValue%20%3Fstart%20%3B%20wikibase%3AtimePrecision%20%3FstartPrecision%20.%20%7D%0A%20%20OPTIONAL%20%7B%20%3Fstatement%20pqv%3AP582%20%3FendNode%20.%20%3FendNode%20wikibase%3AtimeValue%20%3Fend%20%3B%20wikibase%3AtimePrecision%20%3FendPrecision%20.%20%7D%0A%7D%0AORDER%20BY%20%3Forg%20%3Fmember%20%3Fstatement%20%3Frole",
+			"sha256": "20339b3a924b9770b96b23ae763f8cd43c1c28ecb3ba94293631e679530bec64",
+			"bytes": 217425,
+			"publication": "unstated",
+			"terms": {
+				"statement": "Wikidata publishes its structured data under the Creative Commons CC0 1.0 Universal public domain dedication.",
+				"readAt": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+				"elected": true
+			},
+			"feeds": ["country-grouping"]
+		},
+		"wikipedia-developed-country": {
+			"url": "https://en.wikipedia.org/w/index.php?title=Developed_country&oldid=1387385587&action=raw",
+			"sha256": "7890fc2edf9af8665907e005772b3e8efb965bc582b16ee62c9c37aa4dc3e113",
+			"bytes": 58598,
+			"publication": "Mon, 23 Nov 2026 19:00:01 GMT",
+			"terms": {
+				"statement": "The source is read for the list of economies the IMF classifies as advanced, which is a list of facts. The article's prose is CC BY-SA 4.0 and isn't redistributed.",
+				"readAt": "https://en.wikipedia.org/wiki/Wikipedia:Copyrights",
+				"elected": true
+			},
+			"feeds": ["country-grouping"]
+		},
+		"worldbank-countries": {
+			"url": "https://api.worldbank.org/v2/country?format=json&per_page=400",
+			"sha256": "c9acf3932785191a649cbc04c3056af4cf64a236e5c3b49d49be25ddb0440bce",
+			"bytes": 113954,
+			"publication": "Mon, 23 Nov 2026 04:09:24 GMT",
+			"terms": {
+				"statement": "Unless otherwise noted, these Datasets are provided to you under a Creative Commons Attribution 4.0 International License (CC BY 4.0). Attribution: The World Bank: Dataset name: Data source (if known).",
+				"readAt": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+				"elected": true
+			},
+			"feeds": ["country-grouping"]
 		}
 	},
 	"$notElected": {

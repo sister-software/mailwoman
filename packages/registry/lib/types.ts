@@ -181,3 +181,93 @@ export interface AirportRecord {
 	municipality: string | null
 	isoRegion: string | null
 }
+
+/**
+ * Whether a grouping admits members or a publisher assigns countries to it.
+ */
+export const GroupingKind = {
+	Organization: "organization",
+	Classification: "classification",
+} as const
+
+export type GroupingKind = (typeof GroupingKind)[keyof typeof GroupingKind]
+
+/**
+ * The role a membership statement gives its country.
+ * Only `member` counts as membership.
+ */
+export const MembershipRole = {
+	Member: "member",
+	Associate: "associate",
+	Observer: "observer",
+	Suspended: "suspended",
+	Other: "other",
+} as const
+
+export type MembershipRole = (typeof MembershipRole)[keyof typeof MembershipRole]
+
+/**
+ * How a member's code relates to ISO 3166-1.
+ *
+ * `source-extension` is a code the publisher assigns outside ISO 3166-1, kept as the publisher
+ * spells it, such as the World Bank's `XK` for Kosovo and `JG` for the Channel Islands.
+ */
+export const MemberCodeStatus = {
+	OfficiallyAssigned: "officially-assigned",
+	FormerlyUsed: "formerly-used",
+	SourceExtension: "source-extension",
+} as const
+
+export type MemberCodeStatus = (typeof MemberCodeStatus)[keyof typeof MemberCodeStatus]
+
+/**
+ * A date a source states, with the precision it states it at.
+ *
+ * `date` is `YYYY-MM-DD`, with the month and day set to `01` when the precision leaves them unstated.
+ */
+export interface StatedDate {
+	date: string
+	precision: "year" | "month" | "day"
+}
+
+/**
+ * One grouping as the groupings table holds it.
+ */
+export interface GroupingRecord {
+	id: string
+	name: string
+	kind: GroupingKind
+	/**
+	 * The source and the selector the members were read through, such as `wikidata:Q458 P463`.
+	 */
+	source: string
+	/**
+	 * The publication date of a classification's source, or null for an organization.
+	 */
+	asOf: string | null
+	/**
+	 * The reasons the normalizer couldn't classify the grouping's statements.
+	 * A blocked grouping answers no membership question.
+	 */
+	blockedBy: string[]
+}
+
+/**
+ * One membership interval: a country's place in a grouping between two stated dates.
+ */
+export interface MembershipRow {
+	grouping: string
+	code: string
+	codeStatus: MemberCodeStatus
+	role: MembershipRole
+	/**
+	 * The start, or null when the source states none.
+	 * A null start is unknown rather than the epoch.
+	 */
+	start: StatedDate | null
+	end: StatedDate | null
+	/**
+	 * The statement or source row the interval was read from, such as `wikidata:Q145-…`.
+	 */
+	evidence: string
+}

@@ -2,7 +2,7 @@
 title: Data and locales
 description: Published 11.0.0 data bundles, weight families, locale classifications, and installation checks.
 role: reference
-source-of-truth: packages/mailwoman/lib/data/published/bundles.ts, packages/neural/lib/weights/families.ts, packages/codex/lib/support/promises.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
+source-of-truth: packages/mailwoman/lib/data/published/bundles.ts, packages/neural/lib/weights/families.ts, packages/codex/lib/support/promises.json, docs/engineering/SCOPE.mdx, docs/articles/reference/coverage.mdx
 verified-with: mailwoman v11.0.0
 ---
 
@@ -42,7 +42,7 @@ Each listed locale id maps to an `@mailwoman/neural-weights-<id>` package. The `
 
 The [support reference](./support.mdx) lists what Mailwoman guarantees: each country, the language and script of the typed text, and the deepest component inside the guarantee. The list ships in `@mailwoman/codex/support`. The [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) keeps the dated evidence each country group recorded.
 
-The generated [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx) separately reports corpus rows, training admission, gazetteer entries, weight packages, and checking-board rows. Its corpus count is for version `0.7.6-venue-gb-region`, cached 17 October 2026. Its header notes that the training config it reads, `v7.2.0-address-systems-60k.yaml`, declares corpus `v0.7.2-address-systems`, so those counts describe the counted corpus rather than the one that config trains on. The register reports no coordinate-grade measurements for the published 11.0.0 package with model 10.8.0 and its data bundles. The available evaluation ledger also contains no coordinate panel for that exact release. Its coordinate accuracy remains unknown.
+The generated [coverage reference](./coverage.mdx) separately reports corpus rows, training admission, gazetteer entries, weight packages, checking-board rows, support promises and country groupings, per jurisdiction and per grouping. Its corpus count is for version `0.8.22-retention-overlay`, counted on 24 November 2026. Its header notes that the training config it reads, `v7.2.0-address-systems-60k.yaml`, declares corpus `v0.7.2-address-systems`, so those counts describe the counted corpus rather than the one that config trains on. The register reports no coordinate-grade measurements for the published 11.0.0 package with model 10.8.0 and its data bundles. The available evaluation ledger also contains no coordinate panel for that exact release. Its coordinate accuracy remains unknown.
 
 ## Check an installation
 
@@ -58,4 +58,4 @@ mailwoman doctor --verbose
 ## Sources checked
 
 - Published [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/published/bundles.ts), [active-selection resolver](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/catalog/release.ts), and [OSM address-point recipe](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/osm/tools/address-points-recipe.ts).
-- Published [weights-family declaration](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/lib/weights/families.ts), plus the maintained [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json), [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx), and [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json).
+- Published [weights-family declaration](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/lib/weights/families.ts), plus the maintained [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json), [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [coverage reference](./coverage.mdx), and [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json).

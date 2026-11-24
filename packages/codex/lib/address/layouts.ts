@@ -23,6 +23,7 @@ import {
 	stanceFromLayout,
 	type ConventionClaim,
 	type ConventionObservation,
+	type LayoutCitation,
 	reorderedPairs,
 } from "#address/convention-claims"
 import {
@@ -37,9 +38,11 @@ import {
 	numberFirstStreet,
 	numberLastCommaStreet,
 	numberLastStreet,
+	prefixedSlot,
 	SLOTS,
 	withSoftBreakBefore,
 } from "#address/layout"
+import { LAYOUT_CITATIONS } from "#address/layouts/citations"
 import {
 	GENERATED_ADDRESS_LAYOUTS,
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
@@ -332,7 +335,7 @@ ${country}`,
 	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it: written on one line the
 	// whole admin run is unseparated and only the postcode takes a space (`〒100-0005 東京都千代田区丸の内1-9-1`).
 	JP: addr`${country}
-〒${postcode}
+${prefixedSlot("postcode", "〒")}
 ${region}${japaneseSubPrefecture}
 ${venue}
 ${attention}`,
@@ -546,6 +549,33 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
 }
 
 /**
+ * Returns the primary document behind the layout {@linkcode layoutForCountry} renders for
+ * an uppercase `code` with no script chosen, or `null` when that layout lacks a citation.
+ *
+ * A UPU reading's record is its citation, and every other table's citation is in `LAYOUT_CITATIONS`.
+ */
+function layoutCitationForCountry(code: string): LayoutCitation | null {
+	const layout = layoutForCountry(code)
+
+	if (!layout) return null
+
+	if (layout === UPU_PAS_ADDRESS_LAYOUTS[code]) return UPU_PAS_LAYOUT_RECORDS[code] ?? null
+
+	return LAYOUT_CITATIONS[code] ?? null
+}
+
+/**
+ * Every jurisdiction with a rendered layout and no primary citation for it, sorted.
+ *
+ * The `debt` repository check pins the length of this list, so it can only fall.
+ */
+export function uncitedLayoutJurisdictions(): string[] {
+	return addressSystemMembers()
+		.filter((member) => member.script === "local" && !layoutCitationForCountry(member.country))
+		.map((member) => member.country)
+}
+
+/**
  * Returns every source's statement about one convention claim for this country,
  * or `null` when the country has no layout to read.
  *
@@ -666,7 +696,7 @@ export function conventionClaimForCountry(
 			conventionObservation(
 				ConventionSource.PostalAddressingSystems,
 				stanceFromLayout(claim, pas, printedTags(pas)),
-				`UPU Postal Addressing Systems description for ${code}, dated ${record.documentDate}, retrieved 2026-10-18`
+				`UPU Postal Addressing Systems description for ${code}, dated ${record.documentDate}, retrieved ${record.retrievedAt}`
 			)
 		)
 	}

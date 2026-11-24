@@ -43,6 +43,8 @@
 	"type": "module",
 	"sideEffects": [
 		"./sdk/**/*.run.ts",
+		"./sdk/sources.ts",
+		"./out/sdk/sources.js",
 		"./tools/**/*.run.ts",
 		"./out/sdk/**/*.run.js",
 		"./out/tools/**/*.run.js"

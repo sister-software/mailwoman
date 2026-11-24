@@ -18,7 +18,6 @@ import {
 } from "@mailwoman/core/repo/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
@@ -26,6 +25,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
+
+import { countTrainShapes } from "#tools/training/exposure/train-shapes"
 
 /**
  * Describes the best geocoding a country gets and whether its rooftop data is published or build-local.
@@ -193,54 +194,22 @@ interface CorpusCensus {
 }
 
 /**
- * Flattens an Arrow list column to a string array.
+ * Matches a span tag that makes its row a street row.
  *
- * @throws If the column is absent or holds non-string entries, so a partial row never counts as empty.
+ * The tags are `street`, a `street_*` affix, and `house_number`.
  */
-export function normalizeArrowListColumn(value: unknown, column: string): string[] {
-	const entries = Array.isArray(value)
-		? value
-		: Array.isArray((value as { list?: unknown })?.list)
-			? (value as { list: unknown[] }).list.map((entry) => (entry as { element?: unknown })?.element ?? entry)
-			: null
-
-	if (entries?.every((entry): entry is string => typeof entry === "string")) return entries
-
-	throw new Error(
-		`Corpus Arrow reader requested ${column}, but the column was absent or unreadable; ` +
-			"refusing to report an empty count from a partial row."
-	)
-}
-
-const STREET_LABEL = /(^|-)street($|_)|house_number/
-
-async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<string, unknown>> {
-	let sawFirst = false
-	let projectedLabels = true
-
-	for await (const record of openParquetRowStream<Record<string, unknown>>(path, { columns: ["country", "labels"] })) {
-		if (!sawFirst) {
-			sawFirst = true
-
-			if (record["labels"] === undefined) {
-				projectedLabels = false
-
-				break
-			}
-		}
-
-		yield record
-	}
-
-	if (!projectedLabels) {
-		for await (const record of openParquetRowStream<Record<string, unknown>>(path)) { yield record }
-	}
-}
+const STREET_TAG = /^street($|_)|^house_number$/
 
 /**
- * Counts train-split rows and street-labeled rows per country.
+ * Counts train-split rows and street rows per country.
  *
- * @throws If the manifest lists train files but no row could be read.
+ * The rows are the ones {@linkcode countTrainShapes} selects, the sampler's train split.
+ * One DuckDB query groups them on every core the host gives DuckDB.
+ *
+ * A street row has a span tagged `street`, a `street_*` affix or `house_number`.
+ *
+ * @throws If the manifest lists files but selects no train file.
+ * Also if a train file is absent, or the total differs from the manifest's `counts.train`.
  */
 // repo-health-ignore export-name-affix -- counts rows in a built corpus. @mailwoman/corpus's buildCorpus creates it
 export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
@@ -248,44 +217,59 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 		manifestPath
 	)
 
-	const parquetFiles = baseManifestFiles(manifest)
-		.filter((file) => file.split === "train" && file.path)
+	const listed = baseManifestFiles<{ path: string; split?: string; split_attribute?: { path: string } }>(manifest)
+
+	// A file either records one `split`, or holds every split's rows and points under
+	// `split_attribute` at the held-out ids that decide each row.
+	const parquetFiles = listed
+		.filter((file) => file.path && (file.split === "train" || file.split_attribute))
 		.map((file) => localManifestFilePath(file.path))
 
-	const rows: Record<string, number> = {}
-	const streetRows: Record<string, number> = {}
+	if (listed.length && !parquetFiles.length) {
+		throw new Error(
+			`${manifestPath} lists ${listed.length} file(s) and none carries split "train" or a split_attribute, ` +
+				"so this census cannot select the train rows."
+		)
+	}
+
 	const unreadableFiles: string[] = []
-	let total = 0
-	let filesRead = 0
 
 	for (const path of parquetFiles) {
-		try {
-			for await (const record of streamCorpusCensusRows(path)) {
-				total++
-
-				const country = String(record["country"] ?? "").toUpperCase() || "??"
-
-				rows[country] = (rows[country] ?? 0) + 1
-
-				if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
-					streetRows[country] = (streetRows[country] ?? 0) + 1
-				}
-			}
-
-			filesRead++
-		} catch {
+		if (!(await pathExists(path))) {
 			unreadableFiles.push(path)
 		}
 	}
 
-	if (parquetFiles.length && total === 0) {
+	if (unreadableFiles.length) {
 		throw new Error(
-			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
-				`${unreadableFiles.length} of them unreadable` +
-				(unreadableFiles[0] ? ` (first: ${unreadableFiles[0]})` : "") +
-				". Refusing to report an empty corpus — check MAILWOMAN_DATA_ROOT and the manifest's paths."
+			`${unreadableFiles.length} of ${parquetFiles.length} train file(s) listed by ${manifestPath} are absent ` +
+				`(first: ${unreadableFiles[0]}). Refusing to report a partial corpus — check MAILWOMAN_DATA_ROOT ` +
+				"and the manifest's paths."
 		)
 	}
+
+	const rows: Record<string, number> = {}
+	const streetRows: Record<string, number> = {}
+	let total = 0
+
+	for (const shape of parquetFiles.length ? await countTrainShapes(manifestPath.toString()) : []) {
+		const country = (shape.country ?? "").toUpperCase() || "??"
+
+		total += shape.rows
+		rows[country] = (rows[country] ?? 0) + shape.rows
+
+		if (shape.spanTags?.some((tag) => STREET_TAG.test(tag))) {
+			streetRows[country] = (streetRows[country] ?? 0) + shape.rows
+		}
+	}
+
+	const declaredTrain = (manifest["counts"] as { train?: unknown } | undefined)?.train
+
+	if (typeof declaredTrain === "number" && declaredTrain !== total) {
+		throw new Error(`Corpus census counted ${total} train rows, and ${manifestPath} declares ${declaredTrain}.`)
+	}
+
+	const filesRead = parquetFiles.length
 
 	return {
 		takenAt: new Date().toISOString(),

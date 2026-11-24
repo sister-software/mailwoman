@@ -18,6 +18,7 @@ import { stringifyJSON } from "@mailwoman/core/values/json"
 import { TextSpliterator } from "spliterator"
 
 import { pinnedSourceFile, type SourceDefinition, type SourceLock, SOURCES } from "#sdk/sources"
+import type { GroupingReport } from "#tools/groupings"
 
 /**
  * One ISO 3166-1 entry.
@@ -103,6 +104,11 @@ export interface CoverageDeclaration {
 			missMeans: string
 		}
 	>
+	/**
+	 * What the groupings normalizer found per grouping: roles, statements without a role or a start,
+	 * members with no ISO record, and where Wikidata's two membership properties disagree.
+	 */
+	groupings?: Record<string, GroupingReport>
 }
 
 /**
@@ -112,7 +118,10 @@ export interface CoverageDeclaration {
  */
 export const NORMALIZATION_VERSION = 1
 
-interface SPARQLResults {
+/**
+ * A Wikidata Query Service answer in the SPARQL 1.1 JSON results format.
+ */
+export interface SPARQLResults {
 	results: { bindings: Array<Record<string, { type: string; value: string }>> }
 }
 
@@ -120,7 +129,12 @@ const ALPHA2 = /^[A-Z]{2}$/
 const ALPHA3 = /^[A-Z]{3}$/
 const NUMERIC = /^\d{3}$/
 
-function sourceDefinition(id: SourceDefinition["id"]): SourceDefinition {
+/**
+ * Returns the source definition with `id`.
+ *
+ * @throws When the profile declares no such source.
+ */
+export function sourceDefinition(id: SourceDefinition["id"]): SourceDefinition {
 	const found = SOURCES.find((candidate) => candidate.id === id)
 
 	if (!found) throw new Error(`no source ${id}`)

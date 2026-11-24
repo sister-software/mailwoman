@@ -150,6 +150,78 @@ describe("overture adapter", () => {
 		expect(madrid?.components.unit).toBe("2A")
 	})
 
+	it.each([
+		{
+			country: "CZ",
+			row: { street: "Nad Stadiónem", number: "320", unit: "28", postcode: "38501", locality: "Vimperk II" },
+			raw: "Nad Stadiónem 320/28, 385 01 Vimperk II",
+			components: { house_number: "320/28", postcode: "385 01" },
+		},
+		{
+			country: "DE",
+			row: { street: "Neutrale Straße", number: "28", unit: "a", postcode: "66798", locality: "Wallerfangen" },
+			raw: "Neutrale Straße 28a, 66798 Wallerfangen",
+			components: { house_number: "28a" },
+		},
+		{
+			country: "NL",
+			row: { street: "St. Annastraat", number: "193", unit: null, postcode: "4524JH", locality: "Sluis" },
+			raw: "St. Annastraat 193, 4524 JH Sluis",
+			components: { postcode: "4524 JH" },
+		},
+		{
+			country: "CA",
+			row: { street: "Greenlees DR", number: "219", postcode: "K7K6R2", locality: "KINGSTON", region: "ON" },
+			raw: "219 Greenlees DR, KINGSTON ON K7K 6R2",
+			components: { region: "ON", postcode: "K7K 6R2" },
+		},
+		{
+			country: "MX",
+			row: { street: "CALLE ABETOS", number: "12", postcode: "39090", locality: "Chilpancingo", region: "Guerrero" },
+			raw: "CALLE ABETOS 12, 39090 Chilpancingo, GRO",
+			components: { region: "GRO" },
+		},
+		{
+			country: "BR",
+			row: { street: "AVENIDA JOSE BONIFACIO", number: "2867", postcode: "66083-108", locality: "Belém", region: "PA" },
+			raw: "AVENIDA JOSE BONIFACIO, 2867, Belém-PA, 66083-108",
+			components: { region: "PA" },
+		},
+	])("renders a $country row in its operator's form", async ({ country, row, raw, components }) => {
+		const input = await writeFixture([row])
+
+		await runAdapter({
+			adapter: createOvertureAdapter(),
+			adapterOptions: { inputPath: input, country },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const [emitted] = await loadRows()
+
+		expect(emitted?.raw).toBe(raw)
+		expect(emitted?.components).toMatchObject(components)
+		expect(emitted?.components.unit).toBeUndefined()
+	})
+
+	it("renders no region where Overture's first level isn't a form the operator prints", async () => {
+		const input = await writeFixture([
+			{ street: "VIA ROMA", number: "1", postcode: "09017", locality: "Sant'Antioco", region: "Sardegna" },
+		])
+
+		await runAdapter({
+			adapter: createOvertureAdapter(),
+			adapterOptions: { inputPath: input, country: "IT" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const [emitted] = await loadRows()
+
+		expect(emitted?.components.region).toBeUndefined()
+		expect(emitted?.raw).not.toContain("Sardegna")
+	})
+
 	it("rejects an invocation without --country", async () => {
 		const input = await writeFixture(ES)
 

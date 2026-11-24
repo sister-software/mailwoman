@@ -684,7 +684,7 @@
 		{
 			"country": "KI",
 			"script": "local",
-			"system": 27
+			"system": 3
 		},
 		{
 			"country": "KM",
@@ -779,7 +779,7 @@
 		{
 			"country": "LV",
 			"script": "local",
-			"system": 31
+			"system": 11
 		},
 		{
 			"country": "MA",
@@ -1024,7 +1024,7 @@
 		{
 			"country": "RO",
 			"script": "local",
-			"system": 37
+			"system": 8
 		},
 		{
 			"country": "RS",
