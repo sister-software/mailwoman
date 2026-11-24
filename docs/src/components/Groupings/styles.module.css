@@ -2,7 +2,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
 
 /**
- * Grouping tags: a wrapping row wide enough for about six tags per line.
+ * Grouping tags: a wrapping row wide enough for about five tags per line.
  */
 .list {
 	display: inline-flex;

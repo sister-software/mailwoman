@@ -22,8 +22,8 @@ export interface GroupingsProps {
 /**
  * A list of grouping IDs, each one a tag.
  *
- * The list keeps a minimum width, so a table cell holding a dozen groupings wraps
- * them onto two lines rather than one per line.
+ * The list keeps a minimum width of about five tags, so a table cell holding a dozen
+ * groupings wraps them onto three lines rather than one per line.
  */
 export const Groupings: React.FC<GroupingsProps> = ({ ids }) => (
 	<span className={styles.list}>
