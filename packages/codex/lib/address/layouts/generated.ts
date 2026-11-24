@@ -279,7 +279,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "CH-", share: 0.25 }])} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "CH-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%X %A %C %X
@@ -801,7 +801,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "FL-", share: 0.25 }])} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "FL-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%C%n%Z
@@ -870,7 +870,7 @@ ${country}`,
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "MC-", share: 0.25 }])} ${locality} ${cedex}
+${prefixedSlot("postcode", "", [{ prefix: "MC-", share: 0.02 }])} ${locality} ${cedex}
 ${country}`,
 
 	// %N%n%O%n%A%nMD-%Z %C The postcode prints as `MD-`:
@@ -1281,7 +1281,7 @@ ${country}`,
 ${attention}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "SE-", share: 0.25 }])} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "SE-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%nSINGAPORE %Z
@@ -1306,7 +1306,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "", [{ prefix: "SI-", share: 0.25 }])} ${locality}
+${prefixedSlot("postcode", "", [{ prefix: "SI-", share: 0.02 }])} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C

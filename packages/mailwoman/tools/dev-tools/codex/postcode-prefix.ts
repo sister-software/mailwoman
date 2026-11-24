@@ -19,7 +19,8 @@
  *   No description states the share of mail written in each form, so the two forms take equal shares.
  *
  *   A country whose operator documents only the bare form records the prefixed form its
- *   publishers write second, as the publishers' own, at a stated quarter of rows.
+ *   publishers write second, as the publishers' own, at a stated share of rows: a quarter
+ *   where most of a publisher's values start with the prefix (FI), and 2% where a few do.
  *   The rendered share then no longer follows each publisher's habit.
  *
  *   Its `measured` line gives the share of each publisher's raw values that start with the
@@ -89,21 +90,28 @@ interface PostcodePrefixRecord {
 const UPU_PAS = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit"
 
 /**
- * The share of rows a publishers' form takes beside the operator's bare form.
+ * The share of rows a publishers' form takes where most of a publisher's values
+ * start with the prefix, as GLEIF's Finnish ones do.
  */
-const PUBLISHERS_FORM_SHARE = 0.25
+const COMMON_PUBLISHERS_FORM_SHARE = 0.25
 
 /**
- * The operator's bare form at the share a publishers' form leaves it, then that publishers' form.
+ * The share of rows a publishers' form takes where only a few publishers' values start with the prefix.
+ */
+const RARE_PUBLISHERS_FORM_SHARE = 0.02
+
+/**
+ * The operator's bare form at the share a publishers' form leaves it, then that publishers' form at `share`.
  */
 function bareWithPublishersForm(
 	examples: readonly string[],
 	prefix: string,
+	share: number,
 	measured: string
 ): readonly PostcodeFormRecord[] {
 	return [
-		{ prefix: "", share: 1 - PUBLISHERS_FORM_SHARE, writtenBy: Operator, examples },
-		{ prefix, share: PUBLISHERS_FORM_SHARE, writtenBy: Publishers, examples: [], measured },
+		{ prefix: "", share: 1 - share, writtenBy: Operator, examples },
+		{ prefix, share, writtenBy: Publishers, examples: [], measured },
 	]
 }
 
@@ -130,6 +138,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["2544 BETTLACH", "1211 GENEVA 6", "1556 CERNIAZ VD"],
 			"CH-",
+			RARE_PUBLISHERS_FORM_SHARE,
 			"GLEIF 30 of 28,284 legal and 58 of 30,837 headquarters postcodes (0.1%, 0.2%); " +
 				"CORDIS 43 of 1,989 organization records (2.2%)."
 		),
@@ -154,6 +163,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["00550 HELSINKI", "00380 HELSINKI", "50100 MIKKELI", "01620 VANTAA", "00101 HELSINKI"],
 			"FI-",
+			COMMON_PUBLISHERS_FORM_SHARE,
 			"GLEIF 46,681 of 55,806 legal and 46,703 of 55,892 headquarters postcodes (83.6% each); " +
 				"CORDIS 19 of 1,615 organization records (1.2%), and 4 more as `FIN`."
 		),
@@ -199,6 +209,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["2544 BETTLACH (cheEn.pdf, 2024-06)"],
 			"FL-",
+			RARE_PUBLISHERS_FORM_SHARE,
 			"GLEIF 14 of 15,507 legal and 11 of 16,351 headquarters postcodes as `FL` (0.1% each); " +
 				"CORDIS 0 of 12 organization records."
 		),
@@ -239,6 +250,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["98000 MONACO", "98020 MONACO CEDEX"],
 			"MC-",
+			RARE_PUBLISHERS_FORM_SHARE,
 			"GLEIF 10 of 965 legal and 105 of 1,453 headquarters postcodes (1.0%, 7.2%); " +
 				"CORDIS 0 of 7 organization records."
 		),
@@ -258,6 +270,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["123 45 LILLBYN", "111 81 STOCKHOLM", "120 35 TYRESÖ"],
 			"SE-",
+			RARE_PUBLISHERS_FORM_SHARE,
 			"GLEIF 28 of 119,869 legal and 31 of 120,058 headquarters postcodes (0.0% each); " +
 				"CORDIS 54 of 2,332 organization records (2.3%), and 14 more as `S`."
 		),
@@ -271,6 +284,7 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		forms: bareWithPublishersForm(
 			["4000 KRANJ", "1001 LJUBLJANA", "2500 MARIBOR"],
 			"SI-",
+			RARE_PUBLISHERS_FORM_SHARE,
 			"GLEIF 0 of 5,119 legal and 0 of 5,110 headquarters postcodes; CORDIS 3 of 780 organization records (0.4%)."
 		),
 		url: `${UPU_PAS}/svnEn.pdf`,
