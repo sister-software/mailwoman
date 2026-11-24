@@ -510,8 +510,9 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * Returns the layout for `country`, or `null` when neither table has an entry.
  *
  * Hand-authored entries take precedence because tests check them against real addresses.
- * A UPU Postal Addressing Systems reading comes next: that table holds a country only where
- * libaddressinput states no `fmt` or omits the locality line the postal operator's own examples print.
+ * A UPU Postal Addressing Systems reading comes next: that table holds a country only
+ * where libaddressinput states no `fmt`, omits the locality line the postal operator's
+ * own examples print, or orders that line differently from every example.
  *
  * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 7
  * read from a UPU description have a layout, and the rest answer `null`.
@@ -540,7 +541,7 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
 	// A SAFD entry is last because it exists only where libaddressinput states `fmt: null`.
 	// A SAFD entry read ahead of a generated skeleton would replace a stated order with a second reading.
 	// A UPU description is read ahead of the skeleton because it is admitted only where the skeleton
-	// leaves out a line the postal operator prints, so the skeleton has no order for that line to keep.
+	// leaves out a line the postal operator prints or orders it against every printed example.
 	return hand ?? UPU_PAS_ADDRESS_LAYOUTS[code] ?? GENERATED_ADDRESS_LAYOUTS[code] ?? S42_ADDRESS_LAYOUTS[code] ?? null
 }
 
