@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write `docs/engineering/reference/jurisdiction-coverage.mdx` — one row per jurisdiction,
- *   over the denominator of every ISO 3166-1 alpha-2 code plus the non-ISO operational
- *   codes, so a jurisdiction with no presence in any layer still gets a row:
- *   an absent row and a zero row are different findings.
+ *   Write `docs/articles/reference/coverage.mdx`, the published reference route `/docs/reference/coverage`.
+ *
+ *   It holds one row per jurisdiction, over the denominator of every ISO 3166-1 alpha-2
+ *   code plus the non-ISO operational codes, so a jurisdiction with no presence in any
+ *   layer still gets a row: an absent row and a zero row are different findings.
+ *   A second table counts the same holdings over each country grouping in `@mailwoman/registry/groupings`.
  *
  *   Every number comes from `censusCoverage`, the same reader `mwdev_coverage` calls,
  *   so this page and that tool cannot disagree.
@@ -21,10 +23,15 @@
 
 import { ISO2_TO_NAME, CountryISO2 } from "@mailwoman/codex/country"
 import { POSTAL_REGIMES } from "@mailwoman/codex/country/postal-regimes"
+import { countriesOfGrouping } from "@mailwoman/codex/country/sets"
+import { SUPPORT_DEPTHS, SUPPORT_PROMISES, type SupportDepth } from "@mailwoman/codex/support"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/repo/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isoDate } from "@mailwoman/core/utils"
+import { GROUPING_IDS } from "@mailwoman/registry/artifacts/groupings/groupings"
+import { getGrouping, groupingMembers, groupingsOf } from "@mailwoman/registry/groupings"
 import { type PathBuilderLike, relative } from "path-ts"
 
 import {
@@ -160,14 +167,72 @@ const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(co
  */
 const nextDrops = nextAdmitted ? admitted.filter((code) => !nextAdmitted.has(code)) : []
 
+/**
+ * The date grouping membership is read on: the day this page is generated.
+ */
+const membershipDate = isoDate()
+
+/**
+ * The deepest support promise per country, across every input language and script.
+ */
+const deepestPromise = new Map<string, SupportDepth>()
+
+for (const promise of SUPPORT_PROMISES) {
+	const earlier = deepestPromise.get(promise.country)
+
+	if (!earlier || SUPPORT_DEPTHS.indexOf(promise.depth) < SUPPORT_DEPTHS.indexOf(earlier)) {
+		deepestPromise.set(promise.country, promise.depth)
+	}
+}
+
+/**
+ * The answering groupings each jurisdiction belongs to on the membership date.
+ */
+const groupingsByCode = new Map(sorted.map((code) => [code, groupingsOf(code, { at: membershipDate })]))
+
+// The groupings cell renders on one line.
+// A member of a dozen groupings otherwise wraps in a narrow column and stretches
+// every cell of its row, and the table already scrolls sideways.
 const rows = sorted.map((code) => {
 	const coverage = measured.get(code) ?? null
 	const name = ISO2_TO_NAME.get(code) ?? "—"
 	const street = coverage?.corpusStreetRows ? coverage.corpusStreetRows.toLocaleString() : "0"
+	const memberOf = groupingsByCode.get(code)!
 
 	const families = shippedFamilies.get(code)
 
-	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} |`
+	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} | ${deepestPromise.get(code) ?? "—"} | ${memberOf.length ? `<span style={{ whiteSpace: "nowrap" }}>${memberOf.join(", ")}</span>` : "—"} |`
+})
+
+/**
+ * One row per grouping: its members on the membership date, and the count of
+ * those members each layer covers.
+ */
+const groupingTableRows = GROUPING_IDS.map((id) => {
+	const grouping = getGrouping(id)
+
+	if (grouping.blockedBy.length) {
+		return `| \`${id}\` | ${grouping.name} | blocked: ${grouping.blockedBy.join("; ")} | | | | | | |`
+	}
+
+	// A publisher's own code, such as the World Bank's `XK` and `JG`, stays a member and is listed in the members cell.
+	const { set, outside } = countriesOfGrouping(id, membershipDate, groupingMembers(id, { at: membershipDate }))
+	const members = [...set, ...outside]
+	const count = (test: (code: string) => boolean): string => `${members.filter(test).length} of ${members.length}`
+
+	const cells = [
+		`\`${id}\``,
+		grouping.name,
+		outside.length ? `${members.length} (outside ISO 3166-1: ${outside.join(", ")})` : String(members.length),
+		count((code) => (measured.get(code)?.corpusRows ?? 0) > 0),
+		count((code) => (measured.get(code)?.corpusStreetRows ?? 0) > 0),
+		count((code) => shippedFamilies.has(code)),
+		count((code) => (measured.get(code)?.gazetteerPlaces ?? 0) > 0),
+		count((code) => (measured.get(code)?.boardRows ?? 0) > 0),
+		count((code) => deepestPromise.has(code)),
+	]
+
+	return `| ${cells.join(" | ")} |`
 })
 
 /**
@@ -191,23 +256,20 @@ const regimeRows = POSTAL_REGIMES.map(
 )
 
 const page = `---
-title: What this repository has, per jurisdiction
+title: Coverage by jurisdiction
+description: What this repository holds for each of ${sorted.length} jurisdictions and each country grouping, from training rows to support promises.
 role: reference
-audience: maintainer
-owner: operations
+source-of-truth: packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts, packages/mailwoman/tools/coverage/census.ts, packages/registry/definitions/groupings.json, packages/codex/lib/support/promises.json
 ---
 
 {/* Generated by packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts. Edit that file. */}
 
-# What this repository has, per jurisdiction
+# Coverage by jurisdiction
 
-One row per jurisdiction, over ${sorted.length} of them: every ISO 3166-1 alpha-2 code in
-\`@mailwoman/codex/country\` plus the non-ISO operational codes that \`@mailwoman/codex/postal-regimes\`
-defines. Regenerate with:
-
-\`\`\`sh
-node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
-\`\`\`
+This page lists what the repository holds for each of ${sorted.length} jurisdictions: every ISO 3166-1 alpha-2
+code in \`@mailwoman/codex/country\`, plus the non-ISO operational codes that \`@mailwoman/codex/postal-regimes\`
+defines. A second table counts the same holdings over each country grouping in \`@mailwoman/registry/groupings\`.
+The page states holdings. A [support promise](./support.mdx) states what Mailwoman guarantees.
 
 Corpus counts were taken over \`${report.corpusVersion}\`${report.corpusCensusTakenAt ? `, cached ${report.corpusCensusTakenAt}` : ", counted in this run"}, ${report.corpusRowsTotal.toLocaleString()} rows.
 **Admitted by** shows each shipped graph whose training config admits the jurisdiction. Admission is per
@@ -257,6 +319,11 @@ overlays that share the model graph of \`@mailwoman/neural-weights-en-us\` or
 any other row only tracks. A jurisdiction reading
 \`—\` has no board row. That jurisdiction is unmeasured rather than failing.
 
+**Promise** is the deepest [support promise](./support.mdx) for the jurisdiction, in any input language and
+script.
+
+**Groupings** lists the country groupings the jurisdiction belonged to on ${membershipDate}, by grouping ID.
+
 ## Counts
 
 | reading | jurisdictions |
@@ -271,11 +338,23 @@ any other row only tracks. A jurisdiction reading
 | absent from every layer | ${absent.length} |
 | rooftop geocoding a consumer can obtain | ${rooftop.length} |
 | has a weights package | ${packaged.length} |
+| holds a support promise | ${sorted.filter((code) => deepestPromise.has(code)).length} |
+
+## Country groupings
+
+Membership is read on ${membershipDate}. Each count after **members** reads as covered members of all members.
+An organization's members come from Wikidata, and a classification's from its publisher's list.
+\`packages/registry/data/manifests/coverage.json\` records each grouping's Wikidata statements that state no
+role or no start date, and the members whose Wikidata item holds no ISO 3166-1 code.
+
+| grouping | name | members | corpus rows | street rows | admitted | gazetteer | board | promise |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+${groupingTableRows.join("\n")}
 
 ## Every jurisdiction
 
-| code | name | corpus rows | street rows | admitted by | gazetteer | weights | board |
-| --- | --- | --- | ---: | --- | ---: | --- | ---: |
+| code | name | corpus rows | street rows | admitted by | gazetteer | weights | board | promise | groupings |
+| --- | --- | --- | ---: | --- | ---: | --- | ---: | --- | --- |
 ${rows.join("\n")}
 
 ${
@@ -318,9 +397,23 @@ it is the ISO 3166-1 user-assigned range, the register enumerates no jurisdictio
 \`mailwoman data coverage\` reports its rows under \`countryLess\` rather than as a jurisdiction. A reader
 counting the census's countries mustn't count it as one.
 
-${countryLessLines}`
+${countryLessLines}
 
-const out = values.out ?? repoRootPath("docs", "engineering", "reference", "jurisdiction-coverage.mdx")
+## Regeneration
+
+The census reads the corpus on the data root, so this page is generated on a host that holds it:
+
+\`\`\`sh
+node packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts --refresh
+\`\`\`
+
+## See also
+
+- [Data and locales](./data-and-locales.mdx) lists the data bundles and weight families a user can install.
+- [Supported languages and countries](./support.mdx) lists the support promises.
+`
+
+const out = values.out ?? repoRootPath("docs", "articles", "reference", "coverage.mdx")
 
 await writeLocalTextFile(page, out)
 

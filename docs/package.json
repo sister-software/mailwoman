@@ -78,6 +78,7 @@
 		"@sister.software/docusaurus-theme": "^14.8.0",
 		"@sister.software/fonts": "^14.8.0",
 		"@sister.software/theme": "^14.8.0",
+		"@tanstack/react-table": "8.21.3",
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.4.0",
 		"domhandler": "^6.0.1",

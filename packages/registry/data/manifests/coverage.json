@@ -114,6 +114,577 @@
 				"deprecated": 25
 			},
 			"missMeans": "not-found-in-snapshot: the registry's File-Date 2026-09-17 edition holds no such subtag"
+		},
+		"country-grouping": {
+			"source": "wikidata-memberships-p463, wikidata-memberships-p527, worldbank-countries, wikipedia-developed-country",
+			"count": 32,
+			"statuses": {
+				"answering": 32,
+				"blocked": 0
+			},
+			"missMeans": "not-declared: definitions/groupings.json declares no grouping with this id"
+		}
+	},
+	"groupings": {
+		"g7": {
+			"roles": {
+				"member": 7
+			},
+			"withoutRole": 7,
+			"withoutStart": 1,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"g20": {
+			"roles": {
+				"member": 19
+			},
+			"withoutRole": 17,
+			"withoutStart": 13,
+			"uncoded": ["Q458"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 19,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"eu": {
+			"roles": {
+				"member": 28
+			},
+			"withoutRole": 28,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"eurozone": {
+			"roles": {
+				"member": 21
+			},
+			"withoutRole": 21,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P463",
+				"otherStates": 1,
+				"onlySelected": [
+					"AT",
+					"BE",
+					"BG",
+					"CY",
+					"EE",
+					"ES",
+					"FI",
+					"FR",
+					"GR",
+					"HR",
+					"IE",
+					"IT",
+					"LT",
+					"LU",
+					"LV",
+					"MT",
+					"NL",
+					"PT",
+					"SI",
+					"SK"
+				],
+				"onlyOther": []
+			}
+		},
+		"schengen": {
+			"roles": {
+				"member": 30
+			},
+			"withoutRole": 30,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 30,
+				"onlySelected": [],
+				"onlyOther": ["GI"]
+			}
+		},
+		"eea": {
+			"roles": {
+				"member": 13
+			},
+			"withoutRole": 13,
+			"withoutStart": 12,
+			"uncoded": ["Q458"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"efta": {
+			"roles": {
+				"member": 10
+			},
+			"withoutRole": 10,
+			"withoutStart": 1,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 10,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"council-of-europe": {
+			"roles": {
+				"member": 47
+			},
+			"withoutRole": 47,
+			"withoutStart": 27,
+			"uncoded": ["Q11703496", "Q19993509", "Q49456106", "Q6505795", "Q70726904"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 46,
+				"onlySelected": ["FI"],
+				"onlyOther": ["SK"]
+			}
+		},
+		"oecd": {
+			"roles": {
+				"member": 38
+			},
+			"withoutRole": 37,
+			"withoutStart": 23,
+			"uncoded": [
+				"Q106563594",
+				"Q113489728",
+				"Q11985017",
+				"Q1337904",
+				"Q136202564",
+				"Q139980172",
+				"Q140893031",
+				"Q1514244",
+				"Q22277244",
+				"Q27063050"
+			],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"nato": {
+			"roles": {
+				"member": 32
+			},
+			"withoutRole": 32,
+			"withoutStart": 0,
+			"uncoded": ["Q124653007", "Q1426649"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 31,
+				"onlySelected": ["SK"],
+				"onlyOther": []
+			}
+		},
+		"un": {
+			"roles": {
+				"member": 199
+			},
+			"withoutRole": 182,
+			"withoutStart": 1,
+			"uncoded": [
+				"Q1054184",
+				"Q1078602",
+				"Q1138904",
+				"Q1192936",
+				"Q133356",
+				"Q13426199",
+				"Q13474305",
+				"Q1415128",
+				"Q1415585",
+				"Q146328",
+				"Q1477220",
+				"Q1479726",
+				"Q14905932",
+				"Q16674377",
+				"Q170468",
+				"Q17765809",
+				"Q193619",
+				"Q199841",
+				"Q2347668",
+				"Q26234937",
+				"Q431731",
+				"Q476757",
+				"Q4843701",
+				"Q5622720",
+				"Q5870215",
+				"Q617078",
+				"Q618399",
+				"Q7735661",
+				"Q862701",
+				"Q2895",
+				"Q33946",
+				"Q36704"
+			],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"wto": {
+			"roles": {
+				"member": 162
+			},
+			"withoutRole": 161,
+			"withoutStart": 89,
+			"uncoded": ["Q458"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"commonwealth": {
+			"roles": {
+				"member": 62,
+				"associate": 1
+			},
+			"withoutRole": 62,
+			"withoutStart": 0,
+			"uncoded": ["Q1216856", "Q124653007", "Q1757823", "Q31747"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"brics": {
+			"roles": {
+				"member": 10
+			},
+			"withoutRole": 10,
+			"withoutStart": 5,
+			"uncoded": ["Q141374679"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 15,
+				"onlySelected": [],
+				"onlyOther": ["BD", "BH", "BY", "DZ", "SA"]
+			}
+		},
+		"apec": {
+			"roles": {
+				"member": 22
+			},
+			"withoutRole": 21,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"asean": {
+			"roles": {
+				"member": 12
+			},
+			"withoutRole": 12,
+			"withoutStart": 1,
+			"uncoded": ["Q131385525", "Q3462649"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 12,
+				"onlySelected": ["AU"],
+				"onlyOther": ["PG"]
+			}
+		},
+		"mercosur": {
+			"roles": {
+				"member": 7
+			},
+			"withoutRole": 7,
+			"withoutStart": 7,
+			"uncoded": ["Q6814224"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 6,
+				"onlySelected": ["MX"],
+				"onlyOther": []
+			}
+		},
+		"andean-community": {
+			"roles": {
+				"member": 9
+			},
+			"withoutRole": 9,
+			"withoutStart": 9,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 4,
+				"onlySelected": ["AR", "BR", "CL", "PY", "UY"],
+				"onlyOther": []
+			}
+		},
+		"caricom": {
+			"roles": {
+				"member": 15
+			},
+			"withoutRole": 15,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"oas": {
+			"roles": {
+				"member": 35
+			},
+			"withoutRole": 35,
+			"withoutStart": 0,
+			"uncoded": ["Q114562109", "Q125430527"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"african-union": {
+			"roles": {
+				"member": 54
+			},
+			"withoutRole": 54,
+			"withoutStart": 44,
+			"uncoded": ["Q40362"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 1,
+				"onlySelected": [
+					"AO",
+					"BF",
+					"BI",
+					"BJ",
+					"BW",
+					"CD",
+					"CF",
+					"CG",
+					"CI",
+					"CM",
+					"CV",
+					"DJ",
+					"DZ",
+					"EG",
+					"ER",
+					"ET",
+					"GA",
+					"GH",
+					"GM",
+					"GN",
+					"GQ",
+					"GW",
+					"KE",
+					"KM",
+					"LR",
+					"LS",
+					"LY",
+					"MA",
+					"MG",
+					"ML",
+					"MR",
+					"MU",
+					"MW",
+					"MZ",
+					"NA",
+					"NE",
+					"NG",
+					"SC",
+					"SD",
+					"SL",
+					"SN",
+					"SO",
+					"SS",
+					"ST",
+					"SZ",
+					"TD",
+					"TG",
+					"TN",
+					"TZ",
+					"UG",
+					"ZA",
+					"ZM",
+					"ZW"
+				],
+				"onlyOther": []
+			}
+		},
+		"ecowas": {
+			"roles": {
+				"member": 16
+			},
+			"withoutRole": 16,
+			"withoutStart": 11,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 15,
+				"onlySelected": ["MR"],
+				"onlyOther": []
+			}
+		},
+		"sadc": {
+			"roles": {
+				"member": 15
+			},
+			"withoutRole": 15,
+			"withoutStart": 15,
+			"uncoded": ["Q18632554", "Q43252484"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 0,
+				"onlySelected": [],
+				"onlyOther": []
+			}
+		},
+		"arab-league": {
+			"roles": {
+				"member": 22
+			},
+			"withoutRole": 21,
+			"withoutStart": 1,
+			"uncoded": ["Q1121819"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 1,
+				"onlySelected": [
+					"AE",
+					"BH",
+					"DJ",
+					"DZ",
+					"EG",
+					"IQ",
+					"JO",
+					"KM",
+					"KW",
+					"LY",
+					"MA",
+					"MR",
+					"OM",
+					"PS",
+					"QA",
+					"SA",
+					"SD",
+					"SO",
+					"SY",
+					"TN",
+					"YE"
+				],
+				"onlyOther": []
+			}
+		},
+		"gcc": {
+			"roles": {
+				"member": 9
+			},
+			"withoutRole": 9,
+			"withoutStart": 7,
+			"uncoded": [],
+			"crossCheck": null
+		},
+		"opec": {
+			"roles": {
+				"member": 15
+			},
+			"withoutRole": 15,
+			"withoutStart": 0,
+			"uncoded": ["Q6814225"],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 13,
+				"onlySelected": ["ID"],
+				"onlyOther": []
+			}
+		},
+		"cis": {
+			"roles": {
+				"member": 12
+			},
+			"withoutRole": 12,
+			"withoutStart": 9,
+			"uncoded": [],
+			"crossCheck": {
+				"property": "P527",
+				"otherStates": 13,
+				"onlySelected": [],
+				"onlyOther": ["MN"]
+			}
+		},
+		"imf-advanced": {
+			"roles": {
+				"member": 43
+			},
+			"withoutRole": 0,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": null
+		},
+		"wb-high-income": {
+			"roles": {
+				"member": 86
+			},
+			"withoutRole": 0,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": null
+		},
+		"wb-upper-middle-income": {
+			"roles": {
+				"member": 59
+			},
+			"withoutRole": 0,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": null
+		},
+		"wb-lower-middle-income": {
+			"roles": {
+				"member": 47
+			},
+			"withoutRole": 0,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": null
+		},
+		"wb-low-income": {
+			"roles": {
+				"member": 25
+			},
+			"withoutRole": 0,
+			"withoutStart": 0,
+			"uncoded": [],
+			"crossCheck": null
 		}
 	}
 }

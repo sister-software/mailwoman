@@ -46,6 +46,7 @@ export type SetSpec =
 	| { addressSystem: SystemCode }
 	| { weightsFamily: string }
 	| { declaredBy: string }
+	| { grouping: string; at: string }
 	| { union: readonly [SetSpec, SetSpec] }
 	| { intersect: readonly [SetSpec, SetSpec] }
 	| { minus: readonly [SetSpec, SetSpec] }
@@ -204,6 +205,33 @@ export function countriesDeclaredBy<Source extends string>(
 	}
 
 	return brand(listed as CountryISO2[])
+}
+
+/**
+ * The members of a country grouping on one date, from `groupingMembers` in `@mailwoman/registry/groupings`.
+ *
+ * The registry answers with every member it holds, including a formerly used code such
+ * as `SU` and a publisher's own code such as the World Bank's `JG`.
+ * `CountryISO2` holds neither, so those members are returned in `outside` rather than dropped.
+ *
+ * Codex takes the members as an argument because `@mailwoman/registry` depends
+ * on `@mailwoman/core`, which depends on codex.
+ */
+export function countriesOfGrouping<Grouping extends string, At extends string>(
+	grouping: Grouping,
+	at: At,
+	members: Iterable<{ code: string }>
+): { set: CountrySet<{ grouping: Grouping; at: At }>; outside: string[] } {
+	if (!grouping || !/^\d{4}-\d{2}-\d{2}$/.test(at)) {
+		throw new TypeError(`countriesOfGrouping needs a grouping id and a YYYY-MM-DD date, got "${grouping}" and "${at}"`)
+	}
+
+	const codes = [...members].map((member) => member.code)
+
+	return {
+		set: brand(isoCodes(codes)),
+		outside: codes.filter((code) => !ISO2_CODES.has(code)),
+	}
 }
 
 /**

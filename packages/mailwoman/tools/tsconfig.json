@@ -24,6 +24,7 @@
 		{ "path": "../../ban" },
 		{ "path": "../../ban/sdk" },
 		{ "path": "../../codex" },
+		{ "path": "../../registry" },
 		{ "path": "../../postcode" },
 		{ "path": "../../core" },
 		{ "path": "../../corpus" },

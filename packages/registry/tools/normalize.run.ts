@@ -10,15 +10,17 @@
  *   The run refuses a source file whose digest differs from `data/manifests/sources.lock.json`.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { workspacePathBuilder } from "@mailwoman/core/paths"
+import { workspacePath, workspacePathBuilder } from "@mailwoman/core/paths"
+import { isoDate } from "@mailwoman/core/utils"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 
 import { readSourceLock } from "#sdk/fetch"
-import { pinnedSourceFile, SOURCES } from "#sdk/sources"
+import { type GroupingDefinitions, pinnedSourceFile, type SourceID, SOURCES } from "#sdk/sources"
+import { formatGroupings, normalizeGroupings } from "#tools/groupings"
 import { normalizeSubtags, SUBTAG_TYPES } from "#tools/language-subtags"
-import { formatNormalized, normalizeFromLock } from "#tools/normalize"
+import { formatNormalized, normalizeFromLock, type SPARQLResults, sourceDefinition } from "#tools/normalize"
 
 const lock = await readSourceLock()
 
@@ -44,6 +46,44 @@ for (const type of SUBTAG_TYPES) {
 	}
 }
 
+const groupingDefinitions = await readLocalJSONFile<GroupingDefinitions>(
+	workspacePath("registry", "definitions", "groupings.json")
+)
+
+/**
+ * The date of a source's stated publication marker, or null when the server stated none.
+ */
+const publishedOn = (id: SourceID): string | null => {
+	const marker = lock.sources[id]?.publication
+
+	return marker && marker !== "unstated" ? isoDate(new Date(marker)) : null
+}
+
+const { normalized: groupings, reports } = normalizeGroupings({
+	definitions: groupingDefinitions,
+	countries: countries.records,
+	p463: await readLocalJSONFile<SPARQLResults>(pinnedSourceFile(sourceDefinition("wikidata-memberships-p463"))),
+	p527: await readLocalJSONFile<SPARQLResults>(pinnedSourceFile(sourceDefinition("wikidata-memberships-p527"))),
+	worldbank: await readLocalJSONFile<unknown>(pinnedSourceFile(sourceDefinition("worldbank-countries"))),
+	worldbankAsOf: publishedOn("worldbank-countries"),
+	wikitext: await readLocalTextFile(pinnedSourceFile(sourceDefinition("wikipedia-developed-country"))),
+	wikitextAsOf: publishedOn("wikipedia-developed-country"),
+	profile: lock.profile,
+})
+
+coverage.namespaces["country-grouping"] = {
+	source: "wikidata-memberships-p463, wikidata-memberships-p527, worldbank-countries, wikipedia-developed-country",
+	count: groupings.groupings.length,
+	statuses: {
+		answering: groupings.groupings.filter((grouping) => !grouping.blockedBy.length).length,
+		blocked: groupings.groupings.filter((grouping) => grouping.blockedBy.length).length,
+	},
+	missMeans: "not-declared: definitions/groupings.json declares no grouping with this id",
+}
+
+coverage.groupings = reports
+
+await writeLocalFile(formatGroupings(groupings), data("normalized", "groupings.json"))
 await writeLocalFile(formatNormalized(countries), data("normalized", "iso3166-1.json"))
 await writeLocalFile(formatNormalized(airports), data("normalized", "iata-airports.json"))
 await writeLocalFile(formatNormalized(subtags), data("normalized", "language-subtags.json"))
@@ -54,4 +94,24 @@ console.log(
 )
 console.log(`airports: ${airports.records.length} (${stringifyJSON(coverage.namespaces["iata-location"]!.statuses)})`)
 console.log(`subtags: ${subtags.records.length} (File-Date ${subtags.fileDate})`)
+
+for (const grouping of groupings.groupings) {
+	const members = groupings.records.filter((row) => row.grouping === grouping.id && row.role === "member").length
+	const report = reports[grouping.id]!
+
+	console.log(
+		`grouping ${grouping.id}: ${grouping.blockedBy.length ? `blocked (${grouping.blockedBy.join("; ")})` : `${members} member rows`}` +
+			(report.crossCheck
+				? `, ${report.crossCheck.property} states ${report.crossCheck.otherStates}` +
+					(report.crossCheck.onlySelected.length
+						? `, only selected: ${report.crossCheck.onlySelected.join(" ")}`
+						: "") +
+					(report.crossCheck.onlyOther.length
+						? `, only ${report.crossCheck.property}: ${report.crossCheck.onlyOther.join(" ")}`
+						: "")
+				: "") +
+			(report.uncoded.length ? `, uncoded: ${report.uncoded.join(" ")}` : "")
+	)
+}
+
 console.log(`country lists:${coverage.namespaces["$countryListComparison"]!.kinds!.join("; ")}`)

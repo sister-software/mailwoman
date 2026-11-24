@@ -1,0 +1,222 @@
+{
+	"$comment": "The country groupings the registry answers. An organization reads its members from Wikidata through `property` (P463 'member of' on the member, P527 'has part(s)' on the organization, or `both` for an organization whose statements are split between them), and the normalizer cross-checks the other property. A classification reads its members from its publisher's list. The normalizer, the generator and the TypeScript reader read this file.",
+	"schemaVersion": 1,
+	"groupings": [
+		{
+			"id": "g7",
+			"name": "Group of Seven",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q1764511", "property": "P463" }
+		},
+		{
+			"id": "g20",
+			"name": "G20",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q19771", "property": "P463" }
+		},
+		{
+			"id": "eu",
+			"name": "European Union",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q458", "property": "P463" }
+		},
+		{
+			"id": "eurozone",
+			"name": "Eurozone",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q8268", "property": "P527" }
+		},
+		{
+			"id": "schengen",
+			"name": "Schengen Area",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q1969730", "property": "P463" }
+		},
+		{
+			"id": "eea",
+			"name": "European Economic Area",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q8932", "property": "P463" }
+		},
+		{
+			"id": "efta",
+			"name": "European Free Trade Association",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q166546", "property": "P463" }
+		},
+		{
+			"id": "council-of-europe",
+			"name": "Council of Europe",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q8908", "property": "P463" }
+		},
+		{
+			"id": "oecd",
+			"name": "Organisation for Economic Co-operation and Development",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q41550", "property": "P463" }
+		},
+		{
+			"id": "nato",
+			"name": "NATO",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7184", "property": "P463" }
+		},
+		{
+			"id": "un",
+			"name": "United Nations",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q1065", "property": "P463" }
+		},
+		{
+			"id": "wto",
+			"name": "World Trade Organization",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7825", "property": "P463" }
+		},
+		{
+			"id": "commonwealth",
+			"name": "Commonwealth of Nations",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7785", "property": "P463" }
+		},
+		{
+			"id": "brics",
+			"name": "BRICS",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q243630", "property": "P463" }
+		},
+		{
+			"id": "apec",
+			"name": "Asia-Pacific Economic Cooperation",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q170481", "property": "P463" }
+		},
+		{
+			"id": "asean",
+			"name": "Association of Southeast Asian Nations",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7768", "property": "P463" }
+		},
+		{
+			"id": "mercosur",
+			"name": "Mercosur",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q4264", "property": "P463" }
+		},
+		{
+			"id": "andean-community",
+			"name": "Andean Community",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q471690", "property": "P463" }
+		},
+		{
+			"id": "caricom",
+			"name": "Caribbean Community",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q205995", "property": "P463" }
+		},
+		{
+			"id": "oas",
+			"name": "Organization of American States",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q123759", "property": "P463" }
+		},
+		{
+			"id": "african-union",
+			"name": "African Union",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7159", "property": "P463" }
+		},
+		{
+			"id": "ecowas",
+			"name": "Economic Community of West African States",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q193272", "property": "P463" }
+		},
+		{
+			"id": "sadc",
+			"name": "Southern African Development Community",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q816706", "property": "P463" }
+		},
+		{
+			"id": "arab-league",
+			"name": "Arab League",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7172", "property": "P463" }
+		},
+		{
+			"id": "gcc",
+			"name": "Gulf Cooperation Council",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q217172", "property": "both" }
+		},
+		{
+			"id": "opec",
+			"name": "Organization of the Petroleum Exporting Countries",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7795", "property": "P463" }
+		},
+		{
+			"id": "cis",
+			"name": "Commonwealth of Independent States",
+			"kind": "organization",
+			"source": { "type": "wikidata", "item": "Q7779", "property": "P463" }
+		},
+		{
+			"id": "imf-advanced",
+			"name": "IMF advanced economies",
+			"kind": "classification",
+			"source": {
+				"type": "wikipedia-imf-advanced",
+				"$comment": "The names the article spells differently from the ISO record's Wikidata label, mapped to the record's alpha-2 code. A name in neither the records nor this table blocks the grouping.",
+				"aliases": { "Czechia": "CZ", "Netherlands": "NL" }
+			}
+		},
+		{
+			"id": "wb-high-income",
+			"name": "World Bank high income",
+			"kind": "classification",
+			"source": { "type": "worldbank-income", "level": "HIC" }
+		},
+		{
+			"id": "wb-upper-middle-income",
+			"name": "World Bank upper middle income",
+			"kind": "classification",
+			"source": { "type": "worldbank-income", "level": "UMC" }
+		},
+		{
+			"id": "wb-lower-middle-income",
+			"name": "World Bank lower middle income",
+			"kind": "classification",
+			"source": { "type": "worldbank-income", "level": "LMC" }
+		},
+		{
+			"id": "wb-low-income",
+			"name": "World Bank low income",
+			"kind": "classification",
+			"source": { "type": "worldbank-income", "level": "LIC" }
+		}
+	],
+	"entities": {
+		"$comment": "Wikidata items that hold a membership for an ISO 3166-1 entry whose code sits on another item, mapped to that entry's alpha-2 code. The Netherlands country item holds the EU seat while NL sits on the Kingdom of the Netherlands; the Danish Realm holds the UN and NATO seats while DK sits on Denmark; West Germany's UN seat continued as Germany's; Taiwan holds WTO and APEC seats under two names.",
+		"Q55": "NL",
+		"Q756617": "DK",
+		"Q713750": "DE",
+		"Q10915215": "TW",
+		"Q216923": "TW"
+	},
+	"roles": {
+		"$comment": "Wikidata P2868 ('subject has role') values on a membership statement. `member` counts as membership. A name role, such as Chinese Taipei, is the name a member holds its seat under. A value outside this table blocks its grouping until it is classified here.",
+		"Q160016": "member",
+		"Q15140392": "member",
+		"Q6688521": "member",
+		"Q26234937": "member",
+		"Q10915215": "member",
+		"Q216923": "member",
+		"Q47165448": "associate",
+		"Q15978655": "other",
+		"Q381160": "other"
+	}
+}

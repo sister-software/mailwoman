@@ -236,6 +236,7 @@
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/recognizer": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/soil": "workspace:*",

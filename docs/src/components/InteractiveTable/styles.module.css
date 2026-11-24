@@ -1,0 +1,48 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
+.wrapper {
+	margin-bottom: var(--ifm-spacing-vertical);
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+	margin-bottom: 0.5rem;
+	font-size: 0.875rem;
+}
+
+.filter {
+	min-width: 12rem;
+	padding: 0.25rem 0.5rem;
+	border: 1px solid var(--ifm-color-emphasis-400);
+	border-radius: var(--ifm-global-radius);
+	background: var(--ifm-background-color);
+	color: var(--ifm-font-color-base);
+	font: inherit;
+}
+
+.count {
+	color: var(--ifm-color-emphasis-700);
+}
+
+.sort {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-weight: inherit;
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.indicator {
+	font-size: 0.75em;
+	opacity: 0.6;
+}

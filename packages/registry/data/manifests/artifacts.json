@@ -63,5 +63,10 @@
 		"sha256": "2126f847feae97610986ad3902871600165717858f061ee61699acae144dc2b6",
 		"bytes": 5969,
 		"profile": "open-2026-11"
+	},
+	"country-groupings": {
+		"sha256": "500525cacad4ab47c52e35aa07028b72a8fa998e47e7b3043bc459776a5448c2",
+		"bytes": 229404,
+		"profile": "open-2026-11"
 	}
 }
