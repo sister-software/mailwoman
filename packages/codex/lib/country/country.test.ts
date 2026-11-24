@@ -11,7 +11,6 @@ import {
 	formatAsCountryISO2,
 	isAlpha2CodeShape,
 	isCountryToken,
-	isTwoLetterCountryCode,
 	matchCountry,
 } from "#country"
 
@@ -111,7 +110,11 @@ test("countryRenderForms writes every curated country in a form other than a two
 		const forms = countryRenderForms(iso2)
 
 		expect(forms.length, iso2).toBeGreaterThan(0)
-		expect(forms.filter(isTwoLetterCountryCode), iso2).toEqual([])
+
+		expect(
+			forms.filter((form) => /^(?:[A-Za-z]\.?){2}$/u.test(form.trim())),
+			iso2
+		).toEqual([])
 	}
 
 	expect(countryRenderForms("CA")).toEqual(["Canada", "CAN"])

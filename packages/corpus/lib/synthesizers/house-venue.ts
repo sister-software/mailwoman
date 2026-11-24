@@ -5,6 +5,7 @@
  *   Generates addresses in which a house number, a street and a venue appear together.
  */
 
+import { countryRenderForms } from "@mailwoman/codex/country"
 import { sample } from "@mailwoman/core/math/random"
 
 import { layoutAdminTail } from "#synthesizers/tail"
@@ -145,17 +146,10 @@ const GB_VENUE_POOL_RATE = 0.7
 
 const GB_RANGE_NUMBER_RATE = 0.15
 
+/**
+ * The share of rows that end in the country, written in one of `countryRenderForms`.
+ */
 const COUNTRY_APPEND_RATE = 0.3
-
-// Repeated entries weight the sample toward the more common form.
-const COUNTRY_SURFACES: Readonly<Record<string, ReadonlyArray<string>>> = {
-	US: ["United States", "USA"],
-	GB: ["United Kingdom", "United Kingdom", "United Kingdom", "UK"],
-	FR: ["France"],
-	CA: ["Canada"],
-	AU: ["Australia"],
-	DE: ["Germany", "Deutschland"],
-}
 
 /**
  * Synthesizes one row with a house number, a street, a venue and the tuple's admin tail.
@@ -196,8 +190,10 @@ export function synthesizeHouseVenueRow(
 		houseNumber = `${start}-${start + span}`
 	}
 
-	const countrySurfaces = COUNTRY_SURFACES[base.country]
-	const countrySurface = countrySurfaces && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : undefined
+	const countrySurfaces = countryRenderForms(base.country)
+
+	const countrySurface =
+		countrySurfaces.length && random() < COUNTRY_APPEND_RATE ? sample(countrySurfaces, random) : undefined
 
 	// The layout decides the tail's order and which parts it prints: FR prints no region,
 	// VE keeps the region after the postcode, GB puts the postcode after the locality.

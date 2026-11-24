@@ -29,6 +29,49 @@ import { dirname } from "path-ts"
 import { type CIRunsReading, readActiveCIRuns } from "#check-kit/ci-runs"
 
 /**
+ * How much of the lab host a job loads.
+ * The load decides what the job waits for before it starts.
+ */
+export const HostLoad = {
+	/**
+	 * Starts at once and takes no lock.
+	 */
+	Light: "light",
+	/**
+	 * Takes the host lock and starts beside CI runs.
+	 *
+	 * A compile, a lint or a health script fits beside a CI job in memory.
+	 */
+	Heavy: "heavy",
+	/**
+	 * Waits for the host's CI runs to finish, then takes the host lock.
+	 *
+	 * A test suite's workers and a CI test job's workers exceed memory together.
+	 */
+	Exclusive: "exclusive",
+} as const
+
+export type HostLoad = (typeof HostLoad)[keyof typeof HostLoad]
+
+/**
+ * A load that takes the host lock.
+ */
+type LockingHostLoad = Exclude<HostLoad, typeof HostLoad.Light>
+
+/**
+ * The load of a sequence of jobs run under one host acquisition.
+ *
+ * The acquisition takes the lock, so the load is at least heavy, and exclusive when any job's is.
+ */
+export function heaviestHostLoad(loads: Iterable<HostLoad>): LockingHostLoad {
+	for (const load of loads) {
+		if (load === HostLoad.Exclusive) return HostLoad.Exclusive
+	}
+
+	return HostLoad.Heavy
+}
+
+/**
  * How long a heavy check waits for the host lock and for CI before the bound expires: 20 minutes.
  *
  * The longest wait a check meets is a CI test job on this host's runners.
@@ -170,6 +213,9 @@ export interface HostAcquisition {
 		 */
 		staleReleased: string[]
 	}
+	/**
+	 * The wait for CI, or `null` for a job whose load starts beside CI runs.
+	 */
 	ciWait: {
 		waitedMs: number
 		/**
@@ -180,11 +226,13 @@ export interface HostAcquisition {
 		 * The last CI reading before the check started.
 		 */
 		reading: CIRunsReading | null
-	}
+	} | null
 }
 
 /**
- * Wait for CI to finish, then take the host lock, within one shared bound.
+ * Take the host lock, after waiting for CI to finish when the load is exclusive, within one shared bound.
+ *
+ * A heavy load reads no CI state and waits only for the lock.
  *
  * The CI wait holds no lock, so a check waiting on CI blocks no other check.
  * The lock serializes heavy checks: two checks that see CI finish together take it one after the other.
@@ -201,39 +249,25 @@ export interface HostAcquisition {
  */
 export async function acquireHost(
 	detail: Record<string, unknown>,
+	load: LockingHostLoad,
 	maxWaitMs: number,
 	noWait: boolean,
 	services: HostServices = {}
 ): Promise<HostAcquisition> {
 	const clock = services.clock ?? systemClock
-	const readCI = services.readCI ?? readActiveCIRuns
 	const log = services.log ?? (() => {})
 	const staleReleased: string[] = []
 	const startedAt = clock.now()
 	let lastHolder: string | null = null
 	const lockDir = services.lockDir ?? hostLockPath()
 
-	const ciStartedAt = clock.now()
-	let reading = await readCI()
-
 	// Under --no-wait the bound is zero, so the first reading is the one recorded.
 	const boundMs = noWait ? 0 : maxWaitMs
 
-	while (reading.read && reading.runs.length) {
-		const remaining = boundMs - (clock.now() - startedAt)
-
-		if (remaining <= 0) break
-
-		log(`waiting for ${reading.runs.length} CI run(s): ${reading.runs.map((run) => run.workflow).join(", ")}`)
-		await clock.sleep(Math.min(CI_POLL_MS, remaining))
-		reading = await readCI()
-	}
-
-	const ciWait = {
-		waitedMs: clock.now() - ciStartedAt,
-		expired: reading.read && reading.runs.length > 0,
-		reading,
-	}
+	const ciWait =
+		load === HostLoad.Exclusive
+			? await waitForCI(boundMs, startedAt, clock, services.readCI ?? readActiveCIRuns, log)
+			: null
 
 	// The lock is a non-recursive `mkdir`, so its parent must exist first.
 	await makeDirectories(dirname(lockDir))
@@ -267,6 +301,36 @@ export async function acquireHost(
 	}
 
 	return { lock: waited.lock ?? null, lockWait, ciWait }
+}
+
+/**
+ * Poll CI until no run is active or the bound, counted from `startedAt`, expires.
+ */
+async function waitForCI(
+	boundMs: number,
+	startedAt: number,
+	clock: ClockLike,
+	readCI: () => Promise<CIRunsReading>,
+	log: (line: string) => void
+): Promise<NonNullable<HostAcquisition["ciWait"]>> {
+	const ciStartedAt = clock.now()
+	let reading = await readCI()
+
+	while (reading.read && reading.runs.length) {
+		const remaining = boundMs - (clock.now() - startedAt)
+
+		if (remaining <= 0) break
+
+		log(`waiting for ${reading.runs.length} CI run(s): ${reading.runs.map((run) => run.workflow).join(", ")}`)
+		await clock.sleep(Math.min(CI_POLL_MS, remaining))
+		reading = await readCI()
+	}
+
+	return {
+		waitedMs: clock.now() - ciStartedAt,
+		expired: reading.read && reading.runs.length > 0,
+		reading,
+	}
 }
 
 /**

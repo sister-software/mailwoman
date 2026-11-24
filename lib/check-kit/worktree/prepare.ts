@@ -13,7 +13,14 @@
 import { OperationEffect } from "@mailwoman/core/scripting"
 
 import { type CheckResult, HOST_BUSY_EXIT, type RegisteredCheckOptions, runRegisteredCheck } from "#check-kit/check"
-import { acquireHost, describeHolder, type HostAcquisition, type HostServices } from "#check-kit/host"
+import {
+	acquireHost,
+	describeHolder,
+	heaviestHostLoad,
+	type HostAcquisition,
+	HostLoad,
+	type HostServices,
+} from "#check-kit/host"
 import { parseWeightsCopyOutput, parseYarnInstallOutput } from "#check-kit/parsers/prepare-steps"
 import { type CheckCommand, CheckReader, findCheckCommand } from "#check-kit/registry"
 import {
@@ -36,7 +43,7 @@ const PREPARE_STEP_COMMANDS: Readonly<Record<PrepareStep, CheckCommand>> = {
 		name: PrepareStep.Install,
 		description: "yarn install --json: install the tree's dependencies, with Yarn's typed output lines",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["install", "--json"],
 		reader: CheckReader.Script,
@@ -47,7 +54,7 @@ const PREPARE_STEP_COMMANDS: Readonly<Record<PrepareStep, CheckCommand>> = {
 		name: PrepareStep.CopyWeights,
 		description: "yarn mwops release copy-weights: materialize the weights workspaces with the tree's own mwops",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["mwops", "release", "copy-weights"],
 		reader: CheckReader.Script,
@@ -301,6 +308,7 @@ export async function runPrepare(path: string, options: PrepareOptions): Promise
 
 	const acquired = await acquireHost(
 		{ check: "worktree-prepare", checkout: tree, steps: selected },
+		heaviestHostLoad(selected.map((step) => PREPARE_STEP_COMMANDS[step].hostLoad)),
 		options.maxWaitMs,
 		options.noWait,
 		options.host

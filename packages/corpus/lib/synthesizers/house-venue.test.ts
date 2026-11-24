@@ -251,7 +251,10 @@ describe("synthesizeHouseVenueRow", () => {
 			)
 
 			if (row!.components.country) {
-				expect(row!.raw).toMatch(/, 27 Minories, London, EC3N 1DE, (United Kingdom|UK)$/)
+				// The country is any rendered form of three or more characters.
+				// Two-letter codes are never drawn.
+				expect(row!.raw).toMatch(/, 27 Minories, London, EC3N 1DE, [^,]{3,}$/)
+				expect(row!.raw).not.toMatch(/, [A-Za-z]\.?[A-Za-z]\.?$/)
 
 				return
 			}

@@ -7,10 +7,13 @@
  *
  * A heavy check takes the host lock before it starts, because the lab host has the memory
  * for one compile, lint or suite at a time beside the CI runners it also hosts.
+ * A test suite also waits for those runners' CI runs to finish.
+ * Every other heavy check starts beside them.
  */
 
 import { OperationEffect } from "@mailwoman/core/scripting"
 
+import { HostLoad } from "#check-kit/host"
 import type { ParsedCheckOutput } from "#check-kit/parsed"
 import { parseScriptOutput } from "#check-kit/parsers/scripts"
 
@@ -37,9 +40,9 @@ export interface CheckCommand {
 	 */
 	effect: OperationEffect
 	/**
-	 * Whether the check takes the host lock and waits for CI before it starts.
+	 * What the check waits for before it starts: no wait, the host lock, or CI and then the host lock.
 	 */
-	heavy: boolean
+	hostLoad: HostLoad
 	/**
 	 * Whether the check takes test paths.
 	 * The runner appends them to its arguments.
@@ -66,7 +69,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "compile",
 		description: "yarn compile: build every TypeScript project with tsc -b",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["compile"],
 		reader: CheckReader.Script,
@@ -76,7 +79,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "typecheck",
 		description: "yarn typecheck: compile, then type-check the tests, the docs and the tools",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["typecheck"],
 		reader: CheckReader.Script,
@@ -86,7 +89,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "health",
 		description: "yarn health: the repository-health scripts",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["health"],
 		reader: CheckReader.Script,
@@ -97,7 +100,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		description:
 			"yarn vitest --run lib/repo-health: the repository-health tests, which run the current-tree checks `yarn health` leaves out",
 		effect: OperationEffect.Read,
-		heavy: false,
+		hostLoad: HostLoad.Light,
 		takesPaths: false,
 		args: ["vitest", "--run", "lib/repo-health"],
 		reader: CheckReader.Vitest,
@@ -106,7 +109,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "lint",
 		description: "yarn lint: oxlint, oxfmt, code blocks, prose, spelling and health",
 		effect: OperationEffect.LocalWrite,
-		heavy: true,
+		hostLoad: HostLoad.Heavy,
 		takesPaths: false,
 		args: ["lint"],
 		reader: CheckReader.Script,
@@ -116,7 +119,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "prose-code",
 		description: "yarn lint:prose:code: Vale over source comments",
 		effect: OperationEffect.Read,
-		heavy: false,
+		hostLoad: HostLoad.Light,
 		takesPaths: false,
 		args: ["lint:prose:code"],
 		reader: CheckReader.Script,
@@ -126,7 +129,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "prose-vocab",
 		description: "yarn lint:prose:vocab: Vale vocabulary rules over the docs",
 		effect: OperationEffect.Read,
-		heavy: false,
+		hostLoad: HostLoad.Light,
 		takesPaths: false,
 		args: ["lint:prose:vocab"],
 		reader: CheckReader.Script,
@@ -136,7 +139,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "vitest",
 		description: "yarn vitest --run <paths>: the named test files",
 		effect: OperationEffect.Read,
-		heavy: false,
+		hostLoad: HostLoad.Light,
 		takesPaths: true,
 		args: ["vitest", "--run"],
 		reader: CheckReader.Vitest,
@@ -145,7 +148,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "fast-suite",
 		description: "yarn test --run: the root Vitest suite",
 		effect: OperationEffect.Read,
-		heavy: true,
+		hostLoad: HostLoad.Exclusive,
 		takesPaths: false,
 		args: ["test", "--run"],
 		reader: CheckReader.Vitest,
@@ -154,7 +157,7 @@ export const checkCommands: readonly CheckCommand[] = [
 		name: "slow-suite",
 		description: "yarn ci:test:slow: the integration suite",
 		effect: OperationEffect.Read,
-		heavy: true,
+		hostLoad: HostLoad.Exclusive,
 		takesPaths: false,
 		args: ["ci:test:slow"],
 		reader: CheckReader.Vitest,

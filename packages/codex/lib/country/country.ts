@@ -256,7 +256,7 @@ export function countrySurfaceForms(iso2: string): readonly string[] {
  * A two-letter code also reads as a region abbreviation (`CA` is California's),
  * so `packages/corpus/AGENTS.md` keeps a rendered country to three or more characters.
  */
-export function isTwoLetterCountryCode(form: string): boolean {
+function isTwoLetterCountryCode(form: string): boolean {
 	return /^(?:[A-Za-z]\.?){2}$/u.test(form.trim())
 }
 

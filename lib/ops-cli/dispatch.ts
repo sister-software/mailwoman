@@ -33,7 +33,7 @@ import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { resolvePath } from "path-ts"
 
 import { HOST_BUSY_EXIT, renderCheckResult, runPreflight, runRegisteredCheck } from "#check-kit/check"
-import { DEFAULT_MAX_WAIT_MINUTES } from "#check-kit/host"
+import { DEFAULT_MAX_WAIT_MINUTES, HostLoad } from "#check-kit/host"
 import { hostExitCode, hostOperations } from "#check-kit/host/operations"
 import { type ProbeContext, probeExitCode, probeOperationArgs, probeOperations } from "#check-kit/probe/operations"
 import {
@@ -187,7 +187,7 @@ function usage(io: DispatchIO): number {
 			`pr operations:      ${pullRequestOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`worktree operations: ${worktreeOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
 			`probe operations:   ${probeOperations.map((operation) => `${operation.id} (${operation.effect})`).join(", ")}`,
-			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.heavy ? ", heavy" : ""})`).join(", ")}`,
+			`checks:             ${checkCommands.map((check) => `${check.name} (${check.effect}${check.hostLoad === HostLoad.Light ? "" : `, ${check.hostLoad}`})`).join(", ")}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
 			`health fixes:       ${fixes.length ? fixes.map((fix) => fix.id).join(", ") : "(none registered yet)"}`,
 			// oxlint-disable-next-line maishopViewlwoman/comment-reflow -- TODO Detangle this
@@ -839,7 +839,7 @@ const CHECK_OPTIONS = {
  * `mwops check <name> [paths…]` runs one registered check in this checkout and exits with its status.
  *
  * `mwops check preflight` runs the direct-push set and exits non-zero if any of it failed.
- * A heavy check waits for the host lock and for CI, within `--max-wait-minutes`.
+ * A heavy check waits for the host lock, and an exclusive check for CI first, within `--max-wait-minutes`.
  */
 async function runCheckVerb(args: readonly string[], io: DispatchIO): Promise<number> {
 	let parsed: ReturnType<typeof parseFlags>
@@ -862,9 +862,7 @@ async function runCheckVerb(args: readonly string[], io: DispatchIO): Promise<nu
 				"mwops check <name> [paths…] [--json] [--no-wait] [--max-wait-minutes N] [--log-dir <dir>]",
 				"mwops check preflight [--json]",
 				"",
-				...checkCommands.map(
-					(check) => `  ${check.name.padEnd(12)} ${check.heavy ? "heavy" : "light"}  ${check.description}`
-				),
+				...checkCommands.map((check) => `  ${check.name.padEnd(12)} ${check.hostLoad.padEnd(9)}  ${check.description}`),
 				"",
 			].join("\n")
 		)
