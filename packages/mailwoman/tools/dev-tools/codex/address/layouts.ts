@@ -10,6 +10,7 @@
  */
 
 import { ADDRESS_LAYOUTS } from "@mailwoman/codex/address/layouts"
+import { POSTCODE_PREFIX_RECORDS } from "@mailwoman/codex/labels/postcode/documented-forms"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
@@ -19,7 +20,6 @@ import { printedPostcodePrefix } from "@mailwoman/postcode/country-formats"
 import { Globerator } from "spliterator/node/fs"
 
 import { LATIN_DISTRICT_BEFORE_LOCALITY_COUNTRIES } from "#tools/dev-tools/codex/latin-district"
-import { POSTCODE_PREFIX_RECORDS } from "#tools/dev-tools/codex/postcode-prefix"
 import {
 	COMMA_JOINED_STREET_COUNTRIES,
 	LOCAL_STREET_NODES,
@@ -103,6 +103,12 @@ function regionCodeAsSlot(line: string, code: string): string {
 let usesPrefixedSlot = false
 
 /**
+ * Whether a generated layout prints a country's documented postcode forms,
+ * so the emitted file imports `documentedPostcodeSlot`.
+ */
+let usesDocumentedPostcodeSlot = false
+
+/**
  * The fixed text written against the postcode at the start of a line or after white space,
  * such as `HR-` in `HR-%Z %C` or `〒` in `〒%Z`.
  *
@@ -114,23 +120,22 @@ const POSTCODE_PREFIX = /(^|\s)([^\s$}]*)\$\{postcode\}/u
  * Rewrites the text printed against the postcode as a prefixed slot, so the prefix renders
  * inside the postcode's piece and is left out when the value already starts with it.
  *
- * A country in {@linkcode POSTCODE_PREFIX_RECORDS} prints the prefix its operator's
- * description states in place of the one `fmt` writes.
+ * A country in {@linkcode POSTCODE_PREFIX_RECORDS} prints the forms its operator's
+ * description states in place of the prefix `fmt` writes, through `documentedPostcodeSlot`.
  */
 function postcodePrefixAsSlot(line: string, code: string): string {
 	const match = POSTCODE_PREFIX.exec(line)
 
 	if (!match) return line
 
-	const [first, ...otherForms] = POSTCODE_PREFIX_RECORDS[code]?.forms ?? []
-	const prefix = first?.prefix ?? match[2]!
+	// A recorded country's slot is read from the record at runtime, so the forms have one home.
+	if (POSTCODE_PREFIX_RECORDS[code]) {
+		usesDocumentedPostcodeSlot = true
 
-	if (otherForms.length) {
-		usesPrefixedSlot = true
-		const forms = otherForms.map((form) => `{ prefix: "${form.prefix}", share: ${form.share} }`).join(", ")
-
-		return line.replace(POSTCODE_PREFIX, `$1\${prefixedSlot("postcode", "${prefix}", [${forms}])}`)
+		return line.replace(POSTCODE_PREFIX, `$1\${documentedPostcodeSlot("${code}")}`)
 	}
+
+	const prefix = match[2]!
 
 	// Text holding no letter or symbol, such as a parenthesis, separates rather than prefixes.
 	if (!/[\p{L}\p{So}]/u.test(prefix)) {
@@ -335,6 +340,7 @@ const emitted = `${spdxHeaderText(SourceHeaderSyntax.Slash)}/**
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
 
 import { addr, ${usesFixedSlot ? "fixedSlot, " : ""}${[...streetNodes].toSorted().join(", ")}, ${usesPrefixedSlot ? "prefixedSlot, " : ""}SLOTS, type AddressLayout } from "#address/layout"
+${usesDocumentedPostcodeSlot ? 'import { documentedPostcodeSlot } from "#labels/postcode/documented-forms"\n' : ""}
 
 const { ${[...usedSlots].toSorted().join(", ")} } = SLOTS
 

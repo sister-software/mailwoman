@@ -25,24 +25,29 @@
  *
  *   Its `measured` line gives the share of each publisher's raw values that start with the
  *   prefix, read from the GLEIF golden copy of 2026-10-03 and the CORDIS organization files.
+ *
+ *   Every layout table prints a recorded country's postcode through {@linkcode documentedPostcodeSlot},
+ *   so a country moved from one table to another keeps its forms.
  */
+
+import { prefixedSlot, type AddressSlot } from "#address/layout"
 
 /**
  * Who writes a printed postcode form.
  */
-const PostcodeFormAuthor = {
+export const PostcodeFormAuthor = {
 	Operator: "operator",
 	Publishers: "publishers",
 } as const
 
-type PostcodeFormAuthor = (typeof PostcodeFormAuthor)[keyof typeof PostcodeFormAuthor]
+export type PostcodeFormAuthor = (typeof PostcodeFormAuthor)[keyof typeof PostcodeFormAuthor]
 
 const { Operator, Publishers } = PostcodeFormAuthor
 
 /**
  * One printed form of a country's postcode.
  */
-interface PostcodeFormRecord {
+export interface PostcodeFormRecord {
 	/**
 	 * The text printed against the postcode, or the empty string when the postcode prints bare.
 	 */
@@ -70,7 +75,7 @@ interface PostcodeFormRecord {
 /**
  * One country's printed postcode forms and the description they're read from.
  */
-interface PostcodePrefixRecord {
+export interface PostcodePrefixRecord {
 	/**
 	 * The forms, the one the layout prints first.
 	 */
@@ -292,4 +297,25 @@ export const POSTCODE_PREFIX_RECORDS: Readonly<Record<string, PostcodePrefixReco
 		sha256: "9758df597eb7749fe22b8fb7d65ae11aecb695694b19235758eaa218ecc2e9c9",
 		statement: "4 digits to the left of the locality name",
 	},
+}
+
+/**
+ * Returns the postcode slot of a country in {@linkcode POSTCODE_PREFIX_RECORDS}:
+ * the first form's prefix, with every other form at its share for a drawn render.
+ *
+ * Throws for a country the table doesn't hold.
+ * A layout that asks for the country's documented forms would otherwise print none of them.
+ */
+export function documentedPostcodeSlot(countryCode: string): AddressSlot {
+	const record = POSTCODE_PREFIX_RECORDS[countryCode]
+
+	if (!record) throw new Error(`${countryCode} has no documented postcode forms in POSTCODE_PREFIX_RECORDS`)
+
+	const [first, ...otherForms] = record.forms
+
+	return prefixedSlot(
+		"postcode",
+		first!.prefix,
+		otherForms.map(({ prefix, share }) => ({ prefix, share }))
+	)
 }

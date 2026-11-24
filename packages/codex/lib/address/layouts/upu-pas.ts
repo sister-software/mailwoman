@@ -39,6 +39,7 @@ import {
 	withSoftBreakBefore,
 	type AddressLayout,
 } from "#address/layout"
+import { documentedPostcodeSlot } from "#labels/postcode/documented-forms"
 
 const { attention, country, dependent_locality, locality, postcode, region, subregion, venue } = SLOTS
 
@@ -588,7 +589,7 @@ ${country}`,
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
-${prefixedSlot("postcode", "LT-")} ${locality}
+${documentedPostcodeSlot("LT")} ${locality}
 ${country}`,
 
 	// addressee / street + premises (Kr. Barona street 7, dz. 1) / locality + postcode (RIGA, LV–1050)
