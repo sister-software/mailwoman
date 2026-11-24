@@ -73,6 +73,10 @@
 			"entry": ["lib/index.ts", "cli/main.ts", "tools/**/*.ts"],
 			"ignoreDependencies": ["@mailwoman/neural", "@mailwoman/neural-weights-en-us"]
 		},
+		"docker/overlay-tiles": {
+			"entry": [],
+			"ignoreDependencies": ["mailwoman"]
+		},
 		"packages/neural-weights-*": {
 			"entry": ["index.ts", "scripts/**/*.ts"],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us", "@mailwoman/neural-weights-cjk"]

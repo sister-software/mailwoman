@@ -1,0 +1,17 @@
+{
+	"name": "@mailwoman/overlay-tiles-image",
+	"version": "11.3.0",
+	"private": true,
+	"description": "The production dependencies of the overlay-tiles container image. `yarn workspaces focus --production @mailwoman/overlay-tiles-image` installs exactly this closure: the mailwoman CLI that runs `tiles overlays`, and DuckDB, which mailwoman declares only as an optional peer.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "docker/overlay-tiles"
+	},
+	"type": "module",
+	"dependencies": {
+		"@duckdb/node-api": "^2.0.0-r.1",
+		"mailwoman": "workspace:*"
+	}
+}

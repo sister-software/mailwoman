@@ -38,6 +38,11 @@ RUN corepack enable \
 	&& yarn install --immutable \
 	&& yarn compile
 
+# The compile needs every workspace's dev dependencies, and the run needs only the production closure of
+# docker/overlay-tiles/package.json. The focus reinstalls node_modules as that closure, so the runtime copy
+# holds what the manifests declare and none of the build and lint tooling.
+RUN yarn workspaces focus --production @mailwoman/overlay-tiles-image
+
 # ---- runtime ----
 FROM docker.io/library/node:24.22.3-bookworm-slim AS runtime
 

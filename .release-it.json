@@ -104,6 +104,7 @@
 		"packages/api-worker": "private hosted geocoder entry point — Cloudflare infrastructure, never publishes",
 		"packages/browser": "private browser automation for acquisition and agent tools — never publishes",
 		"docs": "private Docusaurus site — never publishes",
+		"docker/overlay-tiles": "private manifest of the overlay-tiles container image's production dependencies — never publishes",
 		"packages/tile-worker": "private demo-map tile worker — never publishes",
 		"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
 		"packages/earth": "private Earth map app — Cloudflare infrastructure, never publishes",

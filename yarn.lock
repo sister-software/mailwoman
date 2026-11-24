@@ -7571,6 +7571,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/overlay-tiles-image@workspace:docker/overlay-tiles":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/overlay-tiles-image@workspace:docker/overlay-tiles"
+  dependencies:
+    "@duckdb/node-api": "npm:^2.0.0-r.1"
+    mailwoman: "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/photon@workspace:packages/photon":
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:packages/photon"
