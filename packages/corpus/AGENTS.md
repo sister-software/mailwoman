@@ -211,7 +211,7 @@ absent statement and from a reservation of rights.
 
 An elected decision records a reading per operation (`SourceOperation` in `@mailwoman/license/operations`)
 and a reading per purpose (`UsePurpose` in `@mailwoman/license/decision`) beside them. The operations are
-named by what leaves this repository's hands: `distribute-rows` for a file the rows can be read back from,
+identified by what leaves this repository's hands: `distribute-rows` for a file the rows can be read back from,
 `answer-queries` for values sent one request at a time, `distribute-derived` for an artifact the rows can't
 be recovered from, and `distribute-model` for trained weights. `evaluate` scores a model and lets only
 aggregate scores leave. A grant that permits `train` permits `evaluate`, and one that permits

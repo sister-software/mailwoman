@@ -78,8 +78,8 @@ Use repository skills for procedures rather than copying their steps into this f
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` defines model evaluation requirements and the
   release-quality procedure: a default-on model or decoder change ships only on a `pass` verdict
   against the registered release requirements. Those requirements replaced the D-rule on 2026-10-20. The current
-  specification, v13, which `release/current-spec.ts` names, registers model 10.8.0 as the published identity and
-  the v8.9.0 seed 42 artifact as the candidate. Its confirmation read on 2026-11-19 returned `pass` on all 16
+  specification is v13. `release/current-spec.ts` names that specification. V13 registers model 10.8.0 as the published
+  identity and the v8.9.0 seed 42 artifact as the candidate. Its confirmation read on 2026-11-19 returned `pass` on all 16
   checks, the first `pass` verdict. `docs/records/evals/2026-11-19-release-requirements-v13.md` records that read,
   and `docs/records/evals/2026-11-20-release-requirements-v14.md` the unregistered v14 draft.
 - `docs/engineering/HOLDOUT_AND_EVALUATION.mdx` is the held-out data and evaluation specification: how

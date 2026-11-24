@@ -14,7 +14,7 @@ visible on the map. Earth's Gazette explorer reads them.
 | `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`   | The `wof` export by id, or the union of an Overture division's land areas |
 
 Each archive holds three layers: `boundaries`, `points` and `extents`. `extents` is the rectangle the gazetteer stores
-for each place, which the resolver reads in place of a boundary. Each feature's id is the place id, and its attributes
+for each place. The resolver reads that rectangle in place of a boundary. Each feature's id is the place id, and its attributes
 are `name`, `placetype`, `country`, `source`, `parent_id`, `is_current`, `is_deprecated` and `is_superseded`. A
 `gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames publishes
 no boundaries.
@@ -38,7 +38,7 @@ publish either archive to `mailwoman-public`.
 4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
    `s3://overturemaps-us-west-2`, recomputes each division's synthetic id with `assignSyntheticIDs`, and fails when no
    Overture place in the admin database maps to a division.
-5. `hrt overlay` builds one archive per row set, to zoom 12 unless `--max-zoom` says otherwise.
+5. `hrt overlay` builds one archive per row set, to zoom 12 unless `--max-zoom` specifies another level.
 6. `publishTiles` uploads each archive to `mailwoman-tiles/tiles/` through rclone. With `--dry-run`, it prints
    each target in place of the upload.
 
@@ -65,7 +65,7 @@ podman run --rm -v <work>:/work -v /mnt/mw/db/wof/admin-global-priority.db:/inpu
 ```
 
 On 2026-11-22 that run cloned 2 repositories and built a 91-tile `wof` archive and a 144-tile `gazetteer` archive. It
-read Overture's 85 folded countries to map the admin database's 883,204 Overture places, which took 3 minutes 18
+read Overture's 85 folded countries to map the admin database's 883,204 Overture places. That mapping took 3 minutes 18
 seconds of its 3 minutes 25 seconds.
 
 ## A run on AWS
@@ -94,7 +94,7 @@ After a policy change, `mint-aws-credentials --policies-only` rewrites every pol
 | Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region                                       |
 | R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store                                          |
 
-The 68 GB figure covers every clone, postcode and other repositories included. The admin clones alone are unmeasured.
+The 68 GB figure covers every clone, postcode and other repositories included. The size of the admin-clone subset was not measured.
 
 ### Instance
 

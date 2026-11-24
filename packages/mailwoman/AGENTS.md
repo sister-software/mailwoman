@@ -41,7 +41,7 @@ the step it performs, the label it studies, or the country it covers:
 - `tools/eval-harness/`: `board/` (the boards a run grades), `evaluation/` (one evaluation a command runs),
   `rig/` (what a run is set up with), `capability/`, `parity/`, `preregistration/` and `ledger/`.
 
-A `*.run.ts` entry is started by its path, which the compiler never reads. After moving one, search
+A `*.run.ts` entry is started by its path. The compiler never reads that path. After moving one, search
 `resolvePackagePath` calls, workflows, skills, `AGENTS.md` files and `docs/` for the old path.
 
 ## CLI commands

@@ -115,7 +115,7 @@ doesn't permit `distribute-model` for the `commercial-use` purpose, and for `sal
 expression offers `LicenseRef-Commercial` (`soldUnderCommercialTerms` in `packages/license/lib/operations.ts` defines
 the sale). No accepted-violations list applies: a row that blocks a release gets a decision permitting each, or leaves
 the corpus.
-CC BY 4.0, CC BY 3.0 AU, OGL v3.0 and Licence Ouverte 2.0 each carry one family reading applied to every row under
+CC BY 4.0, CC BY 3.0 AU, OGL v3.0 and Licence Ouverte 2.0 each use one family reading applied to every row under
 them, and a row whose own terms add a use restriction keeps its own reading (#3277).
 
 The per-check invariants stay where they're. `weights-rights` holds the generated files equal to their writer's

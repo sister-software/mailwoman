@@ -11,11 +11,11 @@ tags:
 
 # Product license tokens and model provenance
 
-This page specifies Mailwoman's own product credentials and the provenance record a trained model carries. Two
+This page specifies Mailwoman's own product credentials and the provenance record attached to a trained model. Two
 implementations read them. The TypeScript side has the schemas in `@mailwoman/license/product/*` and the signatures in
 `@mailwoman/core/license/key` and `@mailwoman/core/license/provenance`. The Rust side is the
-`packages/license/crates/product-license` crate, which the trainer and the exporter link. Both run the fixtures under
-`packages/license/test/fixtures/product/`, which `packages/core/tools/license/product-fixtures.run.ts` writes from the
+`packages/license/crates/product-license` crate. The trainer and exporter link that crate. Both run the fixtures under
+`packages/license/test/fixtures/product/`. `packages/core/tools/license/product-fixtures.run.ts` writes those fixtures from the
 test keys in `keys.json`. A case the two disagree on is a defect in one of them.
 
 ## Trust register
@@ -40,7 +40,7 @@ regenerates the well-known file.
 | Key id         | Use        | Private half                                                                                                                                                                              |
 | -------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `v9-e3d8105a`  | license    | the production license worker's `LICENSE_SIGNING_KEY_PEM` secret (`LICENSE_SIGNING_KID` in `packages/license-worker/wrangler.toml`)                                                       |
-| `v9-ecec29be`  | license    | `$MAILWOMAN_CONFIG_ROOT/license/signing-key.pem` on the lab host, which `mailwoman license issue` and `grant-training` sign with                                                          |
+| `v9-ecec29be`  | license    | `$MAILWOMAN_CONFIG_ROOT/license/signing-key.pem` on the lab host. `mailwoman license issue` and `grant-training` use this key to sign                                                     |
 | `p11-75b09012` | provenance | the Modal secret `mailwoman-provenance` (`MAILWOMAN_PROVENANCE_SIGNING_KEY`, `MAILWOMAN_PROVENANCE_SIGNING_KID`), and `$MAILWOMAN_CONFIG_ROOT/license/provenance-key.pem` on the lab host |
 
 A managed export attaches `mailwoman-provenance` to the sandbox or process that runs `trainer-export`, so the exporter
@@ -55,7 +55,7 @@ A token is `<prefix>.<payload>.<signature>`, three parts separated by dots after
   is a payload that isn't UTF-8 or isn't JSON. Non-zero trailing bits are admitted, as the browser's `atob` admits
   them.
 - `<signature>` is unpadded base64url of a 64-byte Ed25519 signature over the ASCII bytes `<prefix>.<payload>` exactly
-  as the token carries them. A verifier never re-encodes the payload. The Rust verifier uses `verify_strict`.
+  as they appear in the token. A verifier never re-encodes the payload. The Rust verifier uses `verify_strict`.
 
 The verifier selects the public key by the payload's `kid`. It returns one of four statuses, in this order of checks:
 
@@ -87,7 +87,7 @@ The payload is `TrainingGrantPayloadSchema`:
 | `v`         | `1`                                                                               |
 | `kid`       | the signing key's id                                                              |
 | `grant`     | `mtg_` and 24 lowercase hex digits, kept by a renewal                             |
-| `holder`    | the party the agreement was signed with, which a training record leaves out       |
+| `holder`    | the party the agreement was signed with. A training record omits this field.      |
 | `agreement` | the training agreement's version, such as `commercial-training-2026-11`           |
 | `issued`    | a date                                                                            |
 | `expires`   | a date, required on every grant                                                   |
@@ -130,7 +130,7 @@ No config value or flag turns the check off. A debug build also reads `MAILWOMAN
 `MAILWOMAN_TRAINING_NOW` for the tests. The trainer image is a release build and reads neither.
 
 The Modal launcher's `start --commercial` builds the commercial image (`mailwoman-trainer-commercial-<variant>-…`). It
-attaches the Modal secret named by `MAILWOMAN_MODAL_TRAINING_SECRET` beside the R2 secret on every start and restart,
+attaches the Modal secret identified by `MAILWOMAN_MODAL_TRAINING_SECRET` beside the R2 secret on every start and restart,
 and records the secret's name, never the token. A grant in the host's `MAILWOMAN_TRAINING_GRANT` is verified before the
 preflight. The sandbox supervisor runs `trainer authorize` before `--fresh` clears anything. A refusal there, or an exit
 3 from `trainer train` on a later attempt, ends the sandbox with the `refused` state without a retry. A refused

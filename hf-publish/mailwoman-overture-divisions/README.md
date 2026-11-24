@@ -25,8 +25,8 @@ terms. Each published gazetteer's `layer_manifest.attribution` states this part 
 
 The part stays independent because no row outside it depends on it. The gazetteer build writes every Overture
 division as its own row and adds no name, Wikidata id or population to a Who's On First record. When a division
-matches a Who's On First place, the build records the pair in `overture_wof_match`. A division's parent may be a Who's On First id,
-which is a reference held on the division's row. The candidate build reads a division's row only to change
+matches a Who's On First place, the build records the pair in `overture_wof_match`. A division's parent may be a Who's On First id.
+The division's row stores that reference. The candidate build reads a division's row only to change
 another division's row.
 
 ## Contents
@@ -34,15 +34,15 @@ another division's row.
 One sealed SQLite database per gazetteer version, `candidate-overture-divisions-<version>.db`, with the
 candidate's own table definitions:
 
-| Table                | Rows it holds                                                                                                                             |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `candidate`          | every name row whose `spr_id` is 8000000000000 to 8999999999999                                                                           |
-| `candidate_ancestor` | the closure rows of those places. A row's parent may be a Who's On First id and name, which is a reference to the rest of the collection. |
-| `candidate_interval` | the interval labels of those places                                                                                                       |
-| `overture_wof_match` | the Who's On First record each division was matched to, and the evidence (`country`, `wikidata`, `geonames` or `name`)                    |
-| `country_codes`      | the codes `candidate.country_id` decodes to                                                                                               |
-| `placetype_codes`    | the placetypes `candidate.placetype_id` decodes to                                                                                        |
-| `layer_manifest`     | the part's license, credit, source candidate md5, Overture release and row counts                                                         |
+| Table                | Rows it holds                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `candidate`          | every name row whose `spr_id` is 8000000000000 to 8999999999999                                                                                     |
+| `candidate_ancestor` | the closure rows of those places. A row's parent may be a Who's On First id and name, so that parent ID refers to another record in the collection. |
+| `candidate_interval` | the interval labels of those places                                                                                                                 |
+| `overture_wof_match` | the Who's On First record each division was matched to, and the evidence (`country`, `wikidata`, `geonames` or `name`)                              |
+| `country_codes`      | the codes `candidate.country_id` decodes to                                                                                                         |
+| `placetype_codes`    | the placetypes `candidate.placetype_id` decodes to                                                                                                  |
+| `layer_manifest`     | the part's license, credit, source candidate md5, Overture release and row counts                                                                   |
 
 `mailwoman gazetteer build overture-part --candidate <candidate.db> --out <file> --release <overture release>
 --part-version <gazetteer version>` writes the file from a built candidate.

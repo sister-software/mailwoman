@@ -109,7 +109,7 @@ To renew the grant before 2027-02-22, run `mailwoman license grant-training --ho
 `modal secret create mailwoman-training-grant --from-json <file> --force`, where the file holds
 `{"MAILWOMAN_TRAINING_GRANT": "<token>"}`. `docs/engineering/reference/product-license-tokens.mdx` specifies the grant,
 the record and the manifest, and lists the keys in service. Without `--commercial` the launch runs the open-source
-trainer, which checks no grant, leaves export to the host, and records `AGPL-3.0-only`.
+trainer. That trainer checks no grant, leaves export to the host, and records `AGPL-3.0-only`.
 
 ### The lifecycle checks
 
@@ -156,9 +156,9 @@ node packages/mailwoman/tools/training/audits/label/support.run.ts <yaml> --json
 node packages/mailwoman/tools/training/audits/prominent/coverage.run.ts <yaml> --json <path>
 ```
 
-The prominent-place coverage receipt (#3156) reads the places table that
-`tools/dev-tools/corpus/prominent/places.run.ts places` writes for one candidate database, named by
-`data.prominent_place_coverage`, and scans the corpus's short admin train rows itself, in about two minutes. It
+The prominent-place coverage receipt (#3156) reads `data.prominent_place_coverage`, the table that
+`tools/dev-tools/corpus/prominent/places.run.ts places` writes for one candidate database. The receipt
+also scans the corpus's short admin train rows in about two minutes. It
 fails when a required prominent place has no drawable train row in a required shape, when a country's decile 1
 holds less than half its population share of a shape's expected epoch draws, or when a short admin row writes a
 dependent locality without a locality. A cell short of its target whose decile-1 places none can be written in the
@@ -174,7 +174,7 @@ the corpus manifest records under `evaluation_groups`) write that form's own sur
 own match, and no drawable train row does. The surface is then kept for grading, and a surface can't be required in
 training and frozen for grading at once. Every other form of the place stays required: a frozen row of another name
 of the place, such as Changsha's `-name-kan-x-preferred-with-region-country` row, holds out no primary-name form,
-while Roeselare's frozen `default-with-country` row holds out its `country` form alone. A place leaves the
+while Roeselare's frozen `default-with-country` row holds out only its `country` form. A place leaves the
 population of a cell only when its form in that cell's shape is held out. `readListedGroups` in
 `audits/prominent/records.ts` reads both lists and refuses one whose sha256 isn't the manifest's. The scan
 (`scanShortAdminRows` with `listed`) then leaves every row of a listed group out of the train rows, as the re-split

@@ -37,7 +37,7 @@ confirmation role before v13.
 ## 4. Confirmation reads under v13
 
 Section 6.5 of HOLDOUT_AND_EVALUATION records every confirmation read in the next version's rationale. The reads
-under v13 are listed here as they happen and carried into v14.
+under v13 are listed here as they happen and included in v14.
 
 | Date       | Arms                                 | Collections                     | Verdict  |
 | ---------- | ------------------------------------ | ------------------------------- | -------- |

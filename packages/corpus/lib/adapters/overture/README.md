@@ -48,14 +48,14 @@ mailwoman corpus run overture \
 
 ## Field map
 
-| field      | ComponentTag                                                                                   |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| `street`   | `street` — keyword included (`CALLE`/`VIA`/…); affix-relabel splits `street_prefix` downstream |
-| `number`   | `house_number` — skipped when `S-N` / `S/N` (sin número)                                       |
-| `unit`     | `unit` (if a designator), or joined into `house_number` where `OVERTURE_UNIT_FIELD_ROLES` says |
-| `postcode` | `postcode`, in the groups the operator writes (`writtenPostcode`: `384 73`, `4524 JH`)         |
-| `locality` | `locality` — Overture `address_levels` municipality, or `postal_city`                          |
-| `region`   | `region` — the first `address_levels` value, only where `OVERTURE_REGION_FORMS` maps it        |
+| field      | ComponentTag                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| `street`   | `street` — keyword included (`CALLE`/`VIA`/…); affix-relabel splits `street_prefix` downstream                |
+| `number`   | `house_number` — skipped when `S-N` / `S/N` (sin número)                                                      |
+| `unit`     | `unit` (if a designator), or joined into `house_number` where `OVERTURE_UNIT_FIELD_ROLES` specifies that role |
+| `postcode` | `postcode`, in the groups the operator writes (`writtenPostcode`: `384 73`, `4524 JH`)                        |
+| `locality` | `locality` — Overture `address_levels` municipality, or `postal_city`                                         |
+| `region`   | `region` — the first `address_levels` value, only where `OVERTURE_REGION_FORMS` maps it                       |
 
 The adapter renders every row through the country's codex layout, so a row takes the operator's order. It emits
 no query-style order (postcode or town first).

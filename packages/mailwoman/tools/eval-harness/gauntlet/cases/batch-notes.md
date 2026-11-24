@@ -23,7 +23,7 @@ Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regressi
 
 > The operator's list of 23 entries: Indiana, Wisconsin, California and Texas, and Bristol, Cardiff, the Isles of
 > Scilly and Highland. Each row's input is the address as the operator wrote it. For the 19 entries that also
-> carry a place-name line, a second row prepends that name with `, `, the form the 2026-11-06 operator rows use.
+> include a place-name line, a second row prepends that name with `, `, the form the 2026-11-06 operator rows use.
 > The Future Space address keeps its two lines, so its input holds a newline.
 >
 > Every truth point is the place pin (`!3d…!4d…`) of the entry's share link, read from the final URL that
@@ -46,7 +46,7 @@ Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regressi
 >   address-point table holds 10631 only as `Bluffside Lane` (NAD). `11160 IN-56, French Lick` has no address
 >   point and interpolates 1.71 km from the golf course's pin.
 > - Parse. `#9151` is read as unit `9151`. `Avon` is read as `region` or `locality`, never `subregion`, and no GB
->   gazetteer record carries the name. `Castle Bryher` is read as a street. In `Coldharbour Ln, Stoke Gifford,
+>   gazetteer record lists the name. `Castle Bryher` is read as a street. In `Coldharbour Ln, Stoke Gifford,
 >   Bristol` the sub-locality is read as the locality and Bristol as the region. `The Glen, Redland Hill` folds
 >   into one street, or into `The Glen` with Redland as the locality. `St Mary's` joins the venue or the street.
 >   The newline is not read as a separator: `Stoke Gifford\nBristol` becomes one locality. With a comma in its
