@@ -1,5 +1,5 @@
 {
-	"privateNameShadows": 25,
+	"privateNameShadows": 24,
 	"exportNameAffix": 40,
 	"danglingDocLinks": 0,
 	"duplicateExportedShapes": 0,
@@ -14,5 +14,5 @@
 	"rawNULBytes": 0,
 	"bannedVocabulary": 0,
 	"handRolledTreeWalks": 0,
-	"uncitedAddressLayouts": 173
+	"uncitedAddressLayouts": 127
 }

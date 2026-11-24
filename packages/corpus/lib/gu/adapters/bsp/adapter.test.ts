@@ -320,9 +320,10 @@ describe("bsp-gu adapter", () => {
 		const rows = await readCanonicalRows(scratch.path, BSP_GU_ADAPTER_ID)
 
 		expect(rows.every((row) => row.license === BSP_GU_LICENSE && row.country === "GU")).toBe(true)
-		expect(rows.map((row) => row.raw)).toContain("452 ROUTE 10 HWY, BARRIGADA")
-		expect(rows.map((row) => row.raw)).toContain("126 W LIGUAN AVE B, DEDEDO")
-		expect(rows.map((row) => row.raw)).toContain("158 BRADLEY LOOP, HAGÅTÑA")
+		// Guam follows the United States system with the state code GU after the town.
+		expect(rows.map((row) => row.raw)).toContain("452 ROUTE 10 HWY, BARRIGADA GU")
+		expect(rows.map((row) => row.raw)).toContain("126 W LIGUAN AVE B, DEDEDO GU")
+		expect(rows.map((row) => row.raw)).toContain("158 BRADLEY LOOP, HAGÅTÑA GU")
 	})
 
 	it("refuses another country", async () => {

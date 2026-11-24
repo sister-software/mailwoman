@@ -160,7 +160,7 @@ describe("synthesizeHouseVenueRow", () => {
 				{ random }
 			)
 
-			if (row!.raw.endsWith("Bengaluru 560100, Karnataka")) {
+			if (row!.raw.endsWith("Bengaluru, Karnataka, 560100")) {
 				postal++
 			}
 

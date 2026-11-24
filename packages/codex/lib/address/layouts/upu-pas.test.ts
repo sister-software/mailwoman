@@ -4,12 +4,16 @@
 import { describe, expect, it } from "vitest"
 
 import { layoutForCountry, layoutPrintsTag } from "#address/layouts"
+import { UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/description-records"
 import { GENERATED_ADDRESS_LAYOUTS } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS } from "#address/layouts/s42"
-import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 import { joinRendering, renderAddress } from "#address/render"
 
+// The unit and the box are in the sample because Bermuda and Cabo Verde move only those lines.
 const SAMPLE = {
+	po_box: "Box 9",
+	unit: "Flat 2",
 	house_number: "1",
 	street: "Main",
 	street_suffix: "Road",

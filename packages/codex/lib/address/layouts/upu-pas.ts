@@ -9,9 +9,9 @@
  * premises`, `post office + postcode`). It isn't an S42 template and specifies no approved crosswalk.
  * It states what the operator prints.
  *
- * This table includes a country only where libaddressinput states no `fmt`,
- * where its `fmt` omits the locality line in the operator's own examples, or where its
- * `fmt` orders the locality line differently from every example the operator prints.
+ * This table includes a country only where libaddressinput states no `fmt`, where its
+ * `fmt` omits the locality line in the operator's own examples, or where its `fmt`
+ * and street order print a line or a field in a place no example the operator prints puts it.
  * The United Arab Emirates uses `%N%n%O%n%A%n%S`, and Romania's `%Z %S %C` writes the
  * county between the postcode and the locality, a line none of its examples prints.
  *
@@ -24,23 +24,27 @@
  * of the Netherlands Antilles and print no address.
  */
 
-import { ConventionSource, type LayoutCitation } from "#address/convention-claims"
+import type { ConventionSource, LayoutCitation } from "#address/convention-claims"
 import {
 	addr,
+	fixedSlot,
 	numberFirstCommaStreet,
 	numberFirstStreet,
+	numberLastCommaStreet,
 	numberLastStreet,
 	prefixedSlot,
 	SLOTS,
+	unitLineNumberFirstStreet,
+	withPoBoxBelow,
 	type AddressLayout,
 } from "#address/layout"
 
-const { attention, country, dependent_locality, locality, postcode, region, venue } = SLOTS
+const { attention, country, dependent_locality, locality, postcode, region, subregion, venue } = SLOTS
 
 /**
  * The three reasons a UPU description replaces a country's libaddressinput skeleton.
  */
-const UPUAdmission = {
+export const UPUAdmission = {
 	NoFormat: "no-fmt",
 	FormatOmitsLocality: "fmt-omits-locality",
 	FormatContradictsOrder: "fmt-contradicts-order",
@@ -51,208 +55,20 @@ export type UPUAdmission = (typeof UPUAdmission)[keyof typeof UPUAdmission]
 /**
  * What one country's description states about itself, and what this layout cannot represent.
  *
- * The record is the layout's citation: `documentDate` is the date in the description's
- * footer, and `url` is the description on upu.int.
+ * The record is the layout's citation, kept in `description-records.ts`.
+ * Its `documentDate` is the date in the description's footer, and `url` is the description on upu.int.
  */
 export interface UPUPostalAddressingRecord extends LayoutCitation {
 	readonly source: typeof ConventionSource.PostalAddressingSystems
 	/**
 	 * Why the table holds the country: libaddressinput states no `fmt`, its `fmt` omits the locality
-	 * the examples print, or its `fmt` orders the locality line differently from every example.
+	 * the examples print, or its rendering prints a line or a field where no example puts it.
 	 */
 	admittedBecause: UPUAdmission
 	/**
 	 * Where the description puts the postcode, or `absent` if it states none.
 	 */
 	postcode: "before-locality" | "after-locality" | "after-region" | "absent"
-}
-
-/**
- * Per-country description metadata.
- */
-export const UPU_PAS_LAYOUT_RECORDS: Readonly<Record<string, UPUPostalAddressingRecord>> = {
-	AE: {
-		admittedBecause: UPUAdmission.FormatOmitsLocality,
-		documentDate: "2014-9",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/areEn.pdf",
-		sha256: "b6927cc8bae0a217610307c2346868255351a432d3f060f9a0177725e725bc4d",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [["MR. OMAR HUSSAIN", "PO BOX 111", "DUBAI", "UNITED ARAB EMIRATES"]],
-		postcode: "absent",
-		unexpressed: [
-			"delivery to P.O. Boxes only, which the description states for every address",
-			"the emirate line, which the example leaves out because its city (DUBAI) names the emirate too; the region line here is libaddressinput's `%S`",
-		],
-	},
-	AO: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2004-9",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/agoEn.pdf",
-		sha256: "8a85d5bc908767cea0a5816482b8907a4abe3e86073c177060bf7252a9b9309b",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [["Sr. Jõao Pembele", "Rua Frederik Engels 92 – 7 o", "LUANDA", "ANGOLA"]],
-		postcode: "absent",
-		unexpressed: ["the floor, printed after the house number with a dash (`92 – 7 o`)"],
-	},
-	AW: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2019-1",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/abwEn.pdf",
-		sha256: "29379581a003bf1c82c75d2ea5b4dae420376f34b7da33def08eabd1963997c1",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["Mr. Brown", "Sun Plaza Suite 110", "L.G. Smith Boulevard #160", "ORANJESTAD", "ARUBA"],
-			["EPI College", "Sero Blanco", "ORANJESTAD", "ARUBA"],
-		],
-		postcode: "absent",
-		unexpressed: ["the `#` written before a house number (`L.G. Smith Boulevard #160`)"],
-	},
-	BZ: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2021-5",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/blzEn.pdf",
-		sha256: "a6f77003af704e7b46e30d50a2f5cfaf06f25793153968af773993a21a0cf61e",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [["Mr. Jessel Monique Lauriano", "C Street Apt 2", "KINGS PARK, BELIZE CITY", "BELIZE C.A."]],
-		postcode: "absent",
-		unexpressed: [
-			"two spaces between the street and the apartment number",
-			"the country line `BELIZE C.A.`, which appends Central America",
-		],
-	},
-	CD: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2022-9",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/codEn.pdf",
-		sha256: "e66cfd3ae8589b582a3d79750cc43f9282d2d759c7ff5c6bb0a843dc83586c20",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			[
-				"M MAKILA MUWULU Jean Fédor",
-				"95, Blvd du 30 juin, Building INSS",
-				"1003071 KINSHASA",
-				"RÉPUBLIQUE DÉMOCRATIQUE DU CONGO",
-			],
-			[
-				"M DUALE NKANU Béni",
-				"S/c M MAKILA MUWULU Jean Fédor",
-				"Avenue de la Poste N°1",
-				"QUAR RESIDENTIEL 12ème Rue",
-				"COM LIMETE",
-				"1004131 KINSHASA",
-				"RÉPUBLIQUE DÉMOCRATIQUE DU CONGO",
-			],
-		],
-		postcode: "after-region",
-		unexpressed: [
-			"the urban examples' number after the street with `N°` (`Avenue de la Poste N°1`); the coding example's `95, Blvd du 30 juin` is the order kept",
-			"the rural village, sector and territory lines (`Village NGIEME`, `Secteur de Niadi Nkara`, `Territoire de Bulungu`), of which one district line is kept",
-		],
-	},
-	CW: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2026-9",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cuwEn.pdf",
-		sha256: "f65a047ef09bb2615799d3924dcd47c9ae3b40f19cecaa62ecd5863aa6d7cfe6",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["John Doe", "Kaya Muizenberg 5", "WILLEMSTAD", "CURAÇAO"],
-			["Acme Corporation", "Gosieweg 153", "WILLEMSTAD", "CURAÇAO"],
-		],
-		postcode: "absent",
-		unexpressed: ["none: each example prints a street with its number, the locality and the country"],
-	},
-	GH: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2023-3",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/ghaEn.pdf",
-		sha256: "d17abceeea47c280db128fb503e36102606d0f1b8735318141b36e5813bbd764",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["Mr Derick Yeboah", "No. 7 Asafoatse Nettey Road", "Accra-Central GA-183-8164", "GREATER ACCRA", "GHANA"],
-			["Mr Derick Yeboah", "DTD 1234", "Sakumono GT-372", "Tema", "GREATER ACCRA", "GHANA", "Tel: +233 22 111 1122"],
-		],
-		postcode: "after-locality",
-		unexpressed: [
-			"the digital address, the postcode extended by four digits (`GA-183-8164`), which takes the postcode's place",
-			"line 4, the district or district capital, printed `in some addresses` between the locality and the region",
-			"a telephone number printed as the last line",
-		],
-	},
-	RW: {
-		admittedBecause: UPUAdmission.NoFormat,
-		documentDate: "2005-3",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/rwaEn.pdf",
-		sha256: "6013d3bf246d19798ae3c39115834be48ac73690838ad636f36e102b79ecc1ad",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [["M. Pierre Simon", "B.P. 3425", "KIGALI", "RWANDA"]],
-		postcode: "absent",
-		unexpressed: [
-			"the one example is a P.O. Box (`B.P. 3425`); the street line takes the box's place above the locality, where every other description here prints it",
-		],
-	},
-	KI: {
-		admittedBecause: UPUAdmission.FormatContradictsOrder,
-		documentDate: "2020-10",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/kirEn.pdf",
-		sha256: "d6b0f0420517f1a287d5aa4c8128b2e18f05ffbe076b9f2493a4474ca33b5d42",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["Mr. Teekia Rui", "Vaticano", "Butaritari KI0102", "KIRIBATI"],
-			["Ms. Josephine Matiota", "PO Box 487", "Betio", "Sth Tarawa KI0108", "KIRIBATI"],
-			["Ms. Meerite Toantei", "Abaunamou", "Teaoraereke", "Sth Tarawa KI0107", "KIRIBATI"],
-		],
-		postcode: "after-locality",
-		unexpressed: [
-			"the island group (Gilbert, Phoenix, Line), which no example prints; libaddressinput's `%S` printed it above the village",
-			"the village or town line, which the examples label `village`, `town` or `delivery post office`; it renders here as the district line above the island",
-			"the what3words line of the household example (`truly.ramping.sheriffs`)",
-		],
-	},
-	LV: {
-		admittedBecause: UPUAdmission.FormatContradictsOrder,
-		documentDate: "2023-9",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/lvaEn.pdf",
-		sha256: "251b08b058d31783d47b417ad7ced517f140d51de06b09df3acb0752991f8dc3",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["Jānis Bērziņš", "Kr. Barona street 7, dz. 1", "RIGA, LV–1050", "LATVIA"],
-			["Jānis Berziņš", "Valdemāra street 42, Ainaži,", "SALACGRIVAS NOV., LV–4035", "LATVIA"],
-		],
-		postcode: "after-locality",
-		unexpressed: [
-			"the sub-locality example's line break: `Valdemāra street 42, Ainaži,` then `SALACGRIVAS NOV., LV–4035`; the national register's one-line form (`Dzirnavu iela 1, Mazsalaca, Valmieras nov., LV-4215`) is the one kept",
-			"the apartment after the number (`dz. 1`)",
-			"the en dash in `LV–1050`; the postcode's `LV-` is written with the hyphen the national register prints (`LV-4215`)",
-		],
-	},
-	RO: {
-		admittedBecause: UPUAdmission.FormatContradictsOrder,
-		documentDate: "2007-10",
-		url: "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/rouEn.pdf",
-		sha256: "a59ca12648bd36f39d90be6f5f40bb50193462267d7f4e2dc3741e99f21babfa",
-		source: ConventionSource.PostalAddressingSystems,
-		retrievedAt: "2026-11-24",
-		examples: [
-			["Posta Romana S.A.", "Calea Giulesti 6–8", "060274 BUCHAREST", "ROMANIA"],
-			["ASTRA", "Drumul Taberei nr. 35, bl. F5, sc. 2, parter, ap. 23", "Sector 6", "061357 BUCHAREST", "ROMANIA"],
-		],
-		postcode: "before-locality",
-		unexpressed: [
-			"the county (județ), which no example prints; libaddressinput's `%Z %S %C` wrote it between the postcode and the locality",
-			"the block, staircase, floor and apartment after the number (`bl. F5, sc. 2, parter, ap. 23`)",
-		],
-	},
 }
 
 /**
@@ -268,7 +84,26 @@ ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
 ${locality}
+${country}`,
+
+	// addressee / premise number + thoroughfare name (16, Ziarat-e-Abolfazl St) / locality
+	// (Murad Khani) / postcode + province (100208 KABUL) / country.
+	// Rural examples print postcode + rural district (265101 HESARAK), then the province (NANGARHAR).
+	AF: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${postcode} ${locality}
 ${region}
+${country}`,
+
+	// addressee / street + premise + apartment number (Saryan str 22 apt 25) /
+	// postcode + locality (0002 YEREVAN) / country.
+	AM: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
 ${country}`,
 
 	// Sr.
@@ -280,9 +115,72 @@ ${dependent_locality}
 ${locality}
 ${country}`,
 
+	// SIGNUM SRL / JUAN LOPEZ / street name and number (SAN MARTIN 230) / floor + department
+	// (PISO 4 DPTO. A) / postcode + locality (Y5900FNF VILLA MARIA) / ARGENTINA.
+	AR: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
 	// addressee / premises (Sun Plaza Suite 110) / thoroughfare + no of thoroughfare
 	// (L.G. Smith Boulevard #160) / locality (ORANJESTAD) / country.
 	AW: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / street + premises (Rashid Behbudov küç. 55) / postcode + locality (AZ1014 Baku) / country.
+	// The rural example prints subprovince (Babək rayonu) and province below.
+	AZ: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+AZ ${postcode} ${locality}
+${subregion}
+${region}
+${country}`,
+
+	// addressee / premise / premise + thoroughfare (566 Avenue de la Nation) / locality –
+	// quarter (Dapoya) / p.o. box + post office / postcode + locality (10000 OUAGADOUGOU) / country.
+	BF: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// addressee / P.O. box (BP 1915) / commune (MUKAZA) / province (BUJUMBURA) / country.
+	BI: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${country}`,
+
+	// addressee / P.O. box number (10 BP 648) / locality (COTONOU) / telephone number / country.
+	BJ: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / unit/apt. name or number (Upper Apt # 1) / street n° and name
+	// (9 Leafy Lane) / parish name + postcode (SMITH'S FL 07) / BERMUDA.
+	BM: addr`${attention}
+${venue}
+${unitLineNumberFirstStreet}
+${dependent_locality}
+${locality} ${postcode}
+${country}`,
+
+	// title / addressee / street + house number (CALLE AZURDUY 158) / locality (SUCRE) / country.
+	BO: addr`${attention}
 ${venue}
 ${numberLastStreet}
 ${dependent_locality}
@@ -307,10 +205,139 @@ ${locality}
 ${postcode} ${region}
 ${country}`,
 
+	// addressee / mailee / telephone / organization / p.o. box (BP 729) / locality (BANGUI) / country.
+	CF: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// M. Joseph Mbemba / 12, rue Kakamoueka / BRAZZAVILLE / CONGO (REP.).
+	CG: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// organisation / street, locality (Maire Nui Drive, Avarua) / island (RAROTONGA) / country.
+	CK: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${country}`,
+
+	// M. Pierre Marie / BP 6000 / YAOUNDE / CAMEROON.
+	CM: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / street + premises / sub-locality (Alqueria La Fragua) / locality +
+	// postcode (Localidad de Kennedy 110841) / province (BOGOTA D.C.).
+	CO: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality} ${postcode}
+${region}
+${country}`,
+
+	// recipient name / street and street number (Ca 15 Av 37 # 55) / province, canton,
+	// district (Heredia, San Rafael, San Rafael) / postcode (40501) / name of the country.
+	CR: addr`${attention}
+${venue}
+${numberLastStreet}
+${region}, ${locality}, ${dependent_locality}
+${postcode}
+${country}`,
+
+	// thoroughfare type and name (Ave Independencia s/n) / cross streets / postal zone
+	// (Habana 6) / postcode + locality (CP 10600 CIUDAD HABANA) / CUBA.
+	CU: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${prefixedSlot("postcode", "CP ")} ${locality}
+${country}`,
+
+	// Luis Felipe Ramos / street name + zone (Rua 5 de Julho 138/Platô) / p.o. box (C.P. 38)
+	// / postcode + locality name (7600 PRAIA) / island name (SANTIAGO) / country.
+	CV: addr`${attention}
+${venue}
+${withPoBoxBelow(numberLastStreet)}
+${dependent_locality}
+${postcode} ${locality}
+${region}
+${country}`,
+
 	// addressee / thoroughfare + premises (Kaya Muizenberg 5) / locality (WILLEMSTAD) / country.
 	CW: addr`${attention}
 ${venue}
 ${numberLastStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / street name, house number, floor, district (Kastanievej 15, 2, Agerskov)
+	// / postcode + locality (8660 SKANDERBORG) / country.
+	DK: addr`${attention}
+${venue}
+${numberLastStreet}, ${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// Mr. Alvin Thomas / Bay Front / ROSEAU / DOMINICA.
+	DM: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / street + premises + intersection / building details / sub-locality
+	// (Conocoto) / postcode + locality (170303 - QUITO) / country.
+	EC: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} - ${locality}
+${country}`,
+
+	// Mr. Samuel Habte / Awet Street 4 / ASMARA / ERITREA.
+	ER: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// MR.
+	// JOHN DAVID / 14 VIRIA STREET / VATUWAQA / town name (SUVA) / FIJI.
+	FJ: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / delivery information and locality / postcode and delivery office (05 TCHIBANGA 01) / GABON.
+	GA: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// addressee / village (Woburn) / municipality (ST. GEORGE'S) / island + region.
+	GD: addr`${attention}
+${venue}
+${numberFirstStreet}
 ${dependent_locality}
 ${locality}
 ${country}`,
@@ -322,6 +349,123 @@ ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
 ${locality} ${postcode}
+${subregion}
+${region}
+${country}`,
+
+	// addressee / premise + street (109 Gardiner’s Road) / locality (Gibraltar)
+	// / postcode (GX11 1AA) / country.
+	GI: addr`${attention}
+${venue}
+${numberFirstStreet}
+${fixedSlot("locality", "Gibraltar")}
+${postcode}
+${country}`,
+
+	// Mr. A. Ceesay / 21 Liberation Avenue / BANJUL / GAMBIA.
+	GM: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${country}`,
+
+	// addressee / organization / premises (Portal 5, puerta 29) / province + sub-province +
+	// locality (BIOKO NORTE, MALABO, REBOLA) / country.
+	GQ: addr`${attention}
+${venue}
+${numberLastStreet}
+${region}, ${subregion}, ${locality}
+${country}`,
+
+	// addressee / thoroughfare + zone (6a. Avenida "A" 10-13, zona 1) / premises /
+	// postcode + - + locality (01001 - Guatemala) / country + geographical region.
+	GT: addr`${attention}
+${venue}
+${numberLastStreet}, ${dependent_locality}
+${postcode} - ${locality}
+${country}`,
+
+	// `Guam follows the United States of America postal system. Its state code is GU`.
+	GU: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality} ${fixedSlot("region", "GU")} ${postcode}
+${country}`,
+
+	// addressee / premises / number of building + district / sub-locality (Lacytown)
+	// / locality (Georgetown) / postcode (4130106) / country.
+	GY: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${postcode}
+${country}`,
+
+	// Sr.
+	// Juan C. Martel / CM1102 LAS LAJAS, COMAYAGUA / HONDURAS (REP).
+	HN: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}, ${region}
+${country}`,
+
+	// addressee / street, premise + sub-loc 3 / sub-loc 2 / sub-loc (Padalarang) /
+	// locality + postcode (BANDUNG 40553) / country.
+	ID: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${locality} ${postcode}
+${country}`,
+
+	// Mr. Ploni Almoni / 16 Yafo Street / 9414219 JERUSALEM / ISRAEL.
+	IL: addr`${attention}
+${venue}
+${numberLastStreet}
+${dependent_locality}
+${postcode} ${locality}
+${country}`,
+
+	// addressee / locality, sub-locality (Tehran(city), Tehranpars) / street / premise,
+	// floor / province (Tehran Province) / postcode / country.
+	IR: addr`${attention}
+${venue}
+${locality}, ${dependent_locality}
+${numberLastStreet}
+${region}
+${postcode}
+${country}`,
+
+	// addressee / region name / district name (Ruelle 5) / street name / street number +
+	// apartment number / locality + postcode (AMMAN 11937) / JORDAN.
+	JO: addr`${attention}
+${venue}
+${dependent_locality}
+${numberLastStreet}
+${locality} ${postcode}
+${country}`,
+
+	// addressee / p.o. box number + name of delivery post office / post office
+	// code (20100) / town (NAKURU) / country.
+	KE: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${postcode}
+${locality}
+${country}`,
+
+	// addressee / premises + street + door (193, Avenue Chuy, apt. 28) / postcode +
+	// locality (720001 BISHKEK) / province (ISSYK-KUL REGION) / country.
+	KG: addr`${attention}
+${venue}
+${numberFirstCommaStreet}
+${dependent_locality}
+${postcode} ${locality}
 ${region}
 ${country}`,
 
@@ -341,6 +485,37 @@ ${venue}
 ${numberLastStreet}
 ${dependent_locality}
 ${locality} ${postcode}
+${country}`,
+
+	// addressee / premises + street (2 Fern Street) / locality subdivision (Greenlands)
+	// / locality (Bassetere) / island (St Kitts) / postcode (KN0101).
+	KN: addr`${attention}
+${venue}
+${numberFirstStreet}
+${dependent_locality}
+${locality}
+${region}
+${postcode}
+${country}`,
+
+	// addressee / district name (Al-Sabbahiya) / zone + street name + building no. /
+	// postcode + name of town (54404 KUWAIT) / country name.
+	KW: addr`${attention}
+${venue}
+${dependent_locality}
+${numberLastStreet}
+${postcode} ${locality}
+${country}`,
+
+	// addressee / street + premises (ul. Shieli, dom 15) / postcode + village (L16T0H2, selo Abay)
+	// / sub-province (Karasayskiy raion) / province (ALMATINSKIY OBLAST) / country.
+	KZ: addr`${attention}
+${venue}
+${numberLastCommaStreet}
+${dependent_locality}
+${postcode}, ${locality}
+${subregion}
+${region}
 ${country}`,
 
 	// addressee / street + premises (Kr. Barona street 7, dz. 1) / locality + postcode (RIGA, LV–1050)

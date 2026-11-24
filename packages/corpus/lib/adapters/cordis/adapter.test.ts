@@ -374,23 +374,23 @@ describe("readCORDISRecord", () => {
 
 	it("refuses a record in a country codex holds no layout for", () => {
 		const reading = readCORDISRecord(
-			{ name: "UNIVERSITE D'ABOMEY-CALAVI", street: "01 BP 526", postCode: "", city: "Cotonou", country: "BJ" },
+			{ name: "UNIVERSITY OF HEALTH SCIENCES", street: "PO Box 1234", postCode: "", city: "St. John's", country: "AG" },
 			lexicon,
 			units
 		)
 
-		expect(reading).toEqual({ refused: CORDISRefusal.CountryNoLayout, country: "BJ" })
+		expect(reading).toEqual({ refused: CORDISRefusal.CountryNoLayout, country: "AG" })
 	})
 
 	it("refuses a record whose only postcode the country's layout does not print", () => {
-		// Burkina Faso's layout has no postcode slot, so this record would print as a name and a city.
+		// Cameroon's layout has no postcode slot, so this record would print as a name and a city.
 		const reading = readCORDISRecord(
-			{ name: "MINISTERE DE LA SANTE", street: "", postCode: "7003", city: "Ouagadougou", country: "BF" },
+			{ name: "MINISTERE DE LA SANTE", street: "", postCode: "7003", city: "Yaounde", country: "CM" },
 			lexicon,
 			units
 		)
 
-		expect(reading).toEqual({ refused: CORDISRefusal.ComponentsTooFew, country: "BF" })
+		expect(reading).toEqual({ refused: CORDISRefusal.ComponentsTooFew, country: "CM" })
 	})
 
 	it("labels a repetition index after the number as part of the house number, as BAN does", () => {

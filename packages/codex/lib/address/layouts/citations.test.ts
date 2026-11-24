@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest"
 
 import { layoutForCountry, uncitedLayoutJurisdictions } from "#address/layouts"
 import { LAYOUT_CITATIONS } from "#address/layouts/citations"
-import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/description-records"
+import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 
 const citations = [...Object.entries(LAYOUT_CITATIONS), ...Object.entries(UPU_PAS_LAYOUT_RECORDS)]
 

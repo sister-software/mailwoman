@@ -86,7 +86,9 @@ const BOARD: readonly BoardRow[] = [
 			postcode: "110001",
 		},
 		// India writes the number, then a comma, then the street.
-		expected: "12, Barakhamba Road, New Delhi 110001, Delhi",
+		// India Post's UPU description prints the locality, the state and the PIN in
+		// that order (`Bangalore` / `Karnataka` / `560082`).
+		expected: "12, Barakhamba Road, New Delhi, Delhi, 110001",
 	},
 	{
 		country: "NZ",

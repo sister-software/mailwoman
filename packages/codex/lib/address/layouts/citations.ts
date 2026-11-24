@@ -24,7 +24,7 @@ const RETRIEVED_AT = "2026-11-24"
 /**
  * A citation of the UPU Postal Addressing Systems description filed under `iso3`.
  */
-function upuDescription(
+export function upuDescription(
 	iso3: string,
 	documentDate: string,
 	sha256: string,
@@ -55,6 +55,37 @@ const FRENCH_LINES_ABOVE_STREET =
  * Citations by ISO 3166-1 alpha-2, for countries the UPU table doesn't render.
  */
 export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
+	AD: upuDescription(
+		"and",
+		"2004-9",
+		"43bf5366d607167e13217e3f3bc640e1b1c584b617e418c628402800475b1dc0",
+		[
+			[
+				"Societat TORRES",
+				"Servei Compres S BARO",
+				"ZONA INDUSTRIAL OEST",
+				"Entrada A Edifici Les Grandalles",
+				"12 AVINGUDA TORRENT PREGO",
+				"BP 15",
+				"AD501 ANDORRA LA VELLA",
+				"ANDORRA",
+			],
+		],
+		[
+			"the Spanish postal office's form, which writes the number after the street (`AVINGUDA TORRENT PREGO 12`); this layout writes the French office's `12 AVINGUDA TORRENT PREGO`",
+			"the delivery-point and building lines above the street, and the P.O. box below it",
+		]
+	),
+	AT: upuDescription(
+		"aut",
+		"2014-4",
+		"aa74ac059961aee6638e4951d47a1207ef3ff6332782b3fccd903b0f6c6e47be",
+		[
+			["Mr. Max Maier", "Rennbahnweg 25/2/15", "1220 WIEN", "AUSTRIA"],
+			["Mr. Max Maier", "Weingartenweg 1", "Rafing", "3741 PULKAU", "AUSTRIA"],
+		],
+		["the block and flat joined to the house number with slashes (`Rennbahnweg 25/2/15`)"]
+	),
 	AU: upuDescription(
 		"aus",
 		"2017-7",
@@ -63,10 +94,7 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			["MR. RON JAMES", "4360 DUKES RD", "KALGOORLIE WA 6430", "AUSTRALIA"],
 			["MS. C. FITZGERALD", "LEVEL 6 51 JACOBSON ST", "BRISBANE QLD 4000", "AUSTRALIA"],
 		],
-		[
-			"the floor and door before the house number on the street line (`LEVEL 6 51 JACOBSON ST`); this layout prints the unit after the street",
-			"one or, preferably, two spaces between the locality, the state and the postcode",
-		]
+		["one or, preferably, two spaces between the locality, the state and the postcode"]
 	),
 	BA: upuDescription(
 		"bih",
@@ -78,12 +106,53 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 		],
 		["the organization unit line between the organization and the street (`Poslovna jedinica br.2 Sapna`)"]
 	),
+	BE: upuDescription(
+		"bel",
+		"2012-9",
+		"9182b024e3ce59a6b5bd54d9ec71e02caaeb325704b13310b5e3deb54388bd89",
+		[
+			["Monsieur Alain Dupont", "Rue du Vivier 7", "1000 Bruxelles", "BELGIUM"],
+			["Dhr Paul Janssens", "Kortijkstraat 37 bus 1", "9800 Deinze", "BELGIUM"],
+			["Dhr Paul Janssens", "Postbus 24", "9000 Gent Centrum", "BELGIUM"],
+		],
+		[
+			"the description's rule that no sub-community follows the town and none enters the street name; this layout prints a district line between the street and the postcode, where the regional register's rows write the section (`Rue Auguste Goemans 5A BP3, Hamme-Mille, 1320 Beauvechain`)",
+			"the building, floor and room line above the street (`Gebouw A - Verdiep 3 - Kamer 8`); this layout prints the unit on the street line",
+			"the retail agency after the town in a P.O. box address (`9000 Gent Centrum`)",
+		]
+	),
+	BG: upuDescription(
+		"bgr",
+		"2017-5",
+		"dee36980bfe0db50b8bb2e5f5ce3857e32bf4069f5688de2eef10e13440f1e7a",
+		[
+			["Detelina Ivanova Khristova", "ul. Aleksandŭr Ekzarkh 2", "4000 PLOVDIV", "BULGARIA (REP.)"],
+			["Penka Hristova Smugleva", "ul. Kokiche", "obl. Vratza", "3264 s. Mechka", "BULGARIA (REP.)"],
+		],
+		[
+			"the rural example's province on its own line above the postcode and locality (`obl. Vratza`)",
+			"the housing-estate form, with block, entrance, floor and flat after the sub-locality (`j.k. Belite Brezi, bl. 104, vh.1, et.2, ap.4`)",
+		]
+	),
 	BL: upuDescription(
 		"blm",
 		"2011-8",
 		"04d3cd4fa011168b3804ae0331cc713ac3136ac3d6081ad8704f6b7cecd3890a",
 		[["Monsieur Jean DURAND", "5 RUE VICTOR HUGO", "97133 SAINT-BARTHELEMY", "FRANCE"]],
 		[FRENCH_LINES_ABOVE_STREET]
+	),
+	BR: upuDescription(
+		"bra",
+		"2012-3",
+		"db74529856993bc48d5eb44c3b430330b18bcfcb8fc53df2ff0c8bd7e2fd5c1c",
+		[
+			["Marina Costa e Silva", "Rua Afonso Camargo, 805", "Santana", "GUARAPUAVA – PR", "85070-200", "BRASIL"],
+			["Marina Costa e Silva", "Caixa Postal 443", "Guarapuava – PR", "85100-970", "BRAZIL"],
+		],
+		[
+			"the spaced dash between the town and the state (`GUARAPUAVA – PR`); this layout joins them with a bare hyphen",
+			"the Brasília sector form (`SBN – Quadra 13 – Bloco B – 8º andar`)",
+		]
 	),
 	BT: upuDescription(
 		"btn",
@@ -104,6 +173,105 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			"the unit before the house number, joined by a hyphen (`10–123 ½ MAIN STREET NW`); this layout prints the unit after the street",
 		]
 	),
+	CC: upuDescription(
+		"cck",
+		"2004-9",
+		"4951e4e5cca7472909454debc915524b94d5609e71c1e64667b85ed035d14896",
+		[["Cocos (Keeling) Islands", "Australian Territory", "See Australia"]],
+		[
+			"every detail of Australia's description, which this one defers to and prints no example of; Australia's citation lists them",
+		]
+	),
+	CH: upuDescription(
+		"che",
+		"2024-6",
+		"530a9a37c2b0e953bf2c78e9d61d1d632438b0bbd69d71596b7ae7ffb1ddf7e6",
+		[
+			["Herrn", "Rudolf Weber", "Solothurnerstrasse 28", "2544 BETTLACH", "SWITZERLAND"],
+			["Sandoz SA", "Rue de Bourgogne 5", "Case postale 12", "1211 GENEVA 6", "SWITZERLAND"],
+			["Monsieur", "Fernand Genoud", "Rue du Marché 8", "1556 CERNIAZ VD", "SWITZERLAND"],
+		],
+		[
+			"the P.O. box below the street (`Rue de Bourgogne 5` / `Case postale 12`); this layout prints the box above it",
+			"the canton abbreviation after a locality whose name isn't unique (`1556 CERNIAZ VD`)",
+			"the post office number after the town (`1211 GENEVA 6`)",
+		]
+	),
+	CI: upuDescription(
+		"civ",
+		"2004-9",
+		"af6e2a87af21af3143102ec66f68d8356287934219357f07b7ae626dd0c437ff",
+		[["Madame KOUAME AKISSI", "COMMERCANTE", "06 B.P. 37 ABIDJAN 06", "COTE D'IVOIRE (REP.)"]],
+		[
+			"the P.O. box on the locality line (`06 B.P. 37 ABIDJAN 06`); this layout's street block prints the box on its own line above the office code and locality",
+		]
+	),
+	CL: upuDescription(
+		"chl",
+		"2017-3",
+		"61ce236665e11c3b72165cbd191571e490fd533ddf788c7ed5066a1bd48c05f1",
+		[
+			["Señor", "Juan Pérez", "Moneda 1152", "8340648 SANTIAGO", "REGION METROPOLITANA", "CHILE"],
+			[
+				"Señorita",
+				"Ester Avila",
+				"Avenida Palena 1084, Depto. 505, Piso 5",
+				"9180794 ESTACION CENTRAL",
+				"REGION METROPOLITANA",
+				"CHILE",
+			],
+		],
+		[
+			"the comma before the flat and floor (`Avenida Palena 1084, Depto. 505, Piso 5`); this layout writes the unit after a space",
+		]
+	),
+	CN: upuDescription(
+		"chn",
+		"2013-9",
+		"0c17b0868e67173ffcea3a809d7c222ee56bde85854ea6d4af3ac78b8047fd7c",
+		[
+			[
+				"An address written in Chinese will start with the biggest geographical component (the province)",
+				"and end with the smallest one (the addressee). However, the name of the country (P.R. CHINA)",
+				"must be written in an internationally known language.",
+			],
+		],
+		[
+			"a Chinese-script example, which the description doesn't print: the postcode's place in the Chinese order is libaddressinput's `%Z` first line",
+			"the Latin order, smallest first (`No.1 Jianguomenwai Avenue` / `100004 BEIJING`), which the Latin layout renders",
+		]
+	),
+	CX: upuDescription(
+		"cxr",
+		"2004-9",
+		"38561cf6b92521227903d7817cede831d71b1524c050f2937461d87a94d508fa",
+		[["Christmas Island", "Australian Territory", "See Australia"]],
+		[
+			"every detail of Australia's description, which this one defers to and prints no example of; Australia's citation lists them",
+		]
+	),
+	CY: upuDescription(
+		"cyp",
+		"2023-3",
+		"3ffaf57736cafb95f7d97acd9bd65deac876de8a64c2db038762f026bd26335b",
+		[
+			["Mr Andreas Panagiotou", "Sofocleous 26", "CY-2008 Strovolos", "CYPRUS"],
+			["Mr Andreas Orphanides", "Sokratous 12", "6036 Larnaka"],
+		],
+		[
+			"the `CY-` before the postcode on inbound mail (`CY-2008 Strovolos`); this layout prints the domestic form (`6036 Larnaka`)",
+		]
+	),
+	CZ: upuDescription(
+		"cze",
+		"2018-2",
+		"8cb166483076b68437558b9554414903e9eeb1c7770ff1ced31387643a462307",
+		[
+			["Pan Martin Parma", "Hrušovská 455/10", "102 00 Praha 102", "CZECH REP."],
+			["Pan Martin Parma", "Ladova 3/64", "Hrusice", "251 66 SENOHRABY", "CZECH REP."],
+		],
+		["the conscription number before the house number with a slash (`Hrušovská 455/10`)"]
+	),
 	DE: upuDescription(
 		"deu",
 		"2015-1",
@@ -114,7 +282,7 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			["Schloß Britz", "Ortsteil Neukoelln", "Alt-Britz 73", "12359 BERLIN", "GERMANY"],
 		],
 		[
-			"the sub-locality above the street (`Ortsteil Neukoelln` then `Alt-Britz 73`); this layout prints the district below the street",
+			"the sub-locality above the street (`Ortsteil Neukoelln` then `Alt-Britz 73`), printed in one example; this layout prints the district below the street, where the corpus's German rows write it (`Neusser Str. 12, Nippes, 50733 Köln`)",
 			"the apartment after the number, separated by `//`",
 			"the Packstation form: a customer number line, then `Packstation 101`, then the postcode and locality",
 		]
@@ -143,9 +311,40 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 		],
 		[
 			"the number after the street name with no comma (`Calle Huertas 18`); this layout writes `Mainstreet, 12`",
-			"the province on its own line below the postcode and locality; this layout prints it on the locality line",
 			"the building line above the street (`Edificio Lepanto`)",
 		]
+	),
+	EE: upuDescription(
+		"est",
+		"2014-6",
+		"afca9c47fc80f9fd1c3bd127f79987c268dfea45bb4a5336c31fd88bf8543158",
+		[
+			["Pr. Elina Loor", "Astri 6–1", "11212 TALLINN", "ESTONIA"],
+			["Hr. Raul Tammek", "Allika talu", "Halliste alevik", "69501 VILJANDIMAA", "ESTONIA"],
+		],
+		[
+			"the locality or the region after the postcode, never both (`11212 TALLINN`, `69501 VILJANDIMAA`); this layout prints both, as the national address register's full form does (`Pargi tn 2b, 76607 Keila linn Harju maakond`)",
+			"the flat joined to the number with a dash (`Astri 6–1`)",
+		]
+	),
+	FI: upuDescription(
+		"fin",
+		"2024-11",
+		"2f1ce8f45d3eb4bc116d49e08458ac5c0bb30d39fda8645fe54996e4c4def754",
+		[
+			["Matti Manninen", "Mäkelänkatu 25 B 13", "00550 HELSINKI", "FINLAND"],
+			["Myymäläpäällikkö Reijo Rekonen", "Oy Finland Camex Ltd", "PL 900", "00101 HELSINKI", "FINLAND"],
+		],
+		[
+			"the addressee line below the organization (`Myymäläpäällikkö Reijo Rekonen` above `Oy Finland Camex Ltd`); this layout prints the organization first",
+		]
+	),
+	FO: upuDescription(
+		"fro",
+		"2017-12",
+		"171683b9a9331dc7c6c16132d6217daa9003ab67bf3d728e054b3e6f4224a863",
+		[["P/F Postverk Føroya", "Óðinshædd 2", "FO-100 Tórshavn", "Faroe Islands"]],
+		["none: the example prints a street with its number, the prefixed postcode and locality, and the country"]
 	),
 	FR: upuDescription(
 		"fra",
@@ -164,8 +363,8 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			],
 		],
 		[
-			"lines 2 and 3, the delivery point and the building, above the street; this layout prints the unit after the street",
-			"line 5, the P.O. box or lieu-dit, below the street (`BP 40122`)",
+			"line 3, the building, between the delivery point and the street (`Entrée A Bâtiment Jonquille`)",
+			"the locality written on the P.O. box line (`BP 90432 MONTFERRIER SUR LEZ`)",
 		]
 	),
 	GB: upuDescription(
@@ -201,12 +400,47 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 		[["Monsieur. Jean DURAND", "3 ALLEE DES ACACIAS", "97100 BASSE TERRE", "FRANCE"]],
 		[FRENCH_LINES_ABOVE_STREET]
 	),
+	GR: upuDescription(
+		"grc",
+		"2005-3",
+		"6e986ab4fb6453e6c051abb467d39cc490a2dd9e40838d4a0afd44b27d71b9f4",
+		[
+			["Mr. George PANAGIOTOU", "1, D. GOUNARI STREET", "151 24 MAROUSI", "GREECE"],
+			["Mr. George PANAGIOTOU", "P.O. BOX 999", "151 10 MAROUSI", "GREECE"],
+		],
+		[
+			"the number before the street in both transliterated examples (`1, D. GOUNARI STREET`); this layout keeps the number after the name, as Greek writes it (`Γούναρη 1`), which the description prints no example of",
+		]
+	),
 	GS: upuDescription(
 		"sgs",
 		"2005-8",
 		"b301ba2e6f28548adcb193cda244c07e0003ec7be209913c9acea6a02ebcd928",
 		[["Mr. I. Hunt", "King Edward Point", "SIQQ 1ZZ", "SOUTH GEORGIA ISLAND"]],
 		["the example prints no locality line: `King Edward Point` is the delivery point above the postcode"]
+	),
+	HK: upuDescription(
+		"hkg",
+		"2025-4",
+		"f04a58bb28a7027fde06a23a9ca8ad12d1290083fdb442e599aaadfb173cc5c7",
+		[
+			["Mr. CHAN Kwok-kwong", "Flat 25, 12/F", "Acacia Building", "150 Kennedy Road", "WAN CHAI", "HONGKONG"],
+			["Mr. WONG Yat-ming", "P.O. Box 42345", "CAUSEWAY BAY POST OFFICE", "HONGKONG"],
+		],
+		[
+			"the building name between the flat and the street (`Acacia Building`); this layout prints the venue above the flat",
+			"the post office name below the P.O. box (`CAUSEWAY BAY POST OFFICE`)",
+		]
+	),
+	HR: upuDescription(
+		"hrv",
+		"2014-5",
+		"695df04065cd708e8431cdd3ee081d66f3bb37c2d9cd1b89f10ddbbe4e2ec642",
+		[
+			["Mr. Ivan Horvat", "Krapinska 17/I stan 4", "HR-10000 ZAGREB", "CROATIA"],
+			["Mr. Josip Kralj", "Branimirova 4", "Kanfanar", "HR-52341 ŽMINJ", "CROATIA"],
+		],
+		["the floor joined to the number with a slash (`Krapinska 17/I stan 4`)"]
 	),
 	HU: upuDescription(
 		"hun",
@@ -217,6 +451,39 @@ export const LAYOUT_CITATIONS: Readonly<Record<string, LayoutCitation>> = {
 			["JELES ÉVA", "DABAS", "PF. 83", "2380", "HUNGARY"],
 		],
 		["the floor and apartment after the house number (`3. IV. 61`)"]
+	),
+	IE: upuDescription(
+		"irl",
+		"2017-6",
+		"a2f9b16409d2e9301cfcf38b82c5da872c464e09a3b87dddc3f65b7056a2ee95",
+		[
+			["MS M SULLIVAN", "56 BROOMFIELD", "MACROOM", "CO. CORK", "T37 F8HK", "IRELAND"],
+			["Ms. M Sullivan", "21 STONEWALL DRIVE", "DUBLIN 24", "D24 TF12", "IRELAND"],
+		],
+		["the `CO.` before the county name (`CO. CORK`)"]
+	),
+	IN: upuDescription(
+		"ind",
+		"2013-1",
+		"f8ac2ed37a59ecece8cd11e2ac5088411148b1e3d69304c118e655e275fa2a3e",
+		[
+			["Mr. Rajiv Rattan", "4, Amrita Shergill Road", "New Delhi", "110003", "INDIA"],
+			[
+				"Mr. N Gopalarathnam",
+				"32/1, 2nd Main Road",
+				"8th Block",
+				"Jayanagar",
+				"Bangalore",
+				"Karnataka",
+				"560082",
+				"INDIA",
+			],
+		],
+		[
+			"the second sub-locality line (`8th Block` above `Jayanagar`), of which one district line is kept",
+			"the rural taluk and district lines (`Pennukonda Taluk`, `Anantpur District`)",
+			"the contact block's PIN on the locality line (`NEW DELHI 110001`), which no example prints",
+		]
 	),
 	IS: upuDescription(
 		"isl",

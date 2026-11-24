@@ -22,7 +22,7 @@ A citation is a `LayoutCitation` from `lib/address/convention-claims.ts`. It rec
 - the example lines the decision rests on, verbatim.
 
 It also lists each detail the layout doesn't print as the document does. A UPU reading's record in
-`lib/address/layouts/upu-pas.ts` is its citation. Every other rendered layout's citation goes in
+`lib/address/layouts/description-records.ts` is its citation. Every other rendered layout's citation goes in
 `lib/address/layouts/citations.ts`. A board locale cites the operator document beside its board rows.
 
 `yarn mwops health layout-citations` lists every jurisdiction whose rendered layout cites no primary document. The

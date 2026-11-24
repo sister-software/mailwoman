@@ -196,6 +196,40 @@ ${either(
 )}`
 
 /**
+ * The street line with the unit before the number, as Australia Post prints `LEVEL 6 51 JACOBSON ST`.
+ */
+export const unitFirstStreet: AddressLayout = addr`${poBoxLine}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.unit} ${SLOTS.house_number} ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix}`
+)}`
+
+/**
+ * The street line with the number first and the unit on its own line above it,
+ * as Bermuda prints `Upper Apt # 1` above `9 Leafy Lane`.
+ */
+export const unitLineNumberFirstStreet: AddressLayout = addr`${poBoxLine}
+${SLOTS.unit}
+${either(
+	addr`${SLOTS.intersection_a} & ${SLOTS.intersection_b}`,
+	addr`${SLOTS.house_number} ${SLOTS.street_prefix} ${SLOTS.street_prefix_particle} ${SLOTS.street} ${SLOTS.street_suffix}`
+)}`
+
+/**
+ * Returns `street` with its post-office box line printed below the street rather than
+ * above it, as Cabo Verde prints `Rua 5 de Julho 138/Platô` above `C.P. 38`.
+ *
+ * A layout whose first line isn't the box line is returned unchanged.
+ */
+export function withPoBoxBelow(street: AddressLayout): AddressLayout {
+	const [first, ...rest] = street.lines
+
+	if (!first || first.length !== 1 || first[0] !== poBoxLine) return street
+
+	return { ...street, lines: [...rest, first] }
+}
+
+/**
  * The Han-script street line, with the name and number written together, as in `佐敦道21號`;
  * a space between them is a romanized convention and is wrong in Han script.
  */

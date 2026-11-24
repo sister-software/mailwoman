@@ -40,9 +40,13 @@ import {
 	numberLastStreet,
 	prefixedSlot,
 	SLOTS,
+	unitFirstStreet,
+	unitLineNumberFirstStreet,
+	withPoBoxBelow,
 	withSoftBreakBefore,
 } from "#address/layout"
 import { LAYOUT_CITATIONS } from "#address/layouts/citations"
+import { UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/description-records"
 import {
 	GENERATED_ADDRESS_LAYOUTS,
 	GENERATED_LATIN_ADDRESS_LAYOUTS,
@@ -50,7 +54,7 @@ import {
 	HAND_AUTHORED_FORMAT_SKELETONS,
 } from "#address/layouts/generated"
 import { S42_ADDRESS_LAYOUTS, S42_READ_LAYOUTS } from "#address/layouts/s42"
-import { UPU_PAS_ADDRESS_LAYOUTS, UPU_PAS_LAYOUT_RECORDS } from "#address/layouts/upu-pas"
+import { UPU_PAS_ADDRESS_LAYOUTS } from "#address/layouts/upu-pas"
 import { s42CohortForJurisdiction } from "#address/s42-templates"
 import type { ComponentTag } from "#component"
 
@@ -262,10 +266,11 @@ ${numberFirstStreet}
 ${locality}, ${region} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%n%Z %C
+	// %O%n%N%n%A%n%Z %C, with La Poste's lines from its UPU description: the delivery point
+	// (`Apartment 2`) above the street and the P.O. box (`BP 40122`) below it.
 	FR: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${withPoBoxBelow(unitLineNumberFirstStreet)}
 ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
@@ -292,11 +297,13 @@ ${postcode} ${locality}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C %S — Spain writes the number after a comma: `Calle Mayor, 12`.
+	// Correos prints the province on its own line below the locality (`45012 TOLEDO` / `TOLEDO`).
 	ES: addr`${attention}
 ${venue}
 ${numberLastCommaStreet}
 ${dependent_locality}
-${postcode} ${locality} ${region}
+${postcode} ${locality}
+${region}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C %S
@@ -307,13 +314,17 @@ ${dependent_locality}
 ${postcode} ${locality} ${region}
 ${country}`,
 
-	// %N%n%O%n%A%n%C %Z%n%S — India writes the number before a comma: `12, MG Road`.
+	// India writes the number before a comma: `12, MG Road`.
+	// India Post's UPU description prints the locality, the state and the PIN on lines
+	// of their own (`Bangalore` / `Karnataka` / `560082`), where libaddressinput's
+	// `%C %Z%n%S` puts the PIN before the state.
 	IN: addr`${attention}
 ${venue}
 ${numberFirstCommaStreet}
 ${dependent_locality}
-${locality} ${postcode}
+${locality}
 ${region}
+${postcode}
 ${country}`,
 
 	// %N%n%O%n%A%n%D%n%C %Z
@@ -324,10 +335,10 @@ ${dependent_locality}
 ${locality} ${postcode}
 ${country}`,
 
-	// %O%n%N%n%A%n%C %S %Z
+	// %O%n%N%n%A%n%C %S %Z, with the unit before the number as Australia Post prints it (`LEVEL 6 51 JACOBSON ST`).
 	AU: addr`${venue}
 ${attention}
-${numberFirstStreet}
+${unitFirstStreet}
 ${dependent_locality}
 ${locality} ${region} ${postcode}
 ${country}`,
@@ -372,9 +383,10 @@ ${attention}`,
 	// both orders, so it holds the Latin one (`21 Jordan Road, Yau Tsim Mong, Kowloon`),
 	// which is what `isLargestFirstSystem("HK") === false` already asserts.
 	// No postcode line: Hong Kong operates none.
+	// Hongkong Post prints the flat and floor on a line above the building and street (`Flat 25, 12/F`).
 	HK: addr`${attention}
 ${venue}
-${numberFirstStreet}
+${unitLineNumberFirstStreet}
 ${dependent_locality}
 ${locality}
 ${region}
@@ -504,7 +516,8 @@ export function writtenLayoutForCountry(countryCode: string | null, draw: number
  * Callers treat them as small-first.
  */
 export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
-	Object.entries({ ...GENERATED_ADDRESS_LAYOUTS, ...ADDRESS_LAYOUTS })
+	// Spread in `layoutForCountry`'s precedence, so a UPU reading replaces the skeleton it overrides.
+	Object.entries({ ...GENERATED_ADDRESS_LAYOUTS, ...UPU_PAS_ADDRESS_LAYOUTS, ...ADDRESS_LAYOUTS })
 		.filter(([, layout]) => layoutPrintsLargestFirst(layout) === true)
 		.map(([countryCode]) => countryCode)
 )
@@ -517,7 +530,7 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
  * where libaddressinput states no `fmt`, omits the locality line the postal operator's
  * own examples print, or orders that line differently from every example.
  *
- * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 7
+ * Of the 55 shipped records with no usable `fmt`, the 8 read from a SAFD and the 22
  * read from a UPU description have a layout, and the rest answer `null`.
  */
 export function layoutForCountry(countryCode: string | null, script?: AddressScript): AddressLayout | null {
