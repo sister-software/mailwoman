@@ -265,6 +265,39 @@ describe("readGLEIFAddress", () => {
 		expect(row.raw).toBe("TWO SIGMA INVESTMENTS, LP, 100 AVENUE OF THE AMERICAS, NEW YORK, NY 10013")
 	})
 
+	it("writes an Indian state's name for its ISO 3166-2 code, as the libaddressinput key beside that id", () => {
+		const shivangi = record({
+			name: "SHIVANGI POLYSACK PRIVATE LIMITED",
+			legal: {
+				FirstAddressLine: "78, BENTICK STREET",
+				City: "KOLKATA",
+				Region: "IN-WB",
+				Country: "IN",
+				PostalCode: "700001",
+			},
+		})
+
+		const row = admitted(readGLEIFAddress(shivangi, GLEIFAddressBlock.Legal, units))
+
+		expect(row.components.region).toBe("West Bengal")
+		expect(row.raw).toContain("West Bengal")
+	})
+
+	it("reads a current ISO 3166-2 code whose earlier code the libaddressinput spec lists", () => {
+		const hyderabad = record({
+			name: "SAMPLE TECHNOLOGIES PRIVATE LIMITED",
+			legal: {
+				FirstAddressLine: "115, HOODI MAIN ROAD",
+				City: "HYDERABAD",
+				Region: "IN-TS",
+				Country: "IN",
+				PostalCode: "500033",
+			},
+		})
+
+		expect(admitted(readGLEIFAddress(hyderabad, GLEIFAddressBlock.Legal, units)).components.region).toBe("Telangana")
+	})
+
 	it("leaves out a region whose ISO 3166-2 code is not how an address writes it", () => {
 		expect(admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal, units)).components.region).toBeUndefined()
 	})

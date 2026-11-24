@@ -133,6 +133,47 @@ function writtenCodesFor(country: string): ReadonlyMap<string, string> {
 }
 
 /**
+ * ISO 3166-2 codes that replaced a code the vendored libaddressinput specs still list,
+ * keyed by the current code.
+ *
+ * ISO 3166-2:IN's change of 2023-11-23 ("Change of subdivision codes") moved Odisha
+ * from `IN-OR` to `IN-OD`, Chhattisgarh from `IN-CT` to `IN-CG`, Telangana from
+ * `IN-TG` to `IN-TS` and Uttarakhand from `IN-UT` to `IN-UK`.
+ * GLEIF's golden copy of 2026-10-03 writes the current codes.
+ *
+ * The libaddressinput spec and Who's On First's concordances hold the earlier ones.
+ */
+const ISO_SUBDIVISION_CODES_REPLACED: Readonly<Record<string, string>> = {
+	"IN-CG": "IN-CT",
+	"IN-OD": "IN-OR",
+	"IN-TS": "IN-TG",
+	"IN-UK": "IN-UT",
+}
+
+/**
+ * The form `country`'s addresses write for the subdivision whose ISO 3166-2 code ends in `isoSuffix`:
+ * the libaddressinput key listed beside that ISO id, or `null` when the spec lists no such id.
+ *
+ * India keys Maharashtra by its name beside ISO id `MH`, so `IN`, `MH` returns `Maharashtra`.
+ * The United States keys New York as `NY`, so `US`, `NY` returns `NY`.
+ * The comparison ignores case.
+ */
+export function writtenSubdivisionForISO(country: string, isoSuffix: string): string | null {
+	const code = country.toUpperCase()
+	const spec = specFor(code)
+	const keys = spec?.sub_keys?.split("~") ?? []
+	const isoIDs = spec?.sub_isoids?.split("~") ?? []
+
+	if (isoIDs.length !== keys.length) return null
+
+	const suffix = isoSuffix.toUpperCase()
+	const listed = ISO_SUBDIVISION_CODES_REPLACED[`${code}-${suffix}`]?.slice(code.length + 1) ?? suffix
+	const at = isoIDs.findIndex((isoID) => isoID.toUpperCase() === listed)
+
+	return at === -1 ? null : keys[at]!
+}
+
+/**
  * Every key and name libaddressinput lists for `country`'s subdivisions
  * (`TX`, `Texas`; `AE`, `Armed Forces (AE)`; `TO`, `Torino`), or none when it lists no subdivisions.
  */
