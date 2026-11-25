@@ -1,6 +1,6 @@
 ---
 title: Choose an address workflow
-description: Start with verified Mailwoman 11.0.0 guides for parsing, record checks, matching, and annotations.
+description: Choose a parsing, intake, matching, or annotation guide and check what each result can establish.
 ---
 
 import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
@@ -9,13 +9,13 @@ import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
 
 ## Inspect an address entered in a form
 
-**Use this when:** You need to separate a line into components and show the user what the parser read. Install the published parser and en-US model, then run [the first parse](/docs/start). [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the query kind, labeled spans, and stage trace for one exact input. Both exercises run without a geographic database.
+**Use this when:** You need to separate a line into components and show the user what the parser read. Install `mailwoman`, then run [the first parse](/docs/start). [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the query kind, labeled spans, and stage trace for one exact input. Both exercises were checked with published 11.3.0 packages and need no geographic database.
 
 **Limit:** A labeled house number or postcode is evidence about the text. Whether the address exists or accepts mail takes postal or geographic evidence. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why that decision needs more than a raw node score.
 
 ## Prepare irregular records for review
 
-**Use this when:** You need a repeatable intake step before a human or another system reviews records. [Normalize an input](/docs/guides/normalize-input) shows how to retain the original text and map a normalized span back to it. [Review parse results](/docs/guides/review-parse-results) applies an explicit component-presence rule to a small labeled set. The checked paths use the parser model and no geographic database.
+**Use this when:** You need a repeatable intake step before a human or another system reviews records. [Normalize an input](/docs/guides/normalize-input) shows how to retain the original text and map a normalized span back to it. It was executed with published 11.3.0 packages. [Review parse results](/docs/guides/review-parse-results) applies an explicit component-presence rule to a small labeled set. Its verification record identifies the parser source. Neither procedure needs a geographic database.
 
 **Limit:** The review rule is an application choice. Its seven illustrative records show the rule's behavior, and a production error rate needs a representative labeled set. [How data and evaluation support quality claims](/docs/explanation/data-and-model-quality) explains the held-out evidence needed for a broader claim.
 
@@ -33,7 +33,7 @@ import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
 
 ## Add fields to a coordinate you already have
 
-**Use this when:** A consumer needs coordinate formats or country reference fields. [Annotate a result](/docs/guides/annotate-results) executes published 11.0.0 annotators on a supplied coordinate and country code, then shows two output projections. The checked annotators need no geographic database.
+**Use this when:** A consumer needs coordinate formats or country reference fields. [Annotate a result](/docs/guides/annotate-results) executes published 11.3.0 annotators on a supplied coordinate and country code, then shows two output projections. The checked annotators need no geographic database.
 
 **Limit:** Annotation doesn't obtain or verify the coordinate. A projection can omit repeated parse components and geocode provenance. [Result schema](/docs/reference/schema) describes the source fields to retain if that evidence matters.
 
