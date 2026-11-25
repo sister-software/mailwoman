@@ -229,6 +229,15 @@ export const AWS_CREDENTIAL_ROLES: readonly AWSCredentialRole[] = [
 					Condition: taggedForBuild,
 				},
 				{
+					// A running build writes its log to the bucket only on exit, so its console
+					// output is the progress an operator can read while it runs.
+					Sid: "BuildInstancesConsoleRead",
+					Effect: "Allow",
+					Action: ["ec2:GetConsoleOutput"],
+					Resource: [`arn:aws:ec2:${AWS_BUILD_REGION}:${accountID}:instance/*`],
+					Condition: taggedForBuild,
+				},
+				{
 					Sid: "InstanceRolePass",
 					Effect: "Allow",
 					Action: ["iam:PassRole"],
