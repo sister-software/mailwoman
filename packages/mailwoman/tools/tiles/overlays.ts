@@ -20,21 +20,22 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/repo/git"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { runProcess } from "@mailwoman/core/scripting/process"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
-import { resumableDownload } from "@mailwoman/corpus/tools/fetch/download/retry"
 import { FORK_ORG } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
 import { wofRepoName } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 
-import { artifactURL, BUNDLES } from "#data/published/bundles"
+import { adminGazetteerURL } from "#browser-runtime/resources"
 import { OVERLAY_ROW_SETS, type OverlayRowSet } from "#tools/tiles/overlay-row-sets"
 import { publishTiles } from "#tools/tiles/publish"
+import { type BucketObject, copyWithRclone } from "#tools/tiles/rclone"
 
 export interface BuildOverlayTilesOptions {
 	/**
@@ -52,10 +53,10 @@ export interface BuildOverlayTilesOptions {
 	 */
 	rowSets?: readonly OverlayRowSet[]
 	/**
-	 * The candidate database the `gazetteer` row set reads: a local path, or an `s3://`
-	 * or `https://` URL the run copies into the work directory.
+	 * The candidate database the `gazetteer` row set reads: a local path,
+	 * or an `s3://` URL the run copies into the work directory.
 	 *
-	 * @defaultValue the published `candidate` bundle's database, {@linkcode publishedCandidateURL}
+	 * @defaultValue the demo geocoder's candidate database, copied from R2 ({@linkcode demoCandidateObject})
 	 */
 	candidate?: string
 	/**
@@ -127,37 +128,44 @@ const GITHUB_PAGE_SIZE = 100
 const GITHUB_PAGE_LIMIT = 20
 
 /**
- * The URL of the published `candidate` bundle's database, the one a Mailwoman install downloads.
+ * The R2 object of the candidate database the demo geocoder serves, at `ADMIN_GAZETTEER_VERSION`.
+ *
+ * The object's key is the path of the URL the demo reads it from, in the public bucket.
  */
-export function publishedCandidateURL(): string {
-	const [artifact] = BUNDLES.candidate?.artifacts ?? []
-
-	if (!artifact) throw new CommandError("the published bundles list no candidate database")
-
-	return artifactURL(artifact)
+export function demoCandidateObject(): BucketObject {
+	return { bucket: $public.MAILWOMAN_PUBLIC_BUCKET, key: new URL(adminGazetteerURL()).pathname.slice(1) }
 }
 
 /**
- * A local path to the candidate database: `source` itself when it's a path,
- * or its copy in the work directory when it's an `s3://` or `https://` URL.
+ * A local path to the candidate database, copied into the work directory unless `source` is a local path.
+ *
+ * An `s3://` URL is copied with the `aws` program.
+ * Without a source, the demo's candidate database is copied from R2 with rclone over
+ * the `RCLONE_S3_*` credentials, the ones the build publishes its tiles with.
  * A copy already in the work directory is reused.
  */
 async function localCandidate(
-	source: string,
+	source: string | undefined,
 	work: PathBuilderLike,
 	phase: (name: string, detail?: string) => void
 ): Promise<string> {
-	if (!/^(?:s3|https?):\/\//.test(source)) return source
+	if (source && !source.startsWith("s3://")) return source
 
 	const path = PathBuilder.from(work, "candidate.db").toString()
 
 	if (await pathExists(path)) return path
 
-	phase("candidate", source)
+	if (source) {
+		phase("candidate", source)
+		await runProcess("aws", ["s3", "cp", "--only-show-errors", source, path], ON_TERMINAL)
 
-	await (source.startsWith("s3://")
-		? runProcess("aws", ["s3", "cp", "--only-show-errors", source, path], ON_TERMINAL)
-		: resumableDownload({ url: source, dest: path, report: (line) => phase("candidate", line) }))
+		return path
+	}
+
+	const object = demoCandidateObject()
+
+	phase("candidate", `${object.bucket}/${object.key}`)
+	await copyWithRclone(object, path)
 
 	return path
 }
@@ -405,7 +413,7 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	)
 
 	if (rowSets.includes("gazetteer")) {
-		const candidatePath = await localCandidate(options.candidate ?? publishedCandidateURL(), work, phase)
+		const candidatePath = await localCandidate(options.candidate, work, phase)
 
 		const gazetteer = await exportGazetteerGeoParquet({
 			out: exportDir,

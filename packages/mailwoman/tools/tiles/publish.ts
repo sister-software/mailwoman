@@ -26,7 +26,8 @@
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { runProcess } from "@mailwoman/core/scripting/process"
+
+import { copyWithRclone } from "#tools/tiles/rclone"
 
 /**
  * A transport that puts one local file at `bucket/key`.
@@ -73,31 +74,10 @@ export interface PublishTilesOptions {
 	upload?: UploadTransport
 }
 
-const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
-
 /**
- * The default transport: rclone over the inherited `RCLONE_S3_*` credentials,
- * on the on-the-fly `:s3:` remote.
- *
- * The flags skip the post-PUT head + checksum ops that 501 against R2.
+ * The default transport: rclone over the inherited `RCLONE_S3_*` credentials.
  */
-export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) => {
-	const { $private } = await import("#env")
-
-	const missing = REQUIRED_ENV.filter((v) => !$private[v])
-
-	if (missing.length) {
-		throw new CommandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
-	}
-
-	const remote = `:s3:${bucket}/${key}`
-	const flags = ["--s3-no-head", "--s3-no-check-bucket", "--s3-disable-checksum", "--no-update-modtime"]
-	const result = await runProcess("rclone", ["copyto", file, remote, ...flags], { reject: false })
-
-	if (result.exitCode !== 0) {
-		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
-	}
-}
+export const uploadWithRclone: UploadTransport = ({ file, bucket, key }) => copyWithRclone(file, { bucket, key })
 
 /**
  * Copy one local file to `bucket/key`.

@@ -46,9 +46,11 @@ publish either archive to `mailwoman-public`.
    With `--repos-cache s3://…`, each repository's `.git` is restored from the cache before the sync and
    stored again when the sync moved its head. With `--repos`, the run reads that directory's clones as they
    stand: on the lab, `gazetteer inspect sync` keeps them current.
-2. With the `gazetteer` row set, it reads `--candidate`: a local path, or an `s3://` or `https://` URL it copies
-   into the work directory. Without the flag it downloads the published `candidate` bundle's database, the one a
-   Mailwoman install downloads. `--rowsets wof` skips this step and step 4.
+2. With the `gazetteer` row set, it reads `--candidate`: a local path, or an `s3://` URL it copies into the work
+   directory with the `aws` program. Without the flag it copies the demo geocoder's candidate database, at
+   `ADMIN_GAZETTEER_VERSION`, from the `mailwoman-public` R2 bucket with rclone over the `RCLONE_S3_*` keys the run
+   publishes its tiles with. The read goes to R2's S3 API rather than `public.mailwoman.post`, whose firewall admits
+   only browser and CLI reads. `--rowsets wof` skips this step and step 4.
 3. `exportWOFGeoParquet` writes `export/rowset=wof/`. It refreshes the WOF record store over the clones and passes
    each record through the admin intake's own decision, `extractParsedWOFFeature` over `ADMIN_PLACETYPES`, with
    successor names read from the store. A superseded duplicate and a placetype the intake doesn't ingest stay out, so
@@ -108,7 +110,7 @@ After a policy change, `mint-aws-credentials --policies-only` rewrites every pol
 
 | Input                       | Size                                                    | Where the run reads it                                                               |
 | --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `candidate.db`              | 2.9 GB, the published `candidate` bundle                | `https://public.mailwoman.post/mailwoman/`, the published bundle's URL               |
+| `candidate.db`              | 4.3 GB at `2026-11-25a`, the demo geocoder's database   | `mailwoman-public/mailwoman/gazetteer/<version>/` in R2, read with rclone            |
 | Who's On First admin clones | Below 68 GB, the size of all 271 clones on the lab host | `overlay-tiles/wof-repos/` in the inputs bucket, then GitHub for any fork that moved |
 | Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region                                       |
 | R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store                                          |
