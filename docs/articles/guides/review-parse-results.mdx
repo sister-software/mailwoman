@@ -3,7 +3,7 @@ title: Route parse results to review
 description: Apply an explicit row-level intake rule and inspect its decisions against labeled examples.
 role: guide
 source-of-truth: packages/mailwoman/lib/engine/parser.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/types.ts
-verified-with: mailwoman source with the parse API of issue 3121
+verified-with: published mailwoman v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-25
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -95,20 +95,20 @@ The rule checks the kind and component tags across the whole tree. It prints the
 
 ## Inspect the decisions
 
-Run `node review-parses.ts`. The script prints this complete output:
+Run `node review-parses.ts`. Published `mailwoman@11.3.0` on Node.js 24.22.3 and Linux x64 printed this complete output:
 
 ```text
-┌─────────┬──────┬──────────┬──────────┬──────────────────────┬────────────────────────────────────────────────────┬──────────────────┐
-│ (index) │ id   │ expected │ route    │ kind                 │ missing                                            │ weakest          │
-├─────────┼──────┼──────────┼──────────┼──────────────────────┼────────────────────────────────────────────────────┼──────────────────┤
-│ 0       │ 'A1' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'postcode 0.914' │
-│ 1       │ 'A2' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'postcode 0.915' │
-│ 2       │ 'A3' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'postcode 0.914' │
-│ 3       │ 'R1' │ 'review' │ 'review' │ 'po_box'             │ 'house_number, street'                             │ 'postcode 0.914' │
-│ 4       │ 'R2' │ 'review' │ 'review' │ 'intersection'       │ 'house_number, street, locality, region, postcode' │ 'venue 0.757'    │
-│ 5       │ 'R3' │ 'review' │ 'review' │ 'landmark'           │ 'house_number, locality, region, postcode'         │ 'unit 0.029'     │
-│ 6       │ 'R4' │ 'review' │ 'review' │ 'structured_address' │ 'region'                                           │ 'locality 0.841' │
-└─────────┴──────┴──────────┴──────────┴──────────────────────┴────────────────────────────────────────────────────┴──────────────────┘
+┌─────────┬──────┬──────────┬──────────┬──────────────────────┬────────────────────────────────────────────────────┬────────────────────────────┐
+│ (index) │ id   │ expected │ route    │ kind                 │ missing                                            │ weakest                    │
+├─────────┼──────┼──────────┼──────────┼──────────────────────┼────────────────────────────────────────────────────┼────────────────────────────┤
+│ 0       │ 'A1' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'street_suffix 0.819'      │
+│ 1       │ 'A2' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'postcode 0.910'           │
+│ 2       │ 'A3' │ 'ready'  │ 'ready'  │ 'structured_address' │ ''                                                 │ 'postcode 0.911'           │
+│ 3       │ 'R1' │ 'review' │ 'review' │ 'po_box'             │ 'house_number, street'                             │ 'postcode 0.910'           │
+│ 4       │ 'R2' │ 'review' │ 'review' │ 'intersection'       │ 'house_number, street, locality, region, postcode' │ 'venue 0.696'              │
+│ 5       │ 'R3' │ 'review' │ 'review' │ 'landmark'           │ 'house_number, street, locality, region, postcode' │ 'unit 0.012'               │
+│ 6       │ 'R4' │ 'review' │ 'review' │ 'structured_address' │ 'region'                                           │ 'dependent_locality 0.681' │
+└─────────┴──────┴──────────┴──────────┴──────────────────────┴────────────────────────────────────────────────────┴────────────────────────────┘
 Labeled ready routed ready: 3/3
 Labeled review routed review: 4/4
 ```
@@ -119,6 +119,6 @@ The rule sent the three rows labeled `ready` to downstream validation and the fo
 
 Send `ready` rows with their original input and an application-established <Country code="US" /> country field to the [record validation policy](./validate-records.mdx). The example script doesn't store a country field, so add one to your intake record before connecting the two procedures. For a `review` row, inspect `faults` first. Investigate a stage fault before using the returned components. If the kind is `po_box` or `intersection`, use the corresponding [PO box](./handle-po-boxes.mdx) or [intersection](./handle-intersections.mdx) intake. Ask the sender for a missing component when the kind is `structured_address`, as in `R4`. Keep the input and the observed kind, missing tags, and faults with the review record. The `weakest` column is diagnostic information. It doesn't select a route in this rule.
 
-The PO box row's weakest node score is `0.914`, the same rounded value as the first ready row. A cutoff chosen from these seven scores would mix different query kinds and score origins. The bundled calibration metadata identifies a model version older than the published 10.8.0 English model, so these raw values have no established probability interpretation. The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) gives the version evidence. Use a separate, representative labeled set to evaluate any score-based policy for your model, locale, and application costs.
+The PO box row's weakest node score is `0.910`, the same rounded value as ready row `A2`. A cutoff chosen from these seven scores would mix different query kinds and score origins. The installed 11.3.0 weights package contains calibration metadata for model 5.3.0. That metadata doesn't establish a probability interpretation for this run's raw scores. The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) explains the score origins. Use a separate, representative labeled set to evaluate any score-based policy for your model, locale, and application costs.
 
 For production intake, label records that cover your actual input sources before evaluating this rule. Count false ready decisions and unnecessary reviews with denominators, inspect the exact failed inputs, then change the condition that caused each error. The [result schema](../reference/schema.mdx) defines the kind, fault, tag, and score fields used here.
