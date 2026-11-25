@@ -9,6 +9,7 @@ import {
 } from "@mailwoman/core/resources/languages/types.gen"
 import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
 
+import { isEDTFDate } from "#whosonfirst/edtf"
 import type { WhosOnFirstPlacetype } from "#whosonfirst/placetypes/definition"
 
 export interface WOFBaseProperties {
@@ -193,8 +194,8 @@ export function pluckPlacetypeSpec({
 		population,
 		concordances: concordances && Object.keys(concordances).length ? concordances : null,
 		isCurrent,
-		isDeprecated: !!edtfDeprecated,
-		isCeased: !!edtfCessation,
+		isDeprecated: isEDTFDate(edtfDeprecated),
+		isCeased: isEDTFDate(edtfCessation),
 		isSuperseded: !!(superseded_by && superseded_by.length),
 		isSuperseding: !!(supersedes && supersedes.length),
 		lastmodified: typeof lastmodified === "number" ? lastmodified : null,

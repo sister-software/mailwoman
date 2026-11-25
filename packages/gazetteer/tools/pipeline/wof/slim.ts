@@ -22,6 +22,7 @@ import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
+import { isEDTFDate } from "#whosonfirst/edtf"
 import { storedWOFRecord, type WOFRecordStoreDatabase } from "#whosonfirst/record-store"
 
 /**
@@ -123,13 +124,10 @@ export const FORMER_DIVISION_PLACETYPES: ReadonlySet<string> = new Set([
  * `mz:is_current` 0 and a dated `edtf:cessation`.
  */
 function isCeasedDivision(properties: Record<string, unknown>): boolean {
-	const cessation = properties["edtf:cessation"]
-
 	return (
 		FORMER_DIVISION_PLACETYPES.has(String(properties["wof:placetype"] ?? "")) &&
 		properties["mz:is_current"] === 0 &&
-		typeof cessation === "string" &&
-		/^\d/.test(cessation)
+		isEDTFDate(properties["edtf:cessation"])
 	)
 }
 
@@ -201,9 +199,7 @@ function nameKey(name: string): string {
  * The values `""` and `"uuuu"` mean the record isn't deprecated.
  */
 export function isDeprecatedWithoutSuccessor(record: WOFRecordShape): boolean {
-	const deprecated = record.properties?.["edtf:deprecated"]
-
-	return typeof deprecated === "string" && /^\d/.test(deprecated) && !successorIDs(record).length
+	return isEDTFDate(record.properties?.["edtf:deprecated"]) && !successorIDs(record).length
 }
 
 /**

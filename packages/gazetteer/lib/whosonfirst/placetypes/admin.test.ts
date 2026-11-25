@@ -51,6 +51,8 @@ test("pluckPlacetypeSpec: mz:is_current is tri-state (0/'0' â†’ false, present â
 test("pluckPlacetypeSpec: lifecycle flags from edtf + superseded arrays", () => {
 	expect(pluckPlacetypeSpec(baseProps({ "edtf:deprecated": "2019" })).isDeprecated).toBe(true)
 	expect(pluckPlacetypeSpec(baseProps({ "edtf:cessation": "2020" })).isCeased).toBe(true)
+	expect(pluckPlacetypeSpec(baseProps({ "edtf:deprecated": "uuuu" })).isDeprecated).toBe(false)
+	expect(pluckPlacetypeSpec(baseProps({ "edtf:cessation": "uuuu" })).isCeased).toBe(false)
 	expect(pluckPlacetypeSpec(baseProps({ "wof:superseded_by": [202] })).isSuperseded).toBe(true)
 	expect(pluckPlacetypeSpec(baseProps({ "wof:supersedes": [303] })).isSuperseding).toBe(true)
 	const clean = pluckPlacetypeSpec(baseProps())

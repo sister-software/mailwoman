@@ -24,6 +24,7 @@ import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import type { WOFFeature } from "#whosonfirst"
+import { isEDTFDate } from "#whosonfirst/edtf"
 
 export interface BuildPolygonsOptions {
 	/**
@@ -359,7 +360,7 @@ export async function buildPolygonsDatabase(
 
 				if (properties?.["wof:superseded_by"]?.length) {
 					counts.superseded++
-				} else if (properties?.["edtf:deprecated"]) {
+				} else if (isEDTFDate(properties?.["edtf:deprecated"])) {
 					counts.deprecated++
 				} else if (!held && !linked.length && !sameCountry.length) {
 					counts.notInGazetteer++

@@ -17,6 +17,7 @@ import type { GeoCoordinate } from "@mailwoman/spatial/position"
 
 import { isSupersededRecord, type WOFNamesOf } from "#tools/pipeline/wof/slim"
 import type { WOFFeature, WOFProperties } from "#whosonfirst"
+import { isEDTFDate } from "#whosonfirst/edtf"
 
 /**
  * The number of values in a 2D bounding box: `[west, south, east, north]`.
@@ -197,8 +198,8 @@ export function extractParsedWOFFeature(
 		bbox,
 		population: props["wof:population"] ?? props["gn:population"] ?? 0,
 		isCurrent: mzIsCurrent === 0 || mzIsCurrent === "0" ? 0 : 1,
-		isDeprecated: props["edtf:deprecated"] ? 1 : 0,
-		isCeased: props["edtf:cessation"] ? 1 : 0,
+		isDeprecated: isEDTFDate(props["edtf:deprecated"]) ? 1 : 0,
+		isCeased: isEDTFDate(props["edtf:cessation"]) ? 1 : 0,
 		isSuperseded: (props["wof:superseded_by"]?.length ?? 0) > 0 ? 1 : 0,
 		isSuperseding: (props["wof:supersedes"]?.length ?? 0) > 0 ? 1 : 0,
 		lastmodified: typeof props["wof:lastmodified"] === "number" ? props["wof:lastmodified"] : 0,

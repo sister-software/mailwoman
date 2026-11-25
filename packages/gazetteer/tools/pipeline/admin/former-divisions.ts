@@ -39,6 +39,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { FORMER_DIVISION_PLACETYPES, wofRecordNames } from "#tools/pipeline/wof/slim"
+import { isEDTFDate } from "#whosonfirst/edtf"
 
 /**
  * The GeoNames feature codes of a historical division, with the admin level each sits at.
@@ -409,9 +410,7 @@ export function isCeasedRecord(properties: {
 	readonly "mz:is_current"?: unknown
 	readonly "edtf:cessation"?: unknown
 }): boolean {
-	const cessation = properties["edtf:cessation"]
-
-	return properties["mz:is_current"] === 0 || (typeof cessation === "string" && /^\d/.test(cessation))
+	return properties["mz:is_current"] === 0 || isEDTFDate(properties["edtf:cessation"])
 }
 
 /**
@@ -422,7 +421,7 @@ export function ceasedWOFDivision(id: number, properties: Record<string, unknown
 
 	if (!FORMER_DIVISION_PLACETYPES.has(placetype) || !isCeasedRecord(properties)) return null
 
-	if (typeof properties["edtf:deprecated"] === "string" && /^\d/.test(properties["edtf:deprecated"])) return null
+	if (isEDTFDate(properties["edtf:deprecated"])) return null
 
 	const name = String(properties["wof:name"] ?? "").trim()
 

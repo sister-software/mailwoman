@@ -69,3 +69,19 @@ describe("the names extractWOFFeature keeps", () => {
 		).toEqual([])
 	})
 })
+
+describe("the lifecycle flags extractWOFFeature stores", () => {
+	const flagsOf = (properties: Record<string, string>) => {
+		const record = { "wof:id": 1, "wof:placetype": "neighbourhood", "wof:country": "IN", ...properties }
+		const feature = extractWOFFeature(stringifyJSON({ properties: record }), ADMIN_PLACETYPES)
+
+		return [feature?.isDeprecated, feature?.isCeased]
+	}
+
+	it("sets deprecated and ceased only for a date", () => {
+		expect(flagsOf({ "edtf:deprecated": "2024-03-01", "edtf:cessation": "2019" })).toEqual([1, 1])
+		// WOF writes EDTF's unknown date on current records, such as 100,860 Indian `neighbourhood` records.
+		expect(flagsOf({ "edtf:deprecated": "uuuu", "edtf:cessation": "uuuu" })).toEqual([0, 0])
+		expect(flagsOf({ "edtf:deprecated": "", "edtf:cessation": "" })).toEqual([0, 0])
+	})
+})
