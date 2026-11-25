@@ -1,10 +1,14 @@
 # v8.11.0-base-c6-90k-v0823-s42 is v8.10.0-base-c6-90k-v0822-s42.yaml on corpus v0.8.23, drafted on 2026-11-25.
 # Every key and value is that config's except these:
 #
-# A. `data.corpus_dir` is corpus v0.8.23,
-#    /data/corpus/versioned/v0.8.23-retention-overlay/corpus-v0.8.23-retention-overlay (MANIFEST.json sha256
-#    e7efbb47…7b67, 576 files, train 357,569,462, val 24,276, test 359,827), recorded in
-#    packages/corpus/data/builds/v0.8.23-overlay/OVERLAY_PLAN.json. Every base-build source is rebuilt under the codex
+# A. `data.corpus_dir` is corpus v0.8.23 with `rendered-prominent-places` re-rendered for it,
+#    /data/corpus/versioned/v0.8.23-prominent-retention-overlay/corpus-v0.8.23-prominent-retention-overlay
+#    (MANIFEST.json sha256 59c16104…dedd, 576 files, train 357,579,188, val 24,276, test 359,827). It is
+#    v0.8.23-retention-overlay (packages/corpus/data/builds/v0.8.23-overlay/OVERLAY_PLAN.json) with the recipe's
+#    tuples written by `places.run.ts tuples --config <this file>` over v0.8.23 without the recipe: 42,104 rows
+#    against v0.8.22's 32,430. On v0.8.23 with v0.8.22's recipe the launch preflight's prominent-place audit failed 8
+#    of 811 demand cells (CA locality with region 0.3217 against 0.4207). On this corpus it passes 808 of 811 with 3
+#    unwritable, and presence covers 20,910 of 20,910 required forms. Every base-build source is rebuilt under the codex
 #    layouts of 2026-11-24. Those layouts cite each country's postal operator. 40 recipe and adapter sources are
 #    regenerated. Rows of AR, AM, CU, ID, KI, LT, RO and AE keep their region on half their rows where writers print
 #    it. `usgov-nad` keeps 0.11 of its training rows (`trainShare`), 9.9M of its 89.9M base rows. NAD's weight stays
@@ -112,7 +116,7 @@
 # Seed 42, as v8.9.0. The launch waits for the operator's go.
 
 data:
-  corpus_dir: /data/corpus/versioned/v0.8.23-retention-overlay/corpus-v0.8.23-retention-overlay
+  corpus_dir: /data/corpus/versioned/v0.8.23-prominent-retention-overlay/corpus-v0.8.23-prominent-retention-overlay
   tokenizer_dir: /data/models/tokenizer/v0.10.0-c6-isolated-punctuation
   max_length: 128
   # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.

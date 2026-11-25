@@ -1,0 +1,42 @@
+{
+	"$plan-note": "The plan for corpus v0.8.23-prominent, applied 2026-11-25 by `mailwoman corpus overlay-manifest` on v0.8.23-overlay (packages/corpus/data/builds/v0.8.23-overlay/OVERLAY_PLAN.json). The re-split under the evaluation-group policy wrote /mnt/mw/corpus/versioned/v0.8.23-prominent-retention-overlay/corpus-v0.8.23-prominent-retention-overlay/MANIFEST.json (sha256 59c161040564e274a21170ec84c2bb3acb8b0208b97733a2036f4a0f374ddedd; train 357,579,188, val 24,276, test 359,827; 576 files).",
+	"$why": "rendered-prominent-places is sized to its corpus: its tuples are written in the training config's expected epoch draws over the corpus without the recipe. On v0.8.23 with v0.8.22's recipe, the v8.11.0 launch preflight's prominent-place audit failed 8 of 811 demand cells, CA locality with region at 0.3217 against 0.4207 among them.",
+	"$recipe-output": {
+		"recipe": "prominent-places",
+		"source": "rendered-prominent-places",
+		"commands": [
+			"places.run.ts scan --out /mnt/mw/audits/prominent-places/v0.8.23-scan --manifest <v0.8.23-retention-overlay MANIFEST.json without rendered-prominent-places, paths under /mnt/mw>",
+			"places.run.ts tuples --out /mnt/mw/audits/prominent-places/v0.8.23-scan --config packages/corpus/data/training-configs/v8.11.0-base-c6-90k-v0823-s42.yaml",
+			"mailwoman corpus recipe prominent-places --input <scan dir>/prominent-tuples.jsonl --out $MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.23/rendered-prominent-places-v0.8.23.jsonl --seed 20261122",
+			"mailwoman corpus align-recipe, then mailwoman dev jsonl-to-parquet"
+		],
+		"placesTable": "/mnt/mw/audits/prominent-places/candidate-global-2026-11-19/places.parquet",
+		"scan": "575 of 576 files, 3,514,133 short admin train rows, 145 s",
+		"parquet": "$MAILWOMAN_DATA_ROOT/corpus/recipe-outputs-v0.8.23/rendered-prominent-places-v0.8.23.parquet",
+		"sha256": "4b51163bf7b9ef2a210acb28fe92fd204fa241c2eeff68167a9f959801811caf",
+		"rows": 42104,
+		"aligned": "42,104 labeled, 0 quarantined"
+	},
+	"$checks": {
+		"prominentPlaceCoverage": "coverage.run.ts on the v8.11.0 config re-rooted at this corpus: presence 20,910 of 20,910 required forms; demand share 808 of 811 cells, 0 failing, 3 unwritable (FJ and GD locality region, ID sub-locality parent); 0 short admin train rows write a dependent locality without a locality.",
+		"overlap": "overlap.run.ts --match-address --preview-evaluation-groups evaluation-groups.v0.8.24.json --refuse-overlap identity,group,address: heldout-dev-v0.8.18.v4 (86,845 rows), heldout-confirm-v0.8.18.v3 (33,402), heldout-confirm-v0.8.20 (19,757), heldout-dev-v0.8.21 (44,978), each exit 0 with identity, group, text and address overlap 0.",
+		"validationQuota": "15,539 groups in 242 countries (15,540 entries; osm-43b5825341eb is listed twice)"
+	},
+	"corpusVersion": "0.8.23-prominent-overlay",
+	"overlayBase": "0.8.23-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.23-overlay/corpus-v0.8.23-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.23-prominent-overlay/corpus-v0.8.23-prominent-overlay",
+	"note": "v0.8.23-overlay with rendered-prominent-places rendered from tuples sized under the v8.11.0 config against v0.8.23 without the recipe",
+	"appliedAt": "2026-11-25T21:14:50.055Z",
+	"files": [
+		{
+			"parquet": "rendered-prominent-places-v0.8.23.parquet",
+			"source": "rendered-prominent-places",
+			"splitAttribute": {
+				"path": "attributes/rendered-prominent-places-v0.8.23.split.b3ce4de29412a46ec2e25466d543ce5896e096aaea326e4c5f8adf0969bcd28d.json",
+				"policyHash": "b3ce4de29412a46ec2e25466d543ce5896e096aaea326e4c5f8adf0969bcd28d"
+			}
+		}
+	],
+	"replacedSources": ["rendered-prominent-places"]
+}
