@@ -1,16 +1,16 @@
 ---
 title: Add place-name autocomplete
-description: Serve ranked place-name suggestions from a published FST and count requests for a fixed typing sequence.
+description: Run a place-name suggestion endpoint and check which typing events send requests.
 role: guide
 source-of-truth: packages/resolver-wof-sqlite/lib/fst.ts, packages/mailwoman/lib/autocomplete/core.ts, packages/mailwoman/cli/native/commands/autocomplete.ts
-verified-with: published @mailwoman/resolver-wof-sqlite and @mailwoman/neural-weights-en-us v11.0.0
+verified-with: published @mailwoman/resolver-wof-sqlite and @mailwoman/neural-weights-en-us v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-25
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
 
 # Add place-name autocomplete
 
-Use the published finite-state transducer (FST) to suggest **place names** as someone types. The FST in `@mailwoman/neural-weights-en-us@11.0.0` runs without a geographic database. Each suggestion is a place name with its Who's On First ID. Coordinates, street addresses and delivery evidence come from other sources. This example serves a small JSON endpoint and sends a fixed sequence of input events through it.
+Use the published finite-state transducer (FST) to suggest **place names** as someone types. The FST in `@mailwoman/neural-weights-en-us@11.3.0` runs without a geographic database. Each suggestion is a place name with its Who's On First ID. Coordinates, street addresses, and delivery evidence come from other sources. This guide starts a local JSON endpoint and checks it with a fixed sequence of typing events.
 
 ## Prerequisites
 
@@ -24,9 +24,11 @@ npm install @mailwoman/resolver-wof-sqlite @mailwoman/neural-weights-en-us
 
 Check that `node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin` exists in this project before starting the server. The path is relative to the project directory. The [data and locales reference](../reference/data-and-locales.mdx) distinguishes this place-name index from the geographic databases needed to resolve coordinates.
 
-## Serve suggestions and check the request count
+Port 3000 on your computer must be free for the local endpoint.
 
-Save this code as `autocomplete.ts`. It loads the FST once, exposes `GET /suggest?q=...`, and runs a local client against seven input events. The client skips inputs shorter than three trimmed characters and suppresses an event when trimming leaves the same query as the previous request. The application chooses these rules.
+## 1. Start a suggestion endpoint
+
+Save this code as `autocomplete-server.ts`. It loads the FST once and serves `GET /suggest?q=...` on your computer. Keep this process running while you check the endpoint in the next step.
 
 ```ts
 import { createServer } from "node:http"
@@ -40,7 +42,6 @@ interface Suggestion {
 }
 
 const fst = deserializeFST(await readFile("node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin"))
-let requests = 0
 
 const server = createServer((request, response) => {
 	const url = new URL(request.url ?? "/", "http://localhost")
@@ -51,7 +52,6 @@ const server = createServer((request, response) => {
 		return
 	}
 
-	requests++
 	const query = url.searchParams.get("q")?.trim() ?? ""
 
 	const entries: Suggestion[] =
@@ -64,14 +64,29 @@ const server = createServer((request, response) => {
 	response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ entries }))
 })
 
-await new Promise<void>((resolve) => {
-	server.listen(0, "127.0.0.1", resolve)
+server.listen(3000, "127.0.0.1", () => {
+	console.log("Serving suggestions at http://127.0.0.1:3000/suggest")
 })
+```
 
-const address = server.address()
+Run `node autocomplete-server.ts` in the first terminal. The server prints:
 
-if (typeof address === "string" || address === null) throw new Error("Expected TCP address")
+```text
+Serving suggestions at http://127.0.0.1:3000/suggest
+```
 
+## 2. Check typed inputs
+
+Save this file as `autocomplete-check.ts` in the same project. It sends seven input events to the running endpoint. The client skips inputs shorter than three trimmed characters and suppresses an event when trimming leaves the same query as the previous request. The application chooses these rules.
+
+```ts
+interface Suggestion {
+	name: string
+	placetype: string
+	wofID: number
+}
+
+let requests = 0
 let lastQuery = ""
 
 for (const input of ["s", "sa", "san", "san ", "san f", "san fr", "san franc"]) {
@@ -90,7 +105,9 @@ for (const input of ["s", "sa", "san", "san ", "san f", "san fr", "san franc"]) 
 	}
 
 	lastQuery = query
-	const response = await fetch(`http://127.0.0.1:${address.port}/suggest?q=${encodeURIComponent(query)}`)
+	const response = await fetch(`http://127.0.0.1:3000/suggest?q=${encodeURIComponent(query)}`)
+
+	requests++
 
 	if (!response.ok) throw new Error(`HTTP ${response.status}`)
 	const data = (await response.json()) as { entries: Suggestion[] }
@@ -101,11 +118,9 @@ for (const input of ["s", "sa", "san", "san ", "san f", "san fr", "san franc"]) 
 }
 
 console.log(`HTTP requests: ${requests} of 7 input events`)
-
-server.close()
 ```
 
-Run `node autocomplete.ts`. The published 11.0.0 packages returned this complete output in the local check:
+Run `node autocomplete-check.ts` in a second terminal while the server is running. The published 11.3.0 packages returned this complete client output:
 
 ```text
 "s": skipped (short)
@@ -120,6 +135,6 @@ HTTP requests: 4 of 7 input events
 
 Four of the seven input events made HTTP requests: `san`, `san f`, `san fr`, and `san franc`. The first two events were below this example's three-character rule, and `san ` trimmed to the already-requested `san`. The server also checks short queries, so a direct request gets the same length rule as the client. `dedupeByName: true` keeps one entry per displayed name. It changes the second result for `san franc` from the CLI's default. The CLI example on the [capabilities page](/product/capabilities#what-the-autocomplete-check-established) leaves deduplication off.
 
-In an application, send the search field's current value to `/suggest` using the same trim, length, and unchanged-query checks. Render the returned `entries` as selectable place-name suggestions and keep each `wofID` as its place identifier. The example measures the request count for one fixed typing sequence. Measure response latency on your host and with your input mix before choosing a debounce delay.
+The endpoint remains available after the client check. Stop it with Ctrl+C when you're done. In an application, send the search field's current value to `/suggest` using the same trim, length, and unchanged-query checks. Serve the endpoint from the application's origin when a browser page calls it. Render the returned `entries` as selectable place-name suggestions and keep each `wofID` as its place identifier. The example measures the request count for one fixed typing sequence. Measure response latency on your host and with your input mix before choosing a debounce delay.
 
 The FST returns ranked gazetteer names and a `wofID` for each suggestion. See [geocoding](/docs/explanation/geocoding) for the separate lookup that supplies a coordinate, and [confidence and limits](/docs/explanation/confidence-and-limits) for evidence boundaries.
