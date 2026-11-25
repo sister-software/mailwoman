@@ -157,7 +157,7 @@ export const launchOverlayBuild = defineOperation({
 		const deadline = new Date(Date.now() + hours * 3_600_000)
 
 		const names = rowSets.flatMap((rowSet) =>
-			rowSet === "wof" && input.postcodes ? [rowSet, `${rowSet}-postcodes`] : [rowSet]
+			rowSet === "gazetteer" || input.postcodes ? [rowSet, `${rowSet}-postcodes`] : [rowSet]
 		)
 
 		const tileSets = names.map((name) => `https://tiles.mailwoman.post/${name}.${tilesetVersion}.json`)
