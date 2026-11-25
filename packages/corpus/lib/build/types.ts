@@ -333,8 +333,12 @@ export interface BuildCorpusManifest {
 	 */
 	refused_rows_by_source: Record<string, number>
 	/**
-	 * Training rows each source's `trainShare` left out, so a reader can tell
+	 * Training draws each source's `trainShare` left out, so a reader can tell
 	 * a capped source from a small one.
+	 *
+	 * A draw is a row the share dropped, or an augmentation it kept from running.
+	 * A skipped augmentation would have written one row or none, so the count is
+	 * an upper bound on the rows left out.
 	 * Validation and test rows are never left out.
 	 */
 	train_rows_left_out_by_source: Record<string, number>

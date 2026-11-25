@@ -804,6 +804,22 @@ export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
 }
 
+/**
+ * Whether a country's declared holdout reads postcode prefixes and no region or locality.
+ *
+ * Under such a policy a row's split reads only its record and its postcode digits.
+ * The corpus augmentations change case, punctuation and abbreviations, and drop a ZIP+4 dash.
+ * None of them changes the compacted postcode digits.
+ *
+ * A variant of a training row therefore trains, and a caller may draw a variant's
+ * training share before making it.
+ */
+export function holdoutReadsOnlyPostcode(holdout: CountryHoldout | null | undefined): boolean {
+	const policy = holdoutPolicyFor(holdout ?? null)
+
+	return Boolean(policy.postcodePrefixes?.length) && !policy.regions?.length && !policy.localities?.length
+}
+
 interface FoldedHoldoutNames {
 	regions: ReadonlySet<string>
 	localities: ReadonlySet<string>

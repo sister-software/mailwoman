@@ -48,7 +48,14 @@ import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/uti
 import type { AdapterOptions, CanonicalRow, LabeledRow } from "#types"
 import { alignRow, nfcComponents } from "#utils/align"
 import type { SplitRetention } from "#utils/retention"
-import { hashBucket, SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
+import {
+	hashBucket,
+	holdoutReadsOnlyPostcode,
+	SPLIT_NAMES,
+	splitForRow,
+	type CountryHoldout,
+	type SplitName,
+} from "#utils/split"
 
 export interface AlignPhaseOptions {
 	/**
@@ -119,7 +126,10 @@ export interface AlignPhaseResult {
 	 */
 	refusedBySource: Map<string, number>
 	/**
-	 * Training rows each source's `trainShare` left out.
+	 * Training draws each source's `trainShare` left out: a row it dropped,
+	 * or an augmentation it kept from running.
+	 *
+	 * A skipped augmentation would have written one row or none.
 	 * Validation and test rows are never left out.
 	 */
 	trainRowsLeftOutBySource: Map<string, number>
@@ -272,6 +282,17 @@ const TRAIN_SHARE_SALT = "train-share"
  * Hash buckets the `trainShare` draw resolves a share to: one per million.
  */
 const TRAIN_SHARE_BUCKETS = 1_000_000
+
+/**
+ * One training record in 1,024 runs every augmentation, so the assertion that its
+ * variants train checks the rows a draw before synthesis never makes.
+ */
+const AUDITED_DRAW_RECORDS = 1024
+
+/**
+ * The salt of the draw that picks the audited records, apart from the share's own draw.
+ */
+const DRAW_AUDIT_SALT = "train-share-audit"
 
 /**
  * Whether a training row whose source keeps `share` of its training rows is kept.
@@ -455,16 +476,51 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 
 		result.rowsBySource.set(row.source, { rows: (contributed?.rows ?? 0) + 1, license: row.license })
 
+		const leaveOut = (source: string): void => {
+			result.trainRowsLeftOutBySource.set(source, (result.trainRowsLeftOutBySource.get(source) ?? 0) + 1)
+		}
+
+		const baseShare = opts.trainShares?.[row.source]
+
+		// A training base row in a country whose holdout reads only postcodes has variants that
+		// all train (`holdoutReadsOnlyPostcode`), so each variant's share is drawn from its id
+		// before the augmentation runs, and an augmentation the share leaves out is never run.
+		// One record in AUDITED_DRAW_RECORDS runs every augmentation, so the assertion
+		// below checks the premise on rows the shortcut never makes.
+		const variantsTrain =
+			typeof baseShare === "number" &&
+			!opts.retention &&
+			holdoutReadsOnlyPostcode(opts.holdouts[row.country]) &&
+			splitForRow({ ...row, components: nfcComponents(row.components) }, opts.holdouts) === "train"
+
+		const drawsFirst = variantsTrain && hashBucket(`${DRAW_AUDIT_SALT}|${row.source_id}`, AUDITED_DRAW_RECORDS) !== 0
+
+		const wants = drawsFirst
+			? (method: string): boolean => {
+					const kept = keepsTrainRow(`${row.source_id}+${method}`, baseShare)
+
+					if (!kept) {
+						leaveOut(row.source)
+					}
+
+					return kept
+				}
+			: undefined
+
 		const fanned: CanonicalRow[] = [row]
 
 		if (opts.synthesize) {
-			for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country))) {
+			for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country), wants)) {
+				// The draw above read `${source_id}+${method}`, so a variant written under another id drew for the wrong row.
+				if (drawsFirst && aug.source_id !== `${row.source_id}+${aug.augmentation?.name}`) {
+					throw new Error(
+						`createRowAligner: variant ${aug.source_id} of ${row.source_id} doesn't carry its method's id, ` +
+							`so its training share was drawn for another id`
+					)
+				}
+
 				fanned.push(aug)
 			}
-		}
-
-		const leaveOut = (source: string): void => {
-			result.trainRowsLeftOutBySource.set(source, (result.trainRowsLeftOutBySource.get(source) ?? 0) + 1)
 		}
 
 		for (const r of fanned) {
@@ -480,6 +536,13 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 				typeof share === "number" && !opts.retention
 					? splitForRow({ ...r, components: nfcComponents(r.components) }, opts.holdouts)
 					: null
+
+			if (variantsTrain && early !== "train") {
+				throw new Error(
+					`createRowAligner: variant ${r.source_id} of a training row splits ${String(early)} under a holdout that ` +
+						`reads only postcodes, so drawing its share before synthesis would have dropped a held-out row`
+				)
+			}
 
 			if (early === "train" && !keepsTrainRow(r.source_id, share!)) {
 				leaveOut(r.source)

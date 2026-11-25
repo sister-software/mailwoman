@@ -24,9 +24,37 @@ import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align
 import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
- * A row augmentation.
+ * One augmentation: a function from a row to its variant, or `null` when the row
+ * offers no text to vary, with its method name.
+ *
+ * The variant writes that name as its `augmentation.name` and as its `source_id` suffix.
+ *
+ * The name lets a caller decide whether it wants a variant before the augmentation runs.
  */
-export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
+export interface Augmentation {
+	(row: CanonicalRow): CanonicalRow | null
+	readonly method: string
+}
+
+/**
+ * Builds the variant of the row an augmentation's body was given, under the augmentation's method name.
+ */
+type EmitVariant = (newRaw: string, newComponents: ComponentDict) => CanonicalRow
+
+/**
+ * Defines an augmentation whose method name is `method`.
+ *
+ * Its body builds the variant through `emit`, so the name is written once.
+ */
+function augmentation(
+	method: string,
+	body: (row: CanonicalRow, emit: EmitVariant) => CanonicalRow | null
+): Augmentation {
+	const apply = (row: CanonicalRow): CanonicalRow | null =>
+		body(row, (newRaw, newComponents) => withAugmentation(row, method, newRaw, newComponents))
+
+	return Object.assign(apply, { method })
+}
 
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
@@ -55,7 +83,7 @@ function withAugmentation(
 /**
  * Upper-case raw and components.
  */
-export const caseUpper: Augmentation = (row) => {
+export const caseUpper = augmentation("case-upper", (row, emit) => {
 	if (row.raw === row.raw.toUpperCase()) return null
 	const upRaw = row.raw.toUpperCase()
 	const upComponents: ComponentDict = {}
@@ -66,13 +94,13 @@ export const caseUpper: Augmentation = (row) => {
 		}
 	}
 
-	return withAugmentation(row, "case-upper", upRaw, upComponents)
-}
+	return emit(upRaw, upComponents)
+})
 
 /**
  * Lower-case raw and components.
  */
-export const caseLower: Augmentation = (row) => {
+export const caseLower = augmentation("case-lower", (row, emit) => {
 	if (row.raw === row.raw.toLowerCase()) return null
 	const downRaw = row.raw.toLowerCase()
 	const downComponents: ComponentDict = {}
@@ -83,8 +111,8 @@ export const caseLower: Augmentation = (row) => {
 		}
 	}
 
-	return withAugmentation(row, "case-lower", downRaw, downComponents)
-}
+	return emit(downRaw, downComponents)
+})
 
 /**
  * Drop commas from raw and from every component, each the same way.
@@ -93,7 +121,7 @@ export const caseLower: Augmentation = (row) => {
  * The aligner places a span of the component's length, so a component left one character
  * longer than its text in raw ends its span on the space after it.
  */
-export const dropCommas: Augmentation = (row) => {
+export const dropCommas = augmentation("drop-commas", (row, emit) => {
 	if (!row.raw.includes(",")) return null
 	const strip = (text: string) => text.replaceAll(",", "").replaceAll(/\s+/g, " ").trim()
 	const components: ComponentDict = {}
@@ -104,13 +132,13 @@ export const dropCommas: Augmentation = (row) => {
 		}
 	}
 
-	return withAugmentation(row, "drop-commas", strip(row.raw), components)
-}
+	return emit(strip(row.raw), components)
+})
 
 /**
  * Double spaces in raw and components.
  */
-export const doubleSpace: Augmentation = (row) => {
+export const doubleSpace = augmentation("double-space", (row, emit) => {
 	if (!/ /.test(row.raw)) return null
 	const newRaw = row.raw.replaceAll(" ", "  ")
 	const newComponents: ComponentDict = {}
@@ -121,8 +149,8 @@ export const doubleSpace: Augmentation = (row) => {
 		}
 	}
 
-	return withAugmentation(row, "double-space", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * The share of rows that get a line-break variant, chosen per row from its source id.
@@ -136,7 +164,7 @@ const LINE_BREAK_SHARE = 0.25
  * The variant's components are the ones the layout printed.
  * A row whose layout puts everything on one line, or a country with no layout, gets no variant.
  */
-export const lineBreaks: Augmentation = (row) => {
+export const lineBreaks = augmentation("line-breaks", (row, emit) => {
 	if (/[\r\n]/.test(row.raw)) return null
 
 	if (mulberry32(hashString(`${row.source_id}:line-breaks`))() >= LINE_BREAK_SHARE) return null
@@ -145,13 +173,13 @@ export const lineBreaks: Augmentation = (row) => {
 
 	if (!rendered?.raw.includes("\n")) return null
 
-	return withAugmentation(row, "line-breaks", rendered.raw, rendered.components)
-}
+	return emit(rendered.raw, rendered.components)
+})
 
 /**
  * Strip accents/diacritics from raw and components.
  */
-export const accentStrip: Augmentation = (row) => {
+export const accentStrip = augmentation("accent-strip", (row, emit) => {
 	const stripped = stripCombiningMarks(row.raw)
 
 	if (stripped === row.raw) return null
@@ -163,8 +191,8 @@ export const accentStrip: Augmentation = (row) => {
 		}
 	}
 
-	return withAugmentation(row, "accent-strip", stripped, newComponents)
-}
+	return emit(stripped, newComponents)
+})
 
 // Typo helpers are deterministic per row.
 
@@ -221,7 +249,7 @@ function hashString(s: string): number {
 /**
  * Inject one deterministic typo into an eligible component.
  */
-export const typoInject: Augmentation = (row) => {
+export const typoInject = augmentation("typo-inject", (row, emit) => {
 	const rng = mulberry32(hashString(`${row.source_id}:typo`))
 
 	// Only edit an unambiguous component value.
@@ -274,8 +302,8 @@ export const typoInject: Augmentation = (row) => {
 	const newRaw = row.raw.replace(value, typed)
 
 	// `replace(string, …)` updates the first literal match.
-	return withAugmentation(row, "typo-inject", newRaw, { ...row.components, [tag]: typed })
-}
+	return emit(newRaw, { ...row.components, [tag]: typed })
+})
 
 // US-specific augmentations.
 
@@ -359,7 +387,11 @@ function replaceRegionWord(raw: string, region: string, replacement: string): st
 	return raw.slice(0, match.index) + replacement + raw.slice(match.index + region.length)
 }
 
-export const stateExpand: Augmentation = (row) => {
+/**
+ * Writes a US row's state abbreviation as the state's full name (`AK` to `Alaska`),
+ * in the text and the region.
+ */
+export const stateExpand = augmentation("state-expand", (row, emit) => {
 	// country-branch: the state, directional, street-suffix, unit and ZIP+4
 	// augmentations below read US vocabulary tables.
 	// Per-country abbreviation tables in the codex would let
@@ -381,13 +413,13 @@ export const stateExpand: Augmentation = (row) => {
 	if (!newRaw) return null
 	const newComponents: ComponentDict = { ...row.components, region: full }
 
-	return withAugmentation(row, "state-expand", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Abbreviate full state name to alpha-2.
  */
-export const stateAbbreviate: Augmentation = (row) => {
+export const stateAbbreviate = augmentation("state-abbreviate", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const region = row.components.region
@@ -401,8 +433,8 @@ export const stateAbbreviate: Augmentation = (row) => {
 	if (!newRaw) return null
 	const newComponents: ComponentDict = { ...row.components, region: abbr }
 
-	return withAugmentation(row, "state-abbreviate", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 const DIRECTIONAL_FULL_TO_ABBR: Record<string, string> = {
 	North: "N",
@@ -422,7 +454,7 @@ const DIRECTIONAL_ABBR_TO_FULL: Record<string, string> = Object.fromEntries(
 /**
  * Expand directional abbreviations.
  */
-export const directionalExpand: Augmentation = (row) => {
+export const directionalExpand = augmentation("directional-expand", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
@@ -447,13 +479,13 @@ export const directionalExpand: Augmentation = (row) => {
 
 	if (!changed) return null
 
-	return withAugmentation(row, "directional-expand", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Abbreviate directional words.
  */
-export const directionalAbbreviate: Augmentation = (row) => {
+export const directionalAbbreviate = augmentation("directional-abbreviate", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const tagsToCheck: ComponentTag[] = ["street", "street_suffix", "street_prefix"]
@@ -482,8 +514,8 @@ export const directionalAbbreviate: Augmentation = (row) => {
 
 	if (!changed) return null
 
-	return withAugmentation(row, "directional-abbreviate", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * An augmentation rewrites one component's text in `raw`.
@@ -515,7 +547,7 @@ function siblingHoldsValue(components: ComponentDict, editedTag: ComponentTag, v
 /**
  * Abbreviate trailing US street suffix.
  */
-export const streetSuffixAbbreviate: Augmentation = (row) => {
+export const streetSuffixAbbreviate = augmentation("us-street-suffix-abbreviate", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const street = row.components.street
@@ -541,13 +573,13 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 
 	if (newRaw === row.raw) return null
 
-	return withAugmentation(row, "us-street-suffix-abbreviate", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Expand trailing US street suffix.
  */
-export const streetSuffixExpand: Augmentation = (row) => {
+export const streetSuffixExpand = augmentation("us-street-suffix-expand", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const street = row.components.street
@@ -572,13 +604,13 @@ export const streetSuffixExpand: Augmentation = (row) => {
 
 	if (newRaw === row.raw) return null
 
-	return withAugmentation(row, "us-street-suffix-expand", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Abbreviate leading US unit designator.
  */
-export const unitDesignatorAbbreviate: Augmentation = (row) => {
+export const unitDesignatorAbbreviate = augmentation("us-unit-designator-abbreviate", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const unit = row.components.unit
@@ -604,13 +636,13 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 
 	if (newRaw === row.raw) return null
 
-	return withAugmentation(row, "us-unit-designator-abbreviate", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Expand leading US unit designator.
  */
-export const unitDesignatorExpand: Augmentation = (row) => {
+export const unitDesignatorExpand = augmentation("us-unit-designator-expand", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const unit = row.components.unit
@@ -635,13 +667,13 @@ export const unitDesignatorExpand: Augmentation = (row) => {
 
 	if (newRaw === row.raw) return null
 
-	return withAugmentation(row, "us-unit-designator-expand", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 /**
  * Drop dash from ZIP+4.
  */
-export const zipPlus4DashDrop: Augmentation = (row) => {
+export const zipPlus4DashDrop = augmentation("zip-plus4-dash-drop", (row, emit) => {
 	// country-branch: see `stateExpand`.
 	if (row.country !== "US") return null
 	const postcode = row.components.postcode
@@ -652,15 +684,15 @@ export const zipPlus4DashDrop: Augmentation = (row) => {
 
 	if (newRaw === row.raw) return null
 
-	return withAugmentation(row, "zip-plus4-dash-drop", newRaw, { ...row.components, postcode: noDash })
-}
+	return emit(newRaw, { ...row.components, postcode: noDash })
+})
 
 // French-specific augmentations.
 
 /**
  * Drop French street particle.
  */
-export const particleStrip: Augmentation = (row) => {
+export const particleStrip = augmentation("particle-strip", (row, emit) => {
 	// country-branch: the particle list is French.
 	// A per-language particle table in the codex would replace this.
 	if (row.country !== "FR") return null
@@ -675,8 +707,8 @@ export const particleStrip: Augmentation = (row) => {
 	if (!re.test(row.raw)) return null
 	const newRaw = row.raw.replaceAll(re, " ").replaceAll(/\s+/g, " ").trim()
 
-	return withAugmentation(row, "particle-strip", newRaw, newComponents)
-}
+	return emit(newRaw, newComponents)
+})
 
 // Stable augmentation registry.
 
@@ -738,9 +770,16 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
  */
 export function* synthesizeRow(
 	row: CanonicalRow,
-	augmentations: readonly Augmentation[] = defaultAugmentationsForCountry(row.country)
+	augmentations: readonly Augmentation[] = defaultAugmentationsForCountry(row.country),
+	/**
+	 * Whether the caller wants the variant an augmentation's method writes. An augmentation it doesn't want isn't
+	 * run, so a caller that would drop the variant skips its work.
+	 */
+	wants?: (method: string) => boolean
 ): Generator<CanonicalRow> {
 	for (const aug of augmentations) {
+		if (wants && !wants(aug.method)) continue
+
 		const out = aug(row)
 
 		if (out) {

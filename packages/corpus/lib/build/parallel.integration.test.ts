@@ -20,10 +20,12 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { hostName } from "@mailwoman/core/utils/system"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
 import type { PathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { buildCorpus, PriorOutput, type BuildCorpusOptions } from "#build"
+import { keepsTrainRow } from "#build/align"
 import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align/range"
 import { planWorkerBudget, WORKER_CLASSES, workerReservationBytes, type WorkerClass } from "#build/budget"
 import { acquireBuildLock, BUILD_LOCK_DIRECTORY } from "#build/lock"
@@ -411,8 +413,18 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 				.train_rows_left_out_by_source
 		).reduce((sum, count) => sum + count, 0)
 
-		expect(leftOut).toBeGreaterThan(0)
-		expect(rowsIn(kept, "train") + leftOut).toBe(rowsIn(full, "train"))
+		// The capped build keeps exactly the uncapped build's training rows whose ids pass the draw,
+		// whether a row was drawn after alignment or before its augmentation ran.
+		// A draw that skipped an augmentation counts even when the augmentation would have
+		// written no row, so the count bounds the rows left out from above.
+		const fullTrainIDs = await TextSpliterator.fromAsync(scratch.path("serial", "splits", "train.txt"), {
+			skipEmpty: true,
+		}).toArray()
+
+		const keptTrainIDs = await TextSpliterator.fromAsync(outDir("splits", "train.txt"), { skipEmpty: true }).toArray()
+
+		expect(keptTrainIDs).toEqual(fullTrainIDs.filter((id) => keepsTrainRow(id, 0.5)))
+		expect(leftOut).toBeGreaterThanOrEqual(rowsIn(full, "train") - rowsIn(kept, "train"))
 	})
 
 	it("clones every source from an earlier build at another corpus version and writes its parquet bytes", async () => {
