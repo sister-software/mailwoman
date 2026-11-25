@@ -1,37 +1,31 @@
 ---
-title: How Mailwoman locates an address
-description: How parsed components, place records, address points, and containment produce different geographic evidence.
+title: Why a geocode coordinate has a precision tier
+description: How place identity, available geographic records, and coordinate selection determine what a point can represent.
 role: explanation
-source-of-truth: packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/result.ts, packages/resolver/lib/resolve.ts, packages/resolver/lib/street/tier.ts, packages/resolver-wof-sqlite/lib/lookup/reverse.ts, packages/core/lib/geocode/result.ts, packages/core/lib/layers/schema.ts
-verified-with: published mailwoman and @mailwoman/resolver-wof-sqlite v11.0.0 source, inspected 2026-11-10
+source-of-truth: packages/mailwoman/lib/geocode/result.ts, packages/resolver/lib/street/tier.ts, packages/resolver-wof-sqlite/lib/lookup/reverse.ts
+verified-with: published mailwoman and @mailwoman/resolver-wof-sqlite v11.0.0 source, inspected 2026-11-24. Geographic output awaits a versioned data run
 ---
 
-# How Mailwoman locates an address
+# Why a geocode coordinate has a precision tier
 
-An address line can identify a place without identifying a building point. Mailwoman first parses the line into components. A geographic resolver can then match those components to place records and, when suitable data exists, to an address-point or street record. The returned coordinate describes the selected geographic evidence. Its position on a map doesn't by itself measure its error against the real destination.
+Why can Mailwoman return a coordinate for a full street address without locating its building? The parser identifies text such as a street, house number, and locality. The geocoder searches geographic records for those components. It may find an address point, an estimated point on a street, or only a representative point for a postcode or place. `resolution_tier` states which kind of record supplied the selected coordinate.
 
-## Place-name lookup
+## The resolver identifies places before selecting a point
 
-The parser can label text as `locality`, `region`, or `postcode` without opening a geographic database. A resolver asks a place index which records identify those names. It can use a supplied country, a postcode, a parent place, or a caller-supplied proximity bias to scope and rank the candidates. The [parsing explanation](./parsing.mdx) describes why the parser's optional place-name matcher is a separate signal from this lookup.
+A parser can label `New York` as a locality without a geographic database. A resolver asks the installed place index which locality records have that name. It can use a supplied country, postcode, parent place, or proximity preference to narrow and rank candidates. A name match can identify a city while still leaving the street and building unresolved. [The parsing explanation](./parsing.mdx) describes the earlier labeling decision.
 
-The published `geocodeAddress` path supplies the parsed tree and options to `resolver.resolveTree`. The resolver can attach a place identity, coordinates, alternatives, and ancestry to nodes. The geocode extractor then projects that resolved tree into one `GeocodeResult`. Its `candidates` array retains the selected place and the places each resolved span passed over. A candidate's ranking score compares possibilities within that answer. It isn't a measure of distance from a verified address.
+The resolver attaches identities and alternatives to the parsed tree. The geocode extractor then selects one coordinate from the resolved evidence. A candidate's ranking score compares possible places for that answer. It doesn't measure distance from the actual destination. The [data and locales reference](../reference/data-and-locales.mdx) lists the published geographic bundles. A listed bundle doesn't establish that it is installed or that it contains a row for the input address.
 
-The place index and the address-point layers answer different questions. A gazetteer record can identify a city or administrative area and supply a representative point. An address-point row can associate a street and number with its own recorded coordinate. An interpolated point uses a rule and a street range to estimate a number's position. The [data and locales reference](../reference/data-and-locales.mdx) identifies the published candidate, point-of-interest, French, and United States bundles and the layers they declare. A bundle declaration doesn't establish that the data is installed or that a particular address has a matching row.
+## The selected record determines the tier
 
-## Coordinate selection and source
+The result extractor prefers a matched address point. If no suitable point is present, it can use an interpolated house-number point, a street point, or a resolved postcode or administrative place. A matched venue can supply another point. An address with a parsed `house_number` can therefore return an `admin` or `postcode` coordinate when no finer record matches. The parsed text remains in the result; `resolution_tier` describes the coordinate.
 
-The published result extractor prefers an address-point match, then an interpolated point, then a street point, before falling back to a resolved administrative or postcode place. A matched venue can supply another point. `resolution_tier` records the mechanism that supplied the returned `lat` and `lon`. A parsed `house_number` can remain in the result when the coordinate comes from a postcode or locality.
+An address point comes from a recorded row. Interpolation computes a position from a street range. A street or place point represents a larger area. The returned `coordinate_source` identifies a stamped address-point or interpolation row when the row records a source and release. The published landmark branch can stamp a venue source too. The field can be `null` when the selected tier or row supplies no stamp. `epistemic_status` states what kind of claim the selected evidence supports, independently of the tier. The [result schema](../reference/schema.mdx#geocode-result-and-provenance) defines these fields and their conditions.
 
-A source point is the coordinate stored on a matched place or address record. The returned coordinate can be that recorded point, a computed interpolation, a street or postcode point, or a representative administrative point. `coordinate_source` can preserve a matched address row's source and release, when that row has a source stamp. The published landmark branch can also record its landmark source on a venue result. `epistemic_status` states the claim supported by the selected evidence: for example, an authority-designated row and an observed row can both answer at `address_point` grain while carrying different statuses. The [result schema](../reference/schema.mdx#geocode-result-and-provenance) lists the fields and tiers.
+The selected mechanism may report `uncertainty_m`, a radius in meters. A `null` value means it reported no radius. A small radius or decimal precision doesn't establish observed accuracy for the input. Accuracy requires a comparison with independently known positions for an identified data installation and input population.
 
-An `uncertainty_m` value reports a radius supplied by the selected mechanism when available. The radius describes the mechanism, as opposed to an observed error for this input. A `null` radius means the mechanism reported none. An evaluation measures the selected point's accuracy, whatever the number of decimal places in `lat` and `lon`. Accuracy requires a versioned evaluation against independently known positions for the relevant input population and data installation.
+## What a coordinate cannot establish
 
-## Reverse geocoding
+Reverse geocoding starts from a coordinate supplied by the caller. The published reverse resolver searches administrative bounding boxes and can check polygons when its polygon data is available. If no polygon confirms a place, it can return an approximate nearest-centroid result. The reported containment describes the relationship between the supplied point and the available administrative geometry. It cannot establish that the supplied point marks a building or a deliverable address. The [reverse-geocoding guide](../guides/reverse-geocode.mdx) shows the caller's task and the returned containment field.
 
-Forward geocoding starts from text and chooses a point. Reverse geocoding starts from a supplied coordinate and asks which administrative place contains it. The published `WOFReverseGeocoder` searches bounding boxes in a WOF administrative database. When a polygon sidecar is available, it checks candidate polygons against the point. A bounding-box hit can include points outside a place's polygon. If no polygon confirms a place, the resolver can use its nearest-centroid fallback and report `containment: "approximate"`.
-
-The reverse result reports a place hierarchy and whether the selected containment was polygon-confirmed or approximate. That relation concerns the input point and administrative geometry. Whether a building or deliverable address exists at the point is a separate question. A finer boundary places the input coordinate as given, so an incorrect coordinate stays incorrect.
-
-## Unverified behavior in 11.0.0
-
-The published 11.0.0 interfaces and bundle registry show which mechanisms are available. No complete forward or reverse call against 11.0.0 data was run for this page, so its place candidates, returned coordinates, containment results, and latency values are unverified. [Geocode a file of addresses](../tutorials/geocode-a-file.mdx) shows forward geocodes captured with local data builds newer than the 11.0.0 registry entries. The [release status](/product/limits-and-status) reports that exact-release coordinate-grade evidence is unknown from the available evaluation ledger. [Confidence and ambiguity](./confidence-and-limits.mdx) explains how to use a result's tier, source, alternatives, and unresolved state when deciding what evidence an application requires.
+The published 11.0.0 code and bundle registry establish these selection paths. This page has no complete forward or reverse run against an identified 11.0.0 geographic installation, so it makes no claim about the coordinate returned for a particular address. [Current product limits](/product/limits-and-status) distinguish available interfaces from release-matched geographic evidence. [Confidence and ambiguity](./confidence-and-limits.mdx) explains how a caller can use the tier, source, alternatives, and unresolved state together.
