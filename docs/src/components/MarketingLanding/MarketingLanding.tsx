@@ -41,7 +41,7 @@ export function ProductIntro(): ReactNode {
 	return (
 		<>
 			<header className={styles.hero}>
-				<p className={styles.eyebrow}>Product · Mailwoman 11.0.0</p>
+				<p className={styles.eyebrow}>Product · Mailwoman</p>
 				<h1>Label an address and find its place.</h1>
 				<p className={styles.lead}>
 					Mailwoman labels address text in your application or on your server. Add local geographic data when you need
@@ -62,8 +62,8 @@ export function ProductIntro(): ReactNode {
 					<p className={styles.cardEyebrow}>01 · Parse</p>
 					<h2>Get structure from text</h2>
 					<p className={styles.cardBody}>
-						The published Node.js parser labels components and their spans in normalized address text. Install the model
-						package to use it. The first-parse tutorial needs no geographic database.
+						The published Node.js parser labels components and their spans in address text. The <code>mailwoman</code>
+						package installs the English model. The first-parse tutorial needs no geographic database.
 					</p>
 					<Link to="/docs/start">Inspect a published parse →</Link>
 				</div>
@@ -82,17 +82,17 @@ export function ProductIntro(): ReactNode {
 }
 
 /**
- * Routes readers from a supported task to its executed guide and stated limits.
+ * Routes readers from address tasks to guides and their stated limits.
  */
 export function SolutionsIntro(): ReactNode {
 	return (
 		<>
 			<header className={styles.hero}>
-				<p className={styles.eyebrow}>Solutions · Mailwoman 11.0.0</p>
+				<p className={styles.eyebrow}>Solutions · Mailwoman</p>
 				<h1>Choose an address workflow.</h1>
 				<p className={styles.lead}>
-					Start with executed guides for reading and checking address text, matching candidate records, or annotating a
-					coordinate you already have. Each guide shows the input, the result, and its limits.
+					Choose a guide for reading and checking address text, matching candidate records, or annotating a coordinate
+					you already have. Each guide shows the input, the result, and its limits.
 				</p>
 				<div className={styles.actions}>
 					<Link className="button button--primary button--lg" to="/docs/start">
@@ -117,8 +117,8 @@ export function SolutionsIntro(): ReactNode {
 			</div>
 
 			<p className={styles.sectionLead}>
-				These examples use published 11.0.0 packages without a geographic database. Read each guide&apos;s limits before
-				using its result to make a decision.
+				The first parse and several linked guides were executed with published 11.3.0 packages. Each guide states its
+				checked version or source basis. These text and supplied-coordinate examples need no geographic database.
 			</p>
 		</>
 	)
