@@ -27,7 +27,6 @@ import {
 } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
-import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -44,7 +43,7 @@ import {
 } from "#tools/pipeline/admin/sources/overture"
 import { extractParsedWOFFeature, wofRecordPoint } from "#tools/pipeline/admin/wof/feature"
 import { DEFAULT_RELEASE } from "#tools/pipeline/poi/defaults"
-import { DEFAULT_ADMIN_DB, DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/recipe/defaults"
+import { DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/recipe/defaults"
 import { storedRecordNames } from "#tools/pipeline/wof/slim"
 import type { WOFFeature } from "#whosonfirst"
 import { type ParsedWOFPlacetype, pluckPlacetypeSpec } from "#whosonfirst/placetypes/admin"
@@ -268,11 +267,9 @@ export interface ExportGazetteerGeoParquetOptions {
 	 */
 	wofExport?: PathBuilderLike
 	/**
-	 * The admin database whose `spr` rows are the row set.
-	 *
-	 * @defaultValue `<data-root>/db/wof/admin-global-priority.db`
+	 * The candidate database whose places are the row set: the places the geocoder can return.
 	 */
-	adminPath?: PathBuilderLike
+	candidatePath: PathBuilderLike
 	/**
 	 * The countries the admin build folded from Overture.
 	 * A division's synthetic id depends on the whole list.
@@ -332,14 +329,20 @@ function sourceOfIDExpression(): string {
 }
 
 /**
- * Writes the combined gazetteer's places to GeoParquet: every `spr` row of the admin database
+ * Writes the combined gazetteer's places to GeoParquet: every place of the candidate database
  * as a point and as its stored extent, and each place's boundary where a source holds one.
+ *
+ * The candidate database holds one row per name a place answers to.
+ * The export writes one row per place: its primary name where it has one,
+ * otherwise its best-ranked name, with its nearest ancestor as the parent.
+ *
+ * Every candidate is a place the geocoder can return, so the rows have no currency flags.
  *
  * A Who's On First place takes its boundary from the `wof` export by id.
  * An Overture place takes the union of its division's land areas.
  * A place from another dataset has no boundary to read.
  *
- * @throws When the admin database holds Overture places and none of them maps to a division.
+ * @throws When the candidate database holds Overture places and none of them maps to a division.
  * The countries or release then differ from the ones the admin build folded.
  */
 export async function exportGazetteerGeoParquet(
@@ -347,7 +350,7 @@ export async function exportGazetteerGeoParquet(
 ): Promise<{ out: string; counts: GazetteerGeoParquetCounts }> {
 	const out = PathBuilder.from(options.out).toString()
 	const target = PathBuilder.from(out, "rowset=gazetteer")
-	const adminPath = PathBuilder.from(options.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)).toString()
+	const candidatePath = PathBuilder.from(options.candidatePath).toString()
 
 	const wofBoundaries = PathBuilder.from(
 		options.wofExport ?? out,
@@ -366,15 +369,40 @@ export async function exportGazetteerGeoParquet(
 		INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite; INSTALL httpfs; LOAD httpfs;
 		SET s3_region='us-west-2';
 		${OVERTURE_ANONYMOUS_SECRET}
-		ATTACH '${escapeSQLString(adminPath)}' AS admin (TYPE sqlite, READ_ONLY);
+		ATTACH '${escapeSQLString(candidatePath)}' AS cand (TYPE sqlite, READ_ONLY);
 		CREATE TEMP TABLE overture_area (id BIGINT, geometry GEOMETRY);
 		CREATE TEMP TABLE overture_ids (gers VARCHAR, id BIGINT);
 	`)
 
 	const scalar = async (sql: string): Promise<number> => Number((await db.runAndReadAll(sql)).getRows()[0]?.[0] ?? 0)
 
+	phase("places", candidatePath)
+
+	const countryFilter = options.countries
+		? `WHERE cc.code IN (${overtureCountryList(options.countries.map((code) => code.toUpperCase()))})`
+		: ""
+
+	// One row per place: the primary name first, then the best rank (`neg_rank` ascending).
+	await db.run(/* sql */ `
+		CREATE TEMP TABLE places AS
+		SELECT id, parent_id, name, placetype, country, ${sourceOfIDExpression()} AS source, population,
+			latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude
+		FROM (
+			SELECT c.spr_id AS id, coalesce(a.parent_spr_id, -1) AS parent_id, c.name, p.placetype, cc.code AS country,
+				c.population, c.latitude, c.longitude,
+				c.min_lat AS min_latitude, c.min_lon AS min_longitude, c.max_lat AS max_latitude, c.max_lon AS max_longitude,
+				row_number() OVER (PARTITION BY c.spr_id ORDER BY c.is_primary DESC, c.neg_rank) AS pick
+			FROM cand.candidate c
+			JOIN cand.placetype_codes p ON p.id = c.placetype_id
+			JOIN cand.country_codes cc ON cc.id = c.country_id
+			LEFT JOIN cand.candidate_ancestor a ON a.spr_id = c.spr_id AND a.depth = 1
+			${countryFilter}
+		)
+		WHERE pick = 1
+	`)
+
 	const overturePlaces = await scalar(
-		/* sql */ `SELECT count(*) FROM admin.spr WHERE id >= ${OVERTURE_ID_BASE} AND id < ${GEONAMES_ID_BASE}`
+		/* sql */ `SELECT count(*) FROM places WHERE id >= ${OVERTURE_ID_BASE} AND id < ${GEONAMES_ID_BASE}`
 	)
 
 	let overturePlacesMapped = 0
@@ -398,11 +426,11 @@ export async function exportGazetteerGeoParquet(
 
 		appender.closeSync()
 
-		overturePlacesMapped = await scalar(/* sql */ `SELECT count(*) FROM admin.spr s JOIN overture_ids m ON m.id = s.id`)
+		overturePlacesMapped = await scalar(/* sql */ `SELECT count(*) FROM places s JOIN overture_ids m ON m.id = s.id`)
 
 		if (!overturePlacesMapped) {
 			throw new Error(
-				`None of the ${overturePlaces} Overture places in ${adminPath} maps to a division of release ${release}. ` +
+				`None of the ${overturePlaces} Overture places in ${candidatePath} maps to a division of release ${release}. ` +
 					`The admin build folded other countries or another release.`
 			)
 		}
@@ -414,7 +442,7 @@ export async function exportGazetteerGeoParquet(
 			SELECT m.id, ST_Union_Agg(a.geometry)
 			FROM read_parquet('${overtureDivisionsGlob(release, "division_area")}') a
 			JOIN overture_ids m ON m.gers = a.division_id
-			JOIN admin.spr s ON s.id = m.id
+			JOIN places s ON s.id = m.id
 			WHERE a.country IN (${overtureCountryList(countries)}) AND a.class = 'land'
 			GROUP BY m.id
 		`)
@@ -422,14 +450,8 @@ export async function exportGazetteerGeoParquet(
 
 	await makeDirectories(target)
 
-	const place = /* sql */ `
-		SELECT id, parent_id, name, placetype, country, ${sourceOfIDExpression()} AS source,
-			is_current = 1 AS is_current, is_deprecated = 1 AS is_deprecated, is_superseded = 1 AS is_superseded,
-			latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude
-		FROM admin.spr
-		${options.countries ? `WHERE upper(country) IN (${overtureCountryList(options.countries.map((code) => code.toUpperCase()))})` : ""}`
-
-	const columns = "id, parent_id, name, placetype, country, source, is_current, is_deprecated, is_superseded"
+	const place = /* sql */ `SELECT * FROM places`
+	const columns = "id, parent_id, name, placetype, country, source, population"
 	const copyOptions = `(FORMAT parquet, COMPRESSION zstd, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
 
 	const fileOf = (type: string) =>

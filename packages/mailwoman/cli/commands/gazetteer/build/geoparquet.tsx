@@ -8,6 +8,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { WOFGeoParquetCounts } from "@mailwoman/gazetteer/tools/pipeline/geoparquet"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, useStageProgress } from "#cli-kit"
 
@@ -23,10 +24,13 @@ export const spec = {
 			type: "string",
 			choices: ["wof", "gazetteer"],
 			default: "wof",
-			description: "wof reads the clones. gazetteer reads the admin database and a wof export's boundaries",
+			description: "wof reads the clones. gazetteer reads the candidate database and a wof export's boundaries",
 		},
 		repos: { type: "string", description: "Directory of whosonfirst-data-* clones. Default the data root's clones" },
-		admin: { type: "string", description: "Admin database of the gazetteer row set. Default the data root's" },
+		candidate: {
+			type: "string",
+			description: "Candidate database of the gazetteer row set. Default the data root's installed one",
+		},
 		countries: { type: "string", description: "Comma-separated lower-case country codes. Default every country" },
 		postcodes: { type: "boolean", description: "With wof, also read each country's postcode repository." },
 		"skip-overture": {
@@ -57,7 +61,7 @@ const GazetteerBuildGeoParquet: CommandComponent<typeof spec> = ({ options }) =>
 				? await exportGazetteerGeoParquet({
 						out: options.out,
 						...countries,
-						...(options.admin ? { adminPath: options.admin } : {}),
+						candidatePath: options.candidate ?? wofDatabasePath("candidate.db"),
 						skipOverture: options.skipOverture === true,
 						onPhase: progress.report,
 					})

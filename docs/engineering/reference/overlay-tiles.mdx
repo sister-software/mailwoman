@@ -11,7 +11,7 @@ visible on the map. Earth's Gazette explorer reads them.
 | Tile set              | Row set                                           | Boundaries from                                                           |
 | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
 | `wof.<version>`       | Each Who's On First record the admin intake keeps | The record's own geometry, at full resolution                             |
-| `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`     | The `wof` export by id, or the union of an Overture division's land areas |
+| `gazetteer.<version>` | Every place of `candidate.db`                     | The `wof` export by id, or the union of an Overture division's land areas |
 
 Each archive holds three layers: `boundaries`, `points` and `extents`. `extents` is the rectangle the gazetteer stores
 for each place. The resolver reads that rectangle in place of a boundary. Each feature's id is the place id, and its
@@ -21,6 +21,11 @@ attributes are `name`, `placetype`, `country`, `source`, `parent_id`, `is_curren
 `min_zoom` is the zoom the point first draws at. A style reads both to size an overlay label as the basemap sizes its
 own. A `gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames
 publishes no boundaries.
+
+The `gazetteer` row set is what the geocoder can return. `candidate.db` holds one row per name a place answers to,
+and the export writes one row per place: its primary name where it has one, otherwise its best-ranked name, with its
+`candidate_ancestor` depth-1 parent as `parent_id`. A `gazetteer` feature has no currency flags, because every
+candidate is a place the geocoder returns. Its postcodes always go to `gazetteer-postcodes.<version>`, as points.
 
 With `--postcodes`, the build also reads each country's `whosonfirst-data-postalcode-*` repository and writes its
 postcodes to a third tile set, `wof-postcodes.<version>`, with the layers `postcode_boundaries` and `postcode_points`.
@@ -41,8 +46,9 @@ publish either archive to `mailwoman-public`.
    With `--repos-cache s3://…`, each repository's `.git` is restored from the cache before the sync and
    stored again when the sync moved its head. With `--repos`, the run reads that directory's clones as they
    stand: on the lab, `gazetteer inspect sync` keeps them current.
-2. With the `gazetteer` row set, it copies the admin database when `--admin` is an `s3://` URL.
-   `--rowsets wof` skips this step and step 4.
+2. With the `gazetteer` row set, it reads `--candidate`: a local path, or an `s3://` or `https://` URL it copies
+   into the work directory. Without the flag it downloads the published `candidate` bundle's database, the one a
+   Mailwoman install downloads. `--rowsets wof` skips this step and step 4.
 3. `exportWOFGeoParquet` writes `export/rowset=wof/`. It refreshes the WOF record store over the clones and passes
    each record through the admin intake's own decision, `extractParsedWOFFeature` over `ADMIN_PLACETYPES`, with
    successor names read from the store. A superseded duplicate and a placetype the intake doesn't ingest stay out, so
@@ -51,7 +57,7 @@ publish either archive to `mailwoman-public`.
    records" otherwise.
 4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
    `s3://overturemaps-us-west-2`, recomputes each division's synthetic id with `assignSyntheticIDs`, and fails when no
-   Overture place in the admin database maps to a division.
+   Overture place in the candidate database maps to a division.
 5. `hrt overlay` builds one archive per row set, to zoom 12 unless `--max-zoom` specifies another level.
 6. `publishTiles` uploads each archive to `mailwoman-tiles/tiles/` through rclone. With `--dry-run`, it prints
    each target in place of the upload.
@@ -71,16 +77,15 @@ podman build -f docker/overlay-tiles.Dockerfile -t mailwoman-overlay-tiles .
 The image measured 6.22 GB on 2026-11-22. Each rebuild leaves about 20 GB of untagged layers in podman's storage,
 and `podman image prune` removes them.
 
-A run on the lab host mounts a work directory and the admin database:
+A run on the lab host mounts a work directory and, to skip the download, a candidate database:
 
 ```sh
-podman run --rm -v <work>:/work -v /mnt/mw/db/wof/admin-global-priority.db:/inputs/admin.db:ro \
-  localhost/mailwoman-overlay-tiles --tileset-version test --admin /inputs/admin.db --countries mc,bh --dry-run
+podman run --rm -v <work>:/work -v /mnt/mw/db/wof/candidate.db:/inputs/candidate.db:ro \
+  localhost/mailwoman-overlay-tiles --tileset-version test --candidate /inputs/candidate.db --countries mc,bh --dry-run
 ```
 
-On 2026-11-22 that run cloned 2 repositories and built a 91-tile `wof` archive and a 144-tile `gazetteer` archive. It
-read Overture's 85 folded countries to map the admin database's 883,204 Overture places. That mapping took 3 minutes 18
-seconds of its 3 minutes 25 seconds.
+On 2026-11-25 a France build from the lab's clones and its 2026-11-21 `candidate.db` wrote 126,115 places, 74,228
+Who's On First boundaries and 82,897 extents in 6 minutes 25 seconds.
 
 ## A run on AWS
 
@@ -103,7 +108,7 @@ After a policy change, `mint-aws-credentials --policies-only` rewrites every pol
 
 | Input                       | Size                                                    | Where the run reads it                                                               |
 | --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `admin-global-priority.db`  | 7.3 GB (built 2026-11-21)                               | `s3://mailwoman-basemaps-inputs-<account>/`                                          |
+| `candidate.db`              | 2.9 GB, the published `candidate` bundle                | `https://public.mailwoman.post/mailwoman/`, the published bundle's URL               |
 | Who's On First admin clones | Below 68 GB, the size of all 271 clones on the lab host | `overlay-tiles/wof-repos/` in the inputs bucket, then GitHub for any fork that moved |
 | Overture divisions          | Read by DuckDB over S3                                  | `s3://overturemaps-us-west-2`, the same region                                       |
 | R2 upload keys              | Two values                                              | `/mailwoman/tile-build/` in Parameter Store                                          |

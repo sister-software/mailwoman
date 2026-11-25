@@ -22,9 +22,10 @@ export const spec = {
 		work: { type: "string", required: true, description: "Work directory for clones, exports and archives" },
 		"tileset-version": { type: "string", required: true, description: "Tile set version, such as v1 for wof.v1" },
 		rowsets: { type: "string", description: "Comma-separated row sets to build: wof, gazetteer. Default both" },
-		admin: {
+		candidate: {
 			type: "string",
-			description: "Admin database, a local path or an s3:// URL. The gazetteer row set reads it",
+			description:
+				"Candidate database of the gazetteer row set: a local path, or an s3:// or https:// URL. Default the published one",
 		},
 		countries: { type: "string", description: "Comma-separated lower-case country codes. Default every country" },
 		postcodes: { type: "boolean", description: "Also read each country's postalcode repository" },
@@ -55,7 +56,7 @@ const TilesOverlays: CommandComponent<typeof spec> = ({ options }) => {
 			work: options.work,
 			version: options.tilesetVersion,
 			...(options.rowsets ? { rowSets: parseOverlayRowSets(options.rowsets) } : {}),
-			...(options.admin ? { admin: options.admin } : {}),
+			...(options.candidate ? { candidate: options.candidate } : {}),
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,

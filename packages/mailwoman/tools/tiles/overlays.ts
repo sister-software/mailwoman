@@ -3,14 +3,14 @@
 
 /**
  *   Builds the two gazetteer overlay tile sets from their sources in one run: `wof`,
- *   the Who's On First clones, and `gazetteer`, the places of the admin database.
+ *   the Who's On First clones, and `gazetteer`, the places of the candidate database.
  *
  *   The run fetches what its work directory lacks, so it starts from an empty disk:
  *
  *   1. It brings each admin repository current as the lab's `gazetteer inspect sync` does,
  *      through `syncWOFRepo` with a read-only origin.
  *      A repos cache in S3 keeps each clone's `.git` between runs.
- *   2. It copies the admin database from an `s3://` URL with the `aws` program.
+ *   2. It downloads the published candidate database unless given a local one.
  *   3. It exports both row sets to GeoParquet.
  *      The gazetteer export reads Overture from Overture's bucket.
  *   4. It builds one PMTiles archive per row set with the `hrt` program.
@@ -26,11 +26,13 @@ import { GitClient } from "@mailwoman/core/repo/git"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { runProcess } from "@mailwoman/core/scripting/process"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { resumableDownload } from "@mailwoman/corpus/tools/fetch/download/retry"
 import { FORK_ORG } from "@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"
 import { wofRepoName } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 
+import { artifactURL, BUNDLES } from "#data/published/bundles"
 import { OVERLAY_ROW_SETS, type OverlayRowSet } from "#tools/tiles/overlay-row-sets"
 import { publishTiles } from "#tools/tiles/publish"
 
@@ -50,11 +52,12 @@ export interface BuildOverlayTilesOptions {
 	 */
 	rowSets?: readonly OverlayRowSet[]
 	/**
-	 * The admin database: a local path, or an `s3://` URL the run copies into the work directory.
+	 * The candidate database the `gazetteer` row set reads: a local path, or an `s3://`
+	 * or `https://` URL the run copies into the work directory.
 	 *
-	 * The `gazetteer` row set reads it, and a run without that row set needs none.
+	 * @defaultValue the published `candidate` bundle's database, {@linkcode publishedCandidateURL}
 	 */
-	admin?: string
+	candidate?: string
 	/**
 	 * Lower-case country codes to build, or every country when absent.
 	 */
@@ -122,6 +125,42 @@ const GITHUB_PAGE_SIZE = 100
  * The fork organization held 271 repositories on 2026-11-22.
  */
 const GITHUB_PAGE_LIMIT = 20
+
+/**
+ * The URL of the published `candidate` bundle's database, the one a Mailwoman install downloads.
+ */
+export function publishedCandidateURL(): string {
+	const [artifact] = BUNDLES.candidate?.artifacts ?? []
+
+	if (!artifact) throw new CommandError("the published bundles list no candidate database")
+
+	return artifactURL(artifact)
+}
+
+/**
+ * A local path to the candidate database: `source` itself when it's a path,
+ * or its copy in the work directory when it's an `s3://` or `https://` URL.
+ * A copy already in the work directory is reused.
+ */
+async function localCandidate(
+	source: string,
+	work: PathBuilderLike,
+	phase: (name: string, detail?: string) => void
+): Promise<string> {
+	if (!/^(?:s3|https?):\/\//.test(source)) return source
+
+	const path = PathBuilder.from(work, "candidate.db").toString()
+
+	if (await pathExists(path)) return path
+
+	phase("candidate", source)
+
+	await (source.startsWith("s3://")
+		? runProcess("aws", ["s3", "cp", "--only-show-errors", source, path], ON_TERMINAL)
+		: resumableDownload({ url: source, dest: path, report: (line) => phase("candidate", line) }))
+
+	return path
+}
 
 /**
  * The Who's On First repository themes an overlay build reads.
@@ -366,23 +405,11 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 	)
 
 	if (rowSets.includes("gazetteer")) {
-		if (!options.admin) throw new CommandError("the gazetteer row set reads the admin database: pass --admin")
-
-		let adminPath = options.admin
-
-		if (adminPath.startsWith("s3://")) {
-			adminPath = PathBuilder.from(work, "admin.db").toString()
-
-			if (!(await pathExists(adminPath))) {
-				phase("admin", options.admin)
-
-				await runProcess("aws", ["s3", "cp", "--only-show-errors", options.admin, adminPath], ON_TERMINAL)
-			}
-		}
+		const candidatePath = await localCandidate(options.candidate ?? publishedCandidateURL(), work, phase)
 
 		const gazetteer = await exportGazetteerGeoParquet({
 			out: exportDir,
-			adminPath,
+			candidatePath,
 			...countries,
 			onPhase: (name, detail) => phase(`export gazetteer: ${name}`, detail),
 		})
@@ -405,11 +432,13 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		report.push(`export copied → ${options.exportCopy}`)
 	}
 
-	// The `wof` postcodes go to a tile set of their own, `wof-postcodes`, because they
-	// outnumber every other placetype and a client downloads every layer of a tile it requests.
+	// Postcodes go to a tile set of their own, `<rowset>-postcodes`, because they outnumber
+	// every other placetype and a client downloads every layer of a tile it requests.
+	// The candidate database always holds postcodes.
+	// The `wof` export holds them with `--postcodes`.
 	const archives = rowSets.flatMap((rowSet) => [
 		{ rowSet, name: rowSet, flags: [] as string[] },
-		...(rowSet === "wof" && options.postcodes
+		...(rowSet === "gazetteer" || options.postcodes
 			? [{ rowSet, name: `${rowSet}-postcodes`, flags: ["postcodes-only"] }]
 			: []),
 	])
