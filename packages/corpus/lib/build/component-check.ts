@@ -107,6 +107,35 @@ export function componentFindingsRecord(counts: ComponentFindingCounts): Record<
 }
 
 /**
+ * The key under which a row's region value is counted: its country and the value as the row writes it.
+ */
+export function regionValueKey(country: string, region: string): string {
+	return `${country}\u001E${region}`
+}
+
+/**
+ * The `region:unknown` count of rows counted per {@linkcode regionValueKey}, under `regions`.
+ *
+ * It applies the rule's own test, so it equals the count an align under `regions` would write.
+ */
+export function countRegionUnknown(
+	values: Iterable<readonly [key: string, rows: number]>,
+	regions: RegionNames
+): number {
+	let unknown = 0
+
+	for (const [key, rows] of values) {
+		const separator = key.indexOf("\u001E")
+
+		if (regions.holds(key.slice(0, separator), key.slice(separator + 1)) === false) {
+			unknown += rows
+		}
+	}
+
+	return unknown
+}
+
+/**
  * The fewest digits a street's ending needs before it is compared with the row's postcode.
  */
 const SHORTEST_POSTCODE_DIGITS = 4

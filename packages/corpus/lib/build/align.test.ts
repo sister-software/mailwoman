@@ -11,6 +11,7 @@ import { alignTotalsOf, mergeAlignTotals, serializeAlignTotals } from "#build/al
 import { componentFindingsRecord, ComponentRule } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
 import type { RegionNames } from "#build/region-names"
+import { recountRegionCheck, type RegionCheckedRecord } from "#build/region-recount"
 import type { CanonicalRow } from "#types"
 
 const units = await createUnitSplitter()
@@ -155,5 +156,76 @@ describe("createRowAligner's component check", () => {
 		const merged = mergeAlignTotals([serializeAlignTotals(checked.totals), serializeAlignTotals(unchecked.totals)])
 
 		expect([...merged.uncheckedComponentRules]).toEqual([ComponentRule.RegionUnknown])
+	})
+})
+
+describe("recountRegionCheck", () => {
+	const rows = [
+		row("usgov-nad", "a", { house_number: "1", street: "Main St", locality: "Pensacola", region: "FL" }),
+		row("usgov-nad", "b", { house_number: "2", street: "Main St", locality: "Pensacola", region: "FL" }),
+		row("usgov-nad", "c", { house_number: "4744", street: "N Mesa Apt 266", locality: "El Paso", region: "TX" }),
+		row("usgov-nad", "d", { house_number: "1811", street: "Hayes Avenue", locality: "Hull", region: "IA IA" }),
+	]
+
+	// A rebuilt admin database that no longer holds Florida.
+	const WITHOUT_FLORIDA: RegionNames = {
+		path: "rebuilt",
+		holds: (country, region) => (country === "US" ? region === "TX" : null),
+	}
+
+	const recordOf = (
+		totals: ReturnType<typeof alignAll>["totals"],
+		regionCheck: Record<string, string>
+	): RegionCheckedRecord => ({
+		source: "usgov-nad",
+		derivation: { config: {} },
+		totals: serializeAlignTotals(totals),
+		regionCheck,
+	})
+
+	// An align lists rules in the order it first saw a failing row.
+	// A recount can't know that order.
+	// The tests therefore compare counts per rule.
+	const countsOf = (findings: [string, [ComponentRule, number][]][] | undefined) =>
+		Object.fromEntries((findings ?? []).map(([source, rules]) => [source, Object.fromEntries(rules)]))
+
+	it("recounts region:unknown to the count an align under the new region data writes", async () => {
+		const before = recordOf(alignAll(rows).totals, { regionDatabase: "old" })
+		const recounted = await recountRegionCheck(before, { regionDatabase: "new" }, async () => WITHOUT_FLORIDA)
+		const fresh = serializeAlignTotals(alignAll(rows, WITHOUT_FLORIDA).totals)
+
+		expect(countsOf(recounted.record?.totals.component_findings_by_source)).toEqual(
+			countsOf(fresh.component_findings_by_source)
+		)
+
+		expect(countsOf(fresh.component_findings_by_source)["usgov-nad"]?.[ComponentRule.RegionUnknown]).toBe(3)
+		expect(recounted.record?.regionCheck).toEqual({ regionDatabase: "new" })
+	})
+
+	it("lists the rule as unchecked when the new build reads no region data", async () => {
+		const before = recordOf(alignAll(rows).totals, { regionDatabase: "old" })
+		const recounted = await recountRegionCheck(before, { regionDatabase: "absent" }, async () => null)
+		const fresh = serializeAlignTotals(alignAll(rows, null).totals)
+
+		expect(countsOf(recounted.record?.totals.component_findings_by_source)).toEqual(
+			countsOf(fresh.component_findings_by_source)
+		)
+
+		expect(recounted.record?.totals.unchecked_component_rules).toEqual([ComponentRule.RegionUnknown])
+	})
+
+	it("refuses a record made under other region data that records no region values", async () => {
+		const { region_values: _values, ...totals } = serializeAlignTotals(alignAll(rows).totals)
+
+		const before: RegionCheckedRecord = {
+			source: "usgov-nad",
+			derivation: { config: {} },
+			totals,
+			regionCheck: { regionDatabase: "old" },
+		}
+
+		const recounted = await recountRegionCheck(before, { regionDatabase: "new" }, async () => WITHOUT_FLORIDA)
+
+		expect(recounted.problem).toMatch(/records no region values/u)
 	})
 })

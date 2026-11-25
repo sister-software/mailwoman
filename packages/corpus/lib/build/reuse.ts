@@ -23,10 +23,10 @@ import {
 	readReusableSource,
 	SOURCE_RECORD_FILE,
 	sourceStateDirectory,
-	type SourceBuildSettings,
+	type ExpectedSource,
 	type SourceCompletionRecord,
 } from "#build/source-record"
-import { recordPathFor, type DerivationInputs } from "#parquet/record"
+import { recordPathFor } from "#parquet/record"
 
 /**
  * Where an import reads from and writes to.
@@ -41,7 +41,7 @@ export interface SourceImport {
 	 * This build's `--out`.
 	 */
 	outputDir: PathBuilderLike
-	expected: { settings: SourceBuildSettings; derivation: DerivationInputs }
+	expected: ExpectedSource
 }
 
 /**

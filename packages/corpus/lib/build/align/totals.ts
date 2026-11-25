@@ -36,6 +36,7 @@ export interface AlignTotals extends AlignTally {
 	refusedValues: Map<string, LicenseRefusalKind>
 	componentFindingsBySource: ComponentFindingCounts
 	uncheckedComponentRules: Set<ComponentRule>
+	regionValues: Map<string, number>
 }
 
 /**
@@ -60,6 +61,12 @@ export interface AlignTotalsRecord {
 	refused_license_values: [string, LicenseRefusalKind][]
 	component_findings_by_source: [string, [ComponentRule, number][]][]
 	unchecked_component_rules: ComponentRule[]
+	/**
+	 * The rows that reached the component check with a region, per `regionValueKey`.
+	 *
+	 * Absent from a record written before the region data left the source derivation.
+	 */
+	region_values?: [string, number][]
 }
 
 /**
@@ -82,6 +89,7 @@ export function alignTotalsOf(result: AlignPhaseResult): AlignTotals {
 		refusedValues: result.licenses.refusedValues(),
 		componentFindingsBySource: result.componentFindingsBySource,
 		uncheckedComponentRules: result.uncheckedComponentRules,
+		regionValues: result.regionValues,
 	}
 }
 
@@ -102,6 +110,7 @@ export function serializeAlignTotals(totals: AlignTotals): AlignTotalsRecord {
 		refused_license_values: [...totals.refusedValues],
 		component_findings_by_source: [...totals.componentFindingsBySource].map(([source, rules]) => [source, [...rules]]),
 		unchecked_component_rules: [...totals.uncheckedComponentRules],
+		region_values: [...totals.regionValues],
 	}
 }
 
@@ -145,6 +154,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		refusedValues: new Map(),
 		componentFindingsBySource: new Map(),
 		uncheckedComponentRules: new Set(),
+		regionValues: new Map(),
 	}
 
 	for (const record of records) {
@@ -162,6 +172,7 @@ export function mergeAlignTotals(records: readonly AlignTotalsRecord[]): AlignTo
 		addCounts(totals.refusedByKind, record.refused_by_kind)
 		addCounts(totals.refusedBySource, record.refused_by_source)
 		addCounts(totals.trainRowsLeftOutBySource, record.train_rows_left_out_by_source ?? [])
+		addCounts(totals.regionValues, record.region_values ?? [])
 
 		for (const [source, contributed] of record.rows_by_source) {
 			const before = totals.rowsBySource.get(source)

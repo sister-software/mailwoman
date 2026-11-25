@@ -187,8 +187,13 @@ re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources only.
 `--reuse-from <earlier --out>[,…]` clones a finished source from an earlier build at any corpus version
 when its derivation and settings match. Clones on btrfs share the earlier files' blocks. The match
 covers the adapter's input and options (a street index by its contents), the code the source reaches,
-and the fingerprints of the data files align reads (`alignDataFingerprints` in `lib/build/settings.ts`).
-It leaves out the corpus and builder versions, because no row holds either.
+and the fingerprints of the data files that change an aligned row (`alignDataFingerprints` in `lib/build/settings.ts`).
+It leaves out the corpus and builder versions, because no row holds either. It also leaves out the WOF admin
+database, GeoNames and the second-level region table, which the component check's `region:unknown` rule reads.
+That rule is reported and never quarantines a row, so those files change only its count. A source record states
+the fingerprints of the region data its count was made under (`regionCheck`) and the region value of every row the
+check read. A build that reuses the source under other region data recounts the rule (`lib/build/region-recount.ts`). A WOF
+rebuild therefore rebuilds the two WOF adapters, whose input is the WOF clones, and clones every other source.
 
 `trainShare` on an adapter's `inputs.json` entry keeps that share of the source's training rows. A
 training row is kept when a salted hash of its id up to the last `#` falls under the share. NAD's ids

@@ -111,28 +111,53 @@ export async function adapterExtractHash(options: AdapterOptions): Promise<strin
 	)
 }
 
+const fingerprintOf = async (path: string): Promise<string> =>
+	(await pathExists(path)) ? extractFingerprint(path) : "absent"
+
 /**
- * The fingerprint of each data file the align phase reads, keyed by its role.
+ * The fingerprint of each data file that changes an aligned row, keyed by its role.
  *
  * The code hash follows module imports and so misses a file read at run time.
- * A rebuilt WOF admin database or an edited license table changes aligned rows,
+ * An edited source register or corpus-source input table changes a row's license,
  * so each one enters every source's derivation.
- *
- * An absent database records `absent`, because align then reads no region names.
  */
 export async function alignDataFingerprints(): Promise<Record<string, string>> {
-	const regions = defaultRegionNameInputs()
 	const licenses = committedRowLicenseInputs()
 
-	const fingerprintOf = async (path: string): Promise<string> =>
-		(await pathExists(path)) ? extractFingerprint(path) : "absent"
+	return {
+		sourceRegister: await fingerprintOf(licenses.register),
+		corpusSourceInputs: await fingerprintOf(licenses.corpusSourceInputs),
+	}
+}
+
+/**
+ * The keys {@linkcode regionCheckFingerprints} returns.
+ *
+ * A source record written before the region data left the derivation holds
+ * them in its derivation's `alignData`.
+ */
+export const REGION_CHECK_INPUTS = ["regionDatabase", "geonames", "secondLevelRegions"] as const
+
+/**
+ * The fingerprint of each file the component check's `region:unknown` rule reads, keyed by its role.
+ *
+ * The region data changes no row's bytes.
+ * `region:unknown` is reported and never quarantines a row.
+ *
+ * The data changes only that rule's count, so it stays out of the derivation.
+ * A source's record states the fingerprints beside the count.
+ *
+ * A build that reuses the source under other region data recounts the rule (`#build/region-recount`).
+ *
+ * An absent database records `absent`, because align then reads no region data.
+ */
+export async function regionCheckFingerprints(): Promise<Record<(typeof REGION_CHECK_INPUTS)[number], string>> {
+	const regions = defaultRegionNameInputs()
 
 	return {
 		regionDatabase: await fingerprintOf(regions.database),
 		geonames: await fingerprintOf(regions.geonamesDirectory),
 		secondLevelRegions: await fingerprintOf(regions.secondLevelTable),
-		sourceRegister: await fingerprintOf(licenses.register),
-		corpusSourceInputs: await fingerprintOf(licenses.corpusSourceInputs),
 	}
 }
 

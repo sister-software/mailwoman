@@ -43,8 +43,14 @@ import { WORKER_CLASSES, workerReservationBytes, type WorkerBudget, type WorkerC
 import { readSourceDecisionTable } from "#build/eligibility"
 import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
+import { tryReadDefaultRegionNames, type RegionNames } from "#build/region-names"
 import { importPriorSource } from "#build/reuse"
-import { adapterDerivations, derivationConfig, type ResolvedBuildSettings } from "#build/settings"
+import {
+	adapterDerivations,
+	derivationConfig,
+	regionCheckFingerprints,
+	type ResolvedBuildSettings,
+} from "#build/settings"
 import {
 	readReusableSource,
 	sourceStateDirectory,
@@ -454,6 +460,11 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 			`${ctx.adapters.length} sources`
 	)
 
+	// A reused source made under other region data recounts `region:unknown` under these.
+	const regionCheck = await regionCheckFingerprints()
+	let regionNames: Promise<RegionNames | null> | null = null
+	const readRegions = (): Promise<RegionNames | null> => (regionNames ??= tryReadDefaultRegionNames())
+
 	const buildSource = async (adapter: CorpusAdapter): Promise<SourceCompletionRecord> => {
 		const source = adapter.id
 		const sourceDir = sourceStateDirectory(intermediateDir, source)
@@ -468,6 +479,8 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 			const reusable = await readReusableSource(sourceDir, {
 				settings: buildSettings,
 				derivation: await resolveDerivation(await sourceDerivation()),
+				regionCheck,
+				readRegions,
 			})
 
 			if (reusable.record) {
@@ -484,7 +497,12 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 				source,
 				priorOutputDir,
 				outputDir,
-				expected: { settings: buildSettings, derivation: await resolveDerivation(await sourceDerivation()) },
+				expected: {
+					settings: buildSettings,
+					derivation: await resolveDerivation(await sourceDerivation()),
+					regionCheck,
+					readRegions,
+				},
 			})
 
 			if (imported.record) {

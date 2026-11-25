@@ -37,6 +37,7 @@ import {
 	componentFindingsRecord,
 	ComponentRule,
 	ENFORCED_COMPONENT_RULES,
+	regionValueKey,
 	type ComponentFindingCounts,
 } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
@@ -151,6 +152,14 @@ export interface AlignPhaseResult {
 	 * Their counts in {@linkcode AlignPhaseResult.componentFindingsBySource} are absent rather than zero.
 	 */
 	uncheckedComponentRules: Set<ComponentRule>
+	/**
+	 * The base rows that reached the component check with a region, per {@linkcode regionValueKey}.
+	 *
+	 * A build that reuses a source under other region data recounts `region:unknown` from these.
+	 * The serial build's checkpoint doesn't record them, because only a parallel
+	 * build's source records are reused.
+	 */
+	regionValues: Map<string, number>
 
 	/**
 	 * The source-id lists this phase wrote, or `null` when it wrote none.
@@ -446,6 +455,15 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			return
 		}
 
+		// The value `region:unknown` reads, counted under the condition the rule checks it.
+		const region = row.components.region
+
+		if (region) {
+			const key = regionValueKey(row.country, region)
+
+			result.regionValues.set(key, (result.regionValues.get(key) ?? 0) + 1)
+		}
+
 		// A row whose values fail its country's rules or contradict each other (#2898) is
 		// quarantined before augmentation, so no variant inherits the wrong value.
 		const findings = componentFindings(row.components, row.country, context)
@@ -614,6 +632,7 @@ export function emptyAlignResult(
 		ineligibleSources,
 		componentFindingsBySource: new Map(),
 		uncheckedComponentRules: new Set(),
+		regionValues: new Map(),
 		sourceIDPaths: null,
 		licenses,
 	}

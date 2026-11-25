@@ -37,6 +37,7 @@ import { mergeAlignTotals, serializeAlignTotals } from "#build/align/totals"
 import type { WorkerResources } from "#build/budget"
 import { loadAdapterFromModule } from "#build/code-hash"
 import { readSourceEligibility } from "#build/eligibility"
+import { regionCheckFingerprints } from "#build/settings"
 import {
 	recordFile,
 	SOURCE_RECORD_FILE,
@@ -365,6 +366,7 @@ async function runFinishTask(task: FinishTask, report: (message: string) => void
 			task.plans.map((plan) => recordFile(alignRangeDirectory(sourceDir, plan)("quarantine.jsonl")))
 		),
 		totals: serializeAlignTotals(mergeAlignTotals(ranges.map((range) => range.totals))),
+		regionCheck: await regionCheckFingerprints(),
 		completed_at: new Date().toISOString(),
 	}
 

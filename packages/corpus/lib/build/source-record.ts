@@ -18,6 +18,8 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
+import type { RegionNames } from "#build/region-names"
+import { recountRegionCheck, withoutRegionCheckInputs } from "#build/region-recount"
 import { readParquetRecord, type DerivationInputs } from "#parquet/record"
 import type { ParquetFileDescriptor } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
@@ -73,6 +75,13 @@ export interface SourceCompletionRecord {
 	 */
 	quarantine: RecordedFile[]
 	totals: AlignTotalsRecord
+	/**
+	 * The fingerprints of the region data the `region:unknown` count in `totals`
+	 * was made under, from `regionCheckFingerprints`.
+	 *
+	 * A record written before the region data left the derivation holds them in `derivation.config.alignData`.
+	 */
+	regionCheck?: Record<string, string>
 	completed_at: string
 	/**
 	 * The earlier build's output directory the source's files were cloned from,
@@ -114,9 +123,26 @@ async function fileProblem(file: RecordedFile): Promise<string | null> {
 }
 
 /**
+ * What a build expects of a source it reuses.
+ */
+export interface ExpectedSource {
+	settings: SourceBuildSettings
+	derivation: DerivationInputs
+	/**
+	 * The fingerprints of the region data this build reads, from `regionCheckFingerprints`.
+	 */
+	regionCheck: Record<string, string>
+	/**
+	 * Reads this build's region data, for a record whose count was made under other data.
+	 */
+	readRegions: () => Promise<RegionNames | null>
+}
+
+/**
  * Why a source's completion record cannot be reused, or `null` with the record when it can.
  *
  * Every listed file is re-hashed, so a reused source is one whose bytes were read back in this build.
+ * A record made under other region data comes back with its `region:unknown` count recounted.
  *
  * `acrossBuilds` compares a record from another build's output directory.
  * It leaves out the corpus version, because no row holds it.
@@ -126,7 +152,7 @@ async function fileProblem(file: RecordedFile): Promise<string | null> {
  */
 export async function readReusableSource(
 	sourceDir: PathBuilderLike,
-	expected: { settings: SourceBuildSettings; derivation: DerivationInputs },
+	expected: ExpectedSource,
 	opts: { acrossBuilds?: boolean } = {}
 ): Promise<{ record: SourceCompletionRecord; problem: null } | { record: null; problem: string }> {
 	const path = PathBuilder.from(sourceDir)(SOURCE_RECORD_FILE)
@@ -137,8 +163,11 @@ export async function readReusableSource(
 	const settingsOf = (settings: SourceBuildSettings): unknown =>
 		opts.acrossBuilds ? { ...settings, align: { ...settings.align, corpus_version: null } } : settings
 
-	const derivationOf = (derivation: DerivationInputs): unknown =>
-		opts.acrossBuilds ? { ...derivation, builderVersion: null } : derivation
+	const derivationOf = (derivation: DerivationInputs): unknown => {
+		const current = withoutRegionCheckInputs(derivation)
+
+		return opts.acrossBuilds ? { ...current, builderVersion: null } : current
+	}
 
 	if (canonicalJSON(settingsOf(record.settings)) !== canonicalJSON(settingsOf(expected.settings))) {
 		return { record: null, problem: `${path.toString()} was written under other build settings` }
@@ -182,5 +211,5 @@ export async function readReusableSource(
 		if (problem) return { record: null, problem }
 	}
 
-	return { record, problem: null }
+	return recountRegionCheck(record, expected.regionCheck, expected.readRegions)
 }
