@@ -45,15 +45,18 @@ import {
 import { stampRowLicenses } from "#source-register/row-license"
 
 /**
- * The columns of the recipe output, in the order and with the types pyarrow
- * inferred for the Python builder's rows.
+ * The columns of the recipe output, in the order the Python builder wrote them and with the corpus's types.
+ *
+ * The spans are 32-bit and `base_source_id` is a string, as in every other corpus file.
+ * A file with 64-bit spans reads back as `BigInt` values.
+ * The corpus re-split's workers refuse them.
  */
 export const FRAGMENT_COLUMNS: ParquetColumns = [
 	["raw", ParquetColumnKind.String],
 	["tokens", ParquetColumnKind.StringList],
 	["labels", ParquetColumnKind.StringList],
-	["span_starts", ParquetColumnKind.Int64List],
-	["span_ends", ParquetColumnKind.Int64List],
+	["span_starts", ParquetColumnKind.Int32List],
+	["span_ends", ParquetColumnKind.Int32List],
 	["span_tags", ParquetColumnKind.StringList],
 	["country", ParquetColumnKind.String],
 	["locale", ParquetColumnKind.String],
@@ -62,7 +65,7 @@ export const FRAGMENT_COLUMNS: ParquetColumns = [
 	["license", ParquetColumnKind.String],
 	["register", ParquetColumnKind.String],
 	["surface", ParquetColumnKind.String],
-	["base_source_id", ParquetColumnKind.Null],
+	["base_source_id", ParquetColumnKind.String],
 ]
 
 /**
