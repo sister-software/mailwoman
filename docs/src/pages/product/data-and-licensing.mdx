@@ -30,6 +30,16 @@ The table reports the [published 11.0.0 bundle registry](https://github.com/sist
 
 The [published-bundle snapshot](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/data/published-bundles.json), measured on 31 October 2026, records HTTP `Content-Length` values for the published artifacts. It marks database-level rights and component lists `unmeasured` for those artifacts. Its local comparison files had different sizes, so their manifests couldn't establish the published artifacts' component-level licenses. A flat registry expression identifies source terms. The missing component inventory still needs a separate review.
 
+## OpenStreetMap attribution
+
+The published en-US weights package records OpenStreetMap-derived training inputs in its [provenance file](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/PROVENANCE.json). That training notice describes the model's inputs. An operator may also build and install a separate OpenStreetMap address-point database for geographic lookup. Its layer manifest identifies that database's source and credit. [Review a geocoding result's evidence](/docs/guides/review-geocode-evidence) shows how to inspect both records for an installation.
+
+OpenStreetMap's [copyright page](https://www.openstreetmap.org/copyright) calls for credit to OpenStreetMap contributors and a notice that the data is available under the Open Database License. The OpenStreetMap Foundation's [attribution guideline](https://osmfoundation.org/wiki/Attribution_Guidelines) addresses public geocoders, applications using them, and model documentation separately. A public service using an OpenStreetMap lookup database needs a credit readers can find. A source stamp in one API response is insufficient as the service's only credit. A notice for that use can read:
+
+> Address data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). OpenStreetMap data is available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+
+The [geocoding guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline) distinguishes individual results from a database assembled through substantial or systematic extraction. The exact database, public use, and redistribution determine which additional obligations need review. The published bundle registry and a model's training notice cannot decide those questions for an operator's installation. Send the artifact and intended use to the data owner or legal reviewer before stating that its attribution and database obligations are complete.
+
 ## Read the source publishers' terms
 
 The following publisher pages were checked on 10 November 2026. They describe their own data and may describe a later release than the paths above.

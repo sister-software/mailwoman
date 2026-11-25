@@ -38,6 +38,8 @@ Save the output and command exit statuses. `data status` reports the selected bu
 
 Identify the installed artifact and its source records before using or redistributing its data. Read the [published bundle terms](/product/data-and-licensing#data-bundles-and-their-recorded-terms) and the artifact's own manifest when available. Record the publisher, source vintage, attribution, license expression, and unresolved component-level rights separately. Ask the data owner or legal reviewer to decide whether those terms permit the intended use. A row's `coordinate_source` isn't a license grant.
 
+If the installation includes a weights package, run `mailwoman license attribution` and save its output. It reports the attribution recorded in installed package provenance files. It doesn't inspect reference databases downloaded into the data root. For an installed OpenStreetMap address-point layer, use the layer manifest and the `doctor --verbose` output from step 2 to record the lookup database's source, license, and credit separately. The [OpenStreetMap attribution notice](/product/data-and-licensing#openstreetmap-attribution) identifies the public-credit question for a service that uses that layer.
+
 ## 4. File a correction with the evidence you can share
 
 If the result conflicts with an identified source, follow [report a parsing or geocoding problem](./report-a-problem.mdx). Include the exact input, expected and observed coordinates or components, first visible mismatch, package and data versions, and the source used for the expectation. Remove private address data from a public report. Use the private security route for an exploitable vulnerability.
