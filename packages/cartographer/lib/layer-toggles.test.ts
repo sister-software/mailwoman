@@ -6,17 +6,32 @@ import { describe, expect, test } from "vitest"
 import { BaseLayers } from "#base/layers"
 import { UnderseaLabelLayers } from "#base/undersea"
 import { CoverageLayers } from "#coverage"
-import { GazetteerOverlaySourceLayer, gazetteerOverlayLayers, gazetteerPostcodeLayers } from "#gazetteer-overlay"
+import { gazetteerOverlayLayers, gazetteerPostcodeLayers } from "#gazetteer-overlay"
 import { JurisdictionLayers } from "#jurisdictions"
-import { BASE_CANVAS_LAYER, LAYER_TOGGLE_GROUPS, resolveLayerToggle } from "#layer-toggles"
+import { LAYER_TOGGLE_GROUPS, resolveLayerToggle } from "#layer-toggles"
 
 /**
  * The layers Earth adds outside the composed style: the graticule and the two building scenes.
  */
 const RUNTIME_LAYER_IDS = ["mw-graticule-line", "compact-buildings", "city-models"]
 
-const overlay = gazetteerOverlayLayers("page-overlay", new Set(Object.values(GazetteerOverlaySourceLayer)), BaseLayers)
-const postcodes = gazetteerPostcodeLayers("page-overlay-postcodes", new Set(Object.values(GazetteerOverlaySourceLayer)))
+/**
+ * Every source layer `hrt overlay` writes, across the place and postcode tile sets.
+ */
+const OVERLAY_SOURCE_LAYERS = new Set(["boundaries", "points", "extents", "postcode_boundaries", "postcode_points"])
+
+/**
+ * The overlay switches paired with a basemap place layer, with that layer.
+ */
+const PAIRED_LABELS = [
+	["countries", "places_country"],
+	["regions", "places_region"],
+	["localities", "places_locality"],
+	["neighborhoods", "places_subplace"],
+] as const
+
+const overlay = gazetteerOverlayLayers("page-overlay", OVERLAY_SOURCE_LAYERS, BaseLayers)
+const postcodes = gazetteerPostcodeLayers("page-overlay-postcodes", OVERLAY_SOURCE_LAYERS)
 
 const styleLayers = [
 	...BaseLayers,
@@ -39,7 +54,7 @@ describe("layer toggles", () => {
 		const ambiguous = styleLayers.flatMap((layer) => {
 			const leaf = layer.id.slice(layer.id.lastIndexOf("/") + 1)
 
-			if (BASE_CANVAS_LAYER.test(leaf)) return []
+			if (resolveLayerToggle(layer) === "canvas") return []
 
 			const matches = LAYER_TOGGLE_GROUPS.flatMap((group) => group.toggles).filter((toggle) => toggle.match?.test(leaf))
 
@@ -47,6 +62,27 @@ describe("layer toggles", () => {
 		})
 
 		expect(ambiguous).toEqual([])
+	})
+
+	test("overlay labels stack in the basemap's order, so larger places are placed first", () => {
+		const stackOf = (layers: readonly { id: string }[], ids: readonly string[]) =>
+			ids.map((id) => layers.findIndex((layer) => layer.id === id))
+
+		const basemap = stackOf(
+			BaseLayers,
+			PAIRED_LABELS.map(([, basemapLayer]) => basemapLayer)
+		)
+
+		const copies = stackOf(
+			overlay,
+			PAIRED_LABELS.map(([key]) => `page-overlay-${key}-labels`)
+		)
+
+		const rankOf = (positions: number[]) =>
+			positions.map((position) => positions.toSorted((a, b) => a - b).indexOf(position))
+
+		expect(copies).not.toContain(-1)
+		expect(rankOf(copies)).toEqual(rankOf(basemap))
 	})
 
 	test("each overlay label copies the basemap layer it replaces", () => {

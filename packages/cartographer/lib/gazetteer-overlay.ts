@@ -41,7 +41,7 @@ import { MAP_FONT_REGULAR } from "#styles/fonts"
 /**
  * The source layers a gazetteer overlay tile set can hold.
  */
-export const GazetteerOverlaySourceLayer = {
+const GazetteerOverlaySourceLayer = {
 	boundaries: "boundaries",
 	extents: "extents",
 	points: "points",
@@ -57,7 +57,7 @@ const OVERLAY_LINE_COLOR = "#7b3fbf"
 /**
  * One switch of the overlay: the placetypes it draws and the basemap layer its labels copy.
  */
-export interface GazetteerPlacetypeToggle {
+interface GazetteerPlacetypeToggle {
 	key: string
 	label: string
 	/**
@@ -95,7 +95,7 @@ export interface GazetteerPlacetypeToggle {
  * Local admin areas start hidden because they repeat most localities: at Paris, zoom 12,
  * the tile held 112 local admin points beside 121 locality points.
  */
-export const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
+const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 	{
 		key: "countries",
 		label: "Countries & dependencies",
@@ -174,6 +174,34 @@ export const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = 
  * The basemap place layers the overlay's labels replace.
  */
 const REPLACED_BASEMAP_LABELS = new Set(["places_country", "places_region", "places_locality", "places_subplace"])
+
+/**
+ * The overlay's label switches from the bottom of the layer stack to the top.
+ *
+ * MapLibre places a higher layer's labels first, and a later label that collides
+ * with a placed one is dropped.
+ * The basemap stacks `places_subplace`, `places_region`, `places_locality` and `places_country` from
+ * bottom to top, so a country or city name claims its place before the neighborhood names around it.
+ *
+ * The overlay follows that order and puts each unpaired switch beside its nearest pair.
+ */
+const LABEL_STACK = [
+	"other",
+	"campuses",
+	"neighborhoods",
+	"boroughs",
+	"counties",
+	"regions",
+	"local-admin",
+	"localities",
+	"countries",
+]
+
+function labelStackIndex(layerID: string, source: string): number {
+	const key = layerID.slice(`${source}-`.length).replace(/-(?:labels|points)$/, "")
+
+	return LABEL_STACK.indexOf(key)
+}
 
 const ALL_LISTED_PLACETYPES = GAZETTEER_PLACETYPE_TOGGLES.flatMap((toggle) => toggle.placetypes)
 
@@ -367,7 +395,9 @@ export function gazetteerOverlayLayers(
 	}
 
 	// Lines draw under every label, so a boundary never covers a name.
-	return [...lines, ...marks]
+	// MapLibre places labels from the top of the stack down, so the labels stack
+	// in the basemap's placement order.
+	return [...lines, ...marks.toSorted((a, b) => labelStackIndex(a.id, source) - labelStackIndex(b.id, source))]
 }
 
 /**

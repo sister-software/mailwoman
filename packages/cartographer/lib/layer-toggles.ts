@@ -80,7 +80,7 @@ export interface LayerToggleDeclaration extends LayerToggle {
  * The layer-ID leaves of the land, sea and background fills.
  * These layers get no switch.
  */
-export const BASE_CANVAS_LAYER = /^(?:background|earth|land-underlay|ocean-fill)$/
+const BASE_CANVAS_LAYER = /^(?:background|earth|land-underlay|ocean-fill)$/
 
 /**
  * The panel's groups and the basemap switches in each, in the order the panel lists them:
