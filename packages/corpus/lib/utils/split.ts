@@ -16,7 +16,7 @@
  * a holdout to a built corpus would leak rows the model already trained on.
  */
 
-import { createHash } from "@mailwoman/core/crypto/hash"
+import { sha256Buffer } from "@mailwoman/core/crypto/hash"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/scripting/process"
@@ -807,6 +807,10 @@ export function holdoutPolicyFor(holdout: CountryHoldout | null): HoldoutPolicy 
 interface FoldedHoldoutNames {
 	regions: ReadonlySet<string>
 	localities: ReadonlySet<string>
+	/**
+	 * The policy's postcode prefixes under `compactPostcode`, so a row's test compacts only its own postcode.
+	 */
+	postcodePrefixes: readonly string[]
 }
 
 const foldedNamesCache = new WeakMap<object, FoldedHoldoutNames>()
@@ -825,6 +829,7 @@ function foldedNamesFor(declared: CountryHoldout, policy: HoldoutPolicy): Folded
 	const names: FoldedHoldoutNames = {
 		regions: new Set((policy.regions ?? []).map(foldNFKCWhitespace)),
 		localities: new Set((policy.localities ?? []).map(foldNFKCWhitespace)),
+		postcodePrefixes: (policy.postcodePrefixes ?? []).map(compactPostcode),
 	}
 
 	foldedNamesCache.set(declared, names)
@@ -906,7 +911,7 @@ export function splitForRow(
 
 		isHeldOut = Boolean(
 			(region && folded.regions.has(foldNFKCWhitespace(region))) ||
-			(compact && (policy.postcodePrefixes?.some((prefix) => compact.startsWith(compactPostcode(prefix))) ?? false)) ||
+			(compact && folded.postcodePrefixes.some((prefix) => compact.startsWith(prefix))) ||
 			(locality && folded.localities.has(foldNFKCWhitespace(locality)))
 		)
 	} else {
@@ -976,7 +981,7 @@ export function hashBucket(id: string, n: number): number {
  * the value {@link hashBucket} reduces and the validation quota orders groups by.
  */
 export function hashUint32(id: string): number {
-	const digest = createHash("sha256").update(id).digest()
+	const digest = sha256Buffer(id)
 
 	return digest[0]! * 0x01_00_00_00 + digest[1]! * 0x01_00_00 + digest[2]! * 0x01_00 + digest[3]!
 }

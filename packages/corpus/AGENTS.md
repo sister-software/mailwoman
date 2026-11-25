@@ -191,8 +191,10 @@ and the fingerprints of the data files align reads (`alignDataFingerprints` in `
 It leaves out the corpus and builder versions, because no row holds either.
 
 `trainShare` on an adapter's `inputs.json` entry keeps that share of the source's training rows. A
-training row is kept when a salted hash of its record id falls under the share. Validation and test
-keep every row, so the frozen evaluation rows are unaffected, and the manifest's
+training row is kept when a salted hash of its id up to the last `#` falls under the share. NAD's ids
+hold no `#`, so each of its rows draws on its own, and under 0.11 57% of its training records keep at
+least one form. Align decides the split and the draw before aligning a row, so a row the share leaves
+out is never aligned. Validation and test keep every row, so the frozen evaluation rows are unaffected, and the manifest's
 `train_rows_left_out_by_source` counts what the share left out. The share enters the source's parquet
 derivation and leaves its adapter run reusable. A parallel build writes no top-level
 `labeled-*.jsonl`: each source's rows stay under its own state directory, staged in their parquet form.

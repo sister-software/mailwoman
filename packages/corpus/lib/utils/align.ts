@@ -146,6 +146,26 @@ export function locateComponentSpans(
 /**
  * Align a single row.
  */
+/**
+ * A copy of a row's components with each value in NFC, the form {@linkcode alignRow} writes to a labeled row.
+ *
+ * A caller that decides a row's split before aligning it reads these,
+ * so the decision equals the one made on the aligned row.
+ */
+export function nfcComponents(components: CanonicalRow["components"]): CanonicalRow["components"] {
+	const normalized = { ...components }
+
+	for (const key of Object.keys(normalized)) {
+		const value = normalized[key as keyof typeof normalized]
+
+		if (typeof value === "string") {
+			normalized[key as keyof typeof normalized] = value.normalize("NFC")
+		}
+	}
+
+	return normalized
+}
+
 export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentResult {
 	const tokenizer = opts.tokenizer ?? whitespaceTokenizer()
 	const maxEditDistance = opts.maxEditDistance ?? 2
@@ -156,15 +176,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	}
 
 	const raw = row.raw.normalize("NFC")
-	const components = { ...row.components }
-
-	for (const key of Object.keys(components)) {
-		const v = components[key as keyof typeof components]
-
-		if (typeof v === "string") {
-			components[key as keyof typeof components] = v.normalize("NFC")
-		}
-	}
+	const components = nfcComponents(row.components)
 
 	const located = locateComponentSpans(raw, components, { maxEditDistance, caseInsensitive })
 

@@ -33,6 +33,7 @@ import {
 } from "#build/checkpoint"
 import {
 	componentFindings,
+	createComponentCheckMemo,
 	componentFindingsRecord,
 	ComponentRule,
 	ENFORCED_COMPONENT_RULES,
@@ -45,7 +46,7 @@ import type { BuildProfile, BuildStage } from "#build/types"
 import { flushStream, once, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, LabeledRow } from "#types"
-import { alignRow } from "#utils/align"
+import { alignRow, nfcComponents } from "#utils/align"
 import type { SplitRetention } from "#utils/retention"
 import { hashBucket, SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
 
@@ -275,8 +276,11 @@ const TRAIN_SHARE_BUCKETS = 1_000_000
 /**
  * Whether a training row whose source keeps `share` of its training rows is kept.
  *
- * The draw reads the row's record id, so every variant synthesized from one
- * record is kept or left out together.
+ * The draw reads `recordIDOf(sourceID)`, which keeps the id up to its last `#`.
+ * A source whose ids hold no `#`, as NAD's don't, draws once per row: a variant synthesized
+ * from a record draws apart from its base row, so a kept record contributes some of its forms.
+ *
+ * Under a share of 0.11, 57% of NAD's training records keep at least one row.
  */
 export function keepsTrainRow(sourceID: string, share: number): boolean {
 	if (share >= 1) return true
@@ -372,7 +376,7 @@ export interface RowAlignerOptions {
  */
 export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) => void {
 	const { result, tally, sinks, licenses, ineligibility } = opts
-	const context = { units: opts.units, regions: opts.regions }
+	const context = { units: opts.units, regions: opts.regions, memo: createComponentCheckMemo() }
 
 	if (!opts.regions) {
 		result.uncheckedComponentRules.add(ComponentRule.RegionUnknown)
@@ -459,7 +463,30 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			}
 		}
 
+		const leaveOut = (source: string): void => {
+			result.trainRowsLeftOutBySource.set(source, (result.trainRowsLeftOutBySource.get(source) ?? 0) + 1)
+		}
+
 		for (const r of fanned) {
+			const share = opts.trainShares?.[r.source]
+
+			// A capped source decides each row's split before aligning it, so a training
+			// row the share leaves out is never aligned.
+			// `alignRow` changes only the text's normal form.
+			// The split reads the components in that form, so the decision equals the one made after alignment.
+			// Retention reads the aligned row's span tags, so a build with a retention
+			// table decides after alignment.
+			const early =
+				typeof share === "number" && !opts.retention
+					? splitForRow({ ...r, components: nfcComponents(r.components) }, opts.holdouts)
+					: null
+
+			if (early === "train" && !keepsTrainRow(r.source_id, share!)) {
+				leaveOut(r.source)
+
+				continue
+			}
+
 			let aligned: ReturnType<typeof alignRow>
 
 			try {
@@ -475,14 +502,15 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			}
 
 			if (aligned.kind === "labeled") {
-				const split = splitForRow(aligned.row, opts.holdouts, undefined, opts.retention)
-				const share = opts.trainShares?.[aligned.row.source]
+				const split = early ?? splitForRow(aligned.row, opts.holdouts, undefined, opts.retention)
 
-				if (split === "train" && typeof share === "number" && !keepsTrainRow(aligned.row.source_id, share)) {
-					result.trainRowsLeftOutBySource.set(
-						aligned.row.source,
-						(result.trainRowsLeftOutBySource.get(aligned.row.source) ?? 0) + 1
-					)
+				if (
+					early === null &&
+					split === "train" &&
+					typeof share === "number" &&
+					!keepsTrainRow(aligned.row.source_id, share)
+				) {
+					leaveOut(aligned.row.source)
 
 					continue
 				}

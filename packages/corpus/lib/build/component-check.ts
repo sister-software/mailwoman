@@ -132,6 +132,57 @@ export interface ComponentCheckContext {
 	 * Without them the rule isn't checked.
 	 */
 	regions?: RegionNames | null
+	/**
+	 * Answers already computed for a (country, value) pair, from {@linkcode createComponentCheckMemo}.
+	 *
+	 * A source repeats one postcode or region on every row of a place.
+	 * Each answer reads only the country and the value.
+	 */
+	memo?: ComponentCheckMemo | null
+}
+
+/**
+ * The postcode and region answers one aligner has computed, keyed by country and value.
+ */
+export interface ComponentCheckMemo {
+	readonly postcodeRejected: Map<string, boolean>
+	readonly regionUnknown: Map<string, boolean>
+}
+
+/**
+ * Entries the postcode table holds before it starts again empty.
+ *
+ * NAD writes ZIP+4 forms, millions of distinct values, and an align worker's heap is 1.5 GiB.
+ * Regions take a few thousand values per country, so their table needs no bound.
+ */
+const POSTCODE_MEMO_ENTRIES = 200_000
+
+/**
+ * An empty memo for one aligner.
+ */
+export function createComponentCheckMemo(): ComponentCheckMemo {
+	return { postcodeRejected: new Map(), regionUnknown: new Map() }
+}
+
+function memoized(
+	table: Map<string, boolean>,
+	key: string,
+	compute: () => boolean,
+	bound = Number.POSITIVE_INFINITY
+): boolean {
+	const known = table.get(key)
+
+	if (known !== undefined) return known
+
+	if (table.size >= bound) {
+		table.clear()
+	}
+
+	const answer = compute()
+
+	table.set(key, answer)
+
+	return answer
 }
 
 /**
@@ -145,7 +196,21 @@ export function componentFindings(
 	const findings: ComponentFinding[] = []
 	const { postcode, street, locality, region } = components
 
-	if (postcode && statesPostcodeSyntax(country) && acceptPostcode(postcode, country) == null) {
+	const postcodeRejected = (value: string): boolean => {
+		const compute = () => statesPostcodeSyntax(country) && acceptPostcode(value, country) == null
+
+		return context.memo
+			? memoized(context.memo.postcodeRejected, `${country}\u001E${value}`, compute, POSTCODE_MEMO_ENTRIES)
+			: compute()
+	}
+
+	const regionUnknown = (value: string): boolean => {
+		const compute = () => context.regions?.holds(country, value) === false
+
+		return context.memo ? memoized(context.memo.regionUnknown, `${country}\u001E${value}`, compute) : compute()
+	}
+
+	if (postcode && postcodeRejected(postcode)) {
 		findings.push({ rule: ComponentRule.PostcodeFormat, values: [postcode] })
 	}
 
@@ -213,7 +278,7 @@ export function componentFindings(
 		}
 	}
 
-	if (region && context.regions?.holds(country, region) === false) {
+	if (region && regionUnknown(region)) {
 		findings.push({ rule: ComponentRule.RegionUnknown, values: [region] })
 	}
 

@@ -391,8 +391,10 @@ export interface AdapterOptions {
 	 * The share of the source's training rows a build keeps, from 0 to 1, or no value to keep them all.
 	 *
 	 * Align applies it after each row's split is decided, so validation and test keep every row.
-	 * A training row is kept when a salted hash of its record id falls under the share,
-	 * so every variant of a kept record stays.
+	 * A training row is kept when a salted hash of its id up to the last `#` falls
+	 * under the share (`keepsTrainRow`).
+	 *
+	 * An id with no `#` draws per row, so a record's variants draw apart.
 	 * The adapter ignores it.
 	 */
 	trainShare?: number | null
