@@ -36,7 +36,7 @@ import {
 	type LayerToggleDeclaration,
 	resolveLayerToggle,
 } from "#layer-toggles"
-import { MAP_FONT_REGULAR } from "#styles/fonts"
+import { MAP_FONT_ITALIC, MAP_FONT_REGULAR } from "#styles/fonts"
 
 /**
  * The source layers a gazetteer overlay tile set can hold.
@@ -186,6 +186,8 @@ const REPLACED_BASEMAP_LABELS = new Set(["places_country", "places_region", "pla
  * The overlay follows that order and puts each unpaired switch beside its nearest pair.
  */
 const LABEL_STACK = [
+	"deprecated",
+	"former",
 	"other",
 	"campuses",
 	"neighborhoods",
@@ -205,10 +207,104 @@ function labelStackIndex(layerID: string, source: string): number {
 
 const ALL_LISTED_PLACETYPES = GAZETTEER_PLACETYPE_TOGGLES.flatMap((toggle) => toggle.placetypes)
 
+/**
+ * A record the gazette treats as a current place, as name search does: not marked
+ * `is_current=false`, not deprecated and not superseded.
+ *
+ * A record with no `is_current` value counts as current, as the admin intake
+ * reads an absent `mz:is_current`.
+ */
+const CURRENT_RECORD: ExpressionSpecification = [
+	"all",
+	["!=", ["get", "is_current"], false],
+	["!=", ["get", "is_deprecated"], true],
+	["!=", ["get", "is_superseded"], true],
+]
+
+/**
+ * A record no longer current, or one a successor replaced.
+ * Its source didn't withdraw it.
+ *
+ * The admin intake keeps a ceased division and drops a superseded record whose successor shares its name.
+ */
+const FORMER_RECORD: ExpressionSpecification = [
+	"all",
+	["any", ["==", ["get", "is_current"], false], ["==", ["get", "is_superseded"], true]],
+	["!=", ["get", "is_deprecated"], true],
+]
+
+/**
+ * A record its source withdrew as wrong.
+ * `candidate.db` and name search leave it out.
+ */
+const DEPRECATED_RECORD: ExpressionSpecification = ["==", ["get", "is_deprecated"], true]
+
 function placetypeFilter(toggle: GazetteerPlacetypeToggle): ExpressionSpecification {
-	return toggle.placetypes.length
+	const placetypes: ExpressionSpecification = toggle.placetypes.length
 		? ["in", ["get", "placetype"], ["literal", [...toggle.placetypes]]]
 		: ["!", ["in", ["get", "placetype"], ["literal", ALL_LISTED_PLACETYPES]]]
+
+	return ["all", placetypes, CURRENT_RECORD]
+}
+
+/**
+ * The switches for records outside the current gazette: each draws its records' boundaries
+ * and names in grey, whatever their placetype.
+ */
+const RECORD_STATUS_TOGGLES = [
+	{ key: "former", label: "Former places", filter: FORMER_RECORD, dasharray: [4, 2] },
+	{ key: "deprecated", label: "Deprecated records", filter: DEPRECATED_RECORD, dasharray: [1, 2] },
+] as const
+
+function recordStatusLayers(source: string, sourceLayers: ReadonlySet<string>): LayerSpecification[] {
+	const layers: LayerSpecification[] = []
+
+	for (const toggle of RECORD_STATUS_TOGGLES) {
+		const metadata = toggleMetadata(source, { key: toggle.key, label: toggle.label, visible: false })
+
+		if (sourceLayers.has(GazetteerOverlaySourceLayer.boundaries)) {
+			layers.push({
+				id: `${source}-${toggle.key}-boundaries`,
+				type: "line",
+				source,
+				"source-layer": GazetteerOverlaySourceLayer.boundaries,
+				filter: toggle.filter,
+				metadata,
+				layout: { visibility: "none" },
+				paint: {
+					"line-color": GuideMapPalette.district,
+					"line-opacity": 0.8,
+					"line-width": 0.8,
+					"line-dasharray": [...toggle.dasharray],
+				},
+			} satisfies LineLayerSpecification)
+		}
+
+		if (sourceLayers.has(GazetteerOverlaySourceLayer.points)) {
+			layers.push({
+				id: `${source}-${toggle.key}-labels`,
+				type: "symbol",
+				source,
+				"source-layer": GazetteerOverlaySourceLayer.points,
+				filter: toggle.filter,
+				metadata,
+				layout: {
+					"text-field": ["get", "name"],
+					"text-font": [MAP_FONT_ITALIC],
+					"text-size": ["interpolate", ["linear"], ["zoom"], 8, 10, 16, 12],
+					"text-optional": true,
+					visibility: "none",
+				},
+				paint: {
+					"text-color": GuideMapPalette.district,
+					"text-halo-color": "#ffffff",
+					"text-halo-width": 1.2,
+				},
+			} satisfies SymbolLayerSpecification)
+		}
+	}
+
+	return layers
 }
 
 function toggleMetadata(
@@ -392,6 +488,10 @@ export function gazetteerOverlayLayers(
 				"line-dasharray": [2, 2],
 			},
 		} satisfies LineLayerSpecification)
+	}
+
+	for (const layer of recordStatusLayers(source, sourceLayers)) {
+		;(layer.type === "line" ? lines : marks).push(layer)
 	}
 
 	// Lines draw under every label, so a boundary never covers a name.

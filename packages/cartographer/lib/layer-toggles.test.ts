@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { type Feature, featureFilter, type FilterSpecification } from "@maplibre/maplibre-gl-style-spec"
 import { describe, expect, test } from "vitest"
 
 import { BaseLayers } from "#base/layers"
@@ -83,6 +84,42 @@ describe("layer toggles", () => {
 
 		expect(copies).not.toContain(-1)
 		expect(rankOf(copies)).toEqual(rankOf(basemap))
+	})
+
+	test("each Who's On First record draws under exactly one switch, by placetype when current and by status when not", () => {
+		const evaluate = (filter: FilterSpecification, properties: Feature["properties"]) => {
+			const { filter: matches } = featureFilter(filter, "filter")
+			const feature: Feature = { type: "Point", properties }
+
+			return matches({ zoom: 10 }, feature)
+		}
+
+		const records = [
+			{ placetype: "locality", is_current: true, is_deprecated: false, is_superseded: false },
+			{ placetype: "locality", is_deprecated: false, is_superseded: false },
+			{ placetype: "locality", is_current: false, is_deprecated: false, is_superseded: false },
+			{ placetype: "locality", is_current: true, is_deprecated: false, is_superseded: true },
+			{ placetype: "locality", is_current: false, is_deprecated: true, is_superseded: false },
+			{ placetype: "timezone", is_current: true, is_deprecated: false, is_superseded: false },
+		]
+
+		const labels = overlay.filter((layer) => layer.type === "symbol" || layer.type === "circle")
+
+		const matches = records.map((properties) =>
+			labels
+				.filter((layer) => "filter" in layer && layer.filter != null && evaluate(layer.filter, properties))
+				.map((layer) => layer.id)
+				.join(",")
+		)
+
+		expect(matches).toEqual([
+			"page-overlay-localities-labels",
+			"page-overlay-localities-labels",
+			"page-overlay-former-labels",
+			"page-overlay-former-labels",
+			"page-overlay-deprecated-labels",
+			"page-overlay-other-points",
+		])
 	})
 
 	test("each overlay label copies the basemap layer it replaces", () => {
