@@ -2,8 +2,8 @@
 title: What a confidence score can tell you
 description: Why a parse score cannot establish place identity, coordinate accuracy, or address validity.
 role: explanation
-source-of-truth: packages/core/lib/decoder/build-tree.ts, packages/neural/lib/classifier.ts, packages/mailwoman/lib/geocode/result.ts, docs/articles/reference/schema.mdx
-verified-with: published mailwoman v11.0.0 source and model records, inspected 2026-11-25
+source-of-truth: packages/core/lib/decoder/build-tree.ts, packages/neural/lib/classifier.ts, packages/neural-weights-en-us/model-card.json, packages/neural-weights-en-us/calibration.json, packages/mailwoman/lib/geocode/result.ts, docs/articles/reference/schema.mdx
+verified-with: published mailwoman v11.3.0 parser and model records, plus geocode source, inspected 2026-11-25
 ---
 
 # What a confidence score can tell you
@@ -14,9 +14,11 @@ Can a high `confidence` value tell you that an address is valid? It describes ho
 
 The parser assigns a score to each returned node in its `AddressTree`. On the neural path, the tree builder averages the selected pieces' label scores across the span. Label repairs can change those scores before the average. A postcode or locality fast path instead uses the query-shape or kind classifier's confidence. A provisional phrase-grouper node uses a scaled proposal score. The pipeline `path` and a node's `source`, when present, help identify which mechanism produced a node.
 
-These scores have different origins. One threshold across them would mix different measurements. The [parse inspection tutorial](../tutorials/inspect-a-parse.mdx) shows scores for `apt 4b 350 5th ave new york ny 10118` in a published 11.0.0 run. That one result gives no error rate for other addresses.
+These scores have different origins. One threshold across them would mix different measurements. The [parse inspection tutorial](../tutorials/inspect-a-parse.mdx) shows scores for `apt 4b 350 5th ave new york ny 10118` in a published 11.3.0 run. That one result gives no error rate for other addresses.
 
-A calibration table can map raw scores to observed label frequencies for a specified model and evaluation population. The default runtime parse doesn't apply such a table. The published `@mailwoman/neural-weights-en-us@11.0.0` package names model `10.8.0`, while its bundled `calibration.json` names model `5.3.0`. The table therefore doesn't establish an accuracy mapping for the published model. A decision threshold needs an evaluation of the exact model, locale, input population, and cost of an incorrect decision. [What supports a model-quality claim?](./data-and-model-quality.mdx) explains that evaluation.
+The [review-routing guide](../guides/review-parse-results.mdx) gives a concrete distinction. For `350 5th Ave, New York, NY 10118`, its policy returned `ready`. For `PO Box 1234, Springfield, IL 62701`, it returned `review`. Both rows had a lowest displayed node score of `0.910`. The policy used query kind and required components to assign the different routes.
+
+A calibration table can map raw scores to observed label frequencies for a specified model and evaluation population. The default Node.js parser in these guides doesn't apply such a table. The published `@mailwoman/neural-weights-en-us@11.3.0` package names model `11.3.0`, while its bundled `calibration.json` names model `5.3.0`. The table therefore doesn't establish an accuracy mapping for the published model. A decision threshold needs an evaluation of the exact model, locale, input population, and cost of an incorrect decision. [What supports a model-quality claim?](./data-and-model-quality.mdx) explains that evaluation.
 
 ## Place identity has its own alternatives
 
