@@ -1,6 +1,6 @@
 ---
 title: Compare Mailwoman with other geocoders
-description: How Mailwoman differs from Google's Geocoding API, self-hosted Nominatim and Pelias on where data lives, what self-hosting needs and what results you may keep, with the one dated measured comparison and the command that reproduces it.
+description: Choose among Mailwoman, Google's Geocoding API, self-hosted Nominatim, and Pelias by deployment, data, and operating requirements.
 ---
 
 import { NodeRequirement } from "#partials/runtime"
@@ -9,7 +9,16 @@ import "./evidence-tables.css"
 
 # Compare Mailwoman with other geocoders
 
-This page compares Mailwoman with three alternatives: Google's Geocoding API, a self-hosted Nominatim server, and Pelias with libpostal. It covers where the data lives, what running each one requires, what you may keep from its results, and the one measured comparison this project has published. Third-party requirements, service terms, and pricing were checked against each publisher's documentation on 14 November 2026. Check the linked pages before deciding, because their terms and requirements change.
+Which geocoder fits your application? Start with where queries may go. Then consider the data you need and the service you can operate. The table below compares Mailwoman 11.0.0 with Google's Geocoding API, self-hosted Nominatim, and Pelias with libpostal. A separate, dated test compares older Mailwoman weights with Pelias and Photon. Third-party requirements, service terms, and pricing were checked against publisher documentation on 25 November 2026.
+
+## Choose by operating requirement
+
+- **Use Mailwoman** when addresses must stay in your process or server and you want its parser alongside geocoding. Install the data bundles for the places you need and review each bundle's terms. The [data and licensing page](/product/data-and-licensing) lists those sources. The [server tutorial](/docs/tutorials/run-a-server) shows the local setup.
+- **Use Google's Geocoding API** when you want a [managed address-to-coordinate service](https://developers.google.com/maps/documentation/geocoding/overview) and can send queries to Google. Its [pricing](https://developers.google.com/maps/billing-and-pricing/pricing) and the terms for your billing region govern the service and result storage.
+- **Use self-hosted Nominatim** when OpenStreetMap is your intended source and you can maintain its [PostgreSQL import](https://nominatim.org/release-docs/latest/admin/Installation/). The OpenStreetMap Foundation's [public server policy](https://operations.osmfoundation.org/policies/nominatim/) applies to its public endpoint, including its one-request-per-second limit. It doesn't set a rate limit for your own installation.
+- **Use Pelias with libpostal** when you want to choose the imported sources and can operate the [Pelias services and Elasticsearch](https://github.com/pelias/documentation/blob/master/requirements.md). Its result rights depend on those imported sources.
+
+These are deployment and data choices. The measured panel below used Mailwoman model 9.1.0 in August 2026, so it cannot establish which geocoder is more accurate for Mailwoman 11.0.0 or for your address population.
 
 ## How they differ
 
