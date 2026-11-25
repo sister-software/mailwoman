@@ -155,7 +155,7 @@ export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
  * Every model release shares it.
  * Update it after uploading a rebuilt gazetteer.
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-11-19a"
+export const ADMIN_GAZETTEER_VERSION = "2026-11-25a"
 
 /**
  * Version of the Who's On First boundary file, built by `mailwoman gazetteer build polygons`.
