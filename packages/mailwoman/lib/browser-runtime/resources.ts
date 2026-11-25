@@ -163,7 +163,7 @@ export const ADMIN_GAZETTEER_VERSION = "2026-11-25a"
  * Every model release shares it.
  * The browser caches range chunks by URL and offset, so a rebuilt file is published under a new version.
  */
-export const WOF_POLYGONS_VERSION = "2026-11-07b"
+export const WOF_POLYGONS_VERSION = "2026-11-25a"
 
 /**
  * Returns the URL of the boundary file.
