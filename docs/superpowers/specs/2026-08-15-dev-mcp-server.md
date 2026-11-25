@@ -1,9 +1,24 @@
 # Development MCP server — design spec
 
-**Status:** proposal rather than implemented. **Written:** 2026-08-15. **Three forks decided 2026-08-16** (§9):
-the workspace lives in-repo, the confound guard warns rather than refuses, and a small sample always gets its
-aggregate with the confidence bound attached. **Build §11 first.** It is three tools, and it tests the claim the
-rest of the design depends on.
+**Status:** implemented, with the departures listed below. **Written:** 2026-08-15. **Updated:** 2026-11-25.
+The §11 first increment shipped in #1698, and every tool in §4 now exists, along with `mwdev_runs` and all four
+`ArmSpec` members. The server runs from `.mcp.json` as `mailwoman-dev`.
+
+The shipped code departs from this text in three places:
+
+- **Process model (§3.1, §3.6).** The supervisor, socket and per-config workers were never built. A stdio shim
+  that never goes stale (`lib/dev-mcp/cli.ts`) forks one restartable worker (`lib/dev-mcp/worker.ts`) over IPC,
+  and `mwdev_restart` swaps it. The note at the top of §11 gives the reason.
+- **Location (§7.4).** The code lives in the root workspace at `lib/dev-mcp/`, imported as `#dev-mcp/*`, rather
+  than in a `packages/dev-mcp/` workspace. It adds no entry to the `workspaces` array.
+- **Scope.** The surface grew past §4: data-source tools (`mwdev_sources`, `mwdev_provenance`,
+  `mwdev_coverage`, `mwdev_sql`), mechanism tools (`mwdev_diagnose`, `mwdev_constraints`,
+  `mwdev_minimal_pairs`, `mwdev_fanout`), the repo tools `mwdev_symbol`, `mwdev_worktree`, `mwdev_issue` and
+  `mwdev_pull_request`, and the Claude Code hooks under `lib/dev-mcp/hooks/`.
+
+Of the §9 questions, 3 through 8 are decided or resolved. Questions 9 (board-case writes) and 10 (`run_id` on
+`mwdev_trace`) are still open, and questions 1 and 2 are unanswered. Read the rest of this spec as the reasoning
+behind the design, and read `lib/dev-mcp/` for what's built.
 
 This spec describes a long-lived daemon that holds warm geocoder state and an MCP tool surface over it. With it,
 an agent working in this repo runs a measurement instead of writing a throwaway probe script. The goal is
