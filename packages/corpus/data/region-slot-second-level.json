@@ -1,5 +1,5 @@
 {
-	"$description": "Per country, the base rows with a region and those whose region is a second-level (WOF county) name of the country and no region name of it. Written by packages/corpus/lib/tools/region-slot-census.run.ts; secondLevelAdmitted in packages/corpus/lib/build/region-names.ts decides which countries the region:unknown rule admits.",
+	"$description": "Per country, the base rows with a region and those whose region is a second-level (WOF county) name of the country and no region name of it. Written by packages/corpus/lib/tools/region-slot-census.run.ts; secondLevelAdmitted in packages/corpus/lib/build/region/names.ts decides which countries the region:unknown rule admits.",
 	"manifest": "/mnt/mw/corpus/versioned/v0.8.10-retention-overlay/corpus-v0.8.10-retention-overlay/MANIFEST.json",
 	"countries": {
 		"AD": {

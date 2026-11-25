@@ -10,8 +10,8 @@ import { createRowAligner, emptyAlignResult, type AlignTally } from "#build/alig
 import { alignTotalsOf, mergeAlignTotals, serializeAlignTotals } from "#build/align/totals"
 import { componentFindingsRecord, ComponentRule } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
-import type { RegionNames } from "#build/region-names"
-import { recountRegionCheck, type RegionCheckedRecord } from "#build/region-recount"
+import type { RegionNames } from "#build/region/names"
+import { recountRegionCheck, type RegionCheckedRecord } from "#build/region/recount"
 import type { CanonicalRow } from "#types"
 
 const units = await createUnitSplitter()

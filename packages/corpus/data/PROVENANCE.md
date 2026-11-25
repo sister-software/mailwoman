@@ -713,7 +713,7 @@ every country it counts a corpus's base rows that have a region (`withRegion`), 
 is a second-level (WOF `county`) name of the country and no region name of it (`secondLevelOnly`). The
 file's `manifest` field records the corpus manifest the counts were taken from.
 
-`secondLevelAdmitted` in `packages/corpus/lib/build/region-names.ts` reads the table and decides which
+`secondLevelAdmitted` in `packages/corpus/lib/build/region/names.ts` reads the table and decides which
 countries the `region:unknown` rule admits second-level names for.
 
 To check the file, run the tool against the manifest the file records, with `--out` for the per-country

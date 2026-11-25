@@ -16,10 +16,9 @@ import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { canonicalJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
-import type { RegionNames } from "#build/region-names"
-import { recountRegionCheck, withoutRegionCheckInputs } from "#build/region-recount"
+import type { RegionNames } from "#build/region/names"
+import { type RegionCheckedRecord, recountRegionCheck, withoutRegionCheckInputs } from "#build/region/recount"
 import { readParquetRecord, type DerivationInputs } from "#parquet/record"
 import type { ParquetFileDescriptor } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
@@ -46,8 +45,7 @@ export interface SourceBuildSettings {
 /**
  * A finished source.
  */
-export interface SourceCompletionRecord {
-	source: string
+export interface SourceCompletionRecord extends RegionCheckedRecord {
 	settings: SourceBuildSettings
 	/**
 	 * The derivation every one of the source's parquet files was written under,
@@ -74,14 +72,6 @@ export interface SourceCompletionRecord {
 	 * The quarantine files of the source's align ranges, in range order.
 	 */
 	quarantine: RecordedFile[]
-	totals: AlignTotalsRecord
-	/**
-	 * The fingerprints of the region data the `region:unknown` count in `totals`
-	 * was made under, from `regionCheckFingerprints`.
-	 *
-	 * A record written before the region data left the derivation holds them in `derivation.config.alignData`.
-	 */
-	regionCheck?: Record<string, string>
 	completed_at: string
 	/**
 	 * The earlier build's output directory the source's files were cloned from,

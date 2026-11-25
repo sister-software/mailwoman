@@ -21,7 +21,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { BUILTIN_ADAPTERS } from "@mailwoman/corpus/adapters"
 import { createUnitSplitter } from "@mailwoman/corpus/adapters/street/unit"
-import { tryReadDefaultRegionNames } from "@mailwoman/corpus/build/region-names"
+import { tryReadDefaultRegionNames } from "@mailwoman/corpus/build/region/names"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 

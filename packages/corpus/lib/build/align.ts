@@ -41,7 +41,7 @@ import {
 	type ComponentFindingCounts,
 } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
-import { tryReadDefaultRegionNames, type RegionNames } from "#build/region-names"
+import { tryReadDefaultRegionNames, type RegionNames } from "#build/region/names"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
 import { flushStream, once, type AdapterRunManifest } from "#runner"

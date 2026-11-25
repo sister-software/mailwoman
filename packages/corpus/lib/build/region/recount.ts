@@ -15,7 +15,7 @@ import { canonicalJSON } from "@mailwoman/core/values/json"
 
 import type { AlignTotalsRecord } from "#build/align/totals"
 import { ComponentRule, countRegionUnknown } from "#build/component-check"
-import type { RegionNames } from "#build/region-names"
+import type { RegionNames } from "#build/region/names"
 import { REGION_CHECK_INPUTS } from "#build/settings"
 
 /**
@@ -25,6 +25,12 @@ export interface RegionCheckedRecord {
 	source: string
 	derivation: { config: unknown }
 	totals: AlignTotalsRecord
+	/**
+	 * The fingerprints of the region data the `region:unknown` count in `totals`
+	 * was made under, from `regionCheckFingerprints`.
+	 *
+	 * A record written before the region data left the derivation holds them in `derivation.config.alignData`.
+	 */
 	regionCheck?: Record<string, string>
 }
 

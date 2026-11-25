@@ -7,7 +7,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { readRegionNames, readSecondLevelNames } from "#build/region-names"
+import { readRegionNames, readSecondLevelNames } from "#build/region/names"
 
 let scratch: TemporaryDirectory
 

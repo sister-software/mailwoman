@@ -43,7 +43,7 @@ import { WORKER_CLASSES, workerReservationBytes, type WorkerBudget, type WorkerC
 import { readSourceDecisionTable } from "#build/eligibility"
 import { admitParquetManifest, UNCHECKED_PARQUET_MANIFEST_FILE } from "#build/holdout-check"
 import { writeBuildManifests } from "#build/manifest"
-import { tryReadDefaultRegionNames, type RegionNames } from "#build/region-names"
+import { tryReadDefaultRegionNames, type RegionNames } from "#build/region/names"
 import { importPriorSource } from "#build/reuse"
 import {
 	adapterDerivations,

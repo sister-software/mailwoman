@@ -14,7 +14,7 @@ import { acceptPostcode, statesPostcodeSyntax } from "@mailwoman/postcode/countr
 
 import type { UnitSplitter } from "#adapters/street/unit"
 import { writtenSubdivisionCode } from "#adapters/wof/admin/json/region-codes"
-import type { RegionNames } from "#build/region-names"
+import type { RegionNames } from "#build/region/names"
 import type { CanonicalRow } from "#types"
 
 /**

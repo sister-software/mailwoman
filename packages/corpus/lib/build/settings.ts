@@ -14,7 +14,7 @@ import { canonicalJSON } from "@mailwoman/core/values/json"
 import { LicensePolicy } from "@mailwoman/license/policy"
 
 import { adapterModules, moduleGraphHashes } from "#build/code-hash"
-import { defaultRegionNameInputs } from "#build/region-names"
+import { defaultRegionNameInputs } from "#build/region/names"
 import { BuildProfile, PriorOutput, type BuildCorpusOptions } from "#build/types"
 import { extractFingerprint, type FileDerivation, inputCheckouts } from "#parquet/record"
 import { ROWS_PER_FILE } from "#parquet/schema"
@@ -147,7 +147,7 @@ export const REGION_CHECK_INPUTS = ["regionDatabase", "geonames", "secondLevelRe
  * The data changes only that rule's count, so it stays out of the derivation.
  * A source's record states the fingerprints beside the count.
  *
- * A build that reuses the source under other region data recounts the rule (`#build/region-recount`).
+ * A build that reuses the source under other region data recounts the rule (`#build/region/recount`).
  *
  * An absent database records `absent`, because align then reads no region data.
  */

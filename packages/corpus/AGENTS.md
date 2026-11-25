@@ -192,7 +192,7 @@ It leaves out the corpus and builder versions, because no row holds either. It a
 database, GeoNames and the second-level region table, which the component check's `region:unknown` rule reads.
 That rule is reported and never quarantines a row, so those files change only its count. A source record states
 the fingerprints of the region data its count was made under (`regionCheck`) and the region value of every row the
-check read. A build that reuses the source under other region data recounts the rule (`lib/build/region-recount.ts`). A WOF
+check read. A build that reuses the source under other region data recounts the rule (`lib/build/region/recount.ts`). A WOF
 rebuild therefore rebuilds the two WOF adapters, whose input is the WOF clones, and clones every other source.
 
 `trainShare` on an adapter's `inputs.json` entry keeps that share of the source's training rows. A

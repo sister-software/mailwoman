@@ -23,7 +23,7 @@ import {
 	readSecondLevelNames,
 	secondLevelAdmitted,
 	type SecondLevelRegionTable,
-} from "#build/region-names"
+} from "#build/region/names"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { parquetColumnNames } from "#parquet/readers"
 import { localManifestFilePath } from "#tools/overlay/manifest"
@@ -155,7 +155,7 @@ const table: SecondLevelRegionTable = {
 	$description:
 		"Per country, the base rows with a region and those whose region is a second-level (WOF county) name " +
 		"of the country and no region name of it. Written by packages/corpus/lib/tools/region-slot-census.run.ts; " +
-		"secondLevelAdmitted in packages/corpus/lib/build/region-names.ts decides which countries the region:unknown rule admits.",
+		"secondLevelAdmitted in packages/corpus/lib/build/region/names.ts decides which countries the region:unknown rule admits.",
 	manifest: manifestPath,
 	countries: Object.fromEntries(
 		countries

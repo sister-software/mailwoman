@@ -28,7 +28,7 @@ import { alignSettings, createRowAligner, emptyAlignResult, labeledSourceID, typ
 import { alignTotalsOf, serializeAlignTotals, type AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
 import { createIneligibilityReader } from "#build/eligibility"
-import { tryReadDefaultRegionNames } from "#build/region-names"
+import { tryReadDefaultRegionNames } from "#build/region/names"
 import type { BuildProfile } from "#build/types"
 import { encodeStagedRow, stageRow } from "#parquet/writers"
 import { flushStream, once } from "#runner"

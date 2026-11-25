@@ -49,7 +49,7 @@ import { foldName } from "@mailwoman/codex/names/normalize"
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { mulberry32 } from "@mailwoman/core/math/random"
 
-import { type RegionNames, tryReadDefaultRegionNames } from "#build/region-names"
+import { type RegionNames, tryReadDefaultRegionNames } from "#build/region/names"
 import { INStreetLineRefusal, isINSubProvince, segmentINStreetLine } from "#in/street-line/segment"
 import { openParquetRowStream } from "#parquet/streams"
 import { SourceRegister } from "#registers"
