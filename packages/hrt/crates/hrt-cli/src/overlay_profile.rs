@@ -42,7 +42,7 @@ const POSTCODE_PLACETYPE: &str = "postalcode";
 const TEXT_ATTRIBUTES: [&str; 6] = ["name", "placetype", "country", "source", "boundary_source", "rowset"];
 
 /// The columns of the export that become boolean attributes.
-const FLAG_ATTRIBUTES: [&str; 3] = ["is_current", "is_deprecated", "is_superseded"];
+const FLAG_ATTRIBUTES: [&str; 4] = ["is_current", "is_deprecated", "is_superseded", "is_ceased"];
 
 /// The zooms a placetype's boundary and point first draw at.
 fn min_zooms(placetype: &str) -> (i32, i32) {

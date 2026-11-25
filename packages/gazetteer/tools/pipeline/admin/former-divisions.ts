@@ -405,7 +405,10 @@ export interface CeasedWOFDivision {
 /**
  * Whether a WOF record's properties describe a ceased place.
  */
-export function isCeasedRecord(properties: Record<string, unknown>): boolean {
+export function isCeasedRecord(properties: {
+	readonly "mz:is_current"?: unknown
+	readonly "edtf:cessation"?: unknown
+}): boolean {
 	const cessation = properties["edtf:cessation"]
 
 	return properties["mz:is_current"] === 0 || (typeof cessation === "string" && /^\d/.test(cessation))

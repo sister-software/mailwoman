@@ -32,6 +32,8 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { isCeasedRecord } from "#tools/pipeline/admin/former-divisions"
+import { ADMIN_PLACETYPES } from "#tools/pipeline/admin/ingest-wof"
 import { repositoryPatterns } from "#tools/pipeline/admin/polygons"
 import {
 	assignSyntheticIDs,
@@ -40,11 +42,13 @@ import {
 	overtureDivisionsGlob,
 	OVERTURE_ANONYMOUS_SECRET,
 } from "#tools/pipeline/admin/sources/overture"
-import { wofRecordPoint } from "#tools/pipeline/admin/wof/feature"
+import { extractParsedWOFFeature, wofRecordPoint } from "#tools/pipeline/admin/wof/feature"
 import { DEFAULT_RELEASE } from "#tools/pipeline/poi/defaults"
 import { DEFAULT_ADMIN_DB, DEFAULT_OVERTURE_COUNTRIES } from "#tools/pipeline/recipe/defaults"
+import { storedRecordNames } from "#tools/pipeline/wof/slim"
 import type { WOFFeature } from "#whosonfirst"
 import { type ParsedWOFPlacetype, pluckPlacetypeSpec } from "#whosonfirst/placetypes/admin"
+import { openWOFRecordStoreReader, refreshWOFRecordStore, wofRecordStorePathFor } from "#whosonfirst/record-store"
 
 export interface ExportWOFGeoParquetOptions {
 	/**
@@ -65,6 +69,12 @@ export interface ExportWOFGeoParquetOptions {
 	 * Reads each country's postcode repository as well as its admin repository.
 	 */
 	postcodes?: boolean
+	/**
+	 * The WOF record store the export refreshes over the clones and reads successor names from.
+	 *
+	 * @defaultValue the store {@linkcode wofRecordStorePathFor} assigns the clones
+	 */
+	recordStore?: PathBuilderLike
 	concurrency?: number
 	onProgress?: (counts: WOFGeoParquetCounts) => void
 }
@@ -86,8 +96,15 @@ export interface WOFGeoParquetCounts {
 	 * Records with neither a label point, a centroid property nor a point geometry.
 	 */
 	withoutPoint: number
-	superseded: number
+	/**
+	 * Records the admin intake leaves out: a superseded duplicate, or a placetype it doesn't ingest.
+	 */
+	notIngested: number
 	deprecated: number
+	/**
+	 * Records written with `is_ceased`, by the former-divisions rule.
+	 */
+	ceased: number
 	unreadable: number
 	/**
 	 * Parquet files written, across both types.
@@ -130,6 +147,10 @@ type RowType = (typeof ROW_TYPES)[number]
  */
 interface StagedRow {
 	place: ParsedWOFPlacetype
+	/**
+	 * Whether the record is ceased by the rule the former-divisions table applies (`isCeasedRecord`).
+	 */
+	ceased: boolean
 	geometry: string
 }
 
@@ -174,13 +195,14 @@ class ParquetStage {
 			await this.#db.run(/* sql */ `
 				CREATE OR REPLACE TEMP TABLE staged (
 					id BIGINT, parent_id BIGINT, name VARCHAR, placetype VARCHAR, country VARCHAR,
-					is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN, population BIGINT, geojson VARCHAR
+					is_current BOOLEAN, is_deprecated BOOLEAN, is_superseded BOOLEAN, is_ceased BOOLEAN,
+					population BIGINT, geojson VARCHAR
 				)
 			`)
 
 			const appender = await this.#db.createAppender("staged")
 
-			for (const { place, geometry } of rows) {
+			for (const { place, ceased, geometry } of rows) {
 				appender.appendBigInt(BigInt(place.id))
 				appender.appendBigInt(BigInt(place.parent_id))
 				appender.appendVarchar(place.name ?? "")
@@ -195,6 +217,7 @@ class ParquetStage {
 
 				appender.appendBoolean(place.isDeprecated)
 				appender.appendBoolean(place.isSuperseded)
+				appender.appendBoolean(ceased)
 
 				if (typeof place.population === "number" && Number.isSafeInteger(place.population)) {
 					appender.appendBigInt(BigInt(place.population))
@@ -217,7 +240,7 @@ class ParquetStage {
 			await this.#db.run(/* sql */ `
 				COPY (
 					SELECT id, parent_id, name, placetype, country, 'whosonfirst' AS source,
-						is_current, is_deprecated, is_superseded, population,
+						is_current, is_deprecated, is_superseded, is_ceased, population,
 						{'xmin': ST_XMin(geometry), 'xmax': ST_XMax(geometry),
 						 'ymin': ST_YMin(geometry), 'ymax': ST_YMax(geometry)} AS bbox,
 						geometry
@@ -484,29 +507,43 @@ export async function exportGazetteerGeoParquet(
 }
 
 /**
- * Writes every record of the clones to GeoParquet and reports what it read.
+ * Writes the records of the clones the admin intake keeps to GeoParquet, and reports what it read.
  *
- * A superseded or deprecated record is written with its flag set, so the tiles can show it.
+ * Each record passes through the intake's own decision, `extractParsedWOFFeature`
+ * over {@linkcode ADMIN_PLACETYPES} with successor names from the WOF record store,
+ * so the export holds the records the gazette is built from.
+ * Each kept record is written with its `is_deprecated`, `is_current` and `is_ceased` flags,
+ * so the tiles can sort deprecated and former records from candidates.
  */
 export async function exportWOFGeoParquet(
 	options: ExportWOFGeoParquetOptions
 ): Promise<{ out: string; counts: WOFGeoParquetCounts }> {
 	const out = PathBuilder.from(options.out).toString()
+	const reposDir = options.reposDir ?? wofReposPath
+	const storePath = options.recordStore ?? wofRecordStorePathFor(reposDir)
+	const placetypes = options.postcodes ? new Set([...ADMIN_PLACETYPES, "postalcode"]) : ADMIN_PLACETYPES
+
+	await refreshWOFRecordStore(storePath, reposDir)
+
+	using store = openWOFRecordStoreReader(storePath)
+
+	const namesOf = storedRecordNames(store)
 
 	const counts: WOFGeoParquetCounts = {
 		read: 0,
 		boundaries: 0,
 		points: 0,
 		withoutPoint: 0,
-		superseded: 0,
+		notIngested: 0,
 		deprecated: 0,
+		ceased: 0,
 		unreadable: 0,
 		files: 0,
 		geometryBytes: 0,
 	}
 
 	const paths = Globerator.from(repositoryPatterns(options), {
-		cwd: options.reposDir ?? wofReposPath,
+		cwd: reposDir,
 		absolute: true,
 		exclude: ["**/*-alt-*"],
 		// A clone can be a symbolic link into the repositories directory, as the US admin clone is.
@@ -545,15 +582,22 @@ export async function exportWOFGeoParquet(
 			continue
 		}
 
-		const place = pluckPlacetypeSpec(properties)
+		if (!extractParsedWOFFeature({ properties }, placetypes, namesOf)) {
+			counts.notIngested++
 
-		counts.superseded += Number(place.isSuperseded)
+			continue
+		}
+
+		const place = pluckPlacetypeSpec(properties)
+		const ceased = isCeasedRecord(properties)
+
 		counts.deprecated += Number(place.isDeprecated)
+		counts.ceased += Number(ceased)
 
 		if (geometry?.type === "Polygon" || geometry?.type === "MultiPolygon") {
 			const boundary = stringifyJSON(geometry)
 
-			stage.add("boundary", { place, geometry: boundary })
+			stage.add("boundary", { place, ceased, geometry: boundary })
 
 			counts.boundaries++
 			counts.geometryBytes += boundary.length
@@ -564,6 +608,7 @@ export async function exportWOFGeoParquet(
 		if (point) {
 			stage.add("point", {
 				place,
+				ceased,
 				geometry: stringifyJSON({ type: "Point", coordinates: [point.longitude, point.latitude] }),
 			})
 

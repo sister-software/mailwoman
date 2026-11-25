@@ -22,7 +22,6 @@
  */
 
 import type {
-	CircleLayerSpecification,
 	ExpressionSpecification,
 	LayerSpecification,
 	LineLayerSpecification,
@@ -61,8 +60,7 @@ interface GazetteerPlacetypeToggle {
 	key: string
 	label: string
 	/**
-	 * The placetypes the switch draws.
-	 * An empty list draws every placetype no other switch lists.
+	 * The placetypes the switch draws, among those the admin intake ingests.
 	 */
 	placetypes: readonly string[]
 	/**
@@ -75,11 +73,6 @@ interface GazetteerPlacetypeToggle {
 	 * Whether the switch shows when the page opens.
 	 */
 	visible: boolean
-	/**
-	 * Whether the switch labels its points.
-	 * A switch without labels draws a dot for each point.
-	 */
-	labels: boolean
 	/**
 	 * The boundary line's width at zoom 12, in pixels.
 	 */
@@ -98,11 +91,10 @@ interface GazetteerPlacetypeToggle {
 const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 	{
 		key: "countries",
-		label: "Countries & dependencies",
-		placetypes: ["country", "dependency", "disputed"],
+		label: "Countries",
+		placetypes: ["country"],
 		basemapLabel: "places_country",
 		visible: true,
-		labels: true,
 		lineWidth: 1.8,
 	},
 	{
@@ -111,7 +103,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["macroregion", "region"],
 		basemapLabel: "places_region",
 		visible: true,
-		labels: true,
 		lineWidth: 1.4,
 	},
 	{
@@ -120,7 +111,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["macrocounty", "county"],
 		basemapLabel: "places_subplace",
 		visible: true,
-		labels: true,
 		lineWidth: 1.1,
 	},
 	{
@@ -129,7 +119,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["locality"],
 		basemapLabel: "places_locality",
 		visible: true,
-		labels: true,
 		lineWidth: 1,
 	},
 	{
@@ -138,7 +127,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["localadmin"],
 		basemapLabel: "places_locality",
 		visible: false,
-		labels: true,
 		lineWidth: 0.8,
 	},
 	{
@@ -147,7 +135,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["borough"],
 		basemapLabel: "places_subplace",
 		visible: true,
-		labels: true,
 		lineWidth: 0.9,
 	},
 	{
@@ -156,16 +143,6 @@ const GAZETTEER_PLACETYPE_TOGGLES: readonly GazetteerPlacetypeToggle[] = [
 		placetypes: ["macrohood", "neighbourhood", "microhood"],
 		basemapLabel: "places_subplace",
 		visible: true,
-		labels: true,
-		lineWidth: 0.7,
-	},
-	{ key: "campuses", label: "Campuses", placetypes: ["campus"], visible: false, labels: true, lineWidth: 0.7 },
-	{
-		key: "other",
-		label: "Continents, oceans & time zones",
-		placetypes: [],
-		visible: false,
-		labels: false,
 		lineWidth: 0.7,
 	},
 ]
@@ -188,8 +165,6 @@ const REPLACED_BASEMAP_LABELS = new Set(["places_country", "places_region", "pla
 const LABEL_STACK = [
 	"deprecated",
 	"former",
-	"other",
-	"campuses",
 	"neighborhoods",
 	"boroughs",
 	"counties",
@@ -200,36 +175,33 @@ const LABEL_STACK = [
 ]
 
 function labelStackIndex(layerID: string, source: string): number {
-	const key = layerID.slice(`${source}-`.length).replace(/-(?:labels|points)$/, "")
+	const key = layerID.slice(`${source}-`.length).replace(/-labels$/, "")
 
 	return LABEL_STACK.indexOf(key)
 }
 
-const ALL_LISTED_PLACETYPES = GAZETTEER_PLACETYPE_TOGGLES.flatMap((toggle) => toggle.placetypes)
-
 /**
- * A record the gazette treats as a current place, as name search does: not marked
- * `is_current=false`, not deprecated and not superseded.
+ * A record `candidate.db` takes as a place the geocoder can return:
+ * the build's `is_current != 0 AND is_deprecated = 0`.
  *
  * A record with no `is_current` value counts as current, as the admin intake
  * reads an absent `mz:is_current`.
+ * A superseded or ceased record still marked current is a candidate too.
  */
 const CURRENT_RECORD: ExpressionSpecification = [
 	"all",
 	["!=", ["get", "is_current"], false],
 	["!=", ["get", "is_deprecated"], true],
-	["!=", ["get", "is_superseded"], true],
 ]
 
 /**
- * A record no longer current, or one a successor replaced.
- * Its source didn't withdraw it.
+ * A record marked `is_current=false` and not deprecated: a former place.
  *
- * The admin intake keeps a ceased division and drops a superseded record whose successor shares its name.
+ * The former-divisions table reads these to resolve a division by an old name.
  */
 const FORMER_RECORD: ExpressionSpecification = [
 	"all",
-	["any", ["==", ["get", "is_current"], false], ["==", ["get", "is_superseded"], true]],
+	["==", ["get", "is_current"], false],
 	["!=", ["get", "is_deprecated"], true],
 ]
 
@@ -240,11 +212,7 @@ const FORMER_RECORD: ExpressionSpecification = [
 const DEPRECATED_RECORD: ExpressionSpecification = ["==", ["get", "is_deprecated"], true]
 
 function placetypeFilter(toggle: GazetteerPlacetypeToggle): ExpressionSpecification {
-	const placetypes: ExpressionSpecification = toggle.placetypes.length
-		? ["in", ["get", "placetype"], ["literal", [...toggle.placetypes]]]
-		: ["!", ["in", ["get", "placetype"], ["literal", ALL_LISTED_PLACETYPES]]]
-
-	return ["all", placetypes, CURRENT_RECORD]
+	return ["all", ["in", ["get", "placetype"], ["literal", [...toggle.placetypes]]], CURRENT_RECORD]
 }
 
 /**
@@ -447,26 +415,6 @@ export function gazetteerOverlayLayers(
 		}
 
 		if (!sourceLayers.has(GazetteerOverlaySourceLayer.points)) continue
-
-		if (!toggle.labels) {
-			marks.push({
-				id: `${source}-${toggle.key}-points`,
-				type: "circle",
-				source,
-				"source-layer": GazetteerOverlaySourceLayer.points,
-				filter: placetypeFilter(toggle),
-				metadata: toggleMetadata(source, toggle),
-				layout: { visibility: visibility(toggle.visible) },
-				paint: {
-					"circle-color": OVERLAY_LINE_COLOR,
-					"circle-radius": 3,
-					"circle-stroke-color": "#ffffff",
-					"circle-stroke-width": 1,
-				},
-			} satisfies CircleLayerSpecification)
-
-			continue
-		}
 
 		const base = basemapLayers.find((layer) => layer.id === toggle.basemapLabel)
 

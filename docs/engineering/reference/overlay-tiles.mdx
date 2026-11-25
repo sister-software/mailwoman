@@ -8,15 +8,16 @@ description: How the wof and gazetteer overlay tile sets are built, in a contain
 Two tile sets draw the gazetteer's places over the basemap, so a place that one source holds and the other lacks is
 visible on the map. Earth's Gazette explorer reads them.
 
-| Tile set              | Row set                                         | Boundaries from                                                           |
-| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
-| `wof.<version>`       | Every record of the Who's On First admin clones | The record's own geometry, at full resolution                             |
-| `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`   | The `wof` export by id, or the union of an Overture division's land areas |
+| Tile set              | Row set                                           | Boundaries from                                                           |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| `wof.<version>`       | Each Who's On First record the admin intake keeps | The record's own geometry, at full resolution                             |
+| `gazetteer.<version>` | Every `spr` row of `admin-global-priority.db`     | The `wof` export by id, or the union of an Overture division's land areas |
 
 Each archive holds three layers: `boundaries`, `points` and `extents`. `extents` is the rectangle the gazetteer stores
 for each place. The resolver reads that rectangle in place of a boundary. Each feature's id is the place id, and its
 attributes are `name`, `placetype`, `country`, `source`, `parent_id`, `is_current`, `is_deprecated`, `is_superseded`,
-`population`, `population_rank` and `min_zoom`. `population_rank` is the basemap's rank of the same population, and
+`is_ceased`, `population`, `population_rank` and `min_zoom`. `is_ceased` follows the former-divisions rule
+(`isCeasedRecord`): `mz:is_current` 0 or a dated `edtf:cessation`. `population_rank` is the basemap's rank of the same population, and
 `min_zoom` is the zoom the point first draws at. A style reads both to size an overlay label as the basemap sizes its
 own. A `gazetteer` boundary also records `boundary_source`. A GeoNames place draws as a point only, because GeoNames
 publishes no boundaries.
@@ -42,7 +43,12 @@ publish either archive to `mailwoman-public`.
    stand: on the lab, `gazetteer inspect sync` keeps them current.
 2. With the `gazetteer` row set, it copies the admin database when `--admin` is an `s3://` URL.
    `--rowsets wof` skips this step and step 4.
-3. `exportWOFGeoParquet` writes `export/rowset=wof/`.
+3. `exportWOFGeoParquet` writes `export/rowset=wof/`. It refreshes the WOF record store over the clones and passes
+   each record through the admin intake's own decision, `extractParsedWOFFeature` over `ADMIN_PLACETYPES`, with
+   successor names read from the store. A superseded duplicate and a placetype the intake doesn't ingest stay out, so
+   the export holds the records the gazette is built from. Earth draws a record under its placetype's switch when
+   `candidate.db` takes it (`is_current != 0` and `is_deprecated = 0`), and under "Former places" or "Deprecated
+   records" otherwise.
 4. `exportGazetteerGeoParquet` writes `export/rowset=gazetteer/`. It reads Overture's `divisions` theme from
    `s3://overturemaps-us-west-2`, recomputes each division's synthetic id with `assignSyntheticIDs`, and fails when no
    Overture place in the admin database maps to a division.

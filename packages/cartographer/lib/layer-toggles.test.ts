@@ -86,7 +86,7 @@ describe("layer toggles", () => {
 		expect(rankOf(copies)).toEqual(rankOf(basemap))
 	})
 
-	test("each Who's On First record draws under exactly one switch, by placetype when current and by status when not", () => {
+	test("each Who's On First record draws under one switch: by placetype when candidate.db takes it, by status when not", () => {
 		const evaluate = (filter: FilterSpecification, properties: Feature["properties"]) => {
 			const { filter: matches } = featureFilter(filter, "filter")
 			const feature: Feature = { type: "Point", properties }
@@ -100,10 +100,10 @@ describe("layer toggles", () => {
 			{ placetype: "locality", is_current: false, is_deprecated: false, is_superseded: false },
 			{ placetype: "locality", is_current: true, is_deprecated: false, is_superseded: true },
 			{ placetype: "locality", is_current: false, is_deprecated: true, is_superseded: false },
-			{ placetype: "timezone", is_current: true, is_deprecated: false, is_superseded: false },
+			{ placetype: "county", is_current: true, is_deprecated: false, is_superseded: false, is_ceased: true },
 		]
 
-		const labels = overlay.filter((layer) => layer.type === "symbol" || layer.type === "circle")
+		const labels = overlay.filter((layer) => layer.type === "symbol")
 
 		const matches = records.map((properties) =>
 			labels
@@ -116,9 +116,9 @@ describe("layer toggles", () => {
 			"page-overlay-localities-labels",
 			"page-overlay-localities-labels",
 			"page-overlay-former-labels",
-			"page-overlay-former-labels",
+			"page-overlay-localities-labels",
 			"page-overlay-deprecated-labels",
-			"page-overlay-other-points",
+			"page-overlay-counties-labels",
 		])
 	})
 

@@ -11,12 +11,11 @@ import type { PathBuilderLike } from "path-ts"
 
 import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "#tools/pipeline/admin/label-point-adjudicator"
 import { type ExtractedWOFFeature, extractParsedWOFFeature } from "#tools/pipeline/admin/wof/feature"
-import { wofRecordNames } from "#tools/pipeline/wof/slim"
+import { storedRecordNames } from "#tools/pipeline/wof/slim"
 import type { WOFFeature } from "#whosonfirst"
 import {
 	openWOFRecordStoreReader,
 	refreshWOFRecordStore,
-	storedWOFRecord,
 	storedWOFRecords,
 	wofRecordStorePathFor,
 	wofRepositories,
@@ -188,12 +187,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 
 	using store = openWOFRecordStoreReader(storePath)
 
-	// A ceased division's successors are read from the store, whatever repository holds them.
-	const namesOf = (id: number) => {
-		const successor = storedWOFRecord<WOFFeature>(store, id)
-
-		return successor ? wofRecordNames(successor.feature.properties ?? {}) : null
-	}
+	const namesOf = storedRecordNames(store)
 
 	let filesFound = 0
 

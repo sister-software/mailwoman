@@ -19,7 +19,10 @@ import { md5Hex } from "@mailwoman/core/crypto/hash"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
+
+import { storedWOFRecord, type WOFRecordStoreDatabase } from "#whosonfirst/record-store"
 
 /**
  * Decimal places a rounded coordinate keeps: about 0.11 m at the equator,
@@ -134,6 +137,19 @@ function isCeasedDivision(properties: Record<string, unknown>): boolean {
  * The names of the record with an id, in every language, or `null` when the caller can't read that record.
  */
 export type WOFNamesOf = (id: number) => readonly string[] | null
+
+/**
+ * A {@linkcode WOFNamesOf} over the WOF record store.
+ *
+ * It reads a successor's names whatever repository holds the successor.
+ */
+export function storedRecordNames(store: DatabaseClient<WOFRecordStoreDatabase>): WOFNamesOf {
+	return (id) => {
+		const successor = storedWOFRecord<{ properties?: object }>(store, id)
+
+		return successor ? wofRecordNames(successor.feature.properties ?? {}) : null
+	}
+}
 
 /**
  * Whether a parsed record is superseded, the rule the forks, the doctor

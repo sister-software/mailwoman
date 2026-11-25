@@ -353,10 +353,15 @@ export async function buildOverlayTiles(options: BuildOverlayTilesOptions): Prom
 		reposDir,
 		...countries,
 		postcodes: options.postcodes === true,
+		// Clones synced into the work directory get their record store beside them; `--repos` clones reuse theirs.
+		...(options.reposDir ? {} : { recordStore: PathBuilder.from(work, "wof-records.db") }),
+		onProgress: (counts) => phase("export wof", `${counts.read} records read`),
 	})
 
 	report.push(
-		`wof export: ${wof.counts.read} records, ${wof.counts.boundaries} boundaries, ${wof.counts.points} points, ` +
+		`wof export: ${wof.counts.read} records read, ${wof.counts.notIngested} left out as the admin intake leaves them, ` +
+			`${wof.counts.deprecated} deprecated and ${wof.counts.ceased} ceased kept, ` +
+			`${wof.counts.boundaries} boundaries, ${wof.counts.points} points, ` +
 			`${wof.counts.unreadable} unreadable`
 	)
 
