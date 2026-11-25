@@ -3,7 +3,7 @@ title: Route PO box records for mailing review
 description: Identify a PO box parse and keep mailing intake separate from building-coordinate use.
 role: guide
 source-of-truth: packages/mailwoman/lib/engine/parser.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
-verified-with: mailwoman source with the parse API of issue 3121
+verified-with: published mailwoman v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-25
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -60,7 +60,7 @@ for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234", "350 5
 
 `decodeAsJSON` gives one value per tag for the required-field check. `flattenTreeNodes` lists the returned components in source order, and `console.table` prints each one's tag, value, and offsets. The rule sends a stage fault to technical review and prints the fault before it considers the query kind. It sends a non-PO-box kind to the ordinary address flow. For a `po_box` kind, it requires the `po_box`, `locality`, `region`, and `postcode` components before placing a record in this application's mailing-review queue. A missing field triggers a request for more input. The application supplies the <Country code="US" /> mailing-intake context, separately from the parser locale.
 
-Run `node route-po-box.ts`. The script prints this complete output:
+Run `node route-po-box.ts`. Published `mailwoman@11.3.0` on Node.js 24.22.3 and Linux x64 printed this complete output:
 
 ```text
 PO Box 1234, Springfield, IL 62701

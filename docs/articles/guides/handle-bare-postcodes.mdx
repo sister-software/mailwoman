@@ -3,7 +3,7 @@ title: Require country context for a bare postcode
 description: Parse a postcode-only input and request caller country context before a geographic lookup.
 role: guide
 source-of-truth: packages/mailwoman/lib/engine/parser.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/resolver/types.ts, packages/postcode/lib/legacy-formats/table.ts
-verified-with: mailwoman source with the parse API of issue 3121
+verified-with: published mailwoman v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-25
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -38,12 +38,7 @@ const cases: Array<{ input: string; applicationCountry: string | null }> = [
 ]
 
 for (const example of cases) {
-	const resolverPreference = example.applicationCountry
-		? { country: example.applicationCountry, source: "caller" as const }
-		: null
-
-	const options = resolverPreference ? { resolveOpts: { defaultCountry: resolverPreference } } : undefined
-	const result = await parser.parse(example.input, options)
+	const result = await parser.parse(example.input)
 	const { postcode } = decodeAsJSON(result.tree)
 
 	const route =
@@ -63,9 +58,9 @@ for (const example of cases) {
 }
 ```
 
-The application owns `applicationCountry`. When it has `US`, the example also passes `{ country: "US", source: "caller" }` through `resolveOpts.defaultCountry`, the resolver's country preference. This exercise configures no resolver, so the parse output can't show whether a lookup applied that preference. The policy reads the application field directly and marks a future country-scoped lookup as pending data. It requests a country when that field is absent, even when one format name looks specific to a country.
+The application owns `applicationCountry`. The parser reads the same input in the first two cases. The policy reads the application field directly and marks a future country-scoped lookup as pending data. It requests a country when that field is absent, even when one format name looks specific to a country. Supply the country as a resolver preference when you perform the later lookup.
 
-Run `node route-postcodes.ts`. The script prints this complete output:
+Run `node route-postcodes.ts`. Published `mailwoman@11.3.0` on Node.js 24.22.3 and Linux x64 printed this complete output:
 
 ```text
 10118 (application country: none)

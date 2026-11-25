@@ -3,7 +3,7 @@ title: Route intersection descriptions for review
 description: Check both crossing-street components before treating a parse as an intersection description.
 role: guide
 source-of-truth: packages/mailwoman/lib/engine/parser.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
-verified-with: mailwoman source with the parse API of issue 3121
+verified-with: published mailwoman v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-25
 ---
 
 import { CommonPrerequisites } from "#partials/runtime"
@@ -52,7 +52,7 @@ for (const input of ["5th Avenue and Main Street, Springfield, IL", "5th and Mai
 
 This application rule requires both `intersection_a` and `intersection_b` nodes and an empty `faults` list. It records the query kind and alternatives for diagnosis. When the top kind is `intersection` and the tree lacks either crossing-street component, it asks for clarification. The rule decides the route from the component tree and leaves the coordinate unknown.
 
-Run `node route-intersection.ts`. The script prints the complete output below:
+Run `node route-intersection.ts`. Published `mailwoman@11.3.0` on Node.js 24.22.3 and Linux x64 printed the complete output below:
 
 ```text
 5th Avenue and Main Street, Springfield, IL
