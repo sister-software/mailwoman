@@ -231,7 +231,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 					${fillExprs},
 					round(100.0 * count(*) FILTER (len(address_levels) > 0) / count(*), 1) AS address_levels_pct,
 					round(100.0 * count(*) FILTER (
-						len(list_filter(sources, s -> s.dataset ILIKE '%openaddress%')) > 0
+						len(list_filter(sources, lambda s: s.dataset ILIKE '%openaddress%')) > 0
 					) / count(*), 1) AS oa_lineage_pct
 				FROM read_parquet('${src}')
 			`)
