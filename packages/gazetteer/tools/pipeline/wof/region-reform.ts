@@ -58,12 +58,17 @@ export interface ReformCitation {
 export interface RegionReformUnit {
 	/**
 	 * The unit's ISO 3166-2 code, `KE-01`.
+	 * Absent while ISO has assigned the unit no code.
 	 */
-	iso: string
+	iso?: string
 	/**
 	 * The unit's name without its designator, `Baringo`.
 	 */
 	name: string
+	/**
+	 * The EDTF date this unit came into being, when it differs from {@link RegionReformSpec.inception}.
+	 */
+	inception?: string
 	/**
 	 * The unit's English name when `name` is in another language, `South Papua` for `Papua Selatan`.
 	 */
@@ -221,6 +226,21 @@ function concordancesOf(record: LoadedRecord): Record<string, unknown> {
 	const concordances = properties(record)["wof:concordances"]
 
 	return concordances && typeof concordances === "object" ? (concordances as Record<string, unknown>) : {}
+}
+
+/**
+ * The key a unit's record is found by on a second run: its ISO 3166-2 code,
+ * or its Wikidata item when ISO has assigned it no code.
+ */
+function reformUnitKey(unit: RegionReformUnit): string {
+	return unit.iso ?? unit.wikidata
+}
+
+/**
+ * The `iso:code` and `iso:id` concordances of a unit that has an ISO 3166-2 code.
+ */
+function isoConcordances(unit: RegionReformUnit): Record<string, string> {
+	return unit.iso ? { "iso:code": unit.iso, "iso:id": unit.iso } : {}
 }
 
 /**
@@ -473,29 +493,27 @@ export async function applyRegionReform(
 	const mintedIDs = new Set(minted.map((record) => record.id))
 
 	const writtenBefore = new Map(
-		minted
-			.map((record) => {
-				const concordances = record.properties["wof:concordances"]
+		minted.flatMap((record) => {
+			const concordances = record.properties["wof:concordances"]
+			const held = concordances && typeof concordances === "object" ? (concordances as Record<string, unknown>) : {}
 
-				const iso =
-					concordances && typeof concordances === "object" ? (concordances as Record<string, unknown>)["iso:id"] : null
-
-				return typeof iso === "string" ? ([iso, record.id] as const) : null
-			})
-			.filter(isPresent)
+			return [held["iso:id"], held["wd:id"]]
+				.filter((key): key is string => typeof key === "string")
+				.map((key) => [key, record.id] as const)
+		})
 	)
 
 	const idOfUnit = new Map<string, number>()
 
 	for (const unit of spec.units) {
-		let id = unit.existing ?? writtenBefore.get(unit.iso)
+		let id = unit.existing ?? writtenBefore.get(reformUnitKey(unit))
 
 		if (!isPresent(id)) {
 			id = nextMailwomanWOFID(mintedIDs)
 			mintedIDs.add(id)
 		}
 
-		idOfUnit.set(unit.iso, id)
+		idOfUnit.set(reformUnitKey(unit), id)
 	}
 
 	const unitOfGeoNames = new Map(spec.units.map((unit) => [unit.geonames, unit] as const))
@@ -556,7 +574,7 @@ export async function applyRegionReform(
 			continue
 		}
 
-		const unitID = idOfUnit.get(unit.iso)!
+		const unitID = idOfUnit.get(reformUnitKey(unit))!
 		const replaced = new Set<number>()
 
 		const moved = hierarchy.map((branch) => {
@@ -636,7 +654,7 @@ export async function applyRegionReform(
 	const membersOfUnit = new Map(
 		spec.units
 			.filter((unit) => unit.members.length > 0)
-			.map((unit) => [unit.iso, unit.members.map((id) => required(id, "member"))] as const)
+			.map((unit) => [reformUnitKey(unit), unit.members.map((id) => required(id, "member"))] as const)
 	)
 
 	const unions = await unionGeometries(membersOfUnit)
@@ -656,12 +674,12 @@ export async function applyRegionReform(
 	})
 
 	for (const unit of spec.units) {
-		const id = idOfUnit.get(unit.iso)!
+		const id = idOfUnit.get(reformUnitKey(unit))!
 		const english = unit.english ?? unit.name
 		const longName = spec.designator ? `${english} ${spec.designator}` : null
 
 		result.units.push({
-			iso: unit.iso,
+			iso: reformUnitKey(unit),
 			name: unit.name,
 			id,
 			written: !isPresent(unit.existing),
@@ -670,8 +688,8 @@ export async function applyRegionReform(
 
 		if (isPresent(unit.existing)) {
 			const record = required(unit.existing, `existing record of ${unit.iso}`)
-			const remaining = unions.get(unit.iso)
-			const kept = membersOfUnit.get(unit.iso) ?? []
+			const remaining = unions.get(reformUnitKey(unit))
+			const kept = membersOfUnit.get(reformUnitKey(unit)) ?? []
 			const total = (key: string) => kept.reduce((all, member) => all + Number(properties(member)[key] ?? 0), 0)
 
 			writes.set(
@@ -679,8 +697,8 @@ export async function applyRegionReform(
 				patchWOFRecordText(
 					record.text,
 					{
-						"wof:concordances": { ...concordancesOf(record), "iso:code": unit.iso, "iso:id": unit.iso },
-						"wof:concordances_official": "iso:code",
+						"wof:concordances": { ...concordancesOf(record), ...isoConcordances(unit) },
+						...(unit.iso ? { "wof:concordances_official": "iso:code" } : {}),
 						"wof:lastmodified": options.lastModified,
 						...(remaining
 							? {
@@ -704,8 +722,8 @@ export async function applyRegionReform(
 			continue
 		}
 
-		const members = membersOfUnit.get(unit.iso)!
-		const union = unions.get(unit.iso)
+		const members = membersOfUnit.get(reformUnitKey(unit))!
+		const union = unions.get(reformUnitKey(unit))
 
 		if (!union) throw new Error(`region reform ${spec.country}: ${unit.iso} has no member geometry`)
 
@@ -729,7 +747,7 @@ export async function applyRegionReform(
 
 		// A second run keeps a unit's record as the first run wrote it.
 		// Its members have moved since, so the province they came from can no longer be read from them.
-		if (writtenBefore.has(unit.iso)) {
+		if (writtenBefore.has(reformUnitKey(unit))) {
 			result.units.at(-1)!.written = false
 
 			continue
@@ -740,7 +758,7 @@ export async function applyRegionReform(
 			type: "Feature",
 			properties: {
 				"edtf:cessation": "uuuu",
-				"edtf:inception": spec.inception,
+				"edtf:inception": unit.inception ?? spec.inception,
 				"geom:area": Number(sum("geom:area").toFixed(6)),
 				"geom:area_square_m": sum("geom:area_square_m"),
 				"geom:bbox": union.bbox.join(","),
@@ -764,11 +782,10 @@ export async function applyRegionReform(
 				"wof:breaches": [],
 				"wof:concordances": {
 					"gn:id": unit.geonames,
-					"iso:code": unit.iso,
-					"iso:id": unit.iso,
+					...isoConcordances(unit),
 					"wd:id": unit.wikidata,
 				},
-				"wof:concordances_official": "iso:code",
+				"wof:concordances_official": unit.iso ? "iso:code" : "wd:id",
 				"wof:country": spec.country,
 				"wof:geomhash": wofGeometryHash(union.geometry),
 				"wof:hierarchy": [
