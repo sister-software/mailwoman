@@ -55,7 +55,7 @@ import {
 } from "@mailwoman/neural/weights/families"
 import { basename, dirname, PathBuilder, type PathBuilderLike, relative, resolvePathBuilder } from "path-ts"
 
-import { auditAddressSystemWidths } from "#release-kit/weights/address-system-width"
+import { auditAddressSystemWidths, fitAddressSystemTable } from "#release-kit/weights/address-system-width"
 
 /**
  * The graph file a training export's quantized graph is written to, the one a weights package serves.
@@ -512,6 +512,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			recipe: { path: relative(repoRoot.toString(), recipePath.toString()), sha256: await sha256File(recipePath) },
 			export: exportIdentity?.identity ?? null,
 		})
+
+		await fitAddressSystemTable(derivedCard, candidateGraph, publishedCardPath.toString())
 
 		cardKind = "derived"
 	}
