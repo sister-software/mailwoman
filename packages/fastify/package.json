@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/fastify",
-	"version": "11.3.0",
+	"version": "11.4.0",
 	"description": "Fastify plugin for mailwoman — registers POST /parse, /geocode and /poi plus GET /health, and a fastify.mailwoman decorator, over a geocode session or a parse pipeline built lazily, or an injected pipeline.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

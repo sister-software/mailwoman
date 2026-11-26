@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/recognizer",
-	"version": "11.3.0",
+	"version": "11.4.0",
 	"description": "A declarative grammar library and recognition engine for the formal languages in geographic queries: a deterministic JSON intermediate representation, compiled automata, captures and validators, and a WebAssembly adapter with a synchronous first-call loader.",
 	"keywords": [
 		"grammar",

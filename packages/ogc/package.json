@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/ogc",
-	"version": "11.3.0",
+	"version": "11.4.0",
 	"description": "OGC API adapter for the Mailwoman engine. Serves the OGC API Common landing page, conformance declaration, API definition and collections, gazetteer places as OGC API Features items, and forward geocoding at /search in the form of PDOK's Location API. Run it with `npx @mailwoman/ogc serve`.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
