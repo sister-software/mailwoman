@@ -1,16 +1,16 @@
 ---
 title: Packages and runtime
-description: Current first-parse installation, the Node requirement, and published 11.0.0 runtime and size records.
+description: Published 11.3.0 package roles, Node requirements, and installed sizes, with dated runtime path rules.
 role: reference
 source-of-truth: packages/mailwoman/package.json, packages/neural/package.json, packages/neural-weights-en-us/package.json, packages/codex/package.json, packages/mailwoman/lib/env/schema.ts, packages/mailwoman/lib/engine/resolver-backend.ts, packages/mailwoman/lib/geocode/session.ts, packages/mailwoman/lib/engine/api.ts, packages/resolver-wof-sqlite/lib/env.ts, packages/core/lib/env/schema.ts, packages/core/lib/env/paths.ts
-verified-with: published mailwoman v11.3.0 for first-parse installation and published v11.0.0 for runtime paths and measured sizes
+verified-with: published mailwoman, neural, neural-weights-en-us, and codex v11.3.0 on Linux x64, measured 2026-11-26. Runtime path rules retain the published 11.0.0 source baseline.
 ---
 
 import { NodeRequirement } from "#partials/runtime"
 
 # Packages and runtime
 
-The current first-parse exercise installs one package. This page also keeps the package roles, runtime settings, and file sizes checked against published 11.0.0 manifests. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
+The first-parse exercise installs one package. The package roles and sizes below were checked against published 11.3.0. The runtime path rules retain their published 11.0.0 source baseline until the geographic-data rebuild can be checked. [The library reference](./library.mdx) gives callable signatures, options, and result types. [Limits and release status](/product/limits-and-status) distinguishes downloadable data from installed and evaluated coverage.
 
 The [data and locales reference](./data-and-locales.mdx) lists bundle dependencies, model families, and scope classifications.
 The [CLI reference](./cli.mdx) lists the current checkout's generated command and flag tables with selected published 11.0.0 checks.
@@ -23,22 +23,24 @@ npm install mailwoman
 
 The published `mailwoman@11.3.0` manifest depends on `@mailwoman/neural` and `@mailwoman/neural-weights-en-us`. The `mailwoman` entry point exports `createParser` and the tree readers used in the [first-parse tutorial](../start.mdx). Install a scoped package directly when your application imports its own entry point, as the [record-check guide](../guides/validate-records.mdx) does for `@mailwoman/codex`.
 
-## Package inventory checked with 11.0.0
+## Package inventory checked with 11.3.0
 
 | Package                                  | Purpose                                       | Public surface used here                                                                         |
 | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `mailwoman@11.0.0`                       | CLI and parse pipeline                        | `mailwoman` and `mw` binaries; `mailwoman` for `parse`; `mailwoman/geocode` for geocoding calls. |
-| `@mailwoman/neural@11.0.0`               | Neural classifier runtime                     | `@mailwoman/neural` for `NeuralAddressClassifier`.                                               |
-| `@mailwoman/neural-weights-en-us@11.0.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.            |
-| `@mailwoman/codex@11.0.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                          |
+| `mailwoman@11.3.0`                       | CLI and parse pipeline                        | `mailwoman` and `mw` binaries; `mailwoman` for `parse`; `mailwoman/geocode` for geocoding calls. |
+| `@mailwoman/neural@11.3.0`               | Neural classifier runtime                     | `@mailwoman/neural` for `NeuralAddressClassifier`.                                               |
+| `@mailwoman/neural-weights-en-us@11.3.0` | en-US model and tokenizer files               | Asset package read by `NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })`.            |
+| `@mailwoman/codex@11.3.0`                | Component vocabulary and postal shape helpers | `@mailwoman/codex/component` and `@mailwoman/codex/us`.                                          |
 
-These package roles and import surfaces were checked against the 11.0.0 release. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
+These package roles and import surfaces were checked against the 11.3.0 release. A geocoding call also needs a resolver and geographic data. The [library reference](./library.mdx#geocode-and-batch-calls) gives the resolver interface and call signature.
 
 Mailwoman requires <NodeRequirement />. These are the patched release floors from the [November 2026 Node.js security release](https://nodejs.org/en/blog/vulnerability/november-2026-security-releases/).
 
-The manifest also declares `type: "module"`. The examples on these pages are TypeScript files that Node runs directly, from a project whose `package.json` sets `"type": "module"`. The en-US weights package version is 11.0.0, while its model card identifies the model inside it as version 10.8.0.
+The manifest also declares `type: "module"`. The examples on these pages are TypeScript files that Node runs directly, from a project whose `package.json` sets `"type": "module"`. The published en-US weights package and its bundled model card both identify version 11.3.0. The bundled `calibration.json` still identifies model version 5.3.0, so it doesn't establish an accuracy mapping for the installed model. [Confidence and limits](../explanation/confidence-and-limits.mdx) explains that distinction.
 
 ## Runtime variables and path precedence
+
+The path rules in this table were checked with published 11.0.0. Check resolved paths in the installed release before relying on them for a new geographic-data artifact.
 
 | Variable                 | Published 11.0.0 behavior                                                                                                                                                                                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,21 +54,21 @@ The manifest also declares `type: "module"`. The examples on these pages are Typ
 
 ## Checked file sizes
 
-These are local apparent file and directory sizes from the published 11.0.0 install used for the first-parse exercise. The measurement ran on Linux x86_64 with npm 11.19.1. `du -sb` measured each installed package directory separately, and `stat -c %s` measured the model file. The values describe the listed directory or file in this installation. They exclude the rest of `node_modules` and any downloaded geocoding database.
+These are local apparent file and directory sizes from a published 11.3.0 installation on Linux x64, measured 26 November 2026. `du -sb` measured each installed package directory separately, and `stat -c %s` measured the model file. The values describe the listed directory or file in this installation. They exclude the rest of `node_modules` and any downloaded geocoding database.
 
 | Installed path                                            | Method       |      Bytes |
 | --------------------------------------------------------- | ------------ | ---------: |
-| `node_modules/mailwoman`                                  | `du -sb`     | 17,969,301 |
-| `node_modules/@mailwoman/neural`                          | `du -sb`     |  1,649,870 |
-| `node_modules/@mailwoman/neural-weights-en-us`            | `du -sb`     | 65,018,687 |
-| `node_modules/@mailwoman/neural-weights-en-us/model.onnx` | `stat -c %s` | 29,829,842 |
+| `node_modules/mailwoman`                                  | `du -sb`     | 20,438,302 |
+| `node_modules/@mailwoman/neural`                          | `du -sb`     |  1,702,682 |
+| `node_modules/@mailwoman/neural-weights-en-us`            | `du -sb`     | 69,117,825 |
+| `node_modules/@mailwoman/neural-weights-en-us/model.onnx` | `stat -c %s` | 29,831,448 |
 
 The total size of a clean install containing only the three first-parse packages hasn't been measured for this page. This page doesn't measure runtime memory, browser download size, or server capacity. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) reports one resident-memory measurement from one Linux host, and [Parse an address in a browser](../guides/parse-in-browser.mdx) reports one browser transfer size. The bundle registry's declared data estimates are on [limits and release status](/product/limits-and-status).
 
-On 18 November 2026, `npm view <package>@11.0.0 dist.unpackedSize` returned the same three package-directory byte values shown above. This registry metadata checks the package contents separately from the earlier `du -sb` run. The `model.onnx` file value remains the earlier install's measurement. The registry metadata doesn't report that file's size.
+On 26 November 2026, `npm view <package>@11.3.0 dist.unpackedSize` returned the same three package-directory byte values shown above. This registry metadata checks the package contents separately from the local `du -sb` run. The `model.onnx` value comes from the local file measurement. The registry metadata doesn't report that file's size.
 
 ## Published sources
 
-- [`mailwoman@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/package.json), [`@mailwoman/neural@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/package.json), [en-US weights manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/package.json), and [codex manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/package.json).
+- [`mailwoman@11.3.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.3.0/packages/mailwoman/package.json), [`@mailwoman/neural@11.3.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.3.0/packages/neural/package.json), [en-US weights manifest](https://github.com/sister-software/mailwoman/blob/v11.3.0/packages/neural-weights-en-us/package.json), and [codex manifest](https://github.com/sister-software/mailwoman/blob/v11.3.0/packages/codex/package.json).
 - [Core storage variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/env/schema.ts), [CLI runtime variables](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/env/schema.ts), and [resolver path precedence](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/resolver-backend.ts).
 - [Published geocode session](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/geocode/session.ts), [resolver environment schema](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/lib/env.ts), and [native health report](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/api-engine.ts).
