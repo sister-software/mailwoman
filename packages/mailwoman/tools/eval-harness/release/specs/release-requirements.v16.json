@@ -199,8 +199,8 @@
 			"sha256": "ebd8af18d8debee722b9488a44b7e9de132795c32cc78939355d149e924fece8"
 		},
 		"candidate": {
-			"description": "The exact release artifact's model.onnx",
-			"sha256": null
+			"description": "v8.12.0-base-c6-wofreps-v0823-s42 seed 42 step 121,000, run 87902e27f4fff9bc, on corpus v0.8.23-prominent-retention-overlay",
+			"sha256": "ea9db85b3672c7550c34f90ee393ff36953371dd69b6403a12998176f9027b60"
 		}
 	},
 	"statistics": {
