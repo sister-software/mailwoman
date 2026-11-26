@@ -94,6 +94,12 @@ export interface RegionReformUnit {
 	 */
 	members: number[]
 	/**
+	 * The unit's point as `[longitude, latitude]`, for a unit the fork holds no member boundary of.
+	 *
+	 * Its record is a point record, and only records GeoNames files under the unit move to it.
+	 */
+	point?: [number, number]
+	/**
 	 * The WOF id of a current region record that already describes this unit and is kept.
 	 */
 	existing?: number
@@ -663,15 +669,25 @@ export async function applyRegionReform(
 	/**
 	 * The citation of a geometry drawn as the union of a unit's members.
 	 */
-	const geometrySource = (unit: RegionReformUnit, members: readonly LoadedRecord[]) => ({
-		property: "geometry",
-		citation:
-			`The union of the Who's On First ${spec.memberPlacetype} records ` +
-			`${members.map((member) => `${properties(member)["wof:name"]} (${member.feature.id})`).join(", ")}. ` +
-			spec.sources.membership.citation +
-			(unit.note ? ` ${unit.note}` : ""),
-		...(spec.sources.membership.url ? { url: spec.sources.membership.url } : {}),
-	})
+	const geometrySource = (unit: RegionReformUnit, members: readonly LoadedRecord[]) => {
+		if (!members.length) {
+			return {
+				property: "geometry",
+				citation: `GeoNames first-level division ${unit.geonames}: its point.${unit.note ? ` ${unit.note}` : ""}`,
+				url: `https://www.geonames.org/${unit.geonames}`,
+			}
+		}
+
+		return {
+			property: "geometry",
+			citation:
+				`The union of the Who's On First ${spec.memberPlacetype} records ` +
+				`${members.map((member) => `${properties(member)["wof:name"]} (${member.feature.id})`).join(", ")}. ` +
+				spec.sources.membership.citation +
+				(unit.note ? ` ${unit.note}` : ""),
+			...(spec.sources.membership.url ? { url: spec.sources.membership.url } : {}),
+		}
+	}
 
 	for (const unit of spec.units) {
 		const id = idOfUnit.get(reformUnitKey(unit))!
@@ -691,6 +707,9 @@ export async function applyRegionReform(
 			const remaining = unions.get(reformUnitKey(unit))
 			const kept = membersOfUnit.get(reformUnitKey(unit)) ?? []
 			const total = (key: string) => kept.reduce((all, member) => all + Number(properties(member)[key] ?? 0), 0)
+
+			// A kept record with its code already set and no new boundary keeps its file unchanged.
+			if (!remaining && concordancesOf(record)["iso:code"] === unit.iso) continue
 
 			writes.set(
 				record.path,
@@ -722,12 +741,23 @@ export async function applyRegionReform(
 			continue
 		}
 
-		const members = membersOfUnit.get(reformUnitKey(unit))!
-		const union = unions.get(reformUnitKey(unit))
+		const members = membersOfUnit.get(reformUnitKey(unit)) ?? []
 
-		if (!union) throw new Error(`region reform ${spec.country}: ${unit.iso} has no member geometry`)
+		const union =
+			unions.get(reformUnitKey(unit)) ??
+			(unit.point
+				? {
+						geometry: { type: "Point", coordinates: unit.point },
+						bbox: [...unit.point, ...unit.point] as WOFRecordFeature["bbox"],
+						centroid: unit.point,
+					}
+				: null)
 
-		const branch = hierarchyOf(members[0]!)[0] ?? {}
+		if (!union) throw new Error(`region reform ${spec.country}: ${unit.iso} has neither a member nor a point`)
+
+		// A unit without members reads its continent and country from a region the reform affects.
+		const sibling = members[0] ?? required([...affected][0] ?? -1, "affected region")
+		const branch = hierarchyOf(sibling)[0] ?? {}
 		const country = branch.country_id
 
 		const supersedes = [
@@ -777,7 +807,7 @@ export async function applyRegionReform(
 				"mz:is_current": 1,
 				"name:eng_x_preferred": [english],
 				"name:eng_x_variant": [longName, ...(unit.variants ?? [])].filter(isPresent),
-				"src:geom": String(properties(members[0]!)["src:geom"] ?? "whosonfirst"),
+				"src:geom": members[0] ? String(properties(members[0])["src:geom"] ?? "whosonfirst") : "geonames",
 				"wof:belongsto": [branch.continent_id, country].filter(isPresent),
 				"wof:breaches": [],
 				"wof:concordances": {
