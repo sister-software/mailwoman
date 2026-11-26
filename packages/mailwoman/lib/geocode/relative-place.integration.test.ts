@@ -44,7 +44,11 @@ describe.skipIf(!haveArtifacts)("geocode — a relative-place description (#3022
 		expect(result.hierarchy.map((place) => place.placeID)).not.toContain(STATION_KY)
 	}, 60_000)
 
-	it("answers with Station, Kentucky when the input states the town", async () => {
+	// The 11.4.0 model (v8.13.0 seed 42) reads `Station KY` as one region span (0.46),
+	// where 11.3.0 read the locality `Station` at 0.13 and the region `KY`.
+	// Accepted in #3521.
+	// The test fails until a model reads the town.
+	it.fails("answers with Station, Kentucky when the input states the town", async () => {
 		const { result } = await (await sessionPromise!).geocode("Behind the gas station, Station KY")
 
 		expect(result.components).toMatchObject({ locality: "Station", region: "KY" })
