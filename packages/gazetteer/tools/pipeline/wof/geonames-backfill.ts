@@ -101,7 +101,7 @@ export interface GeoNamesBackfillOptions {
 	 * Without it the run reads the mailwoman id range of every fork and mints after the largest.
 	 * A caller that runs several countries at once assigns each a block that no other run uses.
 	 */
-	firstID?: number
+	firstID?: number | null
 	/**
 	 * The `wof:lastmodified` the new records take, in Unix seconds.
 	 */

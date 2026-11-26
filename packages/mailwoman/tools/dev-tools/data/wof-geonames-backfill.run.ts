@@ -59,7 +59,7 @@ const result = await backfillGeoNamesPlaces({
 	reposRoot: values.repos ?? wofReposPath,
 	geonamesDir,
 	dryRun: values["dry-run"],
-	firstID: values["first-id"] ? integerArgument("first-id", values["first-id"]) : undefined,
+	firstID: values["first-id"] ? integerArgument("first-id", values["first-id"]) : null,
 	lastModified: Math.floor(Date.now() / 1000),
 })
 

@@ -682,7 +682,7 @@ export async function applyRegionReform(
 	/**
 	 * The unit of the member whose boundary contains a record's point.
 	 */
-	const containing = (record: LoadedRecord): RegionReformUnit | undefined => {
+	const containing = (record: LoadedRecord): RegionReformUnit | null => {
 		const longitude = Number(properties(record)["geom:longitude"])
 		const latitude = Number(properties(record)["geom:latitude"])
 
@@ -692,7 +692,7 @@ export async function applyRegionReform(
 			if (polygons.some((rings) => pointInPolygon(longitude, latitude, rings))) return unit
 		}
 
-		return undefined
+		return null
 	}
 
 	const unitPlacetype = spec.unitPlacetype ?? "region"
