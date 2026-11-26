@@ -436,7 +436,14 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		const parentPlacetype = String(parent.feature.properties["wof:placetype"])
 		const parentName = String(parent.feature.properties["wof:name"] ?? "")
 		const branches = hierarchyOf(parent)
-		const hierarchy = (branches.length ? branches : [{}]).map((branch) => ({ ...branch, locality_id: id }))
+
+		// The parent's own id is set too: a parent record's hierarchy can omit it,
+		// as one Guyanese county's does, and the new record must list its parent either way.
+		const hierarchy = (branches.length ? branches : [{}]).map((branch) => ({
+			...branch,
+			[`${parentPlacetype}_id`]: parentID,
+			locality_id: id,
+		}))
 
 		const belongsTo = [...new Set(hierarchy.flatMap((branch) => Object.values(branch)))].filter(
 			(other) => other !== id && other > 0
