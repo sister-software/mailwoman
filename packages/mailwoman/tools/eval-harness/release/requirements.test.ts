@@ -12,11 +12,11 @@ import {
 	validateReleaseSpec,
 } from "#tools/eval-harness/release/requirements"
 
-const committedPath = releaseSpecPath(13)
+const committedPath = CURRENT_RELEASE_SPEC
 
 describe("validateReleaseSpec", () => {
-	it("accepts the current v13 specification with every threshold registered and per-check admission", async () => {
-		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v13\.json$/u)
+	it("accepts the current v17 specification with every threshold registered and per-check admission", async () => {
+		expect(CURRENT_RELEASE_SPEC).toMatch(/release-requirements\.v17\.json$/u)
 
 		const spec = validateReleaseSpec(await readLocalJSONFile<unknown>(committedPath))
 

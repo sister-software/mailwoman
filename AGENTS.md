@@ -78,10 +78,9 @@ Use repository skills for procedures rather than copying their steps into this f
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` defines model evaluation requirements and the
   release-quality procedure: a default-on model or decoder change ships only on a `pass` verdict
   against the registered release requirements. Those requirements replaced the D-rule on 2026-10-20. The current
-  specification is v13. `release/current-spec.ts` names that specification. V13 registers model 10.8.0 as the published
-  identity and the v8.9.0 seed 42 artifact as the candidate. Its confirmation read on 2026-11-19 returned `pass` on all 16
-  checks, the first `pass` verdict. `docs/records/evals/2026-11-19-release-requirements-v13.md` records that read,
-  and `docs/records/evals/2026-11-20-release-requirements-v14.md` the unregistered v14 draft.
+  specification is v17. `release/current-spec.ts` names that specification. V17 registers model 11.3.0 as the published
+  identity and the v8.13.0 seed 42 artifact as the candidate. Its confirmation read on 2026-11-26 returned `pass` on all 16
+  checks. `docs/records/evals/2026-11-26-release-requirements-v17.md` records that read and the collections it read.
 - `docs/engineering/HOLDOUT_AND_EVALUATION.mdx` is the held-out data and evaluation specification: how
   rows are split, the checks that admit a corpus manifest, the comparator, the three-run rule for a corpus
   or recipe change, and the checks a training run passes before launch. Read it before changing the split policy, a

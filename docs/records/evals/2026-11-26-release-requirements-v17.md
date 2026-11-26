@@ -1,14 +1,15 @@
 ---
-title: Release requirements v17 draft, three unread collections and the whole-street US scorer
+title: Release requirements v17, three unread collections and the whole-street US scorer
 role: record
 audience: maintainer
 owner: evaluation
 ---
 
-# Release requirements v17 draft, three unread collections and the whole-street US scorer
+# Release requirements v17, three unread collections and the whole-street US scorer
 
-Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v17.json`
-is v16 with a new confirmation role and the scorer revision of #3518. `release/current-spec.ts` still names v13.
+Status: **registered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v17.json`
+is v16 with a new confirmation role and the scorer revision of #3518. `release/current-spec.ts` names v17, and its
+candidate is v8.13.0 seed 42, which read the confirmation role on 2026-11-26 and passed (section 4).
 `scratchpad/2026/11/26/derive-spec-v17.ts` writes it from v16, and every requirement, threshold, inference rule and
 statistic is v16's.
 
@@ -53,3 +54,31 @@ Each audit read configs v8.10.0, v8.13.0 and v8.12.0. The comparative checks adm
 `evaluation-groups.v0.8.22-reserve` lists an earlier reserve draw, `681f928c68575cc3`, which is kept under
 `/mnt/mw/corpus/heldout/superseded/`; v17 pins the file on disk, and the audit classes its rows. The outputs and the
 render, filter and pool scripts are under `/mnt/mw/audits/v17-confirm/`.
+
+## 4. The confirmation read
+
+v8.13.0 (`v8.13.0-base-c6-wofreps-v0822-s42.yaml` seed 42, step 122,000, run `f339a83d401dd492`, corpus
+v0.8.22-retention-overlay, int8 `model.onnx` sha256 `6a4d585fea59149748d01331fafa62018f1e2daad4001e7b9a1a57385dc1d6c3`)
+read the three collections against 11.3.0 on 2026-11-26 at 16:29 UTC
+(`/mnt/mw/models/arms/v8130/verdict-confirm-v17-n8130.json`). The outcome is `pass` on all 16 checks.
+
+| Check           |  Rows | 11.3.0 |                 v8.13.0 |          Threshold |
+| --------------- | ----: | -----: | ----------------------: | -----------------: |
+| objective       | 7,481 |  0.940 | +0.014 [+0.005, +0.023] |                > 0 |
+| geocode         | 7,481 |  0.914 | +0.005 [−0.001, +0.012] |            ≥ −0.01 |
+| country-US      | 1,000 |  0.939 |                   0.961 |                0.6 |
+| country-FR      |   996 |  1.000 |                   0.998 |                0.9 |
+| country-GB      |   440 |  0.991 |                   0.989 |                0.8 |
+| country-DE      |   971 |  0.952 |                   0.952 |               0.85 |
+| country-IN      |   632 |  0.892 |                   0.878 |                0.5 |
+| country-ES      |   867 |  0.953 |                   0.952 |                0.8 |
+| country-IT      |   994 |  0.985 |                   0.984 |                0.8 |
+| country-AU      |   715 |  0.965 |                   0.966 |                0.8 |
+| country-NZ      |   866 |  0.788 |                   0.908 |                0.8 |
+| `po_box_cedex`  | 4,064 |  0.883 |          0.939 (+0.056) | 0.85, loss ≥ −0.05 |
+| `venue_unit`    | 1,637 |  0.984 |                   0.984 |               0.85 |
+| `country_token` | 2,587 |  0.993 |                   0.991 |               0.85 |
+| `postal_unit`   |   977 |  0.775 |                  +0.033 |           loss ≥ 0 |
+
+The measured losses against 11.3.0 are IN −0.014, FR, GB and `country_token` −0.002, and ES and IT −0.001. Each is
+inside its threshold.
