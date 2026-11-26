@@ -49,7 +49,7 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman geocode --stdin --worker
 		const one = geocodeStdin(1)
 		const two = geocodeStdin(2)
 
-		expect(one.map((record) => record["input"])).toEqual(ADDRESSES.filter(Boolean))
+		expect(one.map((record) => record["input"])).toEqual(ADDRESSES.filter((address) => address !== ""))
 		expect(two).toEqual(one)
 	}, 300_000)
 })

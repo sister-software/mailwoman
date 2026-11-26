@@ -25,7 +25,18 @@ import {
  * The flags that choose how the command reads its input and prints its answer.
  * A session never reads them.
  */
-const COMMAND_ONLY_FLAGS = ["format", "json", "text", "jsonld", "debug", "debug-size", "stdin", "timing", "tiles"]
+const COMMAND_ONLY_FLAGS = [
+	"format",
+	"json",
+	"text",
+	"jsonld",
+	"debug",
+	"debug-size",
+	"stdin",
+	"workers",
+	"timing",
+	"tiles",
+]
 
 /**
  * The flags that reach the session outside the schema, each with its reason.
