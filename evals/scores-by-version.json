@@ -1608,6 +1608,48 @@
 				}
 			},
 			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v8100/promotion]"
+		},
+		{
+			"run_id": "v9-0-0-base-20261126",
+			"model_version": "11.4.0",
+			"model_path": "@mailwoman/neural-weights-en-us@11.4.0",
+			"corpus_version": "v0.8.22-retention-overlay",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"tokenizer_md5": "5a1759ca2a384ab7fe1ac2166399106c",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-11-26",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 122000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.7,
+					"country_homograph": 100,
+					"micro": 88.6,
+					"locality": 91.4,
+					"region": 93.5,
+					"street": 75.7,
+					"street_prefix": 93.9,
+					"street_suffix": 100,
+					"unit": 100,
+					"po_box_real": 99,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.4,
+					"house_number": 98.9,
+					"region": 90.5,
+					"cedex_real": 100
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 68
+				}
+			},
+			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v8130/promotion]"
 		}
 	]
 }
