@@ -11,6 +11,8 @@ import { NodeRequirement } from "#partials/runtime"
 
 In this tutorial you start the native Mailwoman HTTP server on your machine and send it four requests: a health check, a parse, a geocode, and a request with a missing field. You then stop the server. Each step shows the complete response the server returned.
 
+The displayed HTTP responses come from a historical 11.0.0 run with locally built data. Run the exercise only after the data commands below show bundles you can install and you've checked their disk requirements. The health response identifies the model and databases your server loaded. Use those identities when interpreting your geocode response.
+
 ## Prerequisites
 
 - <NodeRequirement />.
@@ -27,11 +29,16 @@ The server doesn't start without geographic data. It exits with status 1 before 
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 
+npx mailwoman data pull candidate --dry-run
+npx mailwoman data pull us --only us-dc --dry-run
+```
+
+Check the current download sizes and local disk space before running the pulls. The historical 11.0.0 registry listed about 3 GB for these two pulls: `candidate` 2.9 GB and DC 127.5 MB. If you completed [Geocode a file of addresses](./geocode-a-file.mdx), you already have both. The responses below were captured with local builds of these bundles that are newer than the 11.0.0 registry entries, so a coordinate or source release in your responses can differ.
+
+```sh
 npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
 ```
-
-The two pulls download about 3 GB: `candidate` 2.9 GB and DC 127.5 MB. If you completed [Geocode a file of addresses](./geocode-a-file.mdx), you already have both. The responses below were captured with local builds of these bundles that are newer than the 11.0.0 registry entries, so a coordinate or source release in your responses can differ.
 
 ## 1. Start the server
 

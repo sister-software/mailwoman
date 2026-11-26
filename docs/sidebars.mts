@@ -42,6 +42,7 @@ const sidebars: SidebarsConfig = {
 				"guides/prefer-one-country",
 				"guides/handle-landmark-queries",
 				"guides/review-parse-results",
+				"guides/evaluate-your-addresses",
 				"guides/parse-in-browser",
 				"guides/add-autocomplete",
 			],
