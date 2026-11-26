@@ -838,6 +838,8 @@ pub struct SourceWeight {
 pub struct DerivedSourceReps {
 	pub source: String,
 	pub target_reps_per_row: f64,
+	/// The source's emitted rows per draw relative to the run's mean, 1 when the config states none.
+	pub emit_factor: f64,
 	pub rows: i64,
 	pub weight: f64,
 }
@@ -857,6 +859,7 @@ fn weights(entries: Vec<SourceWeight>) -> Weights {
 pub fn derive_source_weights(
 	fixed: Option<Vec<SourceWeight>>,
 	source_reps: Vec<SourceWeight>,
+	source_emit_factors: Option<Vec<SourceWeight>>,
 	rows_by_source: Vec<SourceCount>,
 	samples: i64,
 ) -> Result<DerivedSourceWeights> {
@@ -871,7 +874,9 @@ pub fn derive_source_weights(
 		.collect::<Result<_>>()?;
 	let samples = u64::try_from(samples).map_err(|_| input("samples must be zero or positive"))?;
 	let fixed = fixed.map(weights);
-	let (merged, derived) = derive(fixed.as_ref(), &weights(source_reps), &rows, samples).map_err(sampler_error)?;
+	let factors = source_emit_factors.map(weights);
+	let (merged, derived) =
+		derive(fixed.as_ref(), &weights(source_reps), factors.as_ref(), &rows, samples).map_err(sampler_error)?;
 	Ok(DerivedSourceWeights {
 		merged: merged
 			.0
@@ -884,11 +889,13 @@ pub fn derive_source_weights(
 				|DerivedReps {
 				     source,
 				     target_reps_per_row,
+				     emit_factor,
 				     rows,
 				     weight,
 				 }| DerivedSourceReps {
 					source,
 					target_reps_per_row,
+					emit_factor,
 					rows: rows as i64,
 					weight,
 				},

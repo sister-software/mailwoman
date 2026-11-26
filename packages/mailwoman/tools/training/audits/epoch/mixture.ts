@@ -139,6 +139,7 @@ export function resolveSourceWeights(
 	const { data, train } = config
 	const fixed = data.source_weights ? Object.entries(data.source_weights) : null
 	const reps = Object.entries(data.source_reps ?? {})
+	const factors = data.source_emit_factors ? Object.entries(data.source_emit_factors) : null
 
 	if (!reps.length) return { weights: fixed, derivation: "" }
 
@@ -148,6 +149,7 @@ export function resolveSourceWeights(
 	const { merged, derived } = mtf.deriveSourceWeights(
 		fixed?.map(([source, weight]) => ({ source, weight })) ?? null,
 		reps.map(([source, weight]) => ({ source, weight })),
+		factors?.map(([source, weight]) => ({ source, weight })) ?? null,
 		rows,
 		samples
 	)
@@ -155,8 +157,10 @@ export function resolveSourceWeights(
 	const lines = ["source_reps → source_weights (#1677):"]
 
 	for (const d of derived) {
+		const emit = d.emitFactor === 1 ? "" : ` ÷ emit ${d.emitFactor.toFixed(4)}`
+
 		lines.push(
-			`  ${d.source.padEnd(32)} ${d.targetRepsPerRow.toFixed(3).padStart(9)} reps/row × ${d.rows.toLocaleString("en-US").padStart(9)} rows → weight ${d.weight.toFixed(4)}`
+			`  ${d.source.padEnd(32)} ${d.targetRepsPerRow.toFixed(3).padStart(9)} reps/row${emit} × ${d.rows.toLocaleString("en-US").padStart(9)} rows → weight ${d.weight.toFixed(4)}`
 		)
 	}
 

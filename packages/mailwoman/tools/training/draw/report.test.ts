@@ -10,8 +10,13 @@ import { describe, expect, it } from "vitest"
 
 import { drawFalls, expectedCountryDraws, type SourceDraws } from "./report.ts"
 
-const draws = (entries: Record<string, number>): SourceDraws[] =>
-	Object.entries(entries).map(([source, count]) => ({ source, rows: 1_000_000, draws: count }))
+const draws = (entries: Record<string, number>, factors: Record<string, number> = {}): SourceDraws[] =>
+	Object.entries(entries).map(([source, count]) => ({
+		source,
+		rows: 1_000_000,
+		draws: count,
+		emitFactor: factors[source] ?? 1,
+	}))
 
 describe("drawFalls", () => {
 	it("reports each source whose draws fell past the bound, the largest fall first", () => {
@@ -32,6 +37,19 @@ describe("drawFalls", () => {
 
 	it("leaves a fall within the bound unreported", () => {
 		expect(drawFalls(draws({ nad: 100 }), draws({ nad: 96 }), 0.05)).toEqual([])
+	})
+
+	it("compares emitted rows under the current run's factors on both sides", () => {
+		// usgs-structures emits 1.43 rows per draw.
+		// Its 231,284 draws at the old weights emitted 331,000 rows, more than its target. 161,601
+		// draws under the factor emit the 231,284 the target asks for, a real fall of 30%.
+		const previous = draws({ "usgov-usgs-structures": 231_284 })
+		const current = draws({ "usgov-usgs-structures": 231_284 / 1.4312 }, { "usgov-usgs-structures": 1.4312 })
+		const [fall] = drawFalls(previous, current, 0.05)
+
+		expect(fall!.previous).toBeCloseTo(231_284 * 1.4312, 3)
+		expect(fall!.current).toBeCloseTo(231_284, 3)
+		expect(fall!.fall).toBeCloseTo(1 - 1 / 1.4312, 6)
 	})
 })
 

@@ -327,6 +327,11 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 			.ok_or_else(|| fail!("data.country_weights is null"))?,
 		source_weights: weights(field(d, "data", "source_weights")?, "data.source_weights")?,
 		source_reps,
+		// A config resolved before the field existed has no key, and reads as no factors.
+		source_emit_factors: weights(
+			d.get("source_emit_factors").unwrap_or(&Value::Null),
+			"data.source_emit_factors",
+		)?,
 		run_length: run_length.transpose()?,
 		coarse_filter: run.data_bool("coarse_filter")?,
 		active_tags: active_tags.to_vec(),

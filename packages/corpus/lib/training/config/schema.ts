@@ -169,6 +169,7 @@ export const DATA_SECTION = {
 		]),
 		source_weights: optionalFloatMap(),
 		source_reps: optionalFloatMap(),
+		source_emit_factors: optionalFloatMap(),
 		unshippable_reason: optionalStr(),
 		required_corpus_receipts: sectionList(CORPUS_RECEIPT_SECTION),
 		required_validation_coverage: sectionList(VALIDATION_COVERAGE_SECTION),

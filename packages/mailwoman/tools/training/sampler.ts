@@ -160,6 +160,8 @@ export function samplerConfigJSON(config: TrainingConfig, options: SamplerConfig
 		country_weights: data.country_weights,
 		source_weights: data.source_weights,
 		source_reps: data.source_reps && Object.keys(data.source_reps).length ? data.source_reps : null,
+		source_emit_factors:
+			data.source_emit_factors && Object.keys(data.source_emit_factors).length ? data.source_emit_factors : null,
 		run_length: {
 			max_steps: train.max_steps,
 			batch_size: train.batch_size,

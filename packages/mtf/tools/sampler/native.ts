@@ -273,6 +273,10 @@ export interface SourceWeight {
 export interface DerivedSourceReps {
 	source: string
 	targetRepsPerRow: number
+	/**
+	 * The source's emitted rows per draw relative to the run's mean, 1 when the config states none.
+	 */
+	emitFactor: number
 	rows: number
 	weight: number
 }
@@ -305,6 +309,7 @@ interface NativeModule {
 	deriveSourceWeights(
 		fixed: SourceWeight[] | null,
 		sourceReps: SourceWeight[],
+		sourceEmitFactors: SourceWeight[] | null,
 		rowsBySource: SourceCount[],
 		samples: number
 	): { merged: SourceWeight[]; derived: DerivedSourceReps[] }

@@ -119,6 +119,18 @@ trainer reopens epoch `e` from the same run seed. `Sampler::open`, `RawRows` and
 cursor. Their counts per source, country and label order keep the training stream's distribution, and the rows
 they read differ from the rows the run trains on.
 
+### A reps target counts emitted rows
+
+`source_reps` derives each target's weight from the run's samples, which count emitted rows. The emit step keeps each
+drawn row and adds augmented copies of some, and every emitted row counts toward the epoch's row limit. A source in
+`augment_exclude_sources` emits one row per draw and an augmented source more, so in v8.14.0 `wof-admin` emitted 0.82
+of the rows its target derived (2,277,277 of 2,780,333) and `usgov-usgs-structures` 1.44. The epoch-mixture audit
+measures that ratio per source as `distortion_vs_draw_share`. `data.source_emit_factors` gives it to the derivation,
+which reads a target `r` with factor `f` as `r / f` draws per row (`derive_source_weights` in `source_reps.rs`, which
+the trainer and, through `mtf-node`, the host audits call). `tools/training/draw/emit-factors.run.ts` writes the block
+from an audit and gives a source the audit's epoch emitted fewer than 2,000 rows of no factor. The draw report
+compares two configs in emitted rows, both under the current config's factors.
+
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
 `nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows

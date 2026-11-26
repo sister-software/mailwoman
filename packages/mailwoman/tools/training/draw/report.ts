@@ -35,6 +35,11 @@ export interface SourceDraws {
 	 * The rows the run is expected to draw from it.
 	 */
 	draws: number
+	/**
+	 * The source's emitted rows per draw relative to the run's mean, from the config's
+	 * `source_emit_factors`, 1 for a source the config gives none.
+	 */
+	emitFactor: number
 }
 
 /**
@@ -50,20 +55,28 @@ export function expectedDraws(mtf: MTFNode, config: TrainingConfig, corpusDir: s
 	const positive = (weights ?? []).filter(([, weight]) => weight > 0)
 	const total = positive.reduce((sum, [, weight]) => sum + weight, 0)
 	const samples = config.train.max_steps * config.train.batch_size * config.train.grad_accum_steps
+	const factors = config.data.source_emit_factors ?? {}
 
 	return positive.map(([source, weight]) => ({
 		source,
 		rows: rowsBySource.get(source) ?? 0,
 		draws: (samples * weight) / total,
+		emitFactor: factors[source] ?? 1,
 	}))
 }
 
 /**
- * A source whose expected draws fell from one run to the next.
+ * A source whose expected emitted rows fell from one run to the next.
  */
 export interface DrawFall {
 	source: string
+	/**
+	 * The previous run's expected emitted rows: its draws times the current run's emit factor.
+	 */
 	previous: number
+	/**
+	 * The current run's expected emitted rows.
+	 */
 	current: number
 	/**
 	 * `1 − current / previous`.
@@ -72,7 +85,13 @@ export interface DrawFall {
 }
 
 /**
- * The sources drawn in both runs whose draws fell by more than `bound`, the largest fall first.
+ * The sources drawn in both runs whose expected emitted rows fell by more than
+ * `bound`, the largest fall first.
+ *
+ * A source's emitted rows are its draws times its emit factor.
+ * Both runs read the current run's factors, because a factor measures the source under the emit step.
+ *
+ * A config without a factor table emits its rows under the same step.
  *
  * A source the current run no longer draws is a fall of 1.
  * A source only the current run draws is no fall.
@@ -82,14 +101,17 @@ export function drawFalls(
 	current: readonly SourceDraws[],
 	bound: number
 ): DrawFall[] {
-	const now = new Map(current.map(({ source, draws }) => [source, draws]))
+	const now = new Map(current.map((entry) => [entry.source, entry]))
 
 	return previous
 		.filter(({ draws }) => draws > 0)
 		.map(({ source, draws }) => {
-			const drawn = now.get(source) ?? 0
+			const entry = now.get(source)
+			const factor = entry?.emitFactor ?? 1
+			const before = draws * factor
+			const after = (entry?.draws ?? 0) * factor
 
-			return { source, previous: draws, current: drawn, fall: 1 - drawn / draws }
+			return { source, previous: before, current: after, fall: 1 - after / before }
 		})
 		.filter(({ fall }) => fall > bound)
 		.toSorted((a, b) => b.fall - a.fall)

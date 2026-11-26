@@ -64,6 +64,7 @@ fn a_target_of_five_lands_at_five_reps_per_row() {
 	let (merged, derived) = derive_source_weights(
 		Some(&fixed()),
 		&weights(&[("synth-bare-country-v23", 5.0)]),
+		None,
 		&rows(),
 		samples(),
 	)
@@ -78,13 +79,14 @@ fn a_target_of_five_lands_at_five_reps_per_row() {
 
 #[test]
 fn a_source_with_a_weight_cannot_take_a_target_and_two_targets_hold_together() {
-	let error =
-		derive_source_weights(Some(&fixed()), &weights(&[("tiger", 3.0)]), &rows(), samples()).expect_err("an error");
+	let error = derive_source_weights(Some(&fixed()), &weights(&[("tiger", 3.0)]), None, &rows(), samples())
+		.expect_err("an error");
 	assert!(error.to_string().contains("both a weight and a reps target"), "{error}");
 
 	let (merged, derived) = derive_source_weights(
 		Some(&weights(&[("ban", 100.0)])),
 		&weights(&[("synth-bare-country-v23", 40.0), ("synth-trailing-region-es-v23", 8.0)]),
+		None,
 		&rows(),
 		samples(),
 	)
@@ -96,16 +98,17 @@ fn a_source_with_a_weight_cannot_take_a_target_and_two_targets_hold_together() {
 
 #[test]
 fn no_targets_leave_the_weights_as_they_were() {
-	let (merged, derived) = derive_source_weights(Some(&fixed()), &Weights::default(), &rows(), samples()).unwrap();
+	let (merged, derived) =
+		derive_source_weights(Some(&fixed()), &Weights::default(), None, &rows(), samples()).unwrap();
 	assert_eq!((merged, derived.len()), (fixed(), 0));
-	let (merged, derived) = derive_source_weights(None, &Weights::default(), &rows(), samples()).unwrap();
+	let (merged, derived) = derive_source_weights(None, &Weights::default(), None, &rows(), samples()).unwrap();
 	assert_eq!((merged, derived.len()), (Weights::default(), 0));
 }
 
 #[test]
 fn each_refusal_names_its_reason() {
 	let refusal = |fixed: &Weights, targets: &[(&str, f64)], samples: u64| {
-		derive_source_weights(Some(fixed), &weights(targets), &rows(), samples)
+		derive_source_weights(Some(fixed), &weights(targets), None, &rows(), samples)
 			.expect_err("an error")
 			.to_string()
 	};
@@ -117,4 +120,38 @@ fn each_refusal_names_its_reason() {
 	assert!(message.contains("at or over the run's"), "{message}");
 	let message = refusal(&fixed(), &[("synth-bare-country-v23", 0.0)], samples());
 	assert!(message.contains("must be positive"), "{message}");
+}
+
+#[test]
+fn an_emit_factor_derives_the_weight_of_its_target_over_the_factor_and_a_stray_or_zero_factor_is_refused() {
+	// A source that emits 0.8 of the mean rows per draw needs 1/0.8 draws per row to emit its target, so its derived
+	// weight is the one a target of 5 / 0.8 derives with no factor. A source without a factor reads 1.
+	let fixed = weights(&[("ban", 100.0)]);
+	let targets = weights(&[("synth-bare-country-v23", 5.0), ("synth-trailing-region-es-v23", 8.0)]);
+	let factors = weights(&[("synth-bare-country-v23", 0.8)]);
+	let (with_factor, derived) =
+		derive_source_weights(Some(&fixed), &targets, Some(&factors), &rows(), samples()).unwrap();
+	let unscaled = weights(&[
+		("synth-bare-country-v23", 5.0 / 0.8),
+		("synth-trailing-region-es-v23", 8.0),
+	]);
+	let (by_hand, _) = derive_source_weights(Some(&fixed), &unscaled, None, &rows(), samples()).unwrap();
+	assert_eq!(with_factor, by_hand);
+	let bare = derived.iter().find(|d| d.source == "synth-bare-country-v23").unwrap();
+	assert_eq!((bare.target_reps_per_row, bare.emit_factor), (5.0, 0.8));
+	let es = derived
+		.iter()
+		.find(|d| d.source == "synth-trailing-region-es-v23")
+		.unwrap();
+	assert_eq!(es.emit_factor, 1.0);
+
+	let refusal = |factors: &[(&str, f64)]| {
+		derive_source_weights(Some(&fixed), &targets, Some(&weights(factors)), &rows(), samples())
+			.expect_err("an error")
+			.to_string()
+	};
+	let stray = refusal(&[("tiger", 0.9)]);
+	assert!(stray.contains("no source_reps target"), "{stray}");
+	let zero = refusal(&[("synth-bare-country-v23", 0.0)]);
+	assert!(zero.contains("must be positive"), "{zero}");
 }
