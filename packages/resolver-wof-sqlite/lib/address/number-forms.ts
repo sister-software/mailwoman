@@ -84,10 +84,11 @@ export function* houseNumberForms(number: string, locale: StreetLocale): Generat
  */
 function repetitionForms(number: string, indexes: readonly string[]): string[] | null {
 	const match = /^(\d+)\s*([a-z]+)$/.exec(number)
+	const digits = match?.[1]
+	const suffix = match?.[2]
 
-	if (!match) return null
+	if (!digits || !suffix) return null
 
-	const [, digits, suffix] = match as unknown as [string, string, string]
 	const word = indexes.find((index) => index === suffix || index[0] === suffix)
 
 	if (!word) return null
