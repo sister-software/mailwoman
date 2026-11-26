@@ -1,0 +1,29 @@
+{
+	"country": "KZ",
+	"source": {
+		"citation": "Wikidata, the item of this region: English, Kazakh and Russian labels and item id, read on 2026-11-26. South Kazakhstan Region was renamed Turkistan Region in June 2018."
+	},
+	"renames": [
+		{
+			"id": 85672927,
+			"name": "Turkistan",
+			"longName": "Turkistan Region",
+			"wikidata": "Q815330",
+			"names": {
+				"name:kaz_x_preferred": ["Түркістан облысы"],
+				"name:kaz_x_variant": [
+					"Ongtüstik Qazaqstan Oblysy",
+					"Оңтүстік Қазақстан",
+					"Оңтүстік Қазақстан Облысы",
+					"Оңтүстік Қазақстан облысы"
+				],
+				"name:rus_x_preferred": ["Туркестанская область"],
+				"name:rus_x_variant": [
+					"Yuzhno-Kazakhstanskaya Oblast’",
+					"Южно-Казахстанская Область",
+					"Южно-Казахстанская область"
+				]
+			}
+		}
+	]
+}

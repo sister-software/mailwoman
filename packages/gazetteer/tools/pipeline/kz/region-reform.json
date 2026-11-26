@@ -1,0 +1,97 @@
+{
+	"country": "KZ",
+	"memberPlacetype": "county",
+	"designator": "Region",
+	"inception": "2022-06-08",
+	"cessation": "2022-06-08",
+	"ceased": [],
+	"split": [85672915, 85672921, 85672905, 85672927],
+	"sources": {
+		"law": {
+			"citation": "Abai, Zhetisu and Ulytau Regions were formed on 8 June 2022 from East Kazakhstan, Almaty and Karaganda Regions. Shymkent became a city of republican significance in June 2018, outside the region then renamed Turkistan. ISO 3166-2:KZ lists all four.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:KZ"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: English label, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the region its Wikidata item is located in (P131), read on 2026-11-26. A member without a Wikidata item is assigned to the region that GeoNames files most of the populated places inside its boundary under."
+		}
+	},
+	"units": [
+		{
+			"iso": "KZ-10",
+			"name": "Abai",
+			"wikidata": "Q111279364",
+			"geonames": 12510143,
+			"members": [1108785305, 1108785459, 1108785463, 1108785467, 1108785639, 1108785641, 1108785727, 1108785729],
+			"note": "Ayagozskiy (1108785459) and Semey (1108785641) have no Wikidata item and are assigned by GeoNames, with 80% and 64% of their places in Abai Region."
+		},
+		{
+			"iso": "KZ-63",
+			"name": "East Kazakhstan",
+			"wikidata": "Q36156",
+			"geonames": 1517381,
+			"existing": 85672915,
+			"members": [
+				1108785307, 1108785311, 1108785313, 1108785461, 1108785469, 1108785471, 1108785473, 1108785475, 1108785611,
+				1108785719
+			],
+			"note": "The Tarbagatayskiy record (1108785469) predates the transfer of its Aksuat area to Abai Region: GeoNames files 44% of the populated places inside it under Abai Region."
+		},
+		{
+			"iso": "KZ-33",
+			"name": "Zhetisu",
+			"variants": ["Zhetysu", "Jetisu"],
+			"wikidata": "Q111281411",
+			"geonames": 12510144,
+			"members": [1108785405, 1108785407, 1108785409, 1108785413, 1108785415, 1108785417, 1108785423, 1108785635]
+		},
+		{
+			"iso": "KZ-19",
+			"name": "Almaty",
+			"wikidata": "Q186466",
+			"geonames": 1537162,
+			"existing": 85672921,
+			"members": [
+				1108785309, 1108785373, 1108785403, 1108785419, 1108785421, 1108785425, 1108785427, 1108785431, 1108785433,
+				1108785481
+			]
+		},
+		{
+			"iso": "KZ-62",
+			"name": "Ulytau",
+			"wikidata": "Q111830286",
+			"geonames": 12510145,
+			"members": [1108785515, 1108785597]
+		},
+		{
+			"iso": "KZ-35",
+			"name": "Qaraghandy",
+			"wikidata": "Q485429",
+			"geonames": 1523401,
+			"existing": 85672905,
+			"members": [1108785499, 1108785505, 1108785507, 1108785509, 1108785649, 1108785651, 1108785653]
+		},
+		{
+			"iso": "KZ-79",
+			"name": "Shymkent",
+			"inception": "2018-06",
+			"wikidata": "Q485496",
+			"geonames": 1537272,
+			"members": [1108785601, 1108785607]
+		},
+		{
+			"iso": "KZ-61",
+			"name": "Turkistan",
+			"wikidata": "Q815330",
+			"geonames": 1524787,
+			"existing": 85672927,
+			"members": [
+				1108785361, 1108785365, 1108785369, 1108785581, 1108785583, 1108785585, 1108785587, 1108785589, 1108785593,
+				1108785595, 1108785599, 1108785605, 1108785667, 1108785691, 1108785693
+			]
+		}
+	]
+}
