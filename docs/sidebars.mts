@@ -23,6 +23,8 @@ const sidebars: SidebarsConfig = {
 			type: "category",
 			label: "How-to guides",
 			items: [
+				"guides/plan-an-integration",
+				"guides/roll-out-an-integration",
 				"guides/batch-geocode",
 				"guides/reverse-geocode",
 				"guides/operate-data",

@@ -1,0 +1,74 @@
+---
+title: Plan an address integration
+description: Choose the Mailwoman operation, runtime, and result-handling rule for one address workflow.
+role: guide
+source-of-truth: docs/src/pages/product/capabilities.mdx, docs/src/pages/product/deployment.mdx, docs/articles/reference/schema.mdx
+---
+
+# Plan an address integration
+
+Use this guide when a team knows the address problem it needs to solve but has yet to choose a Mailwoman operation. Finish with a one-page decision record that identifies the input, required result, runtime, failure route, and next implementation guide. Make one record per workflow. A checkout form and a nightly duplicate-record job can need different operations and failure rules.
+
+## 1. State the result the workflow needs
+
+Write one sentence describing what the application will do with the result. Then choose the operation that produces the evidence for that action:
+
+| Required result                                                       | Choose                                               | Continue with                                                                                                                                             |
+| --------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Labeled parts of an address string                                    | Parse                                                | [First parse](../start.mdx), then [library API](../reference/library.mdx)                                                                                 |
+| A decision about whether the parsed fields meet your own intake rules | Parse, then apply an application policy              | [Check parsed records](./validate-records.mdx) or [route results to review](./review-parse-results.mdx)                                                   |
+| Candidate duplicate records                                           | Compare records under an application matching policy | [Match candidate records](./match-records.mdx)                                                                                                            |
+| A coordinate or containing place                                      | Geocode or reverse geocode with suitable local data  | [Data and locales](../reference/data-and-locales.mdx), then [geocode a file](../tutorials/geocode-a-file.mdx) or [reverse geocode](./reverse-geocode.mdx) |
+| Additional fields from a coordinate or country code you already have  | Annotate the supplied value                          | [Annotate a result](./annotate-results.mdx)                                                                                                               |
+
+A parsed postcode establishes what the parser read from text. It doesn't establish that a building exists or receives mail. A coordinate needs the data layer and source evidence appropriate to the decision that will use it. [Choose a Mailwoman operation](/product/capabilities) lists the published interfaces and their current evidence status.
+
+## 2. Choose where the operation runs
+
+Put parsing in an existing Node.js application when that application can own the model and call the library. Use the [browser parsing guide](./parse-in-browser.mdx) when the page needs components in the tab. Use a shared HTTP service when several clients need one deployed endpoint. The native server's geographic routes require suitable local data. [Choose a deployment shape](/product/deployment) records the requirements and checked status for each option.
+
+Record the release and runtime you intend to deploy. If the workflow uses geographic data, also record the data root, selected generation, and the countries or areas it contains. [Limits and release status](/product/limits-and-status) distinguishes an available interface from an installed or evaluated data layer.
+
+## 3. Decide what each outcome does
+
+Define the next action for a usable result, an incomplete or ambiguous result, and an operational failure. Keep a parser stage fault separate from an address that parsed but failed your application policy. For geocoding, keep an unresolved result separate from a coordinate at a coarse tier. State whether a person reviews the row, the sender supplies another field, or the application leaves the original value in place. [The result schema](../reference/schema.mdx) defines the fields you can inspect. [Review geocode evidence](./review-geocode-evidence.mdx) covers the data and coordinate record.
+
+Do this before selecting a score threshold. A node score describes one model output and doesn't by itself give the probability that an address is correct. [Confidence and ambiguity](../explanation/confidence-and-limits.mdx) explains the distinction. For a parser decision, [evaluate your own labeled addresses](./evaluate-your-addresses.mdx) and inspect the errors your workflow would accept or reject.
+
+## 4. Save the decision record
+
+Use these fields in the team's design or deployment record:
+
+```text
+Workflow and owner:
+Input source, countries, and address forms:
+Required application action:
+Mailwoman operation and interface:
+Runtime and package version:
+Geographic data generation and area, if used:
+Accepted result and required fields:
+Ambiguous or unresolved result action:
+Parser fault or service failure action:
+Source for expected results and acceptance rule:
+```
+
+This example plan is for a <Country code="US" /> checkout form. It chooses parsing before the application's existing validation step:
+
+```text
+Workflow and owner: US checkout form, checkout team
+Input source, countries, and address forms: customer-entered US street addresses
+Required application action: send complete parsed fields to the existing validation step
+Mailwoman operation and interface: Node.js library parser.parse
+Runtime and package version: Node.js 24.22.3, mailwoman 11.4.0
+Geographic data generation and area: none (no coordinate requested)
+Accepted result and required fields: structured_address with house_number, street,
+  locality, region, and postcode, and no parser fault
+Ambiguous or unresolved result action: keep the original text and ask for review
+Parser fault or service failure action: keep the original text and report a failure
+Source for expected results and acceptance rule: reviewed checkout examples
+  and the checkout team's required-field policy
+```
+
+The [review-routing guide](./review-parse-results.mdx) shows this component-presence rule, and the [record-validation guide](./validate-records.mdx) adds a ZIP Code shape check. Neither guide verifies deliverability.
+
+The record is complete when another implementer can name the operation, point to its exact interface, and explain the action for every result class without inventing a product guarantee. Use [roll out an address integration](./roll-out-an-integration.mdx) to move the chosen path into production.
