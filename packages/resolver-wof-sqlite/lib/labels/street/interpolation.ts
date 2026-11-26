@@ -157,11 +157,10 @@ export class StreetInterpolator<
 		| undefined
 	readonly #byStreet: PreparedAll<[street: RouteKey, minNumber: number, maxNumber: number], SegmentRow> | undefined
 	/**
-	 * The distinct stored keys among a JSON array of candidates whose segments in one postcode cover a number.
+	 * The distinct stored keys in one postcode among a JSON array of candidates,
+	 * whatever numbers their segments cover.
 	 */
-	readonly #storedKeys:
-		| PreparedAll<[postcode: string, minNumber: number, maxNumber: number, keys: string], { street_norm: string }>
-		| undefined
+	readonly #storedKeys: PreparedAll<[postcode: string, keys: string], { street_norm: string }> | undefined
 	readonly #radiusCalibration: number | null = null
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
@@ -194,8 +193,7 @@ export class StreetInterpolator<
 			this.#storedKeys = prepareAll(
 				this.#db,
 				`SELECT DISTINCT street_norm FROM street_segment
-				 WHERE postcode = ? AND min_hn <= ? AND max_hn >= ?
-				   AND street_norm IN (SELECT value FROM json_each(?))`
+				 WHERE postcode = ? AND street_norm IN (SELECT value FROM json_each(?))`
 			)
 		}
 
@@ -258,8 +256,9 @@ export class StreetInterpolator<
 	 * or trailing directional, after every written variant missed: TIGER may store
 	 * `main street` where a writer adds `N`, or the reverse.
 	 *
-	 * Runs only with a postcode, and abstains when the postcode holds two or more such keys covering
-	 * the number, because `north main street` and `south main street` are different streets.
+	 * Runs only with a postcode, and abstains when the postcode holds two or more
+	 * such keys at any number, because `east broad street` and `west broad street`
+	 * are different streets numbered from one origin.
 	 */
 	#directionalRelaxed(key: StreetKey | undefined, n: number, query: InterpolationQuery): InterpolatedHit | null {
 		if (!key || !query.postcode || !this.#storedKeys || !this.#byPostcode) return null
@@ -269,7 +268,7 @@ export class StreetInterpolator<
 		if (!candidates.length) return null
 
 		const postcode = query.postcode.trim()
-		const stored = this.#storedKeys(postcode, n, n, stringifyJSON(candidates))
+		const stored = this.#storedKeys(postcode, stringifyJSON(candidates))
 
 		if (stored.length !== 1) return null
 

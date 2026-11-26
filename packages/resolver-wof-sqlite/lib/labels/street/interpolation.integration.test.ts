@@ -320,6 +320,8 @@ describe("StreetInterpolator — a directional the query and the register disagr
 			// Two streets that differ only by their directional.
 			segment("north elm street", 101, 199, 1),
 			segment("south elm street", 101, 199, 2),
+			segment("east oak street", 1, 99, 4),
+			segment("west oak street", 101, 199, 5),
 			segment("northwest highway", 1, 99, 3),
 		])
 
@@ -345,6 +347,11 @@ describe("StreetInterpolator — a directional the query and the register disagr
 
 	it("abstains when the postcode holds two streets that differ only by their directional", () => {
 		expect(relaxed.find({ street: "Elm St", number: "121", postcode: "89049" })).toBeNull()
+	})
+
+	it("abstains on a number only one of the two streets covers", () => {
+		// `1 Broad St, Athens GA 30601`: East and West Broad Street are numbered from one origin.
+		expect(relaxed.find({ street: "Oak St", number: "5", postcode: "89049" })).toBeNull()
 	})
 
 	it("never relaxes without a postcode, or to a one-word base", () => {
