@@ -222,10 +222,30 @@ export interface RegionReformResult {
 	unplaced: Array<{ id: number; name: string; placetype: string }>
 }
 
-interface LoadedRecord {
+/**
+ * One record of a fork clone: its file, the file's text and the parsed feature.
+ */
+export interface LoadedRecord {
 	path: string
 	text: string
 	feature: WOFRecordFeature
+}
+
+/**
+ * Every record of a fork clone, by WOF id.
+ * Alternate-geometry files are left out.
+ */
+export async function loadForkRecords(repoDir: PathBuilder): Promise<Map<number, LoadedRecord>> {
+	const records = new Map<number, LoadedRecord>()
+
+	for (const path of await sortedGlob(repoDir("data"), "**/[0-9]*[0-9].geojson")) {
+		const text = await readLocalTextFile(path)
+		const feature = parseJSONStrict<WOFRecordFeature>(text)
+
+		records.set(feature.id, { path, text, feature })
+	}
+
+	return records
 }
 
 type Hierarchy = Array<Record<string, number>>
@@ -234,13 +254,19 @@ function properties(record: LoadedRecord): Record<string, unknown> {
 	return record.feature.properties
 }
 
-function hierarchyOf(record: LoadedRecord): Hierarchy {
+/**
+ * A record's `wof:hierarchy` branches, or an empty list when it states none.
+ */
+export function hierarchyOf(record: LoadedRecord): Hierarchy {
 	const hierarchy = properties(record)["wof:hierarchy"]
 
 	return Array.isArray(hierarchy) ? (hierarchy as Hierarchy) : []
 }
 
-function concordancesOf(record: LoadedRecord): Record<string, unknown> {
+/**
+ * A record's `wof:concordances`, or an empty object when it states none.
+ */
+export function concordancesOf(record: LoadedRecord): Record<string, unknown> {
 	const concordances = properties(record)["wof:concordances"]
 
 	return concordances && typeof concordances === "object" ? (concordances as Record<string, unknown>) : {}
@@ -376,8 +402,13 @@ export interface RegionRename {
 	name: string
 	/**
 	 * The adopted name with its designator, `Koshi Province`.
+	 * A locality has none.
 	 */
-	longName: string
+	longName?: string
+	/**
+	 * Other English spellings of the adopted name, `Bayan Nur` beside `Bayannur`.
+	 */
+	variants?: string[]
 	/**
 	 * The record's Wikidata item.
 	 */
@@ -430,8 +461,14 @@ export async function applyRegionRenames(
 		}
 
 		const variants = [
-			...new Set([rename.longName, ...list("name:eng_x_variant"), former, ...list("label:eng_x_preferred_longname")]),
-		].filter((variant) => variant && variant !== rename.name)
+			...new Set([
+				rename.longName,
+				...(rename.variants ?? []),
+				...list("name:eng_x_variant"),
+				former,
+				...list("label:eng_x_preferred_longname"),
+			]),
+		].filter((variant): variant is string => Boolean(variant) && variant !== rename.name)
 
 		renamed.push({ id: rename.id, from: former, to: rename.name })
 
@@ -440,7 +477,7 @@ export async function applyRegionRenames(
 		await writeLocalTextFile(
 			patchWOFRecordText(text, {
 				...rename.names,
-				"label:eng_x_preferred_longname": [rename.longName],
+				...(rename.longName ? { "label:eng_x_preferred_longname": [rename.longName] } : {}),
 				"mailwoman:sources": [
 					...sourcesOf(record).filter((source) => !RENAMED_PROPERTIES.has(String(source.property))),
 					{ property: "wof:name", citation: spec.source.citation, url: wikidataURL(rename.wikidata) },
@@ -472,14 +509,7 @@ export async function applyRegionReform(
 	const reposRoot = PathBuilder.from(options.reposRoot)
 	const repoName = wofRepoName("admin", spec.country)
 	const repoDir = reposRoot(repoName)
-	const records = new Map<number, LoadedRecord>()
-
-	for (const path of await sortedGlob(repoDir("data"), "**/[0-9]*[0-9].geojson")) {
-		const text = await readLocalTextFile(path)
-		const feature = parseJSONStrict<WOFRecordFeature>(text)
-
-		records.set(feature.id, { path, text, feature })
-	}
+	const records = await loadForkRecords(repoDir)
 
 	const required = (id: number, role: string): LoadedRecord => {
 		const record = records.get(id)
