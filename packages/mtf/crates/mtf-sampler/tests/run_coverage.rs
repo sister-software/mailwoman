@@ -45,7 +45,12 @@ fn corpus(root: &Path) -> PathBuf {
 		let rows: Vec<Row> = (0..GROUPS_PER_FILE * GROUP_ROWS)
 			.map(|i| row(format!("{file}-{i} Spread St"), "spread"))
 			.collect();
-		write_corpus_parquet(&rows, &corpus.join(format!("train/part-spread-{file}.parquet")), GROUP_ROWS, &options);
+		write_corpus_parquet(
+			&rows,
+			&corpus.join(format!("train/part-spread-{file}.parquet")),
+			GROUP_ROWS,
+			&options,
+		);
 	}
 	let other: Vec<Row> = (0..400).map(|i| row(format!("{i} Other Rd"), "other")).collect();
 	write_corpus_parquet(&other, &corpus.join("train/part-other.parquet"), 1 << 20, &options);
