@@ -3,7 +3,7 @@ title: Why one building can have several useful addresses
 description: How units, mailing services, and postal codes describe different destinations and purposes.
 role: explanation
 source-of-truth: packages/corpus/lib/types.ts, packages/codex/lib/country/postal-regimes.ts, packages/postcode/lib/legacy-formats/table.ts
-verified-with: USPS Publication 28 and Canada Post guidance checked 2026-11-25, and published mailwoman v11.0.0 parse examples
+verified-with: USPS Publication 28 and Canada Post guidance checked 2026-11-25, and published mailwoman v11.3.0 parse examples on Node.js v24.22.3 and Linux x64 checked 2026-11-26
 ---
 
 # Why one building can have several useful addresses
@@ -14,18 +14,18 @@ Why can two address records point to the same building but require different del
 
 The United States Postal Service [secondary-unit guidance](https://pe.usps.com/text/pub28/pub28c2_003.htm) requires a designator such as `APT` or `STE` on mail for an address location that has one. Two units can share a street number and building point. An address without the unit may locate the building while omitting the detail needed on the mailpiece.
 
-Mailwoman's [corpus address roles](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/corpus/lib/types.ts) distinguish a premise, mailing address, registered office, and other source claims. A registered office and a premises address can each be accurate records for one organization while serving different purposes. Their text or coordinates cannot establish whether they lead to the same entrance or mailbox.
+Mailwoman's [corpus address roles](https://github.com/sister-software/mailwoman/blob/main/packages/corpus/lib/types.ts) distinguish a premise, mailing address, registered office, and other source claims. A registered office and a premises address can each be accurate records for one organization while serving different purposes. Their text or coordinates cannot establish whether they lead to the same entrance or mailbox.
 
 ## A mailing address need not locate the recipient's building
 
 USPS [Publication 28](https://pe.usps.com/text/pub28/28c2_036.htm) standardizes a Post Office Box line as `PO BOX` followed by its identifier. At some locations, USPS also permits the [Post Office street address with a box designation](https://pe.usps.com/text/pub28/28c2_039.htm). That street-looking form still directs mail to a box at the Post Office.
 
-For the synthetic input `PO Box 1234, Springfield, IL 62701`, published `mailwoman@11.0.0` returned kind `po_box` and a `po_box` node containing `PO Box 1234`. The parse identifies the form. It doesn't establish that the box exists or that the postal operator will deliver to it. The [PO box guide](../guides/handle-po-boxes.mdx) shows the result and a mailing-review policy.
+For the synthetic input `PO Box 1234, Springfield, IL 62701`, published `mailwoman@11.3.0` returned kind `po_box` and a `po_box` node containing `PO Box 1234`. The parse identifies the form. It doesn't establish that the box exists or that the postal operator will deliver to it. The [PO box guide](../guides/handle-po-boxes.mdx) shows the result and a mailing-review policy.
 
 ## A postcode serves a postal system
 
 Canada Post [defines](https://www.canadapost-postescanada.ca/cpc/en/support/articles/addressing-guidelines/postal-codes.page) a six-character postcode in the `ANA NAN` form. Its first three characters identify a forward sortation area. The last three identify a local delivery unit. That unit can describe a city block, one building, a large-volume receiver, or a rural community. A postcode helps route mail. Its shape doesn't locate an individual building.
 
-The published Mailwoman parse of bare `10118` matched the `us_zip`, `fr_postcode`, and `de_postcode` shapes. All three are format matches for the same five characters. The [bare-postcode guide](../guides/handle-bare-postcodes.mdx) keeps the country choice separate from this text check.
+The published 11.3.0 parse of bare `10118` matched the `us_zip`, `fr_postcode`, and `de_postcode` shapes. All three are format matches for the same five characters. The [bare-postcode guide](../guides/handle-bare-postcodes.mdx) keeps the country choice separate from this text check.
 
 Mailwoman can label components and an application can check whether those components meet its stated policy. A geographic resolver can then identify a place when suitable data is installed. Delivery to a particular unit or box needs evidence from the postal operator. The [record-check guide](../guides/validate-records.mdx) shows an application policy, and [data and locales](../reference/data-and-locales.mdx) describes the geographic data needed for lookup.

@@ -3,7 +3,7 @@ title: How Mailwoman turns text into address components
 description: How text shape, contextual label scores, place-name evidence, and decoder rules produce a parse tree.
 role: explanation
 source-of-truth: packages/mailwoman/lib/engine/parser.ts, packages/neural/lib/classifier.ts, docs/engineering/reference/decoder-grammar.mdx
-verified-with: mailwoman v11.0.0 parse and trace, source reviewed 2026-11-24
+verified-with: published mailwoman v11.3.0 parse and trace on Node.js v24.22.3 and Linux x64, with decoder source reviewed 2026-11-26
 ---
 
 # How Mailwoman turns text into address components
@@ -12,7 +12,7 @@ Why does `New York` become a locality in `apt 4b 350 5th ave new york ny 10118`,
 
 ## The text supplies clues before the model decides
 
-The runtime normalizes the input before it computes the query shape. The classifier can also adjust letter case before labeling. In the published 11.0.0 run, `input` and `normalized.normalized` both remain `apt 4b 350 5th ave new york ny 10118`, while `tree.raw` is `Apt 4B 350 5TH Ave New York NY 10118`. The returned nodes index `tree.raw`: `[19, 27)` selects `New York` from that string. [The first-parse tutorial](../start.mdx) shows the complete tree.
+The runtime normalizes the input before it computes the query shape. The classifier can also adjust letter case before labeling. In the published 11.3.0 run, `input` and `normalized.normalized` both remain `apt 4b 350 5th ave new york ny 10118`, while `tree.raw` is `Apt 4B 350 5TH Ave New York NY 10118`. The returned nodes index `tree.raw`: `[19, 27)` selects `New York` from that string. [The first-parse tutorial](../start.mdx) shows the complete tree.
 
 The query-shape stage finds clues such as word groups and postcode-shaped text. In the [trace for this input](../tutorials/inspect-a-parse.mdx), `10118` matches `us_zip`, `fr_postcode`, and `de_postcode`. Those are three possible formats for the same five characters, rather than three identified destinations. The input as a whole is classified as `structured_address`, so it takes the full parse path. A clear postcode-only or locality-only query can instead take a fast path that constructs a simpler result without neural labeling.
 
