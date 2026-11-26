@@ -20,10 +20,9 @@ We're happy to credit you in the release notes if you'd like.
 
 ## Supported versions
 
-Mailwoman is pre-1.0 in spirit even though the npm version is 5.x — the public
-API is still settling. Security fixes land on the **latest published minor**
-(`5.x`). We don't backport to older minors. The supported path is to upgrade
-forward.
+Mailwoman's public API is still settling. Security fixes land on the **latest
+published minor**. We don't backport to older minors. Upgrade to the latest
+published version to receive fixes.
 
 ## Scope
 
