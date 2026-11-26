@@ -636,6 +636,44 @@ function ordinalOf(n: number): string {
 }
 
 /**
+ * The directionals as a street key writes them: `north`, `northeast` and so on.
+ */
+const KEY_DIRECTIONALS: readonly string[] = [
+	...new Set([...AbbreviationToDirectional.values()].map((name) => name.toLowerCase().replaceAll(" ", ""))),
+]
+
+/**
+ * The keys a street key could be stored under if its writer and the register disagree
+ * on one directional: the key's base name without a leading or trailing directional,
+ * and the base with each directional before or after it.
+ * The key itself is left out.
+ *
+ * Returns an empty list when the base has fewer than two words,
+ * so `northwest highway` never relaxes to `highway`.
+ */
+export function directionalRelaxedKeys(key: StreetKey): StreetKey[] {
+	const words = key.split(" ")
+
+	if (words.length && KEY_DIRECTIONALS.includes(words[0]!)) {
+		words.shift()
+	}
+
+	if (words.length && KEY_DIRECTIONALS.includes(words.at(-1)!)) {
+		words.pop()
+	}
+
+	if (words.length < 2) return []
+
+	const base = words.join(" ")
+	const forms = [
+		base,
+		...KEY_DIRECTIONALS.flatMap((directional) => [`${directional} ${base}`, `${base} ${directional}`]),
+	]
+
+	return forms.filter((form) => form !== key) as StreetKey[]
+}
+
+/**
  * Lists the lookup keys to probe for a street span, most literal first, adding the
  * English respellings for a locale whose rules probe them.
  */

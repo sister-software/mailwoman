@@ -8,13 +8,19 @@
  */
 
 import type { InterpolationLookup } from "@mailwoman/core/resolver"
-import { parseJSONStrict } from "@mailwoman/core/values/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { streetLocaleForCountry } from "#labels/street/locale"
-import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#labels/street/normalize"
+import {
+	canonicalizeRouteKey,
+	directionalRelaxedKeys,
+	type RouteKey,
+	type StreetKey,
+	streetKeyVariants,
+} from "#labels/street/normalize"
 import type { StreetSegmentDatabase } from "#labels/street/segment-schema"
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 
@@ -150,6 +156,12 @@ export class StreetInterpolator<
 		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
 		| undefined
 	readonly #byStreet: PreparedAll<[street: RouteKey, minNumber: number, maxNumber: number], SegmentRow> | undefined
+	/**
+	 * The distinct stored keys among a JSON array of candidates whose segments in one postcode cover a number.
+	 */
+	readonly #storedKeys:
+		| PreparedAll<[postcode: string, minNumber: number, maxNumber: number, keys: string], { street_norm: string }>
+		| undefined
 	readonly #radiusCalibration: number | null = null
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
@@ -177,6 +189,13 @@ export class StreetInterpolator<
 				this.#db,
 				`SELECT ${columns} FROM street_segment
 				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
+			)
+
+			this.#storedKeys = prepareAll(
+				this.#db,
+				`SELECT DISTINCT street_norm FROM street_segment
+				 WHERE postcode = ? AND min_hn <= ? AND max_hn >= ?
+				   AND street_norm IN (SELECT value FROM json_each(?))`
 			)
 		}
 
@@ -215,8 +234,10 @@ export class StreetInterpolator<
 		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
+		const variants = streetKeyVariants(query.street, SEGMENT_STREET_LOCALE)
+
 		// A variant advances the ladder when it produces no answer rather than merely no rows.
-		for (const variant of streetKeyVariants(query.street, SEGMENT_STREET_LOCALE)) {
+		for (const variant of variants) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
 			// A ZIP that scopes to no candidate is a miss rather than a statewide guess.
@@ -229,7 +250,30 @@ export class StreetInterpolator<
 			if (hit) return hit
 		}
 
-		return null
+		return this.#directionalRelaxed(variants[0], n, query)
+	}
+
+	/**
+	 * Answers from the one stored key that differs from the query's key by a leading
+	 * or trailing directional, after every written variant missed: TIGER may store
+	 * `main street` where a writer adds `N`, or the reverse.
+	 *
+	 * Runs only with a postcode, and abstains when the postcode holds two or more such keys covering
+	 * the number, because `north main street` and `south main street` are different streets.
+	 */
+	#directionalRelaxed(key: StreetKey | undefined, n: number, query: InterpolationQuery): InterpolatedHit | null {
+		if (!key || !query.postcode || !this.#storedKeys || !this.#byPostcode) return null
+
+		const candidates = directionalRelaxedKeys(key).map((candidate) => canonicalizeRouteKey(candidate))
+
+		if (!candidates.length) return null
+
+		const postcode = query.postcode.trim()
+		const stored = this.#storedKeys(postcode, n, n, stringifyJSON(candidates))
+
+		if (stored.length !== 1) return null
+
+		return this.#answerFromRows(this.#byPostcode(postcode, stored[0]!.street_norm as RouteKey, n, n), n, query)
 	}
 
 	/**

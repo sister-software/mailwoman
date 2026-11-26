@@ -294,6 +294,65 @@ describe("StreetInterpolator — artifact-carried radius calibration", () => {
 	})
 })
 
+describe("StreetInterpolator — a directional the query and the register disagree on (#3509)", () => {
+	let relaxedDB: DatabaseClient<StreetSegmentDatabase>
+	let relaxed: StreetInterpolator
+
+	const segment = (street_norm: string, from_hn: number, to_hn: number, latitude: number): SeedSegment => ({
+		street_norm,
+		side: "L",
+		from_hn,
+		to_hn,
+		parity: "odd",
+		postcode: "89049",
+		geometry: [
+			[0, latitude],
+			[0.001, latitude],
+		],
+	})
+
+	beforeAll(() => {
+		relaxedDB = DatabaseClient.temp<StreetSegmentDatabase>()
+
+		seed(relaxedDB, [
+			// TIGER writes Tonopah's Main Street with no directional.
+			segment("main street", 501, 599, 0),
+			// Two streets that differ only by their directional.
+			segment("north elm street", 101, 199, 1),
+			segment("south elm street", 101, 199, 2),
+			segment("northwest highway", 1, 99, 3),
+		])
+
+		relaxed = new StreetInterpolator({ database: relaxedDB })
+	})
+
+	afterAll(() => {
+		relaxedDB[Symbol.dispose]()
+	})
+
+	it("answers a directional the register leaves out, within the postcode", () => {
+		const hit = relaxed.find({ street: "N Main St", number: "521", postcode: "89049" })
+
+		expect(hit).not.toBeNull()
+		expect(hit!.lat).toBeCloseTo(0, 9)
+	})
+
+	it("answers a directional the query leaves out when the postcode holds one such street", () => {
+		const hit = relaxed.find({ street: "Main Street North", number: "521", postcode: "89049" })
+
+		expect(hit!.lat).toBeCloseTo(0, 9)
+	})
+
+	it("abstains when the postcode holds two streets that differ only by their directional", () => {
+		expect(relaxed.find({ street: "Elm St", number: "121", postcode: "89049" })).toBeNull()
+	})
+
+	it("never relaxes without a postcode, or to a one-word base", () => {
+		expect(relaxed.find({ street: "N Main St", number: "521" })).toBeNull()
+		expect(relaxed.find({ street: "Highway", number: "21", postcode: "89049" })).toBeNull()
+	})
+})
+
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
 		const hit = interpolator.find({ street: "Main St", number: "151" })
