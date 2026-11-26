@@ -13,6 +13,7 @@
 import { layoutForCountry, layoutPrintsTag } from "@mailwoman/codex/address/layouts"
 import { makeLcg } from "@mailwoman/core/utils"
 
+import { withConventionStreet } from "#adapters/street/convention"
 import {
 	alignAndWrite,
 	readTuples,
@@ -83,7 +84,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 					write,
 					{
 						raw: synth.raw,
-						components: synth.components,
+						components: withConventionStreet(synth.components, tuple.country),
 						country: tuple.country,
 						locale: synth.locale,
 						source,

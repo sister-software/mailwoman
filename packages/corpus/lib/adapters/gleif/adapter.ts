@@ -137,6 +137,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
+import { withConventionStreet } from "#adapters/street/convention"
 import { type CountryStreetLineContext, streetLineReaderFor } from "#adapters/street/country-line"
 import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
 import { joinRepetitionIndex, withoutRepetitionIndex } from "#adapters/street/repetition"
@@ -659,7 +660,7 @@ export function readGLEIFAddress(
 		components.region = region
 	}
 
-	const rendered = formatCorpusRow(components, country, { singleLine: true, script })
+	const rendered = formatCorpusRow(withConventionStreet(components, country), country, { singleLine: true, script })
 
 	if (!rendered) return { refused: GLEIFRefusal.Unrenderable }
 
