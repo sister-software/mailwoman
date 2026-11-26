@@ -38,7 +38,9 @@ Mailwoman requires <NodeRequirement />. These are the patched release floors fro
 
 The manifest also declares `type: "module"`. The examples on these pages are TypeScript files that Node runs directly, from a project whose `package.json` sets `"type": "module"`. The published en-US weights package and its bundled model card both identify version 11.3.0. The bundled `calibration.json` still identifies model version 5.3.0, so it doesn't establish an accuracy mapping for the installed model. [Confidence and limits](../explanation/confidence-and-limits.mdx) explains that distinction.
 
-## Runtime variables and path precedence checked with 11.0.0
+## Runtime variables and path precedence
+
+The path rules in this table were checked with published 11.0.0. Check resolved paths in the installed release before relying on them for a new geographic-data artifact.
 
 | Variable                 | Published 11.0.0 behavior                                                                                                                                                                                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
