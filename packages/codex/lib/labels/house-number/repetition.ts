@@ -21,8 +21,9 @@
 /**
  * The repetition indexes, lower-cased, in the order a street numbers them.
  *
- * These are the values BAN's `rep` column holds as words.
- * Its single-letter values (`a`, `b`) are a different suffix and aren't listed.
+ * BAN's `rep` column holds each index as its word (`bis`) across most of France
+ * and as its first letter (`b`, `t`, `q`) in Paris, where no row writes the word.
+ * A letter other than an index's first letter (`a`) is a letter suffix.
  */
 export const HOUSE_NUMBER_REPETITION_INDEXES: readonly string[] = ["bis", "ter", "quater"]
 

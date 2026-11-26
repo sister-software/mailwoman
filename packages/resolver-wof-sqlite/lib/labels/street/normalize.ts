@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { HOUSE_NUMBER_REPETITION_INDEXES } from "@mailwoman/codex/labels/house-number/repetition"
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 import type { Tagged } from "type-fest"
 
@@ -277,6 +278,15 @@ export interface StreetKeyRules {
 	 * `null` when the locale writes no such number.
 	 */
 	houseNumberBase: RegExp | null
+	/**
+	 * The repetition indexes the locale writes after a house number (`20 bis`, `20 ter`),
+	 * each of which a register may store as the word or as its first letter (`20 b`).
+	 *
+	 * A reader probes the other spellings of an index after the written number misses.
+	 *
+	 * `null` when the locale writes no repetition index.
+	 */
+	houseNumberRepetition: readonly string[] | null
 }
 
 /**
@@ -350,6 +360,7 @@ const SHARED_KEY_RULES: StreetKeyRules = {
 	localityFromRegionAndSubregion: false,
 	houseNumberKey: (number) => number.trim().toLowerCase(),
 	houseNumberBase: null,
+	houseNumberRepetition: null,
 }
 
 /**
@@ -379,6 +390,8 @@ const STREET_KEY_RULES: Readonly<Record<string, StreetKeyRules>> = {
 		...SHARED_KEY_RULES,
 		streetKey: (street) => wordStreetKey(street, expandEveryWord(FR_STREET_ABBREV)),
 		arrondissementAtBaseCity: true,
+		// BAN writes `3 bis` across most of France and `3 b` in Paris, and a query may write either joined.
+		houseNumberRepetition: HOUSE_NUMBER_REPETITION_INDEXES,
 	},
 	de: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandStreetSuffix("strasse")) },
 	it: { ...SHARED_KEY_RULES, streetKey: (street) => wordStreetKey(street, expandLeadingWord(IT_STREET_TYPE_ABBREV)) },

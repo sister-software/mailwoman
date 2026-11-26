@@ -18,11 +18,29 @@ import { streetKeyRulesOf, type StreetLocale } from "#labels/street/normalize"
  *   BAN stores `3 a`, while G-NAF and most OpenAddresses sources store `3a`.
  * - Under `zh`, `14之12` and `30附40` fall back to `14` and `30`, the number the Taiwanese register stores.
  *   That answer is approximate.
+ * - Under a locale with repetition indexes (`fr`), `3bis`, `3 bis`, `3 b`
+ *   and `3b` are one number: the spaced word, the joined word, the spaced letter
+ *   and the joined letter are tried, then the bare number.
+ *   BAN stores `3 bis` across most of France and `3 b` in Paris.
+ *   The bare number is an approximate answer.
  *
  * Both address readers call this, so they try one number in one order.
  */
 export function* houseNumberForms(number: string, locale: StreetLocale): Generator<string> {
 	yield number
+
+	const indexes = streetKeyRulesOf(locale).houseNumberRepetition
+	const repetition = indexes ? repetitionForms(number, indexes) : null
+
+	if (repetition) {
+		for (const form of repetition) {
+			if (form !== number) {
+				yield form
+			}
+		}
+
+		return
+	}
 
 	if (isJoinedHouseNumber(number)) {
 		yield number.replace("-", "")
@@ -56,4 +74,23 @@ export function* houseNumberForms(number: string, locale: StreetLocale): Generat
 	if (base) {
 		yield base
 	}
+}
+
+/**
+ * The spellings of a number written with a repetition index, in probe order,
+ * or `null` when the number ends in no index.
+ *
+ * An index is written as its word or its first letter, spaced or joined.
+ */
+function repetitionForms(number: string, indexes: readonly string[]): string[] | null {
+	const match = /^(\d+)\s*([a-z]+)$/.exec(number)
+
+	if (!match) return null
+
+	const [, digits, suffix] = match as unknown as [string, string, string]
+	const word = indexes.find((index) => index === suffix || index[0] === suffix)
+
+	if (!word) return null
+
+	return [`${digits} ${word}`, `${digits}${word}`, `${digits} ${word[0]}`, `${digits}${word[0]}`, digits]
 }
