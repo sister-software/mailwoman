@@ -19,7 +19,7 @@ describe("the launch wall-clock check", () => {
 	})
 
 	it("refuses a device or batch size with no observed rate", () => {
-		expect(() => estimateWallClock("H100", { maxSteps: 100, evalEverySteps: 10, batchSize: 128 })).toThrow(/H100/)
+		expect(() => estimateWallClock("T4", { maxSteps: 100, evalEverySteps: 10, batchSize: 128 })).toThrow(/T4/)
 
 		expect(() => estimateWallClock("A100", { maxSteps: 100, evalEverySteps: 10, batchSize: 256 })).toThrow(
 			/batch_size=256/

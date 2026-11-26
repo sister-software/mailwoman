@@ -62,6 +62,7 @@ import { isPresent } from "@mailwoman/core/values/objects"
 
 import { mergeHeldoutCollections, readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
 import { heldoutArmDecoderSettings, parseHeldoutArm, splitHeldoutArms } from "#tools/eval-harness/heldout/per/arm"
+import { HeldoutCase, rowsInCase } from "#tools/eval-harness/heldout/per/case"
 import {
 	type HeldoutRowOutcome,
 	assertPairedArms,
@@ -106,6 +107,13 @@ const { values } = parseArguments({
 			type: "boolean",
 			default: false,
 			description: "Also geocode the rows the specification's geocode requirements select, with every arm",
+		},
+		case: {
+			type: "string",
+			default: HeldoutCase.AsWritten,
+			description:
+				"The register rows are scored in: as-written, or lower (each row's text lowercased; a row whose length " +
+				"changes is left out and counted)",
 		},
 		"per-country": {
 			type: "string",
@@ -280,7 +288,13 @@ async function scoreAndReport(): Promise<void> {
 		history = await readProvenanceHistory(provenancePaths)
 	}
 
-	const { rows, counts, dataset } = values.dataset
+	const register = values.case as HeldoutCase
+
+	if (!Object.values(HeldoutCase).includes(register)) {
+		throw new Error(`--case must be one of ${Object.values(HeldoutCase).join(", ")}, got ${values.case}`)
+	}
+
+	const read = values.dataset
 		? await readCollections(splitList(values.dataset))
 		: {
 				...(await sampleHeldoutRows(
@@ -295,7 +309,16 @@ async function scoreAndReport(): Promise<void> {
 				dataset: null,
 			}
 
+	const { counts, dataset } = read
+	const { rows, leftOut } = rowsInCase(read.rows, register)
+
 	console.error(`${rows.length} held-out rows from ${values.dataset ?? values.manifest}`)
+
+	if (register !== HeldoutCase.AsWritten) {
+		console.error(
+			`scored in the ${register} register; ${leftOut} rows left out because the case change moved their length`
+		)
+	}
 
 	const arms = [values.baseline, ...splitHeldoutArms(values.candidates)]
 	const parsedArms = arms.map(parseHeldoutArm)
@@ -444,6 +467,7 @@ async function scoreAndReport(): Promise<void> {
 		{
 			manifest: values.manifest ?? null,
 			dataset,
+			case: { register, leftOut },
 			provenance: provenancePaths.length ? provenancePaths : null,
 			geocode,
 			capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },

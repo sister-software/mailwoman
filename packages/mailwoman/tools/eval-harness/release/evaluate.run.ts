@@ -31,6 +31,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { HeldoutCase } from "#tools/eval-harness/heldout/per/case"
 import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
 import { readReportedCollections, verifyReportedCollections } from "#tools/eval-harness/release/collection"
 import {
@@ -83,7 +84,16 @@ const report = await readLocalJSONFile<{
 	outcomes?: Array<{ arm?: unknown; rows?: unknown }>
 	inference?: { rule?: unknown }
 	dataset?: unknown
+	case?: { register?: unknown }
 }>(values.report)
+
+// A release reads rows as their publishers wrote them.
+// A report in another register (`--case lower`) is a diagnostic.
+if (report.case?.register != null && report.case.register !== HeldoutCase.AsWritten) {
+	throw new Error(
+		`${values.report} scored rows in the ${String(report.case.register)} register; a release verdict reads rows as written`
+	)
+}
 
 const reported = readReportedCollections(report, values.report)
 const collections = reported ? await verifyReportedCollections(spec, reported) : null
