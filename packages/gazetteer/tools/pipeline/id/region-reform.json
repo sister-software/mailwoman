@@ -1,0 +1,78 @@
+{
+	"country": "ID",
+	"memberPlacetype": "county",
+	"designator": "",
+	"inception": "2022",
+	"cessation": "2022",
+	"ceased": [],
+	"split": [85672115, 85672067],
+	"sources": {
+		"law": {
+			"citation": "Undang-Undang Nomor 14, 15 and 16 Tahun 2022 formed the provinces of Papua Selatan, Papua Tengah and Papua Pegunungan from Papua, and Undang-Undang Nomor 29 Tahun 2022 formed Papua Barat Daya from Papua Barat. ISO 3166-2:ID lists the four provinces.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:ID"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: Indonesian and English labels, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the province that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26. The assignment agrees with the regencies each statute lists."
+		}
+	},
+	"units": [
+		{
+			"iso": "ID-PA",
+			"name": "Papua",
+			"wikidata": "Q5095",
+			"geonames": 1643012,
+			"existing": 85672115,
+			"members": [102072957, 102072959, 102072997, 102073035, 102073081, 1108796871, 1108796883, 1108796887]
+		},
+		{
+			"iso": "ID-PS",
+			"name": "Papua Selatan",
+			"english": "South Papua",
+			"names": { "name:ind_x_preferred": ["Papua Selatan"] },
+			"wikidata": "Q61439296",
+			"geonames": 12503513,
+			"members": [102072939, 102073195, 102073423, 1108796879]
+		},
+		{
+			"iso": "ID-PT",
+			"name": "Papua Tengah",
+			"english": "Central Papua",
+			"names": { "name:ind_x_preferred": ["Papua Tengah"] },
+			"wikidata": "Q12486766",
+			"geonames": 12503511,
+			"members": [102072955, 102073507, 1108796873, 1108796875, 1108796881, 1108796891, 1108796897, 1108796899]
+		},
+		{
+			"iso": "ID-PE",
+			"name": "Papua Pegunungan",
+			"english": "Highland Papua",
+			"names": { "name:ind_x_preferred": ["Papua Pegunungan"] },
+			"wikidata": "Q112810104",
+			"geonames": 12503512,
+			"members": [102072971, 102073143, 102073171, 102073467, 1108796885, 1108796889, 1108796893, 1108796901],
+			"note": "Record 1108796893 is titled Asmat and lies in the highlands, where GeoNames files 2 of the 3 populated places inside it under Papua Pegunungan. The Asmat regency of Papua Selatan is record 102073423."
+		},
+		{
+			"iso": "ID-PB",
+			"name": "Papua Barat",
+			"wikidata": "Q5096",
+			"geonames": 1996549,
+			"existing": 85672067,
+			"members": [102072595, 102072797, 102073049, 102073445, 1108796867, 1108796869],
+			"note": "The Manokwari record's boundary predates the province: GeoNames files 33 of the 151 populated places inside it under Papua Barat Daya."
+		},
+		{
+			"iso": "ID-PD",
+			"name": "Papua Barat Daya",
+			"english": "Southwest Papua",
+			"names": { "name:ind_x_preferred": ["Papua Barat Daya"] },
+			"wikidata": "Q115253263",
+			"geonames": 12503510,
+			"members": [102072635, 102072725, 1108796861, 1108796863, 1108796865]
+		}
+	]
+}

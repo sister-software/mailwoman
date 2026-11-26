@@ -65,9 +65,17 @@ export interface RegionReformUnit {
 	 */
 	name: string
 	/**
+	 * The unit's English name when `name` is in another language, `South Papua` for `Papua Selatan`.
+	 */
+	english?: string
+	/**
 	 * Other English spellings of the name, `Elgeyo-Marakwet` beside `Elgeyo/Marakwet`.
 	 */
 	variants?: string[]
+	/**
+	 * Names in other languages, keyed by WOF name property: `{ "name:ind_x_preferred": ["Papua Selatan"] }`.
+	 */
+	names?: Record<string, string[]>
 	/**
 	 * The unit's Wikidata item, `Q808201`.
 	 */
@@ -103,7 +111,8 @@ export interface RegionReformSpec {
 	 */
 	memberPlacetype: string
 	/**
-	 * The designator the long label adds after a unit's name, `County`.
+	 * The designator the long label adds after a unit's English name, `County`.
+	 * An empty string writes no long label.
 	 */
 	designator: string
 	/**
@@ -648,7 +657,8 @@ export async function applyRegionReform(
 
 	for (const unit of spec.units) {
 		const id = idOfUnit.get(unit.iso)!
-		const longName = `${unit.name} ${spec.designator}`
+		const english = unit.english ?? unit.name
+		const longName = spec.designator ? `${english} ${spec.designator}` : null
 
 		result.units.push({
 			iso: unit.iso,
@@ -737,7 +747,8 @@ export async function applyRegionReform(
 				"geom:latitude": latitude,
 				"geom:longitude": longitude,
 				"iso:country": spec.country,
-				"label:eng_x_preferred_longname": [longName],
+				...unit.names,
+				...(longName ? { "label:eng_x_preferred_longname": [longName] } : {}),
 				"mailwoman:sources": [
 					{ property: "wof:placetype", ...spec.sources.law },
 					{ property: "wof:name", ...spec.sources.units },
@@ -746,8 +757,8 @@ export async function applyRegionReform(
 				],
 				"mz:hierarchy_label": 1,
 				"mz:is_current": 1,
-				"name:eng_x_preferred": [unit.name],
-				"name:eng_x_variant": [longName, ...(unit.variants ?? [])],
+				"name:eng_x_preferred": [english],
+				"name:eng_x_variant": [longName, ...(unit.variants ?? [])].filter(isPresent),
 				"src:geom": String(properties(members[0]!)["src:geom"] ?? "whosonfirst"),
 				"wof:belongsto": [branch.continent_id, country].filter(isPresent),
 				"wof:breaches": [],
