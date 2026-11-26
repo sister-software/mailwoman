@@ -144,6 +144,18 @@ export interface RegionReformSpec {
 	 * Each is also a unit with `existing` set, and takes the union of its remaining members as its boundary.
 	 */
 	split?: number[]
+	/**
+	 * The EDTF date a replaced region ceased, by WOF id, when it differs from {@link cessation}.
+	 */
+	cessations?: Record<string, string>
+	/**
+	 * A record below a replaced region takes the unit of its member ancestor
+	 * before the unit GeoNames files it under.
+	 *
+	 * Set when the members are the replaced regions themselves, merged into a unit of
+	 * the same tier, so the member ancestor states the unit exactly.
+	 */
+	preferMember?: boolean
 	sources: {
 		/**
 		 * The law that creates the units.
@@ -568,7 +580,8 @@ export async function applyRegionReform(
 			.find(isPresent)
 
 		const filed = unitOfGeoNames.get(divisionOf.get(Number(concordancesOf(record)["gn:id"])) ?? -1)
-		const unit = member ?? filed ?? ancestor ?? containing(record)
+
+		const unit = member ?? (spec.preferMember ? (ancestor ?? filed) : (filed ?? ancestor)) ?? containing(record)
 
 		if (!unit) {
 			result.unplaced.push({
@@ -594,10 +607,10 @@ export async function applyRegionReform(
 		// A record below a split region that stays in it keeps its file as it is.
 		if (!replaced.size) continue
 
-		if (member || !filed) {
-			result.moved.byMembership++
-		} else {
+		if (!member && unit === filed && !(spec.preferMember && ancestor)) {
 			result.moved.byGeoNames++
+		} else {
+			result.moved.byMembership++
 		}
 
 		if (!member && filed && ancestor && filed !== ancestor) {
@@ -630,10 +643,18 @@ export async function applyRegionReform(
 	for (const id of spec.ceased) {
 		const record = required(id, "replaced region")
 		const name = String(properties(record)["wof:name"] ?? "")
+		const cessation = spec.cessations?.[String(id)] ?? spec.cessation
+		const absorbedBy = unitOfMember.get(id)
+
+		// A replaced region listed as a member was merged into its unit.
+		// The unit succeeds it.
+		if (absorbedBy) {
+			successors.set(id, (successors.get(id) ?? new Set()).add(idOfUnit.get(reformUnitKey(absorbedBy))!))
+		}
 
 		// A region an earlier run marked ceased keeps its successors: its members have moved
 		// since, so this run can no longer read them.
-		if (properties(record)["mz:is_current"] === 0 && properties(record)["edtf:cessation"] === spec.cessation) {
+		if (properties(record)["mz:is_current"] === 0 && properties(record)["edtf:cessation"] === cessation) {
 			const before = properties(record)["wof:superseded_by"]
 
 			result.ceased.push({ id, name, supersededBy: Array.isArray(before) ? (before as number[]) : [] })
@@ -648,7 +669,7 @@ export async function applyRegionReform(
 		writes.set(
 			record.path,
 			patchWOFRecordText(record.text, {
-				"edtf:cessation": spec.cessation,
+				"edtf:cessation": cessation,
 				"mz:is_current": 0,
 				"wof:superseded_by": supersededBy,
 				"wof:lastmodified": options.lastModified,
@@ -708,6 +729,10 @@ export async function applyRegionReform(
 			const kept = membersOfUnit.get(reformUnitKey(unit)) ?? []
 			const total = (key: string) => kept.reduce((all, member) => all + Number(properties(member)[key] ?? 0), 0)
 
+			// The replaced regions merged into this kept record.
+			// The record supersedes each of them.
+			const absorbed = unit.members.filter((member) => ceased.has(member))
+
 			// A kept record with its code already set and no new boundary keeps its file unchanged.
 			if (!remaining && concordancesOf(record)["iso:code"] === unit.iso) continue
 
@@ -716,7 +741,17 @@ export async function applyRegionReform(
 				patchWOFRecordText(
 					record.text,
 					{
-						"wof:concordances": { ...concordancesOf(record), ...isoConcordances(unit) },
+						"wof:concordances": { ...concordancesOf(record), ...isoConcordances(unit), "wd:id": unit.wikidata },
+						...(absorbed.length
+							? {
+									"wof:supersedes": [
+										...new Set([
+											...((properties(record)["wof:supersedes"] as number[] | undefined) ?? []),
+											...absorbed,
+										]),
+									].toSorted((a, b) => a - b),
+								}
+							: {}),
 						...(unit.iso ? { "wof:concordances_official": "iso:code" } : {}),
 						"wof:lastmodified": options.lastModified,
 						...(remaining

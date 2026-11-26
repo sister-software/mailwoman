@@ -1,0 +1,265 @@
+{
+	"country": "LV",
+	"memberPlacetype": "region",
+	"designator": "Municipality",
+	"inception": "2021-07-01",
+	"cessation": "2021-07-01",
+	"cessations": { "85686051": "2025-07-01" },
+	"preferMember": true,
+	"ceased": [
+		85685789, 85685791, 85685803, 85685807, 85685811, 85685815, 85685819, 85685825, 85685829, 85685837, 85685839,
+		85685845, 85685855, 85685857, 85685863, 85685867, 85685871, 85685875, 85685885, 85685893, 85685901, 85685905,
+		85685907, 85685911, 85685921, 85685939, 85685947, 85685953, 85685957, 85685961, 85685975, 85685977, 85685987,
+		85685991, 85685995, 85686011, 85686017, 85686023, 85686027, 85686033, 85686049, 85686051, 85686055, 85686061,
+		85686073, 85686085, 85686089, 85686099, 85686103, 85686107, 85686117, 85686125, 85686131, 85686139, 85686151,
+		85686153, 85686161, 85686173, 85686175, 85686179, 85686185, 85686189, 85686203, 85686207, 85686211, 85686215,
+		85686221, 85686225, 85686229, 85686243, 85686251, 85686257, 85686261, 85686269, 85686275, 85686283, 85686287,
+		85686293, 85686299, 85686303, 85686305
+	],
+	"sources": {
+		"law": {
+			"citation": "Administratīvo teritoriju un apdzīvoto vietu likums of 2020, whose annex lists the municipalities in effect from 1 July 2021 and the towns and parishes of each. Varakļāni municipality joined Madona municipality on 1 July 2025.",
+			"url": "https://likumi.lv/ta/id/315654"
+		},
+		"units": {
+			"citation": "Wikidata, the current municipality whose ISO 3166-2 code (P300) is this unit's: Latvian and English labels, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each former municipality is assigned to the municipality that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26. Strenči, Rauna and Varakļāni are assigned as the law's annex lists them."
+		}
+	},
+	"units": [
+		{
+			"iso": "LV-113",
+			"name": "Valmieras",
+			"english": "Valmiera",
+			"names": { "name:lav_x_preferred": ["Valmieras novads"] },
+			"wikidata": "Q97233086",
+			"geonames": 454564,
+			"members": [85686243, 85686257, 85686261, 85686275, 85686283, 85686299, 85686303, 85686305],
+			"note": "The annex lists the town of Strenči under Valmiera municipality, so the Strenču record (85686275) is a member here. GeoNames files 64% of the populated places inside it under Valka."
+		},
+		{
+			"iso": "LV-112",
+			"name": "Dienvidkurzemes",
+			"english": "South Kurzeme",
+			"names": { "name:lav_x_preferred": ["Dienvidkurzemes novads"] },
+			"wikidata": "Q97230452",
+			"geonames": 12276857,
+			"members": [85685789, 85685791, 85685803, 85685807, 85685811, 85685829, 85685867, 85685901]
+		},
+		{
+			"iso": "LV-111",
+			"name": "Augšdaugavas",
+			"english": "Augšdaugava",
+			"names": { "name:lav_x_preferred": ["Augšdaugavas novads"] },
+			"wikidata": "Q97230083",
+			"geonames": 12276858,
+			"members": [85685815, 85685825]
+		},
+		{
+			"iso": "LV-099",
+			"name": "Tukuma",
+			"wikidata": "Q97232977",
+			"geonames": 454771,
+			"existing": 85686083,
+			"members": [85685921, 85686061, 85686083, 85686103]
+		},
+		{
+			"iso": "LV-097",
+			"name": "Talsu",
+			"wikidata": "Q97232890",
+			"geonames": 454968,
+			"existing": 85686157,
+			"members": [85686125, 85686157, 85686211, 85686221]
+		},
+		{
+			"iso": "LV-088",
+			"name": "Saldus",
+			"wikidata": "Q97232673",
+			"geonames": 455888,
+			"existing": 85685935,
+			"members": [85685885, 85685935]
+		},
+		{
+			"iso": "LV-077",
+			"name": "Rezeknes",
+			"wikidata": "Q97232589",
+			"geonames": 456197,
+			"existing": 85686095,
+			"members": [85686049, 85686095]
+		},
+		{
+			"iso": "LV-073",
+			"name": "Preilu",
+			"wikidata": "Q97232413",
+			"geonames": 456528,
+			"existing": 85685929,
+			"members": [85685857, 85685929, 85685977]
+		},
+		{
+			"iso": "LV-067",
+			"name": "Ogres",
+			"wikidata": "Q97232220",
+			"geonames": 457061,
+			"existing": 85686079,
+			"members": [85685995, 85686011, 85686017, 85686079]
+		},
+		{
+			"iso": "LV-059",
+			"name": "Madonas",
+			"wikidata": "Q97231990",
+			"geonames": 457712,
+			"existing": 85686143,
+			"members": [85686051, 85686085, 85686131, 85686143, 85686151],
+			"note": "The Varaklanu record (85686051) joined on 1 July 2025, four years after the others."
+		},
+		{
+			"iso": "LV-058",
+			"name": "Ludzas",
+			"wikidata": "Q97231943",
+			"geonames": 457773,
+			"existing": 85686037,
+			"members": [85685987, 85686037, 85686089, 85686139]
+		},
+		{
+			"iso": "LV-054",
+			"name": "Limbažu",
+			"wikidata": "Q97231916",
+			"geonames": 457889,
+			"existing": 85686265,
+			"members": [85686265, 85686287, 85686293]
+		},
+		{
+			"iso": "LV-050",
+			"name": "Kuldigas",
+			"wikidata": "Q97231583",
+			"geonames": 458459,
+			"existing": 85686043,
+			"members": [85685871, 85685961, 85686043]
+		},
+		{
+			"iso": "LV-047",
+			"name": "Kraslavas",
+			"wikidata": "Q97231555",
+			"geonames": 458621,
+			"existing": 85685833,
+			"members": [85685833, 85685855, 85685893],
+			"note": "The former Aglona municipality (85685855) was divided: the annex lists Aglona parish under Preiļi municipality and Grāveri, Kastuļina and Šķeltova under Krāslava. GeoNames files 58% of the populated places inside the record under Krāslava."
+		},
+		{
+			"iso": "LV-041",
+			"name": "Jelgavas",
+			"wikidata": "Q97231093",
+			"geonames": 459278,
+			"existing": 85685971,
+			"members": [85685907, 85685971]
+		},
+		{
+			"iso": "LV-042",
+			"name": "Jekabpils",
+			"wikidata": "Q97231194",
+			"geonames": 459282,
+			"existing": 85685889,
+			"members": [85685819, 85685875, 85685889, 85685911, 85685953, 85685991]
+		},
+		{
+			"iso": "LV-026",
+			"name": "Dobeles",
+			"wikidata": "Q97230466",
+			"geonames": 460311,
+			"existing": 85685925,
+			"members": [85685837, 85685839, 85685925]
+		},
+		{
+			"iso": "LV-022",
+			"name": "Cesu",
+			"wikidata": "Q97230394",
+			"geonames": 460569,
+			"existing": 85686193,
+			"members": [85686153, 85686173, 85686175, 85686189, 85686193, 85686215, 85686229]
+		},
+		{
+			"iso": "LV-016",
+			"name": "Bauskas",
+			"wikidata": "Q97230156",
+			"geonames": 461112,
+			"existing": 85685851,
+			"members": [85685845, 85685851, 85685905, 85685939]
+		},
+		{
+			"iso": "LV-015",
+			"name": "Balvu",
+			"wikidata": "Q97230143",
+			"geonames": 461160,
+			"existing": 85686235,
+			"members": [85686179, 85686185, 85686235, 85686251]
+		},
+		{
+			"iso": "LV-002",
+			"name": "Aizkraukles",
+			"wikidata": "Q97229842",
+			"geonames": 461613,
+			"existing": 85685965,
+			"members": [85685863, 85685947, 85685965, 85685975, 85686023, 85686055]
+		},
+		{
+			"iso": "LV-062",
+			"name": "Marupes",
+			"wikidata": "Q97232200",
+			"geonames": 7628319,
+			"existing": 85686007,
+			"members": [85686007, 85686027]
+		},
+		{
+			"iso": "LV-052",
+			"name": "Kekavas",
+			"wikidata": "Q97233440",
+			"geonames": 7628322,
+			"existing": 85685999,
+			"members": [85685957, 85685999]
+		},
+		{
+			"iso": "LV-011",
+			"name": "Adažu",
+			"wikidata": "Q97233421",
+			"geonames": 7628327,
+			"existing": 85686113,
+			"members": [85686107, 85686113]
+		},
+		{
+			"iso": "LV-080",
+			"name": "Ropažu",
+			"wikidata": "Q97232560",
+			"geonames": 7628359,
+			"existing": 85686069,
+			"members": [85686033, 85686069, 85686073]
+		},
+		{
+			"iso": "LV-091",
+			"name": "Siguldas",
+			"wikidata": "Q97232700",
+			"geonames": 7628362,
+			"existing": 85686135,
+			"members": [85686099, 85686117, 85686135, 85686203]
+		},
+		{
+			"iso": "LV-089",
+			"name": "Saulkrastu",
+			"wikidata": "Q97232692",
+			"geonames": 7628366,
+			"existing": 85686169,
+			"members": [85686161, 85686169]
+		},
+		{
+			"iso": "LV-094",
+			"name": "Smiltenes",
+			"wikidata": "Q97232760",
+			"geonames": 7628380,
+			"existing": 85686249,
+			"members": [85686207, 85686225, 85686249, 85686269],
+			"note": "The annex lists Rauna parish under Smiltene municipality, so both Raunas records (85686207 and 85686225) are members here."
+		}
+	]
+}
