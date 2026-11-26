@@ -1,0 +1,167 @@
+{
+	"country": "PH",
+	"unitPlacetype": "macroregion",
+	"memberPlacetype": "region",
+	"designator": "",
+	"inception": "uuuu",
+	"cessation": "uuuu",
+	"ceased": [],
+	"sources": {
+		"law": {
+			"citation": "The Philippine Standard Geographic Code of the Philippine Statistics Authority divides the country into 18 administrative regions, each a group of provinces and independent cities. Republic Act No. 11054 of 2018 formed Bangsamoro, and Republic Act No. 12000 of 2024 formed the Negros Island Region.",
+			"url": "https://psa.gov.ph/classification/psgc"
+		},
+		"units": {
+			"citation": "Wikidata, this region's item (an instance of region of the Philippines, Q24698): English label, item id and ISO 3166-2 code where it holds one. The GeoNames id is the region's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Q24698"
+		},
+		"membership": {
+			"citation": "A province or city record is assigned to the region its Wikidata item is located in (P131), read on 2026-11-26, which covers 88 of the 103 records. The other 15 hold a wd:id that isn't the place's own item and are assigned to the region GeoNames files most of the populated places inside their boundary under. Bacolod follows Republic Act No. 12000 into the Negros Island Region."
+		}
+	},
+	"units": [
+		{
+			"iso": "PH-00",
+			"name": "Metro Manila",
+			"variants": ["National Capital Region", "NCR"],
+			"wikidata": "Q13580",
+			"geonames": 7521311,
+			"members": [1159397243]
+		},
+		{
+			"iso": "PH-01",
+			"name": "Ilocos Region",
+			"variants": ["Region I"],
+			"wikidata": "Q12933",
+			"geonames": 7521301,
+			"members": [85676057, 85676061, 85676119, 85676123, 85676365]
+		},
+		{
+			"iso": "PH-02",
+			"name": "Cagayan Valley",
+			"variants": ["Region II"],
+			"wikidata": "Q13615",
+			"geonames": 7521297,
+			"members": [85676043, 85676047, 85676073, 85676083, 85676089, 85676349]
+		},
+		{
+			"iso": "PH-03",
+			"name": "Central Luzon",
+			"variants": ["Region III"],
+			"wikidata": "Q13617",
+			"geonames": 7521305,
+			"members": [85676065, 85676093, 85676097, 85676101, 85676107, 85676113, 85676135, 85676351, 85676361]
+		},
+		{
+			"iso": "PH-40",
+			"name": "Calabarzon",
+			"variants": ["Region IV-A"],
+			"wikidata": "Q13650",
+			"geonames": 7521303,
+			"members": [85676127, 85676131, 85676141, 85676145, 85676161, 85676441]
+		},
+		{
+			"iso": "PH-41",
+			"name": "Mimaropa",
+			"variants": ["Southwestern Tagalog Region"],
+			"wikidata": "Q13658",
+			"geonames": 7521296,
+			"members": [85676003, 85676007, 85676149, 85676153, 85676159, 85676331]
+		},
+		{
+			"iso": "PH-05",
+			"name": "Bicol Region",
+			"variants": ["Region V"],
+			"wikidata": "Q13662",
+			"geonames": 7521310,
+			"members": [85676011, 85676017, 85676021, 85676025, 85676029, 85676035, 85676345]
+		},
+		{
+			"iso": "PH-06",
+			"name": "Western Visayas",
+			"variants": ["Region VI"],
+			"wikidata": "Q13665",
+			"geonames": 7521304,
+			"members": [85675981, 85675985, 85675989, 85675993, 85675999, 85676299]
+		},
+		{
+			"iso": "PH-07",
+			"name": "Central Visayas",
+			"variants": ["Region VII"],
+			"wikidata": "Q13669",
+			"geonames": 7521306,
+			"members": [85675933, 85675939, 85676281, 85676287, 85676291]
+		},
+		{
+			"iso": "PH-08",
+			"name": "Eastern Visayas",
+			"variants": ["Region VIII"],
+			"wikidata": "Q13675",
+			"geonames": 7521307,
+			"members": [85676187, 85676191, 85676197, 85676201, 85676203, 85676209, 85676335, 85676341]
+		},
+		{
+			"iso": "PH-09",
+			"name": "Zamboanga Peninsula",
+			"variants": ["Region IX"],
+			"wikidata": "Q13682",
+			"geonames": 7521308,
+			"members": [85675961, 85675963, 85675967, 85675975, 85676277]
+		},
+		{
+			"iso": "PH-10",
+			"name": "Northern Mindanao",
+			"variants": ["Region X"],
+			"wikidata": "Q13690",
+			"geonames": 7521295,
+			"members": [85675971, 85676165, 85676221, 85676225, 85676249, 85676317, 85676323]
+		},
+		{
+			"iso": "PH-11",
+			"name": "Davao Region",
+			"variants": ["Region XI"],
+			"wikidata": "Q13694",
+			"geonames": 7521309,
+			"members": [85676231, 85676235, 85676253, 85676255, 85676309, 1108810255]
+		},
+		{
+			"iso": "PH-12",
+			"name": "Soccsksargen",
+			"variants": ["Region XII"],
+			"wikidata": "Q13701",
+			"geonames": 7521298,
+			"members": [85676179, 85676183, 85676259, 85676263, 85676313]
+		},
+		{
+			"iso": "PH-13",
+			"name": "Caraga",
+			"variants": ["Region XIII"],
+			"wikidata": "Q13704",
+			"geonames": 7521299,
+			"members": [85676213, 85676217, 85676239, 85676243, 85676327]
+		},
+		{
+			"iso": "PH-15",
+			"name": "Cordillera Administrative Region",
+			"variants": ["CAR"],
+			"wikidata": "Q13606",
+			"geonames": 7521300,
+			"members": [85676039, 85676053, 85676077, 85676079, 85676111, 85676269, 85676359]
+		},
+		{
+			"name": "Bangsamoro",
+			"variants": ["Bangsamoro Autonomous Region in Muslim Mindanao", "BARMM"],
+			"inception": "2019",
+			"wikidata": "Q806550",
+			"members": [85675929, 85675955, 85676169, 85676173, 85676305],
+			"note": "The Sulu record (85675975) is a member of Zamboanga Peninsula, as its Wikidata item places it. GeoNames files it under the former Autonomous Region in Muslim Mindanao."
+		},
+		{
+			"name": "Negros Island Region",
+			"variants": ["NIR"],
+			"inception": "2024",
+			"wikidata": "Q17081785",
+			"members": [85675945, 85675947, 85675951, 85676295]
+		}
+	]
+}

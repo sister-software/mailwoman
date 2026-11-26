@@ -87,8 +87,9 @@ export interface RegionReformUnit {
 	wikidata: string
 	/**
 	 * The unit's GeoNames id, the id of its first-level row.
+	 * Absent when GeoNames holds no such row.
 	 */
-	geonames: number
+	geonames?: number
 	/**
 	 * The WOF ids of the records of {@link RegionReformSpec.memberPlacetype} inside the unit.
 	 */
@@ -156,6 +157,16 @@ export interface RegionReformSpec {
 	 * the same tier, so the member ancestor states the unit exactly.
 	 */
 	preferMember?: boolean
+	/**
+	 * The WOF placetype of the units.
+	 *
+	 * `macroregion` groups current regions under a new tier above them: each member
+	 * region keeps its record and takes the unit as its parent, and every record
+	 * below a member gains the unit's id as `macroregion_id`.
+	 *
+	 * @defaultValue `region`
+	 */
+	unitPlacetype?: "region" | "macroregion"
 	sources: {
 		/**
 		 * The law that creates the units.
@@ -285,6 +296,53 @@ function reformUnitKey(unit: RegionReformUnit): string {
  */
 function isoConcordances(unit: RegionReformUnit): Record<string, string> {
 	return unit.iso ? { "iso:code": unit.iso, "iso:id": unit.iso } : {}
+}
+
+/**
+ * The patched text of every record at or below a region that joins a macroregion, by file path.
+ *
+ * A record gains the macroregion's id as `macroregion_id` in each `wof:hierarchy`
+ * branch through a member region, and in `wof:belongsto`.
+ * A member region also takes it as `wof:parent_id`.
+ *
+ * A branch that already holds a `macroregion_id` is kept, so a second run changes no file.
+ */
+function groupUnderMacroregions(
+	records: ReadonlyMap<number, LoadedRecord>,
+	unitIDOfRegion: ReadonlyMap<number, number>,
+	lastModified: number
+): Map<string, string> {
+	const patched = new Map<string, string>()
+
+	for (const record of records.values()) {
+		const added = new Set<number>()
+
+		const grouped = hierarchyOf(record).map((branch) => {
+			const unitID = unitIDOfRegion.get(branch.region_id ?? -1)
+
+			if (!isPresent(unitID) || isPresent(branch.macroregion_id)) return branch
+
+			added.add(unitID)
+
+			return { ...branch, macroregion_id: unitID }
+		})
+
+		if (!added.size) continue
+
+		const belongsTo = properties(record)["wof:belongsto"]
+
+		patched.set(
+			record.path,
+			patchWOFRecordText(record.text, {
+				"wof:hierarchy": grouped,
+				...(Array.isArray(belongsTo) ? { "wof:belongsto": [...new Set([...belongsTo, ...added])] } : {}),
+				...(unitIDOfRegion.has(record.feature.id) ? { "wof:parent_id": [...added][0] } : {}),
+				"wof:lastmodified": lastModified,
+			})
+		)
+	}
+
+	return patched
 }
 
 /**
@@ -592,6 +650,7 @@ export async function applyRegionReform(
 		return undefined
 	}
 
+	const unitPlacetype = spec.unitPlacetype ?? "region"
 	const writes = new Map<string, string>()
 	const successors = new Map<number, Set<number>>()
 
@@ -667,6 +726,19 @@ export async function applyRegionReform(
 				"wof:lastmodified": options.lastModified,
 			})
 		)
+	}
+
+	// Under a grouping, place every record at or below a member region under the member's unit.
+	if (unitPlacetype === "macroregion") {
+		const unitIDOfRegion = new Map(
+			[...unitOfMember].map(([member, unit]) => [member, idOfUnit.get(reformUnitKey(unit))!] as const)
+		)
+
+		for (const [path, text] of groupUnderMacroregions(records, unitIDOfRegion, options.lastModified)) {
+			writes.set(path, text)
+
+			result.moved.byMembership++
+		}
 	}
 
 	// Mark each replaced region ceased.
@@ -876,7 +948,7 @@ export async function applyRegionReform(
 				"wof:belongsto": [branch.continent_id, country].filter(isPresent),
 				"wof:breaches": [],
 				"wof:concordances": {
-					"gn:id": unit.geonames,
+					...(isPresent(unit.geonames) ? { "gn:id": unit.geonames } : {}),
 					...isoConcordances(unit),
 					"wd:id": unit.wikidata,
 				},
@@ -887,14 +959,14 @@ export async function applyRegionReform(
 					{
 						...(isPresent(branch.continent_id) ? { continent_id: branch.continent_id } : {}),
 						...(isPresent(country) ? { country_id: country } : {}),
-						region_id: id,
+						[`${unitPlacetype}_id`]: id,
 					},
 				],
 				"wof:id": id,
 				"wof:lastmodified": options.lastModified,
 				"wof:name": unit.name,
 				"wof:parent_id": country ?? -1,
-				"wof:placetype": "region",
+				"wof:placetype": unitPlacetype,
 				"wof:repo": repoName,
 				"wof:superseded_by": [],
 				"wof:supersedes": supersedes,
