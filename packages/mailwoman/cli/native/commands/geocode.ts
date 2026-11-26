@@ -263,6 +263,15 @@ export const spec = {
 			default: false,
 			description: "Read one address per line and emit one JSON object per line using one warm session.",
 		},
+		workers: {
+			type: "number",
+			default: 1,
+			hint: "count",
+			description:
+				"With --stdin, the number of worker threads that geocode the lines, each with its own sessions. Results print in input order.",
+			validate: (value) => Number.isInteger(value) && value >= 1,
+			validationMessage: "--workers expects a positive integer.",
+		},
 		timing: {
 			type: "boolean",
 			default: false,
@@ -440,19 +449,19 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 		throw new CLIUsageError("--stdin emits one record per line; use --json or --jsonld, not --text.")
 	}
 
-	const { createInterface } = await import("node:readline")
+	if (options.workers > 1) {
+		if (options.timing) throw new CLIUsageError("--timing reports one session's phases; use it without --workers.")
+
+		await runStdinWorkers(options, format)
+
+		return
+	}
 
 	await using session = await openSession(options)
 
 	let index = 0
 
-	for await (const line of createInterface({ input: process.stdin, crlfDelay: Infinity })) {
-		const input = line.trim()
-
-		if (!input) {
-			continue
-		}
-
+	for await (const input of stdinAddresses()) {
 		const geocoded = await session.geocode(input)
 
 		index++
@@ -462,6 +471,68 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 		}
 
 		process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
+	}
+}
+
+/**
+ * The non-empty lines of standard input, trimmed.
+ */
+async function* stdinAddresses(): AsyncGenerator<string> {
+	const { TextSpliterator } = await import("spliterator")
+
+	for await (const line of TextSpliterator.fromAsync(process.stdin)) {
+		const input = line.trim()
+
+		if (input) {
+			yield input
+		}
+	}
+}
+
+/**
+ * Geocodes standard input on `options.workers` worker threads and prints each result in input order.
+ *
+ * The pool yields results as they complete, so a result waits until every earlier line's result has printed.
+ * Each worker builds the sessions the batch path builds from the session options a config file can state.
+ */
+async function runStdinWorkers(options: GeocodeOptions, format: Format): Promise<void> {
+	const [{ geocodeInputs }, { GeocodeFileOptionsSchema }] = await Promise.all([
+		import("#geocode/batch/stream"),
+		import("#geocode/options"),
+	])
+
+	const fileKeys = new Set(Object.keys(GeocodeFileOptionsSchema.shape))
+
+	const session = Object.fromEntries(
+		Object.entries(options).filter(([key, value]) => fileKeys.has(key) && key !== "parentPlace" && value != null)
+	)
+
+	if (options.parentPlace) {
+		session["parentPlace"] = { id: options.parentPlace.id, strength: options.parentPlace.strength }
+	}
+
+	async function* numbered() {
+		let index = 0
+
+		for await (const input of stdinAddresses()) {
+			yield { id: String(index++), input }
+		}
+	}
+
+	const waiting = new Map<number, GeocodeResult>()
+	let next = 0
+
+	for await (const { id, result } of geocodeInputs(
+		numbered(),
+		{ dataRoot: options.dataRoot.toString(), session, localeSource: options.localeSource },
+		{ concurrency: options.workers }
+	)) {
+		waiting.set(Number(id), result)
+
+		for (let ready = waiting.get(next); ready; ready = waiting.get(next)) {
+			waiting.delete(next++)
+			process.stdout.write(`${await formatResult(ready, format, true)}\n`)
+		}
 	}
 }
 

@@ -36,6 +36,11 @@ export interface GeocodeOutputOptions {
 	debug: boolean
 	debugSize: string
 	stdin: boolean
+	/**
+	 * Worker threads a `--stdin` run geocodes on, each with its own sessions.
+	 * 1 geocodes on the calling thread.
+	 */
+	workers: number
 	timing: boolean
 	tiles?: string
 }
@@ -122,6 +127,7 @@ export async function resolveGeocodeCommandOptions(
 		debug: booleanValue(values, "debug"),
 		debugSize: stringValue(values, "debug-size")!,
 		stdin: booleanValue(values, "stdin"),
+		workers: numberValue(values, "workers") ?? 1,
 		timing: booleanValue(values, "timing"),
 		...(tiles ? { tiles } : {}),
 	}

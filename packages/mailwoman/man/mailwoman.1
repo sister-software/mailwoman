@@ -209,6 +209,9 @@ Options:
                                               120x36)
   \-\-stdin                                     Read one address per line and emit one JSON object per
                                               line using one warm session. (default: false)
+  \-\-workers <count>                           With \-\-stdin, the number of worker threads that
+                                              geocode the lines, each with its own sessions. Results
+                                              print in input order. (default: 1)
   \-\-timing                                    Write startup, initialization, and per\-address phase
                                               timings to stderr. (default: false)
   \-\-tiles <path>                              PMTiles archive for the debug map pane.
