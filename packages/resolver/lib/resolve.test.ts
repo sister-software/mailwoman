@@ -1385,7 +1385,7 @@ describe("ResolveTree — street-centroid tier", () => {
 		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(0)
 	})
 
-	test("never fires when a house number is present (rooftop tiers' domain)", async () => {
+	test("answers a numbered address whose number no address tier answered (#3508)", async () => {
 		let called = false
 
 		const lookup = fakeStreetCentroids([{ street: "rue de rivoli", commune: "Paris", lat: 1, lon: 2 }], () => {
@@ -1401,8 +1401,8 @@ describe("ResolveTree — street-centroid tier", () => {
 		])
 
 		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
-		expect(called).toBe(false)
-		expect(streetTier(out)).toBeNull()
+		expect(called).toBe(true)
+		expect(streetTier(out)).not.toBeNull()
 	})
 
 	test("No matching country → the lookup is never consulted (byte-stable)", async () => {

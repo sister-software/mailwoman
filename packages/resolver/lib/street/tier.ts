@@ -351,7 +351,11 @@ function pushCandidate(list: string[], v: string | null, cap: number): void {
 }
 
 /**
- * Adds a street centroid to a street-only query when no address-point or interpolated coordinate exists.
+ * Adds a street centroid when no address-point or interpolated coordinate exists.
+ *
+ * A numbered address whose number every address tier missed takes the street's centroid.
+ * That point lies on the street the query names, and the next answer down is the locality's centroid.
+ * The house number is then unfollowed.
  */
 export function applyStreetCentroid(
 	roots: AddressNode[],
@@ -360,17 +364,12 @@ export function applyStreetCentroid(
 	hints: readonly string[]
 ): void {
 	let streetNode: AddressNode | null = null
-	let houseNumber = false
 	let postcode: string | null = null
 
 	const adminValues: string[] = []
 	const resolvedCountries: string[] = []
 
 	for (const n of walkNodes(roots)) {
-		if (n.tag === "house_number") {
-			houseNumber = true
-		}
-
 		if (n.tag === "street" && !streetNode) {
 			streetNode = n
 		}
@@ -393,8 +392,6 @@ export function applyStreetCentroid(
 			resolvedCountries.push(rc)
 		}
 	}
-
-	if (houseNumber) return
 
 	const countries: string[] = []
 

@@ -13,7 +13,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import type { AddressPointLookup, Ancestor, InterpolationLookup } from "@mailwoman/core/resolver"
 import { describe, expect, test } from "vitest"
 
-import { applyAddressPoint, applyInterpolation } from "#street"
+import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 0.9 }
@@ -190,6 +190,32 @@ function interpolatorAt(at: { lat: number; lon: number }): InterpolationLookup {
 		}),
 	} as InterpolationLookup
 }
+
+describe("applyStreetCentroid for a numbered address (#3508)", () => {
+	const centroid = { lat: 40.751, lon: -73.93 }
+	const provider = () => ({ find: () => ({ ...centroid, uncertaintyM: 200, source: "test", release: "r" }) })
+
+	test("answers with the street centroid when every address tier missed the number", () => {
+		const tree = hoodTree({ postcode: true })
+
+		applyStreetCentroid(tree.roots, tree.raw, provider, ["us"])
+
+		const street = streetOf(tree.roots)
+
+		expect(street.metadata?.["resolution_tier"]).toBe("street")
+		expect(street.metadata?.["street_centroid"]).toMatchObject(centroid)
+	})
+
+	test("leaves an address that an address point answered", () => {
+		const tree = hoodTree({ postcode: true })
+
+		applyInterpolation(tree.roots, interpolatorAt(INSIDE))
+		applyStreetCentroid(tree.roots, tree.raw, provider, ["us"])
+
+		expect(streetOf(tree.roots).metadata?.["resolution_tier"]).toBe("interpolated")
+		expect(streetOf(tree.roots).metadata?.["street_centroid"]).toBeUndefined()
+	})
+})
 
 describe("applyInterpolation's containment check", () => {
 	test("refuses a locality-scoped estimate outside the resolved locality's box", () => {
