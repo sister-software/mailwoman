@@ -668,10 +668,16 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 					break;
 				}
 			});
+			// The time the loop waits for the batch thread, and the window it falls in, between two logged steps.
+			// A window holds training steps only: a validation pass or a checkpoint resets it.
+			let mut waited = std::time::Duration::ZERO;
+			let mut window = (std::time::Instant::now(), step);
 			while step < max_steps {
+				let asked = std::time::Instant::now();
 				let (rows, encoded) = receiver
 					.recv()
 					.map_err(|_| fail!("the batch thread stopped without an error"))??;
+				waited += asked.elapsed();
 				realized.add(&rows)?;
 				model.mode = Mode::Train;
 				let mut batch = encoded.to_device(device);
@@ -715,10 +721,22 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				for c in &mut callbacks {
 					c.on_step_end(&view, step)?;
 				}
+				if step % log_every == 0 {
+					let steps = (step - window.1).max(1) as f64;
+					println!(
+						"  [timing] {:.1} ms/step over {} steps, {:.1} ms/step waiting for a batch",
+						window.0.elapsed().as_secs_f64() * 1e3 / steps,
+						step - window.1,
+						waited.as_secs_f64() * 1e3 / steps
+					);
+					waited = std::time::Duration::ZERO;
+					window = (std::time::Instant::now(), step);
+				}
 				// Each checkpoint writes the exposure so far, so a retained form the sampler starves shows before the
 				// run spends its remaining steps.
 				if step % save_every == 0 {
 					realized.write_shape_counts(&output_dir, step)?;
+					window = (std::time::Instant::now(), step);
 				}
 				if step % eval_every == 0 {
 					let draw = validation.batches(&sampler, encoder, i128::from(seed + 1), val_rows, eval_batch)?;
@@ -727,6 +745,8 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 					for c in &mut callbacks {
 						c.on_eval_end(&view, step, &metrics)?;
 					}
+					waited = std::time::Duration::ZERO;
+					window = (std::time::Instant::now(), step);
 				}
 			}
 			drop(receiver);
