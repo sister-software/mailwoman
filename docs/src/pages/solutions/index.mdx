@@ -13,6 +13,12 @@ import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
 
 **Limit:** A labeled house number or postcode is evidence about the text. Whether the address exists or accepts mail takes postal or geographic evidence. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why that decision needs more than a raw node score.
 
+## Evaluate addresses from your workflow
+
+**Use this when:** You've labeled addresses and need to decide whether Mailwoman's parser meets your requirements. [Evaluate Mailwoman on your addresses](/docs/guides/evaluate-your-addresses) runs the published parser on the same inputs you label independently, then prints each exact difference. The example needs no geographic database.
+
+**Limit:** The three-row fixture demonstrates the procedure. Use your own reviewed sample and record its input sources, error costs, and denominator before drawing a conclusion about your workflow. Coordinate accuracy requires a separate evaluation with known positions and a current data generation.
+
 ## Prepare irregular records for review
 
 **Use this when:** You need a repeatable intake step before a human or another system reviews records. [Normalize an input](/docs/guides/normalize-input) shows how to retain the original text and map a normalized span back to it. It was executed with published 11.3.0 packages. [Review parse results](/docs/guides/review-parse-results) applies an explicit component-presence rule to a small labeled set. Its verification record identifies the parser source. Neither procedure needs a geographic database.

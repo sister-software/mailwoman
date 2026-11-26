@@ -1,0 +1,38 @@
+[
+	{
+		"id": "us-street",
+		"input": "350 5th Ave, New York, NY 10118",
+		"expected": {
+			"kind": "structured_address",
+			"components": [
+				{ "tag": "house_number", "value": "350" },
+				{ "tag": "street", "value": "5th" },
+				{ "tag": "street_suffix", "value": "Ave" },
+				{ "tag": "locality", "value": "New York" },
+				{ "tag": "region", "value": "NY" },
+				{ "tag": "postcode", "value": "10118" }
+			]
+		}
+	},
+	{
+		"id": "us-po-box",
+		"input": "PO Box 1234, Springfield, IL 62701",
+		"expected": {
+			"kind": "po_box",
+			"components": [
+				{ "tag": "po_box", "value": "PO Box 1234" },
+				{ "tag": "locality", "value": "Springfield" },
+				{ "tag": "region", "value": "IL" },
+				{ "tag": "postcode", "value": "62701" }
+			]
+		}
+	},
+	{
+		"id": "us-intersection",
+		"input": "5th and Main",
+		"expected": {
+			"kind": "intersection",
+			"components": []
+		}
+	}
+]

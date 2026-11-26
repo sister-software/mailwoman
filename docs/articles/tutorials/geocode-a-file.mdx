@@ -11,6 +11,8 @@ import { CommonPrerequisites } from "#partials/runtime"
 
 In this tutorial you geocode a six-line file of addresses in one command. You then read four things from the results: how precise each coordinate is, the record that supplied it, the place candidates the geocoder weighed, and whether the address resolved at all. The file mixes <Country code="US" /> and French street addresses, a city without a street, and two inputs that should stay unresolved.
 
+The displayed coordinates and source releases come from a historical 11.0.0 run with locally built data. Run the exercise only after the data commands below show bundles you can install and you've checked their disk requirements. The displayed responses are examples of that historical run. Compare your own results with the installed data generation and [result schema](../reference/schema.mdx).
+
 ## Before you start
 
 <CommonPrerequisites />
@@ -26,12 +28,18 @@ The geocoder reads geographic data from a local directory. Choose a data directo
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
 
+npx mailwoman data pull candidate fr --dry-run
+npx mailwoman data pull us --only us-dc --dry-run
+npx mailwoman data pull us --only us-vt --dry-run
+```
+
+Check the current download sizes and local disk space before running the pulls. The historical 11.0.0 registry listed about 10.2 GB for these four pulls: `candidate` 2.9 GB, `fr` 7 GB, DC 127.5 MB and Vermont 132.2 MB. The `candidate` bundle resolves places such as cities and regions worldwide. The `fr` and `us` files add individual address points. [Data and locales](../reference/data-and-locales.mdx) lists every bundle.
+
+```sh
 npx mailwoman data pull candidate fr
 npx mailwoman data pull us --only us-dc
 npx mailwoman data pull us --only us-vt
 ```
-
-The four pulls download about 10.2 GB: `candidate` 2.9 GB, `fr` 7 GB, DC 127.5 MB and Vermont 132.2 MB. The `candidate` bundle resolves places such as cities and regions worldwide. The `fr` and `us` files add individual address points. Add `--dry-run` to any pull to see its plan and size first. [Data and locales](../reference/data-and-locales.mdx) lists every bundle.
 
 The output below was captured with local builds of these bundles that are newer than the 11.0.0 registry entries. A coordinate or source release in your output can differ.
 
