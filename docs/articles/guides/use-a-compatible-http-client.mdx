@@ -1,8 +1,8 @@
 ---
 title: Point a Nominatim, Photon or libpostal client at Mailwoman
-description: Run the compatibility server for an existing client, send the requests the client already makes, and check which response fields it receives.
+description: Run the compatibility server for an existing client and compare the response fields it uses.
 role: guide
-verified-with: mailwoman v11.0.0
+verified-with: published @mailwoman/libpostal v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-26. Nominatim and Photon examples retain earlier local-build data receipts.
 ---
 
 import { NodeRequirement } from "#partials/runtime"
@@ -15,13 +15,25 @@ Use this procedure to switch an existing Nominatim, Photon or libpostal REST cli
 
 - <NodeRequirement />.
 
-Install the compatibility package for your client next to the parser packages:
+Install the compatibility package that matches your client. Nominatim and Photon also use the `mailwoman` command to install geographic data:
 
 ```sh npm2yarn
-npm install mailwoman @mailwoman/nominatim @mailwoman/photon @mailwoman/libpostal
+npm install mailwoman @mailwoman/nominatim
 ```
 
-The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. The examples query Washington, DC:
+For a Photon client, use:
+
+```sh npm2yarn
+npm install mailwoman @mailwoman/photon
+```
+
+For a libpostal client, use:
+
+```sh npm2yarn
+npm install @mailwoman/libpostal
+```
+
+The Nominatim and Photon servers geocode, so they need the global place candidates, plus address points for the places your client queries. If you chose either of those servers, install their data before starting them. The examples query Washington, DC:
 
 ```sh
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
@@ -30,11 +42,11 @@ npx mailwoman data pull candidate
 npx mailwoman data pull us --only us-dc
 ```
 
-The libpostal server parses text and reads no geographic data. The responses below were captured with local builds of these bundles that are newer than the 11.0.0 registry entries.
+The Nominatim and Photon responses below were captured with local builds and an earlier data root. Their coordinate and response-field examples haven't been rerun against published 11.3.0 and the rebuilt geographic data. The libpostal responses were checked against the published 11.3.0 package without a geographic database.
 
 ## Nominatim clients
 
-Start the server on the port your client will call:
+If your client uses Nominatim routes, start this server on the port it will call:
 
 ```sh
 npx nominatim serve --port 7803 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
@@ -157,7 +169,7 @@ The compatible servers look for the admin gazetteer among the data root's Who's 
 
 ## Photon clients
 
-Start the server and point the client at it:
+If your client uses Photon routes, start this server and point the client at it:
 
 ```sh
 npx photon serve --port 7804 --host 127.0.0.1 --candidate-db "$MAILWOMAN_DATA_ROOT/db/wof/candidate.db"
@@ -225,7 +237,7 @@ Without an admin gazetteer, `/reverse` returns an empty feature collection with 
 
 ## libpostal clients
 
-The libpostal server parses and expands text without geographic data:
+If your client uses libpostal REST routes, start this server. Published `@mailwoman/libpostal@11.3.0` parsed and expanded text without geographic data:
 
 ```sh
 npx libpostal serve --port 7805 --host 127.0.0.1
@@ -240,15 +252,16 @@ curl -X POST http://127.0.0.1:7805/parse -H "content-type: application/json" -d 
 ```json
 [
 	{ "label": "house_number", "value": "781" },
-	{ "label": "road", "value": "Franklin Ave" },
-	{ "label": "city", "value": "Crown Heights Brooklyn NYC" },
+	{ "label": "road", "value": "Franklin Ave Heights" },
+	{ "label": "city", "value": "Crown" },
+	{ "label": "city", "value": "Brooklyn NYC" },
 	{ "label": "state", "value": "NY" },
 	{ "label": "postcode", "value": "11216" },
 	{ "label": "country", "value": "USA" }
 ]
 ```
 
-The response is the ordered `label` and `value` array that libpostal REST services return. Values keep the input's casing. The three place names before the state came back as one `city` value, `Crown Heights Brooklyn NYC`. Check whether your client expects a neighborhood or district as a separate label.
+The response is an ordered array of `label` and `value` pairs. Values keep the input's casing. In this 11.3.0 run, the parser included `Heights` in `road` and returned two `city` entries. A client that stores one road and one city must decide how to handle those values before switching its base URL. The two services may assign different labels to the same input even when their routes and response fields match.
 
 An expansion:
 
@@ -262,8 +275,9 @@ curl -X POST http://127.0.0.1:7805/expand -H "content-type: application/json" -d
 
 ## Check your client before switching
 
-1. Send the requests your client makes in production to both the current service and the Mailwoman server.
+1. Send representative requests to both your current service and the Mailwoman server in a test environment.
 2. List the response fields your client reads, and confirm each one is present in the Mailwoman response.
-3. Handle the empty results described above: `null` from Nominatim `/reverse`, an empty feature collection from Photon `/reverse`, and status 501 from Nominatim `/lookup`.
+3. For libpostal clients, check repeated labels and the values assigned to each label against your application's expectations.
+4. For Nominatim or Photon clients, handle the empty results described above: `null` from Nominatim `/reverse`, an empty feature collection from Photon `/reverse`, and status 501 from Nominatim `/lookup`.
 
 Each server also serves `GET /openapi.json`, its machine-readable route description. The [HTTP reference](../reference/http.mdx) lists every compatibility route and its declared status codes.
