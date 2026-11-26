@@ -19,6 +19,7 @@ import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
 import { resolveSourceWeights } from "../audits/epoch/mixture.ts"
+import { countryAdmission } from "../exposure/shapes.ts"
 import { samplerConfigJSON } from "../sampler.ts"
 
 /**
@@ -92,4 +93,59 @@ export function drawFalls(
 		})
 		.filter(({ fall }) => fall > bound)
 		.toSorted((a, b) => b.fall - a.fall)
+}
+
+/**
+ * One source's train rows in one country.
+ */
+export interface SourceCountryRows {
+	source: string
+	country: string
+	rows: number
+}
+
+/**
+ * One country's expected draws in a run, over every source.
+ */
+export interface CountryDraws {
+	country: string
+	/**
+	 * The country's train rows over every drawn source.
+	 */
+	rows: number
+	draws: number
+}
+
+/**
+ * The run's expected draws per country, the most drawn first.
+ *
+ * The sampler draws a source, then admits a row of country `c` with the chance
+ * {@linkcode countryAdmission} gives and draws again from the same source on a refusal.
+ * A source's draws therefore fall on its countries in proportion to rows times that chance.
+ * A country with no positive weight is never drawn.
+ */
+export function expectedCountryDraws(
+	draws: readonly SourceDraws[],
+	countryRows: readonly SourceCountryRows[],
+	countryWeights: Readonly<Record<string, number>>
+): CountryDraws[] {
+	const admit = countryAdmission(countryWeights)
+	const bySource = Map.groupBy(countryRows, ({ source }) => source)
+	const totals = new Map<string, CountryDraws>()
+
+	for (const { source, draws: sourceDraws } of draws) {
+		const rows = bySource.get(source) ?? []
+		const accepted = rows.map((row) => ({ ...row, mass: row.rows * admit(row.country) }))
+		const totalMass = accepted.reduce((sum, row) => sum + row.mass, 0)
+
+		for (const { country, rows: count, mass: share } of accepted) {
+			const total = totals.get(country) ?? { country, rows: 0, draws: 0 }
+
+			total.rows += count
+			total.draws += totalMass > 0 ? (sourceDraws * share) / totalMass : 0
+			totals.set(country, total)
+		}
+	}
+
+	return [...totals.values()].toSorted((a, b) => b.draws - a.draws)
 }

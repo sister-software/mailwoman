@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { drawFalls, type SourceDraws } from "./report.ts"
+import { drawFalls, expectedCountryDraws, type SourceDraws } from "./report.ts"
 
 const draws = (entries: Record<string, number>): SourceDraws[] =>
 	Object.entries(entries).map(([source, count]) => ({ source, rows: 1_000_000, draws: count }))
@@ -32,5 +32,24 @@ describe("drawFalls", () => {
 
 	it("leaves a fall within the bound unreported", () => {
 		expect(drawFalls(draws({ nad: 100 }), draws({ nad: 96 }), 0.05)).toEqual([])
+	})
+})
+
+describe("expectedCountryDraws", () => {
+	it("shares a source's draws over its countries by rows times admission, and never draws a zero-weight country", () => {
+		const rows = [
+			{ source: "wof", country: "US", rows: 300 },
+			{ source: "wof", country: "FR", rows: 100 },
+			{ source: "wof", country: "XX", rows: 600 },
+		]
+
+		// FR is admitted at half US's chance, so the 1,000 draws split 300 : 50 between US and FR.
+		const out = expectedCountryDraws(draws({ wof: 1000 }), rows, { US: 1, FR: 0.5, XX: 0 })
+
+		expect(out.map(({ country, draws: drawn }) => [country, Math.round(drawn)])).toEqual([
+			["US", 857],
+			["FR", 143],
+			["XX", 0],
+		])
 	})
 })
