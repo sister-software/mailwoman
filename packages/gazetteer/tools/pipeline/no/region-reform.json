@@ -1,0 +1,92 @@
+{
+	"country": "NO",
+	"memberPlacetype": "localadmin",
+	"designator": "County",
+	"inception": "2024-01-01",
+	"cessation": "2024-01-01",
+	"ceased": [1527947269, 1527947267, 1527947259],
+	"sources": {
+		"law": {
+			"citation": "The Storting resolved on 14 June 2022 to divide the counties of Viken, Vestfold og Telemark and Troms og Finnmark, with effect from 1 January 2024. ISO 3166-2:NO lists the resulting 15 counties.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:NO"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: label, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the county that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26. Every municipality has at least 80% of those places in one county."
+		}
+	},
+	"units": [
+		{
+			"iso": "NO-31",
+			"name": "Østfold",
+			"wikidata": "Q50614",
+			"geonames": 3143188,
+			"members": [
+				1159296713, 1159296869, 1159296973, 1159297141, 1159297239, 1159297257, 1159297385, 1159297477, 1159297541,
+				1159297543, 1527971111, 1527971113
+			]
+		},
+		{
+			"iso": "NO-32",
+			"name": "Akershus",
+			"wikidata": "Q50615",
+			"geonames": 3163480,
+			"members": [
+				1159296797, 1159296815, 1159296941, 1159296969, 1159297009, 1159297073, 1159297097, 1159297161, 1159297185,
+				1159297221, 1159297237, 1159297349, 1159297355, 1159297419, 1159297449, 1159297621, 1159297627, 1527971017,
+				1527971019, 1527971021, 1528041085
+			]
+		},
+		{
+			"iso": "NO-33",
+			"name": "Buskerud",
+			"wikidata": "Q50618",
+			"geonames": 3159665,
+			"members": [
+				1159296697, 1159296793, 1159296811, 1159296823, 1159296937, 1159297069, 1159297107, 1159297217, 1159297255,
+				1159297329, 1159297345, 1159297373, 1159297471, 1159297473, 1159297507, 1159297513, 1159297585, 1527971109
+			]
+		},
+		{
+			"iso": "NO-39",
+			"name": "Vestfold",
+			"wikidata": "Q50619",
+			"geonames": 3132015,
+			"members": [1159296779, 1159297071, 1159297193, 1527971073, 1527971075, 1527971077]
+		},
+		{
+			"iso": "NO-40",
+			"name": "Telemark",
+			"wikidata": "Q2254",
+			"geonames": 3134723,
+			"members": [
+				1159296755, 1159296837, 1159296935, 1159296965, 1159296991, 1159297035, 1159297079, 1159297225, 1159297233,
+				1159297269, 1159297341, 1159297523, 1159297529, 1159297639, 1527971069, 1527971071, 1527971079
+			]
+		},
+		{
+			"iso": "NO-55",
+			"name": "Troms",
+			"wikidata": "Q50631",
+			"geonames": 3133897,
+			"members": [
+				1159296761, 1159296775, 1159296799, 1159296917, 1159297055, 1159297099, 1159297187, 1159297189, 1159297199,
+				1159297213, 1159297307, 1159297319, 1159297359, 1159297451, 1159297453, 1159297455, 1159297483, 1159297593,
+				1159297603, 1527971089, 1527971097
+			]
+		},
+		{
+			"iso": "NO-56",
+			"name": "Finnmark",
+			"wikidata": "Q50632",
+			"geonames": 780166,
+			"members": [
+				1159296751, 1159296871, 1159296893, 1159296899, 1159296947, 1159297043, 1159297127, 1159297143, 1159297177,
+				1159297285, 1159297287, 1159297303, 1159297387, 1159297403, 1159297427, 1159297563, 1159297565, 1527971095
+			]
+		}
+	]
+}

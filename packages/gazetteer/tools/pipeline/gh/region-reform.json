@@ -1,0 +1,98 @@
+{
+	"country": "GH",
+	"memberPlacetype": "county",
+	"designator": "Region",
+	"inception": "2019-02",
+	"cessation": "2019-02",
+	"ceased": [85671337],
+	"split": [85671319, 85671357, 85671347],
+	"sources": {
+		"law": {
+			"citation": "Six regions were created under Article 5 of the Constitution of Ghana after the referendum of 27 December 2018, by constitutional instruments of February 2019. ISO 3166-2:GH lists the resulting 16 regions.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:GH"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: English label, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the region that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26."
+		}
+	},
+	"units": [
+		{
+			"iso": "GH-AF",
+			"name": "Ahafo",
+			"wikidata": "Q48804007",
+			"geonames": 12105072,
+			"members": [1108759811, 1108759813, 1108759835]
+		},
+		{
+			"iso": "GH-BE",
+			"name": "Bono East",
+			"wikidata": "Q60764358",
+			"geonames": 12105073,
+			"members": [1108759817, 1108759825, 1108759827, 1108759829, 1108759837]
+		},
+		{
+			"iso": "GH-BO",
+			"name": "Bono",
+			"wikidata": "Q64685186",
+			"geonames": 12105069,
+			"members": [1108759819, 1108759821, 1108759823, 1108759831, 1108759839]
+		},
+		{
+			"iso": "GH-NE",
+			"name": "North East",
+			"wikidata": "Q60764359",
+			"geonames": 12105071,
+			"members": [1108759917, 1108759929, 1108759937],
+			"note": "The Saboba/Chereponi record (1108759929) spans the regional line: GeoNames files 41 of the 171 populated places inside it under Northern Region."
+		},
+		{
+			"iso": "GH-NP",
+			"name": "Northern",
+			"wikidata": "Q502215",
+			"geonames": 2297169,
+			"existing": 85671319,
+			"members": [1108759915, 1108759925, 1108759927, 1108759931, 1108759933, 1108759935, 1108759939]
+		},
+		{
+			"iso": "GH-OT",
+			"name": "Oti",
+			"wikidata": "Q48804004",
+			"geonames": 12105070,
+			"members": [1108759975, 1108759979, 1108759987, 1108759989]
+		},
+		{
+			"iso": "GH-SV",
+			"name": "Savannah",
+			"wikidata": "Q60764352",
+			"geonames": 12105074,
+			"members": [1108759913, 1108759919, 1108759921]
+		},
+		{
+			"iso": "GH-TV",
+			"name": "Volta",
+			"wikidata": "Q712832",
+			"geonames": 2294234,
+			"existing": 85671357,
+			"members": [1108759967, 1108759969, 1108759971, 1108759973, 1108759981, 1108759983, 1108759985, 1108759991]
+		},
+		{
+			"iso": "GH-WN",
+			"name": "Western North",
+			"wikidata": "Q60764360",
+			"geonames": 12105075,
+			"members": [1108759997, 1108759999, 1108760003, 1108760009]
+		},
+		{
+			"iso": "GH-WP",
+			"name": "Western",
+			"wikidata": "Q870155",
+			"geonames": 2294076,
+			"existing": 85671347,
+			"members": [1108759993, 1108760001, 1108760005, 1108760007, 1108760011, 1108760015, 1108760017]
+		}
+	]
+}

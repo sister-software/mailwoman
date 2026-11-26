@@ -4,7 +4,7 @@
 import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { describe, expect, it } from "vitest"
 
-import { formatWOFFeature, type WOFRecordFeature } from "#tools/pipeline/wof/record"
+import { formatWOFFeature, patchWOFRecordText, type WOFRecordFeature } from "#tools/pipeline/wof/record"
 
 // Mission Dolores Park (WOF 1108832255) as whosonfirst-data-admin-us stores it: nested arrays
 // and objects, integral floats (`18.0`), a small float area and an unsorted `wof:belongsto`.
@@ -115,5 +115,52 @@ describe("formatWOFFeature", () => {
 		expect(text).toContain('"wof:id":1\n')
 		expect(text).toContain('{"coordinates":[-81,41],"type":"Point"}')
 		expect(text).toContain("    -81.0,\n")
+	})
+})
+
+describe("patchWOFRecordText", () => {
+	// `ne:ADM0CAP` is a float no list declares, so a parse and reprint would write it as `0`.
+	const record = [
+		"{",
+		'  "id": 7,',
+		'  "type": "Feature",',
+		'  "properties": {',
+		'    "mz:is_current":1,',
+		'    "ne:ADM0CAP":0.0,',
+		'    "wof:hierarchy":[',
+		"        {",
+		'            "region_id":5',
+		"        }",
+		"    ],",
+		'    "wof:id":7',
+		"},",
+		'  "bbox": [',
+		"    1.0,",
+		"    2.0,",
+		"    1.0,",
+		"    2.0",
+		"],",
+		'  "geometry": {"coordinates":[1,2],"type":"Point"}',
+		"}",
+	].join("\n")
+
+	it("returns the text unchanged when no property is set", () => {
+		expect(patchWOFRecordText(record, {})).toBe(record)
+	})
+
+	it("sets a property and keeps every other byte, including an undeclared float", () => {
+		const patched = patchWOFRecordText(record, { "wof:hierarchy": [{ region_id: 9 }] })
+
+		expect(patched).toBe(record.replace('"region_id":5', '"region_id":9'))
+	})
+
+	it("places a new property in key order", () => {
+		const patched = patchWOFRecordText(record, { "name:eng_x_preferred": ["A"] })
+
+		expect(patched).toContain(
+			'    "mz:is_current":1,\n    "name:eng_x_preferred":[\n        "A"\n    ],\n    "ne:ADM0CAP":0.0,'
+		)
+
+		expect(patched).toContain('    "wof:id":7\n},')
 	})
 })

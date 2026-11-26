@@ -20,7 +20,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { pythonJSONString } from "@mailwoman/core/strings/python-json"
-import { stringifyJSON } from "@mailwoman/core/values/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { wofGeometryJSON } from "#tools/pipeline/wof/slim"
@@ -117,17 +117,84 @@ function formatIndented(value: unknown, depth: number, float: boolean): string {
  * A feature's text in the WOF exporter's layout, without a trailing newline, as exported records end.
  */
 export function formatWOFFeature(feature: WOFRecordFeature): string {
-	const bbox = feature.bbox.map((coordinate) => INDENT + formatNumber(coordinate, true)).join(",\n")
-
 	return [
 		"{",
 		`  "id": ${feature.id},`,
 		`  "type": "Feature",`,
 		`  "properties": ${formatIndented(feature.properties, 0, false)},`,
-		`  "bbox": [\n${bbox}\n],`,
-		`  "geometry": ${wofGeometryJSON(feature.geometry)}`,
-		"}",
+		formatBoundsAndGeometry(feature),
 	].join("\n")
+}
+
+/**
+ * The `bbox` and `geometry` lines that end an exported record, through its closing brace.
+ */
+function formatBoundsAndGeometry(feature: Pick<WOFRecordFeature, "bbox" | "geometry">): string {
+	const bbox = feature.bbox.map((coordinate) => INDENT + formatNumber(coordinate, true)).join(",\n")
+
+	return [`  "bbox": [\n${bbox}\n],`, `  "geometry": ${wofGeometryJSON(feature.geometry)}`, "}"].join("\n")
+}
+
+const PROPERTIES_OPEN = '  "properties": {\n'
+const PROPERTIES_CLOSE = '\n},\n  "bbox": ['
+const PROPERTY_LINE = /^ {4}("(?:[^"\\]|\\.)*"):/u
+
+/**
+ * An exported record's text with some properties set, every other byte kept.
+ *
+ * The exporter prints one property per block at four spaces, in key order,
+ * so the text divides into one block per property without a parse.
+ * A property in `changes` is printed as the exporter prints it and takes its place in key order.
+ *
+ * A property left out keeps its text, including a float such as `"ne:ADM0CAP":0.0`
+ * that {@link WOF_FLOAT_PROPERTIES} doesn't list.
+ *
+ * With `shape`, the record's `bbox` and `geometry` are replaced as well.
+ *
+ * @throws When the text isn't in the exporter's layout.
+ */
+export function patchWOFRecordText(
+	text: string,
+	changes: Readonly<Record<string, unknown>>,
+	shape?: Pick<WOFRecordFeature, "bbox" | "geometry">
+): string {
+	const open = text.indexOf(PROPERTIES_OPEN)
+	const close = text.lastIndexOf(PROPERTIES_CLOSE)
+
+	if (open === -1 || close < open) throw new Error("patchWOFRecordText: the record isn't in the WOF exporter's layout")
+
+	const blocks = new Map<string, string>()
+	let key: string | null = null
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One record's properties, already resident and bounded by the record.
+	for (const line of text.slice(open + PROPERTIES_OPEN.length, close).split("\n")) {
+		const match = PROPERTY_LINE.exec(line)
+
+		if (match) {
+			key = parseJSONStrict<string>(match[1]!)
+			blocks.set(key, line)
+		} else if (key) {
+			blocks.set(key, `${blocks.get(key)}\n${line}`)
+		} else {
+			throw new Error("patchWOFRecordText: the properties don't begin with a property line")
+		}
+	}
+
+	for (const [name, value] of Object.entries(changes)) {
+		blocks.set(name, `${INDENT}${pythonJSONString(name)}:${formatIndented(value, 1, WOF_FLOAT_PROPERTIES.has(name))}`)
+	}
+
+	const body = [...blocks.entries()]
+		.toSorted(([a], [b]) => (a < b ? -1 : 1))
+		.map(([, block]) => block.replace(/,$/u, ""))
+		.join(",\n")
+
+	const head = text.slice(0, open + PROPERTIES_OPEN.length) + body
+
+	if (!shape) return head + text.slice(close)
+
+	// An exported record ends with or without a newline, and the replacement keeps whichever it had.
+	return `${head}\n},\n${formatBoundsAndGeometry(shape)}${text.endsWith("\n") ? "\n" : ""}`
 }
 
 /**
