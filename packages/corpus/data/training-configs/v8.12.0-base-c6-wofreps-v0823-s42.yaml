@@ -12,6 +12,10 @@
 # C. `train.max_steps` is 115000, so every weighted source draws no fewer rows than it drew in v8.10.0's run. The
 #    cosine schedule stretches with it, and warmup stays at 1,000 steps.
 # D. `train.output_dir` and `train.trackio_run_name` name the run.
+# E. Fifteen `required_corpus_receipts` of `source_reps` sources state `min_fraction_of_expected: 0.9` in place
+#    of v8.11.0's absolute per-epoch `min_draws`. A reps source draws `reps × rows` over the whole run, so at 14.72
+#    epochs against v8.11.0's 11.52 its draws per epoch fall by 11.52 / 14.72 while its run total stays the same, and
+#    the absolute floors exceeded the new expectation (`osm-ru`: 28,068 against 27,147).
 #
 # The notes that follow are v8.11.0's.
 #
@@ -462,7 +466,7 @@ data:
       country: MX
     # The OSM receipts copied from v7.1.0.
     - name: osm-ru-exposure
-      min_draws: 28068
+      min_fraction_of_expected: 0.9
       source: osm-ru
       country: RU
     - name: osm-in-exposure
@@ -470,29 +474,29 @@ data:
       source: osm-in
       country: IN
     - name: osm-id-exposure
-      min_draws: 7452
+      min_fraction_of_expected: 0.9
       source: osm-id
       country: ID
     - name: osm-ng-exposure
-      min_draws: 1884
+      min_fraction_of_expected: 0.9
       source: osm-ng
       country: NG
     - name: osm-vn-exposure
-      min_draws: 4812
+      min_fraction_of_expected: 0.9
       source: osm-vn
       country: VN
     - name: osm-pk-exposure
-      min_draws: 5586
+      min_fraction_of_expected: 0.9
       source: osm-pk
       country: PK
     - name: osm-bd-exposure
-      min_draws: 1560
+      min_fraction_of_expected: 0.9
       source: osm-bd
       country: BD
     # The address-system sources, each at 90% of its expected draws over the 1,000,000-row epoch, rounded down to
     # a multiple of 10. The draws are the v0.8.2 epoch-mixture audit's, run locally on the re-rooted manifest.
     - name: ban-gp-exposure
-      min_draws: 1602
+      min_fraction_of_expected: 0.9
       source: ban-gp
       country: GP
     - name: ban-mq-exposure
@@ -512,23 +516,23 @@ data:
       source: ban-yt
       country: YT
     - name: ban-nc-exposure
-      min_draws: 1014
+      min_fraction_of_expected: 0.9
       source: ban-nc
       country: NC
     - name: ban-pm-exposure
-      min_draws: 438
+      min_fraction_of_expected: 0.9
       source: ban-pm
       country: PM
     - name: ban-bl-exposure
-      min_draws: 408
+      min_fraction_of_expected: 0.9
       source: ban-bl
       country: BL
     - name: ban-mf-exposure
-      min_draws: 504
+      min_fraction_of_expected: 0.9
       source: ban-mf
       country: MF
     - name: ban-pf-exposure
-      min_draws: 480
+      min_fraction_of_expected: 0.9
       source: ban-pf
       country: PF
     - name: ro-retea-scolara-exposure
@@ -541,7 +545,7 @@ data:
       country: LV
     # v8.3.2's header, point 4.
     - name: cordis-exposure
-      min_draws: 4390
+      min_fraction_of_expected: 0.9
       source: cordis
     - name: fr-finess-overseas-exposure
       min_draws: 618
@@ -550,11 +554,11 @@ data:
       min_draws: 684
       source: fr-annuaire-education-overseas
     - name: gleif-lei-exposure
-      min_draws: 15860
+      min_fraction_of_expected: 0.9
       source: gleif-lei
     # v8.4.0's header, point 2.
     - name: geonames-features-exposure
-      min_draws: 14860
+      min_fraction_of_expected: 0.9
       source: geonames-features
       component_sequence:
         - venue
