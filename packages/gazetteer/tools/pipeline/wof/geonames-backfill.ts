@@ -24,12 +24,16 @@ import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { isMailwomanWOFID, nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isPresent } from "@mailwoman/core/values/objects"
+import { levenshteinSimilarity } from "@mailwoman/match/comparators"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street/normalize"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { arealPolygons, pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { readMailwomanWOFRecords, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
 import { concordancesOf, hierarchyOf, loadForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
-import { wofGeometryHash } from "#tools/pipeline/wof/slim"
+import { wofGeometryHash, wofRecordNames } from "#tools/pipeline/wof/slim"
 import { wofRepoName } from "#whosonfirst/extract-repo"
 
 /**
@@ -65,6 +69,10 @@ export const LOCALITY_FEATURE_CODES: ReadonlySet<string> = new Set([
 export interface GeoNamesPlace {
 	id: number
 	name: string
+	/**
+	 * The name, its ASCII form and every alternate name of the row.
+	 */
+	names: string[]
 	latitude: number
 	longitude: number
 	featureCode: string
@@ -133,6 +141,76 @@ export interface GeoNamesBackfillResult {
 	 * Requested places no boundary of the fork contains.
 	 */
 	unlocated: number[]
+	/**
+	 * Requested places held out because a record within {@link SPELLING_TWIN_KM} has a
+	 * name at least {@link SPELLING_TWIN_SIMILARITY} similar, with that record.
+	 */
+	possibleDuplicates: Array<{
+		geonamesID: number
+		name: string
+		near: number
+		nearName: string
+		similarity: number
+		km: number
+	}>
+}
+
+/**
+ * A record this close to a place is compared with it by name, in kilometers.
+ */
+export const SPELLING_TWIN_KM = 1
+
+/**
+ * A place is held out when a record within {@link SPELLING_TWIN_KM} has a name this similar.
+ *
+ * Measured on 2026-11-26 over the 81,669 places the admin build's candidate list would
+ * add in 152 countries, with each place's GeoNames alternate names compared too. 372
+ * places had a neighbor at 0.9 or above, and the rows read as one place spelled two ways,
+ * such as `Meinhartschlag` beside `Meinhartsschlag`. 232 had one between 0.8 and 0.9,
+ * a mix of respellings (`Ḩīrān` beside `Hayran`) and distinct places. 610 had one between 0.7
+ * and 0.8, and those rows read as distinct places, such as `Mato Gege` beside `Santo Gege`.
+ * At 0.8 the mixed band is held out, so a held-out place is listed for a reader
+ * and a written one has no near twin.
+ */
+export const SPELLING_TWIN_SIMILARITY = 0.8
+
+/**
+ * The WOF placetypes whose records can be the same place as a GeoNames populated place.
+ */
+const SETTLEMENT_PLACETYPES: ReadonlySet<string> = new Set([
+	"locality",
+	"localadmin",
+	"borough",
+	"macrohood",
+	"neighbourhood",
+	"microhood",
+])
+
+/**
+ * The side of a grid cell the settlement index files a record under, in degrees.
+ *
+ * At 0.02 degrees a cell is at most 2.2 km across, so the nine cells around a point
+ * hold every record within {@link SPELLING_TWIN_KM} of it.
+ */
+const TWIN_CELL_DEGREES = 0.02
+
+/**
+ * The highest Levenshtein similarity between any name key of one place and any of another.
+ */
+function highestSimilarity(keys: readonly string[], others: readonly string[]): number {
+	let highest = 0
+
+	for (const key of keys) {
+		for (const other of others) {
+			highest = Math.max(highest, levenshteinSimilarity(key, other))
+		}
+	}
+
+	return highest
+}
+
+function twinCell(latitude: number, longitude: number): string {
+	return `${Math.floor(latitude / TWIN_CELL_DEGREES)}:${Math.floor(longitude / TWIN_CELL_DEGREES)}`
 }
 
 /**
@@ -152,6 +230,9 @@ export async function readGeoNamesPlaces(
 		places.set(id, {
 			id,
 			name: (fields[1] ?? "").trim(),
+			names: [fields[1] ?? "", fields[2] ?? "", ...TextSpliterator.from(fields[3] ?? "", { delimiter: "," })]
+				.map((name) => name.trim())
+				.filter((name) => name.length > 0),
 			latitude: Number(fields[4]),
 			longitude: Number(fields[5]),
 			featureCode: fields[7] ?? "",
@@ -175,6 +256,11 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 	const places = await readGeoNamesPlaces(options.geonamesDir, country)
 	const held = new Set<number>()
 
+	const settlements = new Map<
+		string,
+		Array<{ id: number; name: string; latitude: number; longitude: number; keys: string[] }>
+	>()
+
 	const boundaries = new Map<
 		string,
 		Array<{
@@ -193,6 +279,25 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 
 		const placetype = String(record.feature.properties["wof:placetype"] ?? "")
 
+		if (SETTLEMENT_PLACETYPES.has(placetype) && record.feature.properties["mz:is_current"] !== 0) {
+			const latitude = Number(record.feature.properties["geom:latitude"])
+			const longitude = Number(record.feature.properties["geom:longitude"])
+			const cell = twinCell(latitude, longitude)
+
+			settlements.set(cell, [
+				...(settlements.get(cell) ?? []),
+				{
+					id: record.feature.id,
+					name: String(record.feature.properties["wof:name"] ?? ""),
+					latitude,
+					longitude,
+					keys: [...new Set(wofRecordNames(record.feature.properties).map(normalizeLocalityForKey))].filter(
+						(key) => key.length > 0
+					),
+				},
+			])
+		}
+
 		if (!PARENT_LADDER.includes(placetype as (typeof PARENT_LADDER)[number])) continue
 
 		if (record.feature.properties["mz:is_current"] === 0) continue
@@ -202,6 +307,42 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		if (!polygons) continue
 
 		boundaries.set(placetype, [...(boundaries.get(placetype) ?? []), { record, bbox: record.feature.bbox, polygons }])
+	}
+
+	/**
+	 * The record within {@link SPELLING_TWIN_KM} of a place whose name is most similar to one
+	 * of the place's names, when that similarity reaches {@link SPELLING_TWIN_SIMILARITY}.
+	 */
+	const spellingTwin = (place: GeoNamesPlace): GeoNamesBackfillResult["possibleDuplicates"][number] | null => {
+		const keys = [...new Set(place.names.map(normalizeLocalityForKey))].filter((key) => key.length > 0)
+		const row = Math.floor(place.latitude / TWIN_CELL_DEGREES)
+		const column = Math.floor(place.longitude / TWIN_CELL_DEGREES)
+		let best: GeoNamesBackfillResult["possibleDuplicates"][number] | null = null
+
+		for (const rowOffset of [-1, 0, 1]) {
+			for (const columnOffset of [-1, 0, 1]) {
+				for (const settlement of settlements.get(`${row + rowOffset}:${column + columnOffset}`) ?? []) {
+					const km = haversine(place.latitude, place.longitude, settlement.latitude, settlement.longitude)
+
+					if (km > SPELLING_TWIN_KM) continue
+
+					const similarity = highestSimilarity(keys, settlement.keys)
+
+					if (similarity >= SPELLING_TWIN_SIMILARITY && similarity > (best?.similarity ?? 0)) {
+						best = {
+							geonamesID: place.id,
+							name: place.name,
+							near: settlement.id,
+							nearName: settlement.name,
+							similarity: Number(similarity.toFixed(3)),
+							km: Number(km.toFixed(3)),
+						}
+					}
+				}
+			}
+		}
+
+		return best
 	}
 
 	const containing = (longitude: number, latitude: number): LoadedRecord | null => {
@@ -240,6 +381,7 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		unknown: [],
 		leftOut: {},
 		unlocated: [],
+		possibleDuplicates: [],
 	}
 
 	const newRecords: WOFRecordFeature[] = []
@@ -261,6 +403,14 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 
 		if (!LOCALITY_FEATURE_CODES.has(place.featureCode)) {
 			result.leftOut[place.featureCode] = (result.leftOut[place.featureCode] ?? 0) + 1
+
+			continue
+		}
+
+		const twin = spellingTwin(place)
+
+		if (twin) {
+			result.possibleDuplicates.push(twin)
 
 			continue
 		}
