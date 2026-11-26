@@ -9,13 +9,16 @@
 # B. `overture-places-in` falls from `source_reps` 1.0 (3,680,899 draws, 32% of v8.11.0's run) to 0.025. At 1.0 its
 #    reps took their draws from every weighted source, and each of the 41 weighted sources drew 0.559 of v8.10.0's
 #    rows (#3516).
-# C. `train.max_steps` is 115000, so every weighted source draws no fewer rows than it drew in v8.10.0's run. The
+# C. `train.max_steps` is 121000, so every weighted source draws no fewer rows than it drew in v8.10.0's run. The
 #    cosine schedule stretches with it, and warmup stays at 1,000 steps.
 # D. `train.output_dir` and `train.trackio_run_name` name the run.
 # E. Fifteen `required_corpus_receipts` of `source_reps` sources state `min_fraction_of_expected: 0.9` in place
 #    of v8.11.0's absolute per-epoch `min_draws`. A reps source draws `reps × rows` over the whole run, so at 14.72
 #    epochs against v8.11.0's 11.52 its draws per epoch fall by 11.52 / 14.72 while its run total stays the same, and
 #    the absolute floors exceeded the new expectation (`osm-ru`: 28,068 against 27,147).
+# F. `rendered-prominent-places` leaves `source_weights` (3.5) for `source_reps` 20. Drawing every WOF row
+#    raised short admin rows' draws per epoch about sevenfold, spread over all places alike, and at 3.5 the
+#    prominent-place coverage receipt failed 200 of 811 cells: decile 1 held a median 1 / 1.40 of its required share.
 #
 # The notes that follow are v8.11.0's.
 #
@@ -170,7 +173,6 @@ data:
     overture-latam: 6.0
     # v8.6.2's header, point 1.
     # This config's header, point 2.
-    rendered-prominent-places: 3.5
     # 3.3 rather than 3.0: at 3.0, with the WOF weights above, ban drew 9,989 of 1,000,000 audited rows on the
     # v0.8.7-overlay, under the fr-native-postcode-locality floor of 10,000.
     ban: 3.3
@@ -226,6 +228,7 @@ data:
     overture-places-in: 0.025
     wof-admin: 1.0
     wof-postalcode: 1.0
+    rendered-prominent-places: 20
     rendered-sg-register: 1.0
     rendered-pk-register: 1.0
     rendered-bd-register: 8.0
@@ -920,7 +923,7 @@ train:
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
-  max_steps: 115000
+  max_steps: 121000
   eval_every_steps: 2000
   save_every_steps: 5000
   log_every_steps: 100
