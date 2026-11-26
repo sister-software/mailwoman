@@ -12,8 +12,8 @@
 # C. `train.max_steps` is 121000, so every weighted source draws no fewer rows than it drew in v8.10.0's run. The
 #    cosine schedule stretches with it, and warmup stays at 1,000 steps.
 # D. `train.output_dir` and `train.trackio_run_name` name the run.
-# E. Fifteen `required_corpus_receipts` of `source_reps` sources state `min_fraction_of_expected: 0.9` in place
-#    of v8.11.0's absolute per-epoch `min_draws`. A reps source draws `reps × rows` over the whole run, so at 14.72
+# E. Every `required_corpus_receipts` entry on a `source_reps` source states `min_fraction_of_expected: 0.9` in
+#    place of v8.11.0's absolute per-epoch `min_draws`. A reps source draws `reps × rows` over the whole run, so at 14.72
 #    epochs against v8.11.0's 11.52 its draws per epoch fall by 11.52 / 14.72 while its run total stays the same, and
 #    the absolute floors exceeded the new expectation (`osm-ru`: 28,068 against 27,147).
 # F. `rendered-prominent-places` leaves `source_weights` (3.5) for `source_reps` 20. Drawing every WOF row
@@ -386,7 +386,7 @@ data:
   required_corpus_receipts:
     # Each receipt stops the run when the epoch-mixture audit draws fewer matching rows than `min_draws`.
     - name: us-city-state-postcode
-      min_draws: 300
+      min_fraction_of_expected: 0.9
       source: spliced-trailing-region-us
       country: US
       component_sequence:
@@ -394,7 +394,7 @@ data:
         - region
         - postcode
     - name: ca-region-code-tail
-      min_draws: 600
+      min_fraction_of_expected: 0.9
       source: spliced-trailing-region-ca-bare
       country: CA
     - name: us-secondary-unit-current-generation
@@ -402,7 +402,7 @@ data:
       source: spliced-unit-v30
       country: US
     - name: bare-postcode-czech
-      min_draws: 150
+      min_fraction_of_expected: 0.9
       source: codex-bare-postcode
       country: CZ
     - name: cz-postcode-first-current-generation
@@ -414,23 +414,23 @@ data:
       source: fragment-fr-bare-street-v22
       country: FR
     - name: sg-registers
-      min_draws: 600
+      min_fraction_of_expected: 0.9
       source: rendered-sg-register
       country: SG
     - name: pk-house-line
-      min_draws: 600
+      min_fraction_of_expected: 0.9
       source: rendered-pk-register
       country: PK
     - name: bd-trailing-postcode
-      min_draws: 300
+      min_fraction_of_expected: 0.9
       source: rendered-bd-register
       country: BD
     - name: es-trailing-region-local-surfaces
-      min_draws: 300
+      min_fraction_of_expected: 0.9
       source: spliced-trailing-region-es-v28
       country: ES
     - name: us-military-po-box
-      min_draws: 300
+      min_fraction_of_expected: 0.9
       source: invented-po-box-military
       country: US
     # GB rows come from OS OpenData now. rendered-gb drew 24,314 of the 1,000,000 audited rows at weight 6.0, and this
@@ -473,7 +473,7 @@ data:
       source: osm-ru
       country: RU
     - name: osm-in-exposure
-      min_draws: 7242
+      min_fraction_of_expected: 0.9
       source: osm-in
       country: IN
     - name: osm-id-exposure
@@ -503,19 +503,19 @@ data:
       source: ban-gp
       country: GP
     - name: ban-mq-exposure
-      min_draws: 1320
+      min_fraction_of_expected: 0.9
       source: ban-mq
       country: MQ
     - name: ban-re-exposure
-      min_draws: 1758
+      min_fraction_of_expected: 0.9
       source: ban-re
       country: RE
     - name: ban-gf-exposure
-      min_draws: 1122
+      min_fraction_of_expected: 0.9
       source: ban-gf
       country: GF
     - name: ban-yt-exposure
-      min_draws: 918
+      min_fraction_of_expected: 0.9
       source: ban-yt
       country: YT
     - name: ban-nc-exposure
@@ -539,11 +539,11 @@ data:
       source: ban-pf
       country: PF
     - name: ro-retea-scolara-exposure
-      min_draws: 2190
+      min_fraction_of_expected: 0.9
       source: ro-retea-scolara
       country: RO
     - name: lv-varis-exposure
-      min_draws: 3462
+      min_fraction_of_expected: 0.9
       source: lv-varis
       country: LV
     # v8.3.2's header, point 4.
@@ -551,10 +551,10 @@ data:
       min_fraction_of_expected: 0.9
       source: cordis
     - name: fr-finess-overseas-exposure
-      min_draws: 618
+      min_fraction_of_expected: 0.9
       source: fr-finess-overseas
     - name: fr-annuaire-education-overseas-exposure
-      min_draws: 684
+      min_fraction_of_expected: 0.9
       source: fr-annuaire-education-overseas
     - name: gleif-lei-exposure
       min_fraction_of_expected: 0.9
@@ -567,7 +567,7 @@ data:
         - venue
     # v8.6.1's header, point 2: a presence floor under the expected draws.
     - name: wikidata-vital-places-exposure
-      min_draws: 5000
+      min_fraction_of_expected: 0.9
       source: wikidata-vital-places
     # v8.7.0's header, point 2.
     - name: us-structures-exposure
