@@ -75,7 +75,8 @@ describe("usgov-nppes adapter", () => {
 		expect(r.components.region).toBe("TN")
 		expect(r.components.postcode).toBe("37203")
 		expect(r.components.house_number).toBe("1234")
-		expect(r.components.street).toBe("MAIN ST")
+		expect(r.components.street).toBe("MAIN")
+		expect(r.components.street_suffix).toBe("ST")
 		expect(r.components.unit).toBe("SUITE 200")
 		expect(r.raw).toContain("1234 MAIN ST SUITE 200")
 	})
@@ -92,9 +93,9 @@ describe("usgov-nppes adapter", () => {
 			rows.push(r)
 		}
 
-		expect(rows.map((r) => [r.components.street, r.components.unit])).toEqual([
-			["HUNTINGTON AVE", "STE 302"],
-			["KING ST", "STE 300 BLDG 4"],
+		expect(rows.map((r) => [r.components.street, r.components.street_suffix, r.components.unit])).toEqual([
+			["HUNTINGTON", "AVE", "STE 302"],
+			["KING", "ST", "STE 300 BLDG 4"],
 		])
 
 		expect(rows[0]!.raw).toContain("2560 HUNTINGTON AVE STE 302")

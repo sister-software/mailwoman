@@ -154,7 +154,7 @@ describe("scoreExactParseUnderConvention", () => {
 		expect(outcome).toMatchObject({ exact: true, streetConvention: "whole", streetJoinChanged: true })
 	})
 
-	it("compares a US split as it is, exact only when the gold also splits", () => {
+	it("compares a US split as it is when the gold labels a street affix", () => {
 		const convention = streetSpanConventionFor("US")
 
 		expect(scoreExactParseUnderConvention(street, splitGold, splitPrediction, convention)).toMatchObject({
@@ -163,7 +163,19 @@ describe("scoreExactParseUnderConvention", () => {
 			streetJoinChanged: false,
 		})
 
-		expect(scoreExactParseUnderConvention(street, wholeGold, splitPrediction, convention).exact).toBe(false)
+		const wholePrediction = [
+			{ tag: "house_number", start: 0, end: 2 },
+			{ tag: "street", start: 3, end: 14 },
+			{ tag: "locality", start: 16, end: 23 },
+		]
+
+		expect(scoreExactParseUnderConvention(street, splitGold, wholePrediction, convention).exact).toBe(false)
+	})
+
+	it("joins a US prediction against a gold row that labels only the street", () => {
+		const outcome = scoreExactParseUnderConvention(street, wholeGold, splitPrediction, streetSpanConventionFor("US"))
+
+		expect(outcome).toMatchObject({ exact: true, streetConvention: "split", streetJoinChanged: true })
 	})
 
 	it("still refuses a wrong street boundary under the whole convention", () => {

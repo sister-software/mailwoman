@@ -23,8 +23,15 @@
  *   `streetSpanConventionFor` in `@mailwoman/codex/street-convention`.
  *
  *   Under the `split` convention (US), `street_prefix`, `street_prefix_particle`, `street`
- *   and `street_suffix` spans are compared as they're, so a gold row that splits the
- *   street requires the split and a gold row that keeps it whole refuses it.
+ *   and `street_suffix` spans are compared as they're when the gold row labels one of
+ *   the three affix tags, so a gold row that splits the street requires the split.
+ *   A gold row that labels only `street` is compared joined, as under `whole`.
+ *
+ *   Its label states the street's extent and leaves its affixes unlabeled.
+ *   Several US sources (`usgov-nppes`, `state-tx-notaries`) label every street whole.
+ *
+ *   Their rows would otherwise grade the split that
+ *   `docs/engineering/reference/SCHEMA.mdx` prescribes as an error.
  *   Under the `whole` convention (every other country), {@linkcode joinStreetSpans} first joins
  *   each run of those spans that touch or are separated only by whitespace into one `street` span
  *   from the first start to the last end, on the predicted side and the annotated side alike.
@@ -101,8 +108,9 @@ export interface ConventionExactParseOutcome extends ExactParseOutcome {
 	 */
 	streetConvention: StreetSpanConvention
 	/**
-	 * The `whole` convention's street join changed `exact` from the unjoined comparison.
-	 * Always false under `split`.
+	 * The street join changed `exact` from the unjoined comparison.
+	 *
+	 * Always false for a `split` row whose gold labels a street affix.
 	 */
 	streetJoinChanged: boolean
 }
@@ -278,8 +286,9 @@ export function scoreExactParseUnderConvention(
 	streetConvention: StreetSpanConvention
 ): ConventionExactParseOutcome {
 	const unjoined = scoreExactParse(raw, annotated, predicted)
+	const labelsAffix = annotated.some((span) => STREET_FAMILY.has(span.tag) && span.tag !== "street")
 
-	if (streetConvention === "split") return { ...unjoined, streetConvention, streetJoinChanged: false }
+	if (streetConvention === "split" && labelsAffix) return { ...unjoined, streetConvention, streetJoinChanged: false }
 
 	const joined = scoreExactParse(raw, joinStreetSpans(raw, annotated), joinStreetSpans(raw, predicted))
 

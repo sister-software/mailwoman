@@ -22,6 +22,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
+import { withConventionStreet } from "#adapters/street/convention"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
@@ -107,7 +108,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					// It isn't a postal-surface component here.
 				}
 
-				const rendered = formatAddressRow(components, "US", { singleLine: true })
+				const rendered = formatAddressRow(withConventionStreet(components, "US"), "US", { singleLine: true })
 
 				if (!rendered) continue
 

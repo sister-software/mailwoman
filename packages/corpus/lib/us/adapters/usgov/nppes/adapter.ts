@@ -13,6 +13,7 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { withConventionStreet } from "#adapters/street/convention"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
@@ -157,7 +158,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const rendered = formatAddressRow(components, "US", { singleLine: true })
+				const rendered = formatAddressRow(withConventionStreet(components, "US"), "US", { singleLine: true })
 
 				if (!rendered) continue
 

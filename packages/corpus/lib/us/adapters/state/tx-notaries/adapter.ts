@@ -21,6 +21,7 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { withConventionStreet } from "#adapters/street/convention"
 import { splitStreetLine } from "#adapters/street/line"
 import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
@@ -228,7 +229,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 					...(zip ? { postcode: zip } : {}),
 				}
 
-				const rendered = formatAddressRow(components, "US", { singleLine: true })
+				const rendered = formatAddressRow(withConventionStreet(components, "US"), "US", { singleLine: true })
 
 				if (!rendered) continue
 
