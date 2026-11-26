@@ -175,19 +175,26 @@ pub struct RowGroupVisit {
 impl RowGroupVisit {
 	/// Reads row group `index` of `path`, positioned at `position` of the order `order_seed` shuffles, to yield at
 	/// most `limit` accepted rows.
+	///
+	/// The shuffled order starts `rotation` rows in and wraps, so a pass still reads each row once.
+	#[allow(clippy::too_many_arguments)]
 	pub fn open(
 		path: PathBuf,
 		expected_source: Arc<str>,
 		row_filter: Option<&RowFilter>,
 		index: usize,
 		order_seed: i128,
+		rotation: usize,
 		position: usize,
 		limit: usize,
 	) -> Result<Self> {
 		let file = ParquetFile::open(&path)?;
 		let has_spans = span_schema(&file, &path)?;
 		let mut group = read_row_group(&file, &path, has_spans, row_filter, index, |order| {
-			PyRandom::new(crate::pyrandom::Seed::Int(order_seed)).shuffle(order)
+			PyRandom::new(crate::pyrandom::Seed::Int(order_seed)).shuffle(order);
+			if !order.is_empty() {
+				order.rotate_left(rotation % order.len());
+			}
 		})?;
 		group.position = position.min(group.order.len());
 		Ok(Self {
@@ -408,6 +415,7 @@ mod tests {
 			coarse_filter: false,
 			active_tags: Default::default(),
 			source_weights: None,
+			epoch_cursor: None,
 			cancel: CancelToken::default(),
 			observer: None,
 		};

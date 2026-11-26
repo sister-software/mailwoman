@@ -17,6 +17,7 @@ fn shared() -> Shared {
 		coarse_filter: false,
 		active_tags: Default::default(),
 		source_weights: None,
+		epoch_cursor: None,
 		cancel: CancelToken::default(),
 		observer: None,
 	}

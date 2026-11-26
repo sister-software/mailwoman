@@ -83,8 +83,22 @@ pub struct Shared {
 	pub coarse_filter: bool,
 	pub active_tags: FxHashSet<String>,
 	pub source_weights: Option<Weights>,
+	/// The run seed and epoch of a train epoch opened by [`TrainingBatches`], or `None` for a stream opened alone.
+	pub epoch_cursor: Option<EpochCursor>,
 	pub cancel: CancelToken,
 	pub observer: Option<Box<dyn Observer>>,
+}
+
+/// Where one train epoch sits in its run.
+///
+/// A spread source seeds each row group's order from `run_seed` rather than from the epoch, and epoch `epoch`
+/// starts each group `epoch - 1` times the group's expected draws per epoch into that order. The epochs of a run
+/// then read one order per group in turn, so a row repeats only after every row of its group was read.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EpochCursor {
+	pub run_seed: i128,
+	/// The epoch, counted from 1.
+	pub epoch: u64,
 }
 
 impl Shared {
@@ -212,7 +226,20 @@ impl Sampler {
 		cancel: CancelToken,
 		observer: Option<Box<dyn Observer>>,
 	) -> Result<Self> {
-		let parts = StreamParts::open(config, split, row_limit, cancel, observer, true)?;
+		Self::open_epoch(config, split, seed, row_limit, cancel, observer, None)
+	}
+
+	/// Opens `split` as [`Sampler::open_with`] does, placing a train epoch in its run by `epoch_cursor`.
+	pub fn open_epoch(
+		config: &SamplerConfig,
+		split: &str,
+		seed: i128,
+		row_limit: Option<u64>,
+		cancel: CancelToken,
+		observer: Option<Box<dyn Observer>>,
+		epoch_cursor: Option<EpochCursor>,
+	) -> Result<Self> {
+		let parts = StreamParts::open(config, split, row_limit, cancel, observer, true, epoch_cursor)?;
 		Ok(Self {
 			rng: PyRandom::new(Seed::Int(seed)),
 			shared: parts.shared,
@@ -252,6 +279,7 @@ impl StreamParts {
 		cancel: CancelToken,
 		observer: Option<Box<dyn Observer>>,
 		check_exclusions: bool,
+		epoch_cursor: Option<EpochCursor>,
 	) -> Result<Self> {
 		if config.country_weights.is_empty() {
 			return Err(Error::Input("country_weights must be non-empty".into()));
@@ -303,6 +331,7 @@ impl StreamParts {
 			coarse_filter: config.coarse_filter,
 			active_tags: config.active_tags.iter().cloned().collect(),
 			source_weights,
+			epoch_cursor: if train { epoch_cursor } else { None },
 			cancel,
 			observer,
 		};
@@ -351,7 +380,7 @@ impl RawRows {
 		cancel: CancelToken,
 		observer: Option<Box<dyn Observer>>,
 	) -> Result<Self> {
-		let parts = StreamParts::open(config, split, row_limit, cancel, observer, false)?;
+		let parts = StreamParts::open(config, split, row_limit, cancel, observer, false, None)?;
 		Ok(Self {
 			rng: PyRandom::new(Seed::Int(seed)),
 			shared: parts.shared,
@@ -538,13 +567,17 @@ impl TrainingBatches {
 				self.epoch += 1;
 				self.drawn = 0;
 				let seed = self.seed + i128::from(self.epoch);
-				self.current = Some(Sampler::open_with(
+				self.current = Some(Sampler::open_epoch(
 					&self.config,
 					"train",
 					seed,
 					self.row_limit,
 					self.cancel.clone(),
 					None,
+					Some(EpochCursor {
+						run_seed: self.seed,
+						epoch: self.epoch,
+					}),
 				)?);
 			}
 			match self

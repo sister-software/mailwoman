@@ -105,6 +105,20 @@ draws from the epoch's generator (the group order, then one 64-bit pass seed) at
 still fixes every row. A resumed run re-draws skipped batches and reads the same rows. The audits'
 `RawRows` plans use the same limit. `openRawRows` defaults that limit to the config's `train_rows_per_epoch`.
 
+`TrainingBatches` places each epoch in its run with an `EpochCursor`: the run seed and the epoch, counted from 1.
+Under a cursor, a spread group's row order is seeded by the run seed, the file and the group, the same order in every
+epoch. Epoch `e` starts that order `(e − 1) × ⌈fraction × group rows⌉` rows in, wrapping at the group's end. The epochs
+of a run then read each group in turn. A run whose draws of a source equal its rows reads nearly every row once.
+An epoch seeded alone reads a fresh random part of each group instead, and over `E` such epochs about `(1 − 1/E)^E`
+of the rows are never read.
+
+`tests/run_coverage.rs` measures the difference: eight epochs that each expect an eighth of a 24,000-row source read
+23,328 rows with the cursor and 15,695 without it. In v8.13.0, the last run without it, 1,211,010 of `wof-admin`'s
+2,780,333 train rows were never drawn under `source_reps: 1.0` (#3516). A resumed run keeps the cursor, because the
+trainer reopens epoch `e` from the same run seed. `Sampler::open`, `RawRows` and the audits open an epoch without a
+cursor. Their counts per source, country and label order keep the training stream's distribution, and the rows
+they read differ from the rows the run trains on.
+
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
 `nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows

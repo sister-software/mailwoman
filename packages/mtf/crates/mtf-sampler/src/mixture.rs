@@ -22,7 +22,7 @@ use crate::file_rows::{FileRows, RowGroupVisit, StartState};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
 use crate::row::Row;
-use crate::sampler::{Event, Shared};
+use crate::sampler::{EpochCursor, Event, Shared};
 use std::sync::Arc;
 
 /// The fewest accepted rows a spread pass takes per visit from a source's largest row group.
@@ -40,6 +40,8 @@ struct Unit {
 	take: usize,
 	position: usize,
 	exhausted: bool,
+	/// The group's order seed and the rotation its order starts at, set when the epoch is placed in its run.
+	run_order: Option<(i128, usize)>,
 }
 
 /// How a source's pass reads its rows.
@@ -82,7 +84,7 @@ impl SourceRows {
 	}
 
 	/// The pass's plan, drawn on the source's first row: the file order, or the row-group order and the pass seed.
-	fn start(&self, rng: &mut PyRandom) -> Result<Plan> {
+	fn start(&self, rng: &mut PyRandom, cursor: Option<EpochCursor>) -> Result<Plan> {
 		let Some(fraction) = self.fraction else {
 			let mut order: Vec<usize> = (0..self.files.len()).collect();
 			rng.shuffle(&mut order);
@@ -104,7 +106,19 @@ impl SourceRows {
 					take: 0,
 					position: 0,
 					exhausted: false,
+					run_order: None,
 				});
+			}
+		}
+		// A placed epoch reads each group's run-wide order from where the previous epochs' expected draws left it.
+		// The expected draws use the source's share before the visit floor raises it, because the floor sets how
+		// many rows a visit decodes, not how many the epoch draws.
+		if let Some(cursor) = cursor {
+			for (unit, &rows) in units.iter_mut().zip(&sizes) {
+				let per_epoch = (fraction * rows as f64).ceil() as u64;
+				let rotation = (cursor.epoch.saturating_sub(1) * per_epoch % (rows.max(1) as u64)) as usize;
+				let order_seed = (cursor.run_seed << 40) ^ ((unit.file as i128) << 20) ^ unit.group as i128;
+				unit.run_order = Some((order_seed, rotation));
 			}
 		}
 		// The floor raises the fraction for the whole source, so a short group, such as a file's last, is still
@@ -127,7 +141,7 @@ impl SourceRows {
 
 	fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
 		if self.plan.is_none() {
-			self.plan = Some(self.start(rng)?);
+			self.plan = Some(self.start(rng, shared.epoch_cursor)?);
 		}
 		match self.plan.as_mut().expect("started above") {
 			Plan::Sequential {
@@ -181,7 +195,7 @@ impl SourceRows {
 				}
 				let file = &files[unit.file];
 				// Distinct units of one pass seed distinct generators, so each group's order is its own.
-				let order_seed = (seed << 32) | at as i128;
+				let (order_seed, rotation) = unit.run_order.unwrap_or(((seed << 32) | at as i128, 0));
 				*current = Some((
 					at,
 					RowGroupVisit::open(
@@ -190,6 +204,7 @@ impl SourceRows {
 						file.filter.as_deref(),
 						unit.group,
 						order_seed,
+						rotation,
 						unit.position,
 						unit.take,
 					)?,
