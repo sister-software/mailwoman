@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 4,
 	"specVersion": "17",
-	"rationale": "DRAFT, unregistered (docs/records/evals/2026-11-26-release-requirements-v17.md). Version 17 is version 16 with two changes. Its confirmation role is three collections no model has read: heldout-reserve-v0.8.22, the forward reserve that evaluation-groups.v0.8.24 holds out of training, for the country checks; heldout-confirm-v0.8.24-capabilities, spliced-sub-venue and spliced-country rows rendered with seeds 2275 and 2276 and filtered against every split of corpora v0.8.22-retention-overlay and v0.8.23-prominent-retention-overlay; and heldout-confirm-v0.8.24-probes, rendered with seed 2271. v8.12.0's read on 2026-11-26 retired version 16's three. Its scorer compares a US row joined when the gold labels no street affix (#3518): five US sources label the street whole, and version 16's country-US check read 151 of 1,000 NPPES rows for the published model and v8.12.0 alike. Every requirement, threshold, inference rule and statistic is version 16's.",
+	"rationale": "DRAFT, unregistered (docs/records/evals/2026-11-26-release-requirements-v17.md). Version 17 is version 16 with two changes. Its confirmation role is three collections no model has read: heldout-confirm-v0.8.24, frozen from the test split of corpus v0.8.22-retention-overlay with every other frozen collection excluded, which leaves the groups of the forward reserve heldout-reserve-v0.8.22, for the country checks; heldout-confirm-v0.8.24-capabilities, spliced-sub-venue and spliced-country rows rendered with seeds 2275 and 2276 and filtered against every split of corpora v0.8.22-retention-overlay and v0.8.23-prominent-retention-overlay; and heldout-confirm-v0.8.24-probes, rendered with seed 2271. v8.12.0's read on 2026-11-26 retired version 16's three. Its scorer compares a US row joined when the gold labels no street affix (#3518): five US sources label the street whole, and version 16's country-US check read 151 of 1,000 NPPES rows for the published model and v8.12.0 alike. Every requirement, threshold, inference rule and statistic is version 16's.",
 	"requirements": [
 		{
 			"id": "country-US",
@@ -170,8 +170,8 @@
 	"identities": {
 		"dataset": [
 			{
-				"id": "heldout-reserve-v0.8.22@b2a259ef6bcba5b4",
-				"sha256": "16ae9a3f0aa617d9ce28039748cce2b92a8ddaecd6e8769130beb13e078660a0"
+				"id": "heldout-confirm-v0.8.24@eba875cf37531817",
+				"sha256": "8c26bf9554488e45437fb39a110cdb7b38f5bcd3aa8a2e5bcfc11b3835df3cd6"
 			},
 			{
 				"id": "heldout-confirm-v0.8.24-capabilities@f6826932eac0497b",
@@ -228,11 +228,11 @@
 		},
 		"confirmation": {
 			"ids": [
-				"heldout-reserve-v0.8.22@b2a259ef6bcba5b4",
+				"heldout-confirm-v0.8.24@eba875cf37531817",
 				"heldout-confirm-v0.8.24-capabilities@f6826932eac0497b",
 				"heldout-confirm-v0.8.24-probes@82c44d978e64c55b"
 			],
-			"description": "Unread rows that neither 11.3.0 (corpus v0.8.22-retention-overlay) nor a candidate on v0.8.22-retention-overlay or v0.8.23-prominent-retention-overlay trains on. heldout-reserve-v0.8.22 draws 400 groups per country and row kind in the nine objective countries (seed 2216); evaluation-groups.v0.8.24 holds its groups out of training. heldout-confirm-v0.8.24-capabilities is 600 rows per country of spliced-sub-venue and spliced-country renders (seeds 2275 and 2276, freeze seed 2277). heldout-confirm-v0.8.24-probes is 5,000 rows (render seed 2271, confirmation draw seed 2273). The overlap audit against both corpora with folded text and address keys classes each row. Read once, for the release decision; every read is recorded in the next spec version's rationale."
+			"description": "Unread rows that neither 11.3.0 (corpus v0.8.22-retention-overlay) nor a candidate on v0.8.22-retention-overlay or v0.8.23-prominent-retention-overlay trains on. heldout-confirm-v0.8.24 is 15,638 rows, up to 1,000 per country and row kind (seed 2278), drawn from the test groups of v0.8.22-retention-overlay that no frozen collection holds: the forward reserve's 400 groups per country and row kind (seed 2216) and further US test groups. heldout-confirm-v0.8.24-capabilities is 600 rows per country of spliced-sub-venue and spliced-country renders (seeds 2275 and 2276, freeze seed 2277). heldout-confirm-v0.8.24-probes is 5,000 rows (render seed 2271, confirmation draw seed 2273). The overlap audit against both corpora with folded text and address keys classes each row. Read once, for the release decision; every read is recorded in the next spec version's rationale."
 		}
 	}
 }
