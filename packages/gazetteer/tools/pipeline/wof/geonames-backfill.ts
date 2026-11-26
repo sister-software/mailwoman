@@ -22,7 +22,7 @@
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { sortedGlob } from "@mailwoman/core/fs/readers"
-import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isMailwomanWOFID, nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { arealPolygons, pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -95,6 +95,13 @@ export interface GeoNamesBackfillOptions {
 	 * Report the records and write no file.
 	 */
 	dryRun?: boolean
+	/**
+	 * The id the first new record takes, with each later record taking the next.
+	 *
+	 * Without it the run reads the mailwoman id range of every fork and mints after the largest.
+	 * A caller that runs several countries at once assigns each a block that no other run uses.
+	 */
+	firstID?: number
 	/**
 	 * The `wof:lastmodified` the new records take, in Unix seconds.
 	 */
@@ -210,8 +217,21 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 	}
 
 	// A WOF id is unique across every repository, so the minter reads the mailwoman range in all of them.
-	const forks = await sortedGlob(reposRoot, "whosonfirst-data-*", { onlyFiles: false })
-	const minted = new Set((await readMailwomanWOFRecords(forks)).map((record) => record.id))
+	// A caller that writes several forks at once gives each run its own block through `firstID`,
+	// because two runs that both read the range would mint the same ids.
+	const minted = isPresent(options.firstID)
+		? null
+		: new Set(
+				(await readMailwomanWOFRecords(await sortedGlob(reposRoot, "whosonfirst-data-*", { onlyFiles: false }))).map(
+					(record) => record.id
+				)
+			)
+
+	let nextBlockID = options.firstID ?? 0
+
+	if (isPresent(options.firstID) && !isMailwomanWOFID(options.firstID)) {
+		throw new RangeError(`geonames backfill: firstID ${options.firstID} is outside the mailwoman WOF id range`)
+	}
 
 	const result: GeoNamesBackfillResult = {
 		repoDir: repoDir.toString(),
@@ -253,9 +273,13 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 			continue
 		}
 
-		const id = nextMailwomanWOFID(minted)
+		const id = minted ? nextMailwomanWOFID(minted) : nextBlockID++
 
-		minted.add(id)
+		if (!isMailwomanWOFID(id)) {
+			throw new RangeError(`geonames backfill: id ${id} is outside the mailwoman WOF id range`)
+		}
+
+		minted?.add(id)
 		held.add(geonamesID)
 
 		const parentID = parent.feature.id

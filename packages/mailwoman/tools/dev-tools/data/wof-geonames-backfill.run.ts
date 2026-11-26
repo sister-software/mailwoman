@@ -18,7 +18,7 @@
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { backfillGeoNamesPlaces, readGeoNamesPlaces } from "@mailwoman/gazetteer/tools/pipeline/wof/geonames-backfill"
 import { JSONSpliterator } from "spliterator"
@@ -29,6 +29,7 @@ const { values } = parseArguments({
 		"geonames-id": { type: "string", multiple: true, description: "A GeoNames id to write a record for, repeatable" },
 		candidates: { type: "string", description: "The admin build's wof-candidates.jsonl" },
 		"min-population": { type: "string", description: "Keep candidates with at least this GeoNames population" },
+		"first-id": { type: "string", description: "The id of the first new record, for a run beside others" },
 		repos: { type: "string", description: "WOF repos root. Default <cache-root>/sources/wof-repos" },
 		report: { type: "string", description: "Write the whole result to this JSON file" },
 		"dry-run": { type: "boolean", default: false, description: "Report the records and write no file" },
@@ -58,6 +59,7 @@ const result = await backfillGeoNamesPlaces({
 	reposRoot: values.repos ?? wofReposPath,
 	geonamesDir,
 	dryRun: values["dry-run"],
+	firstID: values["first-id"] ? integerArgument("first-id", values["first-id"]) : undefined,
 	lastModified: Math.floor(Date.now() / 1000),
 })
 

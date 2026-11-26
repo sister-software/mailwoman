@@ -27,12 +27,14 @@
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { git } from "@mailwoman/core/repo/git"
 import { nextMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { arealPolygons, pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { parallelMap, TextSpliterator } from "spliterator"
 
 import {
 	patchWOFRecordText,
@@ -249,15 +251,58 @@ export interface LoadedRecord {
 export async function loadForkRecords(repoDir: PathBuilder): Promise<Map<number, LoadedRecord>> {
 	const records = new Map<number, LoadedRecord>()
 
-	for (const path of await sortedGlob(repoDir("data"), "**/[0-9]*[0-9].geojson")) {
-		const text = await readLocalTextFile(path)
-		const feature = parseJSONStrict<WOFRecordFeature>(text)
+	// The clone's index and its untracked files, so a record written and not yet committed is read too.
+	// A walk of the `data` tree took 3 s for Norway's 13,153 records, four directories
+	// deep each, and git answers the same list in 0.02 s.
+	const listing = await git(
+		["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "data"],
+		repoDir,
+		LISTING_BYTES
+	)
 
-		records.set(feature.id, { path, text, feature })
+	const paths = TextSpliterator.from(listing, { delimiter: "\0" })
+		.filter((path) => RECORD_FILE.test(path))
+		.map((path) => repoDir(path).toString())
+
+	const loaded = parallelMap(
+		paths,
+		async (path) => {
+			const text = await readLocalTextFile(path)
+
+			return { path, text, feature: parseJSONStrict<WOFRecordFeature>(text) }
+		},
+		{ concurrency: RECORD_READ_CONCURRENCY }
+	)
+
+	for await (const record of loaded) {
+		records.set(record.feature.id, record)
 	}
 
 	return records
 }
+
+/**
+ * A record's file: `<id>.geojson`.
+ *
+ * An alternate geometry is `<id>-alt-<source>.geojson`, and one such name ends in a digit,
+ * so a pattern that tests only the last character admits it.
+ */
+const RECORD_FILE = /(?:^|\/)\d+\.geojson$/u
+
+/**
+ * Record files read at once.
+ *
+ * The read and parse of Norway's records took 3.6 s one at a time, 2.1 s at 2
+ * to 8 at once, 2.8 s at 32 and 3.3 s at 64.
+ * The parse runs on one thread, so more reads in flight add queueing and no throughput.
+ */
+const RECORD_READ_CONCURRENCY = 3
+
+/**
+ * The most bytes a fork's file listing may hold.
+ * China's fork lists 678,239 records at about 40 bytes each.
+ */
+const LISTING_BYTES = 256 * 1024 * 1024
 
 type Hierarchy = Array<Record<string, number>>
 
