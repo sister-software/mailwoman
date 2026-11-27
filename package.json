@@ -119,6 +119,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/license": "workspace:*",
