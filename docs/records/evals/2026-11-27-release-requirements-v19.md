@@ -7,11 +7,12 @@ owner: evaluation
 
 # Release requirements v19 draft, a new confirmation role after the v18 read
 
-Status: **unregistered, candidate recorded**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v19.json`
-is v18 with a new confirmation role, 11.4.0 still the published identity, and v8.19.0 seed 42 as the candidate
-(section 4). `release/current-spec.ts` still names v17. `scratchpad/2026/11/27/derive-spec-v19.ts` writes v19
-from v18, and every requirement, threshold, inference rule, statistic and the scorer revision `24d48aec5c` is v18's. No
-model has scored the four new collections.
+Status: **read once, `insufficient_evidence`; v8.19.0 ships as 11.5.0 by operator authorization**.
+`packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v19.json` is v18 with a new confirmation
+role, 11.4.0 still the published identity, and v8.19.0 seed 42 as the candidate (section 4). v8.19.0 read the role on
+2026-11-27 (section 5). `release/current-spec.ts` still names v17, because no verdict passed v19.
+`scratchpad/2026/11/27/derive-spec-v19.ts` writes v19 from v18, and every requirement, threshold, inference rule,
+statistic and the scorer revision `24d48aec5c` is v18's.
 
 ## 1. Why v19 exists
 
@@ -97,3 +98,49 @@ Each audit is `<collection>.provenance-v8190.json` beside its manifest.
 | `heldout-confirm-v0.8.26-probes`       | 5,000 | 5,000 `verified_unseen`   |
 
 Each audit found zero rows that overlap training by identity, group, text or address.
+
+## 5. The confirmation read
+
+v8.19.0 read the five collections against 11.4.0 on 2026-11-27 (`/mnt/mw/models/arms/v8190/verdict-confirm-v19-v8190.json`,
+report `heldout-confirm-v19-v8190.json` beside it). The outcome is **`insufficient_evidence`**. Thirteen checks pass,
+every minimum among them, and three intervals cross their thresholds. No check fails.
+
+| Check                  |  Rows | 11.4.0 |                    v8.19.0 |    Threshold | Outcome                 |
+| ---------------------- | ----: | -----: | -------------------------: | -----------: | ----------------------- |
+| objective              | 8,632 |  0.970 | +0.0045 [−0.0007, +0.0097] |          > 0 | `insufficient_evidence` |
+| geocode                | 8,632 |  0.928 | +0.0009 [−0.0043, +0.0062] |      ≥ −0.01 | `pass`                  |
+| country-US             | 1,000 |  0.972 |                      0.977 |          0.6 | `pass`                  |
+| country-FR             | 1,000 |  0.989 |                      0.993 |          0.9 | `pass`                  |
+| country-GB             | 1,000 |  1.000 |                      1.000 |          0.8 | `pass`                  |
+| country-DE             | 1,000 |  1.000 |                      1.000 |         0.85 | `pass`                  |
+| country-IN             |   632 |  0.878 |                      0.862 |          0.5 | `pass`                  |
+| country-ES             | 1,000 |  0.942 |                      0.959 |          0.8 | `pass`                  |
+| country-IT             | 1,000 |  0.983 |                      0.983 |          0.8 | `pass`                  |
+| country-AU             | 1,000 |  1.000 |                      1.000 |          0.8 | `pass`                  |
+| country-NZ             | 1,000 |  0.970 |                      1.000 |          0.8 | `pass`                  |
+| `po_box_cedex` minimum | 4,000 |  0.936 |                      0.877 |         0.85 | `pass`                  |
+| `po_box_cedex` loss    | 4,000 |  0.936 | −0.0597 [−0.0712, −0.0483] | loss ≥ −0.05 | `insufficient_evidence` |
+| `venue_unit`           | 1,617 |  0.988 |                      0.988 |         0.85 | `pass`                  |
+| `country_token`        | 2,583 |  0.993 |                      0.993 |         0.85 | `pass`                  |
+| `postal_unit`          |   956 |  0.806 | −0.0010 [−0.0146, +0.0125] |     loss ≥ 0 | `insufficient_evidence` |
+
+The equal-country exact rate on the 8,632 comparative rows of the nine objective countries is 0.9705 for 11.4.0 and
+0.9749 for v8.19.0. Over all 17,832 address rows, capability rows included, the rate is 96.09% against 94.99%: 106
+rows fixed and 301 broken. The measured changes against 11.4.0, from the report's splits:
+
+- `invented-postal-guideline` 84.5% to 68.5% (242 rows broken, 3 fixed), IT capability rows −15.7 points and AU −2.8.
+  These are 1,500 of the 4,000 rows of the `po_box_cedex` check. That check reads 0.8765 against 0.936.
+- `gleif-lei` −3.1 points, and IN 0.878 to 0.862 (geocode 80.7% to 78.3%).
+- `rendered-nz` 97.0% to 100% (30 fixed, 0 broken), `es-navarra` +4.5 points, `usgov-nad` +0.5.
+
+## 6. The release decision
+
+The verdict doesn't permit the promotion. The operator's standing instruction for this session is to ship a candidate
+that "improves or remains comparable to the current release on typical addresses". Under that instruction the
+coordinator decided on 2026-11-27 to release v8.19.0 as 11.5.0. Every minimum passes, the verified-unseen equal-country
+rate moves from 0.9705 to 0.9749, and NZ reads 1.000. The accepted loss is `po_box_cedex` at 0.8765 against 11.4.0's
+0.936, −5.97 points and still above its 0.85 minimum. The promotion battery `v9.0.0-base` passed 18 of 18 floors on the
+same int8 graph.
+
+Section 6.5 treats this read as the release decision for v8.19.0. The four new collections and the IN subset aren't
+read again for recipe selection.
