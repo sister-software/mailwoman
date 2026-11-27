@@ -37,6 +37,7 @@ fn write_with_ids(path: &Path, source: &str, n: usize, id_prefix: &str) -> Value
 	let options = WriteOptions {
 		without_spans: true,
 		source_ids: Some((0..n).map(|i| Some(format!("{id_prefix}:{i}"))).collect()),
+		..Default::default()
 	};
 	write_corpus_parquet(&rows, path, 1 << 20, &options);
 	json!({"split": "train", "path": path, "source": source, "rows": n, "sha256": file_sha256(path).unwrap()})

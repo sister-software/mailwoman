@@ -27,6 +27,7 @@ fn write(path: &Path, name: &str, source: &str, n: usize) -> (Value, Vec<String>
 	let options = WriteOptions {
 		without_spans: false,
 		source_ids: Some(ids.iter().cloned().map(Some).collect()),
+		..Default::default()
 	};
 	write_corpus_parquet(&rows, path, 3, &options);
 	let entry =

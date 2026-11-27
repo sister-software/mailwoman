@@ -137,6 +137,24 @@ the trainer and, through `mtf-node`, the host audits call). `tools/training/draw
 from an audit and gives a source the audit's epoch emitted fewer than 2,000 rows of no factor. The draw report
 compares two configs in emitted rows, both under the current config's factors.
 
+### A draw weight moves draws inside a source
+
+A corpus file may store a `draw_weight` column, a positive float per row with mean 1 over its source's train rows
+(`DRAW_WEIGHT_COLUMN` in `file_rows.rs` and in `@mailwoman/corpus/parquet/schema`). When a train mixture opens a
+source whose files store it, `DrawWeights::of_files` reads the column of every file the source is indexed under and
+keeps its largest value, `B`. A file of the source without the column reads 1.0 for every row and raises `B` to at
+least 1. Each row then passes one acceptance draw with probability `(c / c_max) × (w / B)`, where `c` is its country's
+weight, `c_max` the heaviest country's and `w` its draw weight. The draw is skipped when that probability is 1.
+
+The multinomial picks the source before the source yields a row, so the weights never move draws between sources:
+`source_weights`, `source_reps` and the emit factors keep their meaning. Inside the source, one pass yields each row
+with probability `w / B`, and a source that runs out restarts with a new pass, so over the passes a run makes a row
+draws `w` times the source's draws per row. A row of weight 2 has twice the draws a uniform read gives it. The
+cost is `B` rows read per row drawn, on average over a source with mean 1. A source none of whose files store the column draws exactly as
+before, and a held-out split and a stored-order read ignore it. `tests/draw_weights.rs` holds the ratio, the source
+share, the uniform-column identity and the refusal of a weight that isn't a positive finite number.
+`@mailwoman/corpus/tools/overlay/draw-weight` writes the column into a corpus overlay (#3541).
+
 ### Stored order
 
 `data.read_order: stored` replaces the train mixture with `Stored` (`mixture.rs`). It reads the positively weighted
