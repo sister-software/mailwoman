@@ -118,6 +118,7 @@ fn allocate_static(like: &TensorBatch, length: i64) -> TensorBatch {
 		labels: zeros(&like.labels, &[rows, length]),
 		locale_ids: zeros(&like.locale_ids, &[rows]),
 		address_system_ids: zeros(&like.address_system_ids, &[rows]),
+		outcome_ids: zeros(&like.outcome_ids, &[rows]),
 		channels: like
 			.channels
 			.iter()
@@ -158,6 +159,7 @@ pub fn write_padded(dst: &TensorBatch, batch: &TensorBatch, pad_id: i64) -> Resu
 		copy_padded(&dst.labels, &batch.labels, IGNORE_INDEX as f64);
 		dst.locale_ids.shallow_clone().copy_(&batch.locale_ids);
 		dst.address_system_ids.shallow_clone().copy_(&batch.address_system_ids);
+		dst.outcome_ids.shallow_clone().copy_(&batch.outcome_ids);
 		for ((_, df, dc), (_, sf, sc)) in dst.channels.iter().zip(&batch.channels) {
 			copy_padded(df, sf, 0.0);
 			copy_padded(dc, sc, 0.0);

@@ -28,6 +28,7 @@ pub mod masking;
 pub mod metrics;
 pub mod noise;
 pub mod optim;
+pub mod outcomes;
 pub mod parity;
 pub mod pretrain;
 pub mod realized;

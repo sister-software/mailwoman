@@ -17,6 +17,7 @@ import {
 	LOCALITY_SURFACE_FEATURE_DIM,
 	STREET_TYPE_FEATURE_DIM,
 } from "#channels/gazetteer-inference"
+import { NO_OUTCOME_HINT } from "#outcome/table"
 import type { RequiredChannels } from "#weights/channels"
 
 /**
@@ -43,6 +44,12 @@ export interface InferEvidenceChannels {
 	 * The model card's `address_systems.no_hint` id states that no hint is given.
 	 */
 	localeHint?: number
+	/**
+	 * The hint-class row for a graph with an `outcome_hint` input, from `outcomeHintID`.
+	 *
+	 * −1 states that no hint is given.
+	 */
+	outcomeHint?: number
 }
 
 /**
@@ -80,6 +87,12 @@ export interface InferResult {
 	 * model card's `address_systems` ids, when the model exports it.
 	 */
 	addressSystemLogits: number[] | null
+	/**
+	 * The outcome head's logits (`outcome_logits` output), indexed by the model card's
+	 * `outcomes.head_classes`, when the model exports it.
+	 * A runner written before the head existed omits the field.
+	 */
+	outcomeLogits?: number[] | null
 	/**
 	 * Per-span type scores from the semi-Markov span head, indexed
 	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1` tokens.
@@ -280,6 +293,20 @@ export function packLocaleHintFeed(
 }
 
 /**
+ * Pack the `outcome_hint` input when the graph declares one, or return null when it doesn't.
+ *
+ * The input is required where declared, so a caller without a hint gets −1, the trained "no hint" row.
+ */
+export function packOutcomeHintFeed(
+	inputNames: readonly string[],
+	outcomeHint: number | undefined
+): PackedFeed<BigInt64Array> | null {
+	if (!inputNames.includes("outcome_hint")) return null
+
+	return { data: BigInt64Array.of(BigInt(outcomeHint ?? NO_OUTCOME_HINT)), dims: [1] }
+}
+
+/**
  * Decode a session's outputs into an {@link InferResult} trimmed to the real `seqLen`
  * (the pad tail is never real); absent tensors yield absent fields.
  */
@@ -289,6 +316,7 @@ export function decodeInferOutput(
 		localeLogits?: OutputTensor
 		spanScores?: OutputTensor
 		addressSystemLogits?: OutputTensor
+		outcomeLogits?: OutputTensor
 	},
 	seqLen: number
 ): InferResult {
@@ -314,6 +342,7 @@ export function decodeInferOutput(
 
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : null
 	const addressSystemLogits = output.addressSystemLogits ? Array.from(output.addressSystemLogits.data) : null
+	const outcomeLogits = output.outcomeLogits ? Array.from(output.outcomeLogits.data) : null
 
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | null = null
@@ -350,6 +379,7 @@ export function decodeInferOutput(
 		numLabels,
 		localeLogits,
 		addressSystemLogits,
+		outcomeLogits,
 		spanScores: maxSpan === null ? null : spanScores,
 		maxSpan: spanScores ? maxSpan : null,
 	}

@@ -251,6 +251,35 @@ function deriveCandidateCard(published: ModelCard, identity: CandidateIdentity):
 }
 
 /**
+ * Sets the derived card's `outcomes` block from the export's `OUTCOMES.json`,
+ * which `trainer-export export-onnx` writes beside a graph with the outcome hint
+ * or head, and declares `requires.outcome_hint` for a graph with the hint.
+ *
+ * The published card's block describes another graph, so a candidate without the sidecar drops it.
+ */
+async function fitOutcomesBlock(card: ModelCard, exportDirectory: PathBuilder): Promise<void> {
+	const sidecar = exportDirectory("OUTCOMES.json")
+	const requires = { ...(card.requires as Record<string, unknown> | undefined) }
+
+	delete card.outcomes
+	delete requires["outcome_hint"]
+
+	if (await pathExists(sidecar)) {
+		const block = await readLocalJSONFile<{ hint_classes?: unknown[] }>(sidecar)
+
+		card.outcomes = block
+
+		if (block.hint_classes?.length) {
+			requires["outcome_hint"] = { required: true }
+		}
+	}
+
+	if (card.requires || Object.keys(requires).length) {
+		card.requires = requires
+	}
+}
+
+/**
  * Splits a `[<locale>:]<rest>` entry.
  *
  * A prefix counts as a locale only when it equals a staged locale, so a path holding a colon stays whole.
@@ -514,6 +543,10 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 		})
 
 		await fitAddressSystemTable(derivedCard, candidateGraph, publishedCardPath.toString())
+
+		if (exportIdentity) {
+			await fitOutcomesBlock(derivedCard, resolvePathBuilder(repoRoot, exportIdentity.identity.directory))
+		}
 
 		cardKind = "derived"
 	}

@@ -200,6 +200,23 @@ export interface AddressTree {
 	 * The country predicted by the parse-time locale classifier, when it was confident.
 	 */
 	localeCountry?: { country: string; confidence: number }
+	/**
+	 * The outcome head's distribution over the readings the caller wants returned, in the model
+	 * card's `outcomes.head_classes` order (`docs/engineering/reference/outcome-kinds.mdx`).
+	 *
+	 * `null` when the graph has no outcome head.
+	 * A tree built by another parser omits the field.
+	 */
+	outcomeDistribution?: readonly OutcomeProbability[] | null
+}
+
+/**
+ * One reading of the outcome head's distribution: an identity top level of the
+ * outcome vocabulary and its probability.
+ */
+export interface OutcomeProbability {
+	outcome: string
+	probability: number
 }
 
 /**

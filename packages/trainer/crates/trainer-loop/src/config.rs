@@ -263,6 +263,10 @@ pub struct DataFiles {
 	pub postal_definition: PathBuf,
 	pub address_systems: PathBuf,
 	pub label_schema: PathBuf,
+	/// The source → reading table of the outcome head and hint.
+	pub outcome_readings: PathBuf,
+	/// The checkout, which `data.outcome_masks_path` is relative to.
+	pub root: PathBuf,
 }
 
 impl DataFiles {
@@ -270,6 +274,8 @@ impl DataFiles {
 	pub fn in_repository(root: &Path) -> Self {
 		let data = root.join("packages/trainer/data");
 		Self {
+			outcome_readings: data.join("outcome_readings.json"),
+			root: root.to_path_buf(),
 			postcode_layouts: data.join("postcode-layouts.json"),
 			postal_artifact: root.join("packages/postcode/data/artifacts/postal.rca1"),
 			postal_definition: root.join("packages/postcode/data/definitions/postal.definition.json"),

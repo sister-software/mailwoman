@@ -421,6 +421,7 @@ fn a_batch_padded_to_its_length_bucket_scores_the_loss_of_the_unpadded_batch() {
 		labels: inputs.labels.as_ref().unwrap().shallow_clone(),
 		locale_ids: inputs.locale_ids.as_ref().unwrap().shallow_clone(),
 		address_system_ids: inputs.address_system_ids.as_ref().unwrap().shallow_clone(),
+		outcome_ids: Tensor::full([2], -100, (Kind::Int64, Device::Cpu)),
 		channels: vec![(
 			channel,
 			inputs.channels[0].features.as_ref().unwrap().shallow_clone(),
@@ -438,6 +439,7 @@ fn a_batch_padded_to_its_length_bucket_scores_the_loss_of_the_unpadded_batch() {
 		labels: Tensor::full([2, 10], 3, (Kind::Int64, Device::Cpu)),
 		locale_ids: Tensor::zeros([2], (Kind::Int64, Device::Cpu)),
 		address_system_ids: Tensor::zeros([2], (Kind::Int64, Device::Cpu)),
+		outcome_ids: Tensor::zeros([2], (Kind::Int64, Device::Cpu)),
 		channels: vec![(
 			batch.channels[0].0.clone(),
 			Tensor::ones([2, 10, 11], (Kind::Float, Device::Cpu)),
@@ -501,6 +503,7 @@ fn padded_batch(width: i64) -> TensorBatch {
 		// -1e9 logits, a loss of order 1e7 that no rounding gap would show in.
 		locale_ids: Tensor::from_slice(&[0i64, 2, -100]),
 		address_system_ids: Tensor::from_slice(&[1i64, -100, 3]),
+		outcome_ids: Tensor::from_slice(&[0i64, -100, 4]),
 		channels: vec![(mtf_channels::encoder::CHANNEL_NAMES[0].to_owned(), features, confidence)],
 		char_ids: None,
 	}

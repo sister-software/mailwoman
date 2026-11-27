@@ -108,6 +108,17 @@ pub struct ModelConfig {
 	#[serde(default)]
 	pub use_locale_hint: bool,
 	#[serde(default)]
+	pub use_outcome_hint: bool,
+	#[serde(default)]
+	pub use_outcome_head: bool,
+	#[serde(default)]
+	pub outcome_hint_classes: Vec<String>,
+	#[serde(default)]
+	pub outcome_head_classes: Vec<String>,
+	/// `{"revision", "sha256"}` of the outcome definitions the class lists follow.
+	#[serde(default)]
+	pub outcome_definitions: serde_json::Value,
+	#[serde(default)]
 	pub id2label: BTreeMap<String, String>,
 }
 
