@@ -60,7 +60,9 @@ export const LIBTORCH_ARCHIVE_SHA256: Readonly<Record<TrainerVariant, string>> =
  * The interpreter only installs the wheels, and the image runs no repository Python.
  */
 export const CUDA_RUNTIME_WHEELS = [
-	"cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3",
+	// `crt` ships `crt/host_config.h`, which `cuda_runtime.h` includes, so `csrc/graph.cpp`
+	// compiles against libtorch's `ATen/cuda/CUDAGraph.h`.
+	"cuda-toolkit[cublas,crt,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3",
 	"nvidia-cudnn-cu13==9.20.0.48",
 	"nvidia-cusparselt-cu13==0.8.1",
 	"nvidia-nccl-cu13==2.29.7",

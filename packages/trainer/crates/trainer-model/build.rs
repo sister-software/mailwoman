@@ -58,7 +58,49 @@ fn main() {
 	build.file("csrc/graph.cpp").compile("trainer_cuda_graph");
 	println!("cargo:rustc-link-lib=dylib=torch_cuda");
 	println!("cargo:rustc-link-lib=dylib=c10_cuda");
+	// `graph.cpp` calls the CUDA runtime (`cudaStreamIsCapturing`, `cudaEventRecord` and others through c10's
+	// headers), which neither libtorch library re-exports to the linker. A `rustc-link-arg` applies only to this
+	// package's own binaries, so the library is named with `rustc-link-lib`, which reaches the trainer binary that
+	// depends on this crate. `+verbatim` takes the file name as it is, because NVIDIA's wheels ship only the
+	// versioned `libcudart.so.13`.
+	let cudart = cuda_runtime_library(&lib, &includes);
+	let dir = cudart.parent().expect("a library file has a directory");
+	let name = cudart
+		.file_name()
+		.and_then(|name| name.to_str())
+		.expect("a UTF-8 library file name");
+	println!("cargo:rustc-link-search=native={}", dir.display());
+	println!("cargo:rustc-link-lib=dylib:+verbatim={name}");
 	println!("cargo:rustc-cfg=trainer_cuda_graph");
+}
+
+/// The CUDA runtime shared library to link: the copy libtorch bundles in `lib`, so the process loads one runtime, or
+/// else the one in a `lib` directory beside a CUDA include directory, where NVIDIA's pip wheels put it.
+fn cuda_runtime_library(lib: &std::path::Path, includes: &[PathBuf]) -> PathBuf {
+	let mut dirs = vec![lib.to_path_buf()];
+	dirs.extend(
+		includes
+			.iter()
+			.filter_map(|dir| dir.parent().map(|parent| parent.join("lib"))),
+	);
+	for dir in &dirs {
+		let Ok(entries) = std::fs::read_dir(dir) else {
+			continue;
+		};
+		let mut found: Vec<PathBuf> = entries
+			.filter_map(|entry| entry.ok().map(|e| e.path()))
+			.filter(|path| {
+				path.file_name()
+					.and_then(|name| name.to_str())
+					.is_some_and(|name| name.starts_with("libcudart") && name.contains(".so"))
+			})
+			.collect();
+		found.sort();
+		if let Some(path) = found.into_iter().next() {
+			return path;
+		}
+	}
+	panic!("the linked libtorch is a CUDA build, but none of {dirs:?} holds a libcudart shared library")
 }
 
 /// The variable that names the CUDA header directories, separated by `:`.
