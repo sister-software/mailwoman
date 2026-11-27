@@ -12,7 +12,6 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import type { ChannelPins } from "@mailwoman/core/pipeline"
 import { type DefaultCountrySource, ScopeStrength, type WeakResolutionReading } from "@mailwoman/core/resolver"
-import type { OutcomeVocabularyLike } from "@mailwoman/core/resolver/outcome"
 import { DEFAULT_VENUE_HEAD_BIAS_SCALE } from "@mailwoman/neural/prior/venue-head"
 import { DEFAULT_WEIGHTS_LOCALE } from "@mailwoman/neural/weights/families"
 import type { PathBuilderLike } from "path-ts"
@@ -368,13 +367,6 @@ export interface GeocodeSessionProgramOptions {
 	 * A file can't hold a function.
 	 */
 	onProgress?: (message: string) => void
-
-	/**
-	 * The outcome vocabulary a request's `outcomeHint` and `outcomeFilter` are checked against.
-	 *
-	 * Without it, a request that sets either field is refused.
-	 */
-	outcomeVocabulary?: readonly OutcomeVocabularyLike[]
 }
 
 /**
@@ -405,7 +397,7 @@ export const GEOCODE_SESSION_DEFAULTS: Readonly<z.output<typeof GeocodeSessionOp
  * @throws {z.ZodError} When a stated option has the wrong type or isn't an option.
  */
 export function createGeocodeSessionOptions(input: GeocodeSessionOptionsInput = {}): GeocodeSessionOptions {
-	const { dataRoot, localeSource, formerDivisionsTable, channelPins, onProgress, outcomeVocabulary, ...stated } = input
+	const { dataRoot, localeSource, formerDivisionsTable, channelPins, onProgress, ...stated } = input
 
 	return {
 		...GeocodeSessionOptionsSchema.parse(stated),
@@ -414,6 +406,5 @@ export function createGeocodeSessionOptions(input: GeocodeSessionOptionsInput = 
 		...(formerDivisionsTable ? { formerDivisionsTable } : {}),
 		...(channelPins ? { channelPins } : {}),
 		...(onProgress ? { onProgress } : {}),
-		...(outcomeVocabulary ? { outcomeVocabulary } : {}),
 	}
 }

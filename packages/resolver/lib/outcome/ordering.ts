@@ -10,8 +10,10 @@
  *   geography doesn't admit never moves ahead of one it does.
  */
 
+import type { OutcomeKind } from "@mailwoman/core/outcome/kinds"
+import { outcomeSatisfies } from "@mailwoman/core/outcome/satisfy"
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
-import { OutcomeLayer, outcomeSatisfies, outcomesSatisfy, unionOutcomes } from "@mailwoman/core/resolver/outcome"
+import { OutcomeLayer, outcomesSatisfy, unionOutcomes } from "@mailwoman/core/resolver/outcome"
 
 /**
  * The order of the data layers when cross-layer prominence is missing.
@@ -22,12 +24,12 @@ const LAYER_ORDER: readonly string[] = [OutcomeLayer.Candidate, OutcomeLayer.Lan
  * What the partition orders by: the request's hint, or the head's readings when no hint is set.
  */
 export interface OutcomeOrder {
-	hint: string | null
+	hint: OutcomeKind | null
 	/**
 	 * The head's identity top levels, most probable first.
 	 * Read only without a hint.
 	 */
-	headOrder: readonly string[] | null
+	headOrder: readonly OutcomeKind[] | null
 }
 
 /**
@@ -52,7 +54,7 @@ export function conformanceKey(
  * Whether a place satisfies a requested outcome id.
  * A place whose set wasn't read satisfies none.
  */
-export function placeSatisfies(place: Pick<ResolvedPlace, "outcomes">, requested: string): boolean {
+export function placeSatisfies(place: Pick<ResolvedPlace, "outcomes">, requested: OutcomeKind): boolean {
 	return outcomesSatisfy([requested], place.outcomes ?? [])
 }
 
@@ -69,7 +71,7 @@ function groupOf(candidate: Pick<ResolvedPlace, "outcomes">, order: OutcomeOrder
 	const readings = order.headOrder ?? []
 
 	const ranks = (candidate.outcomes ?? [])
-		.map((m) => readings.findIndex((reading) => outcomeSatisfies(reading, m.outcome)))
+		.map((m) => readings.findIndex((reading) => outcomeSatisfies(m.outcome, reading)))
 		.filter((rank) => rank >= 0)
 
 	return ranks.length ? Math.min(...ranks) : readings.length

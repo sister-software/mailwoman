@@ -515,7 +515,10 @@ Form 2 is default-on decoder and resolver behavior. It ships only on a `pass` ve
   defaults by the row's `kind`. The candidate table keys them by `spr_id` and placetype, and reads a
   record's Wikidata item from a `concordances` table with `other_source = 'wd:id'`. The candidate
   build doesn't yet copy that table, so a candidate-table record merges with no landmark until it does.
-- An outcome id a database holds and the request's vocabulary lacks is left out of the record's set.
+- An outcome id a database holds and the generated `OUTCOME_KINDS` table lacks is left out of the
+  record's set, and a deprecated id, in a request or a database, is read through `mw:superseded_by`.
+- The head's order reaches the resolver as `ResolveOutcome.headOrder`. A span is eligible for it
+  when the query is a `bare_toponym` or the leading span's node holds `interpretations`.
 - A data layer that reports no outcome tables, such as the Worker's HTTP layers, refuses the request.
 - A response states `outcome_hint_model` and each candidate's `outcomes` only when the request set
   an outcome field or the head's order ran, so a request without them answers byte for byte as before.

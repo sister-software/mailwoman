@@ -24,6 +24,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
+import { parseOutcomeOptions } from "@mailwoman/core/resolver/outcome"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
@@ -277,8 +278,7 @@ export async function createServeEngine(stated: ServeSessionOptionsInput = {}): 
 				inputMode: init.inputMode,
 				bias: init.bias.map((point) => ({ ...point })),
 				...(init.parent ? { parentPlace: { id: init.parent.id, source: "caller", strength: init.parent.scope } } : {}),
-				...(init.outcomeHint != null ? { outcomeHint: init.outcomeHint } : {}),
-				...(init.outcomeFilter ? { outcomeFilter: init.outcomeFilter } : {}),
+				...parseOutcomeOptions(init),
 				...(init.signal ? { signal: init.signal } : {}),
 			})
 

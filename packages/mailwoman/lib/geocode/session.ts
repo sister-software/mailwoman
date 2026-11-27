@@ -358,8 +358,8 @@ export function createGeocodeProcessScope(
  */
 function outcomeDepsOf(
 	request: OutcomeOptions,
-	options: Pick<GeocodeSessionOptions, "outcomeVocabulary" | "outcomeHeadOrdering">
-): Pick<GeocodeDeps, "outcome" | "outcomeVocabulary" | "outcomeHeadOrdering"> {
+	options: Pick<GeocodeSessionOptions, "outcomeHeadOrdering">
+): Pick<GeocodeDeps, "outcome" | "outcomeHeadOrdering"> {
 	const requested = hasOutcomeOptions(request)
 
 	if (!requested && !options.outcomeHeadOrdering) return {}
@@ -373,7 +373,6 @@ function outcomeDepsOf(
 					},
 				}
 			: {}),
-		...(options.outcomeVocabulary ? { outcomeVocabulary: options.outcomeVocabulary } : {}),
 		outcomeHeadOrdering: options.outcomeHeadOrdering,
 	}
 }

@@ -752,7 +752,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		if (query.outcome) {
 			for (const candidate of candidates) {
-				candidate.outcomes = this.#outcomes!.read(candidate.id, candidate.placetype, query.outcome)
+				candidate.outcomes = this.#outcomes!.read(candidate.id, candidate.placetype)
 				candidate.wikidata = this.#wikidataOf(candidate.id)
 			}
 		}

@@ -10,16 +10,14 @@
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import type { OutcomeKind } from "@mailwoman/core/outcome/kinds"
 import { QueryIntentCode, type QueryIntentMarker, type QueryKind } from "@mailwoman/core/pipeline"
 import {
-	checkOutcomeOptions,
 	hasOutcomeOptions,
 	type OutcomeMembership,
 	type OutcomeOptions,
-	OutcomeRefusal,
-	OutcomeRequestError,
 	outcomesSatisfy,
-	type OutcomeVocabularyLike,
+	parseOutcomeOptions,
 	type ResolveOutcome,
 } from "@mailwoman/core/resolver/outcome"
 import { OUTCOME_SET_KEY, OUTCOME_TARGET_KEY } from "@mailwoman/resolver/outcome/fetch"
@@ -32,7 +30,7 @@ import { OUTCOME_SET_KEY, OUTCOME_TARGET_KEY } from "@mailwoman/resolver/outcome
  * and a response states `outcome_hint_model: "unsupported"`.
  * The model lane's `AddressTree.outcomeDistribution` is the value this reads once it lands.
  */
-export function outcomeHeadOrderOf(_tree: AddressTree): readonly string[] | null {
+export function outcomeHeadOrderOf(_tree: AddressTree): readonly OutcomeKind[] | null {
 	return null
 }
 
@@ -42,50 +40,38 @@ export function outcomeHeadOrderOf(_tree: AddressTree): readonly string[] | null
 const HEAD_ORDERED_KIND: QueryKind = "bare_toponym"
 
 /**
- * The request's outcome fields checked against the vocabulary, as the resolver
- * reads them, or null when the request sets neither.
+ * The request's outcome fields checked against the vocabulary, as the resolver reads them.
+ *
+ * It's null when the request sets neither field and the head's order doesn't apply.
  *
  * The head's order is read only without a hint, with the opt-in switch on, for a bare name
  * or a leading span whose decode wrote a small-margin runner-up to its `interpretations`.
  *
- * @throws {OutcomeRequestError} For an id outside the vocabulary, a hint the filter
- * excludes, or a geocoder loaded without the vocabulary.
+ * @throws {OutcomeRequestError} For an id outside the vocabulary or a hint the filter excludes.
  */
 export function resolveOutcomeFor(
 	options: OutcomeOptions | undefined,
 	deps: {
-		vocabulary: readonly OutcomeVocabularyLike[] | undefined
 		/**
 		 * The head's identity top levels for this parse, most probable first, or null
 		 * when the loaded model has no outcome head.
 		 */
-		headOrder: readonly string[] | null
+		headOrder: readonly OutcomeKind[] | null
 		headOrdering: boolean
 	},
 	query: { kind: QueryKind; interpretedSpan: boolean }
 ): ResolveOutcome | null {
-	const requested = !!options && hasOutcomeOptions(options)
-	const hint = options?.outcomeHint ?? null
+	// A JavaScript caller can pass any string, so the request is checked whatever its static type.
+	const checked = options && hasOutcomeOptions(options) ? parseOutcomeOptions(options) : null
+	const hint = checked?.outcomeHint ?? null
 	const shapeEligible = query.kind === HEAD_ORDERED_KIND || query.interpretedSpan
 	const headEligible = hint == null && deps.headOrdering && !!deps.headOrder?.length && shapeEligible
 
-	if (!requested && !headEligible) return null
-
-	if (!deps.vocabulary?.length) {
-		throw new OutcomeRequestError(
-			OutcomeRefusal.VocabularyUnavailable,
-			"This geocoder was loaded without the outcome vocabulary, so it can't read outcomeHint or outcomeFilter."
-		)
-	}
-
-	if (options) {
-		checkOutcomeOptions(options, deps.vocabulary)
-	}
+	if (!checked && !headEligible) return null
 
 	return {
-		vocabulary: deps.vocabulary,
 		hint,
-		filter: options?.outcomeFilter ? [...options.outcomeFilter] : null,
+		filter: checked?.outcomeFilter ? [...checked.outcomeFilter] : null,
 		headOrder: headEligible ? deps.headOrder : null,
 	}
 }

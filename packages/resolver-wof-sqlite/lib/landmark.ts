@@ -115,7 +115,7 @@ export class LandmarkSqliteLookup implements LandmarkLookup, Disposable {
 		// A landmark row's defaults are keyed by its `kind`, as a candidate row's are by its placetype.
 		return landmarkHitsFromRows(rows, name).map((hit) => ({
 			...hit,
-			outcomes: this.#outcomes!.read(hit.qid, hit.kind, outcome),
+			outcomes: this.#outcomes!.read(hit.qid, hit.kind),
 		}))
 	}
 

@@ -13,13 +13,14 @@
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import { OUTCOME_KINDS, type OutcomeKind } from "@mailwoman/core/outcome/kinds"
 import type { ResolvedPlace, ResolveOpts } from "@mailwoman/core/resolver"
 import {
 	OutcomeRefusal,
 	OutcomeRequestError,
 	type OutcomeMembership,
 	type OutcomeOptions,
-	type OutcomeVocabularyLike,
+	parseOutcomeOptions,
 	type ResolveOutcome,
 } from "@mailwoman/core/resolver/outcome"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -40,41 +41,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { extractGeocodeResult } from "#geocode/result"
 import { applyOutcomeResult, resolveOutcomeFor } from "#geocode/result/outcome"
 
-/**
- * The vocabulary table of the design, numbered in its order.
- */
-const VOCABULARY: readonly OutcomeVocabularyLike[] = [
-	"address",
-	"address.street",
-	"address.intersection",
-	"place",
-	"place.neighbourhood",
-	"place.borough",
-	"place.locality",
-	"place.county",
-	"place.region",
-	"place.country",
-	"place.continent",
-	"postal",
-	"natural",
-	"natural.mountain",
-	"natural.water",
-	"natural.island",
-	"natural.forest",
-	"natural.beach",
-	"venue",
-	"venue.park",
-	"venue.campus",
-	"venue.cemetery",
-	"venue.stadium",
-	"transit",
-	"transit.airport",
-	"transit.station",
-	"transit.port",
-	"landmark",
-].map((name, i) => ({ id: i + 1, name, facet: name === "landmark" ? "role" : "identity" }))
-
-const idOf = (name: string): number => VOCABULARY.find((m) => m.name === name)!.id
+const idOf = (name: OutcomeKind): number => OUTCOME_KINDS[name].id
 
 /**
  * An id the database's newer revision holds and the request's vocabulary doesn't.
@@ -147,7 +114,7 @@ interface OutcomeTablesDatabase {
 async function addOutcomeTables(
 	db: Kysely<OutcomeTablesDatabase>,
 	recordColumn: "spr_id" | "qid",
-	defaults: ReadonlyArray<[placetype: string, outcome: string]>,
+	defaults: ReadonlyArray<[placetype: string, outcome: OutcomeKind]>,
 	asserted: ReadonlyArray<[record: string | number, outcomeID: number, contested: boolean]>
 ): Promise<void> {
 	await db.schema
@@ -300,10 +267,10 @@ function node(tag: string, value: string, start: number, children: AddressNode[]
 	return { tag: tag as AddressNode["tag"], value, start, end: start + value.length, confidence: 0.9, children }
 }
 
-function outcomeOf(options: OutcomeOptions, head: readonly string[] | null = null): ResolveOutcome {
+function outcomeOf(options: OutcomeOptions, head: readonly OutcomeKind[] | null = null): ResolveOutcome {
 	return resolveOutcomeFor(
 		options,
-		{ vocabulary: VOCABULARY, headOrder: head, headOrdering: !!head },
+		{ headOrder: head, headOrdering: !!head },
 		{ kind: "bare_toponym", interpretedSpan: false }
 	)!
 }
@@ -436,7 +403,7 @@ describe("outcome kinds: the acceptance fixtures", () => {
 	test("`Manhattan` is one place holding `place.borough` and `natural.island`, admitted by either filter", async () => {
 		const tree = (): AddressTree => ({ raw: "Manhattan", roots: [node("locality", "Manhattan", 0)] })
 
-		for (const filter of [["natural"], ["place"]]) {
+		for (const filter of [["natural"], ["place"]] satisfies OutcomeKind[][]) {
 			const outcome = outcomeOf({ outcomeFilter: filter })
 			const resolved = await resolve(tree(), outcome)
 			const { answer, places } = ranking(resolved)
@@ -454,7 +421,7 @@ describe("outcome kinds: the acceptance fixtures", () => {
 	test("`97215`: a postcode-only query never reads the outcome head", () => {
 		const outcome = resolveOutcomeFor(
 			{ outcomeFilter: ["postal"] },
-			{ vocabulary: VOCABULARY, headOrder: ["place"], headOrdering: true },
+			{ headOrder: ["place"], headOrdering: true },
 			{ kind: "postcode_only", interpretedSpan: false }
 		)
 
@@ -481,7 +448,7 @@ describe("outcome kinds: the acceptance fixtures", () => {
 		const [hood] = await candidate.findPlace({
 			text: "Mt. Tabor",
 			placetype: "neighbourhood",
-			outcome: { vocabulary: VOCABULARY, admit: null },
+			outcome: { admit: null },
 		})
 
 		expect(hood?.outcomes).toEqual([
@@ -493,7 +460,7 @@ describe("outcome kinds: the acceptance fixtures", () => {
 		const [portland] = await candidate.findPlace({
 			text: "Portland",
 			placetype: "locality",
-			outcome: { vocabulary: VOCABULARY, admit: null },
+			outcome: { admit: null },
 		})
 
 		// The older vocabulary lacks the newer member, so the read leaves it out.
@@ -522,7 +489,7 @@ describe("outcome kinds: the request", () => {
 		const rows = await candidate.findPlace({
 			text: "Manhattan",
 			placetype: "locality",
-			outcome: { vocabulary: VOCABULARY, admit: [idOf("natural.water")] },
+			outcome: { admit: [idOf("natural.water")] },
 		})
 
 		expect(rows).toEqual([])
@@ -539,9 +506,9 @@ describe("outcome kinds: the request", () => {
 	})
 
 	test("an id outside the vocabulary and a hint no filter id admits are refused", () => {
-		const refusal = (options: OutcomeOptions) => {
+		const refusal = (options: { outcomeHint?: string; outcomeFilter?: string[] }) => {
 			try {
-				outcomeOf(options)
+				parseOutcomeOptions(options)
 			} catch (error) {
 				return error instanceof OutcomeRequestError ? error.code : null
 			}
@@ -573,13 +540,13 @@ describe("outcome kinds: the request", () => {
 	})
 
 	test("the head's order is read only with the switch on and no hint", () => {
-		const headOrder = ["natural"]
+		const headOrder: OutcomeKind[] = ["natural"]
 
 		const read = (
 			options: OutcomeOptions,
 			headOrdering: boolean,
 			query: Parameters<typeof resolveOutcomeFor>[2] = { kind: "bare_toponym", interpretedSpan: false }
-		) => resolveOutcomeFor(options, { vocabulary: VOCABULARY, headOrder, headOrdering }, query)?.headOrder
+		) => resolveOutcomeFor(options, { headOrder, headOrdering }, query)?.headOrder
 
 		expect(read({ outcomeFilter: ["place", "natural"] }, false)).toBeNull()
 		expect(read({ outcomeHint: "place" }, true)).toBeNull()

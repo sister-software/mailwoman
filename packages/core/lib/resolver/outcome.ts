@@ -3,34 +3,13 @@
 
 /**
  *   The request side of outcome kinds: the two request fields, their refusals,
- *   and the satisfaction rule the resolver and the data layers share.
+ *   and the sets the resolver and the data layers read.
  *
- *   `docs/engineering/reference/outcome-kinds.mdx` is the design.
- *   An outcome id is a top-level name or a top-level name and one second-level name joined by a dot.
- *
- *   A record satisfies an id when one of its members equals it or begins with it and a dot.
+ *   `docs/engineering/reference/outcome-kinds.mdx` is the design, and `#outcome/kinds` is the vocabulary.
  */
 
-/**
- * One member of the outcome vocabulary, as the compiled definitions state it.
- *
- * The generated table in `@mailwoman/core` is the vocabulary's home, and this
- * shape is the part of each row the resolver reads.
- */
-export interface OutcomeVocabularyLike {
-	/**
-	 * The `mw:id` a compiled database stores in its `outcome_id` columns.
-	 */
-	readonly id: number
-	/**
-	 * The `mw:name`, such as `natural.mountain`.
-	 */
-	readonly name: string
-	/**
-	 * The `mw:facet`: `identity` states what a record is, `role` how people use it.
-	 */
-	readonly facet: "identity" | "role"
-}
+import { OUTCOME_KINDS, type OutcomeKind } from "#outcome/kinds"
+import { currentOutcomeKind, isOutcomeKind, outcomeSatisfies } from "#outcome/satisfy"
 
 /**
  * The two outcome fields of a geocode request.
@@ -41,21 +20,21 @@ export interface OutcomeOptions {
 	 *
 	 * The resolver orders candidates that satisfy it first, inside each conformance class, and removes none.
 	 */
-	outcomeHint?: string
+	outcomeHint?: OutcomeKind
 	/**
 	 * The readings the caller admits.
 	 *
 	 * A record is admissible when it satisfies one id in the list.
 	 * Each data layer applies it inside its own query, before its row limit.
 	 */
-	outcomeFilter?: readonly string[]
+	outcomeFilter?: readonly OutcomeKind[]
 }
 
 /**
  * One member of a resolved place's outcome set.
  */
 export interface OutcomeMembership {
-	outcome: string
+	outcome: OutcomeKind
 	/**
 	 * True when one source asserts the member and another denies it.
 	 * The member stays in the set.
@@ -72,11 +51,10 @@ export interface OutcomeMembership {
  * What a data layer's query reads of the outcome request.
  */
 export interface OutcomeQuery {
-	readonly vocabulary: readonly OutcomeVocabularyLike[]
 	/**
 	 * The `mw:id`s a row must hold one of to be read, or `null` to read every row.
 	 *
-	 * The resolver expands a request id to itself and every member it is a prefix of.
+	 * The resolver expands a request id to itself and every member whose parent it is.
 	 */
 	readonly admit: readonly number[] | null
 }
@@ -97,14 +75,13 @@ export type OutcomeLayer = (typeof OutcomeLayer)[keyof typeof OutcomeLayer]
  * The outcome request a resolve reads, checked against the vocabulary.
  */
 export interface ResolveOutcome {
-	readonly vocabulary: readonly OutcomeVocabularyLike[]
-	readonly hint: string | null
-	readonly filter: readonly string[] | null
+	readonly hint: OutcomeKind | null
+	readonly filter: readonly OutcomeKind[] | null
 	/**
 	 * The outcome head's identity top levels, most probable first, when the head's
 	 * ordering is on and the query is eligible for it, and `null` otherwise.
 	 */
-	readonly headOrder: readonly string[] | null
+	readonly headOrder: readonly OutcomeKind[] | null
 }
 
 /**
@@ -128,10 +105,6 @@ export const OutcomeRefusal = {
 	 * A database built before the outcome tables.
 	 */
 	MissingOutcomeTables: "missing_outcome_tables",
-	/**
-	 * A geocoder loaded without the outcome vocabulary.
-	 */
-	VocabularyUnavailable: "outcome_vocabulary_unavailable",
 } as const
 
 export type OutcomeRefusal = (typeof OutcomeRefusal)[keyof typeof OutcomeRefusal]
@@ -151,30 +124,40 @@ export class OutcomeRequestError extends Error {
 }
 
 /**
- * Whether a member satisfies a requested id: the member equals the id or begins with it and a dot.
+ * The vocabulary member each `mw:id` names.
  */
-export function outcomeSatisfies(requested: string, member: string): boolean {
-	return member === requested || member.startsWith(`${requested}.`)
+// Computed once from the generated table, a constant of the build.
+const KIND_OF_ID: ReadonlyMap<number, OutcomeKind> = new Map(
+	(Object.keys(OUTCOME_KINDS) as OutcomeKind[]).map((kind) => [OUTCOME_KINDS[kind].id, kind])
+)
+
+/**
+ * The vocabulary member an `mw:id` names, read through its replacement when deprecated,
+ * or null for an id the vocabulary doesn't hold.
+ */
+export function outcomeKindOfID(id: number): OutcomeKind | null {
+	const kind = KIND_OF_ID.get(id)
+
+	return kind ? currentOutcomeKind(kind) : null
 }
 
 /**
  * Whether a set of members satisfies one id of `requested`.
  */
 export function outcomesSatisfy(
-	requested: readonly string[],
+	requested: readonly OutcomeKind[],
 	members: readonly Pick<OutcomeMembership, "outcome">[]
 ): boolean {
-	return members.some((m) => requested.some((id) => outcomeSatisfies(id, m.outcome)))
+	return members.some((m) => requested.some((id) => outcomeSatisfies(m.outcome, id)))
 }
 
 /**
  * The `mw:id`s of every vocabulary member that satisfies one of `requested`.
  */
-export function admittedOutcomeIDs(
-	requested: readonly string[],
-	vocabulary: readonly OutcomeVocabularyLike[]
-): number[] {
-	return vocabulary.filter((member) => requested.some((id) => outcomeSatisfies(id, member.name))).map((m) => m.id)
+export function admittedOutcomeIDs(requested: readonly OutcomeKind[]): number[] {
+	return (Object.keys(OUTCOME_KINDS) as OutcomeKind[])
+		.filter((member) => requested.some((id) => outcomeSatisfies(member, id)))
+		.map((member) => OUTCOME_KINDS[member].id)
 }
 
 /**
@@ -184,35 +167,38 @@ export function hasOutcomeOptions(options: OutcomeOptions | null | undefined): b
 	return !!options && (typeof options.outcomeHint === "string" || Array.isArray(options.outcomeFilter))
 }
 
+function kindOf(id: string): OutcomeKind {
+	if (!isOutcomeKind(id)) {
+		throw new OutcomeRequestError(
+			OutcomeRefusal.UnknownOutcome,
+			`"${id}" isn't an outcome kind. The vocabulary holds ${Object.keys(OUTCOME_KINDS).join(", ")}.`
+		)
+	}
+
+	return currentOutcomeKind(id)
+}
+
 /**
- * Refuses an id outside the vocabulary and a hint that zero filter ids admit.
+ * The outcome fields of a request as a caller wrote them, checked against the vocabulary.
+ * A deprecated id is read through its replacement.
  *
- * @throws {OutcomeRequestError} With the refused id in the message.
+ * @throws {OutcomeRequestError} For an id outside the vocabulary or a hint that zero filter ids admit.
  */
-export function checkOutcomeOptions(options: OutcomeOptions, vocabulary: readonly OutcomeVocabularyLike[]): void {
-	const known = new Set(vocabulary.map((m) => m.name))
-	const ids = [...(options.outcomeFilter ?? []), ...(options.outcomeHint != null ? [options.outcomeHint] : [])]
+export function parseOutcomeOptions(raw: {
+	outcomeHint?: string | null
+	outcomeFilter?: readonly string[] | null
+}): OutcomeOptions {
+	const hint = raw.outcomeHint != null ? kindOf(raw.outcomeHint) : null
+	const filter = raw.outcomeFilter ? raw.outcomeFilter.map(kindOf) : null
 
-	for (const id of ids) {
-		if (!known.has(id)) {
-			throw new OutcomeRequestError(
-				OutcomeRefusal.UnknownOutcome,
-				`"${id}" isn't an outcome kind. The vocabulary holds ${[...known].toSorted().join(", ")}.`
-			)
-		}
+	if (hint && filter && !filter.some((id) => outcomeSatisfies(hint, id))) {
+		throw new OutcomeRequestError(
+			OutcomeRefusal.HintOutsideFilter,
+			`The hint "${hint}" is outside the filter [${filter.join(", ")}], so it can't be satisfied.`
+		)
 	}
 
-	if (options.outcomeHint != null && options.outcomeFilter) {
-		const hint = options.outcomeHint
-		const admitted = options.outcomeFilter.some((id) => outcomeSatisfies(id, hint))
-
-		if (!admitted) {
-			throw new OutcomeRequestError(
-				OutcomeRefusal.HintOutsideFilter,
-				`The hint "${hint}" is outside the filter [${options.outcomeFilter.join(", ")}], so it can't be satisfied.`
-			)
-		}
-	}
+	return { ...(hint ? { outcomeHint: hint } : {}), ...(filter ? { outcomeFilter: filter } : {}) }
 }
 
 /**
@@ -234,7 +220,7 @@ export function refuseMissingOutcomeTables(database: string, missing: readonly s
  * A member is contested when either side marks it so.
  */
 export function unionOutcomes(a: readonly OutcomeMembership[], b: readonly OutcomeMembership[]): OutcomeMembership[] {
-	const merged = new Map<string, OutcomeMembership>()
+	const merged = new Map<OutcomeKind, OutcomeMembership>()
 
 	for (const member of [...a, ...b]) {
 		const held = merged.get(member.outcome)
