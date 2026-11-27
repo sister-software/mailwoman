@@ -1,0 +1,56 @@
+{
+	"country": "IE",
+	"unitPlacetype": "macroregion",
+	"memberPlacetype": "region",
+	"designator": "",
+	"inception": "uuuu",
+	"cessation": "uuuu",
+	"ceased": [],
+	"sources": {
+		"law": {
+			"citation": "ISO 3166-2:IE lists 4 provinces, and GeoNames holds each as a first-level division with the counties below it.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:IE"
+		},
+		"units": {
+			"citation": "Wikidata, this division's item, read on 2026-11-27: English label, item id, ISO 3166-2 code and GeoNames id.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "A record is assigned to the first-level division GeoNames files the populated places inside its boundary under. For each of the 26 records, at least 99 percent of those places are under one division."
+		}
+	},
+	"units": [
+		{
+			"iso": "IE-C",
+			"name": "Connacht",
+			"wikidata": "Q164421",
+			"geonames": 7521313,
+			"members": [85685097, 85685113, 85685133, 85685137, 85685145]
+		},
+		{
+			"iso": "IE-L",
+			"name": "Leinster",
+			"wikidata": "Q159736",
+			"geonames": 7521314,
+			"members": [
+				85684967, 85684975, 85684979, 85684999, 85685005, 85685025, 85685041, 85685075, 85685081, 85685087, 85685091,
+				1746652171
+			]
+		},
+		{
+			"iso": "IE-M",
+			"name": "Munster",
+			"wikidata": "Q131438",
+			"geonames": 7521315,
+			"members": [85684953, 85684963, 85684987, 85684991, 85685037, 1159294375]
+		},
+		{
+			"iso": "IE-U",
+			"name": "Ulster",
+			"wikidata": "Q93195",
+			"geonames": 7521316,
+			"members": [85685117, 85685125, 85685151],
+			"note": "The boundary is the three counties of Ulster in Ireland. The other six counties of Ulster are in Northern Ireland, in the GB repository."
+		}
+	]
+}

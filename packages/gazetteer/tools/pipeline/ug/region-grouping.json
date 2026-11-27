@@ -1,0 +1,68 @@
+{
+	"country": "UG",
+	"unitPlacetype": "macroregion",
+	"memberPlacetype": "region",
+	"designator": "",
+	"inception": "uuuu",
+	"cessation": "uuuu",
+	"ceased": [],
+	"sources": {
+		"law": {
+			"citation": "ISO 3166-2:UG lists 4 geographical regions, and GeoNames holds each as a first-level division with the districts below it.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:UG"
+		},
+		"units": {
+			"citation": "Wikidata, this division's item, read on 2026-11-27: English label, item id, ISO 3166-2 code and GeoNames id.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "A record is assigned to the first-level division GeoNames files the populated places inside its boundary under. For each of the 111 records, at least 91 percent of those places are under one division."
+		}
+	},
+	"units": [
+		{
+			"iso": "UG-C",
+			"name": "Central Region",
+			"wikidata": "Q429685",
+			"geonames": 234594,
+			"members": [
+				85679769, 85679787, 85679817, 85679823, 85679827, 85679867, 85679871, 85679875, 85679879, 85679881, 85679889,
+				85679891, 85679895, 85680025, 85680031, 85680121, 85680125, 85680131, 85680133, 85680211, 85680215, 85680219,
+				85680223, 1108808409
+			]
+		},
+		{
+			"iso": "UG-E",
+			"name": "Eastern Region",
+			"wikidata": "Q2559220",
+			"geonames": 8260673,
+			"members": [
+				85679773, 85679777, 85679783, 85679789, 85679795, 85679803, 85679807, 85679813, 85679819, 85679951, 85679957,
+				85679961, 85679965, 85679969, 85679975, 85679979, 85679981, 85679985, 85679989, 85679995, 85680003, 85680089,
+				85680095, 85680097, 85680103, 85680107, 85680111, 85680119, 85680187, 85680195, 85680251
+			]
+		},
+		{
+			"iso": "UG-N",
+			"name": "Northern Region",
+			"wikidata": "Q2559686",
+			"geonames": 8260674,
+			"members": [
+				85679799, 85679833, 85679837, 85679839, 85679849, 85679853, 85679857, 85679861, 85679899, 85679905, 85679909,
+				85679913, 85679917, 85679927, 85679999, 85680007, 85680013, 85680017, 85680021, 85680085, 85680139, 85680147,
+				85680151, 85680157, 85680161, 85680165, 85680169, 85680201, 85680209, 85680247
+			]
+		},
+		{
+			"iso": "UG-W",
+			"name": "Western Region",
+			"wikidata": "Q2559188",
+			"geonames": 8260675,
+			"members": [
+				85679843, 85679921, 85679929, 85679933, 85679939, 85679943, 85679947, 85680035, 85680037, 85680041, 85680047,
+				85680051, 85680059, 85680061, 85680069, 85680073, 85680075, 85680079, 85680175, 85680179, 85680183, 85680229,
+				85680233, 85680237, 85680241, 1108808411
+			]
+		}
+	]
+}

@@ -25,7 +25,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { readGeonamesDivisions, type GeonamesCurrentDivision } from "#tools/pipeline/admin/former-divisions"
 import { mailwomanWOFIDs, patchWOFRecordText, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
-import { concordancesOf, hierarchyOf, loadForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
+import { concordancesOf, hierarchyOf, streamForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
 import { wofGeometryHash } from "#tools/pipeline/wof/slim"
 import { wofRepoName } from "#whosonfirst/extract-repo"
 
@@ -50,6 +50,13 @@ export interface GeoNamesDivisionSpec {
 	 * Fork records that are a GeoNames division without holding its id: GeoNames id to WOF id.
 	 */
 	existing?: Readonly<Record<string, number>>
+	/**
+	 * The GeoNames ids of the only divisions to write or change.
+	 *
+	 * A fork can hold a division under another spelling and without its GeoNames id.
+	 * A specification for such a fork lists the divisions a reader has confirmed absent.
+	 */
+	only?: readonly number[]
 }
 
 /**
@@ -96,7 +103,20 @@ export async function backfillGeoNamesDivisions(options: GeoNamesDivisionOptions
 	const country = spec.country.toUpperCase()
 	const repoName = wofRepoName("admin", country)
 	const repoDir = reposRoot(repoName)
-	const records = await loadForkRecords(repoDir)
+	const tiers = new Set(["country", ...Object.values(spec.placetypes)])
+	const stated = new Set(Object.values(spec.existing ?? {}))
+
+	// The fork is read one record at a time.
+	// Only a record of a division tier or one the specification states is kept.
+	// The largest forks then fit in memory.
+	const records = new Map<number, LoadedRecord>()
+
+	for await (const record of streamForkRecords(repoDir)) {
+		if (tiers.has(String(record.feature.properties["wof:placetype"])) || stated.has(record.feature.id)) {
+			records.set(record.feature.id, record)
+		}
+	}
+
 	const { current } = await readGeonamesDivisions(PathBuilder.from(options.geonamesDir)(`${country}.txt`))
 	const byGeoNamesID = new Map<number, LoadedRecord>()
 	let countryRecord: LoadedRecord | null = null
@@ -167,6 +187,14 @@ export async function backfillGeoNamesDivisions(options: GeoNamesDivisionOptions
 			const parentBranch = above ? branches.get(above.geonamesID)! : hierarchyOf(countryRecord)[0]!
 			const parentID = above ? byGeoNamesID.get(above.geonamesID)!.feature.id : countryRecord.feature.id
 			const existing = byGeoNamesID.get(division.geonamesID)
+
+			if (spec.only && !spec.only.includes(division.geonamesID)) {
+				if (existing) {
+					branches.set(division.geonamesID, hierarchyOf(existing)[0] ?? parentBranch)
+				}
+
+				continue
+			}
 
 			const suffix = (spec.nameSuffixes ?? []).find((ending) => division.name.endsWith(ending))
 			const name = suffix ? division.name.slice(0, -suffix.length) : division.name
@@ -289,7 +317,8 @@ export async function backfillGeoNamesDivisions(options: GeoNamesDivisionOptions
 	}
 
 	// A record below a retyped one stated it at its former tier, and follows it to the new one.
-	for (const record of records.values()) {
+	// The fork is read a second time only when a record changed tier.
+	for await (const record of retyped.size ? streamForkRecords(repoDir) : []) {
 		const branch = hierarchyOf(record)[0] ?? {}
 		const moved = Object.values(branch).find((id) => retyped.has(id) && id !== record.feature.id)
 
