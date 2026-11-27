@@ -100,6 +100,10 @@ export interface NativeSampler {
 }
 
 export interface NativeTrainingBatches {
+	/**
+	 * The next batch, or an empty array once a `read_order: stored` split has ended.
+	 * A mixture never ends.
+	 */
 	nextBatch(): SampledRow[]
 	cancel(): void
 	readonly epoch: number

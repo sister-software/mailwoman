@@ -659,13 +659,19 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			let (sender, receiver) = std::sync::mpsc::sync_channel(2);
 			scope.spawn(move || loop {
 				let next = (|| -> Result<_> {
-					let rows = batches.next_batch()?;
+					let Some(rows) = batches.next_batch()? else {
+						if let Some(summary) = batches.stored_summary() {
+							println!("[data] stored-order train files ended: {summary}");
+						}
+						return Ok(None);
+					};
 					let encoded = encoder.encode(&rows)?;
-					Ok((rows, encoded))
+					Ok(Some((rows, encoded)))
 				})();
-				let failed = next.is_err();
+				// A stored-order split sends `None` once its files end.
+				let last = !matches!(next, Ok(Some(_)));
 				// The receiver is dropped once the run reaches max_steps, which ends this thread.
-				if sender.send(next).is_err() || failed {
+				if sender.send(next).is_err() || last {
 					break;
 				}
 			});
@@ -675,9 +681,13 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			let mut window = (std::time::Instant::now(), step);
 			while step < max_steps {
 				let asked = std::time::Instant::now();
-				let (rows, encoded) = receiver
+				let Some((rows, encoded)) = receiver
 					.recv()
-					.map_err(|_| fail!("the batch thread stopped without an error"))??;
+					.map_err(|_| fail!("the batch thread stopped without an error"))??
+				else {
+					println!("[data] the stored-order train files ended at step {step} of max_steps {max_steps}");
+					break;
+				};
 				waited += asked.elapsed();
 				realized.add(&rows)?;
 				model.mode = Mode::Train;

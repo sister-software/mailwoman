@@ -93,7 +93,7 @@ fn draws_per_row(config: SamplerConfig, seed: i128, epoch_rows: u64, epochs: u64
 	let mut batches = TrainingBatches::new(config, 100, seed, Some(epoch_rows), 0, CancelToken::default());
 	let mut draws = BTreeMap::new();
 	loop {
-		let rows = batches.next_batch().unwrap();
+		let rows = batches.next_batch().unwrap().expect("a mixture never ends");
 		if batches.epoch() > epochs {
 			break;
 		}

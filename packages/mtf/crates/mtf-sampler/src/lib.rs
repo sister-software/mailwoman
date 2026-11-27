@@ -30,9 +30,10 @@ pub mod source_reps;
 pub mod split_columns;
 mod text;
 
-pub use config::{AugmentProbabilities, CharConfig, RunLength, SamplerConfig, Weights};
+pub use config::{AugmentProbabilities, CharConfig, ReadOrder, RunLength, SamplerConfig, Weights};
 pub use error::{Error, Result};
 pub use row::{Row, SpanTriple};
 pub use sampler::{
-	CancelToken, EpochCursor, Event, Observer, RawRows, RunPositions, Sampler, SkipReason, TrainingBatches,
+	CancelToken, EpochCursor, Event, Observer, RawRows, RowDrops, RunPositions, Sampler, SkipReason, StoredSummary,
+	TrainingBatches,
 };

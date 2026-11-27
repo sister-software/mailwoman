@@ -13,13 +13,17 @@
 //! exhausted it emits what remains in shuffled order. The emit step applies augmentation and the affix relabel on the
 //! train split only; a held-out split reads its rows unweighted and unaugmented. Rows whose UTF-16 span offsets run
 //! past their code-point length are skipped and reported, and the rest are yielded.
+//!
+//! A train split opened under `read_order: stored` replaces the mixture with [`Stored`], hands each upstream row
+//! straight to the emit step without the shuffle buffer, and ends when the files end.
 
 use crate::augment::postcode_move::PostcodeLayouts;
-use crate::config::{SamplerConfig, Weights};
-use crate::corpus_files::corpus_split_files;
+use crate::config::{ReadOrder, SamplerConfig, Weights};
+use crate::corpus_files::{corpus_split_files, corpus_split_files_listed};
 use crate::emit::EmitPolicy;
 use crate::error::{Error, Result};
-use crate::mixture::{HeldOut, Mixture, Upstream};
+pub use crate::file_rows::RowDrops;
+use crate::mixture::{HeldOut, Mixture, Stored, Upstream};
 use crate::pyrandom::{PyRandom, Seed};
 use crate::relabel::AffixRelabelLexicon;
 use crate::row::Row;
@@ -56,6 +60,35 @@ pub enum Event {
 	SourceRestarted { source: String, passes: u64 },
 	/// Every train source completed a pass, which ends the epoch. `realized` lists the draws per source.
 	EpochComplete { realized: Vec<(String, u64)> },
+}
+
+/// What a stored-order train split has read: the rows each source yielded and the rows each check refused.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct StoredSummary {
+	/// The upstream rows each positively weighted source yielded, in read order.
+	pub read: Vec<(String, u64)>,
+	pub drops: RowDrops,
+	/// Rows skipped after the emit step because a span end runs past the row's code-point length.
+	pub astral_skipped: u64,
+	/// The rows the stream yielded.
+	pub yielded: u64,
+}
+
+impl std::fmt::Display for StoredSummary {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let read = self
+			.read
+			.iter()
+			.map(|(s, n)| format!("{s} {n}"))
+			.collect::<Vec<_>>()
+			.join(", ");
+		write!(
+			f,
+			"{} rows yielded; read {read}; dropped {} by the row filter, {} by country_weights, {} by the coarse \
+			 filter, {} for astral span offsets",
+			self.yielded, self.drops.filtered, self.drops.country, self.drops.coarse, self.astral_skipped
+		)
+	}
 }
 
 /// Receives the sampler's events. An observer may travel with its sampler to another thread.
@@ -173,6 +206,8 @@ struct Stream {
 	pending: VecDeque<Result<Row>>,
 	policy: EmitPolicy,
 	shuffle_buffer: usize,
+	/// Hand each upstream row straight to the emit step, as a stored-order train split does.
+	unbuffered: bool,
 	row_limit: Option<u64>,
 	emitted: u64,
 	finished: bool,
@@ -194,6 +229,16 @@ impl Stream {
 				return Ok(Some(row));
 			}
 			shared.check_cancelled()?;
+			if self.unbuffered {
+				match self.upstream.next(rng, shared)? {
+					Some(row) => self.pending.extend(self.policy.emit(row, rng)),
+					None => {
+						self.finished = true;
+						return Ok(None);
+					}
+				}
+				continue;
+			}
 			if !self.filled {
 				self.filled = true;
 				while self.buffer.len() < self.shuffle_buffer {
@@ -288,6 +333,7 @@ impl Sampler {
 				pending: VecDeque::new(),
 				policy: parts.policy,
 				shuffle_buffer: config.shuffle_buffer,
+				unbuffered: parts.stored,
 				row_limit,
 				emitted: 0,
 				finished: false,
@@ -304,6 +350,8 @@ struct StreamParts {
 	shared: Shared,
 	upstream: Upstream,
 	policy: EmitPolicy,
+	/// The upstream is a stored-order train split.
+	stored: bool,
 }
 
 impl StreamParts {
@@ -322,6 +370,15 @@ impl StreamParts {
 			return Err(Error::Input("country_weights must be non-empty".into()));
 		}
 		let train = split == "train";
+		let stored = train && config.read_order == ReadOrder::Stored;
+		// A reps target asks the mixture for a number of draws per row, and a stored-order read reads each row once.
+		if stored && (config.source_reps.is_some() || config.source_emit_factors.is_some()) {
+			return Err(Error::Input(
+				"read_order: stored reads each train row once, so it takes no source_reps or source_emit_factors; \
+				 remove them from the config"
+					.into(),
+			));
+		}
 		// The relabel lexicon is read for every split, so a missing file fails a validation stream too.
 		let relabel = config
 			.affix_relabel_lexicon_path
@@ -372,10 +429,13 @@ impl StreamParts {
 			cancel,
 			observer,
 		};
-		let files = corpus_split_files(config, split)?;
-		let upstream = if train {
-			Upstream::Train(Mixture::open(files, &shared, row_limit)?)
+		let upstream = if stored {
+			let files = corpus_split_files_listed(config, split)?;
+			Upstream::Stored(Box::new(Stored::open(files, &shared, &config.augment_exclude_sources)?))
+		} else if train {
+			Upstream::Train(Mixture::open(corpus_split_files(config, split)?, &shared, row_limit)?)
 		} else {
+			let files = corpus_split_files(config, split)?;
 			Upstream::HeldOut(Box::new(HeldOut::new(files, split, row_limit.map(|n| n as usize))))
 		};
 		shared.check_cancelled()?;
@@ -389,6 +449,7 @@ impl StreamParts {
 				layouts,
 				postcode_move_outcomes: Default::default(),
 			},
+			stored,
 		})
 	}
 }
@@ -542,6 +603,19 @@ impl Sampler {
 		self.astral_skipped
 	}
 
+	/// What a stored-order train split has read so far, or `None` for any other stream.
+	pub fn stored_summary(&self) -> Option<StoredSummary> {
+		let Upstream::Stored(stored) = &self.stream.upstream else {
+			return None;
+		};
+		Some(StoredSummary {
+			read: stored.realized().to_vec(),
+			drops: stored.drops(),
+			astral_skipped: self.astral_skipped,
+			yielded: self.yielded,
+		})
+	}
+
 	/// Each postcode-move draw so far, as moved or under its skip reason.
 	pub fn postcode_move_outcomes(&self) -> Vec<(&'static str, u64)> {
 		sorted_outcomes(&self.stream.policy)
@@ -558,6 +632,9 @@ impl Sampler {
 /// A resumed run passes the number of batches its earlier attempts consumed as `skip_batches`. Those batches are
 /// sampled in order and dropped, so the stream continues with the batch an uninterrupted run would read next. An
 /// epoch that yields no row is an error, because the stream would otherwise spin.
+///
+/// Under `read_order: stored` the split is opened once, without an [`EpochCursor`]: the last batch may hold fewer
+/// than `batch_size` rows, and the batches end when the files end.
 pub struct TrainingBatches {
 	config: SamplerConfig,
 	batch_size: usize,
@@ -568,6 +645,8 @@ pub struct TrainingBatches {
 	positions: RunPositions,
 	drawn: u64,
 	current: Option<Sampler>,
+	/// What the ended stored-order split read, set when its files end.
+	ended: Option<StoredSummary>,
 	cancel: CancelToken,
 }
 
@@ -590,6 +669,7 @@ impl TrainingBatches {
 			positions: RunPositions::default(),
 			drawn: 0,
 			current: None,
+			ended: None,
 			cancel,
 		}
 	}
@@ -599,13 +679,29 @@ impl TrainingBatches {
 		self.epoch
 	}
 
-	/// The next batch the trainer reads.
-	pub fn next_batch(&mut self) -> Result<Vec<Row>> {
+	/// What a stored-order split has read, the open stream or the ended one; `None` under the mixture.
+	pub fn stored_summary(&self) -> Option<StoredSummary> {
+		self.ended
+			.clone()
+			.or_else(|| self.current.as_ref().and_then(Sampler::stored_summary))
+	}
+
+	/// The next batch the trainer reads, or `None` once a stored-order split has ended. A mixture never ends.
+	pub fn next_batch(&mut self) -> Result<Option<Vec<Row>>> {
+		let stored = self.config.read_order == ReadOrder::Stored;
 		loop {
+			if self.ended.is_some() {
+				return Ok(None);
+			}
 			if self.current.is_none() {
 				self.epoch += 1;
 				self.drawn = 0;
 				let seed = self.seed + i128::from(self.epoch);
+				let cursor = (!stored).then(|| EpochCursor {
+					run_seed: self.seed,
+					epoch: self.epoch,
+					positions: self.positions.clone(),
+				});
 				self.current = Some(Sampler::open_epoch(
 					&self.config,
 					"train",
@@ -613,11 +709,7 @@ impl TrainingBatches {
 					self.row_limit,
 					self.cancel.clone(),
 					None,
-					Some(EpochCursor {
-						run_seed: self.seed,
-						epoch: self.epoch,
-						positions: self.positions.clone(),
-					}),
+					cursor,
 				)?);
 			}
 			match self
@@ -632,7 +724,7 @@ impl TrainingBatches {
 						self.remaining_skip -= 1;
 						continue;
 					}
-					return Ok(rows);
+					return Ok(Some(rows));
 				}
 				None => {
 					if self.drawn == 0 {
@@ -642,7 +734,10 @@ impl TrainingBatches {
 							self.seed + i128::from(self.epoch)
 						)));
 					}
-					self.current = None;
+					let ended = self.current.take().expect("read above");
+					if stored {
+						self.ended = Some(ended.stored_summary().expect("a stored-order stream"));
+					}
 				}
 			}
 		}

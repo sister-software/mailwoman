@@ -356,7 +356,8 @@ impl Sampler {
 	}
 }
 
-/// The train split's batches without end, reopened with `seed + epoch` for epochs 1, 2, ….
+/// The train split's batches, reopened with `seed + epoch` for epochs 1, 2, … under the mixture, and read once under
+/// `read_order: stored`.
 #[napi]
 pub struct TrainingBatches {
 	inner: RustTrainingBatches,
@@ -391,10 +392,12 @@ impl TrainingBatches {
 		})
 	}
 
-	/// The next batch the trainer reads.
+	/// The next batch the trainer reads, or no rows once a stored-order split has ended. A mixture never ends.
 	#[napi(catch_unwind)]
 	pub fn next_batch(&mut self) -> Result<Vec<SampledRow>> {
-		Ok(rows_out(self.inner.next_batch().map_err(sampler_error)?))
+		Ok(rows_out(
+			self.inner.next_batch().map_err(sampler_error)?.unwrap_or_default(),
+		))
 	}
 
 	/// The epoch the last batch came from, counted from 1.

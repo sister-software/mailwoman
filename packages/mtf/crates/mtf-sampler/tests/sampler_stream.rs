@@ -214,7 +214,7 @@ fn training_batches_reopen_with_seed_plus_epoch_and_skip_resumed_batches() {
 	let mut stream = TrainingBatches::new(config.clone(), 8, 10, None, 0, CancelToken::default());
 	let mut actual = Vec::new();
 	for _ in 0..expected.len() {
-		actual.push(stream.next_batch().unwrap());
+		actual.push(stream.next_batch().unwrap().expect("a mixture never ends"));
 	}
 	assert_eq!(
 		actual, expected,
@@ -225,7 +225,7 @@ fn training_batches_reopen_with_seed_plus_epoch_and_skip_resumed_batches() {
 	let mut resumed = TrainingBatches::new(config, 8, 10, None, 3, CancelToken::default());
 	assert_eq!(
 		resumed.next_batch().unwrap(),
-		expected[3],
+		Some(expected[3].clone()),
 		"a resumed stream continues at the batch it stopped at"
 	);
 }
@@ -266,7 +266,7 @@ fn an_epoch_without_rows_is_an_error() {
 		&WriteOptions::default(),
 	);
 	let mut limited = TrainingBatches::new(config_for(&ok), 8, 1, Some(0), 0, CancelToken::default());
-	assert_eq!(limited.next_batch().unwrap().len(), 1);
+	assert_eq!(limited.next_batch().unwrap().map(|rows| rows.len()), Some(1));
 }
 
 fn config_for(corpus: &Path) -> mtf_sampler::SamplerConfig {

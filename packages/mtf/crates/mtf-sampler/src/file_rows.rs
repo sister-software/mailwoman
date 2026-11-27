@@ -12,6 +12,9 @@
 //!
 //! [`RowGroupVisit`] reads one row group for a source the epoch reads in part: a few rows per visit, in an order
 //! the group's own seed fixes, so the pass that visits it again continues where the last visit stopped.
+//!
+//! [`FileRows::stored`] reads a file in stored order and draws nothing: row groups ascending, each group's rows as
+//! stored, and a row of a positively weighted country accepted without the acceptance draw.
 
 use crate::columns::{column, IntListColumn, StrColumn, StrListColumn};
 use crate::corpus_files::RowFilter;
@@ -28,6 +31,25 @@ pub const REQUIRED_COLUMNS: [&str; 5] = ["raw", "tokens", "labels", "country", "
 
 /// The char-offset label columns: a file stores all three or none.
 pub const SPAN_COLUMNS: [&str; 3] = ["span_starts", "span_ends", "span_tags"];
+
+/// The rows of the expected source a read passed over, by the check that refused them.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RowDrops {
+	/// Refused by the file's row filter: a held-out id of its split attribute, or a manifest deletion.
+	pub filtered: u64,
+	/// The row's country is absent from `country_weights` or weighs zero.
+	pub country: u64,
+	/// The coarse filter found no active tag among the row's labels.
+	pub coarse: u64,
+}
+
+impl RowDrops {
+	pub fn add(&mut self, other: RowDrops) {
+		self.filtered += other.filtered;
+		self.country += other.country;
+		self.coarse += other.coarse;
+	}
+}
 
 /// One read row group, held until its rows are visited.
 struct RowGroup {
@@ -58,6 +80,9 @@ pub struct FileRows {
 	next_group: usize,
 	current: Option<RowGroup>,
 	start: StartState,
+	/// Read in stored order with no generator draw, rather than in shuffled order.
+	stored_order: bool,
+	drops: RowDrops,
 }
 
 /// Whether a lazily started reader has opened its input.
@@ -170,6 +195,7 @@ pub struct RowGroupVisit {
 	expected_source: Arc<str>,
 	group: RowGroup,
 	limit: usize,
+	drops: RowDrops,
 }
 
 impl RowGroupVisit {
@@ -202,6 +228,7 @@ impl RowGroupVisit {
 			expected_source,
 			group,
 			limit,
+			drops: RowDrops::default(),
 		})
 	}
 
@@ -212,8 +239,9 @@ impl RowGroupVisit {
 			&self.path,
 			Some(&*self.expected_source),
 			Some(self.limit),
-			rng,
+			Some(rng),
 			shared,
+			&mut self.drops,
 		)
 	}
 
@@ -246,27 +274,49 @@ impl FileRows {
 			next_group: 0,
 			current: None,
 			start: StartState::Pending,
+			stored_order: false,
+			drops: RowDrops::default(),
 		}
+	}
+
+	/// The accepted rows of `source` in `path`, in stored order, drawing nothing from the generator.
+	pub fn stored(path: PathBuf, source: Arc<str>, row_filter: Option<Arc<RowFilter>>) -> Self {
+		Self {
+			stored_order: true,
+			..Self::new(path, Some(source), row_filter, None)
+		}
+	}
+
+	/// The rows of the expected source this read has passed over so far.
+	pub fn drops(&self) -> RowDrops {
+		self.drops
 	}
 
 	fn open(&mut self, rng: &mut PyRandom) -> Result<()> {
 		let file = ParquetFile::open(&self.path)?;
 		self.has_spans = span_schema(&file, &self.path)?;
 		self.row_groups = (0..file.num_row_groups()).collect();
-		rng.shuffle(&mut self.row_groups);
+		if !self.stored_order {
+			rng.shuffle(&mut self.row_groups);
+		}
 		self.file = Some(file);
 		Ok(())
 	}
 
 	fn read_group(&mut self, index: usize, rng: &mut PyRandom) -> Result<RowGroup> {
 		let file = self.file.as_ref().expect("started");
+		let stored_order = self.stored_order;
 		read_row_group(
 			file,
 			&self.path,
 			self.has_spans,
 			self.row_filter.as_deref(),
 			index,
-			|order| rng.shuffle(order),
+			|order| {
+				if !stored_order {
+					rng.shuffle(order);
+				}
+			},
 		)
 	}
 
@@ -292,8 +342,9 @@ impl FileRows {
 				&self.path,
 				self.expected_source.as_deref(),
 				self.row_group_limit,
-				rng,
+				(!self.stored_order).then_some(&mut *rng),
 				shared,
+				&mut self.drops,
 			)?;
 			match row {
 				Some(row) => return Ok(Some(row)),
@@ -302,13 +353,16 @@ impl FileRows {
 		}
 	}
 
+	/// The next accepted row of `group`. `rng` draws the country acceptance test; `None` accepts every row of a
+	/// positively weighted country, as a stored-order read does.
 	fn next_in_group(
 		group: &mut RowGroup,
 		path: &std::path::Path,
 		expected_source: Option<&str>,
 		row_group_limit: Option<usize>,
-		rng: &mut PyRandom,
+		mut rng: Option<&mut PyRandom>,
 		shared: &Shared,
+		drops: &mut RowDrops,
 	) -> Result<Option<Row>> {
 		while group.position < group.order.len() {
 			if row_group_limit.is_some_and(|limit| group.taken >= limit) {
@@ -316,23 +370,27 @@ impl FileRows {
 			}
 			let i = group.order[group.position];
 			group.position += 1;
-			if let Some(admitted) = &group.admitted {
-				if !admitted[i] {
-					continue;
-				}
-			}
 			let source = group.source.get(i);
 			if let Some(expected) = expected_source {
 				if source != Some(expected) {
 					continue;
 				}
 			}
+			if let Some(admitted) = &group.admitted {
+				if !admitted[i] {
+					drops.filtered += 1;
+					continue;
+				}
+			}
 			let country = group.country.get(i);
 			let Some(weight) = country.and_then(|c| shared.country_weights.get(c)).filter(|&w| w > 0.0) else {
+				drops.country += 1;
 				continue;
 			};
-			if weight < shared.max_country_weight && rng.random() > weight / shared.max_country_weight {
-				continue;
+			if let Some(rng) = rng.as_deref_mut() {
+				if weight < shared.max_country_weight && rng.random() > weight / shared.max_country_weight {
+					continue;
+				}
 			}
 			let at = |what: &str| {
 				Error::Row(format!(
@@ -343,6 +401,7 @@ impl FileRows {
 			};
 			let labels = group.labels.get(i)?.ok_or_else(|| at("null labels"))?;
 			if shared.coarse_filter && !shared.active_components_present(&labels) {
+				drops.coarse += 1;
 				continue;
 			}
 			let raw = group.raw.get(i).ok_or_else(|| at("null raw"))?.to_owned();
