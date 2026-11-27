@@ -8,7 +8,7 @@
  *   A record's set is the join of the two: the defaults of its placetype, and its explicit assertions.
  *   `outcome_manifest` is the database's `outcomes` block, the revision and spec hash both were built from.
  *
- *   `landmarks.db` keys its records by Wikidata item, so its assertions sit in `landmark_outcome`.
+ *   `landmarks.db` keys its records by Wikidata item, so its `record_outcome` holds a `qid` column.
  */
 
 import { createOutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
@@ -60,14 +60,9 @@ export interface OutcomeDatabase {
 
 export interface LandmarkOutcomeDatabase {
 	outcome_default: OutcomeDefaultTable
-	landmark_outcome: LandmarkOutcomeTable
+	record_outcome: LandmarkOutcomeTable
 	outcome_manifest: OutcomeManifestTable
 }
-
-/**
- * The tables every outcome-aware gazetteer database holds, in the order a reader names them in a refusal.
- */
-const OUTCOME_TABLES = ["outcome_default", "record_outcome", "outcome_manifest"] as const
 
 /**
  * The placetype every `poi.db` row holds, so the join with `outcome_default` gives each row `venue`.
@@ -116,7 +111,7 @@ export async function writeOutcomeDefaults(
 		.execute()
 
 	await db.schema
-		.createTable(recordKey === "qid" ? "landmark_outcome" : "record_outcome")
+		.createTable("record_outcome")
 		.addColumn(recordKey, recordKey === "qid" ? "text" : "integer", (c) => c.notNull())
 		.addColumn("outcome_id", "integer", (c) => c.notNull())
 		.addColumn("contested", "integer", (c) => c.notNull())
@@ -132,18 +127,6 @@ export async function writeOutcomeDefaults(
 	await db.insertInto("outcome_default").values(defaults).execute()
 
 	return defaults.length
-}
-
-/**
- * The outcome tables a database lacks, empty when it holds all three.
- *
- * A database built before the outcome design holds none, and a request that filters
- * or orders by outcome against it is refused with these names.
- *
- * @public
- */
-export function missingOutcomeTables<DB>(db: DatabaseClient<DB>): string[] {
-	return OUTCOME_TABLES.filter((table) => !hasTable(db, table))
 }
 
 /**

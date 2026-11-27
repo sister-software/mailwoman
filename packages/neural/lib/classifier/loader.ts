@@ -93,6 +93,7 @@ export async function loadClassifierFromWeights(
 		{
 			readLabelsFromModelCard,
 			readAddressSystemsFromModelCard,
+			readOutcomesFromModelCard,
 			readCRFTransitions,
 			readRequiredChannels,
 			loadAnchorLookup,
@@ -269,6 +270,10 @@ export async function loadClassifierFromWeights(
 		(await readAddressSystemsFromModelCard(resolved.modelCardPath ?? null)) ??
 		(await readAddressSystemsFromModelCard(resolved.baseModelCardPath ?? null))
 
+	const outcomes =
+		(await readOutcomesFromModelCard(resolved.modelCardPath ?? null)) ??
+		(await readOutcomesFromModelCard(resolved.baseModelCardPath ?? null))
+
 	if (addressSystems) {
 		assertAddressSystemWidth(
 			addressSystems,
@@ -283,6 +288,7 @@ export async function loadClassifierFromWeights(
 		runner,
 		...(labels ? { labels } : {}),
 		...(addressSystems ? { addressSystems } : {}),
+		...(outcomes ? { outcomes } : {}),
 		transitions: crf?.transitions,
 		startTransitions: crf?.startTransitions,
 		endTransitions: crf?.endTransitions,

@@ -31,6 +31,7 @@ import type { NeuralParseTrace } from "#decode/trace"
 import type { CharEncoderInterface, CharVocabulary } from "#input/char-encoder"
 import type { MailwomanTokenizer } from "#input/tokenizer"
 import type { AddressSystemTable } from "#labels/address-system"
+import type { OutcomeTable } from "#outcome/table"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import type { FSTMatcherLike, ImportanceLengthScaleMode } from "#prior/fst"
@@ -206,6 +207,14 @@ export interface NeuralAddressClassifierConfig {
 	addressSystems?: AddressSystemTable
 
 	/**
+	 * The model's outcome classes, from its card's `outcomes` block.
+	 *
+	 * A graph with an `outcome_hint` input reads `ParseOpts.outcomeHint` through it,
+	 * and a graph with an `outcome_logits` output reports the head's distribution on the tree.
+	 */
+	outcomes?: OutcomeTable
+
+	/**
 	 * Whether the graph reads the code-unit channel (#2845), from its `code_unit_features` input.
 	 *
 	 * The channel is computed from the raw surface, so no lexicon backs it.
@@ -304,6 +313,14 @@ export interface ParseWithLogitsResult {
  * Per-call options for `parse()`, each overriding the classifier's configured default for that call.
  */
 export interface ParseOpts {
+	/**
+	 * When true, a span whose closest other tag scores within `INTERPRETATION_MARGIN` of its own
+	 * stores that tag in its node's `interpretations`, for the resolver's outcome ordering to read.
+	 *
+	 * Off by default, because the JSON and XML serializers emit each interpretation as a role.
+	 */
+	runnerUpInterpretations?: boolean
+
 	/**
 	 * A precomputed query shape whose known-format hits add emission biases toward the matching BIO label.
 	 */
@@ -461,6 +478,16 @@ export interface ParseOpts {
 	 * Other models ignore it.
 	 */
 	localeHint?: string
+
+	/**
+	 * The outcome kind the caller wants returned, such as
+	 * `natural.mountain` (`docs/engineering/reference/outcome-kinds.mdx`).
+	 *
+	 * A model trained with the outcome hint reads it as evidence it can overrule.
+	 * An id the card doesn't list reads as its parent, and as no hint when the parent is absent too.
+	 * Other models ignore it.
+	 */
+	outcomeHint?: string
 
 	/**
 	 * Receives a function that builds the trace of the decode behind the tree `parse` returns.

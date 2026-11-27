@@ -34,7 +34,22 @@ export interface DecoderToken {
 	 * The softmax confidence of the label, in `[0, 1]`.
 	 */
 	confidence: number
+	/**
+	 * The highest-scoring label of another component tag in this piece's emission row,
+	 * and the decoded label's lead over it in the row's log space.
+	 *
+	 * Absent when the decoder doesn't report it, or when every other tag in the row is unreachable.
+	 */
+	runnerUp?: { label: BIOLabel; margin: number }
 }
+
+/**
+ * The largest emission lead at which a span's runner-up tag becomes an `interpretations` entry.
+ *
+ * Emissions are in log space, so a lead of `ln 2` means the runner-up's probability
+ * is at least half the decoded label's.
+ */
+export const INTERPRETATION_MARGIN = Math.LN2
 
 /**
  * An address component span and the components it contains.
@@ -185,6 +200,23 @@ export interface AddressTree {
 	 * The country predicted by the parse-time locale classifier, when it was confident.
 	 */
 	localeCountry?: { country: string; confidence: number }
+	/**
+	 * The outcome head's distribution over the readings the caller wants returned, in the model
+	 * card's `outcomes.head_classes` order (`docs/engineering/reference/outcome-kinds.mdx`).
+	 *
+	 * `null` when the graph has no outcome head.
+	 * A tree built by another parser omits the field.
+	 */
+	outcomeDistribution?: readonly OutcomeProbability[] | null
+}
+
+/**
+ * One reading of the outcome head's distribution: an identity top level of the
+ * outcome vocabulary and its probability.
+ */
+export interface OutcomeProbability {
+	outcome: string
+	probability: number
 }
 
 /**

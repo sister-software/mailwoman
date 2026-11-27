@@ -5,10 +5,12 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeCandidate, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { landmarkPlaceID, ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
+import type { OutcomeMembership } from "@mailwoman/core/resolver/outcome"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { computeQueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
+import { OUTCOME_SET_KEY } from "@mailwoman/resolver/outcome/fetch"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
@@ -201,6 +203,22 @@ interface CandidateAlternative {
 	scoreUnmeasured?: ScoreUnmeasuredReason | null
 	matchedAlias?: true | null
 	outsideScope?: true | null
+	outcomes?: readonly OutcomeMembership[] | null
+}
+
+/**
+ * A candidate's `outcomes` field: the set the resolver read, copied, or no field when it read none.
+ */
+function outcomesFieldOf(value: unknown): Pick<GeocodeCandidate, "outcomes"> {
+	if (!Array.isArray(value)) return {}
+
+	return {
+		outcomes: (value as readonly OutcomeMembership[]).map((m) => ({
+			outcome: m.outcome,
+			contested: m.contested,
+			sources: [...m.sources],
+		})),
+	}
 }
 
 /**
@@ -250,6 +268,7 @@ function candidatesOf(primaryNode: AddressNode | null, allNodes: readonly Addres
 			placeID: primaryNode.placeID || null,
 			...scoreFieldsOf(metadata["resolver_score"], metadata["resolver_score_unmeasured"]),
 			...(metadata["resolver_matched_alias"] ? { matchedAlias: true as const } : {}),
+			...outcomesFieldOf(metadata[OUTCOME_SET_KEY]),
 		},
 	]
 
@@ -289,6 +308,7 @@ function candidatesOf(primaryNode: AddressNode | null, allNodes: readonly Addres
 				...scoreFieldsOf(a.score, a.scoreUnmeasured),
 				...(a.matchedAlias ? { matchedAlias: true as const } : {}),
 				...(a.outsideScope ? { outsideScope: true as const } : {}),
+				...outcomesFieldOf(a.outcomes),
 			})
 		}
 	}

@@ -61,6 +61,7 @@ import {
 	buildBIOEndMask,
 	buildBIOStartMask,
 	buildBIOTransitionMask,
+	emissionRunnerUp,
 	pathMargins,
 	softmax,
 } from "#decode/viterbi"
@@ -71,6 +72,7 @@ import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#labels/address-system"
 import { repairPostcodeLabels } from "#labels/postcode/repair"
 import type { InferFunction, InferCharsFunction } from "#onnx/feeds"
+import { outcomeDistribution as headDistribution, outcomeHintID } from "#outcome/table"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
 import { buildFSTEmissionPriors, isStreetAffix } from "#prior/fst"
@@ -142,11 +144,19 @@ function treeWithLocaleCountry(
 	tokens: DecoderToken[],
 	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
 	localeCountry: { country: string; confidence: number } | null,
-	localeHint: string | null | undefined
+	localeHint: string | null | undefined,
+	outcomeDistribution: DecodeOutput["outcomeDistribution"],
+	runnerUpInterpretations: boolean
 ): AddressTree {
-	const tree = buildAddressTree(text, tokens, { ...calibrate, country: containmentCountry(localeCountry, localeHint) })
+	const tree = buildAddressTree(text, tokens, {
+		...calibrate,
+		country: containmentCountry(localeCountry, localeHint),
+		...(runnerUpInterpretations ? { runnerUpInterpretations } : {}),
+	})
 
-	return Object.assign(tree, localeCountry ? { localeCountry } : {})
+	// A model without the outcome head leaves the field off.
+	// A reader takes the absent field as `null`.
+	return Object.assign(tree, localeCountry ? { localeCountry } : {}, outcomeDistribution ? { outcomeDistribution } : {})
 }
 
 /**
@@ -336,7 +346,7 @@ export class NeuralAddressClassifier {
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
 		const decoded = await this.#decode(modelText, opts, opts?.onTrace != null)
-		const { tokens, localeCountry } = decoded
+		const { tokens, localeCountry, outcomeDistribution } = decoded
 
 		// The trace is of the decode that builds the returned tree, so the two can't disagree.
 		// The receiver builds it, so a failure to build one is the receiver's to catch
@@ -348,7 +358,9 @@ export class NeuralAddressClassifier {
 			tokens,
 			opts?.calibrate ? { calibrate: opts.calibrate } : null,
 			localeCountry,
-			opts?.localeHint
+			opts?.localeHint,
+			outcomeDistribution,
+			opts?.runnerUpInterpretations === true
 		)
 	}
 
@@ -364,7 +376,7 @@ export class NeuralAddressClassifier {
 		const modelText =
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
-		const { tokens, logits, pieces, localeCountry } = await this.#decode(modelText, opts)
+		const { tokens, logits, pieces, localeCountry, outcomeDistribution } = await this.#decode(modelText, opts)
 
 		return {
 			tree: treeWithLocaleCountry(
@@ -372,7 +384,9 @@ export class NeuralAddressClassifier {
 				tokens,
 				opts?.calibrate ? { calibrate: opts.calibrate } : null,
 				localeCountry,
-				opts?.localeHint
+				opts?.localeHint,
+				outcomeDistribution,
+				opts?.runnerUpInterpretations === true
 			),
 			logits,
 			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
@@ -504,14 +518,14 @@ export class NeuralAddressClassifier {
 		// A diagnostic pin zeros a built channel at feed time, and the trace records the fed state.
 		const soft = applyChannelPins(built, opts?.channels)
 
-		const { logits, localeLogits, spanScores } = encoded.charIDs
+		const { logits, localeLogits, spanScores, outcomeLogits } = encoded.charIDs
 			? await this.cfg.runner.inferChars!(encoded.charIDs, encoded.attentionMask!)
 			: await this.cfg.runner.infer(
 					encoded.ids,
 					soft.anchor,
 					soft.gazetteer,
 					soft.country,
-					soft.streetType || soft.localitySurface || this.cfg.addressSystems || this.cfg.codeUnits
+					soft.streetType || soft.localitySurface || this.cfg.addressSystems || this.cfg.codeUnits || this.cfg.outcomes
 						? {
 								streetType: soft.streetType,
 								localitySurface: soft.localitySurface,
@@ -527,6 +541,7 @@ export class NeuralAddressClassifier {
 								...(this.cfg.addressSystems
 									? { localeHint: localeHintID(this.cfg.addressSystems, opts?.localeHint ?? null, text) }
 									: {}),
+								...(this.cfg.outcomes ? { outcomeHint: outcomeHintID(this.cfg.outcomes, opts?.outcomeHint) } : {}),
 							}
 						: undefined
 				)
@@ -847,14 +862,17 @@ export class NeuralAddressClassifier {
 		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
+			const label = (this.labels[idx] ?? "O") as DecoderToken["label"]
+			const runnerUp = emissionRunnerUp(emissions[i]!, idx, this.labels)
 
 			return {
 				piece: p.piece,
 				start: p.start,
 				end: p.end,
-				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
+				label,
 				// Repaired words take the vote's mean probability and other pieces keep their softmax probability.
 				confidence: healedConfidence?.get(i) ?? probs[idx]!,
+				...(runnerUp ? { runnerUp } : {}),
 			}
 		})
 
@@ -917,6 +935,8 @@ export class NeuralAddressClassifier {
 			logits,
 			pieces,
 			localeCountry: confidentLocaleCountry(localeLogits),
+			outcomeDistribution:
+				outcomeLogits && this.cfg.outcomes ? headDistribution(this.cfg.outcomes, outcomeLogits) : null,
 			...(trace
 				? {
 						trace: {

@@ -219,6 +219,12 @@ export const DATA_SECTION = {
 		anchor_paint_mode: str("gold"),
 		anchor_value_mode: str("posterior_latlon"),
 		region_centroids_path: optionalStr(),
+		/**
+		 * The corpus's outcome mask file, relative to the checkout.
+		 *
+		 * A model with the outcome hint or head reads it (`packages/trainer/crates/trainer-loop/src/outcomes.rs`).
+		 */
+		outcome_masks_path: optionalStr(),
 	},
 } as const satisfies ConfigSectionSpec
 
@@ -251,6 +257,10 @@ export const MODEL_SECTION = {
 		use_locale_hint: bool(false),
 		locale_hint_drop_prob: float(0.5),
 		locale_hint_noise_prob: float(0.05),
+		use_outcome_hint: bool(false),
+		outcome_hint_prob: float(0),
+		use_outcome_head: bool(false),
+		outcome_loss_weight: float(0),
 		use_postcode_anchor: bool(false),
 		use_gazetteer_anchor: bool(false),
 		use_conventions_loss_mask: bool(false),

@@ -70,9 +70,9 @@ list must equal the sanctioned absences by name (see `lib/release-kit/release/st
 Add `--keep` or `--staging <dir>` to inspect the tree afterwards. The preflight writes no state to git,
 GitHub, npm, R2 or HF, and an interrupted run cannot dirty the checkout.
 
-Both dry and real `mode=publish` runs must complete this audit before creating a tag, a GitHub
-release or publishing a package. After correcting any failed stage, repeat the complete
-`mode=publish, dry_run=true` run against the corrected commit and artifacts before the real dispatch.
+A `mode=publish` run completes this audit before creating a tag, a GitHub release or publishing a
+package, so a failed stage stops the run before anything is published. Dispatch the real run directly.
+After correcting a failed stage, dispatch the real run again.
 A successful `mode=prepare` run checks the version change. It doesn't audit the release tarballs.
 
 Publication still packs each workspace again and verifies its release plan. The preflight doesn't

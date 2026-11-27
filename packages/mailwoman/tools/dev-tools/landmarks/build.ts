@@ -139,7 +139,7 @@ export interface LandmarkBuildCounts {
 	places: number
 	rows: number
 	/**
-	 * `landmark_outcome` rows, or null without outcome definitions.
+	 * `record_outcome` rows, or null without outcome definitions.
 	 */
 	outcomeRows: number | null
 }
@@ -179,7 +179,7 @@ export async function buildLandmarkDatabase(
 			)
 
 			const insertOutcome = table
-				? database.prepare("INSERT OR REPLACE INTO landmark_outcome (qid, outcome_id, contested) VALUES (?, ?, ?)")
+				? database.prepare("INSERT OR REPLACE INTO record_outcome (qid, outcome_id, contested) VALUES (?, ?, ?)")
 				: null
 
 			const counts: LandmarkBuildCounts = { places: 0, rows: 0, outcomeRows: table ? 0 : null }

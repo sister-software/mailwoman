@@ -81,6 +81,21 @@ export const GeocodeRequestSchema = z
 		 * A caller that renders spans and confidences sets it and sends one request instead of two.
 		 */
 		include_tree: z.boolean().default(false),
+		/**
+		 * The reading the caller expects, an outcome kind such as `natural.mountain`.
+		 *
+		 * It orders the candidates that satisfy it first and removes none.
+		 * When the text decided another answer, the response lists the `outcome_hint_unsatisfied` advisory.
+		 */
+		outcome_hint: z.string().optional(),
+		/**
+		 * The outcome kinds the caller admits.
+		 *
+		 * A place is admissible when it satisfies one of them, and a filter that admits zero
+		 * places answers zero places with the `outcome_filter_empty` advisory.
+		 * An id outside the vocabulary, or a hint the filter excludes, fails the request.
+		 */
+		outcome_filter: z.array(z.string()).optional(),
 	})
 	.meta({ id: "GeocodeRequest" })
 
@@ -129,7 +144,9 @@ const GeocodeAddress = {
 	body: Ref(GeocodeRequestSchema),
 	response: {
 		200: StampedGeocodeResponseSchema,
-		400: APIErrorSchema.meta({ description: "`address` is required." }),
+		400: APIErrorSchema.meta({
+			description: "`address` is required, or the request's outcome fields were refused.",
+		}),
 		503: GeocoderUnavailableErrorSchema,
 	},
 } as const satisfies APIOperationSchema

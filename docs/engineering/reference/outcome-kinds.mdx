@@ -12,8 +12,10 @@ belongs to, so a caller or the model can ask for one.
 
 This page is the design for issue [#3538](https://github.com/sister-software/mailwoman/issues/3538),
 revised after the review on pull request
-[#3540](https://github.com/sister-software/mailwoman/pull/3540#issuecomment-7223579983). The design
-is unbuilt. [The experiments](#the-experiments) lists the four issues that build it.
+[#3540](https://github.com/sister-software/mailwoman/pull/3540#issuecomment-7223579983).
+[The experiments](#the-experiments) lists the four issues that build it. The request fields and the
+resolver of #3544 are built, and [What the resolver decides](#what-the-resolver-decides) records
+the rules the build added.
 
 ## Five properties, five questions
 
@@ -236,9 +238,13 @@ through `mw:superseded_by`.
 
 `@mailwoman/gazetteer` gains `whosonfirst/outcomes/`, beside `whosonfirst/placetypes/`. It reads
 `outcomes/*.json` through `resolveWOFRepo`, as `Placetype.prepare` reads `placetypes/*.json`. The
-`OutcomeKind` union and the compiled table are generated from the clone into `@mailwoman/core`, so a
-request type and the resolver need no clone at run time. A repository check compares the generated
-file with the clone's compiled spec and its pinned revision.
+`OutcomeKind` union and the compiled table are generated from the clone into `@mailwoman/gazetteer`, so
+the resolver needs no clone at run time. A repository check compares the generated file with the clone's
+compiled spec and its pinned revision.
+
+`@mailwoman/core` holds no outcome vocabulary, because the vocabulary is Who's On First data and core
+depends on no source. A core type that holds an outcome id, such as the request's `outcomeHint`, types it
+as `string`. A package that checks an id against the vocabulary imports the table from gazetteer.
 
 ## Record memberships
 
@@ -386,11 +392,16 @@ all. Two rules cover the two mixed cases:
 | Runtime and model                                | Behavior                                                                                                                                                                                                                                                                                                         | Test                                                                                                                                                           |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | new runtime, model without the input or the head | The feed is packed only when the graph declares the input, as `packLocaleHintFeed` does. The parse is the model's own. `outcomeHint` and `outcomeFilter` still act in the resolver, because they read record sets. The head's ordering doesn't run, and the response states `outcome_hint_model: "unsupported"`. | Run the published 11.4.0 weights with a hint set: the labels equal the labels with zero hints, the advisory is present, and the resolver's hint order applies. |
-| previous released runtime, model with the input  | The export declares `outcome_hint` as an initializer that a caller can override, with −1 stored. A runtime that feeds zero values for it runs the "no hint" row. The head's output is an extra tensor that the older runtime doesn't read.                                                                       | Run the new export with the previous runtime's feeds: the session runs, and the logits equal the new runtime's logits at −1.                                   |
+| previous released runtime, model with the input  | The export declares `outcome_hint` as a required input, under the fallback below. A runtime that feeds no value for it is refused with an error that states the missing input, and the card's `requires.outcome_hint` states the need. The head's output is an extra tensor that the older runtime doesn't read. | Run the new export with the previous runtime's feeds: the session refuses them, and the new runtime's logits at −1 equal the trained model's "no hint" logits. |
 
-Whether ONNX Runtime Web accepts an omitted initializer of that form is unverified until the first
-export. When it refuses one, the export keeps `outcome_hint` required, the card declares
-`requires.outcome_hint`, and the weights package raises its minimum runtime version.
+ONNX Runtime 1.31.1 can't override an initializer that a graph lists as an input. On 2026-11-27 the
+first export with that initializer ran with the input omitted in both runtimes, and neither listed
+`outcome_hint` in `inputNames`. onnxruntime-web refused a fed value with `invalid input 'outcome_hint'`,
+and onnxruntime-node returned logits for a fed hint that differed from the trained model's. The export
+therefore keeps `outcome_hint` required, the card declares `requires.outcome_hint`, and the weights
+package raises its minimum runtime version. The previous runtime's feeds are refused with an error that
+states the missing input, and the graph never runs on them. `packages/neural/lib/onnx/outcome-hint.test.ts` holds both runtimes to
+that behavior.
 
 ## Importance across sources
 
@@ -497,6 +508,31 @@ Every resolved place reports its outcome set and each member's `contested` flag.
 Form 2 is default-on decoder and resolver behavior. It ships only on a `pass` verdict under
 [the release-quality procedure](../CONTRIBUTING_MODEL_WORK.mdx), and it stays opt-in until then.
 
+### What the resolver decides
+
+- The hint, the filter and the head's order act on the input's leading span, when the walk looks it
+  up. A leading venue or category, as in `coffee near Mt. Tabor`, leaves every later span an anchor
+  in today's order, and the landmark pass reads a leading venue under the request.
+- A class keeps the positions its members held. A landmark or OpenStreetMap candidate the stated
+  context doesn't admit enters the list after every one it admits. A candidate within 50 km of a
+  stated locality counts as inside it for the containment partition.
+- On an outcome-ordered span, the bare-toponym race stands down, because its probes read no outcome
+  sets. The span reads the sub-locality and admin bands the race would have probed into the same list.
+- A filter whose span resolved to no admitted place answers zero places with the
+  `outcome_filter_empty` advisory. A hint the answer doesn't satisfy adds `outcome_hint_unsatisfied`.
+- `landmarks.db` and the OpenStreetMap place database key `record_outcome` by `qid` and their
+  defaults by the row's `kind`. The candidate table keys them by `spr_id` and placetype, and reads a
+  record's Wikidata item from a `concordances` table with `other_source = 'wd:id'`. The candidate
+  build doesn't yet copy that table, so a candidate-table record merges with no landmark until it does.
+- An outcome id a database holds and the request's vocabulary lacks is left out of the record's set.
+  `@mailwoman/core` holds no vocabulary, so the session receives it as `outcomeVocabulary`, and a
+  session without it refuses a request that sets an outcome field.
+- The head's order reaches the resolver as `ResolveOutcome.headOrder`. A span is eligible for it
+  when the query is a `bare_toponym` or the leading span's node holds `interpretations`.
+- A data layer that reports no outcome tables, such as the Worker's HTTP layers, refuses the request.
+- A response states `outcome_hint_model` and each candidate's `outcomes` only when the request set
+  an outcome field or the head's order ran, so a request without them answers byte for byte as before.
+
 ## Acceptance fixtures
 
 Each fixture is a property the implementation must hold before #3538 closes.
@@ -516,19 +552,18 @@ Each fixture is a property the implementation must hold before #3538 closes.
 | A new vocabulary revision                | Stable model-card compatibility             | A card pinned to the older revision runs against a database pinned to the newer one. A new member reaches the model through its parent.                                          |
 | One entity in two data layers            | Zero inflation of training probability      | The entity counts once in `E(r)`, and the response returns one place.                                                                                                            |
 
-## The experiments
+## The work
 
-#3538 is split so each change is measured against its own control:
+The design is built in full and trained in one run. Four issues hold its task lists:
 
-| Experiment                   | Issue                                                             | Changes                                        | Leaves fixed                    |
-| ---------------------------- | ----------------------------------------------------------------- | ---------------------------------------------- | ------------------------------- |
-| Importance-weighted sampling | [#3541](https://github.com/sister-software/mailwoman/issues/3541) | which rows a run draws                         | the graph and the resolver      |
-| Outcome conditioning         | [#3542](https://github.com/sister-software/mailwoman/issues/3542) | one graph input                                | sampling, outputs, the resolver |
-| Outcome prediction           | [#3543](https://github.com/sister-software/mailwoman/issues/3543) | one graph output                               | sampling, inputs, the resolver  |
-| Resolver integration         | [#3544](https://github.com/sister-software/mailwoman/issues/3544) | the request fields, retrieval and the ordering | every training input            |
+| Part                         | Issue                                                             | Changes                                        |
+| ---------------------------- | ----------------------------------------------------------------- | ---------------------------------------------- |
+| Importance-weighted sampling | [#3541](https://github.com/sister-software/mailwoman/issues/3541) | which rows a run draws                         |
+| The hint input               | [#3542](https://github.com/sister-software/mailwoman/issues/3542) | one graph input                                |
+| The head                     | [#3543](https://github.com/sister-software/mailwoman/issues/3543) | one graph output                               |
+| Resolver integration         | [#3544](https://github.com/sister-software/mailwoman/issues/3544) | the request fields, retrieval and the ordering |
 
-The request fields of the fourth experiment read record sets and need zero new models. Its head
-ordering depends on the third.
+The request fields read record sets and need zero new models. The head's ordering needs the head.
 
 ## What other geocoders do
 

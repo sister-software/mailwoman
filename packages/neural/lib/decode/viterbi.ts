@@ -6,6 +6,8 @@
  *   per-piece argmax and softmax beside it.
  */
 
+import type { BIOLabel } from "@mailwoman/codex/component"
+
 const NEG_INF = -1e9
 
 /**
@@ -382,6 +384,39 @@ export function pathMargins(emissions: ReadonlyArray<readonly number[]>, path: r
 
 		return best === NEG_INF ? 0 : row[label]! - best
 	})
+}
+
+/**
+ * Finds the highest-scoring label of another component tag in one emission row,
+ * and the decoded label's lead over it.
+ *
+ * `B-x` and `I-x` share the tag `x`, so a label of the decoded tag is never
+ * the runner-up, and neither is `O`.
+ * Returns `null` when the row holds no other tag above the masked floor.
+ */
+export function emissionRunnerUp(
+	row: readonly number[],
+	decoded: number,
+	labels: readonly string[]
+): { label: BIOLabel; margin: number } | null {
+	const tagOf = (label: string | undefined) => (label && label !== "O" ? label.slice(label.indexOf("-") + 1) : null)
+	const decodedTag = tagOf(labels[decoded])
+	let best = -1
+
+	for (let k = 0; k < row.length; k++) {
+		const tag = tagOf(labels[k])
+
+		if (k === decoded || !tag || tag === decodedTag) continue
+
+		if (best === -1 || row[k]! > row[best]!) {
+			best = k
+		}
+	}
+
+	// A label the conventions mask removed sits at NEG_INF, and is unreachable rather than a reading.
+	if (best === -1 || row[best]! <= NEG_INF) return null
+
+	return { label: labels[best] as BIOLabel, margin: row[decoded]! - row[best]! }
 }
 
 /**

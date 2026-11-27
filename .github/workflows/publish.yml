@@ -360,22 +360,18 @@ jobs:
       # The SBOM generator reads the published tarball from the registry, so it runs after the publish
       # job, and no job can push to main, so the documents attach to the GitHub release and the next
       # step commits their docs copy through a PR.
-      # npm can hold a fresh version in validation for some minutes, so the step waits for the
-      # registry to serve it before packing.
-      - name: Attach the SBOM and the data bill of materials to the GitHub release
-        id: sbom
+      # `npm install` of the mailwoman tarball resolves every workspace it depends on, and npm can hold a
+      # fresh version in validation for an hour. The SBOM and the Docker image both install from npm, so
+      # this step waits until the registry serves each release workspace at this version, and the Docker
+      # dispatch reads its outcome rather than the documents step's.
+      - name: Wait for npm to serve every release workspace
+        id: served
         if: ${{ !inputs.dry_run }}
-        # Every package is on npm by this step, so a failure here leaves a release without its
-        # attached documents rather than an unpublished release.
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: | # shell
           set -euo pipefail
-          # `npm install` of the mailwoman tarball resolves every workspace it depends on, and npm can
-          # hold a fresh version in validation for an hour, so the step waits until the registry serves
-          # each release workspace at this version rather than only the mailwoman package.
           for attempt in $(seq 1 30); do
             MISSING=$(node --input-type=module -e "
               import { readFileSync } from 'node:fs'
@@ -392,6 +388,18 @@ jobs:
             fi
             sleep 30
           done
+
+      - name: Attach the SBOM and the data bill of materials to the GitHub release
+        id: sbom
+        if: ${{ !inputs.dry_run && steps.served.outcome == 'success' }}
+        # Every package is on npm by this step, so a failure here leaves a release without its
+        # attached documents rather than an unpublished release.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: | # shell
+          set -euo pipefail
           BOM="${RUNNER_TEMP}/bom"
           mkdir -p "${BOM}"
           yarn mwops release sbom --version "${VERSION}" --out "${BOM}"
@@ -445,18 +453,18 @@ jobs:
       # the release's packages from npm, so the dispatch runs once the SBOM step has seen npm serve
       # every release workspace. A dispatch, unlike a release event, does start a workflow under this token.
       - name: Dispatch the Docker image publish
-        if: ${{ !inputs.dry_run && steps.sbom.outcome == 'success' }}
+        if: ${{ !inputs.dry_run && steps.served.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.publish.outputs.version }}
         run: gh workflow run docker-publish.yml --ref main -f tag="${VERSION}"
 
       - name: Report a skipped Docker image publish
-        if: ${{ !inputs.dry_run && steps.sbom.outcome != 'success' }}
+        if: ${{ !inputs.dry_run && steps.served.outcome != 'success' }}
         env:
           VERSION: ${{ needs.publish.outputs.version }}
         run: | # shell
-          echo "::warning::npm wasn't serving every package, or the documents step failed, so the Docker image wasn't built. Once npm serves every package, run: gh workflow run docker-publish.yml --ref main -f tag=${VERSION}"
+          echo "::warning::npm wasn't serving every package, so the Docker image wasn't built. Once npm serves every package, run: gh workflow run docker-publish.yml --ref main -f tag=${VERSION}"
 
   # This job regenerates the Python and Rust API clients as workflow artifacts for inspection.
   # publish-clients.yml publishes them to their registries.

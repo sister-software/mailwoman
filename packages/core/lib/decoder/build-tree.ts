@@ -28,7 +28,13 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 
 import type { Calibrator } from "#decoder/calibration"
 import { containmentFor } from "#decoder/containment"
-import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "#decoder/types"
+import {
+	type AddressNode,
+	type AddressSystem,
+	type AddressTree,
+	type DecoderToken,
+	INTERPRETATION_MARGIN,
+} from "#decoder/types"
 
 /**
  * Optional caller-supplied attribution stamped on every emitted node.
@@ -64,6 +70,13 @@ export interface BuildTreeOpts {
 	 * Build one via `createCalibrator` (`./calibration.ts`).
 	 */
 	calibrate?: Calibrator
+	/**
+	 * When true, a span whose closest other tag scores within `INTERPRETATION_MARGIN`
+	 * of its own stores that tag in its node's `interpretations`.
+	 *
+	 * Off by default, because the serializers emit each interpretation as a role of the span.
+	 */
+	runnerUpInterpretations?: boolean
 }
 
 interface OpenSpan {
@@ -71,6 +84,24 @@ interface OpenSpan {
 	start: number
 	end: number
 	confidences: number[]
+	/**
+	 * The span's closest runner-up of another tag, over every piece the span holds.
+	 */
+	runnerUp: { tag: ComponentTag; margin: number } | null
+}
+
+/**
+ * Folds one piece's runner-up into a span's, keeping the smallest lead to another tag.
+ */
+function foldRunnerUp(open: OpenSpan, tok: DecoderToken): void {
+	if (!tok.runnerUp) return
+	const { tag } = bioParts(tok.runnerUp.label)
+
+	if (!tag || tag === open.tag) return
+
+	if (!open.runnerUp || tok.runnerUp.margin < open.runnerUp.margin) {
+		open.runnerUp = { tag, margin: tok.runnerUp.margin }
+	}
 }
 
 function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag | null } {
@@ -165,6 +196,12 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	const confidence = attribution.calibrate ? attribution.calibrate(rawConfidence) : rawConfidence
 	const node: AddressNode = { tag: open.tag, start, end, value, confidence, children: [] }
 
+	// A span whose closest other tag is within the margin has two readings,
+	// and the resolver's outcome ordering reads the second from here.
+	if (attribution.runnerUpInterpretations && open.runnerUp && open.runnerUp.margin <= INTERPRETATION_MARGIN) {
+		node.interpretations = [{ tag: open.runnerUp.tag }]
+	}
+
 	if (attribution.source) {
 		node.source = attribution.source
 	}
@@ -212,18 +249,21 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			if (prefix === "B" && open && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end
 				open.confidences.push(tok.confidence)
+				foldRunnerUp(open, tok)
 
 				continue
 			}
 
 			flush(open, raw, out, attribution)
-			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
+			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence], runnerUp: null }
+			foldRunnerUp(open, tok)
 
 			continue
 		}
 
 		open.end = tok.end
 		open.confidences.push(tok.confidence)
+		foldRunnerUp(open, tok)
 	}
 
 	flush(open, raw, out, attribution)

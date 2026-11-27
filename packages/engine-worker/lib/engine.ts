@@ -12,6 +12,7 @@
 import type { MailwomanAPIEngine } from "@mailwoman/api/engine"
 import { type AddressTree, decodeAsTuples, decodeAsXML } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
+import { OutcomeRefusal, OutcomeRequestError } from "@mailwoman/core/resolver/outcome"
 import { CandidateResolverBackend, type MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { extractGeocodeResult } from "mailwoman/geocode/result"
@@ -77,6 +78,15 @@ export function createEngineWorkerEngine({
 		},
 
 		geocode: async (address, init) => {
+			// The Worker reads its layers over HTTP, and they hold zero outcome tables.
+			// The engine refuses rather than answering without them.
+			if (init.outcomeHint != null || init.outcomeFilter) {
+				throw new OutcomeRequestError(
+					OutcomeRefusal.MissingOutcomeTables,
+					"The Worker engine's data layers predate outcome kinds: they lack outcome_default and record_outcome."
+				)
+			}
+
 			const tree = await (await pipeline()).parse(address)
 
 			const resolved = await resolver.resolveTree(tree, {

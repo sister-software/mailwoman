@@ -9,6 +9,7 @@ import {
 	populationScoreUnmeasured,
 	referentialFromPopulation,
 } from "@mailwoman/core/resolver"
+import { refuseMissingOutcomeTables } from "@mailwoman/core/resolver/outcome"
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { partitionByContainment } from "@mailwoman/resolver"
@@ -34,6 +35,7 @@ import {
 import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#labels/region"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#labels/street/normalize"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#lookup/types"
+import { missingOutcomeTablesIn, OutcomeMembershipReader, outcomeAdmitPredicate } from "#outcome/memberships"
 import { rankByPrimaryPreference, type RankedRow, regionAliasMargin, RERANK_FETCH } from "#ranking/primary-preference"
 import { applyProximityRerank } from "#ranking/proximity-rerank"
 import { hasColumn, hasTable } from "#sqlite-utils"
@@ -83,6 +85,11 @@ interface ContainmentOptions {
 	shapeFilters: string[]
 	shapeParams: Array<string | number>
 	limit: number
+	/**
+	 * The outcome filter's predicate, also among `shapeFilters`, for the injections
+	 * that skip the shape filters.
+	 */
+	outcomeFilter: { sql: string; params: number[] } | null
 }
 
 const FUZZY_FETCH = 40
@@ -144,6 +151,10 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 
 	#placeProbe: ReturnType<DatabaseClient["prepare"]> | undefined
+
+	readonly #missingOutcomeTables: readonly string[]
+	readonly #outcomes: OutcomeMembershipReader | null
+	readonly #wikidataProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * The folds the artifact recorded for its `name_key` column, applied to every query key.
 	 */
@@ -213,6 +224,52 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		}
 
 		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
+
+		this.#missingOutcomeTables = missingOutcomeTablesIn(this.database)
+		this.#outcomes = OutcomeMembershipReader.open(this.database, { recordColumn: "spr_id", layer: "candidate" })
+
+		// The unified build's `concordances` table holds each record's `wd:id`.
+		if (hasTable(this.database, "concordances")) {
+			this.#wikidataProbe = this.database.prepare(
+				"SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id' LIMIT 1"
+			)
+		}
+	}
+
+	/**
+	 * The outcome tables the artifact lacks, empty when it holds them all.
+	 */
+	missingOutcomeTables(): readonly string[] {
+		return this.#missingOutcomeTables
+	}
+
+	/**
+	 * The fetch predicate of a query's outcome filter, or null when the query sets none.
+	 *
+	 * @throws {OutcomeRequestError} When the artifact predates the outcome tables.
+	 */
+	#outcomeFilter(query: FindPlaceQuery): { sql: string; params: number[] } | null {
+		if (!query.outcome) return null
+
+		refuseMissingOutcomeTables("candidate.db", this.#missingOutcomeTables)
+
+		if (!query.outcome.admit) return null
+
+		return outcomeAdmitPredicate(
+			query.outcome.admit,
+			"spr_id",
+			"candidate.spr_id",
+			"(SELECT pc.placetype FROM placetype_codes pc WHERE pc.id = candidate.placetype_id)"
+		)
+	}
+
+	/**
+	 * The record's Wikidata item, or null when the artifact records none.
+	 */
+	#wikidataOf(sprID: number): string | null {
+		const row = this.#wikidataProbe?.get(sprID) as { other_id: string } | undefined
+
+		return row ? String(row.other_id) : null
 	}
 
 	#ancestorLineage(id: number | string): Ancestor[] {
@@ -365,9 +422,15 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			const bandSQL =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND is_primary = 1 ` +
-				"ORDER BY neg_rank ASC LIMIT ?"
+				`${opts.outcomeFilter ? `AND ${opts.outcomeFilter.sql} ` : ""}ORDER BY neg_rank ASC LIMIT ?`
 
-			const fetched = allRows<CandidateRow>(this.database.prepare(bandSQL), opts.nameKey, ...bandIDs, RERANK_FETCH)
+			const fetched = allRows<CandidateRow>(
+				this.database.prepare(bandSQL),
+				opts.nameKey,
+				...bandIDs,
+				...(opts.outcomeFilter?.params ?? []),
+				RERANK_FETCH
+			)
 
 			for (const row of fetched) {
 				const sprID = Number(row.spr_id)
@@ -447,7 +510,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		if (!nameKey) return []
 
-		if (query.postcode && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
+		// The postal-city probe reads no outcome tables, so an outcome query skips it.
+		if (query.postcode && !query.outcome && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
 			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
 				| Pick<PostalCityCandidateTable, "spr_id" | "name" | "latitude" | "longitude">
 				| undefined
@@ -524,6 +588,14 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		if (query.excludeNameRoles?.length && this.#hasNameRole) {
 			shapeFilters.push(`(name_role IS NULL OR name_role NOT IN (${query.excludeNameRoles.map(() => "?").join(",")}))`)
 			shapeParams.push(...query.excludeNameRoles)
+		}
+
+		// The outcome filter is a predicate of the fetch, so a matching row is never lost to the row limit.
+		const outcomeFilter = this.#outcomeFilter(query)
+
+		if (outcomeFilter) {
+			shapeFilters.push(outcomeFilter.sql)
+			shapeParams.push(...outcomeFilter.params)
 		}
 
 		filters.push(...shapeFilters)
@@ -662,6 +734,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			shapeFilters,
 			shapeParams,
 			limit,
+			outcomeFilter,
 		}
 
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
@@ -676,6 +749,13 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		}
 
 		const candidates = rows.map((row) => this.#toCandidate(row, regionScopeMiss))
+
+		if (query.outcome) {
+			for (const candidate of candidates) {
+				candidate.outcomes = this.#outcomes!.read(candidate.id, candidate.placetype, query.outcome)
+				candidate.wikidata = this.#wikidataOf(candidate.id)
+			}
+		}
 
 		if (query.bias && query.bias.length) {
 			applyProximityRerank(candidates, query.bias)

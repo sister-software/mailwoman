@@ -8,11 +8,14 @@
  */
 
 import type { LandmarkHit, LandmarkLookup } from "@mailwoman/core/resolver"
+import { OutcomeLayer, type OutcomeQuery, refuseMissingOutcomeTables } from "@mailwoman/core/resolver/outcome"
+import { allRows } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 import type { PathBuilderLike } from "path-ts"
 
 import { LANDMARK_BY_NAME_SQL, landmarkHitsFromRows, landmarkNameKey, type LandmarkNameTable } from "#landmark/rows"
+import { missingOutcomeTablesIn, OutcomeMembershipReader, outcomeAdmitPredicate } from "#outcome/memberships"
 import type { LandmarkOutcomeDatabase } from "#outcome/schema"
 import { prepareAll, type PreparedAll } from "#sqlite-utils"
 
@@ -79,14 +82,57 @@ export class LandmarkSqliteLookup implements LandmarkLookup, Disposable {
 
 	readonly #byName: PreparedAll<[nameKey: string], LandmarkNameTable>
 
-	constructor(path: PathBuilderLike) {
+	readonly #layer: string
+	readonly #missingOutcomeTables: readonly string[]
+	readonly #outcomes: OutcomeMembershipReader | null
+
+	/**
+	 * `layer` names the database in each outcome member's source and in a refusal:
+	 * `landmarks` for the Wikidata layer, `openstreetmap` for the OpenStreetMap place layer.
+	 */
+	constructor(path: PathBuilderLike, layer: string = OutcomeLayer.Landmarks) {
 		this.#db = new DatabaseClient<LandmarkDatabase>(path, { readOnly: true })
 
 		this.#byName = prepareAll(this.#db, LANDMARK_BY_NAME_SQL)
+		this.#layer = layer
+		this.#missingOutcomeTables = missingOutcomeTablesIn(this.#db)
+		this.#outcomes = OutcomeMembershipReader.open(this.#db, { recordColumn: "qid", layer })
 	}
 
-	find(name: string): LandmarkHit[] {
-		return landmarkHitsFromRows(this.#byName(landmarkNameKey(name)), name)
+	/**
+	 * With `outcome`, each hit holds its outcome set, and `admit` is a predicate of the read.
+	 *
+	 * @throws {OutcomeRequestError} For an outcome query against a database without the outcome tables.
+	 */
+	find(name: string, outcome?: OutcomeQuery): LandmarkHit[] {
+		const key = landmarkNameKey(name)
+
+		if (!outcome) return landmarkHitsFromRows(this.#byName(key), name)
+
+		refuseMissingOutcomeTables(`the ${this.#layer} database`, this.#missingOutcomeTables)
+
+		const rows = outcome.admit ? this.#admittedRows(key, outcome.admit) : this.#byName(key)
+
+		// A landmark row's defaults are keyed by its `kind`, as a candidate row's are by its placetype.
+		return landmarkHitsFromRows(rows, name).map((hit) => ({
+			...hit,
+			outcomes: this.#outcomes!.read(hit.qid, hit.kind, outcome),
+		}))
+	}
+
+	missingOutcomeTables(): readonly string[] {
+		return this.#missingOutcomeTables
+	}
+
+	#admittedRows(key: string, admit: readonly number[]): LandmarkNameTable[] {
+		const predicate = outcomeAdmitPredicate(admit, "qid", "landmark_name.qid", "landmark_name.kind")
+		const [select, order] = LANDMARK_BY_NAME_SQL.split(" ORDER BY ")
+
+		return allRows<LandmarkNameTable>(
+			this.#db.prepare(`${select} AND ${predicate.sql} ORDER BY ${order}`),
+			key,
+			...predicate.params
+		)
 	}
 
 	[Symbol.dispose](): void {

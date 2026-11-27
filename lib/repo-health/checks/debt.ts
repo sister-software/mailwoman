@@ -450,6 +450,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/dictionaries/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
+		"packages/trainer/data/outcome-masks/",
+		"a corpus's shared surfaces are place and feature names quoted verbatim from its rows, such as golden gate",
+	],
+	[
 		"packages/registry/data/normalized/",
 		"OurAirports airport names are external names kept verbatim: Cut Bank Municipal Airport, Seam",
 	],

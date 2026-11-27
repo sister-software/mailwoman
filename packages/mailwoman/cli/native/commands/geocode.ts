@@ -218,6 +218,24 @@ export const spec = {
 			description:
 				"How --parent acts. Hard keeps only places its lineage agrees with, and soft ranks the places inside it first.",
 		},
+		"outcome-hint": {
+			type: "string",
+			hint: "kind",
+			description:
+				"The kind of place the answer should be, such as natural.mountain or venue. It orders the candidates and removes none.",
+		},
+		"outcome-filter": {
+			type: "string",
+			hint: "kinds",
+			description:
+				"Comma-separated kinds of place the answer may be, such as natural,place. A place outside every kind is never returned.",
+		},
+		"outcome-head-ordering": {
+			type: "boolean",
+			default: defaults.outcomeHeadOrdering,
+			description:
+				"Order a bare name's candidates by the model's outcome head when no --outcome-hint is set. Off by default until a release verdict, and it needs a model with an outcome head.",
+		},
 		"capital-tier": {
 			type: "string",
 			default: defaults.capitalTier,
@@ -433,7 +451,7 @@ async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 
 	await using session = await openSession(options)
 
-	const geocoded = await session.geocode(input)
+	const geocoded = await session.geocode(input, options.request)
 
 	if (options.timing) {
 		reportTiming("geocode", geocoded.timing)
@@ -452,6 +470,13 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 	if (options.workers > 1) {
 		if (options.timing) throw new CLIUsageError("--timing reports one session's phases; use it without --workers.")
 
+		// The worker stream sends each line as a bare input, so it would drop the outcome fields.
+		if (options.request.outcomeHint || options.request.outcomeFilter) {
+			throw new CLIUsageError(
+				"--outcome-hint and --outcome-filter apply to a single session; use them without --workers."
+			)
+		}
+
 		await runStdinWorkers(options, format)
 
 		return
@@ -462,7 +487,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 	let index = 0
 
 	for await (const input of stdinAddresses()) {
-		const geocoded = await session.geocode(input)
+		const geocoded = await session.geocode(input, options.request)
 
 		index++
 

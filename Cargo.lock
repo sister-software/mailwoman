@@ -2773,6 +2773,7 @@ dependencies = [
  "mtf-core",
  "mtf-sampler",
  "parquet",
+ "prost",
  "serde",
  "serde_json",
  "sha2 0.11.1",

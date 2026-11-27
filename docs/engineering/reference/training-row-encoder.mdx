@@ -40,6 +40,7 @@ Parity procedure) until the spread read changed which rows a row-limited train e
 | Array packing                                                   | Rust: `encoder.rs`                                                                         |
 | The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                                                       |
 | `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order                                            |
+| `outcome_ids`, a model with the outcome hint or head            | Rust: `trainer-loop/src/outcomes.rs` over `packages/trainer/data/outcome_readings.json`    |
 | Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice`                                    |
 
 The painters and the label projection compile without a regex engine. The serving side can therefore
@@ -51,6 +52,16 @@ differ from the training painters in two places:
 - `tokenizer.ts` trims the leading space from a `▁` piece's range, and training keeps it.
 
 Training uses the Rust encoder while serving continues to use the TypeScript painters.
+
+`outcome_ids` is the outcome head's target and, in training, the outcome hint's source
+([Outcome kinds](./outcome-kinds.mdx)). The encoder and the sampler don't compute it, so no parity record
+holds it, and a model without the outcome hint or head reads no table and gets `IGNORE_INDEX` on every row.
+`outcome_readings.json` maps each corpus source to the identity top level its recipe renders, and refuses a
+row whose source it doesn't map. A corpus's mask file, written by
+`packages/mailwoman/tools/training/outcomes/masks.run.ts` and named by `data.outcome_masks_path`, lists the
+`geonames-features` ids whose GeoNames class maps to no reading and the single-span surfaces that rows of two
+readings share. A single-postcode row, a row of a source whose reading is `unknown`, and a row either list
+names are masked.
 
 ## Interfaces
 
