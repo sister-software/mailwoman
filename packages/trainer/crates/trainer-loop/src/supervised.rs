@@ -735,7 +735,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 						return Ok(None);
 					};
 					let encoded = encoder.encode(&rows)?;
-					Ok(Some((rows, encoded)))
+					// Read on the host, so the step never waits on the device for its batch's width.
+					let width = encoded.longest_width();
+					Ok(Some((rows, encoded, width)))
 				})();
 				// A stored-order split sends `None` once its files end.
 				let last = !matches!(next, Ok(Some(_)));
@@ -748,9 +750,11 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			// A window holds training steps only: a validation pass or a checkpoint resets it.
 			let mut waited = std::time::Duration::ZERO;
 			let mut window = (std::time::Instant::now(), step);
+			// The trimmed batch widths summed, and the batches counted, since the last timing line.
+			let mut widths = (0i64, 0i64);
 			while step < max_steps {
 				let asked = std::time::Instant::now();
-				let Some((rows, encoded)) = receiver
+				let Some((rows, encoded, width)) = receiver
 					.recv()
 					.map_err(|_| fail!("the batch thread stopped without an error"))??
 				else {
@@ -761,7 +765,11 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				realized.add(&rows)?;
 				model.mode = Mode::Train;
 				let mut batch = encoded.to_device(device);
+				// The curricula draw and roll over the encoder's full width, and the step then reads the positions up to
+				// the batch's longest row: the positions dropped are padding, which the loss doesn't read.
 				apply_curricula(&curricula, &mut batch, step)?;
+				let batch = batch.trimmed(width);
+				widths = (widths.0 + width, widths.1 + 1);
 				let in_fisher_window = fisher.is_some() && fisher_window_start.is_some_and(|start| step >= start);
 				// The captured step runs unless this step reads the gradients for the Fisher capture or the batch fits
 				// no bucket; either takes the eager step below.
@@ -839,12 +847,14 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				if step % log_every == 0 {
 					let steps = (step - window.1).max(1) as f64;
 					println!(
-						"  [timing] {:.1} ms/step over {} steps, {:.1} ms/step waiting for a batch",
+						"  [timing] {:.1} ms/step over {} steps, {:.1} ms/step waiting for a batch, mean batch width {:.1}",
 						window.0.elapsed().as_secs_f64() * 1e3 / steps,
 						step - window.1,
-						waited.as_secs_f64() * 1e3 / steps
+						waited.as_secs_f64() * 1e3 / steps,
+						widths.0 as f64 / widths.1.max(1) as f64
 					);
 					waited = std::time::Duration::ZERO;
+					widths = (0, 0);
 					window = (std::time::Instant::now(), step);
 				}
 				// Each checkpoint writes the exposure so far, so a retained form the sampler starves shows before the
