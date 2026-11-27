@@ -516,19 +516,18 @@ Each fixture is a property the implementation must hold before #3538 closes.
 | A new vocabulary revision                | Stable model-card compatibility             | A card pinned to the older revision runs against a database pinned to the newer one. A new member reaches the model through its parent.                                          |
 | One entity in two data layers            | Zero inflation of training probability      | The entity counts once in `E(r)`, and the response returns one place.                                                                                                            |
 
-## The experiments
+## The work
 
-#3538 is split so each change is measured against its own control:
+The design is built in full and trained in one run. Four issues hold its task lists:
 
-| Experiment                   | Issue                                                             | Changes                                        | Leaves fixed                    |
-| ---------------------------- | ----------------------------------------------------------------- | ---------------------------------------------- | ------------------------------- |
-| Importance-weighted sampling | [#3541](https://github.com/sister-software/mailwoman/issues/3541) | which rows a run draws                         | the graph and the resolver      |
-| Outcome conditioning         | [#3542](https://github.com/sister-software/mailwoman/issues/3542) | one graph input                                | sampling, outputs, the resolver |
-| Outcome prediction           | [#3543](https://github.com/sister-software/mailwoman/issues/3543) | one graph output                               | sampling, inputs, the resolver  |
-| Resolver integration         | [#3544](https://github.com/sister-software/mailwoman/issues/3544) | the request fields, retrieval and the ordering | every training input            |
+| Part                         | Issue                                                             | Changes                                        |
+| ---------------------------- | ----------------------------------------------------------------- | ---------------------------------------------- |
+| Importance-weighted sampling | [#3541](https://github.com/sister-software/mailwoman/issues/3541) | which rows a run draws                         |
+| The hint input               | [#3542](https://github.com/sister-software/mailwoman/issues/3542) | one graph input                                |
+| The head                     | [#3543](https://github.com/sister-software/mailwoman/issues/3543) | one graph output                               |
+| Resolver integration         | [#3544](https://github.com/sister-software/mailwoman/issues/3544) | the request fields, retrieval and the ordering |
 
-The request fields of the fourth experiment read record sets and need zero new models. Its head
-ordering depends on the third.
+The request fields read record sets and need zero new models. The head's ordering needs the head.
 
 ## What other geocoders do
 
