@@ -92,6 +92,10 @@ pub fn build_model(run: &RunConfig, encoder: &RunEncoder) -> Result<CoarseEncode
 		encoder.address_systems.count(),
 		&encoder.conventions,
 	)?;
+	let spec = match &encoder.outcomes {
+		Some(o) => spec.with_outcome_classes(&o.hint_classes, &o.head_classes, &o.definitions)?,
+		None => spec,
+	};
 	Ok(CoarseEncoder::new(spec)?)
 }
 

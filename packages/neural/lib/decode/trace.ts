@@ -6,7 +6,7 @@
  */
 
 import type { SystemCode } from "@mailwoman/codex"
-import type { DecoderToken } from "@mailwoman/core/decoder"
+import type { DecoderToken, OutcomeProbability } from "@mailwoman/core/decoder"
 import type { ChannelPins, InputMode } from "@mailwoman/core/pipeline"
 
 import type { SoftFeatureChannel } from "#channels/soft-features"
@@ -97,6 +97,10 @@ export interface DecodeOutput {
 	pieces: TokenizedPiece[]
 
 	localeCountry: { country: string; confidence: number } | null
+	/**
+	 * The outcome head's distribution, or `null` when the graph has no head.
+	 */
+	outcomeDistribution: readonly OutcomeProbability[] | null
 	/**
 	 * The intermediates that a trace needs, present only when the decode ran with `trace` set.
 	 */

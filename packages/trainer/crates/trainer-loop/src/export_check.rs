@@ -83,6 +83,7 @@ pub fn write_feeds(
 				labels: one(&batch.labels),
 				locale_ids: one(&batch.locale_ids),
 				address_system_ids: one(&batch.address_system_ids),
+				outcome_ids: one(&batch.outcome_ids),
 				// A channel the checkpoint was built without has no input on the model or the graph, so a record from a
 				// config with more channels feeds only the ones this checkpoint enables.
 				channels: batch
@@ -109,9 +110,16 @@ pub fn write_feeds(
 			inputs.labels = None;
 			inputs.locale_ids = None;
 			inputs.address_system_ids = None;
+			inputs.outcome_ids = None;
 			if model.spec.use_locale_hint {
 				inputs.locale_hint_ids = Some(hint.shallow_clone());
 			}
+			// Half the probes leave `outcome_hint` unfed, so the graph reads its stored −1; the rest feed a hint class.
+			let outcome_hint = (model.spec.use_outcome_hint && probes.len() % 2 == 1).then(|| {
+				let n = model.spec.outcome_hint_classes.len();
+				Tensor::from_slice(&[((probes.len() / 2) % n) as i64])
+			});
+			inputs.outcome_hint_ids = outcome_hint.as_ref().map(Tensor::shallow_clone);
 			let output = tch::no_grad(|| model.forward(&inputs))?;
 			let mut feeds = Map::new();
 			// The char graph declares `char_ids` in place of `input_ids`.
@@ -132,6 +140,10 @@ pub fn write_feeds(
 				let (k, v) = feed("locale_hint", &hint)?;
 				feeds.insert(k, v);
 			}
+			if let Some(h) = &outcome_hint {
+				let (k, v) = feed("outcome_hint", h)?;
+				feeds.insert(k, v);
+			}
 			let mut expected = Map::new();
 			let (k, v) = feed("logits", &output.logits)?;
 			expected.insert(k, v);
@@ -145,6 +157,10 @@ pub fn write_feeds(
 			}
 			if let Some(s) = &output.span_scores {
 				let (k, v) = feed("span_scores", s)?;
+				expected.insert(k, v);
+			}
+			if let Some(l) = &output.outcome_logits {
+				let (k, v) = feed("outcome_logits", l)?;
 				expected.insert(k, v);
 			}
 			probes.push(json!({"feeds": feeds, "expected": expected}));

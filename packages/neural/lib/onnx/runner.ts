@@ -11,6 +11,7 @@ import {
 	decodeInferOutput,
 	packCharFeed,
 	packLocaleHintFeed,
+	packOutcomeHintFeed,
 	packSoftChannelFeeds,
 	packTokenFeed,
 	type InferCharsFunction,
@@ -245,6 +246,12 @@ export class ONNXRunner {
 			feeds["locale_hint"] = new ort.Tensor("int64", hint.data, hint.dims)
 		}
 
+		const outcomeHint = packOutcomeHintFeed(session.inputNames, evidence?.outcomeHint)
+
+		if (outcomeHint) {
+			feeds["outcome_hint"] = new ort.Tensor("int64", outcomeHint.data, outcomeHint.dims)
+		}
+
 		const output = await session.run(feeds)
 
 		return decodeInferOutput(
@@ -253,6 +260,7 @@ export class ONNXRunner {
 				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
 				...(output.span_scores ? { spanScores: outputTensor(output.span_scores) } : {}),
 				...(output.address_system_logits ? { addressSystemLogits: outputTensor(output.address_system_logits) } : {}),
+				...(output.outcome_logits ? { outcomeLogits: outputTensor(output.outcome_logits) } : {}),
 			},
 			seqLen
 		)

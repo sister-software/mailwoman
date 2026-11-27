@@ -14,6 +14,7 @@
 
 use crate::address_systems::{locale_id, AddressSystems};
 use crate::config::{DataFiles, RunConfig};
+use crate::outcomes::OutcomeReadings;
 use crate::{fail, Result};
 use mtf_channels::encoder::CHANNEL_NAMES as CHANNELS;
 use mtf_channels::finders::PostalFinders;
@@ -34,6 +35,8 @@ pub struct TensorBatch {
 	pub labels: Tensor,
 	pub locale_ids: Tensor,
 	pub address_system_ids: Tensor,
+	/// Each row's outcome-head class, or `IGNORE_INDEX` for a row the head's loss masks (`outcomes.rs`).
+	pub outcome_ids: Tensor,
 	/// `(name, features, confidence)` per configured channel, in packing order.
 	pub channels: Vec<(String, Tensor, Tensor)>,
 	pub char_ids: Option<Tensor>,
@@ -48,6 +51,7 @@ impl TensorBatch {
 			("labels".to_owned(), self.labels.shallow_clone()),
 			("locale_ids".to_owned(), self.locale_ids.shallow_clone()),
 			("address_system_ids".to_owned(), self.address_system_ids.shallow_clone()),
+			("outcome_ids".to_owned(), self.outcome_ids.shallow_clone()),
 		];
 		for (name, f, c) in &self.channels {
 			out.push((format!("{name}_features"), f.shallow_clone()));
@@ -75,6 +79,10 @@ impl TensorBatch {
 			attention_mask: need("attention_mask")?,
 			labels: need("labels")?,
 			locale_ids: need("locale_ids")?,
+			outcome_ids: match get("outcome_ids") {
+				Some(ids) => ids,
+				None => need("address_system_ids")?.full_like(IGNORE_INDEX),
+			},
 			address_system_ids: need("address_system_ids")?,
 			channels,
 			char_ids: get("char_ids"),
@@ -88,6 +96,7 @@ impl TensorBatch {
 			labels: self.labels.to_device(device),
 			locale_ids: self.locale_ids.to_device(device),
 			address_system_ids: self.address_system_ids.to_device(device),
+			outcome_ids: self.outcome_ids.to_device(device),
 			channels: self
 				.channels
 				.iter()
@@ -109,6 +118,7 @@ impl TensorBatch {
 			labels: Some(self.labels.shallow_clone()),
 			locale_ids: Some(self.locale_ids.shallow_clone()),
 			address_system_ids: Some(self.address_system_ids.shallow_clone()),
+			outcome_ids: Some(self.outcome_ids.shallow_clone()),
 			char_ids: self.char_ids.as_ref().map(Tensor::shallow_clone),
 			..EncoderInputs::default()
 		};
@@ -159,6 +169,7 @@ impl TensorBatch {
 			labels: narrow(&self.labels),
 			locale_ids: self.locale_ids.shallow_clone(),
 			address_system_ids: self.address_system_ids.shallow_clone(),
+			outcome_ids: self.outcome_ids.shallow_clone(),
 			channels: self
 				.channels
 				.iter()
@@ -198,6 +209,8 @@ pub struct RunEncoder {
 	pub schema: LabelSchema,
 	pub label_set: String,
 	pub address_systems: AddressSystems,
+	/// The outcome readings, when the model has the outcome hint or head.
+	pub outcomes: Option<OutcomeReadings>,
 	/// The tokenizer's vocabulary size and pad id, or the char path's dummy width and pad 0.
 	pub vocab_size: i64,
 	pub pad_id: i64,
@@ -225,6 +238,7 @@ impl RunEncoder {
 		let stage3_labels = schema.set("stage3")?.bio_labels.clone();
 		let label_set = run.label_set()?;
 		let address_systems = AddressSystems::load(&files.address_systems)?;
+		let outcomes = load_outcomes(run, files)?;
 		let char_mode = run.char_mode()?;
 		if char_mode != "off" {
 			let configured: Vec<&str> = [
@@ -255,6 +269,7 @@ impl RunEncoder {
 				schema,
 				label_set,
 				address_systems,
+				outcomes,
 				vocab_size: 2,
 				pad_id: 0,
 				unk_id: 1,
@@ -315,6 +330,7 @@ impl RunEncoder {
 			schema,
 			label_set,
 			address_systems,
+			outcomes,
 			char_vocab_size: 0,
 			conventions,
 			stage3_labels,
@@ -367,6 +383,11 @@ impl RunEncoder {
 			.iter()
 			.map(|r| self.address_systems.id(r.country.as_deref(), &r.raw))
 			.collect();
+		let outcome_ids: Vec<i64> = match &self.outcomes {
+			Some(outcomes) => rows.iter().map(|r| outcomes.id(r)).collect::<Result<_>>()?,
+			None => vec![IGNORE_INDEX; rows.len()],
+		};
+		let outcome_ids = Tensor::from_slice(&outcome_ids);
 		let locale_ids = Tensor::from_slice(&locale_ids);
 		let address_system_ids = Tensor::from_slice(&address_system_ids);
 		match &self.path {
@@ -397,6 +418,7 @@ impl RunEncoder {
 					labels: Tensor::from_slice(&batch.labels).view([n, l]),
 					locale_ids,
 					address_system_ids,
+					outcome_ids,
 					channels,
 					char_ids: None,
 				})
@@ -410,12 +432,29 @@ impl RunEncoder {
 					labels: Tensor::from_slice(&batch.labels).view([n, s]),
 					locale_ids,
 					address_system_ids,
+					outcome_ids,
 					channels: Vec::new(),
 					char_ids: Some(Tensor::from_slice(&batch.char_ids).view([n, s, w])),
 				})
 			}
 		}
 	}
+}
+
+/// The outcome readings a model with `use_outcome_hint` or `use_outcome_head` reads: the repository's table and the
+/// corpus's mask file, `data.outcome_masks_path` relative to the checkout.
+fn load_outcomes(run: &RunConfig, files: &DataFiles) -> Result<Option<OutcomeReadings>> {
+	let on = |key: &str| run.model.get(key).and_then(serde_json::Value::as_bool).unwrap_or(false);
+	if !on("use_outcome_hint") && !on("use_outcome_head") {
+		return Ok(None);
+	}
+	let masks = run
+		.data
+		.get("outcome_masks_path")
+		.and_then(serde_json::Value::as_str)
+		.filter(|s| !s.is_empty())
+		.ok_or_else(|| fail!("model.use_outcome_hint and model.use_outcome_head need data.outcome_masks_path"))?;
+	OutcomeReadings::load(&files.outcome_readings, &files.root.join(masks)).map(Some)
 }
 
 /// `len(load_char_vocab(path))`: the entry count of the `dict[str, int]`, `<pad>` and `<unk>` included.
