@@ -7,6 +7,7 @@
  */
 
 import type { ScoreUnmeasuredReason } from "@mailwoman/core/resolver"
+import type { OutcomeMembership, OutcomeQuery } from "@mailwoman/core/resolver/outcome"
 import type { LatLon, LatLonBounds } from "@mailwoman/spatial"
 
 /**
@@ -125,6 +126,16 @@ export interface PlaceCandidate {
 	 * Set when the input matched an alias of this place, by the candidate-table backend only.
 	 */
 	matchedAlias?: true | null
+
+	/**
+	 * The place's effective outcome set, read only for a query with `outcome`.
+	 */
+	outcomes?: readonly OutcomeMembership[] | null
+
+	/**
+	 * The place's `wd:id` concordance, read only for a query with `outcome`, when the artifact records one.
+	 */
+	wikidata?: string | null
 }
 
 /**
@@ -219,6 +230,14 @@ export interface FindPlaceQuery {
 	 * Returns only candidates whose bounding box intersects this box.
 	 */
 	bbox?: LatLonBounds
+
+	/**
+	 * Reads each candidate's outcome set, and with `admit` keeps only the rows that
+	 * hold an admitted id, as a predicate of the fetch.
+	 *
+	 * A backend whose artifact lacks the outcome tables throws an `OutcomeRequestError`.
+	 */
+	outcome?: OutcomeQuery
 
 	/**
 	 * The maximum number of candidates to return, defaulting to 10.

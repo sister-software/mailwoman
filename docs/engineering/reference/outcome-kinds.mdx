@@ -12,8 +12,10 @@ belongs to, so a caller or the model can ask for one.
 
 This page is the design for issue [#3538](https://github.com/sister-software/mailwoman/issues/3538),
 revised after the review on pull request
-[#3540](https://github.com/sister-software/mailwoman/pull/3540#issuecomment-7223579983). The design
-is unbuilt. [The experiments](#the-experiments) lists the four issues that build it.
+[#3540](https://github.com/sister-software/mailwoman/pull/3540#issuecomment-7223579983).
+[The experiments](#the-experiments) lists the four issues that build it. The request fields and the
+resolver of #3544 are built, and [What the resolver decides](#what-the-resolver-decides) records
+the rules the build added.
 
 ## Five properties, five questions
 
@@ -505,6 +507,31 @@ Every resolved place reports its outcome set and each member's `contested` flag.
 
 Form 2 is default-on decoder and resolver behavior. It ships only on a `pass` verdict under
 [the release-quality procedure](../CONTRIBUTING_MODEL_WORK.mdx), and it stays opt-in until then.
+
+### What the resolver decides
+
+- The hint, the filter and the head's order act on the input's leading span, when the walk looks it
+  up. A leading venue or category, as in `coffee near Mt. Tabor`, leaves every later span an anchor
+  in today's order, and the landmark pass reads a leading venue under the request.
+- A class keeps the positions its members held. A landmark or OpenStreetMap candidate the stated
+  context doesn't admit enters the list after every one it admits. A candidate within 50 km of a
+  stated locality counts as inside it for the containment partition.
+- On an outcome-ordered span, the bare-toponym race stands down, because its probes read no outcome
+  sets. The span reads the sub-locality and admin bands the race would have probed into the same list.
+- A filter whose span resolved to no admitted place answers zero places with the
+  `outcome_filter_empty` advisory. A hint the answer doesn't satisfy adds `outcome_hint_unsatisfied`.
+- `landmarks.db` and the OpenStreetMap place database key `record_outcome` by `qid` and their
+  defaults by the row's `kind`. The candidate table keys them by `spr_id` and placetype, and reads a
+  record's Wikidata item from a `concordances` table with `other_source = 'wd:id'`. The candidate
+  build doesn't yet copy that table, so a candidate-table record merges with no landmark until it does.
+- An outcome id a database holds and the request's vocabulary lacks is left out of the record's set.
+  `@mailwoman/core` holds no vocabulary, so the session receives it as `outcomeVocabulary`, and a
+  session without it refuses a request that sets an outcome field.
+- The head's order reaches the resolver as `ResolveOutcome.headOrder`. A span is eligible for it
+  when the query is a `bare_toponym` or the leading span's node holds `interpretations`.
+- A data layer that reports no outcome tables, such as the Worker's HTTP layers, refuses the request.
+- A response states `outcome_hint_model` and each candidate's `outcomes` only when the request set
+  an outcome field or the head's order ran, so a request without them answers byte for byte as before.
 
 ## Acceptance fixtures
 

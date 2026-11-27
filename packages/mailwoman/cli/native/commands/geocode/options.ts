@@ -10,6 +10,7 @@
  */
 
 import type { ScopeStrength } from "@mailwoman/core/resolver"
+import type { OutcomeOptions } from "@mailwoman/core/resolver/outcome"
 import { optionPropertyName } from "@mailwoman/core/scripting/arguments"
 import type { PathBuilderLike } from "path-ts"
 
@@ -43,6 +44,10 @@ export interface GeocodeOutputOptions {
 	workers: number
 	timing: boolean
 	tiles?: string
+	/**
+	 * The outcome fields every request of the run sends, from `--outcome-hint` and `--outcome-filter`.
+	 */
+	request: OutcomeOptions
 }
 
 export type GeocodeCommandOptions = GeocodeSessionOptions & GeocodeOutputOptions
@@ -130,5 +135,24 @@ export async function resolveGeocodeCommandOptions(
 		workers: numberValue(values, "workers") ?? 1,
 		timing: booleanValue(values, "timing"),
 		...(tiles ? { tiles } : {}),
+		request: outcomeRequest(stringValue(values, "outcome-hint"), stringValue(values, "outcome-filter")),
+	}
+}
+
+/**
+ * The outcome fields of a request, from the two flags as typed.
+ *
+ * The session checks each id against the vocabulary and refuses an unknown one,
+ * so this only splits the list.
+ */
+function outcomeRequest(hint: string | null, filter: string | null): OutcomeOptions {
+	const kinds = (filter ?? "")
+		.split(",")
+		.map((kind) => kind.trim())
+		.filter((kind) => kind !== "")
+
+	return {
+		...(hint ? { outcomeHint: hint } : {}),
+		...(kinds.length ? { outcomeFilter: kinds } : {}),
 	}
 }

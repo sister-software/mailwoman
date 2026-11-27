@@ -191,6 +191,16 @@ Options:
   \-\-parent\-scope <string>                     How \-\-parent acts. Hard keeps only places its lineage
                                               agrees with, and soft ranks the places inside it
                                               first. (default: hard)
+  \-\-outcome\-hint <kind>                       The kind of place the answer should be, such as
+                                              natural.mountain or venue. It orders the candidates
+                                              and removes none.
+  \-\-outcome\-filter <kinds>                    Comma\-separated kinds of place the answer may be, such
+                                              as natural,place. A place outside every kind is never
+                                              returned.
+  \-\-outcome\-head\-ordering                     Order a bare name's candidates by the model's outcome
+                                              head when no \-\-outcome\-hint is set. Off by default
+                                              until a release verdict, and it needs a model with an
+                                              outcome head. (default: false)
   \-\-capital\-tier <string>                     Bounded national\-capital promotion on bare city names:
                                               auto (skip when the capitals reference is missing),
                                               required (fail when it is missing), or off. (default:

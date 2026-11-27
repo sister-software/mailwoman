@@ -59,6 +59,34 @@ export const ScoreUnmeasuredReasonSchema = z
 	.meta({ id: "ScoreUnmeasuredReason", description: "Why a candidate's score is null." })
 
 /**
+ * One member of a place's outcome set.
+ */
+export const OutcomeMembershipSchema = z
+	.object({
+		/**
+		 * The outcome kind, such as `natural.mountain`.
+		 */
+		outcome: z.string(),
+		/**
+		 * True when one source asserts the member and another denies it.
+		 * The member stays in the set.
+		 */
+		contested: z.boolean(),
+		/**
+		 * Where the member came from: the data layer and `default` or `asserted`, as in `landmarks:asserted`.
+		 */
+		sources: z.array(z.string()),
+	})
+	.meta({ id: "OutcomeMembership", description: "One member of a place's outcome set." })
+
+/**
+ * Whether the loaded model reads the outcome hint and has an outcome head.
+ */
+export const OutcomeHintModelSchema = z
+	.enum(["applied", "unsupported"])
+	.meta({ id: "OutcomeHintModel", description: "Whether the loaded model reads the outcome hint." })
+
+/**
  * One place the resolver weighed for a parsed span: the winner first, then the places it passed over.
  */
 export const GeocodeCandidateSchema = z
@@ -111,6 +139,12 @@ export const GeocodeCandidateSchema = z
 		 * The field is absent for a place inside the scope.
 		 */
 		outsideScope: z.literal(true).optional(),
+		/**
+		 * The place's outcome set, each member with its `contested` flag and its sources.
+		 *
+		 * The field is present when the request set `outcomeHint` or `outcomeFilter`.
+		 */
+		outcomes: z.array(OutcomeMembershipSchema).optional(),
 	})
 	.meta({ id: "GeocodeCandidate", description: "A place the resolver weighed for one parsed span." })
 
@@ -443,6 +477,14 @@ export const GeocodeResultSchema = z
 		 * Every value inside comes from the provider, including `refused` and `transport_error`.
 		 */
 		authoritative: AuthoritativeAssertionSchema.nullable(),
+
+		/**
+		 * `unsupported` when the loaded model has no outcome head, so only the resolver read
+		 * the request's outcome fields, and `applied` when the model read them too.
+		 *
+		 * The field is present when the request set `outcomeHint` or `outcomeFilter`.
+		 */
+		outcome_hint_model: OutcomeHintModelSchema.optional(),
 	})
 	.meta({ id: "GeocodeResult", description: "One geocoded input: its coordinate, tier, components and evidence." })
 

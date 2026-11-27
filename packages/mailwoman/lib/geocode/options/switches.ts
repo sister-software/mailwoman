@@ -105,6 +105,13 @@ export interface GeocodeSwitches {
 	 * through `GeocodeDeps.fstForCountry`, when that country ships one.
 	 */
 	fstCountryRouting: boolean
+	/**
+	 * Orders a bare name's candidates by the outcome head's readings when the request sets no hint.
+	 *
+	 * It is default-on decoder and resolver behavior, so it stays off until a `pass` release verdict.
+	 * It needs a model with an outcome head, and without one every candidate keeps today's order.
+	 */
+	outcomeHeadOrdering: boolean
 }
 
 /**
@@ -134,6 +141,7 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	pairPriorChildPostcodeStrip: false,
 	pairIndexOwnCountry: false,
 	fstCountryRouting: false,
+	outcomeHeadOrdering: false,
 }
 
 /**

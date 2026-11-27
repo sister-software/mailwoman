@@ -15,7 +15,7 @@
 
 import { placetypeMapForCountry } from "@mailwoman/codex/labels/placetype-map"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { decodeAsJSON, walkNodes } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
@@ -49,6 +49,7 @@ import type {
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
 import { hardCountryOf } from "@mailwoman/core/resolver"
+import type { OutcomeOptions, OutcomeVocabularyLike, ResolveOutcome } from "@mailwoman/core/resolver/outcome"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
@@ -65,6 +66,7 @@ import { extractGeocodeResult } from "#geocode/result"
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#geocode/result/authoritative"
 import { traceCollector } from "#geocode/result/derivation"
 import { applyEntityTiers, nameDroppingRescoreToWithdraw, repickLocalityByVenue } from "#geocode/result/fork-entity"
+import { applyOutcomeResult, outcomeHeadOrderOf, resolveOutcomeFor } from "#geocode/result/outcome"
 import { applyPlusCodeOverride } from "#geocode/result/plus-code-override"
 import { inferredScopeYieldsOnMiss, ScopeWithheldReason } from "#geocode/scope/inferred"
 import {
@@ -109,6 +111,16 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * The OpenStreetMap place layer, read after span rescore.
 	 */
 	osmPlaces?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
+	 * The request's outcome hint and filter.
+	 * Absent, the geocode runs today's sequence.
+	 */
+	outcome?: OutcomeOptions
+	/**
+	 * The outcome vocabulary the request's ids are checked against.
+	 * A request with an outcome field is refused without it.
+	 */
+	outcomeVocabulary?: readonly OutcomeVocabularyLike[]
 	/**
 	 * The former divisions table, read under {@link GeocodeSwitches.formerDivisions}.
 	 */
@@ -508,9 +520,16 @@ export async function geocodeAddress(
 		if (refusal) {
 			// Return abstain with parsed components but no resolved coordinates.
 			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps, context))
+
+			// A refused outcome request is refused here too, though the address stages abstain.
+			const outcome = outcomeRequestOf(deps, parseInput, tree)
 			const abstained = extractGeocodeResult(input, tree)
 
 			abstained.intent_markers = refusal
+
+			if (outcome) {
+				abstained.outcome_hint_model = outcomeHeadOrderOf(tree) ? "applied" : "unsupported"
+			}
 
 			return abstained
 		}
@@ -568,6 +587,31 @@ export async function geocodeAddress(
 		input,
 		{ ...unscoped, parsedTree: tree, ...(resolveTraceSink ? { resolveTraceSink } : {}) },
 		context
+	)
+}
+
+/**
+ * The request's outcome fields as the resolver reads them, or null when the request sets neither.
+ *
+ * @throws {OutcomeRequestError} For a request the vocabulary refuses.
+ */
+function outcomeRequestOf(deps: GeocodeDeps, parseInput: string, tree: AddressTree): ResolveOutcome | null {
+	const headOrdering = geocodeSwitches(deps).outcomeHeadOrdering
+
+	if (!deps.outcome && !headOrdering) return null
+
+	const kind = classifyKindSync(
+		{ raw: parseInput, normalized: parseInput },
+		computeQueryShape(parseInput, queryShapeGenerationOf(deps.classifier))
+	).kind
+
+	// The decode writes a small-margin runner-up tag to a span's `interpretations`.
+	const leading = [...walkNodes(tree.roots)].toSorted((a, b) => a.start - b.start)[0]
+
+	return resolveOutcomeFor(
+		deps.outcome,
+		{ vocabulary: deps.outcomeVocabulary, headOrder: outcomeHeadOrderOf(tree), headOrdering },
+		{ kind, interpretedSpan: !!leading?.interpretations?.length }
 	)
 }
 
@@ -708,6 +752,13 @@ async function geocodeAddressOnce(
 	}
 
 	applyCountryEvidence(opts, tree, deps)
+
+	// The hint and the filter act in the resolver, because they read record sets.
+	const outcome = outcomeRequestOf(deps, parseInput, tree)
+
+	if (outcome) {
+		opts.outcome = outcome
+	}
 
 	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
@@ -936,6 +987,14 @@ async function geocodeAddressOnce(
 
 	// Append designation markers from attached spatial layers.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]
+
+	if (outcome) {
+		result = applyOutcomeResult(result, resolved, outcome, {
+			kind: verdict.kind,
+			headLoaded: outcomeHeadOrderOf(tree) != null,
+			unresolved: () => extractGeocodeResult(input, tree),
+		})
+	}
 
 	// Optional authoritative consult runs last and is attached beside open result.
 	if (deps.authoritativeProvider) {

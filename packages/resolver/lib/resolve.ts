@@ -14,6 +14,7 @@ import { collectNodes, isShapeExcludedPostcode, type AddressNode, type AddressTr
 import {
 	type DefaultCountry,
 	hardCountryOf,
+	landmarkPlaceID,
 	ScopeStrength,
 	type ResolveNodeTrace,
 	type ResolvedPlace,
@@ -22,6 +23,7 @@ import {
 	type ResolverBackend,
 	resolveSwitches,
 } from "@mailwoman/core/resolver"
+import { OutcomeLayer, OutcomeRequestError } from "@mailwoman/core/resolver/outcome"
 import { isPresent } from "@mailwoman/core/values/objects"
 import { countriesFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 
@@ -44,6 +46,8 @@ import {
 	loneBareLocalityNode,
 } from "#bare-toponym-race"
 import { decorateNode } from "#decorate-node"
+import { filterQuery } from "#outcome/fetch"
+import { orderSpanByOutcome, outcomeFetches, outcomePickStamps, outcomeState, spanLayerCandidates } from "#outcome/walk"
 import {
 	findPostcodeCountryScope,
 	type PostcodeCountryScope,
@@ -71,6 +75,7 @@ import {
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
+import { rankByPriors } from "#resolve/priors"
 import {
 	applyCountryAsRegion,
 	applyLocalityAsRegion,
@@ -80,20 +85,9 @@ import {
 } from "#resolve/region-city"
 import { applySiblingLocalityContainment } from "#resolve/sibling-locality"
 import { applyWholeInputPlace } from "#resolve/whole-input"
-import {
-	placesOutsideCountryScope,
-	promoteSoftCountry,
-	retrieveWithSoftCountry,
-	softScopeRetrieves,
-} from "#scope-retrieval"
+import { placesOutsideCountryScope, retrieveWithSoftCountry, softScopeRetrieves } from "#scope-retrieval"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
-import {
-	type CapitalLevelFn,
-	DEFAULT_COUNTRY_PRIOR_WEIGHT,
-	promoteCapitals,
-	rankByCountryPrior,
-	rankByImportance,
-} from "#toponym-prior"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT } from "#toponym-prior"
 
 /**
  * Build a `Resolver` from a `ResolverBackend`.
@@ -220,6 +214,7 @@ class WOFResolver implements Resolver {
 				: {}),
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
+			...outcomeState(tree, opts, this.#backend),
 		}
 
 		applyParentPlaceCountry(state)
@@ -310,7 +305,7 @@ class WOFResolver implements Resolver {
 		}
 
 		if (opts.landmarks) {
-			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks, opts.outcome ?? null)
 		}
 
 		if (opts.adminCoherence) {
@@ -359,7 +354,7 @@ class WOFResolver implements Resolver {
 
 		// OpenStreetMap places answer after span rescore, so a town that holds the whole name keeps it.
 		if (opts.osmPlaces) {
-			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces)
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces, opts.outcome ?? null)
 		}
 
 		// Retry exact address-point tier once after span-rescore recovery.
@@ -435,6 +430,11 @@ class WOFResolver implements Resolver {
 			if (picked) {
 				resolved = picked.top
 				decorateNode(decorated, picked.top, picked.alternatives, picked.considered)
+
+				// A landmark that won an outcome-ordered span keeps its own identifier scheme.
+				if (picked.top.layer && picked.top.layer !== OutcomeLayer.Candidate) {
+					decorated.placeID = landmarkPlaceID(picked.top.id)
+				}
 
 				if (picked.metadata) {
 					decorated.metadata = { ...decorated.metadata, ...picked.metadata }
@@ -668,6 +668,44 @@ class WOFResolver implements Resolver {
 		return { top: prefixPlace, alternatives: [], metadata }
 	}
 
+	/**
+	 * The best per-country winner of an unconstrained postcode probed in each format-implied country,
+	 * with the other countries' winners as `considered`, or null when no country holds the code.
+	 */
+	async #postcodeFormatProbe(
+		query: Parameters<ResolverBackend["findPlace"]>[0],
+		countries: readonly string[],
+		rec: NodeTraceRecorder
+	): Promise<(LookupPick & { considered: ResolvedPlace[] }) | null> {
+		rec.check("postcode_format_probe")
+		let best: ResolvedPlace | null = null
+		const countryWinners: ResolvedPlace[] = []
+
+		for (const impliedCountry of countries) {
+			try {
+				const hits = await this.#backend.findPlace({ ...query, country: impliedCountry })
+				const top = hits[0]
+
+				if (top) {
+					countryWinners.push(top)
+				}
+
+				// Keep the best per-country winner by score.
+				if (top && (!best || top.score > best.score)) {
+					best = top
+				}
+			} catch {
+				// Treat per-country probe errors as misses.
+			}
+		}
+
+		if (!best) return null
+
+		rec.emit({ id: best.id, name: best.name, source: "postcode_format_probe" })
+
+		return { top: best, alternatives: [], considered: countryWinners.filter((c) => c !== best) }
+	}
+
 	async #lookupAndPick(
 		node: AddressNode,
 		placetype: string,
@@ -743,6 +781,13 @@ class WOFResolver implements Resolver {
 			}
 		}
 
+		// The filter is a predicate of each fetch of the span outcome ordering applies to.
+		const outcomeSpan = state.outcome?.target === node ? state.outcome : null
+
+		if (outcomeSpan) {
+			query.outcome = filterQuery(outcomeSpan.request)
+		}
+
 		// Trace recorder (no-op when no sink).
 		const rec = state.traceSink ? createNodeTraceRecorder(state.traceSink) : NOOP_TRACE_RECORDER
 
@@ -763,33 +808,9 @@ class WOFResolver implements Resolver {
 
 		// For unconstrained postalcodes, probe format-implied countries only.
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
-			rec.check("postcode_format_probe")
-			let best: ResolvedPlace | null = null
-			const countryWinners: ResolvedPlace[] = []
+			const probed = await this.#postcodeFormatProbe(query, state.postcodeFormatCountries, rec)
 
-			for (const impliedCountry of state.postcodeFormatCountries) {
-				try {
-					const hits = await this.#backend.findPlace({ ...query, country: impliedCountry })
-					const top = hits[0]
-
-					if (top) {
-						countryWinners.push(top)
-					}
-
-					// Keep the best per-country winner by score.
-					if (top && (!best || top.score > best.score)) {
-						best = top
-					}
-				} catch {
-					// Treat per-country probe errors as misses.
-				}
-			}
-
-			if (best) {
-				rec.emit({ id: best.id, name: best.name, source: "postcode_format_probe" })
-
-				return { top: best, alternatives: [], considered: countryWinners.filter((c) => c !== best) }
-			}
+			if (probed) return probed
 
 			candidates = []
 		} else {
@@ -812,6 +833,13 @@ class WOFResolver implements Resolver {
 
 				candidates = await this.#withSoftCountryRows(query, candidates, softCountry, state, rec)
 
+				if (outcomeSpan) {
+					const bareName = placetype === "locality" && node === state.bareLocalityNode
+
+					candidates = await outcomeFetches(this.#backend, query, outcomeSpan, bareName, candidates)
+					rec.stage("outcome_fetch", candidates)
+				}
+
 				// Only a lookup the default country filtered reports the same-name places outside it.
 				const filteredByDefault =
 					anchorEligible && !parentResolved && query.country != null && query.country === defaultCountryForLookup
@@ -823,6 +851,9 @@ class WOFResolver implements Resolver {
 					rec.reachable(await this.#probeOtherBands(query, placetype))
 				}
 			} catch (error) {
+				// A refused outcome request is the caller's error, and the walk can't answer past it.
+				if (error instanceof OutcomeRequestError) throw error
+
 				// Defensive: backend errors shouldn't abort the whole tree walk.
 				rec.check(`backend_error: ${(error as Error).message}`)
 				rec.emit(null)
@@ -838,8 +869,14 @@ class WOFResolver implements Resolver {
 
 		if (recovered) return recovered
 
+		// The landmark layers are read for the same span, so their candidates are ordered with the table's.
+		const layered = outcomeSpan
+			? await spanLayerCandidates(outcomeSpan, node, query.country ?? null, parentResolved)
+			: null
+
 		// Bare-toponym race: locality-tagged single spans also probe country/region.
-		const isBareRace = placetype === "locality" && node === state.bareLocalityNode
+		// The race's probes read no outcome sets, so it stands down on an outcome-ordered span.
+		const isBareRace = !outcomeSpan && placetype === "locality" && node === state.bareLocalityNode
 
 		if (isBareRace) {
 			rec.check("bare_race")
@@ -852,7 +889,7 @@ class WOFResolver implements Resolver {
 		const raceLosers = (picked: ResolvedPlace | null): ResolvedPlace[] =>
 			[bareCountry, bareRegion].filter(isPresent).filter((probe) => probe !== picked)
 
-		if (!candidates.length) {
+		if (!candidates.length && !layered?.candidates.length) {
 			// With no locality candidates, a bare name takes an admin or sub-locality namesake.
 			const pick = isBareRace
 				? await emptyLocalityPick(this.#backend, node.value, query.country, bareCountry, bareRegion)
@@ -877,6 +914,11 @@ class WOFResolver implements Resolver {
 
 		const softPromotion = rankByPriors(candidates, anchorEligible, softCountry, node, state, rec)
 		let ranked = softPromotion.ranked
+
+		if (outcomeSpan && layered) {
+			ranked = orderSpanByOutcome(ranked, outcomeSpan, layered.candidates, state.anchorPosterior)
+			rec.stage("outcome", ranked)
+		}
 
 		// Final containment partition.
 		// It reads the address's own qualifier and preserves the exact-match tier.
@@ -927,27 +969,17 @@ class WOFResolver implements Resolver {
 		}
 
 		// Bare-toponym admin repick rules.
-		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
-			rec.check("bare_country_repick")
-			rec.emit({ id: bareCountry.id, name: bareCountry.name, source: "bare_country" })
+		const repick = bareRepick(top, bareCountry, bareRegion)
+
+		if (repick) {
+			rec.check(repick.check)
+			rec.emit({ id: repick.place.id, name: repick.place.name, source: repick.source })
 
 			return {
-				top: bareCountry,
+				top: repick.place,
 				alternatives: ranked,
-				considered: [...raceLosers(bareCountry), ...outsideScope],
-				metadata: { bare_country_repick: true },
-			}
-		}
-
-		if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
-			rec.check("bare_region_repick")
-			rec.emit({ id: bareRegion.id, name: bareRegion.name, source: "bare_region" })
-
-			return {
-				top: bareRegion,
-				alternatives: ranked,
-				considered: [...raceLosers(bareRegion), ...outsideScope],
-				metadata: { bare_region_repick: true },
+				considered: [...raceLosers(repick.place), ...outsideScope],
+				metadata: { [repick.check]: true },
 			}
 		}
 
@@ -965,6 +997,7 @@ class WOFResolver implements Resolver {
 			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
 			// The soft scope's promotion moved this place ahead of a larger namesake.
 			...(top === softPromotion.promoted ? { soft_country_promotion: softCountry } : {}),
+			...(outcomeSpan ? outcomePickStamps(top, layered?.hits ?? new Map()) : {}),
 			// Mark picks admitted outside resolved parent scope.
 			...((parentResolved && typeof parentResolved.id === "number" && query.parentID == null) ||
 			top.regionScopeMiss === true
@@ -979,6 +1012,32 @@ class WOFResolver implements Resolver {
 			...(Object.keys(pickMetadata).length ? { metadata: pickMetadata } : {}),
 		}
 	}
+}
+
+/**
+ * The bare-toponym race's admin namesake that replaces the ranked leader, or null.
+ *
+ * A country namesake replaces a leader of smaller prominence, and a region namesake
+ * one it dominates by `BARE_REGION_DOMINANCE_LOG10` in log population.
+ */
+function bareRepick(
+	top: ResolvedPlace,
+	bareCountry: ResolvedPlace | null,
+	bareRegion: ResolvedPlace | null
+): {
+	place: ResolvedPlace
+	check: "bare_country_repick" | "bare_region_repick"
+	source: "bare_country" | "bare_region"
+} | null {
+	if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
+		return { place: bareCountry, check: "bare_country_repick", source: "bare_country" }
+	}
+
+	if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
+		return { place: bareRegion, check: "bare_region_repick", source: "bare_region" }
+	}
+
+	return null
 }
 
 /**
@@ -1029,114 +1088,4 @@ function containmentStamps(
 		admin_containment: adminContainmentVerdict(ranked),
 		...(parentContainment && top.containedByQualifier === true ? { contained_by_parent: true } : {}),
 	}
-}
-
-/**
- * Ranks a lookup's candidates by its priors in order: the postcode anchor posterior,
- * the ranking-only soft scope, importance with capital promotion, then the retrieval soft scope.
- *
- * `promoted` is the place the retrieval soft scope moved to the lead, or null.
- */
-function rankByPriors(
-	candidates: ResolvedPlace[],
-	anchorEligible: boolean,
-	softCountry: string | null,
-	node: AddressNode,
-	state: ResolutionState,
-	rec: NodeTraceRecorder
-): { ranked: ResolvedPlace[]; promoted: ResolvedPlace | null } {
-	let ranked = candidates
-
-	// Optional anchor-based rerank using postcode country posterior, kept tier-safe by exact-match first.
-	if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
-		ranked = rankByAnchorPosterior(candidates, state.anchorPosterior, state.anchorWeight)
-		rec.stage("anchor", ranked)
-		ranked = rankWithinPosteriorCountry(ranked, state.capitalLevel, node)
-		rec.stage("importance", ranked)
-	}
-
-	// Without scope retrieval, the soft scope adds to candidate scores ahead of the importance rerank.
-	if (softCountry && !softScopeRetrieves(state)) {
-		ranked = rankByCountryPrior(ranked, softCountry, state.softCountryWeight)
-		rec.stage("locale_prior", ranked)
-	}
-
-	// Importance-first rerank (the posterior branch above runs its own, within the winning country).
-	if (!state.anchorPosterior) {
-		ranked = rankByImportance(ranked)
-		rec.stage("importance", ranked)
-
-		// Optional bounded capital promotion.
-		if (state.capitalLevel) {
-			ranked = promoteCapitalsWithReceipt(ranked, state.capitalLevel, node)
-			rec.stage("capital", ranked)
-		}
-	}
-
-	return promoteSoftCountry(ranked, softCountry, state, rec)
-}
-
-/**
- * Sorts candidates by the postcode country posterior, exact matches first.
- *
- * Within a match tier, the key is a candidate's prominence (its score when it has none)
- * plus `weight` times its country's posterior mass.
- * A candidate with no country gets no posterior mass.
- */
-function rankByAnchorPosterior<
-	T extends Pick<ResolvedPlace, "score" | "country"> & Partial<Pick<ResolvedPlace, "exactMatch" | "prominence">>,
->(candidates: readonly T[], posterior: Readonly<Record<string, number>>, weight: number): T[] {
-	const key = (c: T) => (c.prominence ?? c.score) + weight * (c.country ? (posterior[c.country] ?? 0) : 0)
-
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
-	return [...candidates].sort(
-		(a, b) => Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) || key(b) - key(a) || b.score - a.score
-	)
-}
-
-/**
- * Reorders the posterior-ranked leader's peers, the candidates in its country and exact-match
- * tier, by importance and capital promotion, as the path without a posterior ranks them.
- *
- * The posterior decides the country.
- * Within that country this order makes a venue query (`Clayton Post Office, Clayton, WI`)
- * pick the same locality as its bare form (`Clayton, WI`).
- */
-function rankWithinPosteriorCountry<
-	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
-		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
->(
-	ranked: readonly T[],
-	capitalLevel: CapitalLevelFn | null | undefined,
-	node: { metadata?: Record<string, unknown> | null }
-): T[] {
-	const leader = ranked[0]
-
-	if (!leader?.country) return [...ranked]
-
-	const isPeer = (c: T) => c.country === leader.country && (c.exactMatch === true) === (leader.exactMatch === true)
-	let peers = rankByImportance(ranked.filter(isPeer))
-
-	if (capitalLevel) {
-		peers = promoteCapitalsWithReceipt(peers, capitalLevel, node)
-	}
-
-	return [...peers, ...ranked.filter((c) => !isPeer(c))]
-}
-
-/**
- * Promote capitals and stamp `capital_promotion` when the leader changes.
- * Metadata only.
- */
-function promoteCapitalsWithReceipt<
-	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
-		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
->(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> | null }): T[] {
-	const promoted = promoteCapitals(ranked, level)
-
-	if (promoted[0] !== ranked[0]) {
-		node.metadata = { ...node.metadata, capital_promotion: promoted[0]!.country ?? true }
-	}
-
-	return promoted
 }

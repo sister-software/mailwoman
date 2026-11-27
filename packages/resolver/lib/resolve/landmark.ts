@@ -26,12 +26,15 @@ import {
 	type LandmarkLookup,
 	type ResolvedPlace,
 } from "@mailwoman/core/resolver"
+import { OutcomeLayer, type ResolveOutcome } from "@mailwoman/core/resolver/outcome"
 import { isCountryAirportCollision } from "@mailwoman/registry/overlap/country-airport"
 import { isLatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode } from "#decorate-node"
 import { foldName } from "#fold-name"
+import { findWithOutcome, OUTCOME_SET_KEY, OUTCOME_TARGET_KEY, outcomeOrderOf } from "#outcome/fetch"
+import { orderWithinLayerByOutcome } from "#outcome/ordering"
 import { writtenCountryCode } from "#resolve/country-code"
 
 /**
@@ -48,7 +51,7 @@ const LISTED_ALTERNATIVES = 8
 /**
  * The farthest a landmark may lie from a locality the input states, matching span rescore's postcode radius.
  */
-const STATED_LOCALITY_RADIUS_KM = 50
+export const STATED_LOCALITY_RADIUS_KM = 50
 
 /**
  * Keeps the hits an input's stated context permits: its country, and the surroundings of its locality.
@@ -80,8 +83,15 @@ function hitsInContext(hits: readonly LandmarkHit[], context: readonly AddressNo
 		: kept
 }
 
-function placeOf(hit: LandmarkHit): ResolvedPlace {
+/**
+ * The place a landmark hit answers.
+ *
+ * A place from a hit read with an outcome query also holds its outcome set,
+ * its data layer, its Wikidata item and its comparable prominence.
+ */
+export function placeOfLandmark(hit: LandmarkHit): ResolvedPlace {
 	const prominence = hit.importance ?? Math.log10(hit.sitelinks + 1)
+	const fromOSM = hit.qid.startsWith(OSM_LANDMARK_PREFIX)
 
 	return {
 		...EMPTY_PLACE_FIELDS,
@@ -95,6 +105,15 @@ function placeOf(hit: LandmarkHit): ResolvedPlace {
 		score: prominence,
 		prominence,
 		exactMatch: true,
+		...(hit.outcomes
+			? {
+					outcomes: hit.outcomes,
+					layer: fromOSM ? OutcomeLayer.OpenStreetMap : OutcomeLayer.Landmarks,
+					wikidata: fromOSM ? null : hit.qid,
+					// An OpenStreetMap place has no Wikipedia edition count, so its `s(e)` is unknown.
+					sitelinkProminence: fromOSM ? null : Math.log10(hit.sitelinks + 1),
+				}
+			: {}),
 	}
 }
 
@@ -126,7 +145,7 @@ function listCodeHoldersOnCountry(roots: AddressNode[], code: string, hits: read
 
 	const listed = (country.alternatives as ResolvedPlace[] | undefined) ?? []
 
-	country.alternatives = [...listed, ...holders.map(placeOf)]
+	country.alternatives = [...listed, ...holders.map(placeOfLandmark)]
 }
 
 /**
@@ -135,16 +154,24 @@ function listCodeHoldersOnCountry(roots: AddressNode[], code: string, hits: read
  * The first comma-separated part is the name, and any other part is context that has to have resolved.
  * A settlement that leads the name stays with the admin ladder, because the ladder ranks settlements.
  */
-export async function applyLandmark(roots: AddressNode[], raw: string, landmarks: LandmarkLookup): Promise<void> {
+export async function applyLandmark(
+	roots: AddressNode[],
+	raw: string,
+	landmarks: LandmarkLookup,
+	outcome: ResolveOutcome | null = null
+): Promise<void> {
 	const nodes = [...walkNodes(roots)]
 
 	if (nodes.some((node) => ADDRESS_TAGS.has(node.tag))) return
+
+	// The walk already ordered the span across the data layers.
+	if (outcome && nodes.some((node) => node.metadata?.[OUTCOME_TARGET_KEY] === true && node.placeID)) return
 
 	const name = raw.split(",", 1)[0]!.trim()
 
 	if (!name) return
 
-	const hits = await landmarks.find(name)
+	const hits = outcome ? await findWithOutcome(landmarks, name, outcome) : await landmarks.find(name)
 	const hasContext = raw.trim().length > name.length
 
 	// A bare country code answers the country, and the airport holding the same code is listed beside it.
@@ -163,7 +190,9 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 
 	if (hasContext && !context.length) return
 
-	const candidates = hasContext ? hitsInContext(hits, context) : hits
+	// The stated context already removed the hits it doesn't admit, so the outcome order runs over one class.
+	const inContext = hasContext ? hitsInContext(hits, context) : hits
+	const candidates = outcome ? orderWithinLayerByOutcome(inContext, outcomeOrderOf(outcome)) : inContext
 	const leader = candidates[0]
 
 	if (!leader || leader.kind !== "venue") return
@@ -221,13 +250,14 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 		children: [],
 	}
 
-	decorateNode(node, placeOf(leader), candidates.slice(1, LISTED_ALTERNATIVES + 1).map(placeOf))
+	decorateNode(node, placeOfLandmark(leader), candidates.slice(1, LISTED_ALTERNATIVES + 1).map(placeOfLandmark))
 	node.placeID = landmarkPlaceID(leader.qid)
 
 	node.metadata = {
 		...node.metadata,
 		landmark_sitelinks: leader.sitelinks,
 		...(fromOSM ? { landmark_source: "openstreetmap:planet" } : {}),
+		...(outcome ? { [OUTCOME_TARGET_KEY]: true, [OUTCOME_SET_KEY]: leader.outcomes ?? [] } : {}),
 	}
 
 	roots.splice(0, roots.length, node, ...context)

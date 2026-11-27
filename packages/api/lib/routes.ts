@@ -16,6 +16,7 @@ import { canonicalKey } from "@mailwoman/codex/address/key"
 import type { ComponentDict } from "@mailwoman/codex/address/render"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { EngineStamp } from "@mailwoman/core/license"
+import { OutcomeRequestError } from "@mailwoman/core/resolver/outcome"
 
 import type { MailwomanAPIEngine } from "#engine"
 import { FormatAddressOperation } from "#operations/format-address"
@@ -125,7 +126,7 @@ export function registerMailwomanAPIRoutes(
 				return geocoderUnavailableError(c)
 			}
 
-			const { address, input_mode, bias, parent, include_tree } = c.req.valid("json")
+			const { address, input_mode, bias, parent, include_tree, outcome_hint, outcome_filter } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) return c.json({ error: "address is required", detail: null }, 400)
@@ -137,6 +138,8 @@ export function registerMailwomanAPIRoutes(
 					bias,
 					parent,
 					includeTree: include_tree,
+					...(outcome_hint != null ? { outcomeHint: outcome_hint } : {}),
+					...(outcome_filter ? { outcomeFilter: outcome_filter } : {}),
 					signal: c.req.raw.signal,
 				})
 				.then((result) => {
@@ -148,6 +151,11 @@ export function registerMailwomanAPIRoutes(
 				})
 				.catch((error) => {
 					recordTimed(performance.now() - t0, "error")
+
+					// A refused outcome request is the caller's error.
+					if (error instanceof OutcomeRequestError) {
+						return c.json({ error: error.code, detail: error.message }, 400)
+					}
 
 					throw error
 				})
