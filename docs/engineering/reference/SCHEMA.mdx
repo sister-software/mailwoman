@@ -53,7 +53,8 @@ USPS Publication 28 lists these as whole primary names in [section 237](https://
 (`FARM to MARKET 1200` → `FM 1200`, `CR 1185` → `COUNTY ROAD 1185`). A directional before the road type stays
 `street_prefix`, as the predirectional rule of [section 233.21](https://pe.usps.com/text/pub28/28c2_014.htm) places
 it: `17722 West Highway 70` is `street_prefix: "West"`, `street: "Highway 70"`. Publication 28 gives no highway
-example of that case, so this placement applies the general rule.
+example of that case, so this placement applies the general rule. NAD records a road type in `St_PreTyp`, and the
+NAD adapter's `decomposeNADStreet` joins it to the street name.
 
 The split is defined by the USPS Publication 28 Appendix C table in
 [`packages/codex/lib/us/street/suffix.ts`](../../../packages/codex/lib/us/street/suffix.ts). `matchTrailingSuffix` is the only

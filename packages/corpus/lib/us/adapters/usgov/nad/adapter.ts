@@ -306,6 +306,10 @@ export interface DecomposedNADStreet {
  *
  * Structured street fields take precedence.
  * If they're empty, `StNam_Full` supplies the whole street.
+ *
+ * A pre-type and its separator open the street name, so `Farm to Market` + `1638` is the street
+ * `Farm to Market 1638`, as USPS Publication 28 lists a numbered road (`COUNTY ROAD 20`, SCHEMA.mdx).
+ * Only the pre-directional is the prefix.
  */
 export function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 	const name = (r.St_Name ?? "").toString().trim()
@@ -316,11 +320,12 @@ export function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 		const preSep = (r.St_PreSep ?? "").toString().trim()
 		const posTyp = (r.St_PosTyp ?? "").toString().trim()
 		const posDir = (r.St_PosDir ?? "").toString().trim()
-		const prefix = [preDir, preTyp, preSep].filter(isPresent).join(" ") || undefined
+		const prefix = preDir || undefined
+		const street = [preTyp, preSep, name].filter(isPresent).join(" ")
 		const suffix = [posTyp, posDir].filter(isPresent).join(" ") || undefined
-		const full = [prefix, name, suffix].filter(isPresent).join(" ")
+		const full = [prefix, street, suffix].filter(isPresent).join(" ")
 
-		return { prefix, street: name, suffix, full }
+		return { prefix, street, suffix, full }
 	}
 
 	const full = (r.StNam_Full ?? "").toString().trim()
