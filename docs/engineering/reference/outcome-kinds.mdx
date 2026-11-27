@@ -1,0 +1,264 @@
+---
+title: Outcome kinds
+description: The closed vocabulary that states what kinds of answer a gazetteer record can satisfy, where it is defined and stored, and how a request's hint and the model's outcome head meet a record's set in the resolver.
+---
+
+# Outcome kinds
+
+A bare place name has several correct readings. "Mt. Tabor" names a volcanic butte in Portland, the
+Portland neighborhood around it, the park on it (`Mt. Tabor Park`) and a mountain in Israel. Place
+ranking orders the candidates inside one reading. An **outcome kind** states which reading a record
+belongs to, so a caller or the model can ask for one.
+
+This page is the design for issue [#3538](https://github.com/sister-software/mailwoman/issues/3538).
+The design is unbuilt. Each rule below is a decision unless it is marked as a proposal.
+
+## Four properties, four questions
+
+| Property        | Answers                                               | Belongs to | Cardinality | Decided by                                           |
+| --------------- | ----------------------------------------------------- | ---------- | ----------- | ---------------------------------------------------- |
+| Placetype       | where the record sits in the administrative hierarchy | a record   | one         | Who's On First                                       |
+| Outcome kinds   | what kinds of answer the record can satisfy           | a record   | a set       | placetype defaults plus the record's own evidence    |
+| Query type      | the shape of the input string                         | a query    | one         | the recognizer and the kind classifier (`QueryKind`) |
+| Activity intent | what the caller wants to do at a place                | a query    | zero or one | the activity lexicon and the POI taxonomy            |
+
+The **outcome hint** is one value from the outcome vocabulary, set on a request. A record satisfies a
+hint when the hint equals a member of the record's set or is a prefix of one: `natural` is satisfied
+by `natural.mountain`, and `natural.mountain` isn't satisfied by `natural.water`.
+
+Five inputs show where each property applies:
+
+| Input                         | Query type      | Activity intent          | Records and their outcome sets                                                                                                                              |
+| ----------------------------- | --------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Mt. Tabor`                   | `bare_toponym`  | none                     | the Portland neighborhood `{place.neighbourhood}`, the Portland butte `{natural.mountain, landmark}`, the mountain in Israel `{natural.mountain, landmark}` |
+| `Mt. Tabor` with hint `place` | `bare_toponym`  | none                     | the same records, with the neighborhood first                                                                                                               |
+| `Mt. Tabor Park`              | `landmark`      | none                     | the park `{venue.park, landmark}`. The word `Park` is a cue the parser reads, so the reading needs no hint                                                  |
+| `coffee near Mt. Tabor`       | `poi_query`     | a POI category, `coffee` | the returned records are cafes, each `{venue}`. `Mt. Tabor` is the anchor, and the outcome head ranks its readings                                          |
+| `97215`                       | `postcode_only` | none                     | the postcode record `{postal}`. The recognizer answers, and the outcome head is never consulted                                                             |
+
+The query-type column gives the kind each `QueryKind` definition assigns, and the table as a whole
+is the designed behavior. The `mailwoman geocode` command of 11.4.0, run on 2026-11-27 with its
+default `en-US` locale, answered the four strings as follows:
+
+- `Mt. Tabor` parsed as `locality` and resolved to a `neighbourhood` record at 45.517474° north.
+  The response included a `route_pair` advisory and zero mountains.
+- `Mt. Tabor Park` parsed as `venue` and stayed unresolved.
+- `coffee near Mt. Tabor` raised the `poi_query` advisory, and the address stages abstained.
+- `97215` resolved at the postcode tier.
+
+Three consequences follow from the table.
+
+- Importance ranks the two mountains against each other. Both satisfy `natural.mountain`, so the
+  outcome kind can't separate them and doesn't try to.
+- `coffee` is an activity or a category and never an outcome kind. A cafe's set is `{venue}`
+  whatever it sells. `@mailwoman/poi-taxonomy` and `@mailwoman/activity-lexicon` own that vocabulary.
+- `QueryKind` has a member spelled `landmark`, and so does the outcome vocabulary. The first
+  describes an input string shaped like a venue's name. The second marks a record as prominent.
+  `Mt. Tabor` is a `bare_toponym` query that can resolve to a `landmark` record.
+
+A deterministic input has no outcome class. `@mailwoman/recognizer` answers coordinates, a
+postcode-only query and an identifier. Their training rows are fed −1 as the hint, and the outcome
+head's loss skips them. The records they resolve to still hold a set, so `postal` is in the vocabulary.
+
+## The vocabulary
+
+The vocabulary is closed and has two levels. An id is a top-level name, or a top-level name and one
+second-level name joined by a dot.
+
+| Top level  | A record holds it when                            | First second-level members                                                                                                   |
+| ---------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `address`  | it is a delivery point or a street                | `address.street`, `address.intersection`                                                                                     |
+| `place`    | it is a settlement or an administrative area      | `place.neighbourhood`, `place.borough`, `place.locality`, `place.county`, `place.region`, `place.country`, `place.continent` |
+| `postal`   | it is a postcode or a postal region               | none                                                                                                                         |
+| `natural`  | it is a physical feature of the land or the water | `natural.mountain`, `natural.water`, `natural.island`, `natural.forest`, `natural.beach`                                     |
+| `venue`    | it is a built or managed site with a name         | `venue.park`, `venue.campus`, `venue.cemetery`, `venue.stadium`                                                              |
+| `transit`  | a caller travels through it                       | `transit.airport`, `transit.station`, `transit.port`                                                                         |
+| `landmark` | the landmark index holds it                       | none                                                                                                                         |
+
+`landmark` is the one member that states prominence instead of what the record is. A record never
+holds `landmark` as its only member: its set also holds the member for what the record is.
+
+A `place` member covers every placetype a caller would call by that word. `place.neighbourhood` is
+the default of `neighbourhood`, `macrohood` and `microhood`, and `place.country` is the default of
+`country`, `nation`, `dependency` and `disputed`. The placetype still records which of them a
+record is.
+
+### Rules for a new member
+
+1. A member is added by a change to the definitions repository and never by a build that reads data.
+2. A member is a kind of answer. An activity, a business category, a brand and a cuisine are
+   refused. `venue.*` holds only the venue kinds whose names collide with places and natural features,
+   such as a park or a cemetery. Every other venue is `venue`, and its category stays in the POI taxonomy.
+3. A member has deterministic evidence in one source or more: an OSM tag, a GeoNames feature code,
+   or a Wikidata class. A kind that only a language model can assign isn't added.
+4. A member separates two records that share a name. When every namesake of its records would hold
+   the same set with and without it, the parent is enough.
+5. The vocabulary stays at two levels.
+6. An id is never renamed or reused. A retired member keeps its file with `mw:status` set to
+   `deprecated` and `mw:superseded_by` naming its replacement.
+
+## The definitions repository
+
+The vocabulary, the placetype defaults and the evidence mappings live in `mailwoman/whosonfirst-outcomes`,
+a companion to the `mailwoman/whosonfirst-placetypes` fork. It is cloned beside that fork and the
+country data repositories, and it uses the fork's layout so one reader serves both:
+
+```text
+whosonfirst-outcomes/
+  outcomes/                    one file per outcome kind, named by its id
+    natural.json
+    natural.mountain.json
+    place.neighbourhood.json
+    …
+  exemptions/placetypes.json   the placetypes that have no default, each with its reason
+  data/outcomes-spec-latest.json   every definition, compiled into one file
+```
+
+```json
+{
+	"mw:id": 9895900012,
+	"mw:name": "natural.mountain",
+	"mw:parent": "natural",
+	"mw:status": "current",
+	"name:eng_p": ["mountain", "mount", "peak"],
+	"mw:default_for": [],
+	"mw:evidence": {
+		"osm": ["natural=peak"],
+		"geonames": ["T.MT", "T.PK"],
+		"wikidata": ["Q8502"]
+	},
+	"wof:concordances": { "wd:id": "Q8502" }
+}
+```
+
+- `mw:name` is the id that records, requests and model cards hold. `mw:id` is the number a built
+  database stores.
+- `mw:default_for` lists the Who's On First placetypes whose records hold this member by default.
+  The defaults live here and not on the placetype definitions, so the placetypes fork stays
+  identical to its upstream. Every placetype in the placetypes repository appears in one member's
+  `mw:default_for` or in `exemptions/placetypes.json`, and the compile step refuses any other state.
+  `timezone`, `custom`, `marketarea` and `metroarea` are the expected exemptions.
+- `mw:evidence` maps a source's own type field to this member. A Wikidata class matches a record
+  whose `instance of` names it exactly. A subclass that should match is added to the list, so the
+  mapping stays reviewable.
+- An evidence value appears under one member only. The compile step refuses a tag or a feature code
+  that two members claim.
+- OSM `place=locality` is never evidence for `place.locality`. The two words mean nearly opposite
+  things, as [WOF placetypes and OSM tags](./wof-osm-placetype-map.mdx) records.
+
+### Ids (proposal)
+
+A definition takes its `mw:id` from a block at the top of the `mailwoman` Who's On First range.
+`synthetic-id-ranges.ts` in `@mailwoman/core` would declare `MAILWOMAN_OUTCOME_ID_BASE = 9_895_900_000`,
+end the record range there, and mint a definition's id as one past the largest id in `outcomes/`.
+The module's test then keeps a record and a definition from sharing an id. The record range keeps
+900,000 ids.
+
+### How this repository reads it
+
+`@mailwoman/gazetteer` gains `whosonfirst/outcomes/`, beside `whosonfirst/placetypes/`. It reads
+`outcomes/*.json` through `resolveWOFRepo`, as `Placetype.prepare` reads `placetypes/*.json`. The
+`OutcomeKind` union and the compiled table are generated from the clone into `@mailwoman/core`, so a
+request type and the resolver need no clone at run time. A repository check compares the generated
+file with the clone's compiled spec.
+
+## Storage and composition
+
+A record's set is the union of two parts:
+
+1. **Placetype defaults.** Every member whose `mw:default_for` names the record's placetype.
+2. **Evidence.** Every member whose `mw:evidence` matches a tag the record already links to: its
+   OSM tags, its GeoNames feature code, or the Wikidata class behind its `wd:id` concordance.
+
+Evidence adds members and never removes one, because a source that omits a record is no evidence
+about it.
+
+`mw:outcomes` is a Who's On First property holding the full set as a sorted array of ids.
+A record's file holds it only when the set differs from the placetype defaults, and a reader
+computes the defaults for a record without it. A fork then differs from its upstream only on records
+that have evidence. A record minted in the `mailwoman` id range always writes the property.
+`mw:outcomes_src` maps each member beyond the defaults to the evidence that added it, such as
+`geonames:T.MT`.
+
+Most natural features and landmarks aren't Who's On First records. Each build that adds places from
+another source applies the same evidence table to that source's type field: the GeoNames step reads
+the feature code, the landmark index reads the Wikidata class or the OSM tag, and a `poi.db` row
+is `venue`. A source with no mapped type field fails its build instead of writing empty sets.
+
+A built database stores a row per record and member only for records whose set differs from the
+defaults, keyed by `spr_id` and `mw:id`. Its size is bounded by the count of records with evidence.
+A database built before this design has no such table, and every record in it reads as its
+placetype defaults.
+
+### The residue
+
+A record that has a name and lacks both a placetype default and type evidence goes to a language-model pass, and
+no other record does. The pass picks from the closed vocabulary. Its answer is written with
+`inferred:<model>` in `mw:outcomes_src`, and deterministic evidence that arrives later replaces it.
+
+## Where the hint, the head and the set meet
+
+**The request.** `outcomeHint` is an option beside `localeHint`. Its value is an id from the
+vocabulary, and a value outside the vocabulary is refused with an error.
+
+**The model.** The graph gains an `outcome_hint` input built as `locale_hint` is: an index into an
+embedding table, with −1 for no hint. The model card lists the ids its classes stand for, in class
+order. The runtime maps the request's id to that list. An id the card doesn't list maps to its
+parent, and to −1 when the parent is absent too. The hint is evidence the model can overrule: with
+hint `venue`, `Mt. Tabor` is more likely to be labeled `venue` than `locality`.
+
+**The head.** A per-row outcome head outputs a distribution over the card's classes. A training
+row's target is the top-level members of its record's set. A cue-less bare-name row that several
+records share spreads its target across those records by importance. The hint is shown on a fraction
+of rows, so the head learns both the conditioned reading and the prior.
+
+**The resolver.** A bare name's candidates come from every data layer, as they do today. Two rules
+order the candidates, and each rule keeps every candidate:
+
+1. With a request hint, the records that satisfy it move ahead of the rest, inside the `exactMatch`
+   tier. This is the same shape as the containment partition in [Place ranking](./place-ranking.mdx).
+2. Without a hint, and only for a `bare_toponym` query or a span whose top two labels are within the
+   decoder's margin, the head's order of top-level kinds orders the readings. Importance orders the
+   records inside a reading.
+
+The two rules are lexicographic, and no weight blends a head probability with an importance. A
+blended score waits for a measurement from traces, as the placetype census's `delta` does.
+
+Every resolved place reports its outcome set, so a caller that wants a filter drops the places that
+don't satisfy its hint. In an anchored query such as `coffee near Mt. Tabor`, the hint applies to
+the returned records and not to the anchor.
+
+Rule 2 is default-on decoder and resolver behavior. It ships only on a `pass` verdict under
+[the release-quality procedure](../CONTRIBUTING_MODEL_WORK.mdx), and it stays opt-in until then.
+
+## What other geocoders do
+
+Each row gives what the publisher's documentation states and what this design takes from it. The
+pages were read on 2026-11-27.
+
+| System           | Stated                                                                                                                                                                                                                                                         | This design                                                                                                                                      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OpenStreetMap    | "OpenStreetMap's free tagging system allows the map to include an unlimited number of attributes describing each feature." ([Map features](https://wiki.openstreetmap.org/wiki/Map_features))                                                                  | Differs. The vocabulary is closed. It borrows the key names `natural` and `place` where the meaning agrees, and OSM tags enter only as evidence. |
+| OpenStreetMap    | "one on-the-ground real world feature should be mapped with only one OSM element" ([One feature, one OSM element](https://wiki.openstreetmap.org/wiki/One_feature,_one_OSM_element))                                                                           | Agrees. The butte, the neighborhood and the park are three records, and a set describes one record.                                              |
+| Nominatim        | A result reports "`class`, `type` - key and value of the main OSM tag" ([Output](https://nominatim.org/release-docs/latest/api/Output/))                                                                                                                       | Differs. One main tag per result is one kind per record. A record here holds a set, because a borough can also be an island.                     |
+| Nominatim        | "The layer filter allows to select places by themes." "The `natural` layer collects features like rivers, lakes and mountains" ([Search](https://nominatim.org/release-docs/latest/api/Search/))                                                               | Agrees on a request field apart from the text. Differs in effect: `layer` filters, and the hint orders.                                          |
+| Nominatim        | "The search query may also contain special phrases which are translated into specific OpenStreetMap (OSM) tags" ([Search](https://nominatim.org/release-docs/latest/api/Search/))                                                                              | Differs. A kind word in the text is a parse cue or an activity. The hint is a request field and never query text.                                |
+| Google Places    | "A place can have a single primary type" and "A place can have multiple type values" ([Place types](https://developers.google.com/maps/documentation/places/web-service/place-types))                                                                          | Agrees on a set per place. The placetype is this design's single-valued property, so no primary member is stored.                                |
+| Google Places    | `includedType` "Biases the results to places matching the specified type", and with `strictTypeFiltering` "only places that match the specified types" return ([Text Search](https://developers.google.com/maps/documentation/places/web-service/text-search)) | Agrees on ordering as the default and on one hint per request. The strict form is left to the caller, who reads each place's set.                |
+| Google Places    | A general primary type "can also contain places with a more specific primary type" ([`searchNearby`](https://developers.google.com/maps/documentation/places/web-service/nearby-search))                                                                       | Agrees. A prefix hint is satisfied by its children.                                                                                              |
+| Google Places    | The method is "not intended for ambiguous queries" ([Text Search](https://developers.google.com/maps/documentation/places/web-service/text-search))                                                                                                            | Differs. A bare ambiguous name is in scope, and the answer is ranked readings with alternatives.                                                 |
+| Google Geocoding | "The types may be considered 'tags'." The page's example is a city tagged with both `political` and `locality`. ([Geocoding](https://developers.google.com/maps/documentation/geocoding/requests-geocoding))                                                   | Agrees on a set. Differs in content: Google's types mix business categories with geography, and business categories stay out of this vocabulary. |
+| Pelias           | `layers` values are `venue`, `address`, `street` and the administrative placetypes, with `coarse` an "alias for simultaneously using all administrative layers" ([Search](https://github.com/pelias/documentation/blob/master/search.md))                      | Differs. Pelias filters by placetype and has no member for a natural feature. Placetype and outcome kind are separate properties here.           |
+| Photon           | "A category name consists of a sequence of labels which are separated by dots." "`include=food.shop` will match `food.shop.supermarket`" ([Categories](https://github.com/komoot/photon/blob/master/docs/categories.md))                                       | Agrees on dotted ids and prefix matching. Differs: Photon's categories are open and set per installation.                                        |
+
+Two points are inferred and not stated by a publisher. Google's forward geocoding request lists no
+parameter that selects a result type. Its `result_type` filter is documented for reverse geocoding
+only, where it "acts as a post-search filter". Pelias documents no released `categories` filter on
+its search page, and its [categories page](https://pelias.io/milestones/categories/) is headed as
+proposed functionality.
+
+One observation supports the three-records reading. On 2026-11-27 the public Nominatim instance
+answered `Mount Tabor Portland Oregon` with two results: node 297136178, `natural=peak`, importance
+0.368, and relation 7701836, `boundary=administrative`, importance 0.326. The bare query `Mount
+Tabor` returned 20 results across `natural=peak`, `boundary=administrative`, `place=hamlet` and
+`railway=station`, with the peak in Israel at importance 0.532.
