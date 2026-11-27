@@ -36,6 +36,7 @@ import { moduleSurfaceCheck } from "#repo-health/checks/module/surface"
 import { nestedIndexCheck } from "#repo-health/checks/nested-index"
 import { noRootScriptsCheck } from "#repo-health/checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#repo-health/checks/node-modules-reacharound"
+import { outcomeKindsCheck } from "#repo-health/checks/outcome-kinds"
 import { packageLicenseCheck } from "#repo-health/checks/package-license"
 import { prefixDirectoriesCheck } from "#repo-health/checks/prefix-directories"
 import { privateNameShadowsCheck } from "#repo-health/checks/private-name-shadows"
@@ -82,6 +83,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	weightsReconciliationCheck,
 	weightsMaterializationCheck,
 	dataProvenanceCheck,
+	outcomeKindsCheck,
 	publishedBundlesCheck,
 	testLayoutCheck,
 	nodeModulesReacharoundCheck,
