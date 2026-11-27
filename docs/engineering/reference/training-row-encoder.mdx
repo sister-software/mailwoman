@@ -105,19 +105,25 @@ draws from the epoch's generator (the group order, then one 64-bit pass seed) at
 still fixes every row. A resumed run re-draws skipped batches and reads the same rows. The audits'
 `RawRows` plans use the same limit. `openRawRows` defaults that limit to the config's `train_rows_per_epoch`.
 
-`TrainingBatches` places each epoch in its run with an `EpochCursor`: the run seed and the epoch, counted from 1.
-Under a cursor, a spread group's row order is seeded by the run seed, the file and the group, the same order in every
-epoch. Epoch `e` starts that order `(e − 1) × ⌈fraction × group rows⌉` rows in, wrapping at the group's end. The epochs
-of a run then read each group in turn. A run whose draws of a source equal its rows reads nearly every row once.
-An epoch seeded alone reads a fresh random part of each group instead, and over `E` such epochs about `(1 − 1/E)^E`
-of the rows are never read.
+`TrainingBatches` places each epoch in its run with an `EpochCursor`: the run seed, the epoch counted from 1, and the
+run's `RunPositions` table. Under a cursor, a spread group's row order is seeded by the run seed, the file and the
+group, the same order in every epoch. The table counts the rows the run has read from each group's order, and each
+epoch starts the order at that count, wrapping at the group's end. The epochs of a run then read each group in turn,
+and a run whose draws of a source equal its rows reads nearly every row once. An epoch seeded alone reads a fresh
+random part of each group instead, and over `E` such epochs about `(1 − 1/E)^E` of the rows are never read.
 
-`tests/run_coverage.rs` measures the difference: eight epochs that each expect an eighth of a 24,000-row source read
-23,328 rows with the cursor and 15,695 without it. In v8.13.0, the last run without it, 1,211,010 of `wof-admin`'s
-2,780,333 train rows were never drawn under `source_reps: 1.0` (#3516). A resumed run keeps the cursor, because the
-trainer reopens epoch `e` from the same run seed. `Sampler::open`, `RawRows` and the audits open an epoch without a
-cursor. Their counts per source, country and label order keep the training stream's distribution, and the rows
-they read differ from the rows the run trains on.
+The table counts the rows each epoch read. An epoch's row limit counts emitted rows, augmented copies
+included, so an epoch draws fewer rows from a source than its weight share of the limit. v8.14.0 and v8.15.0 placed
+epoch `e` at `(e − 1) × ⌈fraction × group rows⌉`, the expected draws. Each epoch then left part of its window
+unread, and the windows wrapped before the run ended. v8.15.0 drew `wof-admin` 2,815,421 times against 2,780,333 train
+rows, and 419,900 rows were never drawn. Of the 429,743 rows drawn twice or more, 407,229 repeated four or more epochs
+after their first draw.
+
+`tests/run_coverage.rs` holds both cases. Eight epochs that each expect an eighth of a 24,000-row source read nearly
+every row. Ten epochs whose augmented other source emits two rows per draw read 82.2% of the rows under the expected
+draws, and read in turn under the table. A resumed run rebuilds the table, because the trainer re-draws the batches it
+skips. `Sampler::open`, `RawRows` and the audits open an epoch without a cursor. Their counts per source, country and
+label order keep the training stream's distribution, and the rows they read differ from the rows the run trains on.
 
 ### A reps target counts emitted rows
 

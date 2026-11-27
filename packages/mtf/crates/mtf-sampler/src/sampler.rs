@@ -24,10 +24,11 @@ use crate::pyrandom::{PyRandom, Seed};
 use crate::relabel::AffixRelabelLexicon;
 use crate::row::Row;
 use crate::source_reps;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// Why a sampled row was not yielded.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -91,15 +92,51 @@ pub struct Shared {
 
 /// Where one train epoch sits in its run.
 ///
-/// A spread source seeds each row group's order from `run_seed` rather than from the epoch, and epoch `epoch`
-/// starts each group `epoch - 1` times the group's expected draws per epoch into that order. The epochs of a run
-/// then read one order per group in turn, so a row repeats only after every row of its group was read.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A spread source seeds each row group's order from `run_seed` rather than from the epoch, and each epoch starts
+/// a group where the run's earlier epochs stopped reading it (`RunPositions`). The epochs of a run then read one
+/// order per group in turn, so a row repeats only after every row of its group was read.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EpochCursor {
 	pub run_seed: i128,
 	/// The epoch, counted from 1.
 	pub epoch: u64,
+	pub positions: RunPositions,
 }
+
+/// How many rows of each spread row group's run-wide order the run has read, keyed by file and group.
+///
+/// An epoch reads as many rows as its row limit admits, and the limit counts emitted rows, augmented copies
+/// included. So an epoch draws fewer rows from a source than its weight share of the limit, and a position derived
+/// from the expected draws would skip rows in every epoch and wrap early. The epochs of a run share one table, and
+/// a resumed run rebuilds it by replaying the batches it skips.
+#[derive(Debug, Clone, Default)]
+pub struct RunPositions(Arc<Mutex<FxHashMap<(PathBuf, usize), u64>>>);
+
+impl RunPositions {
+	/// The rows read so far from group `group` of `path`.
+	pub fn get(&self, path: &Path, group: usize) -> u64 {
+		let table = self.0.lock().expect("no reader panics while holding the table");
+		table.get(&(path.to_path_buf(), group)).copied().unwrap_or(0)
+	}
+
+	/// Records `rows` more rows read from group `group` of `path`.
+	pub fn advance(&self, path: &Path, group: usize, rows: u64) {
+		if rows == 0 {
+			return;
+		}
+		let mut table = self.0.lock().expect("no reader panics while holding the table");
+		*table.entry((path.to_path_buf(), group)).or_insert(0) += rows;
+	}
+}
+
+/// Two cursors share a table when they hold the same one.
+impl PartialEq for RunPositions {
+	fn eq(&self, other: &Self) -> bool {
+		Arc::ptr_eq(&self.0, &other.0)
+	}
+}
+
+impl Eq for RunPositions {}
 
 impl Shared {
 	pub fn check_cancelled(&self) -> Result<()> {
@@ -528,6 +565,7 @@ pub struct TrainingBatches {
 	row_limit: Option<u64>,
 	remaining_skip: u64,
 	epoch: u64,
+	positions: RunPositions,
 	drawn: u64,
 	current: Option<Sampler>,
 	cancel: CancelToken,
@@ -549,6 +587,7 @@ impl TrainingBatches {
 			row_limit,
 			remaining_skip: skip_batches,
 			epoch: 0,
+			positions: RunPositions::default(),
 			drawn: 0,
 			current: None,
 			cancel,
@@ -577,6 +616,7 @@ impl TrainingBatches {
 					Some(EpochCursor {
 						run_seed: self.seed,
 						epoch: self.epoch,
+						positions: self.positions.clone(),
 					}),
 				)?);
 			}
