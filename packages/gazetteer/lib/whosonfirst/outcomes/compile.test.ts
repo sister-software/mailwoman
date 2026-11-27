@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { OutcomeDefinition } from "@mailwoman/core/outcome/spec"
 import { describe, expect, it } from "vitest"
 
 import { compileOutcomeSpec, OutcomeCompileError, serializeOutcomeSpec } from "#whosonfirst/outcomes/compile"
 import type { OutcomeDefinitionsInput } from "#whosonfirst/outcomes/definition"
+import type { OutcomeDefinition } from "#whosonfirst/outcomes/spec"
 
 function definition(id: number, name: string, init: Partial<OutcomeDefinition> = {}): OutcomeDefinition {
 	return {

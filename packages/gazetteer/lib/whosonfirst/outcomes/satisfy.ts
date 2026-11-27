@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { OUTCOME_KINDS, type OutcomeKind } from "#outcome/kinds"
+import { OUTCOME_KINDS, type OutcomeKind } from "#whosonfirst/outcomes/kinds"
 
 /**
  * Whether a string is the name of a member of the outcome vocabulary.

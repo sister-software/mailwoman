@@ -11,8 +11,8 @@
  *   `landmarks.db` keys its records by Wikidata item, so its assertions sit in `landmark_outcome`.
  */
 
-import { createOutcomeEvidenceTable } from "@mailwoman/core/outcome/evidence"
-import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
+import { createOutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/gazetteer/whosonfirst/outcomes/spec"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 

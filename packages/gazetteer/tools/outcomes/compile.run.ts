@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Compiles the outcome definitions clone and generates `@mailwoman/core/outcome/kinds` from it.
+ *   Compiles the outcome definitions clone and generates
+ *   `@mailwoman/gazetteer/whosonfirst/outcomes/kinds` from it.
  *
  *   Usage: node packages/gazetteer/tools/outcomes/compile.run.ts [--repos-root <dir>]
  *

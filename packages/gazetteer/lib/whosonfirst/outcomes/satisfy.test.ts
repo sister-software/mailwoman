@@ -3,8 +3,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { OUTCOME_KINDS } from "#outcome/kinds"
-import { currentOutcomeKind, isOutcomeKind, outcomeSatisfies } from "#outcome/satisfy"
+import { OUTCOME_KINDS } from "#whosonfirst/outcomes/kinds"
+import { currentOutcomeKind, isOutcomeKind, outcomeSatisfies } from "#whosonfirst/outcomes/satisfy"
 
 describe("outcome kinds", () => {
 	it("satisfies a requested id by the member itself or its parent, never a sibling", () => {

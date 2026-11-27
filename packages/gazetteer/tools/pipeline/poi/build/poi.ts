@@ -17,7 +17,6 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
@@ -38,6 +37,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent, latLngToCell, polygonToCells } from "@sister.software/h3"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
+
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "#whosonfirst/outcomes/spec"
 
 const COVERAGE_H3_RESOLUTION = 6
 

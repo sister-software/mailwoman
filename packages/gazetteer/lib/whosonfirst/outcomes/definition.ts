@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { OutcomeDefinition, OutcomeRegistryRow } from "@mailwoman/core/outcome/spec"
+import type { OutcomeDefinition, OutcomeRegistryRow } from "#whosonfirst/outcomes/spec"
 
 /**
  * The outcome definitions repository, cloned beside the Who's On First placetypes fork.

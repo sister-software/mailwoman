@@ -9,7 +9,6 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
-import type { OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import { SYNTHETIC_ID_RANGES } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { licenseIdentifiers } from "@mailwoman/license/obligations"
 import { readLicenseRecord } from "@mailwoman/license/record"
@@ -19,6 +18,7 @@ import { probeManifest } from "mailwoman/data/catalog/inventory"
 import { basename, type PathBuilderLike } from "path-ts"
 
 import { OVERTURE_PART_NOTICE } from "#tools/pipeline/manifest/collective-offer"
+import type { OutcomeSpecPin } from "#whosonfirst/outcomes/spec"
 
 /**
  * The ancestor's identity as this manifest records it, where `unknown` is a

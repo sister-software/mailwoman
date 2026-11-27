@@ -3,8 +3,8 @@
 
 import { describe, expect, it } from "vitest"
 
-import { createOutcomeEvidenceTable } from "#outcome/evidence"
-import type { CompiledOutcomeSpec, OutcomeDefinition } from "#outcome/spec"
+import { createOutcomeEvidenceTable } from "#whosonfirst/outcomes/evidence"
+import type { CompiledOutcomeSpec, OutcomeDefinition } from "#whosonfirst/outcomes/spec"
 
 const names = ["place", "place.borough", "place.locality", "natural", "natural.island", "address"]
 

@@ -6,12 +6,6 @@
  */
 
 import { OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
-import {
-	createOutcomeEvidenceTable,
-	type OutcomeAssertion,
-	type OutcomeEvidenceTable,
-} from "@mailwoman/core/outcome/evidence"
-import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import type { ClassRoots } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/classify"
 import type { VitalPlace } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/inventory"
 import {
@@ -19,6 +13,12 @@ import {
 	vitalPlaceCountry,
 	vitalPlaceRendering,
 } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/render"
+import {
+	createOutcomeEvidenceTable,
+	type OutcomeAssertion,
+	type OutcomeEvidenceTable,
+} from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/gazetteer/whosonfirst/outcomes/spec"
 import {
 	createLandmarkTables,
 	isLandmarkCode,

@@ -4,12 +4,6 @@
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import type {
-	CompiledOutcomeSpec,
-	OutcomeDefinition,
-	OutcomeRegistryRow,
-	OutcomeSpecPin,
-} from "@mailwoman/core/outcome/spec"
 import { gitSync } from "@mailwoman/core/repo/git"
 import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath, type PathBuilderLike } from "path-ts"
@@ -17,6 +11,12 @@ import { Globerator } from "spliterator/node/fs"
 
 import { resolveWOFRepo } from "#whosonfirst/extract-repo"
 import { OUTCOMES_REPO, OUTCOMES_SPEC_FILE, type OutcomeDefinitionsInput } from "#whosonfirst/outcomes/definition"
+import type {
+	CompiledOutcomeSpec,
+	OutcomeDefinition,
+	OutcomeRegistryRow,
+	OutcomeSpecPin,
+} from "#whosonfirst/outcomes/spec"
 import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 
 async function requireRepo(reposRoot: PathBuilderLike, name: string): Promise<string> {

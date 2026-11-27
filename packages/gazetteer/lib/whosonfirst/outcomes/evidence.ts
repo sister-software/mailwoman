@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { CompiledOutcomeSpec, OutcomeEvidenceSource } from "#outcome/spec"
+import type { CompiledOutcomeSpec, OutcomeEvidenceSource } from "#whosonfirst/outcomes/spec"
 
 /**
  * One entry of a record's `mw:outcomes`: a source's assertion or denial of one member.

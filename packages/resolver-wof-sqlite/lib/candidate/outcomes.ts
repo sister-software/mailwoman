@@ -12,9 +12,9 @@
  */
 
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
-import { createOutcomeEvidenceTable } from "@mailwoman/core/outcome/evidence"
-import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { createOutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/gazetteer/whosonfirst/outcomes/spec"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
