@@ -251,6 +251,23 @@ export interface LoadedRecord {
 export async function loadForkRecords(repoDir: PathBuilder): Promise<Map<number, LoadedRecord>> {
 	const records = new Map<number, LoadedRecord>()
 
+	for await (const record of streamForkRecords(repoDir)) {
+		records.set(record.feature.id, record)
+	}
+
+	return records
+}
+
+/**
+ * Every record of a fork clone, one at a time, for a caller that keeps part of each.
+ *
+ * {@link loadForkRecords} holds every record's text and parsed feature.
+ * A tool that rewrites files needs both.
+ *
+ * Great Britain's fork is 1.2 GB over 60,989 records, and a load of it for a tool
+ * that only reads exceeded Node's default heap.
+ */
+export async function* streamForkRecords(repoDir: PathBuilder): AsyncGenerator<LoadedRecord> {
 	// The clone's index and its untracked files, so a record written and not yet committed is read too.
 	// A walk of the `data` tree took 3 s for Norway's 13,153 records, four directories
 	// deep each, and git answers the same list in 0.02 s.
@@ -274,11 +291,7 @@ export async function loadForkRecords(repoDir: PathBuilder): Promise<Map<number,
 		{ concurrency: RECORD_READ_CONCURRENCY }
 	)
 
-	for await (const record of loaded) {
-		records.set(record.feature.id, record)
-	}
-
-	return records
+	yield* loaded
 }
 
 /**

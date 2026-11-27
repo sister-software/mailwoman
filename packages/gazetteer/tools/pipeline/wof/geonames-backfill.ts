@@ -33,7 +33,7 @@ import { TextSpliterator } from "spliterator"
 
 import { readGeonamesDivisions } from "#tools/pipeline/admin/former-divisions"
 import { mailwomanWOFIDs, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
-import { concordancesOf, hierarchyOf, loadForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
+import { concordancesOf, hierarchyOf, streamForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
 import { wofGeometryHash, wofRecordNames } from "#tools/pipeline/wof/slim"
 import { wofRepoName } from "#whosonfirst/extract-repo"
 
@@ -297,7 +297,6 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 	const country = options.country.toUpperCase()
 	const repoName = wofRepoName("admin", country)
 	const repoDir = reposRoot(repoName)
-	const records = await loadForkRecords(repoDir)
 	const places = await readGeoNamesPlaces(options.geonamesDir, country)
 	const divisions = await divisionIDsByCodePath(options.geonamesDir, country)
 	const divisionRecords = new Map<number, LoadedRecord>()
@@ -317,7 +316,11 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		}>
 	>()
 
-	for (const record of records.values()) {
+	// The fork is read one record at a time.
+	// A settlement leaves a point and its name keys, and a record of the parent ladder
+	// is kept without its text, so the largest forks fit in memory.
+	for await (const loaded of streamForkRecords(repoDir)) {
+		const record: LoadedRecord = { ...loaded, text: "" }
 		const geonamesID = Number(concordancesOf(record)["gn:id"])
 
 		if (Number.isInteger(geonamesID) && geonamesID > 0) {
@@ -331,18 +334,19 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 			const longitude = Number(record.feature.properties["geom:longitude"])
 			const cell = twinCell(latitude, longitude)
 
-			settlements.set(cell, [
-				...(settlements.get(cell) ?? []),
-				{
-					id: record.feature.id,
-					name: String(record.feature.properties["wof:name"] ?? ""),
-					latitude,
-					longitude,
-					keys: [...new Set(wofRecordNames(record.feature.properties).map(normalizeLocalityForKey))].filter(
-						(key) => key.length > 0
-					),
-				},
-			])
+			const inCell = settlements.get(cell) ?? []
+
+			inCell.push({
+				id: record.feature.id,
+				name: String(record.feature.properties["wof:name"] ?? ""),
+				latitude,
+				longitude,
+				keys: [...new Set(wofRecordNames(record.feature.properties).map(normalizeLocalityForKey))].filter(
+					(key) => key.length > 0
+				),
+			})
+
+			settlements.set(cell, inCell)
 		}
 
 		if (!PARENT_LADDER.includes(placetype as (typeof PARENT_LADDER)[number])) continue
@@ -357,7 +361,10 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 
 		if (!polygons) continue
 
-		boundaries.set(placetype, [...(boundaries.get(placetype) ?? []), { record, bbox: record.feature.bbox, polygons }])
+		const ofPlacetype = boundaries.get(placetype) ?? []
+
+		ofPlacetype.push({ record, bbox: record.feature.bbox, polygons })
+		boundaries.set(placetype, ofPlacetype)
 	}
 
 	/**
