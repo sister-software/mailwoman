@@ -18,10 +18,14 @@
 //!
 //! Under `read_order: stored`, [`Stored`] replaces the mixture: the listed train files are read once in stored order
 //! with no draw.
+//!
+//! A source whose files store a `draw_weight` column reads each row's weight into its acceptance draw (see
+//! `file_rows`). The multinomial picks the source first, so the weights move draws between the source's rows and
+//! never between sources. A held-out split and a stored-order read ignore the column.
 
 use crate::corpus_files::{file_source_counts, files_source_counts, indexed, CorpusFile};
 use crate::error::{Error, Result};
-use crate::file_rows::{FileRows, RowDrops, RowGroupVisit, StartState};
+use crate::file_rows::{DrawWeights, FileRows, RowDrops, RowGroupVisit, StartState};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
 use crate::row::Row;
@@ -98,15 +102,23 @@ struct SourceRows {
 	files: Arc<Vec<CorpusFile>>,
 	/// The share of the source's rows one epoch is expected to draw, when below 1.
 	fraction: Option<f64>,
+	/// The bound of the source's per-row draw weights, when one of its files stores them.
+	draw_weights: Option<DrawWeights>,
 	plan: Option<Plan>,
 }
 
 impl SourceRows {
-	fn new(source: Arc<str>, files: Arc<Vec<CorpusFile>>, fraction: Option<f64>) -> Self {
+	fn new(
+		source: Arc<str>,
+		files: Arc<Vec<CorpusFile>>,
+		fraction: Option<f64>,
+		draw_weights: Option<DrawWeights>,
+	) -> Self {
 		Self {
 			source,
 			files,
 			fraction,
+			draw_weights,
 			plan: None,
 		}
 	}
@@ -188,7 +200,16 @@ impl SourceRows {
 				order,
 				position,
 				current,
-			} => Self::next_sequential(&self.source, &self.files, order, position, current, rng, shared),
+			} => Self::next_sequential(
+				&self.source,
+				&self.files,
+				self.draw_weights,
+				order,
+				position,
+				current,
+				rng,
+				shared,
+			),
 			Plan::Spread {
 				units,
 				next,
@@ -199,6 +220,7 @@ impl SourceRows {
 			} => Self::next_spread(
 				&self.source,
 				&self.files,
+				self.draw_weights,
 				units,
 				next,
 				live,
@@ -215,6 +237,7 @@ impl SourceRows {
 	fn next_spread(
 		source: &Arc<str>,
 		files: &[CorpusFile],
+		draw_weights: Option<DrawWeights>,
 		units: &mut [Unit],
 		next: &mut usize,
 		live: &mut usize,
@@ -248,6 +271,7 @@ impl SourceRows {
 						file.path.clone(),
 						source.clone(),
 						file.filter.as_deref(),
+						draw_weights,
 						unit.group,
 						order_seed,
 						rotation,
@@ -277,9 +301,11 @@ impl SourceRows {
 		}
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	fn next_sequential(
 		source: &Arc<str>,
 		files: &[CorpusFile],
+		draw_weights: Option<DrawWeights>,
 		order: &[usize],
 		position: &mut usize,
 		current: &mut Option<FileRows>,
@@ -293,12 +319,10 @@ impl SourceRows {
 				}
 				let file = &files[order[*position]];
 				*position += 1;
-				*current = Some(FileRows::new(
-					file.path.clone(),
-					Some(source.clone()),
-					file.filter.clone(),
-					None,
-				));
+				*current = Some(
+					FileRows::new(file.path.clone(), Some(source.clone()), file.filter.clone(), None)
+						.with_draw_weights(draw_weights),
+				);
 			}
 			match current.as_mut().expect("set above").next(rng, shared)? {
 				Some(row) => return Ok(Some(row)),
@@ -433,15 +457,17 @@ impl Mixture {
 			let share = limit * weight / total / rows as f64;
 			(rows > 0 && share < 1.0).then_some(share)
 		};
+		let sources = by_source
+			.into_iter()
+			.zip(&weights)
+			.map(|((s, f), &w)| {
+				let share = fraction(&s, w);
+				let draw_weights = DrawWeights::of_files(&f)?;
+				Ok(SourceRows::new(Arc::from(s.as_str()), Arc::new(f), share, draw_weights))
+			})
+			.collect::<Result<Vec<_>>>()?;
 		Ok(Self {
-			sources: by_source
-				.into_iter()
-				.zip(&weights)
-				.map(|((s, f), &w)| {
-					let share = fraction(&s, w);
-					SourceRows::new(Arc::from(s.as_str()), Arc::new(f), share)
-				})
-				.collect(),
+			sources,
 			cumulative,
 			total,
 			passes: vec![0; n],
@@ -494,8 +520,10 @@ impl Mixture {
 					passes: self.passes[chosen],
 				});
 				self.pass_rows[chosen] = 0;
-				let (files, fraction) = (self.sources[chosen].files.clone(), self.sources[chosen].fraction);
-				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files, fraction);
+				let restarted = &self.sources[chosen];
+				let (files, fraction, draw_weights) =
+					(restarted.files.clone(), restarted.fraction, restarted.draw_weights);
+				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files, fraction, draw_weights);
 				self.sources[chosen].next(rng, shared)?.ok_or_else(|| {
 					Error::Input(format!(
 						"source {source:?} yielded rows in an earlier pass and none in its restarted pass"
