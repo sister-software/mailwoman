@@ -18,10 +18,12 @@
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { git } from "@mailwoman/core/repo/git"
 import { isMailwomanWOFID } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { pythonJSONString } from "@mailwoman/core/strings/python-json"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { parallelMap, TextSpliterator } from "spliterator"
 
 import { wofGeometryJSON } from "#tools/pipeline/wof/slim"
 import { wofIDPathSegments } from "#whosonfirst/extract-repo"
@@ -213,6 +215,47 @@ export async function writeWOFRecord(repoDir: PathBuilderLike, feature: WOFRecor
 	await writeLocalTextFile(formatWOFFeature(feature), path)
 
 	return path
+}
+
+/**
+ * Clones listed at once by {@link mailwomanWOFIDs}.
+ *
+ * Each listing is one short git process, and spliterator measures a file
+ * or process fan-out as fastest at two to three in flight.
+ */
+const CLONE_LISTING_CONCURRENCY = 3
+
+/**
+ * Every id in the mailwoman range that the given clones hold a record file for.
+ *
+ * A minter needs the ids and no record's content, so this lists each clone's `data/989` tree
+ * from git's index and its untracked files and reads no file. {@link readMailwomanWOFRecords}
+ * parsed every record for the same answer, 89,425 files across the forks on 2026-11-27.
+ */
+export async function mailwomanWOFIDs(repoDirs: readonly PathBuilderLike[]): Promise<Set<number>> {
+	const ids = new Set<number>()
+
+	const listings = parallelMap(
+		repoDirs,
+		async (repoDir) => {
+			if (!(await pathExists(PathBuilder.from(repoDir)("data", "989")))) return ""
+
+			return git(["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "data/989"], repoDir)
+		},
+		{ concurrency: CLONE_LISTING_CONCURRENCY }
+	)
+
+	for await (const listing of listings) {
+		for (const path of TextSpliterator.from(listing, { delimiter: "\0" })) {
+			const id = Number(/(?:^|\/)(\d+)\.geojson$/u.exec(path)?.[1])
+
+			if (isMailwomanWOFID(id)) {
+				ids.add(id)
+			}
+		}
+	}
+
+	return ids
 }
 
 /**

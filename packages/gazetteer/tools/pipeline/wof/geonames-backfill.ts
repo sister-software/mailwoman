@@ -32,7 +32,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { readGeonamesDivisions } from "#tools/pipeline/admin/former-divisions"
-import { readMailwomanWOFRecords, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
+import { mailwomanWOFIDs, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
 import { concordancesOf, hierarchyOf, loadForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
 import { wofGeometryHash, wofRecordNames } from "#tools/pipeline/wof/slim"
 import { wofRepoName } from "#whosonfirst/extract-repo"
@@ -413,11 +413,7 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 	// because two runs that both read the range would mint the same ids.
 	const minted = isPresent(options.firstID)
 		? null
-		: new Set(
-				(await readMailwomanWOFRecords(await sortedGlob(reposRoot, "whosonfirst-data-*", { onlyFiles: false }))).map(
-					(record) => record.id
-				)
-			)
+		: await mailwomanWOFIDs(await sortedGlob(reposRoot, "whosonfirst-data-*", { onlyFiles: false }))
 
 	let nextBlockID = options.firstID ?? 0
 
