@@ -1650,6 +1650,48 @@
 				}
 			},
 			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v8130/promotion]"
+		},
+		{
+			"run_id": "v9-0-0-base-20261127",
+			"model_version": "11.5.0",
+			"model_path": "@mailwoman/neural-weights-en-us@11.5.0",
+			"corpus_version": "v0.8.22-nz-overlay",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"tokenizer_md5": "5a1759ca2a384ab7fe1ac2166399106c",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-11-27",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 31965,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 96.7,
+					"country_homograph": 98.1,
+					"micro": 88.3,
+					"locality": 88.8,
+					"region": 92.5,
+					"street": 76.4,
+					"street_prefix": 93.9,
+					"street_suffix": 100,
+					"unit": 100,
+					"po_box_real": 99.1,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.4,
+					"house_number": 98.6,
+					"region": 81.3,
+					"cedex_real": 100
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 70
+				}
+			},
+			"notes": "v8.19.0 seed 42 int8 (md5 b8b3d9e2a2db04c697de8f168304784f). Promotion check v9.0.0-base: 18 of 18 floors. Release requirements v19 against 11.4.0: insufficient_evidence (objective +0.0045 [-0.0007, +0.0097]; po_box_cedex loss -0.0597 [-0.0712, -0.0483] against -0.05; postal_unit loss -0.0010 [-0.0146, +0.0125]); every minimum passes. Operator-authorized promotion under the instruction to ship a candidate that \"improves or remains comparable to the current release on typical addresses\"; accepted loss po_box_cedex 0.8765 against 0.936 (-5.97 points, minimum 0.85). [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/models/arms/v8190/promotion]"
 		}
 	]
 }

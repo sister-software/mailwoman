@@ -45,7 +45,7 @@ describe("auditRights", () => {
 	it("counts an entry stating no use apart from one stating a use that is not training", () => {
 		const enUS = audit.packages.find((entry) => entry.package === "@mailwoman/neural-weights-en-us")
 
-		expect(enUS?.attributionEntries).toBe(10)
+		expect(enUS?.attributionEntries).toBe(11)
 		expect(enUS?.entriesNotTraining).toBe(4)
 		expect(enUS?.entriesStatingNoUse).toBe(1)
 
@@ -81,7 +81,7 @@ describe("auditRights", () => {
 		const recorded = audit.training.filter((row) => row.manifest)
 
 		expect(recorded.map((row) => row.package)).toEqual(["@mailwoman/neural-weights-en-us"])
-		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.8.22-retention-overlay")
+		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.8.22-nz-overlay")
 		expect(recorded[0]?.manifest?.problems).toEqual([])
 		// Every source the audited epoch emitted is in the frozen record, so the effective
 		// manifest covers the whole epoch rather than part of it.
