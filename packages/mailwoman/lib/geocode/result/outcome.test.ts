@@ -578,7 +578,7 @@ describe("outcome kinds: the request", () => {
 		const read = (
 			options: OutcomeOptions,
 			headOrdering: boolean,
-			query: Parameters<typeof resolveOutcomeFor>[3] = { kind: "bare_toponym", interpretedSpan: false }
+			query: Parameters<typeof resolveOutcomeFor>[2] = { kind: "bare_toponym", interpretedSpan: false }
 		) => resolveOutcomeFor(options, { vocabulary: VOCABULARY, headOrder, headOrdering }, query)?.headOrder
 
 		expect(read({ outcomeFilter: ["place", "natural"] }, false)).toBeNull()
