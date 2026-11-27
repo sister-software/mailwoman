@@ -17,6 +17,7 @@ import {
 	LOCALITY_SURFACE_FEATURE_DIM,
 	STREET_TYPE_FEATURE_DIM,
 } from "#channels/gazetteer-inference"
+import { NO_OUTCOME_HINT } from "#outcome/table"
 import type { RequiredChannels } from "#weights/channels"
 
 /**
@@ -302,7 +303,7 @@ export function packOutcomeHintFeed(
 ): PackedFeed<BigInt64Array> | null {
 	if (!inputNames.includes("outcome_hint")) return null
 
-	return { data: BigInt64Array.of(BigInt(outcomeHint ?? -1)), dims: [1] }
+	return { data: BigInt64Array.of(BigInt(outcomeHint ?? NO_OUTCOME_HINT)), dims: [1] }
 }
 
 /**

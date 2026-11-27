@@ -75,7 +75,7 @@ fn randomized() -> CoarseEncoder {
 	tch::no_grad(|| {
 		for (name, mut p) in model.store.parameters() {
 			if name.starts_with("outcome_hint_embedding") {
-				let _ = p.copy_(&Tensor::randn_like(&p));
+				p.copy_(&Tensor::randn_like(&p));
 			}
 		}
 	});
