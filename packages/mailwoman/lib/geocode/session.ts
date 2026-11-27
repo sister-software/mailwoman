@@ -26,6 +26,7 @@ import {
 	type ResolveOpts,
 	ScopeStrength,
 } from "@mailwoman/core/resolver"
+import { hasOutcomeOptions, type OutcomeOptions } from "@mailwoman/core/resolver/outcome"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
@@ -173,7 +174,7 @@ export interface GeocodeRun {
 /**
  * The settings one request may set on top of its session's.
  */
-export interface GeocodeRequestOptions {
+export interface GeocodeRequestOptions extends OutcomeOptions {
 	/**
 	 * The register the parse reads the input in, `auto` by default.
 	 */
@@ -349,6 +350,32 @@ export function createGeocodeProcessScope(
 	registerProcessServices(scope, options)
 
 	return scope
+}
+
+/**
+ * The geocode deps of a request's outcome fields and the head's opt-in order, or none
+ * when neither applies, so a request without them geocodes exactly as before.
+ */
+function outcomeDepsOf(
+	request: OutcomeOptions,
+	options: Pick<GeocodeSessionOptions, "outcomeVocabulary" | "outcomeHeadOrdering">
+): Pick<GeocodeDeps, "outcome" | "outcomeVocabulary" | "outcomeHeadOrdering"> {
+	const requested = hasOutcomeOptions(request)
+
+	if (!requested && !options.outcomeHeadOrdering) return {}
+
+	return {
+		...(requested
+			? {
+					outcome: {
+						...(request.outcomeHint != null ? { outcomeHint: request.outcomeHint } : {}),
+						...(request.outcomeFilter ? { outcomeFilter: request.outcomeFilter } : {}),
+					},
+				}
+			: {}),
+		...(options.outcomeVocabulary ? { outcomeVocabulary: options.outcomeVocabulary } : {}),
+		outcomeHeadOrdering: options.outcomeHeadOrdering,
+	}
 }
 
 function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
@@ -606,6 +633,8 @@ export async function createGeocodeSession(
 				...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
 				...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 				diagnoseUnreachable: !!trace && options.diagnoseUnreachable,
+
+				...outcomeDepsOf(request, options),
 			},
 			context
 		)

@@ -9,6 +9,7 @@ import {
 	type FormerDivisionLookup,
 	type FormerDivisionMatch,
 	hardCountryOf,
+	type LandmarkLookup,
 	type ParentPlaceScope,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
@@ -19,6 +20,7 @@ import {
 	type ResolveSwitches,
 	ScopeStrength,
 } from "@mailwoman/core/resolver"
+import type { ResolveOutcome } from "@mailwoman/core/resolver/outcome"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
@@ -272,6 +274,18 @@ export interface ResolutionState {
 	 * The walk records no events when it is absent.
 	 */
 	traceSink?: ((record: ResolveNodeTrace) => void) | null
+
+	/**
+	 * The request's outcome hint, filter and head order, and the span they apply to,
+	 * with the landmark layers that span also reads.
+	 *
+	 * Absent, every lookup runs today's sequence.
+	 */
+	outcome?: {
+		request: ResolveOutcome
+		target: AddressNode
+		layers: readonly LandmarkLookup[]
+	}
 
 	/**
 	 * Whether an empty lookup re-probes the other admin bands and traces which ones hold the value.

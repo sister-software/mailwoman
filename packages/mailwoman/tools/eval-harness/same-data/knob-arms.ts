@@ -74,6 +74,7 @@ const KNOB_OPTION_KINDS = {
 	formerDivisionLookup: null,
 	scopeCountryRetrieval: "boolean",
 	siblingLocalityContainment: "boolean",
+	outcome: null,
 	traceSink: null,
 	diagnoseUnreachable: "boolean",
 } as const satisfies Record<keyof Required<ResolveOpts>, KnobOptionKind>

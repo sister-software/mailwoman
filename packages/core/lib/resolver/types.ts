@@ -11,6 +11,7 @@ import type {
 	PostcodePrefixIndexLike,
 	StreetCentroidLookup,
 } from "#resolver/lookup-types"
+import type { OutcomeLayer, OutcomeMembership, OutcomeQuery, ResolveOutcome } from "#resolver/outcome"
 
 /**
  * Why a place's ranking score is a rank without a measurement behind it.
@@ -146,6 +147,29 @@ export interface ResolvedPlace {
 	 * A point-only row stores its coordinate as both corners.
 	 */
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
+	/**
+	 * The place's outcome set, read only when the request set an outcome field.
+	 */
+	outcomes?: readonly OutcomeMembership[] | null
+	/**
+	 * The place's Wikidata item, such as `Q160409`, when its data layer records one.
+	 */
+	wikidata?: string | null
+	/**
+	 * The data layer the place came from, set on an outcome-ordered candidate list.
+	 */
+	layer?: OutcomeLayer | null
+	/**
+	 * The comparable prominence `log10(sitelinks + 1)` of the place's Wikidata item, when known.
+	 */
+	sitelinkProminence?: number | null
+	/**
+	 * Whether the stated country and locality admit a landmark or OpenStreetMap candidate.
+	 *
+	 * Absent on a candidate-table row.
+	 * The candidate table's query applied the row's scope.
+	 */
+	contextAdmits?: boolean | null
 }
 
 /**
@@ -203,8 +227,17 @@ export interface ResolverBackend {
 		 * Parsed region qualifier, if any.
 		 */
 		regionQualifier?: string
+		/**
+		 * Reads each place's outcome set, and with `admit` keeps only the rows that hold an admitted id.
+		 */
+		outcome?: OutcomeQuery
 		limit?: number
 	}): Promise<ResolvedPlace[]>
+	/**
+	 * The outcome tables the backend's database lacks, empty when it holds them all.
+	 * A backend without the method reads no outcome sets.
+	 */
+	missingOutcomeTables?(): readonly string[]
 	/**
 	 * Optional ancestor lineage lookup.
 	 */
@@ -264,6 +297,10 @@ export interface LandmarkHit {
 	 * The importance Photon's index holds for an OpenStreetMap place, in place of a sitelink count.
 	 */
 	importance?: number | null
+	/**
+	 * The place's outcome set, read only when the lookup was given an outcome query.
+	 */
+	outcomes?: readonly OutcomeMembership[] | null
 }
 
 /**
@@ -298,7 +335,16 @@ export function landmarkPlaceID(id: string | number): string {
  * Finds the places a name belongs to, primary names first, then most sitelinks first.
  */
 export interface LandmarkLookup {
-	find(name: string): LandmarkHit[] | Promise<LandmarkHit[]>
+	/**
+	 * With `outcome`, each hit holds its outcome set, and `admit` keeps only the
+	 * rows that hold an admitted id, inside the query.
+	 */
+	find(name: string, outcome?: OutcomeQuery): LandmarkHit[] | Promise<LandmarkHit[]>
+	/**
+	 * The outcome tables the layer's database lacks, empty when it holds them all.
+	 * A lookup without the method reads no outcome sets.
+	 */
+	missingOutcomeTables?(): readonly string[]
 }
 
 /**
@@ -735,6 +781,12 @@ export interface ResolveOpts {
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	siblingLocalityContainment?: boolean
+	/**
+	 * The request's outcome hint, filter and head order.
+	 *
+	 * Absent, every lookup runs today's sequence.
+	 */
+	outcome?: ResolveOutcome | null
 	/**
 	 * Optional sink for resolver-internal trace records.
 	 */
