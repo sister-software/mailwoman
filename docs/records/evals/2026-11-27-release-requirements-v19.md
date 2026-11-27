@@ -7,9 +7,9 @@ owner: evaluation
 
 # Release requirements v19 draft, a new confirmation role after the v18 read
 
-Status: **draft, unregistered**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v19.json` is
-v18 with a new confirmation role, 11.4.0 still the published identity, and an empty candidate identity for the next
-candidate to fill. `release/current-spec.ts` still names v17. `scratchpad/2026/11/27/derive-spec-v19.ts` writes v19
+Status: **unregistered, candidate recorded**. `packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v19.json`
+is v18 with a new confirmation role, 11.4.0 still the published identity, and v8.19.0 seed 42 as the candidate
+(section 4). `release/current-spec.ts` still names v17. `scratchpad/2026/11/27/derive-spec-v19.ts` writes v19
 from v18, and every requirement, threshold, inference rule, statistic and the scorer revision `24d48aec5c` is v18's. No
 model has scored the four new collections.
 
@@ -75,3 +75,25 @@ that v18's overlap audit classed `verified_unseen`, unchanged, and its manifest'
 
 The 14 unread rows were frozen as `heldout-confirm-v0.8.26-in@c29d91804ee21837` and are left out of v19. Their files
 moved to `/mnt/mw/corpus/heldout/superseded/`, and no model has read them.
+
+## 4. The candidate
+
+v19's candidate is v8.19.0 seed 42 (`v8.19.0-nz-v0822-s42.yaml`, sha256 `184c7e6b…8ac7`, from scratch, final step
+31,965, run `3312e9d3b4843ddd`). Corpus v0.8.22-nz-overlay adds 499,148 `rendered-nz` train rows to
+v0.8.22-retention-overlay. The int8 `model.onnx` under `/mnt/mw/audits/v8190-grade/candidate` has md5
+`b8b3d9e2a2db04c697de8f168304784f` and sha256 `da2d15e231c01fd23d3f92c67800e0063628a1bee4098b88800a35fc442e2553`.
+
+The candidate's corpus differs from v8.16.0's, so the five collections were audited again with v8.19.0's config on the
+candidate side. That config sets no `init_from`. The audits read corpora v0.8.22-nz-overlay, v0.8.22-retention-overlay and
+v0.8.23-prominent-retention-overlay in every split, with folded text and address keys, and config v8.13.0 for 11.4.0.
+Each audit is `<collection>.provenance-v8190.json` beside its manifest.
+
+| Collection                             |  Rows | Overlap audit for v8.19.0 |
+| -------------------------------------- | ----: | ------------------------- |
+| `heldout-confirm-v0.8.26`              | 7,000 | 7,000 `verified_unseen`   |
+| `heldout-confirm-v0.8.26-us`           | 1,000 | 1,000 `verified_unseen`   |
+| `heldout-confirm-v0.8.24-in-unseen`    |   632 | 632 `verified_unseen`     |
+| `heldout-confirm-v0.8.26-capabilities` | 4,200 | 4,200 `verified_unseen`   |
+| `heldout-confirm-v0.8.26-probes`       | 5,000 | 5,000 `verified_unseen`   |
+
+Each audit found zero rows that overlap training by identity, group, text or address.
