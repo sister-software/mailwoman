@@ -10,6 +10,7 @@
 
 use tch::{Device, Kind, Tensor};
 use trainer_loop::optim::{clip_grad_norm_with, AdamW, Group, Kernel};
+use trainer_loop::schedules::{LambdaLr, Schedule};
 
 /// A tensor of `shape` whose values are `sin` of its flat index scaled by `seed`.
 fn fixed(shape: &[i64], seed: i64) -> Tensor {
@@ -106,6 +107,46 @@ fn the_multi_tensor_step_matches_the_per_tensor_step_and_skips_a_parameter_witho
 			.unwrap()
 	};
 	assert_eq!(max_abs_difference(&unused(&multi), &start[0].params[2].1), 0.0);
+}
+
+/// The multi-tensor kernel over 20 scheduled steps, reading each group's rate from the host or from its tensor.
+fn run_scheduled(tensor_rates: bool) -> AdamW {
+	let mut optim = AdamW::with_kernel(groups(7), Kernel::MultiTensor);
+	if tensor_rates {
+		optim.use_tensor_learning_rates().unwrap();
+	}
+	let mut scheduler = LambdaLr::new(
+		&mut optim,
+		Schedule::Cosine {
+			warmup_steps: 4,
+			max_steps: 20,
+		},
+	);
+	for step in 0..20 {
+		optim.zero_grad();
+		backward(&optim, step);
+		optim.step().unwrap();
+		scheduler.step(&mut optim);
+	}
+	optim
+}
+
+#[test]
+fn a_step_that_reads_its_learning_rate_from_a_tensor_follows_the_schedule_the_host_rate_follows() {
+	// Warmup's first rate is 0, so a tensor the scheduler never rewrote would leave every parameter where it started
+	// while the host run moves.
+	let host = run_scheduled(false);
+	let tensor = run_scheduled(true);
+	for ((name, a), (_, b)) in host.params().zip(tensor.params()) {
+		let difference = max_abs_difference(a, b);
+		assert!(
+			difference < 1e-7,
+			"{name} differs by {difference} after 20 scheduled steps"
+		);
+	}
+	assert!(AdamW::with_kernel(groups(7), Kernel::PerTensor)
+		.use_tensor_learning_rates()
+		.is_err());
 }
 
 #[test]

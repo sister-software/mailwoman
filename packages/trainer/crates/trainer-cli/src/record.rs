@@ -64,7 +64,15 @@ fn read_record(path: &Path) -> Result<TrainingRecord, String> {
 
 /// The parent of a run that starts in a fresh output directory: the checkpoint `--resume` names outside the output
 /// directory (a branch), else `train.init_from` (a fine-tune), else none.
-fn parent(run: &RunConfig, output_dir: &Path, resume: Option<&Path>) -> Result<Option<RunParent>, String> {
+///
+/// A parent whose run recorded another license branch is refused: an `AGPL-3.0-only` checkpoint can't seed a run
+/// whose export is signed under the commercial branch, and a commercial checkpoint can't seed an open-source run.
+fn parent(
+	run: &RunConfig,
+	output_dir: &Path,
+	resume: Option<&Path>,
+	branch: Branch,
+) -> Result<Option<RunParent>, String> {
 	let checkpoint = match resume.filter(|dir| !dir.starts_with(output_dir)) {
 		Some(dir) => Some(dir.to_path_buf()),
 		None => Some(run.train_str("init_from").map_err(|e| e.to_string())?)
@@ -76,7 +84,19 @@ fn parent(run: &RunConfig, output_dir: &Path, resume: Option<&Path>) -> Result<O
 	};
 	let parent_record = checkpoint.parent().map(|run_dir| run_dir.join(TRAINING_RECORD_FILE));
 	let run_id = match parent_record.filter(|p| p.is_file()) {
-		Some(path) => Some(read_record(&path)?.run_id),
+		Some(path) => {
+			let record = read_record(&path)?;
+			if record.license_branch != branch.license() {
+				return Err(format!(
+					"{} trained under {}, and this trainer trains under {}; a run's parent checkpoint must come from a \
+					 run of the same license branch",
+					path.display(),
+					record.license_branch,
+					branch.license()
+				));
+			}
+			Some(record.run_id)
+		}
 		None => None,
 	};
 	Ok(Some(RunParent {
@@ -142,7 +162,7 @@ pub fn prepare(
 			},
 			resolved_config_sha256: file_sha256(resolved)?,
 			corpus_manifest_sha256: corpus_manifest.as_deref().map(file_sha256).transpose()?,
-			parent: parent(run, &output_dir, resume)?,
+			parent: parent(run, &output_dir, resume, branch)?,
 			verifications: vec![event("start")],
 		}
 	};

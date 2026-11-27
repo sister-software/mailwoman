@@ -48,6 +48,26 @@ int trainer_fused_adamw(at::Tensor** params, at::Tensor** grads, at::Tensor** ex
   }
 }
 
+// `trainer_fused_adamw` with the learning rate in a tensor, the `_fused_adamw_` overload `torch.optim.AdamW` takes
+// for a tensor `lr`. The kernel reads the rate from device memory when it runs, so a captured CUDA graph replays
+// with whatever value the tensor holds then. `lr` is a float32 scalar on the parameters' device. Returns 0, or -1 on
+// failure.
+int trainer_fused_adamw_tensor_lr(at::Tensor** params, at::Tensor** grads, at::Tensor** exp_avgs,
+                                  at::Tensor** exp_avg_sqs, at::Tensor** steps, size_t n, const at::Tensor* lr,
+                                  double beta1, double beta2, double weight_decay, double eps, char* err,
+                                  size_t err_len) {
+  try {
+    auto step_list = tensors(steps, n);
+    at::_foreach_add_(step_list, 1);
+    at::_fused_adamw_(tensors(params, n), tensors(grads, n), tensors(exp_avgs, n), tensors(exp_avg_sqs, n), {},
+                      step_list, *lr, beta1, beta2, weight_decay, eps, /*amsgrad=*/false, /*maximize=*/false);
+    return 0;
+  } catch (const std::exception& e) {
+    write_error(e, err, err_len);
+    return -1;
+  }
+}
+
 // `clip_grad_norm_(grads, max_norm, foreach=True)`: the per-gradient 2-norms by `torch._foreach_norm`, their 2-norm,
 // then `torch._foreach_mul_(grads, clamp(max_norm / (total + 1e-6), max=1))`. Returns the total norm before clipping
 // as a new tensor the caller owns, or null on failure.

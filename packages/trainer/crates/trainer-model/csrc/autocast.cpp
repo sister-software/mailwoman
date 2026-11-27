@@ -23,9 +23,11 @@ c10::ScalarType scalar_type(int dtype) { return dtype == 1 ? c10::ScalarType::Ha
 extern "C" {
 
 // Enters an autocast region on `device` (0 CPU, 1 CUDA), enabled or not, in `dtype` (0 bfloat16, 1 float16, -1
-// the device's current dtype, as `torch.autocast(enabled=False)` keeps it). Writes the previous enabled flag, dtype
-// code and cache flag to the out parameters. Returns 0, or -1 when libtorch raised.
-int trainer_autocast_enter(int device, int enabled, int dtype, int* prev_enabled, int* prev_dtype, int* prev_cache) {
+// the device's current dtype, as `torch.autocast(enabled=False)` keeps it), with the cast cache on or off (`cache`,
+// `cache_enabled=`). Writes the previous enabled flag, dtype code and cache flag to the out parameters. Returns 0, or
+// -1 when libtorch raised.
+int trainer_autocast_enter(int device, int enabled, int dtype, int cache, int* prev_enabled, int* prev_dtype,
+                           int* prev_cache) {
   try {
     auto type = device_type(device);
     *prev_enabled = at::autocast::is_autocast_enabled(type) ? 1 : 0;
@@ -36,7 +38,7 @@ int trainer_autocast_enter(int device, int enabled, int dtype, int* prev_enabled
       at::autocast::set_autocast_dtype(type, scalar_type(dtype));
     }
     at::autocast::increment_nesting();
-    at::autocast::set_autocast_cache_enabled(true);
+    at::autocast::set_autocast_cache_enabled(cache != 0);
     return 0;
   } catch (const std::exception&) {
     return -1;
