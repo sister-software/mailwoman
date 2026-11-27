@@ -6,11 +6,13 @@
 
 use std::path::Path;
 use tch::{Device, Kind, Tensor};
+use trainer_loop::batch::TensorBatch;
+use trainer_loop::captured::{bucket_for, length_buckets, write_padded};
 use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, restore_generators, save_checkpoint};
 use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
-use trainer_loop::supervised::LossWindow;
+use trainer_loop::supervised::{init_from_checkpoint, LossWindow};
 use trainer_model::autocast::Generator;
 use trainer_model::layers::Mode;
 use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec, SchemaDefaults};
@@ -360,6 +362,157 @@ fn the_latest_checkpoint_is_the_highest_step_past_the_name_padding() {
 	std::fs::write(stray.join("training_state.json"), "{}").unwrap();
 	let refusal = find_latest_checkpoint(dir.path()).unwrap_err().to_string();
 	assert!(refusal.contains("step-old"), "{refusal}");
+}
+
+/// The total loss and each term of an eval-mode forward.
+fn losses(model: &CoarseEncoder, inputs: &EncoderInputs) -> (f64, Vec<(&'static str, f64)>) {
+	let out = tch::no_grad(|| model.forward(inputs).unwrap());
+	let terms = out.terms.iter().map(|(n, t)| (*n, t.double_value(&[]))).collect();
+	(out.loss.unwrap().double_value(&[]), terms)
+}
+
+#[test]
+fn the_graph_safe_losses_match_the_branches_and_add_zero_for_a_batch_without_ids() {
+	let _guard = seeded(0);
+	let mut model = CoarseEncoder::new(spec()).unwrap();
+	model.mode = Mode::Eval;
+	let (branch, branch_terms) = losses(&model, &inputs());
+	model.graph_safe_losses = true;
+	let (masked, masked_terms) = losses(&model, &inputs());
+	assert!((branch - masked).abs() < 1e-6, "{branch} against {masked}");
+	for ((name, a), (_, b)) in branch_terms.iter().zip(&masked_terms) {
+		assert!((a - b).abs() < 1e-6, "{name}: {a} against {b}");
+	}
+
+	// No row carries a locale or an address system: the branches leave both terms out, and the masked sums add 0.
+	let mut without_ids = inputs();
+	without_ids.locale_ids = Some(Tensor::from_slice(&[-100i64, -100]));
+	without_ids.address_system_ids = Some(Tensor::from_slice(&[-100i64, -100]));
+	let (masked, masked_terms) = losses(&model, &without_ids);
+	model.graph_safe_losses = false;
+	let (branch, branch_terms) = losses(&model, &without_ids);
+	assert!((branch - masked).abs() < 1e-6, "{branch} against {masked}");
+	assert!(!branch_terms
+		.iter()
+		.any(|(n, _)| *n == "locale" || *n == "address_system"));
+	for name in ["locale", "address_system"] {
+		let term = masked_terms.iter().find(|(n, _)| *n == name).unwrap().1;
+		assert_eq!(term, 0.0, "{name}");
+	}
+}
+
+#[test]
+fn a_batch_padded_to_its_length_bucket_scores_the_loss_of_the_unpadded_batch() {
+	let _guard = seeded(0);
+	let mut model = CoarseEncoder::new(spec()).unwrap();
+	model.mode = Mode::Eval;
+	model.graph_safe_losses = true;
+	let inputs = inputs();
+	let channel = mtf_channels::encoder::CHANNEL_NAMES[0].to_owned();
+	let batch = TensorBatch {
+		input_ids: inputs.input_ids.as_ref().unwrap().shallow_clone(),
+		attention_mask: inputs.attention_mask.as_ref().unwrap().shallow_clone(),
+		labels: inputs.labels.as_ref().unwrap().shallow_clone(),
+		locale_ids: inputs.locale_ids.as_ref().unwrap().shallow_clone(),
+		address_system_ids: inputs.address_system_ids.as_ref().unwrap().shallow_clone(),
+		channels: vec![(
+			channel,
+			inputs.channels[0].features.as_ref().unwrap().shallow_clone(),
+			inputs.channels[0].confidence.as_ref().unwrap().shallow_clone(),
+		)],
+		char_ids: None,
+	};
+	let buckets = length_buckets(&[4, 10], 10).unwrap();
+	let index = bucket_for(&buckets, batch.input_ids.size()[1]).unwrap();
+	assert_eq!(buckets[index], 10);
+	// A bucket's tensors hold the previous batch's values until the next write, so the write must overwrite them.
+	let padded = TensorBatch {
+		input_ids: Tensor::full([2, 10], 41, (Kind::Int64, Device::Cpu)),
+		attention_mask: Tensor::ones([2, 10], (Kind::Int64, Device::Cpu)),
+		labels: Tensor::full([2, 10], 3, (Kind::Int64, Device::Cpu)),
+		locale_ids: Tensor::zeros([2], (Kind::Int64, Device::Cpu)),
+		address_system_ids: Tensor::zeros([2], (Kind::Int64, Device::Cpu)),
+		channels: vec![(
+			batch.channels[0].0.clone(),
+			Tensor::ones([2, 10, 11], (Kind::Float, Device::Cpu)),
+			Tensor::ones([2, 10], (Kind::Float, Device::Cpu)),
+		)],
+		char_ids: None,
+	};
+	write_padded(&padded, &batch, 0).unwrap();
+	assert_eq!(
+		padded.attention_mask.narrow(1, 6, 4).sum(Kind::Int64).int64_value(&[]),
+		0
+	);
+	assert_eq!(padded.labels.narrow(1, 6, 4).eq(-100).all().int64_value(&[]), 1);
+	let (unpadded, unpadded_terms) = losses(&model, &batch.inputs());
+	let (padded_loss, padded_terms) = losses(&model, &padded.inputs());
+	assert!(
+		(unpadded - padded_loss).abs() < 1e-5,
+		"{unpadded} against {padded_loss}"
+	);
+	for ((name, a), (_, b)) in unpadded_terms.iter().zip(&padded_terms) {
+		assert!((a - b).abs() < 1e-5, "{name}: {a} against {b}");
+	}
+
+	assert!(length_buckets(&[16, 8], 8).is_err(), "a bucket list out of order");
+	assert!(
+		length_buckets(&[16, 32], 64).is_err(),
+		"a largest bucket below max_length"
+	);
+}
+
+#[test]
+fn init_from_refuses_a_checkpoint_missing_a_tensor_or_holding_an_extra_one() {
+	let _guard = seeded(3);
+	let source = CoarseEncoder::new(spec()).unwrap();
+	let target = CoarseEncoder::new(spec()).unwrap();
+	let dir = tempfile::tempdir().unwrap();
+	let full: Vec<(String, Tensor)> = source
+		.store
+		.state_dict()
+		.into_iter()
+		.map(|(n, t)| (n, t.detach().contiguous()))
+		.collect();
+	let write = |name: &str, tensors: &[(String, Tensor)]| {
+		let checkpoint = dir.path().join(name);
+		std::fs::create_dir_all(&checkpoint).unwrap();
+		Tensor::write_safetensors(tensors, checkpoint.join(trainer_model::checkpoint::MODEL_FILE)).unwrap();
+		checkpoint
+	};
+	init_from_checkpoint(&target, &write("whole", &full)).unwrap();
+	let classifier = "classifier.weight";
+	assert!(target
+		.store
+		.get(classifier)
+		.unwrap()
+		.equal(&source.store.get(classifier).unwrap()));
+
+	let missing: Vec<(String, Tensor)> = full
+		.iter()
+		.filter(|(n, _)| n != classifier)
+		.map(|(n, t)| (n.clone(), t.shallow_clone()))
+		.collect();
+	let refusal = init_from_checkpoint(&target, &write("missing", &missing))
+		.unwrap_err()
+		.to_string();
+	assert!(
+		refusal.contains("1 tensors missing") && refusal.contains(classifier),
+		"{refusal}"
+	);
+
+	let mut extra: Vec<(String, Tensor)> = full.iter().map(|(n, t)| (n.clone(), t.shallow_clone())).collect();
+	extra.push((
+		"retired_head.weight".to_owned(),
+		Tensor::zeros([2], (Kind::Float, Device::Cpu)),
+	));
+	let refusal = init_from_checkpoint(&target, &write("extra", &extra))
+		.unwrap_err()
+		.to_string();
+	assert!(
+		refusal.contains("1 unexpected") && refusal.contains("retired_head.weight"),
+		"{refusal}"
+	);
 }
 
 #[test]

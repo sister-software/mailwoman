@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! Compiles the autocast and runtime shims against the libtorch that `torch-sys` links, and records the locked `tch`
+//! Compiles the autocast, runtime and optimizer shims, and the CUDA graph shim against a CUDA libtorch, against the libtorch that `torch-sys` links, and records the locked `tch`
 //! version for the runtime block of a parity record.
 //!
 //! `torch-sys` declares `links = "tch"` and prints `cargo:libtorch_lib=<dir>`, which reaches this script as
@@ -13,6 +13,7 @@ fn main() {
 	println!("cargo:rerun-if-changed=csrc/autocast.cpp");
 	println!("cargo:rerun-if-changed=csrc/runtime.cpp");
 	println!("cargo:rerun-if-changed=csrc/optim.cpp");
+	println!("cargo:rerun-if-changed=csrc/graph.cpp");
 	println!("cargo:rerun-if-changed=../../Cargo.lock");
 	println!("cargo:rustc-env=TRAINER_TCH_VERSION={}", locked_version("tch"));
 	let lib =
@@ -23,19 +24,68 @@ fn main() {
 		.parent()
 		.expect("the libtorch library directory has a parent")
 		.to_path_buf();
-	cc::Build::new()
-		.cpp(true)
-		.pic(true)
-		.warnings(false)
-		.include(root.join("include"))
-		.include(root.join("include/torch/csrc/api/include"))
-		.flag("-std=c++17")
-		.flag("-D_GLIBCXX_USE_CXX11_ABI=1")
-		.flag("-DGLOG_USE_GLOG_EXPORT")
+	let shim = || {
+		let mut build = cc::Build::new();
+		build
+			.cpp(true)
+			.pic(true)
+			.warnings(false)
+			.include(root.join("include"))
+			.include(root.join("include/torch/csrc/api/include"))
+			.flag("-std=c++17")
+			.flag("-D_GLIBCXX_USE_CXX11_ABI=1")
+			.flag("-DGLOG_USE_GLOG_EXPORT");
+		build
+	};
+	shim()
 		.file("csrc/autocast.cpp")
 		.file("csrc/runtime.cpp")
 		.file("csrc/optim.cpp")
 		.compile("trainer_autocast");
+	// `csrc/graph.cpp` wraps `at::cuda::CUDAGraph`, which `libtorch_cuda.so` defines and the CUDA headers declare. A
+	// CPU libtorch ships the headers' libtorch half but no `libtorch_cuda.so`, so the file is compiled only against a
+	// CUDA libtorch, and `trainer_cuda_graph` tells `src/cuda_graph.rs` the symbols exist.
+	println!("cargo:rustc-check-cfg=cfg(trainer_cuda_graph)");
+	println!("cargo:rerun-if-env-changed={CUDA_INCLUDE_VARIABLE}");
+	if !lib.join("libtorch_cuda.so").is_file() {
+		return;
+	}
+	let includes = cuda_include_dirs();
+	let mut build = shim();
+	for dir in &includes {
+		build.include(dir);
+	}
+	build.file("csrc/graph.cpp").compile("trainer_cuda_graph");
+	println!("cargo:rustc-link-lib=dylib=torch_cuda");
+	println!("cargo:rustc-link-lib=dylib=c10_cuda");
+	println!("cargo:rustc-cfg=trainer_cuda_graph");
+}
+
+/// The variable that names the CUDA header directories, separated by `:`.
+const CUDA_INCLUDE_VARIABLE: &str = "TRAINER_CUDA_INCLUDE";
+
+/// The directories that hold `cuda.h` and `cuda_runtime_api.h`: those `TRAINER_CUDA_INCLUDE` names, or
+/// `$CUDA_HOME/include`, or `/usr/local/cuda/include`.
+///
+/// A CUDA libtorch without these headers would build a trainer that can't capture a graph, and `train.cuda_graph`
+/// would then fall back to the eager step on every run. The build refuses instead.
+fn cuda_include_dirs() -> Vec<PathBuf> {
+	let dirs: Vec<PathBuf> = match std::env::var(CUDA_INCLUDE_VARIABLE) {
+		Ok(value) if !value.is_empty() => std::env::split_paths(&value).collect(),
+		_ => {
+			let home = std::env::var("CUDA_HOME").unwrap_or_else(|_| "/usr/local/cuda".to_owned());
+			vec![PathBuf::from(home).join("include")]
+		}
+	};
+	for header in ["cuda.h", "cuda_runtime_api.h"] {
+		if !dirs.iter().any(|d| d.join(header).is_file()) {
+			panic!(
+				"the linked libtorch is a CUDA build, but none of {dirs:?} holds {header}; set {CUDA_INCLUDE_VARIABLE} \
+				 to the CUDA include directories so csrc/graph.cpp compiles"
+			);
+		}
+	}
+	dirs
 }
 
 /// The version of `package` in the workspace's `Cargo.lock`, which is the version compiled into this build. A crate's

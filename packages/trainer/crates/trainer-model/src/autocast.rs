@@ -14,6 +14,7 @@ extern "C" {
 		device: i32,
 		enabled: i32,
 		dtype: i32,
+		cache: i32,
 		prev_enabled: *mut i32,
 		prev_dtype: *mut i32,
 		prev_cache: *mut i32,
@@ -168,12 +169,21 @@ pub struct Autocast {
 }
 
 impl Autocast {
-	fn open(device: Device, enabled: bool, dtype: i32) -> Result<Self> {
+	fn open(device: Device, enabled: bool, dtype: i32, cache: bool) -> Result<Self> {
 		let code = device_code(device);
 		let mut prev = (0, 0, 0);
 		// SAFETY: the shim writes three ints through the pointers and touches no other memory.
-		let status =
-			unsafe { trainer_autocast_enter(code, i32::from(enabled), dtype, &mut prev.0, &mut prev.1, &mut prev.2) };
+		let status = unsafe {
+			trainer_autocast_enter(
+				code,
+				i32::from(enabled),
+				dtype,
+				i32::from(cache),
+				&mut prev.0,
+				&mut prev.1,
+				&mut prev.2,
+			)
+		};
 		if status != 0 {
 			return Err(fail!("libtorch refused to change autocast on {device:?}"));
 		}
@@ -182,7 +192,14 @@ impl Autocast {
 
 	/// Enters autocast on `device`'s type in `kind`.
 	pub fn enter(device: Device, kind: Kind) -> Result<Self> {
-		Self::open(device, true, dtype_code(kind)?)
+		Self::open(device, true, dtype_code(kind)?, true)
+	}
+
+	/// Enters autocast with the cast cache off, `torch.autocast(..., cache_enabled=False)`, as a region captured
+	/// into a CUDA graph requires: a cached cast would be a tensor the capture allocated and a replay never
+	/// recomputes.
+	pub fn enter_uncached(device: Device, kind: Kind) -> Result<Self> {
+		Self::open(device, true, dtype_code(kind)?, false)
 	}
 
 	/// Whether autocast is on for `device`'s type.
@@ -206,7 +223,7 @@ pub struct AutocastOff(#[allow(dead_code)] Autocast);
 
 impl AutocastOff {
 	pub fn enter(device: Device) -> Result<Self> {
-		Ok(Self(Autocast::open(device, false, -1)?))
+		Ok(Self(Autocast::open(device, false, -1, true)?))
 	}
 }
 

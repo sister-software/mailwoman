@@ -29,6 +29,21 @@ extern "C" {
 		err: *mut c_char,
 		err_len: usize,
 	) -> i32;
+	fn trainer_fused_adamw_tensor_lr(
+		params: *const *mut torch_sys::C_tensor,
+		grads: *const *mut torch_sys::C_tensor,
+		exp_avgs: *const *mut torch_sys::C_tensor,
+		exp_avg_sqs: *const *mut torch_sys::C_tensor,
+		steps: *const *mut torch_sys::C_tensor,
+		n: usize,
+		lr: *const torch_sys::C_tensor,
+		beta1: f64,
+		beta2: f64,
+		weight_decay: f64,
+		eps: f64,
+		err: *mut c_char,
+		err_len: usize,
+	) -> i32;
 	fn trainer_clip_grad_norm_foreach(
 		grads: *const *mut torch_sys::C_tensor,
 		n: usize,
@@ -39,7 +54,7 @@ extern "C" {
 }
 
 /// The libtorch message a failed call wrote.
-fn message(buffer: &[c_char]) -> String {
+pub(crate) fn message(buffer: &[c_char]) -> String {
 	// SAFETY: the shim writes a NUL-terminated string within the buffer, or leaves its first byte NUL.
 	unsafe { CStr::from_ptr(buffer.as_ptr()) }
 		.to_string_lossy()
@@ -48,6 +63,16 @@ fn message(buffer: &[c_char]) -> String {
 
 fn handles(tensors: &[&Tensor]) -> Vec<*mut torch_sys::C_tensor> {
 	tensors.iter().map(|t| t.as_ptr() as *mut torch_sys::C_tensor).collect()
+}
+
+/// A parameter group's learning rate as the fused step reads it.
+#[derive(Clone, Copy)]
+pub enum LearningRate<'a> {
+	/// A host value, fixed into the kernel's arguments at launch.
+	Scalar(f64),
+	/// A float32 scalar on the parameters' device, which the kernel reads when it runs. A captured CUDA graph's
+	/// replay reads the value the tensor holds at that replay.
+	Tensor(&'a Tensor),
 }
 
 /// One AdamW step over a parameter group: each step count is incremented, then every parameter, both moments and
@@ -62,7 +87,7 @@ pub fn fused_adamw(
 	exp_avgs: &[&Tensor],
 	exp_avg_sqs: &[&Tensor],
 	steps: &[&Tensor],
-	lr: f64,
+	lr: LearningRate<'_>,
 	betas: (f64, f64),
 	weight_decay: f64,
 	eps: f64,
@@ -76,24 +101,49 @@ pub fn fused_adamw(
 			"fused_adamw takes aligned lists, got {n} parameters and lists of other lengths"
 		));
 	}
+	let (params, grads, exp_avgs, exp_avg_sqs, steps) = (
+		handles(params),
+		handles(grads),
+		handles(exp_avgs),
+		handles(exp_avg_sqs),
+		handles(steps),
+	);
 	let mut err = vec![0 as c_char; ERROR_BYTES];
-	// SAFETY: each handle is a live `at::Tensor` borrowed for the call, and `err` holds `ERROR_BYTES` bytes.
+	// SAFETY: each handle, and a tensor rate, is a live `at::Tensor` borrowed for the call, and `err` holds
+	// `ERROR_BYTES` bytes.
 	let status = unsafe {
-		trainer_fused_adamw(
-			handles(params).as_ptr(),
-			handles(grads).as_ptr(),
-			handles(exp_avgs).as_ptr(),
-			handles(exp_avg_sqs).as_ptr(),
-			handles(steps).as_ptr(),
-			n,
-			lr,
-			betas.0,
-			betas.1,
-			weight_decay,
-			eps,
-			err.as_mut_ptr(),
-			ERROR_BYTES,
-		)
+		match lr {
+			LearningRate::Scalar(lr) => trainer_fused_adamw(
+				params.as_ptr(),
+				grads.as_ptr(),
+				exp_avgs.as_ptr(),
+				exp_avg_sqs.as_ptr(),
+				steps.as_ptr(),
+				n,
+				lr,
+				betas.0,
+				betas.1,
+				weight_decay,
+				eps,
+				err.as_mut_ptr(),
+				ERROR_BYTES,
+			),
+			LearningRate::Tensor(lr) => trainer_fused_adamw_tensor_lr(
+				params.as_ptr(),
+				grads.as_ptr(),
+				exp_avgs.as_ptr(),
+				exp_avg_sqs.as_ptr(),
+				steps.as_ptr(),
+				n,
+				lr.as_ptr(),
+				betas.0,
+				betas.1,
+				weight_decay,
+				eps,
+				err.as_mut_ptr(),
+				ERROR_BYTES,
+			),
+		}
 	};
 	if status != 0 {
 		return Err(fail!("libtorch refused _fused_adamw_: {}", message(&err)));

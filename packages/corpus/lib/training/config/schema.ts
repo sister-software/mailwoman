@@ -318,6 +318,8 @@ export const TRAIN_SECTION = {
 		init_from: str(""),
 		freeze_token_embeddings: bool(false),
 		trainable_only_prefixes: strList(),
+		cuda_graph: bool(false),
+		length_buckets: intList([16n, 32n, 48n, 64n, 96n, 128n]),
 		trackio_enabled: bool(false),
 		trackio_project: str("mailwoman"),
 		trackio_space: str(""),

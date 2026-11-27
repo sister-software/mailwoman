@@ -25,6 +25,7 @@ pub mod autocast;
 pub mod checkpoint;
 pub mod config;
 pub mod crf;
+pub mod cuda_graph;
 pub mod encoder;
 pub mod init;
 pub mod layers;
