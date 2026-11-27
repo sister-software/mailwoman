@@ -261,6 +261,12 @@ export async function readGeoNamesPlaces(
 }
 
 /**
+ * The division levels a GeoNames row states a code for, lowest division first.
+ * A row's four code columns are `admin1` to `admin4`.
+ */
+const CODED_LEVELS: readonly number[] = [4, 3, 2, 1]
+
+/**
  * The key of a division's code path in {@link divisionIDsByCodePath}: its codes from
  * the first level down to its own, such as `C` and `C|MW22`.
  */
