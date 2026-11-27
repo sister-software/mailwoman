@@ -63,7 +63,7 @@ cargo run --profile trainer -p trainer-cli -- \
     train ./smoke.resolved.json --set train.lr_schedule=constant
 
 # The same smoke on Modal, with `lr_schedule: constant` in the YAML
-node packages/mailwoman/tools/training/launch/launch.run.ts start --config <recipe>-smoke.yaml --fresh
+node packages/mailwoman/tools/training/launch/launch.run.ts start --config <recipe>-smoke.yaml --fresh --open-source
 ```
 
 A tweak on a known-stable baseline keeps the cosine schedule and sizes `max_steps` at 10,000 or more, so the smoke

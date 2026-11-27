@@ -207,7 +207,8 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
  * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
-	"Launch training with `node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml>`, which " +
+	"Launch training with `node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> " +
+	"--commercial`, which " +
 	"runs the preflight on the host, starts a detached sandbox and exits, so no signal aimed at this shell can reach the " +
 	"run. Read it with `launch.run.ts status <run key>` or `logs <run key>`, and resume a stopped run with " +
 	"`restart <run key>`, which continues from the run's last save."

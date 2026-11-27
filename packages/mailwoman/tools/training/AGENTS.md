@@ -8,12 +8,16 @@ trainer on Modal and the host audits a launch requires.
 `launch/launch.run.ts` runs `trainer train` in a Modal sandbox. It needs no Python and starts no Modal Function.
 
 ```sh
-node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh [--device <Modal GPU>]
+node --env-file=.env packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh --commercial [--device <Modal GPU>]
 node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>
 node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines 200]
 node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
 node packages/mailwoman/tools/training/launch/launch.run.ts restart <run key>
 ```
+
+`start` takes exactly one of `--commercial` and `--open-source` and refuses without one. A commercial run exports and
+signs its final checkpoint in the sandbox, and `stage-weights-cache` grades only a signed export. An open-source run
+leaves only checkpoints. v8.16.0 launched without `--commercial`, trained 126,000 steps and left no model to grade.
 
 `start` does these steps on the host, in order, before anything is billed:
 
