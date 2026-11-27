@@ -6,7 +6,6 @@
  *   predicate, and a second fetch of the rows that satisfy the hint, or the head's first reading.
  */
 
-import type { OutcomeKind } from "@mailwoman/core/outcome/kinds"
 import type { LandmarkHit, LandmarkLookup } from "@mailwoman/core/resolver"
 import { admittedOutcomeIDs, type OutcomeQuery, type ResolveOutcome } from "@mailwoman/core/resolver/outcome"
 
@@ -26,13 +25,16 @@ export const OUTCOME_SET_KEY = "outcomes"
  * The query of the usual fetch: every row's set is read, and the filter admits rows.
  */
 export function filterQuery(outcome: ResolveOutcome): OutcomeQuery {
-	return { admit: outcome.filter ? admittedOutcomeIDs(outcome.filter) : null }
+	return {
+		vocabulary: outcome.vocabulary,
+		admit: outcome.filter ? admittedOutcomeIDs(outcome.filter, outcome.vocabulary) : null,
+	}
 }
 
 /**
  * The reading the second fetch reads: the hint, or the head's first reading without one.
  */
-export function secondFetchReading(outcome: ResolveOutcome): OutcomeKind | null {
+export function secondFetchReading(outcome: ResolveOutcome): string | null {
 	return outcome.hint ?? outcome.headOrder?.[0] ?? null
 }
 
@@ -47,9 +49,9 @@ export function secondFetchQuery(outcome: ResolveOutcome): OutcomeQuery | null {
 	if (reading == null) return null
 
 	const filtered = filterQuery(outcome).admit
-	const ids = admittedOutcomeIDs([reading])
+	const ids = admittedOutcomeIDs([reading], outcome.vocabulary)
 
-	return { admit: filtered ? ids.filter((id) => filtered.includes(id)) : ids }
+	return { vocabulary: outcome.vocabulary, admit: filtered ? ids.filter((id) => filtered.includes(id)) : ids }
 }
 
 /**

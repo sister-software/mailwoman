@@ -32,7 +32,7 @@ import { reportSupport } from "@mailwoman/api/support"
 import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import type { AddressTree, decodeAsTuples } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { OutcomeRequestError, parseOutcomeOptions } from "@mailwoman/core/resolver/outcome"
+import { OutcomeRequestError } from "@mailwoman/core/resolver/outcome"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import {
@@ -324,7 +324,8 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 							inputMode: input_mode,
 							...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
 							...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
-							...parseOutcomeOptions({ outcomeHint: outcome_hint, outcomeFilter: outcome_filter }),
+							...(outcome_hint != null ? { outcomeHint: outcome_hint } : {}),
+							...(outcome_filter ? { outcomeFilter: outcome_filter } : {}),
 						})
 					} catch (error) {
 						if (error instanceof OutcomeRequestError) {

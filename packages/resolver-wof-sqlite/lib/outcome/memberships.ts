@@ -14,11 +14,10 @@
 
 import {
 	OUTCOME_TABLES,
-	outcomeKindOfID,
 	type OutcomeMembership,
+	type OutcomeQuery,
 	unionOutcomes,
 } from "@mailwoman/core/resolver/outcome"
-import { isPresent } from "@mailwoman/core/values/objects"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
@@ -105,9 +104,11 @@ export class OutcomeMembershipReader {
 	 * The effective set of one record: its placetype defaults and its explicit assertions.
 	 *
 	 * An id the vocabulary doesn't hold is left out, because the database may pin a
-	 * newer revision than the generated table of this build.
+	 * newer revision than the vocabulary the request was checked against.
 	 */
-	read(record: string | number, defaultKey: string): OutcomeMembership[] {
+	read(record: string | number, defaultKey: string, query: OutcomeQuery): OutcomeMembership[] {
+		const names = new Map(query.vocabulary.map((m) => [m.id, m.name]))
+
 		let defaults = this.#defaultCache.get(defaultKey)
 
 		if (!defaults) {
@@ -116,17 +117,14 @@ export class OutcomeMembershipReader {
 		}
 
 		const fromDefaults: OutcomeMembership[] = defaults
-			.map(outcomeKindOfID)
-			.filter(isPresent)
+			.map((id) => names.get(id))
+			.filter((name): name is string => typeof name === "string")
 			.map((outcome) => ({ outcome, contested: false, sources: [`${this.#keying.layer}:default`] }))
 
-		const fromAssertions: OutcomeMembership[] = this.#asserted(record).flatMap((row) => {
-			const outcome = outcomeKindOfID(Number(row.outcome_id))
-
-			return outcome
-				? [{ outcome, contested: Number(row.contested) === 1, sources: [`${this.#keying.layer}:asserted`] }]
-				: []
-		})
+		const fromAssertions: OutcomeMembership[] = this.#asserted(record)
+			.map((row) => ({ name: names.get(Number(row.outcome_id)), contested: Number(row.contested) === 1 }))
+			.filter((row): row is { name: string; contested: boolean } => typeof row.name === "string")
+			.map((row) => ({ outcome: row.name, contested: row.contested, sources: [`${this.#keying.layer}:asserted`] }))
 
 		return unionOutcomes(fromDefaults, fromAssertions)
 	}

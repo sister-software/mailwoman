@@ -49,7 +49,7 @@ import type {
 	WeakResolutionReading,
 } from "@mailwoman/core/resolver"
 import { hardCountryOf } from "@mailwoman/core/resolver"
-import type { OutcomeOptions, ResolveOutcome } from "@mailwoman/core/resolver/outcome"
+import type { OutcomeOptions, OutcomeVocabularyLike, ResolveOutcome } from "@mailwoman/core/resolver/outcome"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/postcode/postcode-format"
 import { computeQueryShape, type QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
@@ -116,6 +116,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 * Absent, the geocode runs today's sequence.
 	 */
 	outcome?: OutcomeOptions
+	/**
+	 * The outcome vocabulary the request's ids are checked against.
+	 * A request with an outcome field is refused without it.
+	 */
+	outcomeVocabulary?: readonly OutcomeVocabularyLike[]
 	/**
 	 * The former divisions table, read under {@link GeocodeSwitches.formerDivisions}.
 	 */
@@ -605,7 +610,7 @@ function outcomeRequestOf(deps: GeocodeDeps, parseInput: string, tree: AddressTr
 
 	return resolveOutcomeFor(
 		deps.outcome,
-		{ headOrder: outcomeHeadOrderOf(tree), headOrdering },
+		{ vocabulary: deps.outcomeVocabulary, headOrder: outcomeHeadOrderOf(tree), headOrdering },
 		{ kind, interpretedSpan: !!leading?.interpretations?.length }
 	)
 }
