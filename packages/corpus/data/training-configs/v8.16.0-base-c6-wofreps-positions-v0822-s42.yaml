@@ -1,0 +1,988 @@
+# v8.16.0-base-c6-wofreps-positions-v0822-s42 is v8.15.0-base-c6-wofreps-cursor-emit-v0822-s42.yaml with its run
+# renamed, drafted on 2026-11-27 (#3516). Every key below the notes is v8.15.0's but `train.output_dir` and
+# `train.trackio_run_name`. The trainer image it launches on builds two changes:
+#
+# 1. The sampler starts each epoch's spread row group where the run's earlier epochs stopped reading it
+#    (b62c9b9abd). v8.15.0 placed epoch e at (e - 1) times the group's expected draws, and an epoch's emitted-row
+#    limit stops it short of them. `wof-admin` drew 2,815,421 times against 2,780,333 train rows, and 419,900 rows
+#    were never drawn, while 407,229 rows repeated four or more epochs after their first draw.
+# 2. AdamW and the gradient clip run libtorch's multi-tensor kernels on CUDA (c322f4a89c). On the CPU the two
+#    kernels agree within 1e-6 after 20 steps. On CUDA the update rounds differently from the per-tensor kernel.
+#
+# v8.15.0 parsed 118,499 of the 131,823 development rows exactly, against the shipped 11.4.0's 118,368.
+#
+# The notes that follow are v8.15.0's.
+#
+# v8.15.0-base-c6-wofreps-cursor-emit-v0822-s42 is v8.14.0-base-c6-wofreps-cursor-v0822-s42.yaml with
+# `data.source_emit_factors` and `train.max_steps` 126000, drafted on 2026-11-26 (#3516).
+#
+# A `source_reps` target counts emitted rows, and the emit step's augmented copies make some sources emit more rows
+# per draw than others: in v8.14.0 `wof-admin` realized 2,277,277 rows against its derived 2,780,333 (0.82), and
+# `usgov-usgs-structures` 333,089 against 231,284 (1.44). The sampler divides each target by its source's factor
+# (`draws_per_row` in mtf-sampler/src/source_reps.rs). The factors are v8.14.0's epoch-mixture audit's
+# `distortion_vs_draw_share`, written by `node packages/mailwoman/tools/training/draw/emit-factors.run.ts --config
+# v8.14.0-base-c6-wofreps-cursor-v0822-s42.yaml --audit epoch-mixture-v8.14.0-base-c6-wofreps-cursor-v0822-s42.json`.
+# A source the audit's epoch emitted fewer than 2,000 rows of reads 1 (115 sources). `max_steps` keeps every
+# weighted source's draws at or above v8.10.0's. The draw report (in emitted rows) lists 22 `source_reps` sources
+# below v8.10.0's run, each with a factor above 1 that over-delivered under the old arithmetic and now emits its
+# declared target, such as `usgov-usgs-structures` (331,013 → 231,284 emitted rows).
+#
+# The notes that follow are v8.14.0's.
+#
+# v8.14.0-base-c6-wofreps-cursor-v0822-s42 is v8.13.0-base-c6-wofreps-v0822-s42.yaml with its run renamed, drafted on
+# 2026-11-26 (#3516). The trainer image it launches on builds the sampler's epoch cursor (a7fb952de4): the epochs of a
+# run read each spread source's row groups in turn, where each epoch formerly read a fresh random part of them. In
+# v8.13.0, 1,211,010 of wof-admin's 2,780,333 train rows were never drawn under `source_reps: 1.0`. Every key below the
+# notes is v8.13.0's but `train.output_dir` and `train.trackio_run_name`.
+#
+# The notes that follow are v8.13.0's.
+#
+# v8.13.0-base-c6-wofreps-v0822-s42 is v8.10.0-base-c6-90k-v0822-s42.yaml, the shipped 11.3.0 model's config, with
+# v8.12.0's training draw reallocation as its one change, drafted on 2026-11-26 (#3516). Corpus v0.8.22 is unchanged.
+#
+# On the development collections (131,823 rows) the shipped model parsed 117,533 rows exactly, v8.11.0 (corpus v0.8.23,
+# v8.10.0's draw) 115,031 and v8.12.0 (corpus v0.8.23, the reallocated draw) 115,686. The large country losses (CH, KZ,
+# ID, IR, MX) sit in both v0.8.23 models, and the draw change gained 655 rows on one corpus. This run measures the draw
+# change on the shipped model's own corpus.
+#
+# A. `wof-admin` and `wof-postalcode` leave `source_weights` (15.0 and 7.5) for `source_reps` 1.0: one expected
+#    draw per training row.
+# B. `rendered-prominent-places` leaves `source_weights` (3.5) for `source_reps` 20, so prominent places keep
+#    their share of the short admin draws against the larger WOF draw.
+# C. `train.max_steps` is 122000, so every source drawn in v8.10.0's run draws no fewer rows than it drew there.
+# D. Every `required_corpus_receipts` entry on a `source_reps` source states `min_fraction_of_expected: 0.9`, because a
+#    reps source's draws per epoch move with `max_steps` while its run total stays fixed.
+# E. `train.output_dir` and `train.trackio_run_name` name the run.
+#
+# The notes that follow are v8.10.0's.
+#
+# v8.10.0-base-c6-90k-v0822-s42 is v8.9.0-base-c6-90k-v0821-s42.yaml on corpus v0.8.22, drafted on 2026-11-20 before
+# that corpus exists. Every key and value is that config's except these:
+#
+# 1. `data.corpus_dir` is corpus v0.8.22,
+#    /data/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay, built on 2026-11-22 from the
+#    corpus fixes landed for this cycle:
+#    - `wof-admin` writes a dependent locality only beside its parent locality (#3156's label policy). On v0.8.21,
+#      111,355 `wof-admin` train rows in 159 countries wrote one without a locality, 104,920 of them in short admin
+#      shapes of one to three spans (`dependent_locality|region|country` 27,370, `dependent_locality|region` 25,377,
+#      bare `dependent_locality` 18,098, `dependent_locality|country` 15,484). The fixed adapter writes none of them.
+#    - `rendered-prominent-places` (recipe `prominent-places`) writes each country's prominent places in their short
+#      query shapes at the row counts the prominent-places census sets against the v0.8.22 base build
+#      (`tools/dev-tools/corpus/prominent/places.run.ts places`, `scan --manifest <v0.8.22 base MANIFEST.json>`,
+#      `tuples --config <this file>`). The counts are set in this config's expected epoch draws (point 2). A
+#      sub-locality pair is written `locality | region` when the child is the postal place at its own location and the
+#      parent's name is also a first-level WOF region's (`Brooklyn, New York`, the board's key), and
+#      `dependent_locality | locality` otherwise (`Camden, London`). The rule moves 276 of the table's 127,698
+#      ranked pairs.
+#    - `rendered-former-divisions` (recipe `former-divisions`, #3200) writes a former administrative division beside a
+#      current WOF locality its containment evidence links it to, before the locality (Google's order,
+#      `Redland, Avon, Bristol`) or after it, tagged `subregion` at county level and `region` at the first level. Its
+#      tuples come from `packages/gazetteer/tools/former-divisions.run.ts --tuples`, capped at 1,500 rows a country
+#      and 300 a division. The table was rebuilt on 2026-11-21 after the forks restored the 628 ceased divisions the
+#      superseded rule keeps (#3205). GeoNames lists 49,122 historical divisions in 112 countries, and WOF 27,141
+#      ceased admin records. Containment evidence makes 685 links (GeoNames hierarchy 9, retired admin codes 53, WOF
+#      supersession 623), and 663 divisions in 37 countries are linked, every one with a tag: locality 523,
+#      region 105, subregion 34, country 1. The recipe writes the 139 tagged `region` or `subregion`, and 127 of them
+#      cover a current settlement. The tuples hold 16,024 rows in 31 countries: AT, DE, FR, GB, MA and NO 1,500
+#      each, IE 908, IT 900, CH 836, CI 600, PH 560, SI 328, BH 324, AM, AO, IQ, NA, PK and ZA 300 each, KE 260,
+#      IR 220, SD 100, GL 80, TD 64, LY 12, BS and UA 8, LA, MO, MR and PL 4. GB's 1,500 rows cover 15 divisions,
+#      Avon 100 of them. The census in #3200 gives the per-country counts.
+# 2. `source_weights` gives `rendered-prominent-places` 3.5: 1.16% of the epoch, 11,649 of the 1,000,000 draws.
+#    The receipt's demand rule is measured in this config's expected epoch draws, and the census's `tuples` step sets
+#    the recipe's rows so those draws, spread over its rows alike, close each cell. The rows therefore follow from
+#    this weight: a lower weight takes more rows, and a weight whose draws fall at or below the cells' deficits takes
+#    no row count. Simulated from v0.8.21 (`/mnt/mw/audits/recipe-key-conflict/`), the deficits come to 5,714 draws,
+#    and the recipe writes 32,616 rows (18,298 presence rows and 14,318 demand rows, US 4,475 or 13.7%), each drawn 0.36
+#    times an epoch. A `wof-admin` row is drawn 0.018 times, so a prominent place's row takes about 20 times a
+#    `wof-admin` row's draws. At 15.0 the recipe wrote 19,115 rows drawn 2.48 times each, about 130 times.
+# 3. `data.prominent_place_coverage` names the census's places table for candidate-global-2026-11-19, so the launch
+#    preflight runs the `prominent_place_coverage` receipt (#3156 rule (a)) and binds its `PLACES.json` into the
+#    receipt key. The receipt measures the demand share in this config's expected epoch draws: each row at its
+#    source's requested share over the source's admitted rows, times its country's admission chance. A place in a
+#    country `country_weights` leaves out isn't required. `country_weights` admits at 1.0, as it does every other
+#    country, the 35 countries v8.9.0 left out that hold selected places on the 2026-11-19 table (518 places, YE 124
+#    and BO 101 the largest): AQ, BO, CC, CM, CX, EH, FJ, GA, GQ, GS, GY, KI, KP, LY, MR, NF, NR, NU, PN, PS, PW, SJ,
+#    SL, SS, SY, TD, TF, TG, TL, TV, WS and YE. It doesn't list XK, XS or XX, the three of the 35 WOF records under
+#    a code outside ISO 3166-1: `weightedCountries` (`countriesDeclaredBy`) refuses such a key, so the validation
+#    quota and the launch refuse a config that lists one. The v0.8.22 recipe holds 66 rows of theirs (XK 24, XX 42),
+#    which the run draws none of. `prominent-places-exposure` floors the recipe's draws at 0.9 of expected.
+# 4. `train.output_dir` and `train.trackio_run_name` name the run.
+# 5. `source_reps` gives `rendered-former-divisions` 1.0, one pass over its rows across the run. By the exposure
+#    arithmetic of `exposure/shapes.ts` (`drawsPerAdmittedRow`, `countryAdmission`), with the 16,024 tuple rows in the
+#    `source_reps` derivation over v0.8.21's other rows, a row is drawn 0.087 times an epoch: 1,391 of the 1,000,000
+#    draws an epoch, and 16,024 over the run's 90,000 steps of 128 (11.52 epochs). Two passes over the earlier
+#    1,888 rows drew 328 an epoch and 3,776 over the run. The rows hold 127 division names, about 126 rows each
+#    (median 100, from 4 to 300). On the table before the restore, two passes over 1,888 rows and 27 names drew about
+#    140 rows a name over the run. One pass now reaches that exposure, so a second would repeat each row without
+#    widening what the model sees.
+#    `augment_exclude_sources` lists the source for the reason `rendered-prominent-places` is listed, and
+#    `former-divisions-exposure` floors its draws at 0.9 of expected.
+# 6. `source_weights` gives `nz-charities-register` 0.0, so the run draws none of its rows, and the source leaves
+#    `source_reps` (0.2 in v8.9.0) and `required_corpus_receipts` (`nz-charities-register-exposure`). The model-release
+#    check of #3278 refuses its register row `nz-charity-nonprofit-1` (CC BY 3.0 NZ): clause 2.1 bars imposing terms
+#    on an Adaptation, and whether trained weights are one is unsettled. The corpus keeps the source's rows. The sampler
+#    refuses a train source that `source_weights` leaves out, so the source is listed at 0.0 rather than dropped.
+#
+# Every other receipt and floor is v8.9.0's and is re-derived on v0.8.22 before launch (HOLDOUT_AND_EVALUATION
+# section 4.4 item 5). Before launch, on the admitted v0.8.22 manifest:
+# - done 2026-11-23: the manifest is the third re-split of v0.8.22-prominent-overlay (MANIFEST.json sha256 aed71697…,
+#   v0.8.22-overlay with the re-sized recipe) under evaluation-groups.v0.8.23.json (sha256 cfaffa67…, 201,538 groups)
+#   and a validation quota of 15,300 groups (sha256 6e9ddd98…). It is MANIFEST.json sha256
+#   c01019fe088458f8e4950fc8245583083f7e230c3446b1bc4952947186f334fd: 1,104 files, train 889,226,116, val 23,330,
+#   test 381,056;
+# - done 2026-11-23: `audits/label/support.run.ts` meets `required_validation_label_support` on that val draw, and
+#   `audits/validation/coverage.run.ts` finds all 21 `required_validation_coverage` floors met;
+# - done 2026-11-23: the epoch-mixture audit (1,000,000 draws) meets all 71 receipts. `former-divisions-exposure`
+#   draws 1,441 against 1,240 (expected 1,378), and `prominent-places-exposure` 11,825 against 10,505 (expected 11,673);
+# - done 2026-11-23: `places.run.ts tuples --config <this file>` against the scan of v0.8.22-overlay without the
+#   recipe, sized through the receipt's held-out reader: 32,378 rows for 16,421 places, every one in train after the
+#   re-split;
+# - done 2026-11-23: `audits/prominent/coverage.run.ts` passes on this config re-rooted at /mnt/mw. Presence covers
+#   20,910 of 20,910 required forms, 808 of 811 demand cells meet their targets and none fails (FJ and GD locality
+#   region and ID sub-locality parent are unwritable), and 0 short admin train rows write a dependent locality without
+#   a locality;
+# - done: the places table `data.prominent_place_coverage` names is frozen on the host at
+#   /mnt/mw/audits/prominent-places/candidate-global-2026-11-19/ (`places.parquet` sha256 acfcd09a44b22622…, record
+#   version 3 with the `postal_pair` column). The version-2 table is kept beside it as `.v2-2026-11-20`. Only the
+#   host reads it: the preflight re-roots /data at MAILWOMAN_DATA_ROOT before the receipt and the receipt key read it,
+#   and of the volume's files the sandbox checks only the corpus MANIFEST. The volume copy keeps the mirror whole and starts no read. It is
+#   written from the host with the operator's launch go, as
+#   `modal volume put mailwoman-training /mnt/mw/audits/prominent-places/candidate-global-2026-11-19 audits/prominent-places/candidate-global-2026-11-19`.
+#   A mounted container doesn't see a `modal volume put` file, and none reads this one.
+#
+# Run shape: from scratch, as v8.9.0. Control: the v8.9.0 seed 42 run, the same recipe and seed on v0.8.21.
+# Seed 42, as v8.9.0. The launch waits for the operator's go.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay
+  tokenizer_dir: /data/models/tokenizer/v0.10.0-c6-isolated-punctuation
+  max_length: 128
+  # `NO` is quoted because YAML 1.1 reads a bare `NO` as false. A false key would match no Norwegian row.
+  country_weights:
+    {
+      AD: 1.0, AE: 1.0, AF: 1.0, AG: 1.0, AI: 1.0, AL: 1.0, AM: 1.0, AO: 1.0, AQ: 1.0, AR: 1.0, AS: 1.0, AT: 1.0,
+      AU: 1.0, AW: 1.0, AX: 1.0, AZ: 1.0, BA: 1.0, BB: 1.0, BD: 1.0, BE: 1.0, BF: 1.0, BG: 1.0, BH: 1.0, BI: 1.0,
+      BJ: 1.0, BL: 1.0, BM: 1.0, BN: 1.0, BO: 1.0, BQ: 1.0, BR: 1.0, BS: 1.0, BT: 1.0, BW: 1.0, BY: 1.0, BZ: 1.0,
+      CA: 1.0, CC: 1.0, CD: 1.0, CF: 1.0, CG: 1.0, CH: 1.0, CI: 1.0, CK: 1.0, CL: 1.0, CM: 1.0, CN: 1.0, CO: 1.0,
+      CR: 1.0, CU: 1.0, CV: 1.0, CW: 1.0, CX: 1.0, CY: 1.0, CZ: 1.0, DE: 1.0, DJ: 1.0, DK: 1.0, DM: 1.0, DO: 1.0,
+      DZ: 1.0, EC: 1.0, EE: 1.0, EG: 1.0, EH: 1.0, ER: 1.0, ES: 1.0, ET: 1.0, FI: 1.0, FJ: 1.0, FK: 1.0, FM: 1.0,
+      FO: 1.0, FR: 1.0, GA: 1.0, GB: 1.0, GD: 1.0, GE: 1.0, GF: 1.0, GG: 1.0, GH: 1.0, GI: 1.0, GL: 1.0, GM: 1.0,
+      GN: 1.0, GP: 1.0, GQ: 1.0, GR: 1.0, GS: 1.0, GT: 1.0, GU: 1.0, GW: 1.0, GY: 1.0, HK: 1.0, HN: 1.0, HR: 1.0,
+      HT: 1.0, HU: 1.0, ID: 1.0, IE: 1.0, IL: 1.0, IM: 1.0, IN: 1.0, IO: 1.0, IQ: 1.0, IR: 1.0, IS: 1.0, IT: 1.0,
+      JE: 1.0, JM: 1.0, JO: 1.0, JP: 1.0, KE: 1.0, KG: 1.0, KH: 1.0, KI: 1.0, KM: 1.0, KN: 1.0, KP: 1.0, KR: 1.0,
+      KW: 1.0, KY: 1.0, KZ: 1.0, LA: 1.0, LB: 1.0, LC: 1.0, LI: 1.0, LK: 1.0, LR: 1.0, LS: 1.0, LT: 1.0, LU: 1.0,
+      LV: 1.0, LY: 1.0, MA: 1.0, MC: 1.0, MD: 1.0, ME: 1.0, MF: 1.0, MG: 1.0, MH: 1.0, MK: 1.0, ML: 1.0, MM: 1.0,
+      MN: 1.0, MO: 1.0, MP: 1.0, MQ: 1.0, MR: 1.0, MS: 1.0, MT: 1.0, MU: 1.0, MV: 1.0, MW: 1.0, MX: 1.0, MY: 1.0,
+      MZ: 1.0, NA: 1.0, NC: 1.0, NE: 1.0, NF: 1.0, NG: 1.0, NI: 1.0, NL: 1.0, "NO": 1.0, NP: 1.0, NR: 1.0, NU: 1.0,
+      NZ: 1.0, OM: 1.0, PA: 1.0, PE: 1.0, PF: 1.0, PG: 1.0, PH: 1.0, PK: 1.0, PL: 1.0, PM: 1.0, PN: 1.0, PR: 1.0,
+      PS: 1.0, PT: 1.0, PW: 1.0, PY: 1.0, QA: 1.0, RE: 1.0, RO: 1.0, RS: 1.0, RU: 1.0, RW: 1.0, SA: 1.0, SB: 1.0,
+      SC: 1.0, SD: 1.0, SE: 1.0, SG: 1.0, SH: 1.0, SI: 1.0, SJ: 1.0, SK: 1.0, SL: 1.0, SM: 1.0, SN: 1.0, SO: 1.0,
+      SR: 1.0, SS: 1.0, ST: 1.0, SV: 1.0, SX: 1.0, SY: 1.0, SZ: 1.0, TC: 1.0, TD: 1.0, TF: 1.0, TG: 1.0, TH: 1.0,
+      TJ: 1.0, TK: 1.0, TL: 1.0, TM: 1.0, TN: 1.0, TO: 1.0, TR: 1.0, TT: 1.0, TV: 1.0, TW: 1.0, TZ: 1.0, UA: 1.0,
+      UG: 1.0, UM: 1.0, US: 1.0, UY: 1.0, UZ: 1.0, VA: 1.0, VC: 1.0, VE: 1.0, VG: 1.0, VI: 1.0, VN: 1.0, VU: 1.0,
+      WF: 1.0, WS: 1.0, YE: 1.0, YT: 1.0, ZA: 1.0, ZM: 1.0, ZW: 1.0,
+    }
+  source_weights:
+    invented-house-venue: 2.0
+    overture-latam: 6.0
+    # v8.6.2's header, point 1.
+    # This config's header, point 2.
+    # 3.3 rather than 3.0: at 3.0, with the WOF weights above, ban drew 9,989 of 1,000,000 audited rows on the
+    # v0.8.7-overlay, under the fr-native-postcode-locality floor of 10,000.
+    ban: 3.3
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    # v7.2.0's weight. us-professional-licensing-3 is elected under the US factual-data reading.
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    state-ia-contractors: 0.0
+    usgov-imls-pls: 0.0
+    # This config's header, point 6 (#3278).
+    nz-charities-register: 0.0
+    deepseek-kryptonite: 3.0
+    invented-intersection: 1.0
+    rendered-de: 6.0
+    rendered-fr-order: 3.0
+    rendered-fr-admin-split: 6.0
+    spliced-unit: 0.0 # Replaced by spliced-unit-v30.
+    spliced-unit-v30: 1.5
+    invented-po-box-cedex: 1.5
+    invented-postal-guideline: 1.5
+    invented-postal-unit-guideline: 2.5
+    spliced-affix: 2.0
+    spliced-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    invented-anchor-absorption: 6.0
+    fragment-fr-bare-street: 0.0 # Replaced by fragment-fr-bare-street-v22.
+    fragment-fr-bare-street-v22: 12.0
+    rendered-si-bare-village: 12.0
+    rendered-no-street-led: 0.0
+    rendered-cz-pcfirst-preposition: 0.0 # Replaced by rendered-cz-pcfirst-preposition-v21.
+    rendered-cz-pcfirst-preposition-v21: 12.0
+    rendered-nl-postcode: 6.0
+    fragment-assay: 6.0
+    fragment-fr: 12.0
+    fragment-no: 12.0
+    rendered-gb-os-open: 6.0
+    rendered-pt: 6.0
+    rendered-ch: 6.0
+    rendered-hr: 6.0
+    rendered-sk: 6.0
+    rendered-lu: 6.0
+    spliced-sub-venue: 12.0
+    spliced-suffix-boundary: 2.5
+    # Replaced by osm-pk, osm-vn and osm-bd, the 2026-10-02 refresh of the same extracts.
+    osm: 0.0
+    # Han-script rows for the CJK character family. v7.1.0's header, point 2, states why.
+    osm-cn: 0.0
+  source_emit_factors:
+    ads: 1.0835
+    au-acnc-register: 1.2481
+    cordis: 1.0581
+    geonames-features: 0.9337
+    gleif-lei: 1.1047
+    invented-po-box-military: 0.9930
+    lv-varis: 1.0661
+    osm-ar: 1.0624
+    osm-eg: 1.2270
+    osm-id: 1.0051
+    osm-in: 1.0910
+    osm-md: 1.0521
+    osm-pk: 1.1248
+    osm-rs: 1.0438
+    osm-ru: 1.0642
+    osm-vn: 0.9869
+    rendered-bd-register: 1.0627
+    rendered-pk-register: 1.0584
+    rendered-prominent-places: 0.8198
+    rendered-sg-register: 0.8852
+    rendered-us-city-county: 1.2887
+    rendered-us-city-state: 1.3069
+    rendered-us-county: 1.2206
+    ro-retea-scolara: 1.1151
+    spliced-trailing-region-ca-bare: 1.0251
+    spliced-trailing-region-es-v28: 1.0198
+    usgov-usgs-structures: 1.4312
+    wikidata-vital-places: 0.8002
+    wof-admin: 0.8219
+    wof-postalcode: 0.8293
+  source_reps:
+    wof-admin: 1.0
+    wof-postalcode: 1.0
+    rendered-prominent-places: 20
+    rendered-sg-register: 1.0
+    rendered-pk-register: 1.0
+    rendered-bd-register: 8.0
+    spliced-trailing-region-es-v28: 8.0
+    invented-po-box-military: 8.0
+    codex-bare-postcode: 1.0
+    spliced-trailing-region-us: 1.0
+    spliced-trailing-region-ca-bare: 4.0
+    osm-ru: 0.2
+    osm-in: 2.0
+    osm-id: 2.0
+    osm-ng: 4.0
+    osm-vn: 1.0
+    osm-pk: 1.0
+    osm-bd: 2.0
+    # v8.3.2's header, point 3.
+    ban-gp: 0.15
+    ban-mq: 0.15
+    ban-re: 0.08
+    ban-gf: 0.3
+    ban-yt: 0.3
+    ban-nc: 0.3
+    ban-pm: 2.0
+    ban-bl: 1.0
+    ban-mf: 1.0
+    ban-pf: 1.0
+    ro-retea-scolara: 2.0
+    lv-varis: 0.1
+    # v8.3.2's header, point 4.
+    cordis: 0.2
+    fr-finess-overseas: 4.0
+    fr-annuaire-education-overseas: 4.0
+    gleif-lei: 0.03
+    # v8.3.2's header, point 2, and v8.4.0's header, point 1, for the source's v0.8.12 rows.
+    geonames-features: 0.12
+    # v8.6.1's header, point 2.
+    wikidata-vital-places: 0.4
+    # v8.7.0's header, point 1.
+    usgov-usgs-structures: 0.075
+    # v8.7.0's header, point 3.
+    fr-laposte-poincont: 0.25
+    nc-opt-agences: 4.0
+    # v8.7.0's header, point 4.
+    es-sanidad-centros-ap: 0.2
+    it-miur-scuole: 0.2
+    au-acnc-register: 0.2
+    # v8.8.0's header, point 2.
+    rendered-us-county: 5.0
+    rendered-us-city-county: 0.55
+    rendered-us-city-state: 1.0
+    # This config's header, point 5.
+    rendered-former-divisions: 1.0
+    # The country-gap sources each take one pass over their rows.
+    adressur-fo: 1.0
+    ads: 1.0
+    bsp-gu: 1.0
+    gbpa-bs: 1.0
+    ide-uy: 1.0
+    landregistry-im: 1.0
+    llv-li: 1.0
+    opendata-az: 1.0
+    osm-ae: 1.0
+    osm-al: 1.0
+    osm-am: 1.0
+    osm-ao: 1.0
+    osm-ar: 1.0
+    osm-aw: 1.0
+    osm-az: 1.0
+    osm-ba: 1.0
+    osm-bb: 1.0
+    osm-bh: 1.0
+    osm-bm: 1.0
+    osm-bn: 1.0
+    osm-bs: 1.0
+    osm-bt: 1.0
+    osm-bw: 1.0
+    osm-by: 1.0
+    osm-bz: 1.0
+    osm-cd: 1.0
+    osm-ci: 1.0
+    osm-cl: 1.0
+    osm-co: 1.0
+    osm-cr: 1.0
+    osm-cu: 1.0
+    osm-cw: 1.0
+    osm-do: 1.0
+    osm-dz: 1.0
+    osm-ec: 1.0
+    osm-eg: 1.0
+    osm-ge: 1.0
+    osm-gg: 1.0
+    osm-gh: 1.0
+    osm-gl: 1.0
+    osm-gt: 1.0
+    osm-hk: 1.0
+    osm-ht: 1.0
+    osm-iq: 1.0
+    osm-ir: 1.0
+    osm-je: 1.0
+    osm-jm: 1.0
+    osm-jo: 1.0
+    osm-ke: 1.0
+    osm-kg: 1.0
+    osm-kh: 1.0
+    osm-kw: 1.0
+    osm-kz: 1.0
+    osm-lb: 1.0
+    osm-lk: 1.0
+    osm-lr: 1.0
+    osm-ma: 1.0
+    osm-md: 1.0
+    osm-me: 1.0
+    osm-mg: 1.0
+    osm-mk: 1.0
+    osm-mm: 1.0
+    osm-mn: 1.0
+    osm-mo: 1.0
+    osm-mt: 1.0
+    osm-mv: 1.0
+    osm-my: 1.0
+    osm-mz: 1.0
+    osm-na: 1.0
+    osm-np: 1.0
+    osm-om: 1.0
+    osm-pa: 1.0
+    osm-pe: 1.0
+    osm-pf: 1.0
+    osm-ph: 1.0
+    osm-pr: 1.0
+    osm-py: 1.0
+    osm-qa: 1.0
+    osm-rs: 1.0
+    osm-rw: 1.0
+    osm-sa: 1.0
+    osm-sm: 1.0
+    osm-sn: 1.0
+    osm-sr: 1.0
+    osm-sv: 1.0
+    osm-th: 1.0
+    osm-tj: 1.0
+    osm-tm: 1.0
+    osm-tn: 1.0
+    osm-tt: 1.0
+    osm-tz: 1.0
+    osm-ua: 1.0
+    osm-ug: 1.0
+    osm-uz: 1.0
+    osm-ve: 1.0
+    osm-vi: 1.0
+    osm-zm: 1.0
+    osm-zw: 1.0
+    ryhti-ax: 1.0
+  # This config's header, point 3.
+  prominent_place_coverage: /data/audits/prominent-places/candidate-global-2026-11-19/places.parquet
+  required_corpus_receipts:
+    # Each receipt stops the run when the epoch-mixture audit draws fewer matching rows than `min_draws`.
+    - name: us-city-state-postcode
+      min_fraction_of_expected: 0.9
+      source: spliced-trailing-region-us
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: ca-region-code-tail
+      min_fraction_of_expected: 0.9
+      source: spliced-trailing-region-ca-bare
+      country: CA
+    - name: us-secondary-unit-current-generation
+      min_draws: 1200
+      source: spliced-unit-v30
+      country: US
+    - name: bare-postcode-czech
+      min_fraction_of_expected: 0.9
+      source: codex-bare-postcode
+      country: CZ
+    - name: cz-postcode-first-current-generation
+      min_draws: 600
+      source: rendered-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 600
+      source: fragment-fr-bare-street-v22
+      country: FR
+    - name: sg-registers
+      min_fraction_of_expected: 0.9
+      source: rendered-sg-register
+      country: SG
+    - name: pk-house-line
+      min_fraction_of_expected: 0.9
+      source: rendered-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_fraction_of_expected: 0.9
+      source: rendered-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_fraction_of_expected: 0.9
+      source: spliced-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_fraction_of_expected: 0.9
+      source: invented-po-box-military
+      country: US
+    # GB rows come from OS OpenData now. rendered-gb drew 24,314 of the 1,000,000 audited rows at weight 6.0, and this
+    # floor sits at the same 1,000 as the other rendered locales.
+    - name: gb-os-open-rows
+      min_draws: 600
+      source: rendered-gb-os-open
+      country: GB
+    - name: pt-native-order
+      min_draws: 600
+      source: rendered-pt
+      country: PT
+    - name: ch-native-order
+      min_draws: 600
+      source: rendered-ch
+      country: CH
+    - name: hr-native-order
+      min_draws: 600
+      source: rendered-hr
+      country: HR
+    - name: sk-native-order
+      min_draws: 600
+      source: rendered-sk
+      country: SK
+    - name: lu-native-order
+      min_draws: 600
+      source: rendered-lu
+      country: LU
+    - name: br-overture-rooftops
+      min_draws: 600
+      source: overture-latam
+      country: BR
+    - name: mx-overture-rooftops
+      min_draws: 600
+      source: overture-latam
+      country: MX
+    # The OSM receipts copied from v7.1.0.
+    - name: osm-ru-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-ru
+      country: RU
+    - name: osm-in-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-in
+      country: IN
+    - name: osm-id-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-id
+      country: ID
+    - name: osm-ng-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-ng
+      country: NG
+    - name: osm-vn-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-vn
+      country: VN
+    - name: osm-pk-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-pk
+      country: PK
+    - name: osm-bd-exposure
+      min_fraction_of_expected: 0.9
+      source: osm-bd
+      country: BD
+    # The address-system sources, each at 90% of its expected draws over the 1,000,000-row epoch, rounded down to
+    # a multiple of 10. The draws are the v0.8.2 epoch-mixture audit's, run locally on the re-rooted manifest.
+    - name: ban-gp-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-gp
+      country: GP
+    - name: ban-mq-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-mq
+      country: MQ
+    - name: ban-re-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-re
+      country: RE
+    - name: ban-gf-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-gf
+      country: GF
+    - name: ban-yt-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-yt
+      country: YT
+    - name: ban-nc-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-nc
+      country: NC
+    - name: ban-pm-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-pm
+      country: PM
+    - name: ban-bl-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-bl
+      country: BL
+    - name: ban-mf-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-mf
+      country: MF
+    - name: ban-pf-exposure
+      min_fraction_of_expected: 0.9
+      source: ban-pf
+      country: PF
+    - name: ro-retea-scolara-exposure
+      min_fraction_of_expected: 0.9
+      source: ro-retea-scolara
+      country: RO
+    - name: lv-varis-exposure
+      min_fraction_of_expected: 0.9
+      source: lv-varis
+      country: LV
+    # v8.3.2's header, point 4.
+    - name: cordis-exposure
+      min_fraction_of_expected: 0.9
+      source: cordis
+    - name: fr-finess-overseas-exposure
+      min_fraction_of_expected: 0.9
+      source: fr-finess-overseas
+    - name: fr-annuaire-education-overseas-exposure
+      min_fraction_of_expected: 0.9
+      source: fr-annuaire-education-overseas
+    - name: gleif-lei-exposure
+      min_fraction_of_expected: 0.9
+      source: gleif-lei
+    # v8.4.0's header, point 2.
+    - name: geonames-features-exposure
+      min_fraction_of_expected: 0.9
+      source: geonames-features
+      component_sequence:
+        - venue
+    # v8.6.1's header, point 2: a presence floor under the expected draws.
+    - name: wikidata-vital-places-exposure
+      min_fraction_of_expected: 0.9
+      source: wikidata-vital-places
+    # v8.7.0's header, point 2.
+    - name: us-structures-exposure
+      min_fraction_of_expected: 0.9
+      source: usgov-usgs-structures
+      country: US
+    - name: us-structures-venue-street
+      min_fraction_of_expected: 0.9
+      source: usgov-usgs-structures
+      country: US
+      component_sequence:
+        - venue
+        - street
+    # v8.7.0's header, point 3.
+    - name: fr-laposte-counters-exposure
+      min_fraction_of_expected: 0.9
+      source: fr-laposte-poincont
+    - name: nc-opt-agencies-exposure
+      min_fraction_of_expected: 0.5
+      source: nc-opt-agences
+      country: NC
+    # v8.7.0's header, point 4.
+    - name: es-sanidad-centros-ap-exposure
+      min_fraction_of_expected: 0.9
+      source: es-sanidad-centros-ap
+      country: ES
+    - name: it-miur-scuole-exposure
+      min_fraction_of_expected: 0.9
+      source: it-miur-scuole
+      country: IT
+    - name: au-acnc-register-exposure
+      min_fraction_of_expected: 0.9
+      source: au-acnc-register
+      country: AU
+    # v8.8.0's header, point 4: the three county sources.
+    - name: us-county-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-us-county
+      country: US
+      component_sequence:
+        - subregion
+        - region
+    - name: us-city-county-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-us-city-county
+      country: US
+      component_sequence:
+        - locality
+        - subregion
+        - region
+    - name: us-city-state-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-us-city-state
+      country: US
+      component_sequence:
+        - locality
+        - region
+    # v8.8.0's header, point 4: the relabels. The NAD county relabel takes no receipt (that point states why).
+    - name: us-nppes-exposure
+      min_fraction_of_expected: 0.8
+      source: usgov-nppes
+      country: US
+    - name: us-nppes-po-box
+      min_draws: 1
+      source: usgov-nppes
+      country: US
+      component_sequence:
+        - po_box
+    - name: us-ny-notaries-po-box
+      min_fraction_of_expected: 0.5
+      source: state-ny-notaries
+      country: US
+      component_sequence:
+        - po_box
+    - name: us-kryptonite-retag
+      min_fraction_of_expected: 0.9
+      source: deepseek-kryptonite
+      country: US
+    - name: wof-admin-exposure
+      min_fraction_of_expected: 0.9
+      source: wof-admin
+    # This config's header, point 3.
+    - name: prominent-places-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-prominent-places
+    # This config's header, point 5.
+    - name: former-divisions-exposure
+      min_fraction_of_expected: 0.9
+      source: rendered-former-divisions
+    # v8.8.0's header, point 4: the re-rendered recipe outputs.
+    - name: us-pmb-street-split
+      min_fraction_of_expected: 0.8
+      source: invented-po-box-cedex
+      country: US
+      component_sequence:
+        - street
+        - street_suffix
+        - po_box
+    - name: fr-residence-lotissement-venue
+      min_fraction_of_expected: 0.8
+      source: invented-postal-unit-guideline
+      country: FR
+      component_sequence:
+        - venue
+        - house_number
+        - street
+    - name: house-venue-exposure
+      min_fraction_of_expected: 0.9
+      source: invented-house-venue
+    # #2750. The move copies a train row whose postcode sits on its layout's native side of the locality-and-region
+    # block, so these four receipts floor that native population in the D-rule locales. They match the drawn row
+    # before augmentation, so they read the same in all three arms. Each floor is a presence floor, set well under the
+    # source's share of a 1,000,000-row epoch rather than fitted to an audit. A shortfall stops the run for a
+    # diagnosis, and the floor stays where it is.
+    - name: us-native-locality-region-postcode
+      min_draws: 6000
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: fr-native-postcode-locality
+      min_draws: 6000
+      source: ban
+      country: FR
+      component_sequence:
+        - postcode
+        - locality
+    - name: de-native-postcode-locality
+      min_draws: 600
+      source: rendered-de
+      country: DE
+      component_sequence:
+        - postcode
+        - locality
+    - name: gb-native-locality-postcode
+      min_draws: 300
+      source: rendered-gb-os-open
+      country: GB
+      component_sequence:
+        - locality
+        - postcode
+    # #2750 keeps the producers that write another form rather than mixing order: G-NAF's postcode before the street,
+    # fr-order variants A, B and D, and nl-postcode orders 1 and 2. The move skips gnaf and the CZ pcfirst sources.
+    # These floor their presence so a rebuild that dropped one is caught before a GPU is allocated.
+    - name: au-gnaf-rows
+      min_draws: 600
+      source: gnaf
+      country: AU
+    - name: fr-order-kept-variants
+      min_draws: 600
+      source: rendered-fr-order
+      country: FR
+    - name: nl-postcode-rows
+      min_draws: 600
+      source: rendered-nl-postcode
+      country: NL
+  required_validation_coverage:
+    - country: GB
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: FR
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: DE
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: US
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: RU
+      min_rows: 20
+      min_street_rows: 10
+    - country: CN
+      min_rows: 20
+      min_street_rows: 10
+    - country: IN
+      min_rows: 20
+      min_street_rows: 10
+    - country: ID
+      min_rows: 20
+      min_street_rows: 10
+    - country: NG
+      min_rows: 20
+      min_street_rows: 10
+    - country: PK
+      min_rows: 20
+      min_street_rows: 10
+    - country: BD
+      min_rows: 20
+      min_street_rows: 10
+    - country: VN
+      min_rows: 20
+      min_street_rows: 10
+    # Presence floors for the address-system sources' countries.
+    - country: RO
+      min_rows: 20
+      min_street_rows: 10
+    - country: LV
+      min_rows: 20
+      min_street_rows: 10
+    - country: GP
+      min_rows: 20
+      min_street_rows: 10
+    - country: MQ
+      min_rows: 20
+      min_street_rows: 10
+    - country: GF
+      min_rows: 20
+      min_street_rows: 10
+    - country: RE
+      min_rows: 20
+      min_street_rows: 10
+    - country: YT
+      min_rows: 20
+      min_street_rows: 10
+    - country: NC
+      min_rows: 20
+      min_street_rows: 10
+    - country: PF
+      min_rows: 20
+      min_street_rows: 10
+    # PM has no entry. The hashed place holdout (6ff893e25) leaves it no held-out place, so its val split held 1 row on
+    # v0.8.1, and a country with no held-out split gets no floor, as BL and MF got none in v7.2.0.
+  # Half of each label's rows in the 21,596-row val draw of v0.8.22-retention-overlay, rounded down, measured
+  # 2026-11-22 by audits/label/support.run.ts on this config re-rooted at /mnt/mw. Measured counts: locality 18,957,
+  # street 16,518, postcode 15,134, house_number 15,102, region 5,152, venue 4,075, street_prefix 2,583, country
+  # 2,520, street_suffix 1,769, unit 363. dependent_locality 1,345, subregion 383 and po_box 47 take no floor, as
+  # the v0.8.2 floors set none for them.
+  required_validation_label_support:
+    - {label: postcode, split: val, min_rows: 7567}
+    - {label: locality, split: val, min_rows: 9478}
+    - {label: street, split: val, min_rows: 8259}
+    - {label: house_number, split: val, min_rows: 7551}
+    - {label: region, split: val, min_rows: 2576}
+    - {label: street_suffix, split: val, min_rows: 884}
+    - {label: street_prefix, split: val, min_rows: 1291}
+    - {label: venue, split: val, min_rows: 2037}
+    - {label: unit, split: val, min_rows: 181}
+    - {label: country, split: val, min_rows: 1260}
+  augment_exclude_sources:
+    - spliced-suffix-boundary
+    # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
+    # mustn't contain.
+    - codex-bare-postcode
+    # On WOF rows the region and directional rewrites expand a word inside a place name (`AL MANĀMAH` to
+    # `Alabama MANĀMAH`) under the original label, and the build already renders a `drop-commas` variant.
+    - wof-admin
+    - wof-postalcode
+    # The recipe writes WOF names in the same short shapes, so the same rewrites would expand them.
+    - rendered-prominent-places
+    # This config's header, point 5.
+    - rendered-former-divisions
+    # The same rewrites would expand a word inside a landmark's name under the `venue` label.
+    - wikidata-vital-places
+  train_rows_per_epoch: 1000000
+  # The validation draw is sized to hold the venue and country rows the label floors above require.
+  val_rows: 36864
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  augment_postcode_move_prob: 0.0
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: postal
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_address_system_head: true
+  address_system_loss_weight: 0.3
+  use_locale_hint: true
+  locale_hint_drop_prob: 0.5
+  locale_hint_noise_prob: 0.05
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    # v8.8.0's header, point 3.
+    B-subregion: 1.0
+    I-subregion: 1.0
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v8160-base-c6-wofreps-positions-v0822-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 126000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v8160-base-c6-wofreps-positions-v0822-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""
