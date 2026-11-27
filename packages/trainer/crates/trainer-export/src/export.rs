@@ -79,6 +79,10 @@ pub struct Interface {
 	locale: bool,
 	address_system: bool,
 	locale_hint: bool,
+	/// The `outcome_hint` input's class count, without its "no hint" row.
+	outcome_hint: Option<usize>,
+	/// The outcome head's class count.
+	outcome_head: Option<usize>,
 	phrase_width: usize,
 	span: Option<SpanHead>,
 }
@@ -260,12 +264,29 @@ pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOption
 		0
 	};
 
+	let classes = |on: bool, list: &Vec<String>, name: &str| -> Result<Option<usize>> {
+		match (on, list.len()) {
+			(false, _) => Ok(None),
+			(true, 0) => Err(fail!(
+				"use_outcome_{name} is set and config.json lists no outcome_{name}_classes"
+			)),
+			(true, n) => Ok(Some(n)),
+		}
+	};
+	let outcome_hint = classes(config.use_outcome_hint, &config.outcome_hint_classes, "hint")?;
+	let outcome_head = classes(config.use_outcome_head, &config.outcome_head_classes, "head")?;
+	if (outcome_hint.is_some() || outcome_head.is_some()) && char.is_some() {
+		return Err(fail!("the outcome hint and head are exportable on the token path only"));
+	}
+
 	Ok(Interface {
 		char,
 		channels,
 		locale: config.use_locale_conditioning,
 		address_system: config.use_address_system_head,
 		locale_hint,
+		outcome_hint,
+		outcome_head,
 		phrase_width,
 		span,
 	})
@@ -606,6 +627,13 @@ fn graph_inputs(iface: &Interface) -> Vec<ValueInfoProto> {
 	if iface.locale_hint {
 		inputs.push(value_info("locale_hint", DataType::Int64, &[batch()]));
 	}
+	// A required input. ONNX Runtime 1.31.1 can't override an initializer listed as an input: neither runtime lists
+	// it in `inputNames`, onnxruntime-web refuses the feed (`invalid input 'outcome_hint'`), and onnxruntime-node's
+	// logits for a fed hint differ from the model's. The export therefore follows the fallback of outcome-kinds.mdx,
+	// and the card declares `requires.outcome_hint`.
+	if iface.outcome_hint.is_some() {
+		inputs.push(value_info("outcome_hint", DataType::Int64, &[batch()]));
+	}
 	inputs
 }
 
@@ -754,6 +782,19 @@ impl Writer<'_> {
 		Ok(self.g.op("Add", &[&h, &hint], vec![], "hinted"))
 	}
 
+	/// Adds the outcome hint's embedding to every position. A fed −1 gathers the table's last row, "no hint".
+	fn outcome_hint(&mut self, h: String, classes: usize) -> Result<String> {
+		let table = self.param("outcome_hint_embedding.weight", &[classes + 1, self.hidden])?;
+		let hint = self.g.op(
+			"Gather",
+			&[&table, "outcome_hint"],
+			vec![attr_int("axis", 0)],
+			"outcome_hint.embedding",
+		);
+		let hint = self.unsqueeze(&hint, &[1], "outcome_hint.row");
+		Ok(self.g.op("Add", &[&h, &hint], vec![], "outcome_hinted"))
+	}
+
 	/// The key-padding mask, [B, 1, 1, S], added to every head's scores.
 	fn padding_mask(&mut self, zero: &str) -> String {
 		let padded = self.g.op("Equal", &["attention_mask", zero], vec![], "padding");
@@ -797,6 +838,16 @@ impl Writer<'_> {
 			self.gemm(&pooled, "address_system_head", n, e, Some("address_system_logits"))?;
 			outputs.push(value_info(
 				"address_system_logits",
+				DataType::Float,
+				&[Dim::Fixed(1), Dim::Fixed(n as i64)],
+			));
+		}
+		// The outcome head is the last output, so a runtime that reads outputs by position reads every earlier one
+		// where it was.
+		if let Some(n) = iface.outcome_head {
+			self.gemm(&pooled, "outcome_head", n, e, Some("outcome_logits"))?;
+			outputs.push(value_info(
+				"outcome_logits",
 				DataType::Float,
 				&[Dim::Fixed(1), Dim::Fixed(n as i64)],
 			));
@@ -892,6 +943,9 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 	if iface.locale_hint {
 		h = w.locale_hint(h, config)?;
 	}
+	if let Some(classes) = iface.outcome_hint {
+		h = w.outcome_hint(h, classes)?;
+	}
 	let mask = w.padding_mask(&dims.zero);
 	for layer in 0..config.num_hidden_layers {
 		h = w.block(&h, layer, config.num_attention_heads, config.intermediate_size, &mask)?;
@@ -907,7 +961,7 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 			Dim::Fixed(config.num_labels as i64),
 		],
 	)];
-	if iface.locale || iface.address_system {
+	if iface.locale || iface.address_system || iface.outcome_head.is_some() {
 		h = w.pooled_heads(h, config, &iface, &mut outputs)?;
 	}
 	w.classifier(&h, config.num_labels)?;

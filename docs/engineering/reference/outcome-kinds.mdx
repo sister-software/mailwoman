@@ -386,11 +386,16 @@ all. Two rules cover the two mixed cases:
 | Runtime and model                                | Behavior                                                                                                                                                                                                                                                                                                         | Test                                                                                                                                                           |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | new runtime, model without the input or the head | The feed is packed only when the graph declares the input, as `packLocaleHintFeed` does. The parse is the model's own. `outcomeHint` and `outcomeFilter` still act in the resolver, because they read record sets. The head's ordering doesn't run, and the response states `outcome_hint_model: "unsupported"`. | Run the published 11.4.0 weights with a hint set: the labels equal the labels with zero hints, the advisory is present, and the resolver's hint order applies. |
-| previous released runtime, model with the input  | The export declares `outcome_hint` as an initializer that a caller can override, with −1 stored. A runtime that feeds zero values for it runs the "no hint" row. The head's output is an extra tensor that the older runtime doesn't read.                                                                       | Run the new export with the previous runtime's feeds: the session runs, and the logits equal the new runtime's logits at −1.                                   |
+| previous released runtime, model with the input  | The export declares `outcome_hint` as a required input, under the fallback below. A runtime that feeds no value for it is refused with an error that states the missing input, and the card's `requires.outcome_hint` states the need. The head's output is an extra tensor that the older runtime doesn't read. | Run the new export with the previous runtime's feeds: the session refuses them, and the new runtime's logits at −1 equal the trained model's "no hint" logits. |
 
-Whether ONNX Runtime Web accepts an omitted initializer of that form is unverified until the first
-export. When it refuses one, the export keeps `outcome_hint` required, the card declares
-`requires.outcome_hint`, and the weights package raises its minimum runtime version.
+ONNX Runtime 1.31.1 can't override an initializer that a graph lists as an input. On 2026-11-27 the
+first export with that initializer ran with the input omitted in both runtimes, and neither listed
+`outcome_hint` in `inputNames`. onnxruntime-web refused a fed value with `invalid input 'outcome_hint'`,
+and onnxruntime-node returned logits for a fed hint that differed from the trained model's. The export
+therefore keeps `outcome_hint` required, the card declares `requires.outcome_hint`, and the weights
+package raises its minimum runtime version. The previous runtime's feeds are refused with an error that
+states the missing input, and the graph never runs on them. `packages/neural/lib/onnx/outcome-hint.test.ts` holds both runtimes to
+that behavior.
 
 ## Importance across sources
 

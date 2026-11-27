@@ -20,6 +20,7 @@ import {
 } from "#channels/anchor-inference"
 import { type EncoderDescriptor, encoderDescriptorFromCard } from "#input/char-encoder"
 import { type AddressSystemTable, parseAddressSystemTable } from "#labels/address-system"
+import { type OutcomeTable, parseOutcomeTable } from "#outcome/table"
 
 /**
  * The `requires` block of a `model-card.json`, which declares the channel
@@ -81,6 +82,13 @@ export interface RequiredChannels {
 	 * The code-unit channel (#2845), computed from the raw surface with no lexicon.
 	 */
 	code_unit?: { required: boolean }
+	/**
+	 * The `outcome_hint` input.
+	 *
+	 * The graph declares it as required.
+	 * A runtime that feeds no value for it can't run the graph.
+	 */
+	outcome_hint?: { required: boolean }
 	/**
 	 * The generation of the query-shape rules the model trained beside.
 	 *
@@ -547,6 +555,22 @@ export async function readAddressSystemsFromModelCard(
 	const card = await readModelCardObject(modelCardPath)
 
 	return card ? parseAddressSystemTable(card.address_systems, String(modelCardPath)) : null
+}
+
+/**
+ * Reads the `outcomes` block from a `model-card.json` file.
+ *
+ * It returns `null` when the file is missing or the card has no such field,
+ * as for every model trained without the outcome hint or head.
+ *
+ * @throws When the field is present but malformed.
+ */
+export async function readOutcomesFromModelCard(
+	modelCardPath: PathBuilderLike | null | undefined
+): Promise<OutcomeTable | null> {
+	const card = await readModelCardObject(modelCardPath)
+
+	return card ? parseOutcomeTable(card.outcomes, String(modelCardPath)) : null
 }
 
 /**
