@@ -32,6 +32,7 @@ import {
 	splitOfSourceID,
 } from "#tools/overlay/split/attribute"
 import type { SplitName } from "#utils/split"
+import type { EvaluationGroupPolicyIdentity } from "#utils/validation-groups"
 
 /**
  * The attribute file that decides the split of each row of one manifest file.
@@ -519,6 +520,37 @@ export function localManifestFilePath(path: string): string {
 }
 
 /**
+ * The base's `evaluation_groups` record, when every row of the corpus overlay
+ * is split by the two lists it names.
+ *
+ * Each attribute records the frozen and validation lists it applied, by sha256.
+ * The policy hash also covers the split code, so an attribute written after that
+ * code changed records another hash under the same lists.
+ *
+ * A file split by its own `split`, or an attribute under other lists or none, leaves the
+ * corpus overlay under no single evaluation-group policy, and the record is dropped.
+ */
+function carriedEvaluationGroups(
+	base: BaseManifest,
+	splitByFile: number,
+	attributes: Iterable<SplitAttributeFile>
+): { evaluation_groups?: unknown } {
+	const record = base["evaluation_groups"] as Partial<EvaluationGroupPolicyIdentity> | null | undefined
+	const frozen = record?.evaluationGroups?.sha256
+	const validation = record?.validationGroups?.sha256
+
+	if (!frozen || !validation || splitByFile !== 0) return {}
+
+	for (const { policy } of attributes) {
+		if (policy.evaluationGroups?.evaluationGroups.sha256 !== frozen) return {}
+
+		if (policy.evaluationGroups.validationGroups.sha256 !== validation) return {}
+	}
+
+	return { evaluation_groups: record }
+}
+
+/**
  * Writes a corpus manifest that keeps the files of `args.base` and appends `args.files`.
  *
  * A base file whose source `args.replaceSources` lists is dropped.
@@ -690,6 +722,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		base.counts[split] + baseDeleted[split] - droppedRows[split] + addedRows[split] - deletedRows[split]
 
 	const sources = args.files.map((file) => file.source).join(", ")
+	const policyHashes = [...new Set([...attributes.values()].map((attribute) => attribute.policyHash))].toSorted()
+	const splitByFile = listedFiles.filter((file) => !file["split_attribute"]).length
 
 	const defaultNote = replaced.size
 		? `${base.corpus_version} files without ${[...replaced].join(", ")} + ${sources}.`
@@ -708,11 +742,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		total_rows: netCount("train") + netCount("val") + netCount("test"),
 		// What decides a row's split: a file's own `split`, or for a file listing
 		// `split_attribute`, the attribute file under these policy hashes.
-		split_decided_by: {
-			file: listedFiles.filter((file) => !file["split_attribute"]).length,
-			attribute: SPLIT_ATTRIBUTE,
-			policy_hashes: [...new Set([...attributes.values()].map((attribute) => attribute.policyHash))].toSorted(),
-		},
+		split_decided_by: { file: splitByFile, attribute: SPLIT_ATTRIBUTE, policy_hashes: policyHashes },
+		...carriedEvaluationGroups(base, splitByFile, attributes.values()),
 		deletions,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// This value in the artifact prevents a reader from deriving an attribution table
