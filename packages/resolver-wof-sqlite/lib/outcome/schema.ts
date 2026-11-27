@@ -50,10 +50,7 @@ export interface LandmarkOutcomeTable {
 /**
  * The single row naming the definitions revision the tables were compiled from.
  */
-export interface OutcomeManifestTable {
-	revision: string
-	sha256: string
-}
+export type OutcomeManifestTable = OutcomeSpecPin
 
 export interface OutcomeDatabase {
 	outcome_default: OutcomeDefaultTable
