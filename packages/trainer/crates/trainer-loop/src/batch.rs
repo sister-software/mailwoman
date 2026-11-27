@@ -6,6 +6,11 @@
 //! The SentencePiece path encodes through `mtf-channels` with the run's tokenizer, label table and lexicons, as
 //! `build_row_encoder` configures `mailwoman_mtf.RowEncoder`. The char path encodes through `mtf-sampler`'s
 //! `CharEncoder`. Both then add each row's locale id and address-system id in row order, as `encode_rows` does.
+//!
+//! Both paths pad every row to the configured width. The supervised loop trims each training batch to its longest
+//! row with [`TensorBatch::trimmed`] after the curricula run, so the curricula draw and roll over the full width
+//! and the step computes over the rows' positions only. Every position past a row's end is masked as a key and
+//! ignored as a label, so the trimmed batch's loss and gradients are the full batch's.
 
 use crate::address_systems::{locale_id, AddressSystems};
 use crate::config::{DataFiles, RunConfig};
@@ -19,7 +24,7 @@ use mtf_sampler::char_path::CharEncoder;
 use mtf_sampler::Row;
 use std::path::{Path, PathBuf};
 use tch::{Device, Kind, Tensor};
-use trainer_model::encoder::{ChannelInput, EncoderInputs};
+use trainer_model::encoder::{ChannelInput, EncoderInputs, IGNORE_INDEX};
 use trainer_model::SchemaDefaults;
 
 /// One batch as the model reads it, every tensor on the CPU until moved.
@@ -121,7 +126,52 @@ impl TensorBatch {
 	pub fn channel_mut(&mut self, name: &str) -> Option<&mut (String, Tensor, Tensor)> {
 		self.channels.iter_mut().find(|(n, _, _)| n == name)
 	}
+
+	/// The width that holds every position a row attends or a label scores: one past the last such position of any
+	/// row, rounded up to [`WIDTH_MULTIPLE`] and capped at the batch's width.
+	///
+	/// It reads the batch's values, so the loop calls it on the host batch: on a device it would wait for the device.
+	pub fn longest_width(&self) -> i64 {
+		let width = self.attention_mask.size()[1];
+		if width == 0 {
+			return 0;
+		}
+		let used = self.attention_mask.ne(0).logical_or(&self.labels.ne(IGNORE_INDEX));
+		let positions = Tensor::arange_start(1, width + 1, (Kind::Int64, used.device()));
+		let longest = (used.to_kind(Kind::Int64) * positions).max().int64_value(&[]);
+		let rounded = (longest.max(1) + WIDTH_MULTIPLE - 1) / WIDTH_MULTIPLE * WIDTH_MULTIPLE;
+		rounded.min(width)
+	}
+
+	/// The batch's first `width` positions: every per-position tensor narrowed along its sequence axis, the per-row
+	/// ids kept. A batch already `width` wide is returned as is.
+	pub fn trimmed(&self, width: i64) -> Self {
+		let narrow = |t: &Tensor| {
+			if t.size()[1] == width {
+				t.shallow_clone()
+			} else {
+				t.narrow(1, 0, width).contiguous()
+			}
+		};
+		Self {
+			input_ids: narrow(&self.input_ids),
+			attention_mask: narrow(&self.attention_mask),
+			labels: narrow(&self.labels),
+			locale_ids: self.locale_ids.shallow_clone(),
+			address_system_ids: self.address_system_ids.shallow_clone(),
+			channels: self
+				.channels
+				.iter()
+				.map(|(n, f, c)| (n.clone(), narrow(f), narrow(c)))
+				.collect(),
+			char_ids: self.char_ids.as_ref().map(narrow),
+		}
+	}
 }
+
+/// The multiple a trimmed training batch's width rounds up to, which bounds a run to `max_length / 8` distinct
+/// widths and keeps each width a multiple the tensor-core kernels tile.
+pub const WIDTH_MULTIPLE: i64 = 8;
 
 fn read(path: &Path) -> Result<String> {
 	std::fs::read_to_string(path).map_err(|e| fail!("{}: {e}", path.display()))

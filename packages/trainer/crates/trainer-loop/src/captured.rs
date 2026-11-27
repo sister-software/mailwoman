@@ -4,7 +4,8 @@
 //! `train.cuda_graph`: the supervised training step captured into one CUDA graph per length bucket and replayed.
 //!
 //! A graph replays fixed kernels on fixed addresses, so each bucket owns one static batch on the device of exactly
-//! `train.batch_size` rows and the bucket's length. A step copies its batch into the static tensors of the smallest
+//! `train.batch_size` rows and the bucket's length. The loop has trimmed each batch to its longest row, rounded up to
+//! a multiple of 8, before the step sees it. A step copies its batch into the static tensors of the smallest
 //! bucket that holds it, padding the rest of each row (`attention_mask` 0, `labels` at the ignore index, the pad
 //! token, zeros in each channel), and replays. The curricula have already run on the batch, eagerly, so their draws
 //! are the eager loop's.
