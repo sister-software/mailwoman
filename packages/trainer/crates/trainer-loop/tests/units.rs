@@ -570,9 +570,9 @@ fn a_trimmed_batch_is_the_full_batchs_first_columns() {
 	assert_eq!(full.labels.narrow(1, 16, 8).ne(-100).any().int64_value(&[]), 0);
 
 	// A label scored past every row's attended positions widens the batch to hold it.
-	let labelled = padded_batch(24);
-	let _ = labelled.labels.get(2).get(17).fill_(1);
-	assert_eq!(labelled.longest_width(), 24);
+	let labeled = padded_batch(24);
+	let _ = labeled.labels.get(2).get(17).fill_(1);
+	assert_eq!(labeled.longest_width(), 24);
 	// The width never exceeds the batch's, and a batch already that wide is returned as is.
 	let narrow = padded_batch(12);
 	assert_eq!(narrow.longest_width(), 12);
