@@ -1,0 +1,6 @@
+{
+	"country": "MW",
+	"placetypes": { "1": "region", "2": "county" },
+	"nameSuffixes": [" Region", " District"],
+	"existing": { "1105841": 85675115 }
+}
