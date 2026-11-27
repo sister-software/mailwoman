@@ -12,6 +12,7 @@ use std::path::PathBuf;
 fn main() {
 	println!("cargo:rerun-if-changed=csrc/autocast.cpp");
 	println!("cargo:rerun-if-changed=csrc/runtime.cpp");
+	println!("cargo:rerun-if-changed=csrc/optim.cpp");
 	println!("cargo:rerun-if-changed=../../Cargo.lock");
 	println!("cargo:rustc-env=TRAINER_TCH_VERSION={}", locked_version("tch"));
 	let lib =
@@ -33,6 +34,7 @@ fn main() {
 		.flag("-DGLOG_USE_GLOG_EXPORT")
 		.file("csrc/autocast.cpp")
 		.file("csrc/runtime.cpp")
+		.file("csrc/optim.cpp")
 		.compile("trainer_autocast");
 }
 

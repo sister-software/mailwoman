@@ -202,6 +202,7 @@ pub fn build_optimization(run: &RunConfig, model: &CoarseEncoder) -> Result<(Ada
 	)?;
 	let live: Vec<f64> = groups.iter().map(|g| g.lr).collect();
 	let mut optim = AdamW::new(groups);
+	println!("optimizer kernel={:?}", optim.kernel());
 	let schedule = Schedule::from_config(
 		&run.train_str("lr_schedule")?,
 		run.train_i64("warmup_steps")?,
@@ -709,7 +710,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 					let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 					clip_grad_norm(&refs, grad_clip)?;
 				}
-				optim.step();
+				optim.step()?;
 				scheduler.step(&mut optim);
 				step += 1;
 				running.add(&loss);

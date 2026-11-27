@@ -381,7 +381,7 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		},
 	);
 	model.forward(&inputs()).unwrap().loss.unwrap().backward();
-	optim.step();
+	optim.step().unwrap();
 	sched.step(&mut optim);
 	let dir = tempfile::tempdir().unwrap();
 	let saved = save_checkpoint(

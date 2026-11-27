@@ -157,7 +157,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 				clip_grad_norm(&refs, grad_clip)?;
 			}
-			optim.step();
+			optim.step()?;
 			scheduler.step(&mut optim);
 			step += 1;
 			running += loss.double_value(&[]);

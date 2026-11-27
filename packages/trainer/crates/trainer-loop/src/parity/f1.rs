@@ -116,7 +116,7 @@ pub fn run(dir: &Path) -> Result<Vec<StageResult>> {
 		let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 		let norm = clip_grad_norm(&refs, 1.0)?.expect("every parameter has a gradient");
 		norms.push(norm.double_value(&[]));
-		optim.step();
+		optim.step()?;
 		scheduler.step(&mut optim);
 		lrs.push(scheduler.get_last_lr()[0]);
 		let mut update = StageResult::new(&format!("train step {step}: AdamW update"), "1e-6 abs");
