@@ -22,7 +22,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use tch::{Device, Kind, Tensor};
 use trainer_model::autocast::{clear_grad, vector_norm};
-use trainer_model::multi_tensor::{clip_grad_norm_foreach, fused_adamw};
+use trainer_model::multi_tensor::{clip_grad_norm_foreach, fused_adamw, LearningRate};
 
 /// Which implementation an optimizer step and a gradient clip run.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -77,6 +77,9 @@ pub struct AdamW {
 	/// Each parameter's index in `state`.
 	index: HashMap<String, usize>,
 	kernel: Kernel,
+	/// Each group's learning rate as a float32 scalar on its parameters' device, when the multi-tensor step reads
+	/// the rate from device memory (`use_tensor_learning_rates`). `None` passes each group's `lr` as a host value.
+	lr_tensors: Option<Vec<Tensor>>,
 }
 
 impl AdamW {
@@ -99,11 +102,55 @@ impl AdamW {
 			state: Vec::new(),
 			index: HashMap::new(),
 			kernel,
+			lr_tensors: None,
 		}
 	}
 
 	pub fn kernel(&self) -> Kernel {
 		self.kernel
+	}
+
+	/// Moves every group's learning rate into a device tensor that the multi-tensor step reads, so a captured CUDA
+	/// graph replays each step at the rate `write_learning_rates` last wrote. Refused on the per-tensor kernel,
+	/// which reads its rate on the host.
+	pub fn use_tensor_learning_rates(&mut self) -> Result<()> {
+		if self.kernel != Kernel::MultiTensor {
+			return Err(fail!(
+				"a tensor learning rate needs the multi-tensor kernel, and this optimizer runs {:?}",
+				self.kernel
+			));
+		}
+		let tensors = self
+			.groups
+			.iter()
+			.map(|g| {
+				let device = g.params.first().map_or(Device::Cpu, |(_, p)| p.device());
+				Tensor::zeros([], (Kind::Float, device))
+			})
+			.collect();
+		self.lr_tensors = Some(tensors);
+		self.write_learning_rates();
+		Ok(())
+	}
+
+	/// Copies each group's `lr` into its device tensor, when the optimizer holds them. The scheduler calls it after
+	/// every rate change, outside any captured region.
+	pub fn write_learning_rates(&self) {
+		if let Some(tensors) = &self.lr_tensors {
+			for (group, tensor) in self.groups.iter().zip(tensors) {
+				let _ = tensor.shallow_clone().fill_(group.lr);
+			}
+		}
+	}
+
+	/// Creates the zeroed state of every parameter that has none yet, as its first step would. A step captured into
+	/// a CUDA graph must allocate nothing the graph would recreate on each replay, so the capture creates the state
+	/// beforehand.
+	pub fn create_missing_state(&mut self) {
+		let params: Vec<(String, Tensor)> = self.params().map(|(n, p)| (n.clone(), p.shallow_clone())).collect();
+		for (name, param) in params {
+			self.state_index(&name, &param);
+		}
 	}
 
 	/// The index in `state` of `param`'s state, created zeroed at its first step.
@@ -170,7 +217,7 @@ impl AdamW {
 
 	fn step_multi_tensor(&self, stepped: &[GroupStep]) -> Result<()> {
 		tch::no_grad(|| {
-			for (lr, wd, members) in stepped {
+			for (g, (lr, wd, members)) in stepped.iter().enumerate() {
 				if members.is_empty() {
 					continue;
 				}
@@ -185,7 +232,10 @@ impl AdamW {
 					&exp_avgs,
 					&exp_avg_sqs,
 					&steps,
-					*lr,
+					match &self.lr_tensors {
+						Some(tensors) => LearningRate::Tensor(&tensors[g]),
+						None => LearningRate::Scalar(*lr),
+					},
 					self.betas,
 					*wd,
 					self.eps,
@@ -281,6 +331,7 @@ impl AdamW {
 			group.initial_lr = saved.initial_lr;
 			group.weight_decay = saved.weight_decay;
 		}
+		self.write_learning_rates();
 		let tensors = Tensor::read_safetensors(dir.join("optimizer.safetensors"))?;
 		let take = |key: String| -> Result<Tensor> {
 			tensors

@@ -152,6 +152,23 @@ impl RunConfig {
 			.ok_or_else(|| fail!("train.{key} is not a boolean"))
 	}
 
+	pub fn train_i64s(&self, key: &str) -> Result<Vec<i64>> {
+		field(&self.train, "train", key)?
+			.as_array()
+			.ok_or_else(|| fail!("train.{key} is not a list"))?
+			.iter()
+			.map(|v| v.as_i64().ok_or_else(|| fail!("train.{key} holds {v}")))
+			.collect()
+	}
+
+	/// `train.cuda_graph`. A config resolved before the field existed has no key, and reads as off.
+	pub fn cuda_graph(&self) -> Result<bool> {
+		match self.train.get("cuda_graph") {
+			None => Ok(false),
+			Some(v) => v.as_bool().ok_or_else(|| fail!("train.cuda_graph is not a boolean")),
+		}
+	}
+
 	pub fn train_str(&self, key: &str) -> Result<String> {
 		Ok(field(&self.train, "train", key)?
 			.as_str()

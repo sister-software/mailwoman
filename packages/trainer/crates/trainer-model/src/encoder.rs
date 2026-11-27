@@ -162,6 +162,12 @@ pub struct CoarseEncoder {
 	address_system_head: Option<Linear>,
 	locale_hint_embedding: Option<Embedding>,
 	device: Device,
+	/// Computes the locale, span-boundary and address-system losses as masked sums over a count clamped to at
+	/// least 1, with no host read of a device value, so the forward can be captured into a CUDA graph. Off, each of
+	/// the three skips its term when the batch holds no valid id, as `losses.py` does. The two agree to rounding
+	/// whenever the batch holds a valid id; with none, the masked term is a zero that still reaches its head's
+	/// gradient.
+	pub graph_safe_losses: bool,
 }
 
 impl CoarseEncoder {
@@ -277,6 +283,7 @@ impl CoarseEncoder {
 			address_system_head: None,
 			locale_hint_embedding: None,
 			device: Device::Cpu,
+			graph_safe_losses: false,
 		};
 		encoder.init_weights();
 		encoder.build_address_system();
@@ -356,6 +363,19 @@ impl CoarseEncoder {
 
 	pub fn hidden_size(&self) -> i64 {
 		self.spec.hidden_size
+	}
+
+	/// Why this model's training forward can't be captured into a CUDA graph, or `None` when it can under
+	/// `graph_safe_losses`. The semi-Markov span loss reads each row's length and labels back to the host to build
+	/// its gold segments, and the char encoder's input has a word width a length bucket doesn't fix.
+	pub fn graph_capture_blocker(&self) -> Option<&'static str> {
+		if self.span_scorer.is_some() && self.spec.span_loss_weight > 0.0 {
+			return Some("the span loss reads each row's gold segments on the host");
+		}
+		if self.char_cnn.is_some() {
+			return Some("the char encoder's input width varies by batch");
+		}
+		None
 	}
 
 	fn zeros(&self, shape: &[i64], kind: Kind) -> Tensor {
@@ -616,15 +636,18 @@ impl CoarseEncoder {
 		terms: &mut Vec<(&'static str, Tensor)>,
 	) -> Option<Tensor> {
 		let (ll, ids) = (locale_logits?, inputs.locale_ids.as_ref()?);
-		if !self.spec.use_locale_conditioning
-			|| self.spec.locale_loss_weight <= 0.0
-			|| ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0
-		{
+		if !self.spec.use_locale_conditioning || self.spec.locale_loss_weight <= 0.0 {
 			return None;
 		}
-		let locale =
+		let locale = if self.graph_safe_losses {
+			masked_mean_cross_entropy(ll, ids)
+		} else {
+			if ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+				return None;
+			}
 			ll.to_kind(Kind::Float)
-				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0);
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0)
+		};
 		terms.push(("locale", locale.shallow_clone()));
 		Some(locale * self.spec.locale_loss_weight)
 	}
@@ -647,7 +670,7 @@ impl CoarseEncoder {
 			return None;
 		}
 		let valid = mask.to_kind(Kind::Bool).logical_and(&labels.ne(IGNORE_INDEX));
-		if valid.any().int64_value(&[]) == 0 {
+		if !self.graph_safe_losses && valid.any().int64_value(&[]) == 0 {
 			return None;
 		}
 		let safe = labels.clamp_min(0);
@@ -665,7 +688,13 @@ impl CoarseEncoder {
 			.to_kind(Kind::Float)
 			.binary_cross_entropy_with_logits::<Tensor>(&targets, None, None, tch::Reduction::None)
 			.mean_dim(&[-1i64][..], false, None);
-		let sb = per_pos.index(&[Some(&valid)]).mean(None);
+		let sb = if self.graph_safe_losses {
+			// A boolean index has a data-dependent shape; the masked sum over the clamped count is its mean.
+			let weight = valid.to_kind(Kind::Float);
+			(per_pos * &weight).sum(None) / weight.sum(None).clamp_min(1.0)
+		} else {
+			per_pos.index(&[Some(&valid)]).mean(None)
+		};
 		terms.push(("span_boundary", sb.shallow_clone()));
 		Some(sb * self.spec.span_boundary_loss_weight)
 	}
@@ -726,16 +755,19 @@ impl CoarseEncoder {
 		let (Some(logits), Some(ids)) = (logits, &inputs.address_system_ids) else {
 			return loss;
 		};
-		if self.spec.address_system_loss_weight <= 0.0 || ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+		if self.spec.address_system_loss_weight <= 0.0 {
 			return loss;
 		}
-		let ce = logits.to_kind(Kind::Float).cross_entropy_loss::<Tensor>(
-			ids,
-			None,
-			tch::Reduction::Mean,
-			IGNORE_INDEX,
-			0.0,
-		);
+		let ce = if self.graph_safe_losses {
+			masked_mean_cross_entropy(logits, ids)
+		} else {
+			if ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+				return loss;
+			}
+			logits
+				.to_kind(Kind::Float)
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0)
+		};
 		terms.push(("address_system", ce.shallow_clone()));
 		Some(add_term(loss, ce * self.spec.address_system_loss_weight))
 	}
@@ -783,6 +815,17 @@ impl CoarseEncoder {
 			terms,
 		}
 	}
+}
+
+/// The fp32 cross-entropy of `logits` `(B, C)` against `ids` `(B)`, averaged over the ids that aren't
+/// [`IGNORE_INDEX`], as a sum over a count clamped to at least 1: the mean reduction's value when an id is valid, and
+/// 0 when none is, with no host read.
+fn masked_mean_cross_entropy(logits: &Tensor, ids: &Tensor) -> Tensor {
+	let per_row =
+		logits
+			.to_kind(Kind::Float)
+			.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::None, IGNORE_INDEX, 0.0);
+	per_row.sum(None) / ids.ne(IGNORE_INDEX).sum(Kind::Float).clamp_min(1.0)
 }
 
 /// `training_hint_ids`: the row's system, dropped to "no hint" or swapped for another at the given rates.

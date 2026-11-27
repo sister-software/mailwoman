@@ -8,6 +8,9 @@
 
 use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
+use crate::captured::{
+	capture_refusal, length_buckets, CaptureRun, CaptureSettings, CapturedStep, StepPath, WARMUP_STEPS,
+};
 use crate::checkpoint::{
 	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, resume_drift, save_checkpoint,
 	RNG_STATE, TRAINING_COMPLETE,
@@ -101,13 +104,7 @@ pub fn load_or_build_model(run: &RunConfig, encoder: &RunEncoder, resume_from: O
 	let model = build_model(run, encoder)?;
 	let init_from = run.train_str("init_from")?;
 	if !init_from.is_empty() {
-		let tensors = trainer_model::checkpoint::read_model_tensors(Path::new(&init_from))?;
-		let (missing, unexpected) = model.store.load(&tensors, false)?;
-		println!(
-			"[init_from] loaded encoder from {init_from} (missing={} unexpected={})",
-			missing.len(),
-			unexpected.len()
-		);
+		init_from_checkpoint(&model, Path::new(&init_from))?;
 	}
 	let reinit = run.train_strings("reinit_label_rows")?;
 	if !reinit.is_empty() {
@@ -117,6 +114,31 @@ pub fn load_or_build_model(run: &RunConfig, encoder: &RunEncoder, resume_from: O
 		reinit_label_rows(&model, &reinit)?;
 	}
 	Ok(model)
+}
+
+/// `train.init_from`: every tensor of the checkpoint at `dir` copied into the freshly built model.
+///
+/// The checkpoint must hold exactly the model's tensors. A tensor the model has and the checkpoint lacks would keep
+/// its fresh initialization, and a tensor only the checkpoint holds would be dropped, and either means the
+/// checkpoint was trained with another model config.
+pub fn init_from_checkpoint(model: &CoarseEncoder, dir: &Path) -> Result<()> {
+	let tensors = trainer_model::checkpoint::read_model_tensors(dir)?;
+	let (missing, unexpected) = model.store.load(&tensors, false)?;
+	if !missing.is_empty() || !unexpected.is_empty() {
+		return Err(fail!(
+			"train.init_from={} does not match the model the config builds: {} tensors missing {missing:?}, {} \
+			 unexpected {unexpected:?}",
+			dir.display(),
+			missing.len(),
+			unexpected.len()
+		));
+	}
+	println!(
+		"[init_from] loaded all {} encoder tensors from {}",
+		tensors.len(),
+		dir.display()
+	);
+	Ok(())
 }
 
 /// `reinit_label_rows`: the selected labels' classifier rows set to the mean of the live rows.
@@ -440,6 +462,50 @@ fn ewc_penalty(run: &RunConfig, device: Device) -> Result<Option<EwcPenalty>> {
 	Ok(Some(e))
 }
 
+/// The run's captured step when `train.cuda_graph` is set and the run can capture, printing which path the run
+/// takes.
+fn captured_step(
+	run: &RunConfig,
+	encoder: &RunEncoder,
+	model: &mut CoarseEncoder,
+	optim: &mut AdamW,
+	precision: Precision,
+	ewc: bool,
+) -> Result<Option<CapturedStep>> {
+	if !run.cuda_graph()? {
+		println!("[cuda-graph] off: every step runs eagerly");
+		return Ok(None);
+	}
+	let device = model.device();
+	let refusal = capture_refusal(&CaptureRun {
+		device,
+		kernel: optim.kernel(),
+		grad_accum_steps: precision.accum,
+		ewc,
+		model,
+	})?;
+	if let Some(reason) = refusal {
+		println!("[cuda-graph] train.cuda_graph is set, and every step runs eagerly: {reason}");
+		return Ok(None);
+	}
+	let max_length = run
+		.data_i64("max_length")?
+		.ok_or_else(|| fail!("train.cuda_graph needs data.max_length to bound its length buckets"))?;
+	let settings = CaptureSettings {
+		buckets: length_buckets(&run.train_i64s("length_buckets")?, max_length)?,
+		batch_size: run.train_i64("batch_size")?,
+		pad_id: encoder.pad_id,
+		autocast: precision.autocast,
+		grad_clip: run.train_f64("grad_clip_norm")?,
+	};
+	println!(
+		"[cuda-graph] capturing the training step per length bucket {:?} after {WARMUP_STEPS} eager steps each; a \
+		 short batch, a longer one and the Fisher window run eagerly",
+		settings.buckets
+	);
+	Ok(Some(CapturedStep::new(settings, device, model, optim)?))
+}
+
 /// Writes the Fisher artifact into the final checkpoint with its provenance.
 fn save_fisher(
 	fisher: &FisherAccumulator,
@@ -613,6 +679,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut validation = ValidationDraw::new();
 	let val_rows = run.data_i64("val_rows")?.map(|n| n as u64);
 	let eval_batch = run.train_i64("eval_batch_size")? as usize;
+	let mut captured = captured_step(run, &encoder, &mut model, &mut optim, precision, ewc.is_some())?;
+	let param_refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
+	let mut announced_fisher_fallback = false;
 	let started = Instant::now();
 	println!("max_steps={max_steps} batch_size={batch_size}");
 
@@ -693,34 +762,69 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				model.mode = Mode::Train;
 				let mut batch = encoded.to_device(device);
 				apply_curricula(&curricula, &mut batch, step)?;
-				let boundary = (micro_step + 1) % accum == 0;
-				if micro_step % accum == 0 {
-					optim.zero_grad();
-				}
-				let out = {
-					let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
-					model.forward(&batch.inputs())?
-				};
-				let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
-				if let Some(e) = &ewc {
-					loss_total = loss_total + e.penalty(&params)?;
-				}
-				let loss = loss_total / accum as f64;
-				loss.backward();
-				micro_step += 1;
-				if !boundary {
-					continue;
-				}
-				if let (Some(f), Some(start)) = (fisher.as_mut(), fisher_window_start) {
-					if step >= start {
-						f.accumulate(&params);
+				let in_fisher_window = fisher.is_some() && fisher_window_start.is_some_and(|start| step >= start);
+				// The captured step runs unless this step reads the gradients for the Fisher capture or the batch fits
+				// no bucket; either takes the eager step below.
+				let replay = match captured.as_ref() {
+					None => false,
+					Some(_) if in_fisher_window => {
+						if !announced_fisher_fallback {
+							println!(
+								"[cuda-graph] step {} onward runs eagerly: the Fisher window reads the gradients",
+								step + 1
+							);
+							announced_fisher_fallback = true;
+						}
+						false
 					}
-				}
-				if grad_clip > 0.0 {
-					let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
-					clip_grad_norm(&refs, grad_clip)?;
-				}
-				optim.step()?;
+					Some(c) => match c.fallback(&batch) {
+						Some(reason) => {
+							println!("[cuda-graph] step {} runs eagerly: {reason}", step + 1);
+							false
+						}
+						None => true,
+					},
+				};
+				let loss = if let (true, Some(c)) = (replay, captured.as_mut()) {
+					let (loss, path, length) = c.step(&batch, &model, &mut optim, &param_refs)?;
+					micro_step += 1;
+					match path {
+						StepPath::Captured => {
+							println!("[cuda-graph] step {} captured the length-{length} bucket", step + 1);
+						}
+						StepPath::Warmup | StepPath::Replayed => {}
+					}
+					loss
+				} else {
+					let boundary = (micro_step + 1) % accum == 0;
+					if micro_step % accum == 0 {
+						optim.zero_grad();
+					}
+					let out = {
+						let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
+						model.forward(&batch.inputs())?
+					};
+					let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
+					if let Some(e) = &ewc {
+						loss_total = loss_total + e.penalty(&params)?;
+					}
+					let loss = loss_total / accum as f64;
+					loss.backward();
+					micro_step += 1;
+					if !boundary {
+						continue;
+					}
+					if in_fisher_window {
+						if let Some(f) = fisher.as_mut() {
+							f.accumulate(&params);
+						}
+					}
+					if grad_clip > 0.0 {
+						clip_grad_norm(&param_refs, grad_clip)?;
+					}
+					optim.step()?;
+					loss
+				};
 				scheduler.step(&mut optim);
 				step += 1;
 				running.add(&loss);

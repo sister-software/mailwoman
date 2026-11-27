@@ -197,11 +197,22 @@ export function trainerBuildScript(variant: TrainerVariant, license: TrainerLice
 	// The build compiles two packages, so the feature is written with its package's prefix.
 	const features = license === TrainerLicense.Commercial ? " --features trainer-cli/commercial" : ""
 
+	// `trainer-model`'s CUDA graph shim compiles against the CUDA headers.
+	// The CUDA wheels put them under `site-packages/nvidia/.../include`,
+	// and the build script refuses a CUDA libtorch without them.
+	const cudaHeaders =
+		variant === TrainerVariant.CUDA
+			? [
+					`export TRAINER_CUDA_INCLUDE="$(find "$(python -c 'import site; print(site.getsitepackages()[0])')/nvidia" -type d -name include | sort | paste -sd: -)"`,
+				]
+			: []
+
 	return [
 		"set -euo pipefail",
 		`mkdir -p ${TRAINER_REPO_ROOT}`,
 		`base64 -d | tar -xz -C ${TRAINER_REPO_ROOT}`,
 		`cd ${TRAINER_REPO_ROOT}`,
+		...cudaHeaders,
 		`cargo build --profile trainer --locked -p trainer-cli -p trainer-export${features}`,
 		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer /usr/local/bin/trainer`,
 		// A commercial run exports and signs its model inside the sandbox, where the provenance key is.

@@ -16,6 +16,7 @@ pub mod address_systems;
 pub mod alignment;
 pub mod batch;
 pub mod callbacks;
+pub mod captured;
 pub mod checkpoint;
 pub mod compare;
 pub mod config;
