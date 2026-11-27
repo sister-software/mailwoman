@@ -46,6 +46,15 @@ This document defines the canonical `ComponentTag` union. Where another document
 For a US address the street type is a separate span. `6220 SE Salmon St` is four components rather than two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
 `street_suffix: "St"`. `street` never includes the type.
 
+A numbered road is the exception. Its road type and number together are the street name: `7567 Farm to Market 1638`
+is `house_number: "7567"`, `street: "Farm to Market 1638"`, and `4570 County Road 260` is `street: "County Road 260"`.
+USPS Publication 28 lists these as whole primary names in [section 237](https://pe.usps.com/text/pub28/28c2_018.htm)
+(`COUNTY ROAD 20`, `STATE HIGHWAY 335`, `US HIGHWAY 70`) and [Appendix F](https://pe.usps.com/text/pub28/28apf.htm)
+(`FARM to MARKET 1200` → `FM 1200`, `CR 1185` → `COUNTY ROAD 1185`). A directional before the road type stays
+`street_prefix`, as the predirectional rule of [section 233.21](https://pe.usps.com/text/pub28/28c2_014.htm) places
+it: `17722 West Highway 70` is `street_prefix: "West"`, `street: "Highway 70"`. Publication 28 gives no highway
+example of that case, so this placement applies the general rule.
+
 The split is defined by the USPS Publication 28 Appendix C table in
 [`packages/codex/lib/us/street/suffix.ts`](../../../packages/codex/lib/us/street/suffix.ts). `matchTrailingSuffix` is the only
 implementation, and no other code copies the table. The split is canonical because of the table:
