@@ -27,6 +27,11 @@ import { downloadIfNeeded } from "#sdk/download"
 export const CensusGazetteerKind = {
 	Place: "place",
 	CountySubdivision: "cousubs",
+	/**
+	 * Core based statistical areas: the metropolitan and micropolitan statistical areas the
+	 * Office of Management and Budget delineates. {@link readCBSAGazetteer} reads this file.
+	 */
+	CoreBasedStatisticalArea: "cbsa",
 } as const
 
 export type CensusGazetteerKind = (typeof CensusGazetteerKind)[keyof typeof CensusGazetteerKind]
@@ -131,6 +136,89 @@ export async function* readCensusGazetteer(
 			name: row[at("NAME")]!,
 			lsad: header.includes("LSAD") ? row[at("LSAD")]! : null,
 			functionalStatus: row[at("FUNCSTAT")]!,
+			latitude: Number(row[at("INTPTLAT")]),
+			longitude: Number(row[at("INTPTLONG")]),
+		}
+	}
+}
+
+/**
+ * The two kinds of core based statistical area.
+ */
+export const CBSAKind = {
+	Metropolitan: "metropolitan",
+	Micropolitan: "micropolitan",
+} as const
+
+export type CBSAKind = (typeof CBSAKind)[keyof typeof CBSAKind]
+
+/**
+ * One row of the core based statistical area gazetteer file.
+ */
+export interface CBSAGazetteerEntry {
+	/**
+	 * The area's five-digit CBSA code, `10180`.
+	 */
+	geoid: string
+	/**
+	 * The area's title with its designator, `Abilene, TX Metro Area`.
+	 */
+	title: string
+	/**
+	 * The area's title without its designator, `Abilene, TX`.
+	 */
+	name: string
+	kind: CBSAKind
+	/**
+	 * The code of the combined statistical area the area belongs to, or `null`.
+	 */
+	combinedArea: string | null
+	latitude: number
+	longitude: number
+}
+
+const CBSA_DESIGNATOR = / (?:Metro|Micro) Area$/u
+
+/**
+ * Reads the national core based statistical area gazetteer file.
+ *
+ * `CBSA_TYPE` is `1` for a metropolitan area and `2` for a micropolitan one.
+ *
+ * @throws When the header lacks a column the reader needs, or a row states another type.
+ */
+export async function* readCBSAGazetteer(path: PathBuilderLike): AsyncGenerator<CBSAGazetteerEntry> {
+	let header: string[] | null = null
+
+	const at = (column: string): number => {
+		const index = header!.indexOf(column)
+
+		if (index === -1) throw new Error(`${path}: the gazetteer header has no ${column} column`)
+
+		return index
+	}
+
+	for await (const fields of readUnquotedTSV(path)) {
+		const row = fields.map((field) => String(field ?? "").trim())
+
+		if (!header) {
+			header = row
+
+			continue
+		}
+
+		const type = row[at("CBSA_TYPE")]
+		const title = row[at("NAME")]!
+
+		if (type !== "1" && type !== "2") {
+			throw new Error(`${path}: CBSA ${row[at("GEOID")]} states CBSA_TYPE ${type}`)
+		}
+
+		yield {
+			geoid: row[at("GEOID")]!,
+			title,
+			name: title.replace(CBSA_DESIGNATOR, ""),
+			kind: type === "1" ? CBSAKind.Metropolitan : CBSAKind.Micropolitan,
+			combinedArea: row[at("CSAFP")] || null,
 			latitude: Number(row[at("INTPTLAT")]),
 			longitude: Number(row[at("INTPTLONG")]),
 		}

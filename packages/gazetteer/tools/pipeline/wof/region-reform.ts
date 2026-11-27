@@ -415,7 +415,7 @@ function roundCoordinates(value: unknown): unknown {
 /**
  * The union of the member geometries of each unit, with its centroid and bounding box.
  */
-async function unionGeometries(
+export async function unionGeometries(
 	members: ReadonlyMap<string, readonly LoadedRecord[]>
 ): Promise<
 	Map<string, { geometry: WOFRecordFeature["geometry"]; bbox: WOFRecordFeature["bbox"]; centroid: [number, number] }>
