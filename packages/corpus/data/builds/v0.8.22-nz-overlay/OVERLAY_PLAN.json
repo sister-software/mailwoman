@@ -1,0 +1,19 @@
+{
+	"corpusVersion": "0.8.22-nz-overlay",
+	"overlayBase": "0.8.22-retention-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.22-retention-overlay/corpus-v0.8.22-retention-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.22-nz-overlay/corpus-v0.8.22-nz-overlay",
+	"note": "v0.8.22-retention-overlay with rendered-nz added: recipe locale --country NZ, seed 42, 500,000 rows rendered from OpenAddresses nz/countrywide (LINZ NZ Addresses, CC BY 4.0, countrywide.csv md5 fa79e586), 852 rows of the 846 groups that an evaluation-group list, a frozen collection under /mnt/mw/corpus/heldout or the validation list names dropped before the split, 499,148 train rows",
+	"appliedAt": "2026-11-27T12:31:54.127Z",
+	"files": [
+		{
+			"parquet": "rendered-nz-v0.8.22.parquet",
+			"source": "rendered-nz",
+			"splitAttribute": {
+				"path": "rendered-nz-v0.8.22.split.95bf9bbdc5b6130bcf625338b6b9b189e28d8b5e104f5d5b4455bf07589ba246.json",
+				"policyHash": "95bf9bbdc5b6130bcf625338b6b9b189e28d8b5e104f5d5b4455bf07589ba246"
+			}
+		}
+	],
+	"replacedSources": []
+}
