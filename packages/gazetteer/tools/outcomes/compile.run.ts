@@ -13,9 +13,7 @@
  *   Otherwise it writes the module pinned to the clone's `HEAD`.
  */
 
-import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { wofReposPath } from "@mailwoman/core/data-root"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { gitSync } from "@mailwoman/core/repo/git"
@@ -26,7 +24,7 @@ import { resolvePath } from "path-ts"
 import { outcomeKindsModulePath, renderOutcomeKindsModule } from "#tools/outcomes/render"
 import { compileOutcomeSpec, OutcomeCompileError, serializeOutcomeSpec } from "#whosonfirst/outcomes/compile"
 import { OUTCOMES_SPEC_FILE } from "#whosonfirst/outcomes/definition"
-import { readOutcomeDefinitions, requireOutcomesRepo } from "#whosonfirst/outcomes/read"
+import { readOutcomeDefinitions, readPinnedOutcomeSpec, requireOutcomesRepo } from "#whosonfirst/outcomes/read"
 
 const { values } = parseArguments({ options: { "repos-root": { type: "string" } } })
 const reposRoot = values["repos-root"] ? resolvePath(values["repos-root"]) : wofReposPath()
@@ -62,13 +60,11 @@ if (status) {
 	process.exit(1)
 }
 
-const revision = gitSync(["rev-parse", "HEAD"], { cwd: repo })
-const committed = await readLocalTextFile(resolvePath(repo, OUTCOMES_SPEC_FILE))
-const pin = { revision, sha256: sha256Hex(committed) }
+const { pin } = readPinnedOutcomeSpec(repo)
 
 await writeLocalTextFile(renderOutcomeKindsModule(spec, pin), outcomeKindsModulePath())
 runFileSync("yarn", ["oxfmt", outcomeKindsModulePath()], { cwd: repoRootPath(), stdio: "inherit" })
 
 console.log(
-	`wrote ${outcomeKindsModulePath()}: ${spec.definitions.length} outcome kinds at ${revision} (sha256 ${pin.sha256})`
+	`wrote ${outcomeKindsModulePath()}: ${spec.definitions.length} outcome kinds at ${pin.revision} (sha256 ${pin.sha256})`
 )

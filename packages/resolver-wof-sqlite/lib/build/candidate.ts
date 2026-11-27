@@ -23,6 +23,7 @@ import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate/impor
 import { applyCandidateKeyFold, type CandidateKeyFold } from "#candidate/key-fold"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
 import { refuseNicknamesOfNamesakes } from "#candidate/nickname-namesakes"
+import { type CandidateOutcomeInputs, type CandidateOutcomeResult, stageCandidateOutcomes } from "#candidate/outcomes"
 import { stageOvertureTwins } from "#candidate/overture-twins"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import {
@@ -122,6 +123,14 @@ export interface BuildCandidateOptions {
 	 * @defaultValue none
 	 */
 	keyFolds?: readonly CandidateKeyFold[]
+
+	/**
+	 * The pinned outcome definitions and the GeoNames dumps whose feature codes become assertions.
+	 *
+	 * Without it the artifact has no outcome tables, and a request that filters
+	 * or orders by outcome against it is refused.
+	 */
+	outcomes?: CandidateOutcomeInputs
 }
 
 /**
@@ -234,6 +243,11 @@ export interface BuildCandidateResult {
 	 * or null with `overtureMatches`.
 	 */
 	overtureTwinRowsDropped: number | null
+
+	/**
+	 * The outcome tables' counts, or null when no definitions were given.
+	 */
+	outcomes: CandidateOutcomeResult | null
 }
 
 /**
@@ -631,6 +645,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.execute()
 	}
 
+	const outcomes: CandidateOutcomeResult | null = opts.outcomes
+		? await stageCandidateOutcomes({ src, out: kdb, attrs, ptcodes, inputs: opts.outcomes, progress })
+		: null
+
 	if (opts.capitals?.length) {
 		await createCapitalTable<CandidateDatabase>(kdb)
 
@@ -703,5 +721,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		populationEstimated: typeof importance?.stats.estimates === "number" ? importance.estimated : null,
 		overtureMatches: twins ? twins.matches : null,
 		overtureTwinRowsDropped: twins ? twins.rowsDropped : null,
+		outcomes,
 	}
 }

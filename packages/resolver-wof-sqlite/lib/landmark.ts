@@ -13,9 +13,10 @@ import { sql, type Kysely } from "kysely"
 import type { PathBuilderLike } from "path-ts"
 
 import { LANDMARK_BY_NAME_SQL, landmarkHitsFromRows, landmarkNameKey, type LandmarkNameTable } from "#landmark/rows"
+import type { LandmarkOutcomeDatabase } from "#outcome/schema"
 import { prepareAll, type PreparedAll } from "#sqlite-utils"
 
-export interface LandmarkDatabase {
+export interface LandmarkDatabase extends LandmarkOutcomeDatabase {
 	landmark_name: LandmarkNameTable
 }
 

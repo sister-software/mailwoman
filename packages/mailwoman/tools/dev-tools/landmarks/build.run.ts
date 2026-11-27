@@ -11,7 +11,7 @@
  *   wrote under, by default the current-source root `$MAILWOMAN_CACHE_ROOT/sources/`.
  */
 
-import { currentSourcesRoot, dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot, dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -20,6 +20,9 @@ import { createWikidataClient } from "@mailwoman/corpus/tools/fetch/wikidata/sub
 import { VITAL_PLACES_FILES, vitalPlacesPath } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places"
 import type { ClassRoots } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/classify"
 import type { VitalPlace } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/inventory"
+import { resolveWOFRepo } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
+import { OUTCOMES_REPO } from "@mailwoman/gazetteer/whosonfirst/outcomes/definition"
+import { readPinnedOutcomeSpec } from "@mailwoman/gazetteer/whosonfirst/outcomes/read"
 import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { PathBuilder, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -56,6 +59,21 @@ if (values["fetch-airports"] || !(await pathExists(airportsPath))) {
 }
 
 const airports = await readLocalJSONFile<AirportCode[]>(airportsPath)
-const counts = await buildLandmarkDatabase(places, roots, out, airports)
 
-console.log(`wrote ${out.toString()}: ${counts.places} places, ${counts.rows} name rows`)
+// The outcome tables come from the definitions clone's committed spec.
+// A host without the clone builds without them.
+const outcomesRepo = await resolveWOFRepo(wofReposPath(), OUTCOMES_REPO.name)
+const outcomes = outcomesRepo ? readPinnedOutcomeSpec(outcomesRepo) : null
+
+if (!outcomes) {
+	console.error(
+		`${OUTCOMES_REPO.name} isn't cloned under ${wofReposPath().toString()}; the database gets no outcome tables`
+	)
+}
+
+const counts = await buildLandmarkDatabase(places, roots, out, airports, outcomes)
+
+console.log(
+	`wrote ${out.toString()}: ${counts.places} places, ${counts.rows} name rows` +
+		(outcomes ? `, ${counts.outcomeRows} outcome rows at ${outcomes.pin.revision}` : "")
+)

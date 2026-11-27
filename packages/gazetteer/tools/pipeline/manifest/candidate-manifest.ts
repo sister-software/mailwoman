@@ -9,6 +9,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
+import type { OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import { SYNTHETIC_ID_RANGES } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { licenseIdentifiers } from "@mailwoman/license/obligations"
 import { readLicenseRecord } from "@mailwoman/license/record"
@@ -88,6 +89,11 @@ export interface CandidateManifestInput {
 	 * instead of writing them onto WOF records.
 	 */
 	overturePart?: boolean
+
+	/**
+	 * The outcome definitions the artifact's outcome tables were compiled from, or null without them.
+	 */
+	outcomes?: OutcomeSpecPin | null
 }
 
 /**
@@ -325,6 +331,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 				? `importance=${input.importance.path} importance-md5=${input.importance.md5}`
 				: "importance=none") +
 			(typeof input.populationEstimated === "number" ? ` population-estimates=${input.populationEstimated}` : "") +
+			(input.outcomes ? ` outcomes=${input.outcomes.revision} outcomes-sha256=${input.outcomes.sha256}` : "") +
 			// Each source's rows and places, measured on the built table. Recorded here because a source's share
 			// is recoverable from the artifact itself only while its upstream release is still served.
 			(input.rowsBySource?.length

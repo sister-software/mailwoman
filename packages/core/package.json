@@ -567,6 +567,16 @@
 			"node": "./lib/math/numeric.ts",
 			"default": "./out/math/numeric.js"
 		},
+		"./outcome/evidence": {
+			"types": "./out/outcome/evidence.d.ts",
+			"node": "./lib/outcome/evidence.ts",
+			"default": "./out/outcome/evidence.js"
+		},
+		"./outcome/spec": {
+			"types": "./out/outcome/spec.d.ts",
+			"node": "./lib/outcome/spec.ts",
+			"default": "./out/outcome/spec.js"
+		},
 		"./outcome/kinds": {
 			"types": "./out/outcome/kinds.d.ts",
 			"node": "./lib/outcome/kinds.ts",

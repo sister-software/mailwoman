@@ -14,7 +14,7 @@
  * only repo-coupled path, so callers pass it in.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists, statLink } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -33,6 +33,7 @@ import { createPhaseClock, isoDate, type PhaseTiming } from "@mailwoman/core/uti
 // would evaluate the resolver's module graph on that path.
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/candidate/capitals"
+import type { CandidateOutcomeInputs } from "@mailwoman/resolver-wof-sqlite/candidate/outcomes"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { ResolvedImportance } from "@mailwoman/resolver-wof-sqlite/schema/importance-source"
 import { recoverInterruptedBuilds, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
@@ -49,6 +50,9 @@ import {
 import { emitCoverageManifest } from "#tools/pipeline/manifest/coverage-manifest"
 import { buildSHA, stampLayerManifest } from "#tools/pipeline/manifest/stamp-manifest"
 import { publishToPublicBucket } from "#tools/publish/public-bucket"
+import { resolveWOFRepo } from "#whosonfirst/extract-repo"
+import { OUTCOMES_REPO } from "#whosonfirst/outcomes/definition"
+import { readPinnedOutcomeSpec } from "#whosonfirst/outcomes/read"
 
 /**
  * The canonical postcode-database set (filenames under `<data-root>/db/wof/`);
@@ -214,7 +218,42 @@ export interface BuildOptions {
 	 * The manifest records the count of such databases the build added, as `build-local-inputs`.
 	 */
 	includeBuildLocalInputs?: boolean
+	/**
+	 * The repositories root holding the `whosonfirst-outcomes` clone whose committed
+	 * compiled spec the outcome tables are built from.
+	 * Pass `false` to build without outcome tables.
+	 *
+	 * A host without the clone builds without them and reports the missing clone through `onProgress`.
+	 *
+	 * @defaultValue {@linkcode wofReposPath}
+	 */
+	outcomesReposRoot?: PathBuilderLike | false
 	onProgress?: (phase: string, message: string) => void
+}
+
+/**
+ * The outcome inputs for a candidate build, or `null` when they're switched off or not cloned.
+ */
+async function candidateOutcomes(opts: BuildOptions): Promise<CandidateOutcomeInputs | null> {
+	if (opts.outcomesReposRoot === false) return null
+
+	const reposRoot = opts.outcomesReposRoot ?? wofReposPath()
+	const repo = await resolveWOFRepo(reposRoot, OUTCOMES_REPO.name)
+
+	if (!repo) {
+		opts.onProgress?.(
+			"outcomes",
+			`${OUTCOMES_REPO.name} isn't cloned under ${reposRoot.toString()}; the candidate gets no outcome tables`
+		)
+
+		return null
+	}
+
+	const { spec, pin } = readPinnedOutcomeSpec(repo)
+
+	opts.onProgress?.("outcomes", `${spec.definitions.length} outcome kinds at ${pin.revision} (sha256 ${pin.sha256})`)
+
+	return { spec, pin, geonamesDir: dataRootPath("geonames") }
 }
 
 /**
@@ -309,8 +348,11 @@ export async function buildCandidate(
 
 	await recoverInterruptedBuilds(opts.out)
 
+	const outcomes = await candidateOutcomes(opts)
+
 	try {
 		const result = await buildCandidateTable({
+			...(outcomes ? { outcomes } : {}),
 			input: opts.adminDB,
 			output: tmp,
 			postcodes: postcodeDatabases,
@@ -353,6 +395,7 @@ export async function buildCandidate(
 				createdAt: new Date().toISOString(),
 				rowsBySource,
 				overturePart: result.overtureMatches != null,
+				outcomes: outcomes?.pin ?? null,
 			})
 		)
 

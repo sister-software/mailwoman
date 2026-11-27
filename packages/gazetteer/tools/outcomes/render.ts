@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "@mailwoman/core/outcome/spec"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { orderedJSON } from "@mailwoman/core/values/json"
-
-import type { CompiledOutcomeSpec } from "#whosonfirst/outcomes/definition"
 
 /**
  * The repository path of the generated module, relative to the repository root.
@@ -16,14 +15,6 @@ export const OUTCOME_KINDS_MODULE = "packages/core/lib/outcome/kinds.ts"
  */
 export function outcomeKindsModulePath(): string {
 	return repoRootPath(OUTCOME_KINDS_MODULE)
-}
-
-/**
- * The definitions revision and compiled-spec hash a generated module was rendered from.
- */
-export interface OutcomeDefinitionsPin {
-	revision: string
-	sha256: string
 }
 
 /**
@@ -60,7 +51,7 @@ export function outcomeKindRows(spec: CompiledOutcomeSpec): Map<string, OutcomeK
 /**
  * The text of `packages/core/lib/outcome/kinds.ts` for one compiled spec, before `oxfmt` formats it.
  */
-export function renderOutcomeKindsModule(spec: CompiledOutcomeSpec, pin: OutcomeDefinitionsPin): string {
+export function renderOutcomeKindsModule(spec: CompiledOutcomeSpec, pin: OutcomeSpecPin): string {
 	const table = outcomeKindRows(spec)
 
 	return [

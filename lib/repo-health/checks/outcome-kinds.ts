@@ -4,15 +4,12 @@
 import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { OUTCOME_DEFINITIONS_PIN, OUTCOME_KINDS } from "@mailwoman/core/outcome/kinds"
+import type { CompiledOutcomeSpec } from "@mailwoman/core/outcome/spec"
 import { gitSync } from "@mailwoman/core/repo/git"
 import { canonicalJSON, parseJSONStrict } from "@mailwoman/core/values/json"
 import { OUTCOME_KINDS_MODULE, outcomeKindRows } from "@mailwoman/gazetteer/tools/outcomes/render"
 import { resolveWOFRepo } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
-import {
-	type CompiledOutcomeSpec,
-	OUTCOMES_REPO,
-	OUTCOMES_SPEC_FILE,
-} from "@mailwoman/gazetteer/whosonfirst/outcomes/definition"
+import { OUTCOMES_REPO, OUTCOMES_SPEC_FILE } from "@mailwoman/gazetteer/whosonfirst/outcomes/definition"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 

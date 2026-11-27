@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { orderedJSON } from "@mailwoman/core/values/json"
-
 import {
 	type CompiledOutcomeSpec,
-	type OutcomeDefinitionsInput,
 	type OutcomeEvidence,
 	OutcomeEvidenceSource,
 	type OutcomeEvidenceIndex,
-} from "#whosonfirst/outcomes/definition"
+} from "@mailwoman/core/outcome/spec"
+import { orderedJSON } from "@mailwoman/core/values/json"
+
+import type { OutcomeDefinitionsInput } from "#whosonfirst/outcomes/definition"
 
 /**
  * The compile step found the definitions in a state it refuses.

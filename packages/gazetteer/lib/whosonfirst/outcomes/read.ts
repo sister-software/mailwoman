@@ -1,20 +1,22 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { sha256Hex } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type {
+	CompiledOutcomeSpec,
+	OutcomeDefinition,
+	OutcomeRegistryRow,
+	OutcomeSpecPin,
+} from "@mailwoman/core/outcome/spec"
+import { gitSync } from "@mailwoman/core/repo/git"
+import { parseJSONStrict } from "@mailwoman/core/values/json"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { resolveWOFRepo } from "#whosonfirst/extract-repo"
-import {
-	type CompiledOutcomeSpec,
-	OUTCOMES_REPO,
-	OUTCOMES_SPEC_FILE,
-	type OutcomeDefinition,
-	type OutcomeDefinitionsInput,
-	type OutcomeRegistryRow,
-} from "#whosonfirst/outcomes/definition"
+import { OUTCOMES_REPO, OUTCOMES_SPEC_FILE, type OutcomeDefinitionsInput } from "#whosonfirst/outcomes/definition"
 import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 
 async function requireRepo(reposRoot: PathBuilderLike, name: string): Promise<string> {
@@ -75,8 +77,17 @@ export async function readOutcomeDefinitions(reposRoot: PathBuilderLike): Promis
 }
 
 /**
- * Read the compiled spec the clone holds.
+ * The compiled spec committed at the clone's `HEAD`, with the pin a database built from it records.
+ *
+ * @throws When the clone's compiled spec has uncommitted changes, because a pin records a commit.
  */
-export async function readCompiledOutcomeSpec(reposRoot: PathBuilderLike): Promise<CompiledOutcomeSpec> {
-	return readLocalJSONFile<CompiledOutcomeSpec>(resolvePath(await requireOutcomesRepo(reposRoot), OUTCOMES_SPEC_FILE))
+export function readPinnedOutcomeSpec(repo: string): { spec: CompiledOutcomeSpec; pin: OutcomeSpecPin } {
+	if (gitSync(["status", "--porcelain", "--", OUTCOMES_SPEC_FILE], { cwd: repo })) {
+		throw new Error(`${repo} has an uncommitted ${OUTCOMES_SPEC_FILE}; commit it so a build can pin its revision.`)
+	}
+
+	const revision = gitSync(["rev-parse", "HEAD"], { cwd: repo })
+	const text = gitSync(["show", `${revision}:${OUTCOMES_SPEC_FILE}`], { cwd: repo, trim: false })
+
+	return { spec: parseJSONStrict<CompiledOutcomeSpec>(text), pin: { revision, sha256: sha256Hex(text) } }
 }
