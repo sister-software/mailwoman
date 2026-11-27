@@ -1,0 +1,47 @@
+---
+title: Roll out an address integration
+description: Introduce a chosen Mailwoman workflow in stages while keeping result evidence and a rollback path.
+role: guide
+source-of-truth: docs/articles/guides/plan-an-integration.mdx, docs/articles/guides/evaluate-your-addresses.mdx, docs/articles/guides/operate-data.mdx, docs/articles/reference/schema.mdx
+verified-with: linked guide and schema pages inspected 2026-11-27. No production rollout was performed for this page.
+---
+
+# Roll out an address integration
+
+Use this guide after [planning one address workflow](./plan-an-integration.mdx). Finish with a release record that identifies the package and any data used, states the application rule, records what happened on a labeled sample and live traffic, and identifies the version to restore if the rollout fails. The steps apply whether the integration calls the library or an HTTP service. Use the linked task guides for commands specific to your runtime.
+
+## Prerequisites
+
+- A decision record that identifies the input, operation, runtime, accepted result, and action for an incomplete result or fault.
+- A labeled sample from the intended input sources. [Evaluate your addresses](./evaluate-your-addresses.mdx) shows a parser-only comparison that lists exact differences.
+- An owner for release and rollback decisions. If geocoding is used, identify the selected local data generation and the source terms that apply to it.
+
+## 1. Pin the inputs to the rollout
+
+Record the package versions, model identity, runtime version, and configuration used by the candidate deployment. For a geographic operation, record the data root and selected generation as separate inputs. Run [the data installation checks](./operate-data.mdx) on the host that will serve requests. If the selection is unreadable, resolve that failure before relying on a coordinate. Keep a copy of the previous package and data selection for rollback.
+
+Decide which request and result fields you may retain. A parser trace can contain the complete address. Apply your organization's retention and access rules before enabling trace collection. Keep the original input with any saved result whose correctness will be reviewed. A normalized or projected result can omit the text or source fields needed to explain a difference.
+
+## 2. Define the acceptance check
+
+Run the candidate on the labeled sample and record the input, expected result, observed result, and first differing field for each failure. Count accepted and rejected rows over the same labeled-row denominator for each input source and address form. If you compare another system, score both on the same rows and keep the paired outcomes. Choose the acceptance rule from the costs of wrong acceptance and unnecessary review in this workflow, then write it beside the counts.
+
+For geocoding, use independently known positions and an explicit distance or source rule. A successful HTTP response or a plausible coordinate doesn't establish location accuracy. [Review the result's evidence](./review-geocode-evidence.mdx) and retain its resolution tier, source stamp when present, and installed data identity. Keep null provenance fields as null.
+
+## 3. Run without changing the user's outcome
+
+Send a bounded share of real inputs through the candidate while the existing application path still decides the outcome. Keep the original input, candidate result, application decision, package and data identities, and faults together under a stable row ID. Review the same failure classes as in the labeled sample, especially input forms absent from it. Stop this stage if the candidate cannot read its required model or data, returns stage faults, or produces an error class the team hasn't assigned an action.
+
+This stage collects observations about live input shape. Its unlabeled rows have no measured accuracy. Have a reviewer label selected disagreements before using them to change the acceptance rule.
+
+## 4. Increase exposure under the written rule
+
+Enable the new result for a small, identified share of requests or records. Keep the prior path available. Compare the number of accepted, reviewed, unresolved, and faulted rows with the earlier path using the same time window and denominators. Inspect exact inputs for new error classes. Increase the share only when the prewritten acceptance check still passes and the owner approves the next share.
+
+For an HTTP deployment, check the route your application calls in addition to `/health`. [The container deployment guide](./deploy.mdx) distinguishes a healthy server from a data-backed geocode result. For parser-only intake, use [review routing](./review-parse-results.mdx) to keep faults and missing components out of the accepted path.
+
+## 5. Record promotion or restore the previous selection
+
+If the acceptance check passes at the intended exposure, save the final package, model, runtime, and data identities with the decision and observed counts. If it fails, return traffic to the previous application path. Restore the previous package version and, when applicable, [select the previous data generation](./operate-data.mdx) as a separate action. Recheck the actual request path after rollback. Do not turn an unreadable data selection or an unhandled fault into a successful empty result.
+
+The rollout record is complete when an operator can reproduce which release and data served a result, identify the acceptance rule and its measured sample, and restore the previous path. [Report a problem](./report-a-problem.mdx) explains what to capture when a specific parse or geocode needs investigation.
