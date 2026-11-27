@@ -236,9 +236,13 @@ through `mw:superseded_by`.
 
 `@mailwoman/gazetteer` gains `whosonfirst/outcomes/`, beside `whosonfirst/placetypes/`. It reads
 `outcomes/*.json` through `resolveWOFRepo`, as `Placetype.prepare` reads `placetypes/*.json`. The
-`OutcomeKind` union and the compiled table are generated from the clone into `@mailwoman/core`, so a
-request type and the resolver need no clone at run time. A repository check compares the generated
-file with the clone's compiled spec and its pinned revision.
+`OutcomeKind` union and the compiled table are generated from the clone into `@mailwoman/gazetteer`, so
+the resolver needs no clone at run time. A repository check compares the generated file with the clone's
+compiled spec and its pinned revision.
+
+`@mailwoman/core` holds no outcome vocabulary, because the vocabulary is Who's On First data and core
+depends on no source. A core type that holds an outcome id, such as the request's `outcomeHint`, types it
+as `string`. A package that checks an id against the vocabulary imports the table from gazetteer.
 
 ## Record memberships
 
