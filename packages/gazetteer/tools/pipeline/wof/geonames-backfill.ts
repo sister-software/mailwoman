@@ -31,6 +31,7 @@ import { arealPolygons, pointInPolygon } from "@mailwoman/spatial/geometries/pol
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { readGeonamesDivisions } from "#tools/pipeline/admin/former-divisions"
 import { readMailwomanWOFRecords, writeWOFRecord, type WOFRecordFeature } from "#tools/pipeline/wof/record"
 import { concordancesOf, hierarchyOf, loadForkRecords, type LoadedRecord } from "#tools/pipeline/wof/region-reform"
 import { wofGeometryHash, wofRecordNames } from "#tools/pipeline/wof/slim"
@@ -76,6 +77,10 @@ export interface GeoNamesPlace {
 	latitude: number
 	longitude: number
 	featureCode: string
+	/**
+	 * The codes of the divisions GeoNames files the place under, levels 1 to 4, each `""` when absent.
+	 */
+	codes: string[]
 	population: number
 }
 
@@ -124,7 +129,18 @@ export interface GeoNamesBackfillResult {
 	/**
 	 * The records written, with the parent each was placed under.
 	 */
-	written: Array<{ id: number; geonamesID: number; name: string; parent: number; parentPlacetype: string }>
+	written: Array<{
+		id: number
+		geonamesID: number
+		name: string
+		parent: number
+		parentPlacetype: string
+		/**
+		 * `boundary` when the parent's boundary contains the point, `geonames` when the
+		 * parent is the record of the division GeoNames files the place under.
+		 */
+		parentBy: "boundary" | "geonames"
+	}>
 	/**
 	 * Requested ids a record of the fork already holds as `gn:id`.
 	 */
@@ -237,10 +253,33 @@ export async function readGeoNamesPlaces(
 			longitude: Number(fields[5]),
 			featureCode: fields[7] ?? "",
 			population: Number(fields[14] ?? 0),
+			codes: [fields[10] ?? "", fields[11] ?? "", fields[12] ?? "", fields[13] ?? ""].map((code) => code.trim()),
 		})
 	}
 
 	return places
+}
+
+/**
+ * The key of a division's code path in {@link divisionIDsByCodePath}: its codes from
+ * the first level down to its own, such as `C` and `C|MW22`.
+ */
+function codePathKey(codes: readonly string[], level: number): string {
+	return codes.slice(0, level).join("|")
+}
+
+/**
+ * The GeoNames id of each current division of a country at levels 1 to 4, by its code path.
+ */
+async function divisionIDsByCodePath(geonamesDir: PathBuilderLike, country: string): Promise<Map<string, number>> {
+	const { current } = await readGeonamesDivisions(PathBuilder.from(geonamesDir)(`${country.toUpperCase()}.txt`))
+
+	return new Map(
+		current
+			.filter((division) => CODED_LEVELS.includes(division.level))
+			.filter((division) => division.codes.slice(0, division.level).every(Boolean))
+			.map((division) => [codePathKey(division.codes, division.level), division.geonamesID] as const)
+	)
 }
 
 /**
@@ -254,6 +293,8 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 	const repoDir = reposRoot(repoName)
 	const records = await loadForkRecords(repoDir)
 	const places = await readGeoNamesPlaces(options.geonamesDir, country)
+	const divisions = await divisionIDsByCodePath(options.geonamesDir, country)
+	const divisionRecords = new Map<number, LoadedRecord>()
 	const held = new Set<number>()
 
 	const settlements = new Map<
@@ -301,6 +342,10 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		if (!PARENT_LADDER.includes(placetype as (typeof PARENT_LADDER)[number])) continue
 
 		if (record.feature.properties["mz:is_current"] === 0) continue
+
+		if (Number.isInteger(geonamesID) && geonamesID > 0) {
+			divisionRecords.set(geonamesID, record)
+		}
 
 		const polygons = arealPolygons(record.feature.geometry as Parameters<typeof arealPolygons>[0])
 
@@ -415,7 +460,18 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 			continue
 		}
 
-		const parent = containing(place.longitude, place.latitude)
+		const around = containing(place.longitude, place.latitude)
+
+		// A fork whose divisions are points, as Malawi's districts are, contains no place.
+		// The parent is then the record that holds the GeoNames id of the lowest division
+		// GeoNames files the place under, tried from level 4 up to level 1.
+		const filedUnder = around
+			? null
+			: (CODED_LEVELS.map((level) => divisionRecords.get(divisions.get(codePathKey(place.codes, level)) ?? -1)).find(
+					isPresent
+				) ?? null)
+
+		const parent = around ?? filedUnder
 
 		if (!parent) {
 			result.unlocated.push(geonamesID)
@@ -453,7 +509,14 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 		const url = `https://www.geonames.org/${geonamesID}`
 		const geonames = `GeoNames populated place ${geonamesID}`
 
-		result.written.push({ id, geonamesID, name: place.name, parent: parentID, parentPlacetype })
+		result.written.push({
+			id,
+			geonamesID,
+			name: place.name,
+			parent: parentID,
+			parentPlacetype,
+			parentBy: around ? "boundary" : "geonames",
+		})
 
 		newRecords.push({
 			id,
@@ -474,7 +537,9 @@ export async function backfillGeoNamesPlaces(options: GeoNamesBackfillOptions): 
 					{ property: "wof:concordances", citation: `${geonames}: its id`, url },
 					{
 						property: "wof:hierarchy",
-						citation: `The hierarchy of WOF ${parentPlacetype} ${parentID} (${parentName}), whose boundary contains the GeoNames point.`,
+						citation: around
+							? `The hierarchy of WOF ${parentPlacetype} ${parentID} (${parentName}), whose boundary contains the GeoNames point.`
+							: `The hierarchy of WOF ${parentPlacetype} ${parentID} (${parentName}), the record that holds the GeoNames id of the division GeoNames files this place under. No boundary of the repository contains the point.`,
 					},
 				],
 				"mz:is_current": 1,
