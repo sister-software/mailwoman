@@ -103,19 +103,25 @@ pub struct EpochCursor {
 	pub positions: RunPositions,
 }
 
-/// How many rows of each spread row group's run-wide order the run has read, keyed by file and group.
+/// Where a run stands in each spread source: the rows read from each row group's run-wide order, keyed by file and
+/// group, and the visits each source's sweep over its groups has made.
 ///
 /// An epoch reads as many rows as its row limit admits, and the limit counts emitted rows, augmented copies
-/// included. So an epoch draws fewer rows from a source than its weight share of the limit, and a position derived
-/// from the expected draws would skip rows in every epoch and wrap early. The epochs of a run share one table, and
-/// a resumed run rebuilds it by replaying the batches it skips.
+/// included. So an epoch draws fewer rows from a source than its weight share of the limit, and usually ends part
+/// way through a sweep. A position derived from the expected draws would skip rows in every epoch and wrap early, and
+/// a sweep restarted in a fresh order each epoch would visit some groups in more epochs than others, so those groups
+/// wrap while others are never read to the end. The epochs of a run share one table, and a resumed run rebuilds it
+/// by replaying the batches it skips.
 #[derive(Debug, Clone, Default)]
-pub struct RunPositions(Arc<Mutex<FxHashMap<(PathBuf, usize), u64>>>);
+pub struct RunPositions {
+	reads: Arc<Mutex<FxHashMap<(PathBuf, usize), u64>>>,
+	sweeps: Arc<Mutex<FxHashMap<String, u64>>>,
+}
 
 impl RunPositions {
 	/// The rows read so far from group `group` of `path`.
 	pub fn get(&self, path: &Path, group: usize) -> u64 {
-		let table = self.0.lock().expect("no reader panics while holding the table");
+		let table = self.reads.lock().expect("no reader panics while holding the table");
 		table.get(&(path.to_path_buf(), group)).copied().unwrap_or(0)
 	}
 
@@ -124,15 +130,27 @@ impl RunPositions {
 		if rows == 0 {
 			return;
 		}
-		let mut table = self.0.lock().expect("no reader panics while holding the table");
+		let mut table = self.reads.lock().expect("no reader panics while holding the table");
 		*table.entry((path.to_path_buf(), group)).or_insert(0) += rows;
+	}
+
+	/// The visits `source`'s sweep has made so far, counted over the run.
+	pub fn sweep(&self, source: &str) -> u64 {
+		let table = self.sweeps.lock().expect("no reader panics while holding the table");
+		table.get(source).copied().unwrap_or(0)
+	}
+
+	/// Records one more step of `source`'s sweep.
+	pub fn advance_sweep(&self, source: &str) {
+		let mut table = self.sweeps.lock().expect("no reader panics while holding the table");
+		*table.entry(source.to_owned()).or_insert(0) += 1;
 	}
 }
 
 /// Two cursors share a table when they hold the same one.
 impl PartialEq for RunPositions {
 	fn eq(&self, other: &Self) -> bool {
-		Arc::ptr_eq(&self.0, &other.0)
+		Arc::ptr_eq(&self.reads, &other.reads)
 	}
 }
 

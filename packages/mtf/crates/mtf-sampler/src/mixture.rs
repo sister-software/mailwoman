@@ -153,10 +153,23 @@ impl SourceRows {
 		}
 		rng.shuffle(&mut units);
 		let seed = rng.getrandbits(64) as i128;
+		// A placed epoch visits the groups in one order for the whole run, from where the run's sweep stopped, so
+		// every group gets its visits in turn. The epoch's own shuffle above still draws from the generator, so the
+		// draws after it are the same whether or not the epoch is placed.
+		let mut next = 0;
+		if let Some(cursor) = cursor {
+			units.sort_by_key(|unit| (unit.file, unit.group));
+			let source_seed = self
+				.source
+				.bytes()
+				.fold(0i128, |hash, byte| (hash * 131 + i128::from(byte)) % (1 << 61));
+			PyRandom::new(crate::pyrandom::Seed::Int((cursor.run_seed << 61) ^ source_seed)).shuffle(&mut units);
+			next = (cursor.positions.sweep(&self.source) % units.len().max(1) as u64) as usize;
+		}
 		Ok(Plan::Spread {
 			live: units.len(),
 			units,
-			next: 0,
+			next,
 			seed,
 			current: None,
 			positions: cursor.map(|c| c.positions.clone()),
@@ -216,6 +229,9 @@ impl SourceRows {
 				shared.check_cancelled()?;
 				let at = *next;
 				*next = (at + 1) % units.len();
+				if let Some(positions) = positions {
+					positions.advance_sweep(source);
+				}
 				let unit = &units[at];
 				if unit.exhausted {
 					continue;
