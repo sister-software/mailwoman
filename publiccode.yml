@@ -3,8 +3,8 @@ publiccodeYmlVersion: "0.4"
 name: Mailwoman
 url: https://github.com/sister-software/mailwoman/
 landingURL: https://mailwoman.post
-softwareVersion: "11.4.0"
-releaseDate: "2026-11-26"
+softwareVersion: "11.5.0"
+releaseDate: "2026-11-27"
 logo: https://mailwoman.post/img/mailwoman-seal-magenta.svg
 
 platforms:
