@@ -158,7 +158,10 @@ pub fn run(cell: &CellInputs) -> Result<Vec<StageResult>> {
 			CancelToken::default(),
 		);
 		for i in 0..n_steps * accum {
-			let ours = encoder.encode(&batches.next_batch()?)?;
+			let rows = batches
+				.next_batch()?
+				.ok_or_else(|| fail!("the train split ended before batch {i}"))?;
+			let ours = encoder.encode(&rows)?;
 			for (name, t) in ours.named() {
 				let key = format!("batch{i}.{name}");
 				if record.has(&key) {

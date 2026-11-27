@@ -137,6 +137,19 @@ the trainer and, through `mtf-node`, the host audits call). `tools/training/draw
 from an audit and gives a source the audit's epoch emitted fewer than 2,000 rows of no factor. The draw report
 compares two configs in emitted rows, both under the current config's factors.
 
+### Stored order
+
+`data.read_order: stored` replaces the train mixture with `Stored` (`mixture.rs`). It reads the positively weighted
+sources in the order `source_weights` lists them, each source's files in the order the manifest lists them, each
+file's row groups ascending and each group's rows as stored. It runs no source multinomial, shuffle, country
+acceptance draw or shuffle buffer. Each row that passes the row filter, the country weights and the coarse filter is
+read once. `TrainingBatches` opens the split once, without an epoch cursor. After the short final batch it returns
+`None`. The trainer's loop stops there and writes its final checkpoint. `stored_summary` counts the rows each
+source yielded and the rows each check refused, and the trainer prints that count when the files end. The sampler
+refuses the setting when a positively weighted source is missing from `augment_exclude_sources`, because the emit
+step would draw for that source's rows. It also refuses `source_reps` and `source_emit_factors`. An absent key reads
+as `mixture`.
+
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
 `nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows

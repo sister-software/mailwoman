@@ -61,6 +61,19 @@ const optionalInt = (value: bigint | null = null) => ({
 	output: z.number().int().nullable(),
 })
 
+/**
+ * The orders the train split can be read in.
+ *
+ * `mixture` draws each row's source from the weights and shuffles.
+ * `stored` reads each positively weighted source's rows once, in the order `source_weights`
+ * lists the sources and the corpus stores the rows, and ends the run when the files end.
+ */
+export const READ_ORDERS = ["mixture", "stored"] as const
+
+export type ReadOrder = (typeof READ_ORDERS)[number]
+
+const readOrder = () => ({ annotation: "str", default: (): PythonValue => "mixture", output: z.enum(READ_ORDERS) })
+
 const optionalFloat = () => ({ annotation: "float | None", default: () => null, output: z.number().nullable() })
 const strList = () => ({ annotation: "list[str]", default: (): PythonValue => [], output: z.array(z.string()) })
 
@@ -176,6 +189,7 @@ export const DATA_SECTION = {
 		required_validation_label_support: sectionList(LABEL_SUPPORT_SECTION),
 		prominent_place_coverage: optionalStr(),
 		train_rows_per_epoch: optionalInt(),
+		read_order: readOrder(),
 		val_rows: optionalInt(4096n),
 		coarse_filter: bool(true),
 		augment_directional_prob: float(0),

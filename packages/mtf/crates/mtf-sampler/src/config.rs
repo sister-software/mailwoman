@@ -142,6 +142,19 @@ fn default_volume_mount() -> PathBuf {
 	PathBuf::from("/data")
 }
 
+/// The order the train split's rows are read in.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ReadOrder {
+	/// Each row draws its source from the weight multinomial; files, row groups and rows are shuffled; the country
+	/// acceptance test draws; and a shuffle buffer mixes the rows. An epoch ends once every source completed a pass.
+	#[default]
+	Mixture,
+	/// The manifest's train files in listed order, each file's row groups ascending and each group's rows as stored,
+	/// every admitted row once, with no draw before the emit step. The run ends when the files end.
+	Stored,
+}
+
 /// Everything that decides the rows a split yields.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -178,6 +191,9 @@ pub struct SamplerConfig {
 	pub postcode_layouts_path: Option<PathBuf>,
 	#[serde(default = "default_shuffle_buffer")]
 	pub shuffle_buffer: usize,
+	/// How the train split is read. A held-out split reads the same way under either order.
+	#[serde(default)]
+	pub read_order: ReadOrder,
 	/// Remove each row's span triple before the astral check, so the encoder takes the token-label path. The
 	/// encoder-parity token arm sets it.
 	#[serde(default)]

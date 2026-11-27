@@ -9,7 +9,7 @@
 //! loader reads it.
 
 use crate::{fail, Result};
-use mtf_sampler::{AugmentProbabilities, CharConfig, RunLength, SamplerConfig, Weights};
+use mtf_sampler::{AugmentProbabilities, CharConfig, ReadOrder, RunLength, SamplerConfig, Weights};
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
 
@@ -269,6 +269,16 @@ impl DataFiles {
 	}
 }
 
+/// `data.read_order`. A config resolved before the field existed has no key, and reads as the mixture.
+fn read_order(data: &Map<String, Value>) -> Result<ReadOrder> {
+	match data.get("read_order") {
+		None | Some(Value::Null) => Ok(ReadOrder::Mixture),
+		Some(Value::String(order)) if order == "mixture" => Ok(ReadOrder::Mixture),
+		Some(Value::String(order)) if order == "stored" => Ok(ReadOrder::Stored),
+		Some(other) => Err(fail!("data.read_order is {other}, expected \"mixture\" or \"stored\"")),
+	}
+}
+
 /// `encode.sampler_config`: the sampler settings of a run.
 pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]) -> Result<SamplerConfig> {
 	let d = &run.data;
@@ -343,6 +353,7 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 		affix_relabel_lexicon_path: run.data_str("affix_relabel_lexicon_path")?.map(PathBuf::from),
 		postcode_layouts_path: Some(files.postcode_layouts.clone()),
 		shuffle_buffer: 131_072,
+		read_order: read_order(d)?,
 		drop_spans: false,
 		data_root: env_path("MAILWOMAN_DATA_ROOT"),
 		volume_mount: env_path("MAILWOMAN_VOLUME_MOUNT").unwrap_or_else(|| PathBuf::from("/data")),

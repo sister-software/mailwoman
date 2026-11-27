@@ -167,6 +167,7 @@ export function samplerConfigJSON(config: TrainingConfig, options: SamplerConfig
 			batch_size: train.batch_size,
 			grad_accum_steps: train.grad_accum_steps,
 		},
+		read_order: data.read_order,
 		coarse_filter: data.coarse_filter,
 		active_tags: [...STAGE3_TAGS],
 		augment,
