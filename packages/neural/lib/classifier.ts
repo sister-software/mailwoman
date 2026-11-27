@@ -61,6 +61,7 @@ import {
 	buildBIOEndMask,
 	buildBIOStartMask,
 	buildBIOTransitionMask,
+	emissionRunnerUp,
 	pathMargins,
 	softmax,
 } from "#decode/viterbi"
@@ -142,9 +143,14 @@ function treeWithLocaleCountry(
 	tokens: DecoderToken[],
 	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
 	localeCountry: { country: string; confidence: number } | null,
-	localeHint: string | null | undefined
+	localeHint: string | null | undefined,
+	runnerUpInterpretations: boolean
 ): AddressTree {
-	const tree = buildAddressTree(text, tokens, { ...calibrate, country: containmentCountry(localeCountry, localeHint) })
+	const tree = buildAddressTree(text, tokens, {
+		...calibrate,
+		country: containmentCountry(localeCountry, localeHint),
+		...(runnerUpInterpretations ? { runnerUpInterpretations } : {}),
+	})
 
 	return Object.assign(tree, localeCountry ? { localeCountry } : {})
 }
@@ -348,7 +354,8 @@ export class NeuralAddressClassifier {
 			tokens,
 			opts?.calibrate ? { calibrate: opts.calibrate } : null,
 			localeCountry,
-			opts?.localeHint
+			opts?.localeHint,
+			opts?.runnerUpInterpretations === true
 		)
 	}
 
@@ -372,7 +379,8 @@ export class NeuralAddressClassifier {
 				tokens,
 				opts?.calibrate ? { calibrate: opts.calibrate } : null,
 				localeCountry,
-				opts?.localeHint
+				opts?.localeHint,
+				opts?.runnerUpInterpretations === true
 			),
 			logits,
 			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
@@ -847,14 +855,17 @@ export class NeuralAddressClassifier {
 		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
+			const label = (this.labels[idx] ?? "O") as DecoderToken["label"]
+			const runnerUp = emissionRunnerUp(emissions[i]!, idx, this.labels)
 
 			return {
 				piece: p.piece,
 				start: p.start,
 				end: p.end,
-				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
+				label,
 				// Repaired words take the vote's mean probability and other pieces keep their softmax probability.
 				confidence: healedConfidence?.get(i) ?? probs[idx]!,
+				...(runnerUp ? { runnerUp } : {}),
 			}
 		})
 

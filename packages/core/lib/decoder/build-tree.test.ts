@@ -534,3 +534,30 @@ describe("a house number in a numbered settlement without a street", () => {
 		expect(findByTag(tree.roots, "locality_unit")?.children.map((child) => child.tag)).toEqual(["house_number"])
 	})
 })
+
+describe("buildAddressTree — runner-up interpretations", () => {
+	const raw = "Mt. Tabor"
+
+	const tokens = (margin: number): DecoderToken[] => [
+		{ ...tok("Mt.", 0, 3, "B-locality"), runnerUp: { label: "B-venue", margin: margin + 1 } },
+		{ ...tok(" Tabor", 3, 9, "I-locality"), runnerUp: { label: "I-venue", margin } },
+	]
+
+	test("writes the closest other tag of a span within the margin when asked", () => {
+		const tree = buildAddressTree(raw, tokens(0.4), { runnerUpInterpretations: true })
+
+		expect(findByTag(tree.roots, "locality")?.interpretations).toEqual([{ tag: "venue" }])
+	})
+
+	test("writes zero interpretations by default, so serialized parses keep their roles", () => {
+		const tree = buildAddressTree(raw, tokens(0.4))
+
+		expect(findByTag(tree.roots, "locality")?.interpretations).toBeUndefined()
+	})
+
+	test("writes zero interpretations when the closest other tag trails by more than ln 2", () => {
+		const tree = buildAddressTree(raw, tokens(1), { runnerUpInterpretations: true })
+
+		expect(findByTag(tree.roots, "locality")?.interpretations).toBeUndefined()
+	})
+})

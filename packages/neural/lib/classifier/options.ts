@@ -305,6 +305,14 @@ export interface ParseWithLogitsResult {
  */
 export interface ParseOpts {
 	/**
+	 * When true, a span whose closest other tag scores within `INTERPRETATION_MARGIN` of its own
+	 * stores that tag in its node's `interpretations`, for the resolver's outcome ordering to read.
+	 *
+	 * Off by default, because the JSON and XML serializers emit each interpretation as a role.
+	 */
+	runnerUpInterpretations?: boolean
+
+	/**
 	 * A precomputed query shape whose known-format hits add emission biases toward the matching BIO label.
 	 */
 	queryShape?: QueryShapeLike
