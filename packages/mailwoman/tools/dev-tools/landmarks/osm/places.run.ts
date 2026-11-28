@@ -9,21 +9,28 @@
  *   <yyyy-mm-dd> [--countries us,vn] [--opensearch http://127.0.0.1:9201] [--out <path>]
  */
 
-import { dataRootPath, databaseRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, databaseRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { createLayerManifestTable, LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { resolveWOFRepo } from "@mailwoman/gazetteer/whosonfirst/extract-repo"
+import { OUTCOMES_REPO } from "@mailwoman/gazetteer/whosonfirst/outcomes/definition"
+import { createOutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
+import { readPinnedOutcomeSpec } from "@mailwoman/gazetteer/whosonfirst/outcomes/read"
 import {
 	createLandmarkTables,
 	LANDMARK_NAME_COLUMNS,
 	type LandmarkDatabase,
 } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { writeOutcomeDefaults } from "@mailwoman/resolver-wof-sqlite/outcome/schema"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { resolvePath } from "path-ts"
 
 import { OSM_PLACES_DATABASE_FILE } from "#geocode/layers/osm"
 import {
 	OSM_PLACE_H3_RESOLUTION,
+	osmPlaceAssertions,
+	osmPlaceKey,
 	osmPlaceQuery,
 	osmPlaceRows,
 	type PhotonPlaceDocument,
@@ -48,6 +55,17 @@ const query = countries
 	? { bool: { must: [osmPlaceQuery()], filter: [{ terms: { countrycode: countries } }] } }
 	: osmPlaceQuery()
 
+// A request with an outcome field refuses a layer without the outcome tables, so the build requires the definitions.
+const outcomesRepo = await resolveWOFRepo(wofReposPath(), OUTCOMES_REPO.name)
+
+if (!outcomesRepo) {
+	throw new Error(
+		`${OUTCOMES_REPO.name} isn't cloned under ${wofReposPath().toString()}; clone it to build the outcome tables`
+	)
+}
+
+const outcomes = readPinnedOutcomeSpec(outcomesRepo)
+
 interface ScrollPage {
 	_scroll_id: string
 	hits: { total: { value: number }; hits: Array<{ _source: PhotonPlaceDocument }> }
@@ -65,11 +83,13 @@ async function post(path: string, body: unknown): Promise<ScrollPage> {
 	return (await response.json()) as ScrollPage
 }
 
-const counts = await buildSealedArtifact<
-	LandmarkDatabase,
-	{ documents: number; rows: number },
-	{ documents: number; rows: number }
->({
+interface PlaceBuildCounts {
+	documents: number
+	rows: number
+	outcomeRows: number
+}
+
+const counts = await buildSealedArtifact<LandmarkDatabase, PlaceBuildCounts, PlaceBuildCounts>({
 	out,
 	createTables: async (database) => {
 		await createLandmarkTables(database)
@@ -80,12 +100,26 @@ const counts = await buildSealedArtifact<
 			`INSERT OR REPLACE INTO landmark_name VALUES (${LANDMARK_NAME_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		const tally = { documents: 0, rows: 0 }
+		const table = createOutcomeEvidenceTable(outcomes.spec)
+
+		await writeOutcomeDefaults(database, outcomes.spec, outcomes.pin, "qid")
+
+		const identityKinds = new Set(
+			outcomes.spec.definitions
+				.filter((definition) => definition["mw:facet"] === "identity")
+				.map((definition) => definition["mw:name"])
+		)
+
+		const insertOutcome = database.prepare(
+			"INSERT OR REPLACE INTO record_outcome (qid, outcome_id, contested) VALUES (?, ?, ?)"
+		)
+
+		const tally: PlaceBuildCounts = { documents: 0, rows: 0, outcomeRows: 0 }
 
 		let page = await post("/photon/_search?scroll=5m", {
 			size: 5000,
 			query,
-			_source: ["osm_type", "osm_id", "name", "coordinate", "countrycode", "importance"],
+			_source: ["osm_type", "osm_id", "osm_key", "osm_value", "name", "coordinate", "countrycode", "importance"],
 		})
 
 		const expected = page.hits.total.value
@@ -96,9 +130,21 @@ const counts = await buildSealedArtifact<
 			for (const hit of page.hits.hits) {
 				tally.documents++
 
-				for (const row of osmPlaceRows(hit._source)) {
+				const rows = osmPlaceRows(hit._source)
+
+				for (const row of rows) {
 					tally.rows++
 					insert.run(...LANDMARK_NAME_COLUMNS.map((column) => row[column]))
+				}
+
+				const key = osmPlaceKey(hit._source)
+
+				if (!rows.length || !key) continue
+
+				for (const row of table.recordRows(null, osmPlaceAssertions(hit._source, table, identityKinds))) {
+					insertOutcome.run(key, row.outcomeID, row.contested ? 1 : 0)
+
+					tally.outcomeRows++
 				}
 			}
 
@@ -135,4 +181,7 @@ const counts = await buildSealedArtifact<
 	},
 })
 
-console.log(`wrote ${out.toString()}: ${counts.documents} documents, ${counts.rows} name rows`)
+console.log(
+	`wrote ${out.toString()}: ${counts.documents} documents, ${counts.rows} name rows, ` +
+		`${counts.outcomeRows} outcome rows at ${outcomes.pin.revision}`
+)

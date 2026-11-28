@@ -151,3 +151,14 @@ describe.skipIf(!haveGazetteer)("a session's coarse placer", () => {
 		expect(session.services.placeCountry).toBeNull()
 	}, 120_000)
 })
+
+describe.skipIf(!haveGazetteer)("a request's outcome fields", () => {
+	// The id check runs before any layer is read, so the refusal shows the session holds the vocabulary.
+	it("checks a request's outcome ids against the vocabulary every session loads", async () => {
+		await using session = await createGeocodeSession(createGeocodeSessionOptions({ countryScope: "none" }))
+
+		await expect(session.geocode("Mt. Tabor, Portland, Oregon", { outcomeFilter: ["not-a-kind"] })).rejects.toThrow(
+			/"not-a-kind" isn't an outcome kind/
+		)
+	}, 120_000)
+})
