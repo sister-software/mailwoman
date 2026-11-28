@@ -12,9 +12,20 @@
 //!
 //! [`RowGroupVisit`] reads one row group for a source the epoch reads in part: a few rows per visit, in an order
 //! the group's own seed fixes, so the pass that visits it again continues where the last visit stopped.
+//!
+//! [`FileRows::stored`] reads a file in stored order and draws nothing: row groups ascending, each group's rows as
+//! stored, and a row of a positively weighted country accepted without the acceptance draw.
+//!
+//! A train read of a source whose files store [`DRAW_WEIGHT_COLUMN`] multiplies each row's weight into the same
+//! acceptance draw: a row is accepted with probability `(country weight / heaviest country weight) × (draw weight /
+//! bound)`, where the bound is the largest draw weight among the source's files ([`DrawWeights`]). A file of that
+//! source without the column reads 1.0 for every row. The mixture picks the source before the source yields a row,
+//! so the acceptance moves draws between the source's rows and leaves the source's share of the run unchanged: over
+//! the passes a run makes, a row's expected draws are the source's draws per row times its draw weight over the
+//! source's mean draw weight. A read without a bound, a held-out read, and a stored-order read ignore the column.
 
-use crate::columns::{column, IntListColumn, StrColumn, StrListColumn};
-use crate::corpus_files::RowFilter;
+use crate::columns::{column, F64Column, IntListColumn, StrColumn, StrListColumn};
+use crate::corpus_files::{CorpusFile, RowFilter};
 use crate::error::{quote, Error, Result};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
@@ -29,6 +40,84 @@ pub const REQUIRED_COLUMNS: [&str; 5] = ["raw", "tokens", "labels", "country", "
 /// The char-offset label columns: a file stores all three or none.
 pub const SPAN_COLUMNS: [&str; 3] = ["span_starts", "span_ends", "span_tags"];
 
+/// The optional per-row draw weight: a positive, finite float that scales a row's chance of being drawn within its
+/// source.
+pub const DRAW_WEIGHT_COLUMN: &str = "draw_weight";
+
+/// The bound a source's draw weights are divided by, so each row's acceptance stays a probability.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DrawWeights {
+	/// The largest draw weight among the source's files, and 1.0 when one of them stores no column.
+	pub bound: f64,
+}
+
+impl DrawWeights {
+	/// The bound over `files`, or `None` when none of them stores [`DRAW_WEIGHT_COLUMN`], so the read draws exactly as
+	/// it does for a corpus without the column.
+	///
+	/// Refuses a null, non-finite or non-positive weight, because a row that can never be drawn would leave the source
+	/// without a trace, and a row whose weight is unreadable has no defined chance.
+	pub fn of_files(files: &[CorpusFile]) -> Result<Option<Self>> {
+		let mut bound: Option<f64> = None;
+		let mut unweighted = false;
+		for file in files {
+			let parquet = ParquetFile::open(&file.path)?;
+			if !parquet.has_column(DRAW_WEIGHT_COLUMN) {
+				unweighted = true;
+				continue;
+			}
+			for batch in parquet.batches(&[DRAW_WEIGHT_COLUMN], 65_536)? {
+				let batch = batch?;
+				let weights = F64Column::new(column(&batch, DRAW_WEIGHT_COLUMN, &file.path)?, DRAW_WEIGHT_COLUMN)?;
+				for i in 0..weights.len() {
+					let weight = draw_weight_at(&weights, i, &file.path)?;
+					bound = Some(bound.map_or(weight, |b: f64| b.max(weight)));
+				}
+			}
+		}
+		Ok(bound.map(|b| Self {
+			bound: if unweighted { b.max(1.0) } else { b },
+		}))
+	}
+}
+
+/// The draw weight of row `i`, refusing a value that is null, non-finite or not positive.
+fn draw_weight_at(weights: &F64Column, i: usize, path: &std::path::Path) -> Result<f64> {
+	match weights.get(i) {
+		Some(weight) if weight.is_finite() && weight > 0.0 => Ok(weight),
+		found => Err(Error::Row(format!(
+			"{}: a {DRAW_WEIGHT_COLUMN} value is {found:?}, and a draw weight must be a positive finite number",
+			path.display()
+		))),
+	}
+}
+
+/// The draw weights one row group's acceptance test reads.
+struct GroupDrawWeights {
+	/// `None` for a file without the column, whose rows read 1.0.
+	column: Option<F64Column>,
+	bound: f64,
+}
+
+/// The rows of the expected source a read passed over, by the check that refused them.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RowDrops {
+	/// Refused by the file's row filter: a held-out id of its split attribute, or a manifest deletion.
+	pub filtered: u64,
+	/// The row's country is absent from `country_weights` or weighs zero.
+	pub country: u64,
+	/// The coarse filter found no active tag among the row's labels.
+	pub coarse: u64,
+}
+
+impl RowDrops {
+	pub fn add(&mut self, other: RowDrops) {
+		self.filtered += other.filtered;
+		self.country += other.country;
+		self.coarse += other.coarse;
+	}
+}
+
 /// One read row group, held until its rows are visited.
 struct RowGroup {
 	index: usize,
@@ -40,6 +129,8 @@ struct RowGroup {
 	/// Present when the file stores `source_id`, so a consumed row keeps its stable identity for the exposure record.
 	source_id: Option<StrColumn>,
 	spans: Option<(IntListColumn, IntListColumn, StrListColumn)>,
+	/// Present when the read applies draw weights.
+	draw_weights: Option<GroupDrawWeights>,
 	admitted: Option<Vec<bool>>,
 	order: Vec<usize>,
 	position: usize,
@@ -52,12 +143,16 @@ pub struct FileRows {
 	expected_source: Option<Arc<str>>,
 	row_filter: Option<Arc<RowFilter>>,
 	row_group_limit: Option<usize>,
+	draw_weights: Option<DrawWeights>,
 	file: Option<ParquetFile>,
 	has_spans: bool,
 	row_groups: Vec<usize>,
 	next_group: usize,
 	current: Option<RowGroup>,
 	start: StartState,
+	/// Read in stored order with no generator draw, rather than in shuffled order.
+	stored_order: bool,
+	drops: RowDrops,
 }
 
 /// Whether a lazily started reader has opened its input.
@@ -111,6 +206,7 @@ fn read_row_group(
 	path: &std::path::Path,
 	has_spans: bool,
 	row_filter: Option<&RowFilter>,
+	draw_weights: Option<DrawWeights>,
 	index: usize,
 	shuffle: impl FnOnce(&mut [usize]),
 ) -> Result<RowGroup> {
@@ -121,6 +217,10 @@ fn read_row_group(
 	let has_source_id = row_filter.is_some() || file.has_column("source_id");
 	if has_source_id {
 		columns.push("source_id");
+	}
+	let has_draw_weight = draw_weights.is_some() && file.has_column(DRAW_WEIGHT_COLUMN);
+	if has_draw_weight {
+		columns.push(DRAW_WEIGHT_COLUMN);
 	}
 	let batch = file.read_row_group(index, &columns)?;
 	let get = |name: &str| column(&batch, name, path);
@@ -142,6 +242,17 @@ fn read_row_group(
 	} else {
 		None
 	};
+	let draw_weights = match draw_weights {
+		None => None,
+		Some(DrawWeights { bound }) => Some(GroupDrawWeights {
+			column: if has_draw_weight {
+				Some(F64Column::new(get(DRAW_WEIGHT_COLUMN)?, DRAW_WEIGHT_COLUMN)?)
+			} else {
+				None
+			},
+			bound,
+		}),
+	};
 	let mut order: Vec<usize> = (0..batch.num_rows()).collect();
 	shuffle(&mut order);
 	Ok(RowGroup {
@@ -153,6 +264,7 @@ fn read_row_group(
 		source: StrColumn::new(get("source")?, "source")?,
 		source_id,
 		spans,
+		draw_weights,
 		admitted,
 		order,
 		position: 0,
@@ -170,6 +282,7 @@ pub struct RowGroupVisit {
 	expected_source: Arc<str>,
 	group: RowGroup,
 	limit: usize,
+	drops: RowDrops,
 }
 
 impl RowGroupVisit {
@@ -182,6 +295,7 @@ impl RowGroupVisit {
 		path: PathBuf,
 		expected_source: Arc<str>,
 		row_filter: Option<&RowFilter>,
+		draw_weights: Option<DrawWeights>,
 		index: usize,
 		order_seed: i128,
 		rotation: usize,
@@ -190,7 +304,7 @@ impl RowGroupVisit {
 	) -> Result<Self> {
 		let file = ParquetFile::open(&path)?;
 		let has_spans = span_schema(&file, &path)?;
-		let mut group = read_row_group(&file, &path, has_spans, row_filter, index, |order| {
+		let mut group = read_row_group(&file, &path, has_spans, row_filter, draw_weights, index, |order| {
 			PyRandom::new(crate::pyrandom::Seed::Int(order_seed)).shuffle(order);
 			if !order.is_empty() {
 				order.rotate_left(rotation % order.len());
@@ -202,6 +316,7 @@ impl RowGroupVisit {
 			expected_source,
 			group,
 			limit,
+			drops: RowDrops::default(),
 		})
 	}
 
@@ -212,8 +327,9 @@ impl RowGroupVisit {
 			&self.path,
 			Some(&*self.expected_source),
 			Some(self.limit),
-			rng,
+			Some(rng),
 			shared,
+			&mut self.drops,
 		)
 	}
 
@@ -240,33 +356,63 @@ impl FileRows {
 			expected_source,
 			row_filter,
 			row_group_limit,
+			draw_weights: None,
 			file: None,
 			has_spans: false,
 			row_groups: Vec::new(),
 			next_group: 0,
 			current: None,
 			start: StartState::Pending,
+			stored_order: false,
+			drops: RowDrops::default(),
 		}
+	}
+
+	/// The accepted rows of `source` in `path`, in stored order, drawing nothing from the generator.
+	pub fn stored(path: PathBuf, source: Arc<str>, row_filter: Option<Arc<RowFilter>>) -> Self {
+		Self {
+			stored_order: true,
+			..Self::new(path, Some(source), row_filter, None)
+		}
+	}
+
+	/// The same read, with each row's draw weight over `draw_weights.bound` multiplied into its acceptance draw.
+	pub fn with_draw_weights(self, draw_weights: Option<DrawWeights>) -> Self {
+		Self { draw_weights, ..self }
+	}
+
+	/// The rows of the expected source this read has passed over so far.
+	pub fn drops(&self) -> RowDrops {
+		self.drops
 	}
 
 	fn open(&mut self, rng: &mut PyRandom) -> Result<()> {
 		let file = ParquetFile::open(&self.path)?;
 		self.has_spans = span_schema(&file, &self.path)?;
 		self.row_groups = (0..file.num_row_groups()).collect();
-		rng.shuffle(&mut self.row_groups);
+		if !self.stored_order {
+			rng.shuffle(&mut self.row_groups);
+		}
 		self.file = Some(file);
 		Ok(())
 	}
 
 	fn read_group(&mut self, index: usize, rng: &mut PyRandom) -> Result<RowGroup> {
 		let file = self.file.as_ref().expect("started");
+		let stored_order = self.stored_order;
 		read_row_group(
 			file,
 			&self.path,
 			self.has_spans,
 			self.row_filter.as_deref(),
+			// A stored-order read draws nothing, so it has no acceptance draw to scale.
+			self.draw_weights.filter(|_| !stored_order),
 			index,
-			|order| rng.shuffle(order),
+			|order| {
+				if !stored_order {
+					rng.shuffle(order);
+				}
+			},
 		)
 	}
 
@@ -292,8 +438,9 @@ impl FileRows {
 				&self.path,
 				self.expected_source.as_deref(),
 				self.row_group_limit,
-				rng,
+				(!self.stored_order).then_some(&mut *rng),
 				shared,
+				&mut self.drops,
 			)?;
 			match row {
 				Some(row) => return Ok(Some(row)),
@@ -302,13 +449,16 @@ impl FileRows {
 		}
 	}
 
+	/// The next accepted row of `group`. `rng` draws the country acceptance test; `None` accepts every row of a
+	/// positively weighted country, as a stored-order read does.
 	fn next_in_group(
 		group: &mut RowGroup,
 		path: &std::path::Path,
 		expected_source: Option<&str>,
 		row_group_limit: Option<usize>,
-		rng: &mut PyRandom,
+		mut rng: Option<&mut PyRandom>,
 		shared: &Shared,
+		drops: &mut RowDrops,
 	) -> Result<Option<Row>> {
 		while group.position < group.order.len() {
 			if row_group_limit.is_some_and(|limit| group.taken >= limit) {
@@ -316,23 +466,41 @@ impl FileRows {
 			}
 			let i = group.order[group.position];
 			group.position += 1;
-			if let Some(admitted) = &group.admitted {
-				if !admitted[i] {
-					continue;
-				}
-			}
 			let source = group.source.get(i);
 			if let Some(expected) = expected_source {
 				if source != Some(expected) {
 					continue;
 				}
 			}
+			if let Some(admitted) = &group.admitted {
+				if !admitted[i] {
+					drops.filtered += 1;
+					continue;
+				}
+			}
 			let country = group.country.get(i);
 			let Some(weight) = country.and_then(|c| shared.country_weights.get(c)).filter(|&w| w > 0.0) else {
+				drops.country += 1;
 				continue;
 			};
-			if weight < shared.max_country_weight && rng.random() > weight / shared.max_country_weight {
-				continue;
+			if let Some(rng) = rng.as_deref_mut() {
+				match &group.draw_weights {
+					None => {
+						if weight < shared.max_country_weight && rng.random() > weight / shared.max_country_weight {
+							continue;
+						}
+					}
+					Some(draw) => {
+						let row_weight = match &draw.column {
+							Some(column) => draw_weight_at(column, i, path)?,
+							None => 1.0,
+						};
+						let accept = weight / shared.max_country_weight * (row_weight / draw.bound);
+						if accept < 1.0 && rng.random() > accept {
+							continue;
+						}
+					}
+				}
 			}
 			let at = |what: &str| {
 				Error::Row(format!(
@@ -343,6 +511,7 @@ impl FileRows {
 			};
 			let labels = group.labels.get(i)?.ok_or_else(|| at("null labels"))?;
 			if shared.coarse_filter && !shared.active_components_present(&labels) {
+				drops.coarse += 1;
 				continue;
 			}
 			let raw = group.raw.get(i).ok_or_else(|| at("null raw"))?.to_owned();

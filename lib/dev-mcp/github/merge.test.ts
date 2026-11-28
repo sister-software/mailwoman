@@ -2,26 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * `mwdev_pull_request`'s `merge` over a stubbed `gh`: each condition's refusal runs no merge,
- * and a merge that every condition admits squashes at the checked head and keeps the branch.
+ * `mwdev_pull_request`'s `merge` over a stubbed `gh`: a closed or conflicting pull request runs no
+ * merge, and an open one squashes at the read head whatever its CI state, reporting that state.
  */
 
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { afterEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import type { RunGitHub } from "#dev-mcp/github"
-import { recordPullRequestCompletion } from "#dev-mcp/github/merge"
 import { JobRegistry } from "#dev-mcp/process/jobs"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { githubTools } from "#dev-mcp/tools"
-
-let fixtures = new AsyncDisposableStack()
-
-afterEach(async () => {
-	await fixtures.disposeAsync()
-	fixtures = new AsyncDisposableStack()
-})
 
 const HEAD = "aac46b327a5ce15e23e53290946526f7aa77792e"
 
@@ -37,35 +28,23 @@ const OPEN_CLEAN = {
 	mergeStateStatus: "CLEAN",
 }
 
-const PASSED = [
-	{
-		bucket: "pass",
-		completedAt: "2026-11-20T21:33:46Z",
-		link: "https://github.com/sister-software/mailwoman/actions/runs/1/job/2",
-		name: "test",
-		startedAt: "2026-11-20T21:22:47Z",
-		state: "SUCCESS",
-		workflow: "Test",
-	},
-]
+const CHECK = {
+	bucket: "pass",
+	completedAt: "2026-11-20T21:33:46Z",
+	link: "https://github.com/sister-software/mailwoman/actions/runs/1/job/2",
+	name: "test",
+	startedAt: "2026-11-20T21:22:47Z",
+	state: "SUCCESS",
+	workflow: "Test",
+}
 
 interface Scenario {
 	view?: Partial<typeof OPEN_CLEAN>
 	checks?: object[]
-	/**
-	 * The head `complete` recorded, or `null` for no record.
-	 */
-	completedHead?: string | null
 }
 
-async function mergeWith(scenario: Scenario): Promise<{ result: Promise<unknown>; calls: string[][] }> {
-	const repoRoot = fixtures.use(await temporaryDirectory("mw-pr-merge-")).path.toString()
+function mergeWith(scenario: Scenario): { result: Promise<unknown>; calls: string[][] } {
 	const calls: string[][] = []
-	const completedHead = scenario.completedHead === undefined ? HEAD : scenario.completedHead
-
-	if (completedHead) {
-		await recordPullRequestCompletion(repoRoot, { pullRequestNumber: 3182, issueNumber: 3182, head: completedHead })
-	}
 
 	const run: RunGitHub = async (args) => {
 		calls.push(args)
@@ -80,7 +59,7 @@ async function mergeWith(scenario: Scenario): Promise<{ result: Promise<unknown>
 
 		if (args[0] === "pr" && args[1] === "view") return stringifyJSON({ ...OPEN_CLEAN, ...scenario.view })
 
-		if (args[0] === "pr" && args[1] === "checks") return stringifyJSON(scenario.checks ?? PASSED)
+		if (args[0] === "pr" && args[1] === "checks") return stringifyJSON(scenario.checks ?? [CHECK])
 
 		if (args[0] === "issue") return stringifyJSON({ state: "CLOSED" })
 
@@ -88,7 +67,7 @@ async function mergeWith(scenario: Scenario): Promise<{ result: Promise<unknown>
 	}
 
 	const [, tool] = githubTools(
-		{ registry: stubEngineRegistry({ repoRoot }), jobs: new JobRegistry(), startedAt: Date.now() },
+		{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
 		{ run }
 	)
 
@@ -100,34 +79,30 @@ const mergeCalls = (calls: string[][]) => calls.filter((args) => args[1] === "me
 describe("mwdev_pull_request merge", () => {
 	it.each([
 		["a closed pull request", { view: { state: "CLOSED" } }, /#3182 is closed/],
-		["no completion record", { completedHead: null }, /`complete` has not succeeded for #3182/],
 		[
-			"a completion for an earlier head",
-			{ completedHead: "old-head" },
-			/succeeded for head old-head, and the current head is aac46b3/,
+			"a pull request that conflicts with its base",
+			{ view: { mergeable: "CONFLICTING", mergeStateStatus: "DIRTY" } },
+			/conflicts with its base/,
 		],
-		[
-			"a pending check",
-			{ checks: [{ ...PASSED[0], bucket: "pending", state: "IN_PROGRESS" }] },
-			/1 pending, 0 failed and 0 cancelled/,
-		],
-		["a failed check", { checks: [{ ...PASSED[0], bucket: "fail", state: "FAILURE" }] }, /0 pending, 1 failed/],
-		["a merge state other than CLEAN", { view: { mergeStateStatus: "BLOCKED" } }, /merge state is BLOCKED/],
 	] as const)("refuses %s and runs no merge", async (_label, scenario, message) => {
-		const { result, calls } = await mergeWith(scenario as Scenario)
+		const { result, calls } = mergeWith(scenario as Scenario)
 
 		await expect(result).rejects.toThrow(message)
 		expect(mergeCalls(calls)).toEqual([])
 	})
 
-	it("squash-merges at the checked head, keeps the branch, and reports the merge commit and the issue's state", async () => {
-		const { result, calls } = await mergeWith({})
+	it("merges while a check is pending and reports the CI state it merged under", async () => {
+		const { result, calls } = mergeWith({
+			view: { mergeStateStatus: "UNSTABLE" },
+			checks: [{ ...CHECK, bucket: "pending", state: "IN_PROGRESS" }],
+		})
 
 		await expect(result).resolves.toMatchObject({
 			action: "merge",
 			head: HEAD,
 			state: "MERGED",
 			mergeCommit: "merge-oid",
+			checksAtMerge: "1 pending, 0 failed and 0 cancelled",
 			linkedIssues: [{ number: 3182, state: "CLOSED" }],
 		})
 

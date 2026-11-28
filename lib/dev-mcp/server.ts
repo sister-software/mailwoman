@@ -14,6 +14,7 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/values/json"
+import { ignoreProgress, progressNotifier } from "@mailwoman/mcp/progress/notifier"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
@@ -26,9 +27,10 @@ export async function createDevMCPServer(deps: DevToolDeps): Promise<McpServer> 
 		server.registerTool(
 			tool.name,
 			{ description: tool.description, inputSchema: tool.inputSchema.shape },
-			async (args): Promise<CallToolResult> => {
+			async (args, extra): Promise<CallToolResult> => {
 				try {
-					const result = (await tool.handler(args)) as Record<string, unknown>
+					const progress = progressNotifier(extra) ?? ignoreProgress
+					const result = (await tool.handler(args, { progress })) as Record<string, unknown>
 
 					return {
 						content: [{ type: "text", text: prettyJSON(result) }],

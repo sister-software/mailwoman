@@ -134,7 +134,13 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			CancelToken::default(),
 		);
 		while step < max_steps {
-			let rows = batches.next_batch()?;
+			let Some(rows) = batches.next_batch()? else {
+				if let Some(summary) = batches.stored_summary() {
+					println!("[data] stored-order train files ended: {summary}");
+				}
+				println!("[data] the stored-order train files ended at step {step} of max_steps {max_steps}");
+				break;
+			};
 			model.mode = Mode::Train;
 			let batch = encoder.encode(&rows)?;
 			let (masked, labels) = mask_tokens(
@@ -157,7 +163,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 				clip_grad_norm(&refs, grad_clip)?;
 			}
-			optim.step();
+			optim.step()?;
 			scheduler.step(&mut optim);
 			step += 1;
 			running += loss.double_value(&[]);

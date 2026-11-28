@@ -424,6 +424,16 @@ export const QueryIntentCode = {
 	 * The evidence lists the unused components and both tiers.
 	 */
 	DeclaredCoarserAnswer: "declared_coarser_answer",
+	/**
+	 * The answer doesn't satisfy the request's `outcomeHint`.
+	 *
+	 * The text's evidence decided the answer, and the hint only ordered its candidates.
+	 */
+	OutcomeHintUnsatisfied: "outcome_hint_unsatisfied",
+	/**
+	 * The request's `outcomeFilter` admitted zero candidates, and the result lists zero places.
+	 */
+	OutcomeFilterEmpty: "outcome_filter_empty",
 } as const
 
 /**

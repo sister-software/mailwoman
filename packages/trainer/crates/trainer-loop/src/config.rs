@@ -9,7 +9,7 @@
 //! loader reads it.
 
 use crate::{fail, Result};
-use mtf_sampler::{AugmentProbabilities, CharConfig, RunLength, SamplerConfig, Weights};
+use mtf_sampler::{AugmentProbabilities, CharConfig, ReadOrder, RunLength, SamplerConfig, Weights};
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
 
@@ -152,6 +152,23 @@ impl RunConfig {
 			.ok_or_else(|| fail!("train.{key} is not a boolean"))
 	}
 
+	pub fn train_i64s(&self, key: &str) -> Result<Vec<i64>> {
+		field(&self.train, "train", key)?
+			.as_array()
+			.ok_or_else(|| fail!("train.{key} is not a list"))?
+			.iter()
+			.map(|v| v.as_i64().ok_or_else(|| fail!("train.{key} holds {v}")))
+			.collect()
+	}
+
+	/// `train.cuda_graph`. A config resolved before the field existed has no key, and reads as off.
+	pub fn cuda_graph(&self) -> Result<bool> {
+		match self.train.get("cuda_graph") {
+			None => Ok(false),
+			Some(v) => v.as_bool().ok_or_else(|| fail!("train.cuda_graph is not a boolean")),
+		}
+	}
+
 	pub fn train_str(&self, key: &str) -> Result<String> {
 		Ok(field(&self.train, "train", key)?
 			.as_str()
@@ -246,6 +263,10 @@ pub struct DataFiles {
 	pub postal_definition: PathBuf,
 	pub address_systems: PathBuf,
 	pub label_schema: PathBuf,
+	/// The source → reading table of the outcome head and hint.
+	pub outcome_readings: PathBuf,
+	/// The checkout, which `data.outcome_masks_path` is relative to.
+	pub root: PathBuf,
 }
 
 impl DataFiles {
@@ -253,6 +274,8 @@ impl DataFiles {
 	pub fn in_repository(root: &Path) -> Self {
 		let data = root.join("packages/trainer/data");
 		Self {
+			outcome_readings: data.join("outcome_readings.json"),
+			root: root.to_path_buf(),
 			postcode_layouts: data.join("postcode-layouts.json"),
 			postal_artifact: root.join("packages/postcode/data/artifacts/postal.rca1"),
 			postal_definition: root.join("packages/postcode/data/definitions/postal.definition.json"),
@@ -266,6 +289,16 @@ impl DataFiles {
 		let root = env_path("MAILWOMAN_REPO_ROOT")
 			.unwrap_or_else(|| PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../../..")));
 		Self::in_repository(&root)
+	}
+}
+
+/// `data.read_order`. A config resolved before the field existed has no key, and reads as the mixture.
+fn read_order(data: &Map<String, Value>) -> Result<ReadOrder> {
+	match data.get("read_order") {
+		None | Some(Value::Null) => Ok(ReadOrder::Mixture),
+		Some(Value::String(order)) if order == "mixture" => Ok(ReadOrder::Mixture),
+		Some(Value::String(order)) if order == "stored" => Ok(ReadOrder::Stored),
+		Some(other) => Err(fail!("data.read_order is {other}, expected \"mixture\" or \"stored\"")),
 	}
 }
 
@@ -327,6 +360,11 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 			.ok_or_else(|| fail!("data.country_weights is null"))?,
 		source_weights: weights(field(d, "data", "source_weights")?, "data.source_weights")?,
 		source_reps,
+		// A config resolved before the field existed has no key, and reads as no factors.
+		source_emit_factors: weights(
+			d.get("source_emit_factors").unwrap_or(&Value::Null),
+			"data.source_emit_factors",
+		)?,
 		run_length: run_length.transpose()?,
 		coarse_filter: run.data_bool("coarse_filter")?,
 		active_tags: active_tags.to_vec(),
@@ -338,6 +376,7 @@ pub fn sampler_config(run: &RunConfig, files: &DataFiles, active_tags: &[String]
 		affix_relabel_lexicon_path: run.data_str("affix_relabel_lexicon_path")?.map(PathBuf::from),
 		postcode_layouts_path: Some(files.postcode_layouts.clone()),
 		shuffle_buffer: 131_072,
+		read_order: read_order(d)?,
 		drop_spans: false,
 		data_root: env_path("MAILWOMAN_DATA_ROOT"),
 		volume_mount: env_path("MAILWOMAN_VOLUME_MOUNT").unwrap_or_else(|| PathBuf::from("/data")),

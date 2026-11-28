@@ -6,6 +6,7 @@
  * Its handler runs the measurement in the package root.
  */
 
+import { countProgress } from "@mailwoman/mcp/progress/notifier"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { z } from "zod"
 
@@ -13,7 +14,13 @@ import type { EngineConfig } from "#dev-mcp/engine/registry"
 import { describeObservedRate } from "#dev-mcp/result/power"
 import { tallyPaths } from "#dev-mcp/result/tally"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } from "#dev-mcp/result/tool-kit"
+import {
+	ENGINE_CONFIG_SCHEMA,
+	INPUT_SET_SCHEMA,
+	WITHOUT_PROGRESS,
+	componentsOf,
+	provenanceFor,
+} from "#dev-mcp/result/tool-kit"
 import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 /**
@@ -78,16 +85,19 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					"without a row dump — this replaces the hand-rolled recount scripts."
 			),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const ref = (args["inputs"] as InputSetRef | null) ?? { kind: "board" }
 		const config = (args["config"] as EngineConfig | null) ?? {}
 		const limit = args["limit"] as number | undefined
 		const fields = args["fields"] as RunRowField[] | undefined
 		const keep = fields ? new Set<RunRowField>(fields) : null
 
+		progress({ stage: "Resolving the input set" })
 		const set = await resolveInputSet(ref)
+		progress({ stage: "Starting the engine" })
 		using engine = await registry.acquire(config)
 		const selected = limit ? set.inputs.slice(0, limit) : set.inputs
+		const geocoded = countProgress(progress, "Geocoding", selected.length)
 
 		const startedAt = Date.now()
 		const rows: unknown[] = []
@@ -131,6 +141,8 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 			} catch (error) {
 				errors.push({ id: item.id, input: item.input, message: (error as Error).message })
 			}
+
+			geocoded()
 		}
 
 		const resolvedCount = resolved

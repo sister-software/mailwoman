@@ -146,6 +146,7 @@ fn source_counts_follow_the_filter_a_listing_passes_not_an_earlier_listings() {
 	let options = WriteOptions {
 		without_spans: true,
 		source_ids: Some(ids),
+		..Default::default()
 	};
 	write_corpus_parquet(&rows, &path, 1 << 20, &options);
 	let set = |members: &[&str]| -> Arc<IdSet> { Arc::new(members.iter().map(|m| Box::from(*m)).collect()) };

@@ -82,6 +82,10 @@ fn write_model(model: &ModelProto, path: &Path) -> Result<()> {
 	write_bytes(path, &model.encode_to_vec())
 }
 
+/// The card's `outcomes` block for a graph with the outcome hint or head, beside the graph. `mwops release
+/// stage-weights-cache` copies it into the candidate's card.
+const OUTCOMES_FILE: &str = "OUTCOMES.json";
+
 /// The trainer's corpus record, `train/corpus_record.py`'s `CORPUS_RECORD_FILE`, beside a run's checkpoints.
 const CORPUS_RECORD_FILE: &str = "CORPUS.json";
 
@@ -244,6 +248,21 @@ fn run(args: &[String]) -> Result<bool> {
 				write_text(&sidecar, &transitions.to_json()?)?;
 				println!("span transitions sidecar: {}", sidecar.display());
 			}
+			// The card's `outcomes` block: the ids the hint's rows and the head's classes stand for, and the definitions
+			// revision they follow. Only the checkpoint's config records them.
+			if config.use_outcome_hint || config.use_outcome_head {
+				let definitions = &config.outcome_definitions;
+				let block = serde_json::json!({
+					"revision": definitions.get("revision"),
+					"sha256": definitions.get("sha256"),
+					"hint_classes": if config.use_outcome_hint { &config.outcome_hint_classes[..] } else { &[] },
+					"head_classes": if config.use_outcome_head { &config.outcome_head_classes[..] } else { &[] },
+				});
+				let sidecar = beside.join(OUTCOMES_FILE);
+				let text = serde_json::to_string_pretty(&block).map_err(|e| fail!("{e}"))?;
+				write_text(&sidecar, &(text + "\n"))?;
+				println!("outcomes sidecar: {}", sidecar.display());
+			}
 			write_model(&model, output)?;
 			if let Some((path, _)) = &training {
 				let bytes = std::fs::read(path).map_err(|e| fail!("{}: {e}", path.display()))?;
@@ -272,7 +291,12 @@ fn run(args: &[String]) -> Result<bool> {
 			}
 			let manifest = provenance::write_beside(
 				output,
-				&[SEMI_CRF_TRANSITIONS_FILE, CORPUS_RECORD_FILE, TRAINING_RECORD_FILE],
+				&[
+					SEMI_CRF_TRANSITIONS_FILE,
+					OUTCOMES_FILE,
+					CORPUS_RECORD_FILE,
+					TRAINING_RECORD_FILE,
+				],
 				&provenance_id,
 				training.map(|(_, r)| r),
 				None,

@@ -124,6 +124,13 @@ before that.
 
 8. Set `ISSUANCE_ENABLED = "true"` in `wrangler.toml` and push. The next build deploys the change.
 
+`deploy.yml` deploys code and applies no D1 migration. After adding a file under `migrations/`, run
+`migrate:production` and confirm with `wrangler d1 migrations list LICENSE_LEDGER --remote`. A deployed route whose
+table is missing fails with `no such table` until then. After moving the worker to another domain, run
+`yarn mwops shop status --mode live`: the Stripe webhook destination keeps the old origin until
+`mwops shop provision --worker-origin <origin> --apply` recreates it, and its new signing secret goes in through
+`wrangler secret put STRIPE_WEBHOOK_SECRET`.
+
 The same steps with `-c wrangler.sandbox.toml` set up the sandbox on a key pair generated only for it
 (`generateLicenseSigningKeyPair` from `@mailwoman/core/license/key`, kid from `licenseKeyID(publicKeyPEM, 9)`). Its
 `/health` reads `signing: ok`, and a Payment Link in Stripe test mode exercises the whole path: checkout, webhook,

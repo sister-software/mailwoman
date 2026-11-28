@@ -1,20 +1,19 @@
 ---
 name: task-intake
-description: Use for an authorized implementation or training arc expected to produce a PR or require a handoff. Creates the GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator asks for one. The todo list is the working plan, and the issue is the durable copy the operator reads.
+description: Use when the operator asks for a tracking issue, or for a multi-session arc that a later session must resume. Creates one GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. One feature gets one issue and one pull request. Never split a feature into sub-issues or create an issue only to open a PR.
 ---
 
 ## Why this exists
 
-The operator follows autonomous work through GitHub rather than the session transcript. A plan kept only
-in the session must be reconstructed after a context reset or handoff. For authorized implementation and
-training work, create the issue and its task list before changing the repository. The hook then copies
-todo progress into that issue.
+A plan kept only in the session must be reconstructed after a context reset or handoff. An issue holds
+that plan where the operator and a later session can read it. The hook copies todo progress into it.
 
 ## When to use
 
-Use this skill for an authorized implementation or training arc expected to produce a PR or require a
-handoff. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator
-asks for one. The number of steps doesn't grant permission to write to GitHub.
+Use this skill when the operator asks for an issue, or when the work spans sessions and a later session must
+pick it up. A single-session change opens its pull request without an issue. Never create an issue for
+review, diagnosis-only work or local exploration. One feature gets one issue at most and one pull request:
+don't split it into sub-issues, and don't open a second issue for its CI or follow-up tasks.
 
 ## Step 1 — write the plan as a todo list FIRST
 
@@ -61,23 +60,8 @@ The hook's interface is:
 
 - Check every box, or say on the issue why a box stays open. An unchecked box with no comment reads
   as forgotten rather than deferred.
-- Call `mwdev_pull_request` with `action: create` and the issue number. The tool verifies the issue's task
-  list, creates a Vale-checked body that contains `Closes #<n>`, and starts a tracked CI monitor.
-- PR creation starts verification. It doesn't complete the task. Wait for the checks with
-  `yarn mwops pr wait <number> --max-minutes 40`, which exits 0 when every check passed, 1 when one failed,
-  3 when the bound expired, 4 when the checks stayed unread and 5 when the head has no checks. On a
-  failure it prints each failed job's failing tests and log path, and for a failed check without a job
-  log, such as CodeQL, each annotation's path, line, title and message. Fix failures, push, and wait for the
-  checks on the new head.
-- PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
-  After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool
-  independently checks CI before marking that task complete and unlinking the issue, and it records
-  the head commit it verified. When the operator has asked for the merge, call `mwdev_pull_request`
-  with `action: merge`. It squash-merges and keeps the branch, and it refuses unless the PR is open,
-  `complete` succeeded for the current head, zero checks are pending or failed, and the merge state is
-  `CLEAN`.
-- The tool persists `.claude/state/tracked-ci.json`, and a Claude Code `PostToolUse` hook records the
-  creating session as its owner. The Claude Code Stop hook checks the current PR head directly on GitHub
-  and blocks the owning session's handoff while checks are absent, pending, failing, or unreadable. It
-  doesn't block another session in the same checkout, and Codex registers no CI Stop hook.
-- Keep the CI marker so a later push requires fresh verification.
+- Run the touched tests, lint and Vale locally on the final head, and read each exit status from its log.
+- Call `mwdev_pull_request` with `action: create` and the issue number. The body contains `Closes #<n>`.
+- Merge with `mwdev_pull_request` `action: merge` without waiting for CI. It refuses only a closed pull
+  request or one that conflicts with its base, and it returns the CI state it merged under in
+  `checksAtMerge`. State that CI state in the report.

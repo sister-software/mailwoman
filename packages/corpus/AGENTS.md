@@ -206,6 +206,11 @@ derivation and leaves its adapter run reusable. A parallel build writes no top-l
 A lock directory, `.corpus-build.lock` under `--out`, refuses a second build of the same output in
 either mode.
 
+A source's parquet `derivation_hash` includes a hash of the code that source reaches. `lib/build/parallel.test.ts`
+compares a serial build with parallel builds made later in the same run. An edit, reflow or format pass under `lib/`
+while that suite runs changes the hash for the later arms only, and the suite reports a `derivation_hash` difference in files whose other bytes match. Finish
+every edit before starting the build suites, and rerun on a settled tree before reading such a failure as a defect.
+
 ## License election
 
 A grant that enumerates its rights grants those rights and no others. An omission is neither a

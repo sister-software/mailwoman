@@ -158,7 +158,10 @@ pub fn run(cell: &CellInputs) -> Result<Vec<StageResult>> {
 			CancelToken::default(),
 		);
 		for i in 0..n_steps * accum {
-			let ours = encoder.encode(&batches.next_batch()?)?;
+			let rows = batches
+				.next_batch()?
+				.ok_or_else(|| fail!("the train split ended before batch {i}"))?;
+			let ours = encoder.encode(&rows)?;
 			for (name, t) in ours.named() {
 				let key = format!("batch{i}.{name}");
 				if record.has(&key) {
@@ -316,7 +319,7 @@ pub fn run(cell: &CellInputs) -> Result<Vec<StageResult>> {
 		let params = model.store.parameters();
 		let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 		norms.push(clip_grad_norm(&refs, grad_clip)?.map_or(0.0, |t| t.double_value(&[])));
-		optim.step();
+		optim.step()?;
 		scheduler.step(&mut optim);
 		lrs.push(scheduler.get_last_lr().to_vec());
 		for (name, p) in &params {
@@ -490,7 +493,7 @@ fn stage6(
 		let params = m.store.parameters();
 		let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
 		clip_grad_norm(&refs, 1.0)?;
-		o.step();
+		o.step()?;
 		s.step(o);
 		Ok(params)
 	};

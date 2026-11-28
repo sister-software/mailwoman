@@ -32,6 +32,7 @@ import { reportSupport } from "@mailwoman/api/support"
 import { memoizeResettable } from "@mailwoman/core/async/memoize"
 import type { AddressTree, decodeAsTuples } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
+import { OutcomeRequestError } from "@mailwoman/core/resolver/outcome"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import {
@@ -311,16 +312,30 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 				url: GeocodeAddressOperation.pathname,
 				schema: GeocodeAddressOperation.schema,
 				handler: async (request, reply) => {
-					const { input_mode, bias, parent, include_tree } = request.body
+					const { input_mode, bias, parent, include_tree, outcome_hint, outcome_filter } = request.body
 					const address = request.body.address.trim()
 
 					if (!address) return reply.code(400).send({ error: "address is required", detail: null })
 
-					const { result: geocoded, tree } = await runGeocode(address, {
-						inputMode: input_mode,
-						...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
-						...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
-					})
+					let run: Awaited<ReturnType<typeof runGeocode>>
+
+					try {
+						run = await runGeocode(address, {
+							inputMode: input_mode,
+							...(bias.length ? { bias: bias.map((point) => ({ ...point })) } : {}),
+							...(parent ? { parentPlace: { id: parent.id, source: "caller", strength: parent.scope } } : {}),
+							...(outcome_hint != null ? { outcomeHint: outcome_hint } : {}),
+							...(outcome_filter ? { outcomeFilter: outcome_filter } : {}),
+						})
+					} catch (error) {
+						if (error instanceof OutcomeRequestError) {
+							return reply.code(400).send({ error: error.code, detail: error.message })
+						}
+
+						throw error
+					}
+
+					const { result: geocoded, tree } = run
 
 					return {
 						...geocoded,

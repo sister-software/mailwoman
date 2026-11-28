@@ -61,6 +61,19 @@ const optionalInt = (value: bigint | null = null) => ({
 	output: z.number().int().nullable(),
 })
 
+/**
+ * The orders the train split can be read in.
+ *
+ * `mixture` draws each row's source from the weights and shuffles.
+ * `stored` reads each positively weighted source's rows once, in the order `source_weights`
+ * lists the sources and the corpus stores the rows, and ends the run when the files end.
+ */
+export const READ_ORDERS = ["mixture", "stored"] as const
+
+export type ReadOrder = (typeof READ_ORDERS)[number]
+
+const readOrder = () => ({ annotation: "str", default: (): PythonValue => "mixture", output: z.enum(READ_ORDERS) })
+
 const optionalFloat = () => ({ annotation: "float | None", default: () => null, output: z.number().nullable() })
 const strList = () => ({ annotation: "list[str]", default: (): PythonValue => [], output: z.array(z.string()) })
 
@@ -169,12 +182,14 @@ export const DATA_SECTION = {
 		]),
 		source_weights: optionalFloatMap(),
 		source_reps: optionalFloatMap(),
+		source_emit_factors: optionalFloatMap(),
 		unshippable_reason: optionalStr(),
 		required_corpus_receipts: sectionList(CORPUS_RECEIPT_SECTION),
 		required_validation_coverage: sectionList(VALIDATION_COVERAGE_SECTION),
 		required_validation_label_support: sectionList(LABEL_SUPPORT_SECTION),
 		prominent_place_coverage: optionalStr(),
 		train_rows_per_epoch: optionalInt(),
+		read_order: readOrder(),
 		val_rows: optionalInt(4096n),
 		coarse_filter: bool(true),
 		augment_directional_prob: float(0),
@@ -204,6 +219,12 @@ export const DATA_SECTION = {
 		anchor_paint_mode: str("gold"),
 		anchor_value_mode: str("posterior_latlon"),
 		region_centroids_path: optionalStr(),
+		/**
+		 * The corpus's outcome mask file, relative to the checkout.
+		 *
+		 * A model with the outcome hint or head reads it (`packages/trainer/crates/trainer-loop/src/outcomes.rs`).
+		 */
+		outcome_masks_path: optionalStr(),
 	},
 } as const satisfies ConfigSectionSpec
 
@@ -236,6 +257,10 @@ export const MODEL_SECTION = {
 		use_locale_hint: bool(false),
 		locale_hint_drop_prob: float(0.5),
 		locale_hint_noise_prob: float(0.05),
+		use_outcome_hint: bool(false),
+		outcome_hint_prob: float(0),
+		use_outcome_head: bool(false),
+		outcome_loss_weight: float(0),
 		use_postcode_anchor: bool(false),
 		use_gazetteer_anchor: bool(false),
 		use_conventions_loss_mask: bool(false),
@@ -303,6 +328,8 @@ export const TRAIN_SECTION = {
 		init_from: str(""),
 		freeze_token_embeddings: bool(false),
 		trainable_only_prefixes: strList(),
+		cuda_graph: bool(false),
+		length_buckets: intList([16n, 32n, 48n, 64n, 96n, 128n]),
 		trackio_enabled: bool(false),
 		trackio_project: str("mailwoman"),
 		trackio_space: str(""),

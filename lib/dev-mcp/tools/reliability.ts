@@ -13,7 +13,7 @@ import { z } from "zod"
 import { ReliabilitySurface, runReliability } from "#dev-mcp/reliability/report"
 import { ComponentAggregate, UnassertedPolicy } from "#dev-mcp/reliability/surfaces"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, WITHOUT_PROGRESS } from "#dev-mcp/result/tool-kit"
 
 export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_reliability",
@@ -84,5 +84,5 @@ export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 			),
 		limit: z.number().int().positive().optional().describe("`decode` only — first N rows of the resolved set."),
 	}),
-	handler: async (args) => runReliability(registry, args),
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => runReliability(registry, args, progress),
 })

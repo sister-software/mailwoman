@@ -1,0 +1,68 @@
+---
+title: Evaluate Mailwoman on your addresses
+description: Label a small address sample, run the published parser, and inspect exact per-row differences before making an adoption decision.
+role: guide
+verified-with: published mailwoman v11.4.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-26
+---
+
+import { NodeRequirement } from "#partials/runtime"
+
+# Evaluate Mailwoman on your addresses
+
+Use this procedure to find out how the published parser handles addresses from your own workflow. You'll compare its returned query kind and components with labels you prepared before running it. The script prints every differing input and the exact expected and observed values. It reads no geographic database and makes no claim about whether an address exists or receives mail.
+
+## Prepare a sample
+
+Choose addresses from the sources and countries you plan to process. Include ordinary records, known difficult forms, and records your current system rejects. Keep the original text and a stable row ID. If your application has several input sources, count each source separately so a large, easy source doesn't hide failures in a smaller one. Set the number of rows and the acceptable error types before looking at Mailwoman's output.
+
+Label each row's expected query kind and every expected component using evidence independent of Mailwoman. A source record or a reviewed annotation can provide that evidence. Leave a row out of the scored sample when its correct components are unknown, and keep it in a separate inspection set. Use [the schema](../reference/schema.mdx) for component names. If two people disagree about a label, settle the label before scoring the parser.
+
+The three-row fixture below demonstrates the file format and produces one difference to inspect. Its selected addresses do not estimate your production accuracy. Save it as `addresses.json` in an empty ECMAScript module project:
+
+```json file=./evaluate-your-addresses.sample.json
+
+```
+
+## Install and run the parser
+
+Use <NodeRequirement />. The commands below create an ECMAScript module project in the empty directory.
+
+Run these commands in that project. The project setting lets Node run the script's imports:
+
+```sh
+npm init -y --init-type=module
+npm install mailwoman
+node -p "require('mailwoman/package.json').version"
+```
+
+Record the installed version with your results. The example output below came from `11.4.0`. A later install can produce different components.
+
+Save the following file as `evaluate.mts` beside `addresses.json`:
+
+```ts file=./evaluate-your-addresses.snippet.mts
+
+```
+
+Run it:
+
+```sh
+node evaluate.mts
+```
+
+The published 11.4.0 package returned:
+
+```text
+Exact labeled rows: 2/3
+Different or faulted rows: 1/3
+{"id":"us-intersection","input":"5th and Main","expected":{"kind":"intersection","components":[]},"observed":{"kind":"intersection","components":[{"tag":"locality","value":"5th and Main"}],"faults":[]}}
+```
+
+The script compares every expected component with every returned tree node, including repeated tags. It counts a row as different when the kind or any component differs, or when the parser reports a stage fault. For `5th and Main`, this fixture accepts the `intersection` kind and no locality component. The returned `locality` node makes the row differ. Inspect that exact result before deciding whether your application accepts it. The sample's exact-row result is 2 divided by 3 labeled rows. Its difference count is 1 divided by the same 3 rows.
+
+## Make the result useful for a decision
+
+Replace the fixture with your reviewed rows and run the script again. Keep the installed package version, Node version, input file, labeling method, output, and any parser faults together. Review each difference by input source, country, address form, and component. A wrong query kind, a missing unit, and a harmless spelling change can have different costs in your workflow. State those costs before deciding which differences matter.
+
+If you use another parser, run it on the same labeled rows. Record for each row whether each parser meets the same acceptance rule, then count the rows only Mailwoman gets right, only the other parser gets right, both get right, and neither gets right. Report each count over the same labeled-row denominator. This paired comparison shows whether the systems fail on the same inputs. Separate aggregate percentages hide that distinction.
+
+This procedure evaluates parsing. To evaluate coordinates, you need independently known positions, an identified geographic data generation, and a distance or source rule suited to your task. The [geocode-a-file tutorial](../tutorials/geocode-a-file.mdx) teaches the result fields after you have a current data bundle. [What supports a model-quality claim?](../explanation/data-and-model-quality.mdx) explains why this selected sample and a registered release comparison answer different questions. [Route parse results to review](./review-parse-results.mdx) shows how to turn observed components into an application intake rule.

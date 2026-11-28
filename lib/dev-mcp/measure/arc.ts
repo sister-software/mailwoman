@@ -17,6 +17,7 @@
 
 import { sha256File } from "@mailwoman/core/crypto/hash"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { ignoreProgress, prefixProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { releaseArmModelPath } from "mailwoman/tools/eval-harness/release/arm"
 import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
 import { ReleaseOutcome } from "mailwoman/tools/eval-harness/release/evaluate"
@@ -308,6 +309,11 @@ export interface ArcOptions {
 	releaseSpec?: string
 	inputs?: unknown
 	locale?: string
+	/**
+	 * Receives each leg's comparison stages, each prefixed with the leg's label.
+	 * Default: `ignoreProgress`, which drops every step.
+	 */
+	progress?: ReportProgress
 }
 
 /**
@@ -408,15 +414,24 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
 	const base = locale ? { locale } : {}
 	const executionPath = locale ? "single-config" : "board-routed"
 
+	const progress = options.progress ?? ignoreProgress
+
 	const compare = async (label: string, weights: string): Promise<ArcLeg> => {
-		const result = (await runCompare(registry, {
-			inputs,
-			arm_a: { kind: "mailwoman", config: { ...base } },
-			arm_b: { kind: "mailwoman", config: { ...base, weights_cache: weights } },
-			variable: ["weights_cache"],
-			grade: "auto",
-			execution_path: executionPath,
-		})) as Record<string, unknown>
+		// The leg's first word names it in each stage: `candidate: Comparing both arms`.
+		const leg = prefixProgress(progress, label.split(" ")[0]!)
+
+		const result = (await runCompare(
+			registry,
+			{
+				inputs,
+				arm_a: { kind: "mailwoman", config: { ...base } },
+				arm_b: { kind: "mailwoman", config: { ...base, weights_cache: weights } },
+				variable: ["weights_cache"],
+				grade: "auto",
+				execution_path: executionPath,
+			},
+			{ progress: leg }
+		)) as Record<string, unknown>
 
 		return legFrom(label, weights, result)
 	}

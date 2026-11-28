@@ -7,6 +7,7 @@
  * Its handler reads the trace measurement in the package root.
  */
 
+import { countProgress } from "@mailwoman/mcp/progress/notifier"
 import { z } from "zod"
 
 import { evidenceCensus } from "#dev-mcp/diagnose/evidence"
@@ -14,6 +15,7 @@ import type { EngineConfig } from "#dev-mcp/engine/registry"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 import {
 	ENGINE_CONFIG_SCHEMA,
+	WITHOUT_PROGRESS,
 	componentsOf,
 	provenanceFor,
 	renderTrace,
@@ -41,10 +43,12 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 					"confidence vectors — and is what a reader almost always wants."
 			),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const inputs = args["inputs"] as string[]
 		const config = (args["config"] as EngineConfig | null) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
+
+		progress({ stage: "Starting a tracing engine" })
 		// This surface enables tracing to explain each row.
 		// The band probe also runs with tracing.
 		// Neither diagnostic changes the parse result.
@@ -57,6 +61,7 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		})
 
 		const rows: unknown[] = []
+		const tracedRow = countProgress(progress, "Tracing", inputs.length)
 
 		for (const input of inputs) {
 			const run = await engine.session.geocode(input)
@@ -84,6 +89,8 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 				...(absent_reason ? { trace_absent_reason: absent_reason } : {}),
 				timing_ms: run.timing,
 			})
+
+			tracedRow()
 		}
 
 		return {

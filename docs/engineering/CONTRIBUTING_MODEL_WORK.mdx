@@ -443,7 +443,7 @@ meant to attribute an effect.
    test split therefore held 36,595 rows and zero street rows, and 770 of the 3,987 `source_id`s in
    its val file are also in train. The eight overlays routed through `split-overlay` in the same corpus
    each have a `.val.parquet` and a `.test.parquet`, and `part-gb` leaks 37 of 4,453.
-5. Train with `node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh`
+5. Train with `node --env-file=.env packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh --commercial`
    (~1h A100); `restart <run key>` resumes a stopped run. Configs live in `packages/corpus/data/training-configs/`. Copy the latest,
    change one variable, and write the acceptance-bar comment.
 

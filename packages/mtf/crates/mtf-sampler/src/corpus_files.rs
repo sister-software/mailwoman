@@ -602,6 +602,23 @@ pub fn corpus_split_files_with(
 	split: &str,
 	report: &(dyn Fn(ListProgress) + Sync),
 ) -> Result<Vec<CorpusFile>> {
+	let mut out = listed_split_files(config, split, report)?;
+	out.sort_by(|a, b| a.path.cmp(&b.path));
+	Ok(out)
+}
+
+/// The parquet files of one split in the order the manifest lists them, each with its row filter.
+///
+/// A corpus with no manifest file list has no listed order, so its files come in path order.
+pub fn corpus_split_files_listed(config: &SamplerConfig, split: &str) -> Result<Vec<CorpusFile>> {
+	listed_split_files(config, split, &|_| {})
+}
+
+fn listed_split_files(
+	config: &SamplerConfig,
+	split: &str,
+	report: &(dyn Fn(ListProgress) + Sync),
+) -> Result<Vec<CorpusFile>> {
 	let listing = Listing::new(report);
 	let corpus_dir = &config.corpus_dir;
 	let manifest = corpus_dir.join("MANIFEST.json");
@@ -664,7 +681,6 @@ pub fn corpus_split_files_with(
 		let filter = (!drop.is_empty() || keep.is_some()).then(|| Arc::new(RowFilter { keep, drop }));
 		out.push(CorpusFile { path, filter });
 	}
-	out.sort_by(|a, b| a.path.cmp(&b.path));
 	Ok(out)
 }
 

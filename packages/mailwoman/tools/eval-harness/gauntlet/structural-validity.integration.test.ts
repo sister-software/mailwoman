@@ -33,23 +33,29 @@ async function weightsPresent(): Promise<boolean> {
 const KNOWN_INVALID: Record<string, string> = {
 	// Decodes to an invalid tree under the 10.7.0 model (v7.10.0 seed 42), accepted in #2682.
 	"gb-vob-2-veneti": "`2 Veneti`: the venue name splits into a house number `2` and a street `Veneti`.",
-	// Decodes to an invalid tree under the 10.8.0 model (v8.6.3 seed 42), accepted in #2926.
-	"jp-inner-shi-kamiichi-native":
-		"`富山県中新川郡上市町大岩148-7`: under the Latin model, `富山県中新川郡上市町大岩148` reads as one dependent_locality.",
 	// Decodes to an invalid tree under the 11.3.0 model (v8.10.0 seed 42), accepted in #3431.
 	"am-thin-system-13":
 		"`NORASHEN DISTRICT, BUILDING 12, APT 63, AJAPNYAK, YEREVAN, Armenia`: `NORASHEN DISTRICT` reads as the locality and `BUILDING 12` as a unit with no street, and `YEREVAN` as the region.",
-	// The rows below decode to an invalid tree under the 11.4.0 model (v8.13.0 seed 42), accepted in #3521.
-	"ae-street-name-corniche-road":
-		"`Corniche Road`: `Corniche` reads as a street_prefix (0.50) and `Road` as a street_suffix, with no street.",
+	// Decodes to an invalid tree under the 11.4.0 model (v8.13.0 seed 42), accepted in #3521.
 	"ae-thin-system-15":
 		"`SHOP S07, BUILDING V04, INTERNATIONAL CITY, DUBAI, United Arab Emirates`: `SHOP S07` and `BUILDING V04` read as units with no street or house number.",
-	"cz-full-praha-100-00":
-		"`Praha 100 00, Czechia`: `Praha 100` reads as the locality and `00` as a house number (0.46) with no street.",
-	"vn-op-city-international-hospital":
-		"`Bệnh viện Quốc tế City, 3 Đường Số 17A, An Lạc, Hồ Chí Minh 700000, Vietnam`: `Đường Số` reads as a dependent_locality between the house number `3` and the street `17A`.",
-	"vn-op-le-duan-city-twice":
-		"`34 Lê Duẩn, Sài Gòn, Hồ Chí Minh, Vietnam`: `Hồ Chí Minh` reads as the region (0.49), so `Sài Gòn` is a dependent_locality with no locality.",
+	// The rows below decode to an invalid tree under the 11.5.0 model (v8.19.0 seed 42), accepted in #3549.
+	"ae-thin-system-08":
+		"`UNIT 05K, AG TOWER JLT, CLUSTER I, DUBAI, United Arab Emirates`: `UNIT 05K` reads as a unit with no street or venue, `AG TOWER JLT` as the locality and `CLUSTER I` as a subregion.",
+	"ae-thin-system-14":
+		"`OFFICE 2003 A, SWISS TOWER, CLUSTER Y JUMEIRAH LAKES TOWERS, DUBAI, United Arab Emirates`: `OFFICE 2003` reads as a unit and `A` as a house number with no street.",
+	"al-thin-system-07":
+		"`AUTOSTRADA TR-DR KM 8, KASHAR, TIRANE, Albania`: `AUTOSTRADA TR-DR` reads as the locality and `KM` as a house number with no street.",
+	"cr-thin-system-06":
+		"`100 S DE LIGA DE LA CANA LA URUCA, EDIFICIO ALQUIMIA, SAN JOSE, Costa Rica`: the building `EDIFICIO ALQUIMIA` reads as a dependent_locality after the street.",
+	"de-cs-hamburg-city-region-same":
+		"`Rathausmarkt 1, Hamburg, Hamburg 20095`: the first `Hamburg` reads as a dependent_locality, so the tree has no locality.",
+	"fo-op2-akraberg":
+		"`Akraberg Lighthouse, 98VC+JHM, Akraberg 970, Faroe Islands`: the plus code `98VC+JHM` reads as the locality and the postcode `970` as a house number with no street.",
+	"gh-ws-digital-address-ga-183-8164-accra":
+		"`GA-183-8164, Accra, Ghana`: the GhanaPost digital address reads as a house number with no street.",
+	"mw-thin-system-02":
+		"`SUITE B21, GOLDEN PEACOCK SHOPPING COMPLEX, LILONGWE, Malawi`: `LILONGWE` reads as a subregion, so the venue and unit sit under no locality.",
 }
 
 interface Row {

@@ -30,6 +30,13 @@ export const ROW_GROUP_SIZE = 50_000
 export const ROWS_PER_FILE = 1_000_000
 
 /**
+ * The optional per-row draw weight: a positive float that scales a row's chance of
+ * being drawn within its source, with mean 1 over the source's train rows.
+ * A file without the column reads 1.0 for every row.
+ */
+export const DRAW_WEIGHT_COLUMN = "draw_weight"
+
+/**
  * Snappy is the codec selected for corpus parquet files.
  */
 export const PARQUET_COMPRESSION = "SNAPPY"

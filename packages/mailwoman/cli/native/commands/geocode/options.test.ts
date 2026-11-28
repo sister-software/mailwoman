@@ -39,6 +39,13 @@ const COMMAND_ONLY_FLAGS = [
 ]
 
 /**
+ * The flags that set a field of every request the run sends.
+ *
+ * A request option is per call, so the session schema never holds it.
+ */
+const REQUEST_FLAGS = ["outcome-hint", "outcome-filter"]
+
+/**
  * The flags that reach the session outside the schema, each with its reason.
  */
 const PROGRAM_FLAGS: Record<string, string> = {
@@ -91,8 +98,8 @@ describe("the geocode flags and the session option schema", () => {
 		expect(schemaKeys.filter((key) => !flagged.has(key) && !(key in KEYS_WITHOUT_FLAG))).toEqual([])
 	})
 
-	test("every flag sets a schema key, or is a command-only or program flag", () => {
-		const outside = new Set([...COMMAND_ONLY_FLAGS, ...Object.keys(PROGRAM_FLAGS)])
+	test("every flag sets a schema key, or is a command-only, request or program flag", () => {
+		const outside = new Set([...COMMAND_ONLY_FLAGS, ...REQUEST_FLAGS, ...Object.keys(PROGRAM_FLAGS)])
 
 		expect(flags.filter((flag) => !outside.has(flag) && !schemaKeys.includes(schemaKeyOf(flag)))).toEqual([])
 	})
@@ -103,7 +110,7 @@ describe("the geocode flags and the session option schema", () => {
 		expect(Object.keys(KEYS_WITHOUT_FLAG).filter((key) => !schemaKeys.includes(key) || flagged.has(key))).toEqual([])
 
 		expect(
-			[...COMMAND_ONLY_FLAGS, ...Object.keys(PROGRAM_FLAGS), ...Object.keys(COMPOSED_FLAGS)].filter(
+			[...COMMAND_ONLY_FLAGS, ...REQUEST_FLAGS, ...Object.keys(PROGRAM_FLAGS), ...Object.keys(COMPOSED_FLAGS)].filter(
 				(flag) => !flags.includes(flag)
 			)
 		).toEqual([])

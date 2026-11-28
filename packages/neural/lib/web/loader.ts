@@ -25,6 +25,7 @@ import { MailwomanTokenizer } from "#input/tokenizer"
 import { parseAddressSystemTable } from "#labels/address-system"
 import { createAnchorRegionLookup } from "#labels/postcode/anchor/regions"
 import { inferRequiredChannelsFromInputs } from "#onnx/feeds"
+import { parseOutcomeTable } from "#outcome/table"
 import type { PairIndexLookup } from "#pair/index/resolver"
 import type { PlacetypePairPriorOpts } from "#placetype/pair-prior"
 import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web/onnx-runner"
@@ -475,12 +476,14 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	}
 
 	const addressSystems = modelCard ? parseAddressSystemTable(modelCard.address_systems, opts.modelCardURL!) : null
+	const outcomes = modelCard ? parseOutcomeTable(modelCard.outcomes, opts.modelCardURL!) : null
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
 		...(labels ? { labels } : {}),
 		...(addressSystems ? { addressSystems } : {}),
+		...(outcomes ? { outcomes } : {}),
 		...(runner.inputNames?.includes("code_unit_features") ? { codeUnits: true } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),

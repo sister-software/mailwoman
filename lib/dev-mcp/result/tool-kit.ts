@@ -4,6 +4,7 @@
 import { VariantAliasExemptionSchema } from "@mailwoman/core/geocode"
 import { ChannelPinsSchema, type QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import {
 	appliedRow,
 	channelsRow,
@@ -281,13 +282,35 @@ export interface DevToolDeps {
 }
 
 /**
+ * What a tool call receives beside its arguments.
+ */
+export interface DevToolContext {
+	/**
+	 * Reports the call's progress.
+	 * It drops every step when the client sent no progress token.
+	 */
+	progress: ReportProgress
+}
+
+/**
+ * The context of a call that drops every progress step, such as a test calling a handler directly.
+ *
+ * A handler that reports progress defaults its context to
+ * this: `async (args, { progress } = WITHOUT_PROGRESS)`.
+ */
+export const WITHOUT_PROGRESS: DevToolContext = { progress: ignoreProgress }
+
+/**
  * One dev MCP tool as registered with the server.
+ *
+ * The server always passes `context`.
+ * It's optional so a test can call a handler with only its arguments.
  */
 export interface DevTool {
 	name: string
 	description: string
 	inputSchema: z.ZodObject<z.ZodRawShape>
-	handler: (args: Record<string, unknown>) => Promise<unknown>
+	handler: (args: Record<string, unknown>, context?: DevToolContext) => Promise<unknown>
 }
 
 /**

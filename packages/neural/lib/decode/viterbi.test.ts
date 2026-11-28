@@ -8,6 +8,7 @@ import {
 	buildBIOEndMask,
 	buildBIOStartMask,
 	buildBIOTransitionMask,
+	emissionRunnerUp,
 	pathMargins,
 	perTokenArgmax,
 	softmax,
@@ -330,6 +331,20 @@ describe("viterbiKBest", () => {
 				expect(pathScore(result.path, emissions)).toBeCloseTo(result.score, 9)
 			}
 		}
+	})
+})
+
+describe("emissionRunnerUp", () => {
+	it("skips the decoded tag's other label and O, and measures the lead over the next tag", () => {
+		// O, B-locality, I-locality, B-region, I-region
+		const result = emissionRunnerUp([5, 2, 1.9, 1.5, 0.2], 1, LABELS)
+
+		expect(result?.label).toBe("B-region")
+		expect(result?.margin).toBeCloseTo(0.5)
+	})
+
+	it("reports null when every other tag is masked", () => {
+		expect(emissionRunnerUp([0, 2, 1, NEG_INF, NEG_INF], 1, LABELS)).toBeNull()
 	})
 })
 

@@ -40,6 +40,7 @@ Parity procedure) until the spread read changed which rows a row-limited train e
 | Array packing                                                   | Rust: `encoder.rs`                                                                         |
 | The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                                                       |
 | `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order                                            |
+| `outcome_ids`, a model with the outcome hint or head            | Rust: `trainer-loop/src/outcomes.rs` over `packages/trainer/data/outcome_readings.json`    |
 | Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice`                                    |
 
 The painters and the label projection compile without a regex engine. The serving side can therefore
@@ -51,6 +52,16 @@ differ from the training painters in two places:
 - `tokenizer.ts` trims the leading space from a `▁` piece's range, and training keeps it.
 
 Training uses the Rust encoder while serving continues to use the TypeScript painters.
+
+`outcome_ids` is the outcome head's target and, in training, the outcome hint's source
+([Outcome kinds](./outcome-kinds.mdx)). The encoder and the sampler don't compute it, so no parity record
+holds it, and a model without the outcome hint or head reads no table and gets `IGNORE_INDEX` on every row.
+`outcome_readings.json` maps each corpus source to the identity top level its recipe renders, and refuses a
+row whose source it doesn't map. A corpus's mask file, written by
+`packages/mailwoman/tools/training/outcomes/masks.run.ts` and named by `data.outcome_masks_path`, lists the
+`geonames-features` ids whose GeoNames class maps to no reading and the single-span surfaces that rows of two
+readings share. A single-postcode row, a row of a source whose reading is `unknown`, and a row either list
+names are masked.
 
 ## Interfaces
 
@@ -105,19 +116,68 @@ draws from the epoch's generator (the group order, then one 64-bit pass seed) at
 still fixes every row. A resumed run re-draws skipped batches and reads the same rows. The audits'
 `RawRows` plans use the same limit. `openRawRows` defaults that limit to the config's `train_rows_per_epoch`.
 
-`TrainingBatches` places each epoch in its run with an `EpochCursor`: the run seed and the epoch, counted from 1.
-Under a cursor, a spread group's row order is seeded by the run seed, the file and the group, the same order in every
-epoch. Epoch `e` starts that order `(e − 1) × ⌈fraction × group rows⌉` rows in, wrapping at the group's end. The epochs
-of a run then read each group in turn. A run whose draws of a source equal its rows reads nearly every row once.
-An epoch seeded alone reads a fresh random part of each group instead, and over `E` such epochs about `(1 − 1/E)^E`
-of the rows are never read.
+`TrainingBatches` places each epoch in its run with an `EpochCursor`: the run seed, the epoch counted from 1, and the
+run's `RunPositions` table. Under a cursor, a spread group's row order is seeded by the run seed, the file and the
+group, the same order in every epoch. The table counts the rows the run has read from each group's order, and each
+epoch starts the order at that count, wrapping at the group's end. The epochs of a run then read each group in turn,
+and a run whose draws of a source equal its rows reads nearly every row once. An epoch seeded alone reads a fresh
+random part of each group instead, and over `E` such epochs about `(1 − 1/E)^E` of the rows are never read.
 
-`tests/run_coverage.rs` measures the difference: eight epochs that each expect an eighth of a 24,000-row source read
-23,328 rows with the cursor and 15,695 without it. In v8.13.0, the last run without it, 1,211,010 of `wof-admin`'s
-2,780,333 train rows were never drawn under `source_reps: 1.0` (#3516). A resumed run keeps the cursor, because the
-trainer reopens epoch `e` from the same run seed. `Sampler::open`, `RawRows` and the audits open an epoch without a
-cursor. Their counts per source, country and label order keep the training stream's distribution, and the rows
-they read differ from the rows the run trains on.
+The table counts the rows each epoch read. An epoch's row limit counts emitted rows, augmented copies
+included, so an epoch draws fewer rows from a source than its weight share of the limit. v8.14.0 and v8.15.0 placed
+epoch `e` at `(e − 1) × ⌈fraction × group rows⌉`, the expected draws. Each epoch then left part of its window
+unread, and the windows wrapped before the run ended. v8.15.0 drew `wof-admin` 2,815,421 times against 2,780,333 train
+rows, and 419,900 rows were never drawn. Of the 429,743 rows drawn twice or more, 407,229 repeated four or more epochs
+after their first draw.
+
+`tests/run_coverage.rs` holds both cases. Eight epochs that each expect an eighth of a 24,000-row source read nearly
+every row. Ten epochs whose augmented other source emits two rows per draw read 82.2% of the rows under the expected
+draws, and read in turn under the table. A resumed run rebuilds the table, because the trainer re-draws the batches it
+skips. `Sampler::open`, `RawRows` and the audits open an epoch without a cursor. Their counts per source, country and
+label order keep the training stream's distribution, and the rows they read differ from the rows the run trains on.
+
+### A reps target counts emitted rows
+
+`source_reps` derives each target's weight from the run's samples, which count emitted rows. The emit step keeps each
+drawn row and adds augmented copies of some, and every emitted row counts toward the epoch's row limit. A source in
+`augment_exclude_sources` emits one row per draw and an augmented source more, so in v8.14.0 `wof-admin` emitted 0.82
+of the rows its target derived (2,277,277 of 2,780,333) and `usgov-usgs-structures` 1.44. The epoch-mixture audit
+measures that ratio per source as `distortion_vs_draw_share`. `data.source_emit_factors` gives it to the derivation,
+which reads a target `r` with factor `f` as `r / f` draws per row (`derive_source_weights` in `source_reps.rs`, which
+the trainer and, through `mtf-node`, the host audits call). `tools/training/draw/emit-factors.run.ts` writes the block
+from an audit and gives a source the audit's epoch emitted fewer than 2,000 rows of no factor. The draw report
+compares two configs in emitted rows, both under the current config's factors.
+
+### A draw weight moves draws inside a source
+
+A corpus file may store a `draw_weight` column, a positive float per row with mean 1 over its source's train rows
+(`DRAW_WEIGHT_COLUMN` in `file_rows.rs` and in `@mailwoman/corpus/parquet/schema`). When a train mixture opens a
+source whose files store it, `DrawWeights::of_files` reads the column of every file the source is indexed under and
+keeps its largest value, `B`. A file of the source without the column reads 1.0 for every row and raises `B` to at
+least 1. Each row then passes one acceptance draw with probability `(c / c_max) × (w / B)`, where `c` is its country's
+weight, `c_max` the heaviest country's and `w` its draw weight. The draw is skipped when that probability is 1.
+
+The multinomial picks the source before the source yields a row, so the weights never move draws between sources:
+`source_weights`, `source_reps` and the emit factors keep their meaning. Inside the source, one pass yields each row
+with probability `w / B`, and a source that runs out restarts with a new pass, so over the passes a run makes a row
+draws `w` times the source's draws per row. A row of weight 2 has twice the draws a uniform read gives it. The
+cost is `B` rows read per row drawn, on average over a source with mean 1. A source none of whose files store the column draws exactly as
+before, and a held-out split and a stored-order read ignore it. `tests/draw_weights.rs` holds the ratio, the source
+share, the uniform-column identity and the refusal of a weight that isn't a positive finite number.
+`@mailwoman/corpus/tools/overlay/draw-weight` writes the column into a corpus overlay (#3541).
+
+### Stored order
+
+`data.read_order: stored` replaces the train mixture with `Stored` (`mixture.rs`). It reads the positively weighted
+sources in the order `source_weights` lists them, each source's files in the order the manifest lists them, each
+file's row groups ascending and each group's rows as stored. It runs no source multinomial, shuffle, country
+acceptance draw or shuffle buffer. Each row that passes the row filter, the country weights and the coarse filter is
+read once. `TrainingBatches` opens the split once, without an epoch cursor. After the short final batch it returns
+`None`. The trainer's loop stops there and writes its final checkpoint. `stored_summary` counts the rows each
+source yielded and the rows each check refused, and the trainer prints that count when the files end. The sampler
+refuses the setting when a positively weighted source is missing from `augment_exclude_sources`, because the emit
+step would draw for that source's rows. It also refuses `source_reps` and `source_emit_factors`. An absent key reads
+as `mixture`.
 
 In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
 `packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows

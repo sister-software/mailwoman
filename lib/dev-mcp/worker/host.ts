@@ -6,7 +6,7 @@
  * importing Node builtins only so the never-stale shim can load it apart from `worker.ts`.
  */
 
-import { type ChildProcess, forkProcess } from "@mailwoman/core/scripting/process"
+import { type ChildProcess, forkProcess, type ProcessProgress } from "@mailwoman/core/scripting/process"
 import { once } from "@mailwoman/core/utils/events"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import type { PathBuilderLike } from "path-ts"
@@ -35,7 +35,19 @@ interface ResultMessage {
 	error?: string
 }
 
-type WorkerMessage = ReadyMessage | ResultMessage
+interface ProgressMessage {
+	type: "progress"
+	id: number
+	step: ProcessProgress
+}
+
+type WorkerMessage = ReadyMessage | ProgressMessage | ResultMessage
+
+interface PendingCall {
+	resolve: (value: unknown) => void
+	reject: (error: Error) => void
+	onProgress?: (step: ProcessProgress) => void
+}
 
 /**
  * Options for {@link WorkerHost}, chiefly where the worker entry module lives.
@@ -125,7 +137,7 @@ export class WorkerHost implements AsyncDisposable {
 	#child: ChildProcess | null = null
 	#ready: ReadyMessage | null = null
 	#nextID = 1
-	readonly #pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>()
+	readonly #pending = new Map<number, PendingCall>()
 	#crashTimes: number[] = []
 	#degraded: string | null = null
 	#stderrTail = ""
@@ -226,7 +238,16 @@ export class WorkerHost implements AsyncDisposable {
 		this.#ready = await ready
 	}
 
-	async call(name: string, args: Record<string, unknown>): Promise<unknown> {
+	/**
+	 * Run a tool in the worker.
+	 *
+	 * With `onProgress`, the worker reports the call's progress steps to it.
+	 */
+	async call(
+		name: string,
+		args: Record<string, unknown>,
+		onProgress?: (step: ProcessProgress) => void
+	): Promise<unknown> {
 		// A call made during a start waits for the ready message.
 		// A start that fails leaves the checks below to report it.
 		if (this.#starting) {
@@ -249,8 +270,8 @@ export class WorkerHost implements AsyncDisposable {
 		const id = this.#nextID++
 
 		return new Promise((resolve, reject) => {
-			this.#pending.set(id, { resolve, reject })
-			child.send({ type: "call", id, name, args })
+			this.#pending.set(id, { resolve, reject, ...(onProgress ? { onProgress } : {}) })
+			child.send({ type: "call", id, name, args, progress: Boolean(onProgress) })
 		})
 	}
 
@@ -337,11 +358,17 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	#onMessage(message: WorkerMessage): void {
-		if (message.type !== "result") return
+		if (message.type === "ready") return
 
 		const pending = this.#pending.get(message.id)
 
 		if (!pending) return
+
+		if (message.type === "progress") {
+			pending.onProgress?.(message.step)
+
+			return
+		}
 
 		this.#pending.delete(message.id)
 

@@ -33,7 +33,7 @@ recorded scores rather than the recorded bytes.
 ```sh
 # 1. Train (Modal A100). `start` resolves the config, runs the preflight on the host copy of the volume and starts one
 #    detached sandbox; `status <run key>` and `logs <run key>` follow it.
-node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.0.2-consolidation-runB --fresh
+node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.0.2-consolidation-runB --fresh --open-source
 
 # 2. Copy the checkpoint directory (config.json and the weights) from the volume to the host, then export ONNX.
 #    A span-scorer checkpoint also gets semi-crf-transitions.json.

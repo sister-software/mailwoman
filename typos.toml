@@ -283,6 +283,8 @@ organisationID = "organisationID"
 ND = "ND"
 # libtorch's `constant_pad_nd`, which `tch` exposes and `F.pad` issues for a constant pad.
 constant_pad_nd = "constant_pad_nd"
+# libtorch's `arange` with a start value, as `tch` exposes it (`Tensor::arange_start`).
+arange_start = "arange_start"
 PNGs = "PNGs"
 OTPs = "OTPs"
 BA = "BA"

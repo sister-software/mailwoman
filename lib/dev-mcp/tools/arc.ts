@@ -9,7 +9,7 @@ import { z } from "zod"
 
 import { renderArc, runArc, summarizeArc } from "#dev-mcp/measure/arc"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import { INPUT_SET_SCHEMA, WITHOUT_PROGRESS } from "#dev-mcp/result/tool-kit"
 
 export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_arc",
@@ -70,8 +70,9 @@ export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 		inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the full regression board."),
 		locale: z.string().optional(),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const arc = await runArc(registry, {
+			progress,
 			candidate: args["candidate"] as string,
 			...(args["shape"] ? { shape: args["shape"] as "fine-tune" | "from-scratch" } : {}),
 			...(args["control"] ? { control: args["control"] as string } : {}),

@@ -20,6 +20,8 @@ describe("the commercial trainer image", () => {
 
 		expect(trainerBuildScript("cu130", TrainerLicense.Commercial)).toContain("/usr/local/bin/trainer-export")
 		expect(trainerBuildScript("cu130", TrainerLicense.OpenSource)).not.toContain("commercial")
+		expect(trainerBuildScript("cu130", TrainerLicense.OpenSource)).toContain("export TRAINER_CUDA_INCLUDE=")
+		expect(trainerBuildScript("cpu", TrainerLicense.OpenSource)).not.toContain("TRAINER_CUDA_INCLUDE")
 
 		expect(trainerImageName("cu130", "1.99.1", "0".repeat(64), TrainerLicense.Commercial)).toBe(
 			"mailwoman-trainer-commercial-cu130-1.99.1-0000000000000000"

@@ -45,6 +45,10 @@ pub struct EncoderInputs {
 	pub char_ids: Option<Tensor>,
 	pub address_system_ids: Option<Tensor>,
 	pub locale_hint_ids: Option<Tensor>,
+	/// Each row's outcome-head class, or [`IGNORE_INDEX`]: the head's target, and in training the hint's source.
+	pub outcome_ids: Option<Tensor>,
+	/// The `outcome_hint` input, an index into the hint classes; the "no hint" row when absent outside training.
+	pub outcome_hint_ids: Option<Tensor>,
 }
 
 /// `CoarseEncoderOutput`, plus each loss term the total sums, by name, for the staged comparison.
@@ -53,6 +57,8 @@ pub struct EncoderOutput {
 	pub loss: Option<Tensor>,
 	pub locale_logits: Option<Tensor>,
 	pub address_system_logits: Option<Tensor>,
+	/// The outcome head's `(B, C)` logits over the head classes.
+	pub outcome_logits: Option<Tensor>,
 	/// The span scorer's `(B, S, max_span, T)` scores, when the model has the scorer.
 	pub span_scores: Option<Tensor>,
 	/// `ce`, `affix`, `crf`, `locale`, `span_boundary`, `span`, `address_system`, `mlm`: each unweighted term
@@ -161,7 +167,17 @@ pub struct CoarseEncoder {
 	locale_film: Option<Linear>,
 	address_system_head: Option<Linear>,
 	locale_hint_embedding: Option<Embedding>,
+	outcome_hint_embedding: Option<Embedding>,
+	outcome_head: Option<Linear>,
+	/// Each head class's row in the hint embedding, which a training row's shown hint reads.
+	outcome_head_hint_index: Option<Tensor>,
 	device: Device,
+	/// Computes the locale, span-boundary and address-system losses as masked sums over a count clamped to at
+	/// least 1, with no host read of a device value, so the forward can be captured into a CUDA graph. Off, each of
+	/// the three skips its term when the batch holds no valid id, as `losses.py` does. The two agree to rounding
+	/// whenever the batch holds a valid id; with none, the masked term is a zero that still reaches its head's
+	/// gradient.
+	pub graph_safe_losses: bool,
 }
 
 impl CoarseEncoder {
@@ -276,11 +292,57 @@ impl CoarseEncoder {
 			locale_film,
 			address_system_head: None,
 			locale_hint_embedding: None,
+			outcome_hint_embedding: None,
+			outcome_head: None,
+			outcome_head_hint_index: None,
 			device: Device::Cpu,
+			graph_safe_losses: false,
 		};
 		encoder.init_weights();
 		encoder.build_address_system();
+		encoder.build_outcomes()?;
 		Ok(encoder)
+	}
+
+	/// The outcome hint's embedding and the outcome head, after every other module, so a model without them draws
+	/// the generator as before. The hint's embedding starts at zero, as the locale hint's does, so a hint begins as
+	/// "no hint".
+	fn build_outcomes(&mut self) -> Result<()> {
+		let h = self.spec.hidden_size;
+		let (hints, heads) = (&self.spec.outcome_hint_classes, &self.spec.outcome_head_classes);
+		if (self.spec.use_outcome_hint || self.spec.use_outcome_head) && (hints.is_empty() || heads.is_empty()) {
+			return Err(fail!(
+				"the outcome hint and head need the reading table's hint and head classes"
+			));
+		}
+		if self.spec.use_outcome_hint {
+			let index = heads
+				.iter()
+				.map(|c| {
+					hints
+						.iter()
+						.position(|h| h == c)
+						.map(|i| i as i64)
+						.ok_or_else(|| fail!("the head class {c:?} is not a hint class"))
+				})
+				.collect::<Result<Vec<_>>>()?;
+			let n = hints.len() as i64;
+			let embedding = Embedding::new(&mut self.store, "outcome_hint_embedding", n + 1, h, None);
+			init::zeros_(&embedding.weight);
+			self.outcome_hint_embedding = Some(embedding);
+			self.outcome_head_hint_index = Some(self.store.buffer(
+				"outcome_head_hint_index",
+				Tensor::from_slice(&index),
+				false,
+			));
+		}
+		if self.spec.use_outcome_head {
+			let head = Linear::new(&mut self.store, "outcome_head", h, heads.len() as i64, true);
+			init::xavier_uniform_(&head.weight);
+			init::zeros_(head.bias.as_ref().expect("the head has a bias"));
+			self.outcome_head = Some(head);
+		}
+		Ok(())
 	}
 
 	/// `_init_weights`: Xavier for every matrix, zero for every vector, LayerNorms reset, small-normal embeddings.
@@ -356,6 +418,19 @@ impl CoarseEncoder {
 
 	pub fn hidden_size(&self) -> i64 {
 		self.spec.hidden_size
+	}
+
+	/// Why this model's training forward can't be captured into a CUDA graph, or `None` when it can under
+	/// `graph_safe_losses`. The semi-Markov span loss reads each row's length and labels back to the host to build
+	/// its gold segments, and the char encoder's input has a word width a length bucket doesn't fix.
+	pub fn graph_capture_blocker(&self) -> Option<&'static str> {
+		if self.span_scorer.is_some() && self.spec.span_loss_weight > 0.0 {
+			return Some("the span loss reads each row's gold segments on the host");
+		}
+		if self.char_cnn.is_some() {
+			return Some("the char encoder's input width varies by batch");
+		}
+		None
 	}
 
 	fn zeros(&self, shape: &[i64], kind: Kind) -> Tensor {
@@ -480,30 +555,64 @@ impl CoarseEncoder {
 		h + hint.unsqueeze(1)
 	}
 
+	/// The `outcome_hint` row added to every position. A caller's hint ids are read as given, and −1 reads the "no
+	/// hint" row, as the export's `Gather` does. In training without given ids, a row with a reading sees that reading
+	/// on `outcome_hint_prob` of draws, and every other row sees "no hint".
+	fn apply_outcome_hint(&self, h: Tensor, inputs: &EncoderInputs) -> Tensor {
+		let Some(embedding) = &self.outcome_hint_embedding else {
+			return h;
+		};
+		let no_hint = self.spec.outcome_hint_classes.len() as i64;
+		let hint_ids = match (
+			&inputs.outcome_hint_ids,
+			&inputs.outcome_ids,
+			&self.outcome_head_hint_index,
+		) {
+			(Some(ids), _, _) => ids.where_scalarother(&ids.ge(0), no_hint),
+			(None, Some(ids), Some(index)) if self.mode.training() => {
+				let valid = ids.ne(IGNORE_INDEX);
+				let own = index.index(&[Some(&ids.clamp_min(0))]);
+				let shown = Tensor::rand(ids.size(), (Kind::Float, ids.device()))
+					.lt(self.spec.outcome_hint_prob)
+					.logical_and(&valid);
+				own.where_scalarother(&shown, no_hint)
+			}
+			_ => Tensor::full([h.size()[0]], no_hint, (Kind::Int64, self.device)),
+		};
+		let hint = embedding.forward(&hint_ids).to_kind(h.kind());
+		h + hint.unsqueeze(1)
+	}
+
 	/// The supervised forward pass, `MailwomanCoarseEncoder.forward`.
 	pub fn forward(&self, inputs: &EncoderInputs) -> Result<EncoderOutput> {
 		let autocast = Autocast::is_enabled(self.device);
 		let h = self.embed_inputs(inputs)?;
-		let mut h = self.apply_locale_hint(h, inputs);
+		let h = self.apply_locale_hint(h, inputs);
+		let mut h = self.apply_outcome_hint(h, inputs);
 		let kpm = inputs.attention_mask.as_ref().map(|m| m.eq(0));
 		for block in &self.blocks {
 			h = block.forward(&h, kpm.as_ref(), self.mode, autocast);
 		}
 		let mut h = self.final_ln.forward(&h);
-		let pooled = if self.spec.use_locale_conditioning || self.spec.use_address_system_head {
-			let pooled = match &inputs.attention_mask {
-				Some(mask) => {
-					let m = mask.to_kind(Kind::Float).unsqueeze(-1);
-					(h.to_kind(Kind::Float) * &m).sum_dim_intlist(&[1i64][..], false, None)
-						/ m.sum_dim_intlist(&[1i64][..], false, None).clamp_min(1.0)
-				}
-				None => h.to_kind(Kind::Float).mean_dim(&[1i64][..], false, None),
+		let pooled =
+			if self.spec.use_locale_conditioning || self.spec.use_address_system_head || self.spec.use_outcome_head {
+				let pooled = match &inputs.attention_mask {
+					Some(mask) => {
+						let m = mask.to_kind(Kind::Float).unsqueeze(-1);
+						(h.to_kind(Kind::Float) * &m).sum_dim_intlist(&[1i64][..], false, None)
+							/ m.sum_dim_intlist(&[1i64][..], false, None).clamp_min(1.0)
+					}
+					None => h.to_kind(Kind::Float).mean_dim(&[1i64][..], false, None),
+				};
+				Some(pooled.to_kind(h.kind()))
+			} else {
+				None
 			};
-			Some(pooled.to_kind(h.kind()))
-		} else {
-			None
-		};
 		let address_system_logits = match (&self.address_system_head, &pooled) {
+			(Some(head), Some(p)) => Some(head.forward(p)),
+			_ => None,
+		};
+		let outcome_logits = match (&self.outcome_head, &pooled) {
 			(Some(head), Some(p)) => Some(head.forward(p)),
 			_ => None,
 		};
@@ -520,11 +629,13 @@ impl CoarseEncoder {
 		let mut terms = Vec::new();
 		let (loss, span_scores) = self.compute_losses(&h, &logits, inputs, locale_logits.as_ref(), &mut terms)?;
 		let loss = self.address_system_loss(loss, address_system_logits.as_ref(), inputs, &mut terms);
+		let loss = self.outcome_loss(loss, outcome_logits.as_ref(), inputs, &mut terms);
 		Ok(EncoderOutput {
 			logits,
 			loss,
 			locale_logits,
 			address_system_logits,
+			outcome_logits,
 			span_scores,
 			terms,
 		})
@@ -616,15 +727,18 @@ impl CoarseEncoder {
 		terms: &mut Vec<(&'static str, Tensor)>,
 	) -> Option<Tensor> {
 		let (ll, ids) = (locale_logits?, inputs.locale_ids.as_ref()?);
-		if !self.spec.use_locale_conditioning
-			|| self.spec.locale_loss_weight <= 0.0
-			|| ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0
-		{
+		if !self.spec.use_locale_conditioning || self.spec.locale_loss_weight <= 0.0 {
 			return None;
 		}
-		let locale =
+		let locale = if self.graph_safe_losses {
+			masked_mean_cross_entropy(ll, ids)
+		} else {
+			if ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+				return None;
+			}
 			ll.to_kind(Kind::Float)
-				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0);
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0)
+		};
 		terms.push(("locale", locale.shallow_clone()));
 		Some(locale * self.spec.locale_loss_weight)
 	}
@@ -647,7 +761,7 @@ impl CoarseEncoder {
 			return None;
 		}
 		let valid = mask.to_kind(Kind::Bool).logical_and(&labels.ne(IGNORE_INDEX));
-		if valid.any().int64_value(&[]) == 0 {
+		if !self.graph_safe_losses && valid.any().int64_value(&[]) == 0 {
 			return None;
 		}
 		let safe = labels.clamp_min(0);
@@ -665,7 +779,13 @@ impl CoarseEncoder {
 			.to_kind(Kind::Float)
 			.binary_cross_entropy_with_logits::<Tensor>(&targets, None, None, tch::Reduction::None)
 			.mean_dim(&[-1i64][..], false, None);
-		let sb = per_pos.index(&[Some(&valid)]).mean(None);
+		let sb = if self.graph_safe_losses {
+			// A boolean index has a data-dependent shape; the masked sum over the clamped count is its mean.
+			let weight = valid.to_kind(Kind::Float);
+			(per_pos * &weight).sum(None) / weight.sum(None).clamp_min(1.0)
+		} else {
+			per_pos.index(&[Some(&valid)]).mean(None)
+		};
 		terms.push(("span_boundary", sb.shallow_clone()));
 		Some(sb * self.spec.span_boundary_loss_weight)
 	}
@@ -726,18 +846,50 @@ impl CoarseEncoder {
 		let (Some(logits), Some(ids)) = (logits, &inputs.address_system_ids) else {
 			return loss;
 		};
-		if self.spec.address_system_loss_weight <= 0.0 || ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+		if self.spec.address_system_loss_weight <= 0.0 {
 			return loss;
 		}
-		let ce = logits.to_kind(Kind::Float).cross_entropy_loss::<Tensor>(
-			ids,
-			None,
-			tch::Reduction::Mean,
-			IGNORE_INDEX,
-			0.0,
-		);
+		let ce = if self.graph_safe_losses {
+			masked_mean_cross_entropy(logits, ids)
+		} else {
+			if ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+				return loss;
+			}
+			logits
+				.to_kind(Kind::Float)
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0)
+		};
 		terms.push(("address_system", ce.shallow_clone()));
 		Some(add_term(loss, ce * self.spec.address_system_loss_weight))
+	}
+
+	/// `L_intent`: the weighted cross-entropy of the outcome head against each row's reading, over the rows the
+	/// reading table doesn't mask.
+	fn outcome_loss(
+		&self,
+		loss: Option<Tensor>,
+		logits: Option<&Tensor>,
+		inputs: &EncoderInputs,
+		terms: &mut Vec<(&'static str, Tensor)>,
+	) -> Option<Tensor> {
+		let (Some(logits), Some(ids)) = (logits, &inputs.outcome_ids) else {
+			return loss;
+		};
+		if self.spec.outcome_loss_weight <= 0.0 {
+			return loss;
+		}
+		let ce = if self.graph_safe_losses {
+			masked_mean_cross_entropy(logits, ids)
+		} else {
+			if ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0 {
+				return loss;
+			}
+			logits
+				.to_kind(Kind::Float)
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0)
+		};
+		terms.push(("outcome", ce.shallow_clone()));
+		Some(add_term(loss, ce * self.spec.outcome_loss_weight))
 	}
 
 	/// `forward_mlm`: the tied-embedding masked-language-model pass.
@@ -779,10 +931,22 @@ impl CoarseEncoder {
 			loss,
 			locale_logits: None,
 			address_system_logits: None,
+			outcome_logits: None,
 			span_scores: None,
 			terms,
 		}
 	}
+}
+
+/// The fp32 cross-entropy of `logits` `(B, C)` against `ids` `(B)`, averaged over the ids that aren't
+/// [`IGNORE_INDEX`], as a sum over a count clamped to at least 1: the mean reduction's value when an id is valid, and
+/// 0 when none is, with no host read.
+fn masked_mean_cross_entropy(logits: &Tensor, ids: &Tensor) -> Tensor {
+	let per_row =
+		logits
+			.to_kind(Kind::Float)
+			.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::None, IGNORE_INDEX, 0.0);
+	per_row.sum(None) / ids.ne(IGNORE_INDEX).sum(Kind::Float).clamp_min(1.0)
 }
 
 /// `training_hint_ids`: the row's system, dropped to "no hint" or swapped for another at the given rates.

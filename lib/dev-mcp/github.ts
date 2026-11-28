@@ -17,12 +17,12 @@ import { lintReply, type ValeAlert } from "#dev-mcp/hooks/vale/check-core"
 /**
  * Marker that begins the task list owned by the task-intake workflow.
  */
-export const TODO_SYNC_BEGIN = "<!-- todo-sync:begin -->"
+const TODO_SYNC_BEGIN = "<!-- todo-sync:begin -->"
 
 /**
  * End marker for the task list owned by the task-intake workflow.
  */
-export const TODO_SYNC_END = "<!-- todo-sync:end -->"
+const TODO_SYNC_END = "<!-- todo-sync:end -->"
 
 interface GitHubUser {
 	login: string
@@ -188,21 +188,6 @@ export function replaceTaskBlock(body: string, taskList: string): string {
 	}
 
 	return body.slice(0, begin + TODO_SYNC_BEGIN.length) + "\n" + taskList + "\n" + body.slice(end)
-}
-
-/**
- * Reports whether every task inside the owned marker block is checked.
- */
-export function taskBlockIsComplete(body: string): boolean {
-	const begin = body.indexOf(TODO_SYNC_BEGIN)
-	const end = body.indexOf(TODO_SYNC_END)
-
-	if (begin === -1 || end === -1 || end < begin) return false
-
-	const block = body.slice(begin + TODO_SYNC_BEGIN.length, end)
-	const tasks = block.match(/^- \[[ xX]\] .+$/gm) ?? []
-
-	return tasks.length > 0 && tasks.every((task) => /^- \[[xX]\]/.test(task))
 }
 
 /**

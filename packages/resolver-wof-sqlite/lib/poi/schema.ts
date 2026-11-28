@@ -23,6 +23,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
 import type { NameKey } from "#labels/street/normalize"
+import type { OutcomeDatabase } from "#outcome/schema"
 
 /**
  * One POI row.
@@ -104,7 +105,7 @@ export interface POICategoryCodeTable {
 	category: string
 }
 
-export interface POIDatabase extends layerschemadatabase {
+export interface POIDatabase extends layerschemadatabase, OutcomeDatabase {
 	poi: POITable
 	poi_stage: POIStageTable
 	poi_category_codes: POICategoryCodeTable

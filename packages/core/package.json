@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "11.4.0",
+	"version": "11.5.0",
 	"description": "Mailwoman core: tokenization, decoder, formatter, resources, filters, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -531,6 +531,11 @@
 			"types": "./out/resolver/synthetic-id-ranges.d.ts",
 			"node": "./lib/resolver/synthetic-id-ranges.ts",
 			"default": "./out/resolver/synthetic-id-ranges.js"
+		},
+		"./resolver/outcome": {
+			"types": "./out/resolver/outcome.d.ts",
+			"node": "./lib/resolver/outcome.ts",
+			"default": "./out/resolver/outcome.js"
 		},
 		"./pipeline/span-proposer": {
 			"types": "./out/pipeline/span-proposer.d.ts",

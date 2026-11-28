@@ -356,7 +356,8 @@ impl Sampler {
 	}
 }
 
-/// The train split's batches without end, reopened with `seed + epoch` for epochs 1, 2, ….
+/// The train split's batches, reopened with `seed + epoch` for epochs 1, 2, … under the mixture, and read once under
+/// `read_order: stored`.
 #[napi]
 pub struct TrainingBatches {
 	inner: RustTrainingBatches,
@@ -391,10 +392,12 @@ impl TrainingBatches {
 		})
 	}
 
-	/// The next batch the trainer reads.
+	/// The next batch the trainer reads, or no rows once a stored-order split has ended. A mixture never ends.
 	#[napi(catch_unwind)]
 	pub fn next_batch(&mut self) -> Result<Vec<SampledRow>> {
-		Ok(rows_out(self.inner.next_batch().map_err(sampler_error)?))
+		Ok(rows_out(
+			self.inner.next_batch().map_err(sampler_error)?.unwrap_or_default(),
+		))
 	}
 
 	/// The epoch the last batch came from, counted from 1.
@@ -838,6 +841,8 @@ pub struct SourceWeight {
 pub struct DerivedSourceReps {
 	pub source: String,
 	pub target_reps_per_row: f64,
+	/// The source's emitted rows per draw relative to the run's mean, 1 when the config states none.
+	pub emit_factor: f64,
 	pub rows: i64,
 	pub weight: f64,
 }
@@ -857,6 +862,7 @@ fn weights(entries: Vec<SourceWeight>) -> Weights {
 pub fn derive_source_weights(
 	fixed: Option<Vec<SourceWeight>>,
 	source_reps: Vec<SourceWeight>,
+	source_emit_factors: Option<Vec<SourceWeight>>,
 	rows_by_source: Vec<SourceCount>,
 	samples: i64,
 ) -> Result<DerivedSourceWeights> {
@@ -871,7 +877,9 @@ pub fn derive_source_weights(
 		.collect::<Result<_>>()?;
 	let samples = u64::try_from(samples).map_err(|_| input("samples must be zero or positive"))?;
 	let fixed = fixed.map(weights);
-	let (merged, derived) = derive(fixed.as_ref(), &weights(source_reps), &rows, samples).map_err(sampler_error)?;
+	let factors = source_emit_factors.map(weights);
+	let (merged, derived) =
+		derive(fixed.as_ref(), &weights(source_reps), factors.as_ref(), &rows, samples).map_err(sampler_error)?;
 	Ok(DerivedSourceWeights {
 		merged: merged
 			.0
@@ -884,11 +892,13 @@ pub fn derive_source_weights(
 				|DerivedReps {
 				     source,
 				     target_reps_per_row,
+				     emit_factor,
 				     rows,
 				     weight,
 				 }| DerivedSourceReps {
 					source,
 					target_reps_per_row,
+					emit_factor,
 					rows: rows as i64,
 					weight,
 				},

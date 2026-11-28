@@ -11,7 +11,9 @@
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import type { ProcessProgress } from "@mailwoman/core/scripting/process"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { ignoreProgress, throttleProgress } from "@mailwoman/mcp/progress/notifier"
 import { z } from "zod"
 
 import { EngineRegistry } from "#dev-mcp/engine/registry"
@@ -27,6 +29,11 @@ interface CallMessage {
 	id: number
 	name: string
 	args: Record<string, unknown>
+	/**
+	 * Whether the client asked for progress.
+	 * A client asks by sending a progress token.
+	 */
+	progress?: boolean
 }
 
 interface ShutdownMessage {
@@ -48,10 +55,12 @@ export interface WorkerToolMeta {
 }
 
 /**
- * Messages the worker sends: a ready signal and a result carrying either a value or an error string.
+ * Messages the worker sends: a ready signal, a call's progress steps,
+ * and a result carrying either a value or an error string.
  */
 export type WorkerOutbound =
 	| { type: "ready"; pid: number; bootFingerprint: string; tools: WorkerToolMeta[] }
+	| { type: "progress"; id: number; step: ProcessProgress }
 	| { type: "result"; id: number; ok: true; value: unknown }
 	| { type: "result"; id: number; ok: false; error: string }
 
@@ -128,8 +137,16 @@ process.on("message", (message: WorkerInbound) => {
 			return
 		}
 
+		const id = message.id
+
+		// Throttled here as well as in the shim, so a loop over the whole board sends
+		// a few IPC messages a second rather than one per row.
+		const progress = message.progress
+			? throttleProgress((step) => send({ type: "progress", id, step }))
+			: ignoreProgress
+
 		void tool
-			.handler(parsed.data as Record<string, unknown>)
+			.handler(parsed.data as Record<string, unknown>, { progress })
 			.then((value) => send({ type: "result", id: message.id, ok: true, value }))
 			.catch((error: unknown) =>
 				send({

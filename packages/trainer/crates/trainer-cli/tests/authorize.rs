@@ -97,6 +97,41 @@ fn text(bytes: &[u8]) -> String {
 	String::from_utf8_lossy(bytes).into_owned()
 }
 
+/// A parent run whose record states `license_branch`, with a checkpoint, and a child run that branches from that
+/// checkpoint: the child's output and its sandbox.
+fn branch_from_a_parent_recorded_under(license_branch: &str, grant: Option<&str>) -> (Output, Sandbox) {
+	let parent = Sandbox::new();
+	assert_eq!(parent.train(grant, DURING).status.code(), Some(2));
+	let mut record = parent.record();
+	record["license_branch"] = Value::from(license_branch);
+	std::fs::write(parent.out().join("TRAINING.json"), record.to_string()).unwrap();
+	let checkpoint = parent.out().join("step-000010");
+	std::fs::create_dir_all(&checkpoint).unwrap();
+	std::fs::write(checkpoint.join("model.safetensors"), b"parent weights").unwrap();
+	let child = Sandbox::new();
+	let resolved = child.root.path().join("resolved.json");
+	let output = child.run(
+		&[
+			"train",
+			resolved.to_str().unwrap(),
+			"--resume",
+			checkpoint.to_str().unwrap(),
+		],
+		grant,
+		DURING,
+	);
+	(output, child)
+}
+
+/// The child of [`branch_from_a_parent_recorded_under`] was refused before it wrote a training record. The refusal
+/// exits 2, as the `trackio_enabled` stop after the record does, so the record's absence tells them apart.
+fn assert_refused_for_its_parents_branch(output: &Output, child: &Sandbox, parent_branch: &str) {
+	assert_ne!(output.status.code(), Some(0), "{}", text(&output.stderr));
+	let stderr = text(&output.stderr);
+	assert!(stderr.contains(&format!("trained under {parent_branch}")), "{stderr}");
+	assert!(!child.out().join("TRAINING.json").exists());
+}
+
 #[cfg(feature = "commercial")]
 mod commercial {
 	use super::*;
@@ -205,6 +240,13 @@ mod commercial {
 		assert_eq!(sandbox.train(Some(&grant), AFTER).status.code(), Some(3));
 		assert_eq!(sandbox.record(), resumed);
 	}
+
+	#[test]
+	fn a_commercial_run_refuses_a_parent_checkpoint_trained_under_the_agpl() {
+		let grant = token("an active training grant");
+		let (output, child) = branch_from_a_parent_recorded_under("AGPL-3.0-only", Some(&grant));
+		assert_refused_for_its_parents_branch(&output, &child, "AGPL-3.0-only");
+	}
 }
 
 #[cfg(not(feature = "commercial"))]
@@ -226,6 +268,12 @@ mod open_source {
 		assert_eq!(record["trainer"]["build"], "open-source");
 		assert_eq!(record["grant"], Value::Null);
 		assert_eq!(record["verifications"][0]["grant"], Value::Null);
+	}
+
+	#[test]
+	fn an_open_source_run_refuses_a_parent_checkpoint_trained_under_the_commercial_branch() {
+		let (output, child) = branch_from_a_parent_recorded_under("LicenseRef-Commercial", None);
+		assert_refused_for_its_parents_branch(&output, &child, "LicenseRef-Commercial");
 	}
 
 	#[test]

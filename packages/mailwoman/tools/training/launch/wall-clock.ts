@@ -28,7 +28,11 @@ export const TRAIN_TIMEOUT_SECONDS = 32_400
  * where the evidence-noise curriculum runs at full strength.
  * Its other windows measured 20.2–23.0 steps/s.
  *
- * `A100-80GB` reuses it as an upper bound that no run has measured.
+ * Its batch-512 entry is four times the batch-128 rate, an upper bound that no run has
+ * measured: a step at four times the rows takes at most four times as long.
+ *
+ * `A100-80GB` reuses the batch-128 rate as an upper bound that no run has measured.
+ * `H100` reuses it the same way until the 2,000-step step-rate probe measures the card.
  *
  * `L4` and `A10` are the Rust trainer's 2,000-step probe on each card, at batch 128 in bf16 with startup
  * included (6.96 and 9.95 steps/s, `/mnt/mw/audits/trainer-parity/gpu-choice/probe-results.log`).
@@ -37,8 +41,9 @@ export const TRAIN_TIMEOUT_SECONDS = 32_400
  * the only job that device runs.
  */
 export const OBSERVED_SECONDS_PER_100_STEPS: Readonly<Record<string, Readonly<Record<number, number>>>> = {
-	"A100-40GB": { 128: 5 },
+	"A100-40GB": { 128: 5, 512: 20 },
 	"A100-80GB": { 128: 5 },
+	H100: { 128: 5 },
 	L4: { 128: 14.4 },
 	A10: { 128: 10.1 },
 	cpu: { 8: 43.3 },

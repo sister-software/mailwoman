@@ -20,7 +20,7 @@ import {
 } from "mailwoman/tools/coverage"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
+import { WITHOUT_PROGRESS, type DevTool, type DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 /**
  * Format one country's parse and geocoding coverage separately.
@@ -85,7 +85,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 					"admits 135, so name it when the question is what a next run would train."
 			),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const config = resolveTrainingConfig(await readScopeConfig(), {
 			requested: args["config"] as string | undefined,
 		})
@@ -109,6 +109,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			manifestPath,
 			casesRoot: repoRootPath("packages", "mailwoman", "tools", "eval-harness", "gauntlet", "cases"),
 			refresh: args["refresh"] === true,
+			progress,
 		})
 
 		return projectCoverage(report, args["countries"] as string[] | undefined)

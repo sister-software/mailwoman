@@ -67,6 +67,7 @@ export const COUNTRY_ABBREVIATIONS = {
 	MP: ["CNMI"],
 	PG: ["PNG"],
 	SA: ["KSA"],
+	VI: ["USVI", "U.S.V.I."],
 	ZA: ["RSA"],
 } as const satisfies Partial<Record<CountryISO2, readonly string[]>>
 

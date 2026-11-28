@@ -8,6 +8,7 @@
  * A well-calibrated surface can still have no threshold that keeps enough correct answers to set.
  */
 
+import { ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -79,14 +80,20 @@ interface SurfaceRun {
 /**
  * Grade one confidence surface and return its curve, threshold table and error classes.
  */
-export async function runReliability(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
+export async function runReliability(
+	registry: EngineRegistryLike,
+	args: Record<string, unknown>,
+	progress: ReportProgress = ignoreProgress
+): Promise<unknown> {
 	const surface = (args["surface"] as ReliabilitySurface | null) ?? ReliabilitySurface.Decode
 	const binCount = (args["bins"] as number | null) ?? DEFAULT_BIN_COUNT
 	const thresholds = (args["thresholds"] as number[] | null) ?? [...DEFAULT_THRESHOLDS]
 	const requestedStrata = (args["stratify"] as string[] | null) ?? STRATA_FOR[surface]
 
 	const { sample, provenance, nRequested, selection, eventLabel } =
-		surface === ReliabilitySurface.CoarsePlacer ? await placerRun(registry, args) : await decodeRun(registry, args)
+		surface === ReliabilitySurface.CoarsePlacer
+			? await placerRun(registry, args, progress)
+			: await decodeRun(registry, args, progress)
 
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const check = thresholdTable(sample.observations, thresholds)
@@ -125,9 +132,15 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	}
 }
 
-async function decodeRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
+async function decodeRun(
+	registry: EngineRegistryLike,
+	args: Record<string, unknown>,
+	progress: ReportProgress
+): Promise<SurfaceRun> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | null) ?? {}
+
+	progress({ stage: "Starting a tracing engine" })
 	// The per-token softmax is the measurement, so tracing is forced on regardless of what the caller passed.
 	using engine = await registry.acquire({ ...config, trace: true })
 	const limit = args["limit"] as number | undefined
@@ -137,7 +150,8 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 		engine,
 		selected,
 		(args["aggregate"] as ComponentAggregate | null) ?? ComponentAggregate.Min,
-		(args["unasserted"] as UnassertedPolicy | null) ?? UnassertedPolicy.Exclude
+		(args["unasserted"] as UnassertedPolicy | null) ?? UnassertedPolicy.Exclude,
+		progress
 	)
 
 	return {
@@ -151,9 +165,13 @@ async function decodeRun(registry: EngineRegistryLike, args: Record<string, unkn
 	}
 }
 
-async function placerRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
+async function placerRun(
+	registry: EngineRegistryLike,
+	args: Record<string, unknown>,
+	progress: ReportProgress
+): Promise<SurfaceRun> {
 	const corpus = (args["corpus"] as string | null) ?? resolvePath(registry.repoRoot, ...PLACER_TEST_SPLIT)
-	const sample = await coarsePlacerReliabilitySample(corpus)
+	const sample = await coarsePlacerReliabilitySample(corpus, progress)
 
 	return {
 		sample,

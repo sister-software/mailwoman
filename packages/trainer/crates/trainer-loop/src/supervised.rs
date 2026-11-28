@@ -8,6 +8,9 @@
 
 use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
+use crate::captured::{
+	capture_refusal, length_buckets, CaptureRun, CaptureSettings, CapturedStep, StepPath, WARMUP_STEPS,
+};
 use crate::checkpoint::{
 	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, resume_drift, save_checkpoint,
 	RNG_STATE, TRAINING_COMPLETE,
@@ -89,6 +92,10 @@ pub fn build_model(run: &RunConfig, encoder: &RunEncoder) -> Result<CoarseEncode
 		encoder.address_systems.count(),
 		&encoder.conventions,
 	)?;
+	let spec = match &encoder.outcomes {
+		Some(o) => spec.with_outcome_classes(&o.hint_classes, &o.head_classes, &o.definitions)?,
+		None => spec,
+	};
 	Ok(CoarseEncoder::new(spec)?)
 }
 
@@ -101,13 +108,7 @@ pub fn load_or_build_model(run: &RunConfig, encoder: &RunEncoder, resume_from: O
 	let model = build_model(run, encoder)?;
 	let init_from = run.train_str("init_from")?;
 	if !init_from.is_empty() {
-		let tensors = trainer_model::checkpoint::read_model_tensors(Path::new(&init_from))?;
-		let (missing, unexpected) = model.store.load(&tensors, false)?;
-		println!(
-			"[init_from] loaded encoder from {init_from} (missing={} unexpected={})",
-			missing.len(),
-			unexpected.len()
-		);
+		init_from_checkpoint(&model, Path::new(&init_from))?;
 	}
 	let reinit = run.train_strings("reinit_label_rows")?;
 	if !reinit.is_empty() {
@@ -117,6 +118,31 @@ pub fn load_or_build_model(run: &RunConfig, encoder: &RunEncoder, resume_from: O
 		reinit_label_rows(&model, &reinit)?;
 	}
 	Ok(model)
+}
+
+/// `train.init_from`: every tensor of the checkpoint at `dir` copied into the freshly built model.
+///
+/// The checkpoint must hold exactly the model's tensors. A tensor the model has and the checkpoint lacks would keep
+/// its fresh initialization, and a tensor only the checkpoint holds would be dropped, and either means the
+/// checkpoint was trained with another model config.
+pub fn init_from_checkpoint(model: &CoarseEncoder, dir: &Path) -> Result<()> {
+	let tensors = trainer_model::checkpoint::read_model_tensors(dir)?;
+	let (missing, unexpected) = model.store.load(&tensors, false)?;
+	if !missing.is_empty() || !unexpected.is_empty() {
+		return Err(fail!(
+			"train.init_from={} does not match the model the config builds: {} tensors missing {missing:?}, {} \
+			 unexpected {unexpected:?}",
+			dir.display(),
+			missing.len(),
+			unexpected.len()
+		));
+	}
+	println!(
+		"[init_from] loaded all {} encoder tensors from {}",
+		tensors.len(),
+		dir.display()
+	);
+	Ok(())
 }
 
 /// `reinit_label_rows`: the selected labels' classifier rows set to the mean of the live rows.
@@ -202,6 +228,7 @@ pub fn build_optimization(run: &RunConfig, model: &CoarseEncoder) -> Result<(Ada
 	)?;
 	let live: Vec<f64> = groups.iter().map(|g| g.lr).collect();
 	let mut optim = AdamW::new(groups);
+	println!("optimizer kernel={:?}", optim.kernel());
 	let schedule = Schedule::from_config(
 		&run.train_str("lr_schedule")?,
 		run.train_i64("warmup_steps")?,
@@ -439,6 +466,50 @@ fn ewc_penalty(run: &RunConfig, device: Device) -> Result<Option<EwcPenalty>> {
 	Ok(Some(e))
 }
 
+/// The run's captured step when `train.cuda_graph` is set and the run can capture, printing which path the run
+/// takes.
+fn captured_step(
+	run: &RunConfig,
+	encoder: &RunEncoder,
+	model: &mut CoarseEncoder,
+	optim: &mut AdamW,
+	precision: Precision,
+	ewc: bool,
+) -> Result<Option<CapturedStep>> {
+	if !run.cuda_graph()? {
+		println!("[cuda-graph] off: every step runs eagerly");
+		return Ok(None);
+	}
+	let device = model.device();
+	let refusal = capture_refusal(&CaptureRun {
+		device,
+		kernel: optim.kernel(),
+		grad_accum_steps: precision.accum,
+		ewc,
+		model,
+	})?;
+	if let Some(reason) = refusal {
+		println!("[cuda-graph] train.cuda_graph is set, and every step runs eagerly: {reason}");
+		return Ok(None);
+	}
+	let max_length = run
+		.data_i64("max_length")?
+		.ok_or_else(|| fail!("train.cuda_graph needs data.max_length to bound its length buckets"))?;
+	let settings = CaptureSettings {
+		buckets: length_buckets(&run.train_i64s("length_buckets")?, max_length)?,
+		batch_size: run.train_i64("batch_size")?,
+		pad_id: encoder.pad_id,
+		autocast: precision.autocast,
+		grad_clip: run.train_f64("grad_clip_norm")?,
+	};
+	println!(
+		"[cuda-graph] capturing the training step per length bucket {:?} after {WARMUP_STEPS} eager steps each; a \
+		 short batch, a longer one and the Fisher window run eagerly",
+		settings.buckets
+	);
+	Ok(Some(CapturedStep::new(settings, device, model, optim)?))
+}
+
 /// Writes the Fisher artifact into the final checkpoint with its provenance.
 fn save_fisher(
 	fisher: &FisherAccumulator,
@@ -612,6 +683,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut validation = ValidationDraw::new();
 	let val_rows = run.data_i64("val_rows")?.map(|n| n as u64);
 	let eval_batch = run.train_i64("eval_batch_size")? as usize;
+	let mut captured = captured_step(run, &encoder, &mut model, &mut optim, precision, ewc.is_some())?;
+	let param_refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
+	let mut announced_fisher_fallback = false;
 	let started = Instant::now();
 	println!("max_steps={max_steps} batch_size={batch_size}");
 
@@ -658,52 +732,111 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			let (sender, receiver) = std::sync::mpsc::sync_channel(2);
 			scope.spawn(move || loop {
 				let next = (|| -> Result<_> {
-					let rows = batches.next_batch()?;
+					let Some(rows) = batches.next_batch()? else {
+						if let Some(summary) = batches.stored_summary() {
+							println!("[data] stored-order train files ended: {summary}");
+						}
+						return Ok(None);
+					};
 					let encoded = encoder.encode(&rows)?;
-					Ok((rows, encoded))
+					// Read on the host, so the step never waits on the device for its batch's width.
+					let width = encoded.longest_width();
+					Ok(Some((rows, encoded, width)))
 				})();
-				let failed = next.is_err();
+				// A stored-order split sends `None` once its files end.
+				let last = !matches!(next, Ok(Some(_)));
 				// The receiver is dropped once the run reaches max_steps, which ends this thread.
-				if sender.send(next).is_err() || failed {
+				if sender.send(next).is_err() || last {
 					break;
 				}
 			});
+			// The time the loop waits for the batch thread, and the window it falls in, between two logged steps.
+			// A window holds training steps only: a validation pass or a checkpoint resets it.
+			let mut waited = std::time::Duration::ZERO;
+			let mut window = (std::time::Instant::now(), step);
+			// The trimmed batch widths summed, and the batches counted, since the last timing line.
+			let mut widths = (0i64, 0i64);
 			while step < max_steps {
-				let (rows, encoded) = receiver
+				let asked = std::time::Instant::now();
+				let Some((rows, encoded, width)) = receiver
 					.recv()
-					.map_err(|_| fail!("the batch thread stopped without an error"))??;
+					.map_err(|_| fail!("the batch thread stopped without an error"))??
+				else {
+					println!("[data] the stored-order train files ended at step {step} of max_steps {max_steps}");
+					break;
+				};
+				waited += asked.elapsed();
 				realized.add(&rows)?;
 				model.mode = Mode::Train;
 				let mut batch = encoded.to_device(device);
+				// The curricula draw and roll over the encoder's full width, and the step then reads the positions up to
+				// the batch's longest row: the positions dropped are padding, which the loss doesn't read.
 				apply_curricula(&curricula, &mut batch, step)?;
-				let boundary = (micro_step + 1) % accum == 0;
-				if micro_step % accum == 0 {
-					optim.zero_grad();
-				}
-				let out = {
-					let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
-					model.forward(&batch.inputs())?
-				};
-				let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
-				if let Some(e) = &ewc {
-					loss_total = loss_total + e.penalty(&params)?;
-				}
-				let loss = loss_total / accum as f64;
-				loss.backward();
-				micro_step += 1;
-				if !boundary {
-					continue;
-				}
-				if let (Some(f), Some(start)) = (fisher.as_mut(), fisher_window_start) {
-					if step >= start {
-						f.accumulate(&params);
+				let batch = batch.trimmed(width);
+				widths = (widths.0 + width, widths.1 + 1);
+				let in_fisher_window = fisher.is_some() && fisher_window_start.is_some_and(|start| step >= start);
+				// The captured step runs unless this step reads the gradients for the Fisher capture or the batch fits
+				// no bucket; either takes the eager step below.
+				let replay = match captured.as_ref() {
+					None => false,
+					Some(_) if in_fisher_window => {
+						if !announced_fisher_fallback {
+							println!(
+								"[cuda-graph] step {} onward runs eagerly: the Fisher window reads the gradients",
+								step + 1
+							);
+							announced_fisher_fallback = true;
+						}
+						false
 					}
-				}
-				if grad_clip > 0.0 {
-					let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
-					clip_grad_norm(&refs, grad_clip)?;
-				}
-				optim.step();
+					Some(c) => match c.fallback(&batch) {
+						Some(reason) => {
+							println!("[cuda-graph] step {} runs eagerly: {reason}", step + 1);
+							false
+						}
+						None => true,
+					},
+				};
+				let loss = if let (true, Some(c)) = (replay, captured.as_mut()) {
+					let (loss, path, length) = c.step(&batch, &model, &mut optim, &param_refs)?;
+					micro_step += 1;
+					match path {
+						StepPath::Captured => {
+							println!("[cuda-graph] step {} captured the length-{length} bucket", step + 1);
+						}
+						StepPath::Warmup | StepPath::Replayed => {}
+					}
+					loss
+				} else {
+					let boundary = (micro_step + 1) % accum == 0;
+					if micro_step % accum == 0 {
+						optim.zero_grad();
+					}
+					let out = {
+						let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
+						model.forward(&batch.inputs())?
+					};
+					let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
+					if let Some(e) = &ewc {
+						loss_total = loss_total + e.penalty(&params)?;
+					}
+					let loss = loss_total / accum as f64;
+					loss.backward();
+					micro_step += 1;
+					if !boundary {
+						continue;
+					}
+					if in_fisher_window {
+						if let Some(f) = fisher.as_mut() {
+							f.accumulate(&params);
+						}
+					}
+					if grad_clip > 0.0 {
+						clip_grad_norm(&param_refs, grad_clip)?;
+					}
+					optim.step()?;
+					loss
+				};
 				scheduler.step(&mut optim);
 				step += 1;
 				running.add(&loss);
@@ -715,10 +848,24 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				for c in &mut callbacks {
 					c.on_step_end(&view, step)?;
 				}
+				if step % log_every == 0 {
+					let steps = (step - window.1).max(1) as f64;
+					println!(
+						"  [timing] {:.1} ms/step over {} steps, {:.1} ms/step waiting for a batch, mean batch width {:.1}",
+						window.0.elapsed().as_secs_f64() * 1e3 / steps,
+						step - window.1,
+						waited.as_secs_f64() * 1e3 / steps,
+						widths.0 as f64 / widths.1.max(1) as f64
+					);
+					waited = std::time::Duration::ZERO;
+					widths = (0, 0);
+					window = (std::time::Instant::now(), step);
+				}
 				// Each checkpoint writes the exposure so far, so a retained form the sampler starves shows before the
 				// run spends its remaining steps.
 				if step % save_every == 0 {
 					realized.write_shape_counts(&output_dir, step)?;
+					window = (std::time::Instant::now(), step);
 				}
 				if step % eval_every == 0 {
 					let draw = validation.batches(&sampler, encoder, i128::from(seed + 1), val_rows, eval_batch)?;
@@ -727,6 +874,8 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 					for c in &mut callbacks {
 						c.on_eval_end(&view, step, &metrics)?;
 					}
+					waited = std::time::Duration::ZERO;
+					window = (std::time::Instant::now(), step);
 				}
 			}
 			drop(receiver);

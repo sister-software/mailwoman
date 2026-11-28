@@ -11,6 +11,7 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { countProgress, ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { componentMatches } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 
@@ -113,7 +114,8 @@ export async function decodeReliabilitySample(
 	engine: EngineLike,
 	inputs: readonly ResolvedInput[],
 	aggregate: ComponentAggregate,
-	unassertedPolicy: UnassertedPolicy = UnassertedPolicy.Exclude
+	unassertedPolicy: UnassertedPolicy = UnassertedPolicy.Exclude,
+	progress: ReportProgress = ignoreProgress
 ): Promise<SurfaceSample> {
 	const observations: Observation[] = []
 	const unassertedConfidences: number[] = []
@@ -121,12 +123,14 @@ export async function decodeReliabilitySample(
 	const noTruth: string[] = []
 	const noTrace: string[] = []
 	const noLocatableSpan: string[] = []
+	const graded = countProgress(progress, "Grading decode confidence", inputs.length)
 
 	for (const item of inputs) {
 		const truth = item.expectComponents ?? item.seed?.expectComponents
 
 		if (!truth || !Object.keys(truth).length) {
 			noTruth.push(item.id)
+			graded()
 
 			continue
 		}
@@ -136,6 +140,7 @@ export async function decodeReliabilitySample(
 
 		if (!tokens) {
 			noTrace.push(item.id)
+			graded()
 
 			continue
 		}
@@ -185,6 +190,8 @@ export async function decodeReliabilitySample(
 		if (!scored) {
 			noLocatableSpan.push(item.id)
 		}
+
+		graded()
 	}
 
 	return {
@@ -225,7 +232,10 @@ export async function decodeReliabilitySample(
  * and the `val` split the temperature was fit on.
  * A `val` or `train` value destroys that property without any other symptom.
  */
-export async function coarsePlacerReliabilitySample(corpusPath: string): Promise<SurfaceSample> {
+export async function coarsePlacerReliabilitySample(
+	corpusPath: string,
+	progress: ReportProgress = ignoreProgress
+): Promise<SurfaceSample> {
 	if (!(await pathExists(corpusPath))) {
 		throw new Error(
 			`No coarse-placer corpus at ${corpusPath}. This split is a LOCAL artifact — it is not tracked in git, so a ` +
@@ -234,15 +244,21 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		)
 	}
 
+	progress({ stage: "Loading the coarse placer" })
+
 	const { loadBundledCoarsePlacer } = await import("mailwoman/default/placer")
 	const placer = await loadBundledCoarsePlacer({ abstainBelow: 0, openSet: true })
 
 	const observations: Observation[] = []
 	const unusable: string[] = []
+	// The stream states no length, so the count rises without a total.
+	let read = 0
 
 	// Streamed rather than read whole, because the held-out split is ~146k rows
 	// and splitting it materializes every line before the first prediction.
 	for await (const row of JSONSpliterator.fromAsync<{ raw?: string; country?: string }>(corpusPath)) {
+		progress({ stage: "Scoring the coarse placer", processed: ++read })
+
 		if (!row?.raw || !row.country) {
 			unusable.push(stringifyJSON(row).slice(0, 60))
 

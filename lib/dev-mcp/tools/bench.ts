@@ -6,12 +6,13 @@
  *   Its handler calls the measurement in the package root.
  */
 
+import { countProgress } from "@mailwoman/mcp/progress/notifier"
 import { z } from "zod"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
 import { assembleBench, summarizeLatency } from "#dev-mcp/measure/bench"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, WITHOUT_PROGRESS, provenanceFor } from "#dev-mcp/result/tool-kit"
 import { resolveInputSet, type InputSetRef } from "#dev-mcp/runs/input-sets"
 
 export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
@@ -29,7 +30,8 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 			.describe("Evict first and time a construction. Costs ~1.4s and is the number a user actually experiences."),
 		limit: z.number().int().positive().optional(),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
+		progress({ stage: "Resolving the input set" })
 		const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 		const config = (args["config"] as EngineConfig | null) ?? {}
 		const repetitions = (args["repetitions"] as number | null) ?? 1
@@ -42,6 +44,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 			// This eviction makes the measurement cold by removing the cached engine.
 			await registry.evictAll()
 
+			progress({ stage: "Building a cold engine" })
 			const startedAt = Date.now()
 			using coldEngine = await registry.acquire(config)
 			const builtAt = Date.now()
@@ -55,15 +58,20 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 			}
 		}
 
+		progress({ stage: "Starting the warm engine" })
 		using engine = await registry.acquire(config)
 		const samples: number[] = []
 
 		for (let pass = 0; pass < repetitions; pass++) {
+			const stage = repetitions > 1 ? `Warm pass ${pass + 1} of ${repetitions}` : "Warm pass"
+			const timed = countProgress(progress, stage, selected.length)
+
 			for (const item of selected) {
 				const startedAt = performance.now()
 
 				await engine.session.geocode(item.input)
 				samples.push(performance.now() - startedAt)
+				timed()
 			}
 		}
 

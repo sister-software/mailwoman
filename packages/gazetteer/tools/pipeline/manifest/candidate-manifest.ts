@@ -18,6 +18,7 @@ import { probeManifest } from "mailwoman/data/catalog/inventory"
 import { basename, type PathBuilderLike } from "path-ts"
 
 import { OVERTURE_PART_NOTICE } from "#tools/pipeline/manifest/collective-offer"
+import type { OutcomeSpecPin } from "#whosonfirst/outcomes/spec"
 
 /**
  * The ancestor's identity as this manifest records it, where `unknown` is a
@@ -88,6 +89,11 @@ export interface CandidateManifestInput {
 	 * instead of writing them onto WOF records.
 	 */
 	overturePart?: boolean
+
+	/**
+	 * The outcome definitions the artifact's outcome tables were compiled from, or null without them.
+	 */
+	outcomes?: OutcomeSpecPin | null
 }
 
 /**
@@ -325,6 +331,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 				? `importance=${input.importance.path} importance-md5=${input.importance.md5}`
 				: "importance=none") +
 			(typeof input.populationEstimated === "number" ? ` population-estimates=${input.populationEstimated}` : "") +
+			(input.outcomes ? ` outcomes=${input.outcomes.revision} outcomes-sha256=${input.outcomes.sha256}` : "") +
 			// Each source's rows and places, measured on the built table. Recorded here because a source's share
 			// is recoverable from the artifact itself only while its upstream release is still served.
 			(input.rowsBySource?.length

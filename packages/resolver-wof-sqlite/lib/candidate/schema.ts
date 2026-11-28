@@ -6,6 +6,7 @@ import { sql, type Kysely } from "kysely"
 import type { CandidateAncestorsDatabase } from "#candidate/ancestors/schema"
 import type { CapitalTable } from "#candidate/capital-schema"
 import type { NameKey } from "#labels/street/normalize"
+import type { OutcomeDatabase } from "#outcome/schema"
 import type { OvertureWOFMatchTable } from "#schema/overture-match"
 
 /**
@@ -87,7 +88,7 @@ export interface PlacetypeCodeTable {
  * The candidate database schema, extending the ancestors sidecar so one typed
  * client covers every table in the artifact.
  */
-export interface CandidateDatabase extends CandidateAncestorsDatabase {
+export interface CandidateDatabase extends CandidateAncestorsDatabase, OutcomeDatabase {
 	/**
 	 * The clustered `without rowid` lookup table the reader probes.
 	 */

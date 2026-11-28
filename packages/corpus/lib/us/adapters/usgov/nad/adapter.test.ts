@@ -9,6 +9,7 @@ import { NAD_FIXTURE, useScratchDir, writeNADReleaseParquet } from "#test-kit"
 import type { CanonicalRow } from "#types"
 import {
 	createUsgovNADAdapter,
+	decomposeNADStreet,
 	nadAddressComponents,
 	nadUnitText,
 	normalizeNADRecord,
@@ -181,6 +182,28 @@ describe("usgov-nad adapter", () => {
 		expect(vt!.components.street_prefix).toBe("N")
 		expect(vt!.components.street).toBe("Maple")
 		expect(vt!.components.street_suffix).toBe("St")
+	})
+
+	// USPS Publication 28 lists a numbered road's type with its number as the primary name (SCHEMA.mdx).
+	it.each([
+		[{ St_PreTyp: "Farm to Market", St_Name: "1638" }, { street: "Farm to Market 1638" }],
+		[
+			{ St_PreDir: "West", St_PreTyp: "Highway", St_Name: "70" },
+			{ prefix: "West", street: "Highway 70" },
+		],
+		[{ St_PreTyp: "Avenue", St_PreSep: "of the", St_Name: "Americas" }, { street: "Avenue of the Americas" }],
+		[
+			{ St_PreDir: "N", St_Name: "Maple", St_PosTyp: "St" },
+			{ prefix: "N", street: "Maple", suffix: "St" },
+		],
+	])("puts the pre-type of %j in the street name", (record, expected) => {
+		const decomposed = decomposeNADStreet(record)
+
+		expect({ prefix: decomposed?.prefix, street: decomposed?.street, suffix: decomposed?.suffix }).toEqual({
+			prefix: undefined,
+			suffix: undefined,
+			...expected,
+		})
 	})
 
 	it("accepts PR territory", async () => {

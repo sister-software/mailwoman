@@ -7,11 +7,21 @@ import { SolutionsIntro } from "#components/MarketingLanding/MarketingLanding"
 
 <SolutionsIntro />
 
+If you're selecting Mailwoman for a project, [plan one address integration](/docs/guides/plan-an-integration) to choose an operation, runtime, and result rule. [Roll out the integration](/docs/guides/roll-out-an-integration) connects that decision to staged deployment and rollback. The workflows below lead to the individual task guides.
+
+For an existing integration, [find a How-to guide](/docs/guides) by the task you need to complete.
+
 ## Inspect an address entered in a form
 
 **Use this when:** You need to separate a line into components and show the user what the parser read. Install `mailwoman`, then run [the first parse](/docs/start). [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the query kind, labeled spans, and stage trace for one exact input. Both exercises were checked with published 11.3.0 packages and need no geographic database.
 
 **Limit:** A labeled house number or postcode is evidence about the text. Whether the address exists or accepts mail takes postal or geographic evidence. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why that decision needs more than a raw node score.
+
+## Evaluate addresses from your workflow
+
+**Use this when:** You've labeled addresses and need to decide whether Mailwoman's parser meets your requirements. [Evaluate Mailwoman on your addresses](/docs/guides/evaluate-your-addresses) runs the published parser on the same inputs you label independently, then prints each exact difference. The example needs no geographic database.
+
+**Limit:** The three-row fixture demonstrates the procedure. Use your own reviewed sample and record its input sources, error costs, and denominator before drawing a conclusion about your workflow. Coordinate accuracy requires a separate evaluation with known positions and a current data generation.
 
 ## Prepare irregular records for review
 

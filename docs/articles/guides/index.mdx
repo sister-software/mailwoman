@@ -1,0 +1,54 @@
+---
+title: Find a How-to guide
+description: Choose a Mailwoman procedure by the task you need to complete.
+role: landing
+audience: Developers and operators using Mailwoman in an application
+slug: /guides
+---
+
+# Find a How-to guide
+
+Start with the result your application needs. Each guide below completes one task and links to the reference for its commands or result fields. If you're new to Mailwoman, [install it and inspect a first parse](../start.mdx) before choosing a procedure.
+
+## Choose and roll out a workflow
+
+- [Plan an address integration](./plan-an-integration.mdx) when you need to choose an operation, runtime, and handling rule.
+- [Evaluate Mailwoman on your addresses](./evaluate-your-addresses.mdx) when you have independently labeled inputs and need to inspect parsing differences.
+- [Roll out an address integration](./roll-out-an-integration.mdx) when you've chosen a workflow and need staged exposure and a rollback path.
+- [Report a parsing or geocoding problem](./report-a-problem.mdx) when an exact result needs correction or investigation.
+
+## Prepare input and route parse results
+
+- [Normalize an input](./normalize-input.mdx) while retaining a way to relate changed text to the original.
+- [Prefer one country](./prefer-one-country.mdx) when your application already knows the country to use for a request.
+- [Handle PO boxes](./handle-po-boxes.mdx) when the input describes a postal box rather than a street address.
+- [Handle intersections](./handle-intersections.mdx) when the input names crossing streets.
+- [Handle bare postcodes](./handle-bare-postcodes.mdx) when the input contains a postcode without a full address.
+- [Handle landmark queries](./handle-landmark-queries.mdx) when the query identifies a landmark.
+- [Route parse results to review](./review-parse-results.mdx) when incomplete or faulted parses need a separate queue.
+- [Check parsed records against an application policy](./validate-records.mdx) when your workflow requires particular components and a postcode shape.
+
+## Find places and manage geographic data
+
+- [Batch geocode records](./batch-geocode.mdx) when a file needs coordinates and explicit unresolved rows.
+- [Reverse geocode a coordinate](./reverse-geocode.mdx) when you need the containing place hierarchy.
+- [Review a geocoding result's evidence](./review-geocode-evidence.mdx) when you need its coordinate source and installed data identity.
+- [Install, check, and roll back local data](./operate-data.mdx) when you manage the geographic files a deployment reads.
+
+These tasks need an appropriate local data layer. Read [data and locales](../reference/data-and-locales.mdx) before choosing a bundle. A published bundle and an installed database answer different questions about availability.
+
+## Connect and deploy Mailwoman
+
+- [Parse in the browser](./parse-in-browser.mdx) when a page needs components in the tab.
+- [Add autocomplete](./add-autocomplete.mdx) when a text field needs place-name suggestions.
+- [Use a compatible HTTP client](./use-a-compatible-http-client.mdx) when an existing Nominatim, Photon, or libpostal client will call Mailwoman.
+- [Use the MCP integration](./use-mcp.mdx) when a tool client needs Mailwoman's address operations.
+- [Install the coding skill](./install-coding-skill.mdx) when Claude Code needs the packaged Mailwoman instructions.
+- [Deploy the server in a container](./deploy.mdx) when several clients need a shared HTTP service.
+
+## Match and enrich records
+
+- [Match candidate records](./match-records.mdx) when your application has pairs to compare under a matching policy.
+- [Annotate a result](./annotate-results.mdx) when you already have a coordinate or country code and need derived fields.
+
+If you need an interface shape or field definition rather than a procedure, use the [library](../reference/library.mdx), [HTTP](../reference/http.mdx), or [result schema](../reference/schema.mdx) reference. [How Mailwoman parses](../explanation/parsing.mdx) explains the mechanism behind a returned tree.

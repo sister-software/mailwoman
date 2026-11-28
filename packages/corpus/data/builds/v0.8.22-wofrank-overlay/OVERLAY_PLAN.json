@@ -1,0 +1,51 @@
+{
+	"corpusVersion": "0.8.22-wofrank-overlay",
+	"overlayBase": "0.8.22-nz-overlay",
+	"baseManifest": "/mnt/mw/corpus/versioned/v0.8.22-nz-overlay/corpus-v0.8.22-nz-overlay/MANIFEST.json",
+	"modalRoot": "/data/corpus/versioned/v0.8.22-wofrank-overlay/corpus-v0.8.22-wofrank-overlay",
+	"note": "v0.8.22-nz-overlay with its 5 wof-admin files rewritten with a draw_weight column (#3541): max(place_importance.importance, 0.071429) over admin-global-priority-importance-f7bb1b5d8609.db, unscored places at the floor, divided by the mean over the 2,780,333 train rows (77.7% at the floor, weight 0.4400; largest weight 6.1606). Rows, order and split attributes are the base files'.",
+	"appliedAt": "2026-11-27T19:24:35.810Z",
+	"files": [
+		{
+			"parquet": "wof-admin-f4e8cbb2cb6de36b05eea3b85d530ee148fe4cfd342960bc8d71b46d9d3ca133.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-f4e8cbb2cb6de36b05eea3b85d530ee148fe4cfd342960bc8d71b46d9d3ca133.split.e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71.json",
+				"policyHash": "e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71"
+			}
+		},
+		{
+			"parquet": "wof-admin-1fa064145eb14841a2bcf7d38ae657df273f512bf1aff5a425d3dab6843e84f1.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-1fa064145eb14841a2bcf7d38ae657df273f512bf1aff5a425d3dab6843e84f1.split.e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71.json",
+				"policyHash": "e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71"
+			}
+		},
+		{
+			"parquet": "wof-admin-fba3a5541e9d8dfedfaf466d75e3dc364022d5d7da4855056404b4fc309a90e5.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-fba3a5541e9d8dfedfaf466d75e3dc364022d5d7da4855056404b4fc309a90e5.split.e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71.json",
+				"policyHash": "e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71"
+			}
+		},
+		{
+			"parquet": "wof-admin-7cc5a77bd170c862f79b146245ebe3f28fb0af70a963beb30420398118d21cc8.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-7cc5a77bd170c862f79b146245ebe3f28fb0af70a963beb30420398118d21cc8.split.e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71.json",
+				"policyHash": "e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71"
+			}
+		},
+		{
+			"parquet": "wof-admin-81a265ec557a164b34b2abf09779a2e343d58e6107d5d5ceb08e0d8208f86628.parquet",
+			"source": "wof-admin",
+			"splitAttribute": {
+				"path": "wof-admin-81a265ec557a164b34b2abf09779a2e343d58e6107d5d5ceb08e0d8208f86628.split.e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71.json",
+				"policyHash": "e278581f497ea2390c531225558fa7f347f9f3685d8ce8c8b4ab9ef58e798c71"
+			}
+		}
+	],
+	"replacedSources": ["wof-admin"]
+}

@@ -5040,7 +5040,15 @@
 					"basis": "publisher-grant",
 					"because": "CC BY 4.0 family reading (#3277). §1(b) defines the Adapter's License as the licence that `You apply to Your Copyright and Similar Rights in Your contributions to Adapted Material`, and §3(a)(4) requires only that it `must not prevent recipients of the Adapted Material from complying with this Public License`. The licence has no non-commercial term, so the weights may be licensed under LicenseRef-Commercial for a fee. The `non-sublicensable` grant of §2(a)(1) refuses passing on a licence to the source's own material, which a commercial release doesn't do: a customer takes that material from the licensor under §2(a)(5)(A). `soldUnderCommercialTerms` in `packages/core/lib/license/obligations.ts` defines the act."
 				}
-			}
+			},
+			"obligations": [
+				{
+					"obligation": "attribution",
+					"strength": "required",
+					"quote": "If you adapt this work (data) in any way or include it in a collection, and publish, distribute or otherwise disseminate that adaptation or collection to the public, the following attribution should be used: Contains data sourced from the LINZ Data Service licensed for reuse under CC BY 4.0",
+					"because": "CC BY 4.0 §3(a)(1) requires the licensee to retain identification of the creator, and LINZ's attribution page states the credit in its own words: `When attributing LINZ you need to credit the data source as the LINZ Data Service and include the licence type: Sourced from the LINZ Data Service and licensed for reuse under the CC BY 4.0 licence`, and for an adapted work the sentence quoted. A rendered training row and trained weights are adaptations, so the adapted-work credit applies. Re-read on 2026-11-27 for the operator's election of `nz-property-building-1` for training: the LINZ Data Service API `https://data.linz.govt.nz/services/api/v1.x/layers/123113/` still gives the title `NZ Addresses` and the licence id 171, `Creative Commons Attribution 4.0 International`, type `cc-by`, version `4.0`; `licenses/171/fulltext/` is still the CC BY 4.0 legal code with no noncommercial term; OpenAddresses' `sources/nz/countrywide.json` still reads layer-123113 under `CC BY 4.0` with the attribution name `Land Information New Zealand`. The attribution page answered HTTP 403 to an automated fetch that day, so its quoted text is the 2026-10-17 copy, sha256 `96b05312…`."
+				}
+			]
 		},
 		"unchecked-corpus-input-pt-instituto-nacional-de-estat-stica": {
 			"state": "elected",

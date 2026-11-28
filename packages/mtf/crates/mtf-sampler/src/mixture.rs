@@ -15,14 +15,21 @@
 //! keep their meaning. A held-out split has no mixture to steer, so its
 //! files stream one after another in shuffled order, or, with a row limit, each contributes rows in proportion to
 //! its size.
+//!
+//! Under `read_order: stored`, [`Stored`] replaces the mixture: the listed train files are read once in stored order
+//! with no draw.
+//!
+//! A source whose files store a `draw_weight` column reads each row's weight into its acceptance draw (see
+//! `file_rows`). The multinomial picks the source first, so the weights move draws between the source's rows and
+//! never between sources. A held-out split and a stored-order read ignore the column.
 
 use crate::corpus_files::{file_source_counts, files_source_counts, indexed, CorpusFile};
 use crate::error::{Error, Result};
-use crate::file_rows::{FileRows, RowGroupVisit, StartState};
+use crate::file_rows::{DrawWeights, FileRows, RowDrops, RowGroupVisit, StartState};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
 use crate::row::Row;
-use crate::sampler::{EpochCursor, Event, Shared};
+use crate::sampler::{EpochCursor, Event, RunPositions, Shared};
 use std::sync::Arc;
 
 /// The fewest accepted rows a spread pass takes per visit from a source's largest row group.
@@ -61,7 +68,32 @@ enum Plan {
 		live: usize,
 		seed: i128,
 		current: Option<(usize, RowGroupVisit)>,
+		/// The run's table of rows read per group, for an epoch placed in its run.
+		positions: Option<RunPositions>,
 	},
+}
+
+/// Records the rows an unfinished visit read, so the next epoch continues after them.
+///
+/// An epoch ends at its row limit, usually in the middle of a visit, and a restarted pass replaces the source's
+/// rows. Both drop the plan.
+impl Drop for SourceRows {
+	fn drop(&mut self) {
+		if let Some(Plan::Spread {
+			units,
+			current: Some((at, visit)),
+			positions: Some(positions),
+			..
+		}) = &self.plan
+		{
+			let unit = &units[*at];
+			positions.advance(
+				&self.files[unit.file].path,
+				unit.group,
+				(visit.position() - unit.position) as u64,
+			);
+		}
+	}
 }
 
 /// One source's files, read in a shuffled order.
@@ -70,21 +102,29 @@ struct SourceRows {
 	files: Arc<Vec<CorpusFile>>,
 	/// The share of the source's rows one epoch is expected to draw, when below 1.
 	fraction: Option<f64>,
+	/// The bound of the source's per-row draw weights, when one of its files stores them.
+	draw_weights: Option<DrawWeights>,
 	plan: Option<Plan>,
 }
 
 impl SourceRows {
-	fn new(source: Arc<str>, files: Arc<Vec<CorpusFile>>, fraction: Option<f64>) -> Self {
+	fn new(
+		source: Arc<str>,
+		files: Arc<Vec<CorpusFile>>,
+		fraction: Option<f64>,
+		draw_weights: Option<DrawWeights>,
+	) -> Self {
 		Self {
 			source,
 			files,
 			fraction,
+			draw_weights,
 			plan: None,
 		}
 	}
 
 	/// The pass's plan, drawn on the source's first row: the file order, or the row-group order and the pass seed.
-	fn start(&self, rng: &mut PyRandom, cursor: Option<EpochCursor>) -> Result<Plan> {
+	fn start(&self, rng: &mut PyRandom, cursor: Option<&EpochCursor>) -> Result<Plan> {
 		let Some(fraction) = self.fraction else {
 			let mut order: Vec<usize> = (0..self.files.len()).collect();
 			rng.shuffle(&mut order);
@@ -110,13 +150,11 @@ impl SourceRows {
 				});
 			}
 		}
-		// A placed epoch reads each group's run-wide order from where the previous epochs' expected draws left it.
-		// The expected draws use the source's share before the visit floor raises it, because the floor sets how
-		// many rows a visit decodes, not how many the epoch draws.
+		// A placed epoch reads each group's run-wide order from where the run's earlier reads of it stopped.
 		if let Some(cursor) = cursor {
 			for (unit, &rows) in units.iter_mut().zip(&sizes) {
-				let per_epoch = (fraction * rows as f64).ceil() as u64;
-				let rotation = (cursor.epoch.saturating_sub(1) * per_epoch % (rows.max(1) as u64)) as usize;
+				let read = cursor.positions.get(&self.files[unit.file].path, unit.group);
+				let rotation = (read % (rows.max(1) as u64)) as usize;
 				let order_seed = (cursor.run_seed << 40) ^ ((unit.file as i128) << 20) ^ unit.group as i128;
 				unit.run_order = Some((order_seed, rotation));
 			}
@@ -130,39 +168,65 @@ impl SourceRows {
 		}
 		rng.shuffle(&mut units);
 		let seed = rng.getrandbits(64) as i128;
+		// A placed epoch visits the groups in one order for the whole run, from where the run's sweep stopped, so
+		// every group gets its visits in turn. The epoch's own shuffle above still draws from the generator, so the
+		// draws after it are the same whether or not the epoch is placed.
+		let mut next = 0;
+		if let Some(cursor) = cursor {
+			units.sort_by_key(|unit| (unit.file, unit.group));
+			let source_seed = self
+				.source
+				.bytes()
+				.fold(0i128, |hash, byte| (hash * 131 + i128::from(byte)) % (1 << 61));
+			PyRandom::new(crate::pyrandom::Seed::Int((cursor.run_seed << 61) ^ source_seed)).shuffle(&mut units);
+			next = (cursor.positions.sweep(&self.source) % units.len().max(1) as u64) as usize;
+		}
 		Ok(Plan::Spread {
 			live: units.len(),
 			units,
-			next: 0,
+			next,
 			seed,
 			current: None,
+			positions: cursor.map(|c| c.positions.clone()),
 		})
 	}
 
 	fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
 		if self.plan.is_none() {
-			self.plan = Some(self.start(rng, shared.epoch_cursor)?);
+			self.plan = Some(self.start(rng, shared.epoch_cursor.as_ref())?);
 		}
 		match self.plan.as_mut().expect("started above") {
 			Plan::Sequential {
 				order,
 				position,
 				current,
-			} => Self::next_sequential(&self.source, &self.files, order, position, current, rng, shared),
+			} => Self::next_sequential(
+				&self.source,
+				&self.files,
+				self.draw_weights,
+				order,
+				position,
+				current,
+				rng,
+				shared,
+			),
 			Plan::Spread {
 				units,
 				next,
 				live,
 				seed,
 				current,
+				positions,
 			} => Self::next_spread(
 				&self.source,
 				&self.files,
+				self.draw_weights,
 				units,
 				next,
 				live,
 				*seed,
 				current,
+				positions.as_ref(),
 				rng,
 				shared,
 			),
@@ -173,11 +237,13 @@ impl SourceRows {
 	fn next_spread(
 		source: &Arc<str>,
 		files: &[CorpusFile],
+		draw_weights: Option<DrawWeights>,
 		units: &mut [Unit],
 		next: &mut usize,
 		live: &mut usize,
 		seed: i128,
 		current: &mut Option<(usize, RowGroupVisit)>,
+		positions: Option<&RunPositions>,
 		rng: &mut PyRandom,
 		shared: &Shared,
 	) -> Result<Option<Row>> {
@@ -189,6 +255,9 @@ impl SourceRows {
 				shared.check_cancelled()?;
 				let at = *next;
 				*next = (at + 1) % units.len();
+				if let Some(positions) = positions {
+					positions.advance_sweep(source);
+				}
 				let unit = &units[at];
 				if unit.exhausted {
 					continue;
@@ -202,6 +271,7 @@ impl SourceRows {
 						file.path.clone(),
 						source.clone(),
 						file.filter.as_deref(),
+						draw_weights,
 						unit.group,
 						order_seed,
 						rotation,
@@ -215,6 +285,13 @@ impl SourceRows {
 				return Ok(Some(row));
 			}
 			let unit = &mut units[*at];
+			if let Some(positions) = positions {
+				positions.advance(
+					&files[unit.file].path,
+					unit.group,
+					(visit.position() - unit.position) as u64,
+				);
+			}
 			unit.position = visit.position();
 			if visit.exhausted() {
 				unit.exhausted = true;
@@ -224,9 +301,11 @@ impl SourceRows {
 		}
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	fn next_sequential(
 		source: &Arc<str>,
 		files: &[CorpusFile],
+		draw_weights: Option<DrawWeights>,
 		order: &[usize],
 		position: &mut usize,
 		current: &mut Option<FileRows>,
@@ -240,18 +319,105 @@ impl SourceRows {
 				}
 				let file = &files[order[*position]];
 				*position += 1;
-				*current = Some(FileRows::new(
-					file.path.clone(),
-					Some(source.clone()),
-					file.filter.clone(),
-					None,
-				));
+				*current = Some(
+					FileRows::new(file.path.clone(), Some(source.clone()), file.filter.clone(), None)
+						.with_draw_weights(draw_weights),
+				);
 			}
 			match current.as_mut().expect("set above").next(rng, shared)? {
 				Some(row) => return Ok(Some(row)),
 				None => *current = None,
 			}
 		}
+	}
+}
+
+/// The train split's files indexed by source, with each kept source's weight.
+struct TrainSources {
+	/// The positively weighted sources in first-appearance order, each with the files that hold it.
+	by_source: Vec<(String, Vec<CorpusFile>)>,
+	/// Every source's train rows, zero-weighted sources included.
+	source_rows: Vec<(String, u64)>,
+	/// The weight of each `by_source` entry.
+	weights: Vec<f64>,
+}
+
+impl TrainSources {
+	/// Indexes `files` by source and applies the configured weights.
+	///
+	/// Refuses a positive weight whose source has no file, a train source the weights leave unnamed, and weights that
+	/// leave no source.
+	fn index(files: &[CorpusFile], shared: &Shared) -> Result<Self> {
+		let mut by_source: Vec<(String, Vec<CorpusFile>)> = Vec::new();
+		let mut source_rows: Vec<(String, u64)> = Vec::new();
+		for (file, counted) in files.iter().zip(files_source_counts(files)) {
+			let counted = indexed(file, counted)?;
+			for (source, rows) in counted {
+				match source_rows.iter_mut().find(|(s, _)| *s == source) {
+					Some((_, total)) => *total += rows,
+					None => source_rows.push((source.clone(), rows)),
+				}
+				match by_source.iter_mut().find(|(s, _)| *s == source) {
+					Some((_, listed)) => listed.push(file.clone()),
+					None => by_source.push((source, vec![file.clone()])),
+				}
+			}
+		}
+		let Some(configured) = &shared.source_weights else {
+			let weights = vec![1.0; by_source.len()];
+			return Ok(Self {
+				by_source,
+				source_rows,
+				weights,
+			});
+		};
+		let mut missing: Vec<&str> = configured
+			.0
+			.iter()
+			.filter(|(s, w)| *w > 0.0 && !by_source.iter().any(|(b, _)| b == s))
+			.map(|(s, _)| s.as_str())
+			.collect();
+		missing.sort_unstable();
+		if !missing.is_empty() {
+			return Err(Error::Input(format!(
+				"positive source_weights entries have no parquet files in the 'train' split: {missing:?}. \
+				 Remove the stale weights or rebuild the corpus with those sources."
+			)));
+		}
+		let mut unnamed: Vec<&(String, Vec<CorpusFile>)> =
+			by_source.iter().filter(|(s, _)| !configured.contains(s)).collect();
+		unnamed.sort_by(|a, b| a.0.cmp(&b.0));
+		if !unnamed.is_empty() {
+			let detail = unnamed
+				.iter()
+				.map(|(s, f)| format!("{s} ({} parquet files)", f.len()))
+				.collect::<Vec<_>>()
+				.join(", ");
+			return Err(Error::Input(format!(
+				"{} source(s) in the 'train' split are absent from source_weights and would be dropped \
+				 without a trace: {detail}. Name each one — give it a weight to train on it, or 0.0 to \
+				 decline it deliberately. Check for a superseded generation still holding the weight (a \
+				 `-vNN` sibling of the same name).",
+				unnamed.len()
+			)));
+		}
+		by_source.retain(|(s, _)| configured.get(s).unwrap_or(0.0) > 0.0);
+		if by_source.is_empty() {
+			return Err(Error::Input(
+				"no parquet files remain after applying source_weights — every file's source is missing \
+				 from or zero-weighted in source_weights"
+					.into(),
+			));
+		}
+		let weights = by_source
+			.iter()
+			.map(|(s, _)| configured.get(s).expect("named above"))
+			.collect();
+		Ok(Self {
+			by_source,
+			source_rows,
+			weights,
+		})
 	}
 }
 
@@ -273,68 +439,11 @@ impl Mixture {
 	/// expected to draw fewer rows than it holds reads its pass spread over its row groups; every other source, and
 	/// every source of an epoch with no limit, reads its pass file by file.
 	pub fn open(files: Vec<CorpusFile>, shared: &Shared, epoch_rows: Option<u64>) -> Result<Self> {
-		let mut by_source: Vec<(String, Vec<CorpusFile>)> = Vec::new();
-		let mut source_rows: Vec<(String, u64)> = Vec::new();
-		for (file, counted) in files.iter().zip(files_source_counts(&files)) {
-			let counted = indexed(file, counted)?;
-			for (source, rows) in counted {
-				match source_rows.iter_mut().find(|(s, _)| *s == source) {
-					Some((_, total)) => *total += rows,
-					None => source_rows.push((source.clone(), rows)),
-				}
-				match by_source.iter_mut().find(|(s, _)| *s == source) {
-					Some((_, listed)) => listed.push(file.clone()),
-					None => by_source.push((source, vec![file.clone()])),
-				}
-			}
-		}
-		let weights = match &shared.source_weights {
-			None => by_source.iter().map(|_| 1.0).collect::<Vec<f64>>(),
-			Some(configured) => {
-				let mut missing: Vec<&str> = configured
-					.0
-					.iter()
-					.filter(|(s, w)| *w > 0.0 && !by_source.iter().any(|(b, _)| b == s))
-					.map(|(s, _)| s.as_str())
-					.collect();
-				missing.sort_unstable();
-				if !missing.is_empty() {
-					return Err(Error::Input(format!(
-						"positive source_weights entries have no parquet files in the 'train' split: {missing:?}. \
-						 Remove the stale weights or rebuild the corpus with those sources."
-					)));
-				}
-				let mut unnamed: Vec<&(String, Vec<CorpusFile>)> =
-					by_source.iter().filter(|(s, _)| !configured.contains(s)).collect();
-				unnamed.sort_by(|a, b| a.0.cmp(&b.0));
-				if !unnamed.is_empty() {
-					let detail = unnamed
-						.iter()
-						.map(|(s, f)| format!("{s} ({} parquet files)", f.len()))
-						.collect::<Vec<_>>()
-						.join(", ");
-					return Err(Error::Input(format!(
-						"{} source(s) in the 'train' split are absent from source_weights and would be dropped \
-						 without a trace: {detail}. Name each one — give it a weight to train on it, or 0.0 to \
-						 decline it deliberately. Check for a superseded generation still holding the weight (a \
-						 `-vNN` sibling of the same name).",
-						unnamed.len()
-					)));
-				}
-				by_source.retain(|(s, _)| configured.get(s).unwrap_or(0.0) > 0.0);
-				if by_source.is_empty() {
-					return Err(Error::Input(
-						"no parquet files remain after applying source_weights — every file's source is missing \
-						 from or zero-weighted in source_weights"
-							.into(),
-					));
-				}
-				by_source
-					.iter()
-					.map(|(s, _)| configured.get(s).expect("named above"))
-					.collect()
-			}
-		};
+		let TrainSources {
+			by_source,
+			source_rows,
+			weights,
+		} = TrainSources::index(&files, shared)?;
 		let mut cumulative = Vec::with_capacity(weights.len());
 		let mut total = 0.0f64;
 		for w in &weights {
@@ -348,15 +457,17 @@ impl Mixture {
 			let share = limit * weight / total / rows as f64;
 			(rows > 0 && share < 1.0).then_some(share)
 		};
+		let sources = by_source
+			.into_iter()
+			.zip(&weights)
+			.map(|((s, f), &w)| {
+				let share = fraction(&s, w);
+				let draw_weights = DrawWeights::of_files(&f)?;
+				Ok(SourceRows::new(Arc::from(s.as_str()), Arc::new(f), share, draw_weights))
+			})
+			.collect::<Result<Vec<_>>>()?;
 		Ok(Self {
-			sources: by_source
-				.into_iter()
-				.zip(&weights)
-				.map(|((s, f), &w)| {
-					let share = fraction(&s, w);
-					SourceRows::new(Arc::from(s.as_str()), Arc::new(f), share)
-				})
-				.collect(),
+			sources,
 			cumulative,
 			total,
 			passes: vec![0; n],
@@ -409,8 +520,10 @@ impl Mixture {
 					passes: self.passes[chosen],
 				});
 				self.pass_rows[chosen] = 0;
-				let (files, fraction) = (self.sources[chosen].files.clone(), self.sources[chosen].fraction);
-				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files, fraction);
+				let restarted = &self.sources[chosen];
+				let (files, fraction, draw_weights) =
+					(restarted.files.clone(), restarted.fraction, restarted.draw_weights);
+				self.sources[chosen] = SourceRows::new(Arc::from(source.as_str()), files, fraction, draw_weights);
 				self.sources[chosen].next(rng, shared)?.ok_or_else(|| {
 					Error::Input(format!(
 						"source {source:?} yielded rows in an earlier pass and none in its restarted pass"
@@ -543,9 +656,141 @@ impl HeldOut {
 	}
 }
 
+/// The train split read once in stored order, for `read_order: stored`.
+///
+/// Only positively weighted sources are read. They come in the order `source_weights` lists them (first appearance
+/// in the manifest when the config sets no weights), so a config states which source trains first. Each source's
+/// files come in the order the manifest lists them, each file's row groups ascending and each group's rows as stored.
+/// A row is yielded when it passes the row filter, the country weight and the coarse filter, so each such row comes
+/// out exactly once, and the rows each check refused are counted in [`Stored::drops`]. Nothing here draws from the
+/// generator: there is no source multinomial, no shuffle and no country acceptance draw. The split ends when the
+/// files end, and a source that yielded no row then is an error, as it is in the mixture.
+pub struct Stored {
+	/// Each source's files in listed order, the sources in read order.
+	units: Vec<(Arc<str>, CorpusFile)>,
+	next_unit: usize,
+	current: Option<FileRows>,
+	/// The positively weighted sources in read order, with the rows each has yielded.
+	realized: Vec<(String, u64)>,
+	/// The rows of finished files the checks refused.
+	drops: RowDrops,
+	done: bool,
+}
+
+impl Stored {
+	/// Indexes the listed train files by source and keeps each positively weighted source's files.
+	///
+	/// Every positively weighted source must be in `augment_exclude_sources`, because the emit step draws for a source
+	/// it augments, and a stored-order read makes no draw before it.
+	pub fn open(files: Vec<CorpusFile>, shared: &Shared, augment_exclude_sources: &[String]) -> Result<Self> {
+		let TrainSources { mut by_source, .. } = TrainSources::index(&files, shared)?;
+		if let Some(configured) = &shared.source_weights {
+			by_source.sort_by_key(|(s, _)| configured.0.iter().position(|(k, _)| k == s));
+		}
+		let mut augmented: Vec<&str> = by_source
+			.iter()
+			.map(|(s, _)| s.as_str())
+			.filter(|s| !augment_exclude_sources.iter().any(|e| e == s))
+			.collect();
+		augmented.sort_unstable();
+		if !augmented.is_empty() {
+			return Err(Error::Input(format!(
+				"read_order: stored reads each train row once with no draw, and {} positively weighted source(s) \
+				 are absent from augment_exclude_sources, so the emit step would draw for their rows: {}. Add each \
+				 one to augment_exclude_sources or give it weight 0.0.",
+				augmented.len(),
+				augmented.join(", ")
+			)));
+		}
+		// `by_source` lists a source's files in the manifest's order, because the index walks the files in that order.
+		let units = by_source
+			.iter()
+			.flat_map(|(source, listed)| {
+				let source: Arc<str> = Arc::from(source.as_str());
+				listed.iter().map(move |file| (source.clone(), file.clone()))
+			})
+			.collect();
+		Ok(Self {
+			units,
+			next_unit: 0,
+			current: None,
+			realized: by_source.into_iter().map(|(s, _)| (s, 0)).collect(),
+			drops: RowDrops::default(),
+			done: false,
+		})
+	}
+
+	/// The next row in stored order. `rng` is handed to the file reader, which draws nothing from it in stored order.
+	pub fn next(&mut self, rng: &mut PyRandom, shared: &mut Shared) -> Result<Option<Row>> {
+		loop {
+			if self.done {
+				return Ok(None);
+			}
+			if self.current.is_none() {
+				if self.next_unit >= self.units.len() {
+					return self.finish(shared);
+				}
+				let (source, file) = &self.units[self.next_unit];
+				self.next_unit += 1;
+				self.current = Some(FileRows::stored(file.path.clone(), source.clone(), file.filter.clone()));
+			}
+			let reader = self.current.as_mut().expect("set above");
+			let Some(row) = reader.next(rng, shared)? else {
+				self.drops.add(reader.drops());
+				self.current = None;
+				continue;
+			};
+			let (_, count) = self
+				.realized
+				.iter_mut()
+				.find(|(s, _)| *s == row.source)
+				.expect("a unit reads only its own source");
+			*count += 1;
+			return Ok(Some(row));
+		}
+	}
+
+	/// The rows each positively weighted source has yielded, in read order.
+	pub fn realized(&self) -> &[(String, u64)] {
+		&self.realized
+	}
+
+	/// The rows the checks refused so far, the file being read included.
+	pub fn drops(&self) -> RowDrops {
+		let mut drops = self.drops;
+		if let Some(reader) = &self.current {
+			drops.add(reader.drops());
+		}
+		drops
+	}
+
+	fn finish(&mut self, shared: &mut Shared) -> Result<Option<Row>> {
+		self.done = true;
+		let mut empty: Vec<&str> = self
+			.realized
+			.iter()
+			.filter(|(_, n)| *n == 0)
+			.map(|(s, _)| s.as_str())
+			.collect();
+		empty.sort_unstable();
+		if !empty.is_empty() {
+			return Err(Error::Input(format!(
+				"sources {empty:?} have a positive weight but yielded zero selectable rows in stored order \
+				 (country_weights / coarse_filter admit nothing) — fix the recipe or the corpus; a silent drop would \
+				 change the training rows"
+			)));
+		}
+		shared.emit(Event::EpochComplete {
+			realized: self.realized.clone(),
+		});
+		Ok(None)
+	}
+}
+
 /// The rows a split's stream reads before the shuffle buffer.
 pub enum Upstream {
 	Train(Mixture),
+	Stored(Box<Stored>),
 	HeldOut(Box<HeldOut>),
 }
 
@@ -553,6 +798,7 @@ impl Upstream {
 	pub fn next(&mut self, rng: &mut PyRandom, shared: &mut Shared) -> Result<Option<Row>> {
 		match self {
 			Upstream::Train(m) => m.next(rng, shared),
+			Upstream::Stored(s) => s.next(rng, shared),
 			Upstream::HeldOut(h) => h.next(rng, shared),
 		}
 	}

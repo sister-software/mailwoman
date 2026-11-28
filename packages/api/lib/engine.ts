@@ -59,6 +59,18 @@ export interface GeocodeInit extends Pick<ParseInit, "inputMode"> {
 	 */
 	includeTree: boolean
 	/**
+	 * The reading the caller expects.
+	 * It orders candidates and removes none.
+	 */
+	outcomeHint?: string
+	/**
+	 * The outcome kinds the caller admits.
+	 *
+	 * An engine that can't apply the outcome fields throws an `OutcomeRequestError`
+	 * rather than answering without them.
+	 */
+	outcomeFilter?: readonly string[]
+	/**
 	 * The request's signal.
 	 * The server aborts it when it gives up on the request.
 	 *

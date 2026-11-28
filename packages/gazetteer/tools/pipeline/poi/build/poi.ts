@@ -20,6 +20,7 @@ import {
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
+import { POI_ROW_PLACETYPE, writeOutcomeDefaults } from "@mailwoman/resolver-wof-sqlite/outcome/schema"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,
@@ -36,6 +37,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent, latLngToCell, polygonToCells } from "@sister.software/h3"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
+
+import type { CompiledOutcomeSpec, OutcomeSpecPin } from "#whosonfirst/outcomes/spec"
 
 const COVERAGE_H3_RESOLUTION = 6
 
@@ -232,6 +235,15 @@ export interface BuildPOIOptions {
 	 * Writes the layer's own tables into the database after its POI rows and coverage, before it is sealed.
 	 */
 	writeTables?: (kdb: DatabaseClient<POIDatabase>) => Promise<void>
+
+	/**
+	 * The pinned outcome definitions.
+	 *
+	 * The build writes their placetype defaults, and every row reads as placetype
+	 * {@linkcode POI_ROW_PLACETYPE}, so each row's set is `{venue}`.
+	 * A category is never an outcome kind, so the build writes zero `record_outcome` rows.
+	 */
+	outcomes?: { spec: CompiledOutcomeSpec; pin: OutcomeSpecPin }
 
 	/**
 	 * The manifest distribution tier.
@@ -485,6 +497,15 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		if (opts.writeTables) {
 			progress("tables", "writing the layer's own tables")
 			await opts.writeTables(kdb)
+		}
+
+		if (opts.outcomes) {
+			const defaults = await writeOutcomeDefaults(kdb, opts.outcomes.spec, opts.outcomes.pin)
+
+			progress(
+				"outcomes",
+				`${defaults} placetype defaults at ${opts.outcomes.pin.revision}; rows read as ${POI_ROW_PLACETYPE}`
+			)
 		}
 
 		progress("finalize", "ANALYZE + VACUUM")

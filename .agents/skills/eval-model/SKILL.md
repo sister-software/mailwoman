@@ -39,7 +39,8 @@ dataset, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base
 `weights_cache`) still decides with its retained-pending floors. Use the passed and total counts the command prints.
 `docs/records/evals/2026-10-20-promotion-check-migration.md` lists every earlier check and its status.
 
-Run the arc with `mwdev_arc`, which also runs the controls that make the number mean anything:
+Run the arc with `mwdev_arc`. The candidate against the published model is the default comparison. Add a
+`null=` placebo arm only when the operator asks for attribution:
 
 ```
 mwdev_arc candidate=<staged candidate root> \
@@ -50,8 +51,7 @@ mwdev_arc candidate=<staged candidate root> \
 `candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/` rather than the package directory itself. A root that's not staged is refused rather than falling through to
 the installed weights — do not "fix" that refusal by pointing it one level deeper.
 
-The full protocol, and why the controls come first, is the `training-arc` skill. Read it before
-launching a run rather than after grading one.
+The full protocol is the `training-arc` skill. Read it before launching a run rather than after grading one.
 
 ## Use the warm tools rather than a probe script
 
@@ -71,6 +71,20 @@ scripts keep concluding that no output changed.
 
 `mwdev_run` with no arguments grades the full regression board in about a minute. That's the right
 first command, and it is cheaper than the script you were about to write.
+
+## Run the battery
+
+- The battery's first leg reads `data/eval/golden/`. A session whose settings deny `data/eval/` also denies the
+  tools it starts, and that covers shell reads of the golden files too. Grade on suites outside it
+  (`/mnt/mw/corpus/heldout/osm-suites/`) and leave the promotion read to the operator, saying so in the PR. A fact
+  about the golden rows comes from a script that prints only the counts or fields the question needs, never rows.
+- An output file outlives the run that wrote it. `mwdev_promotion_eval` keeps the previous `verdict.json` in
+  `/tmp/lab/mailwoman/mwdev-check-0` until the new one lands, and a runner whose worker throws leaves its earlier
+  `--out` file in place. Before reading a result, read the log's `EXIT=` line and compare the file's mtime with the
+  run's start.
+- The compiled CLI still loads `.ts` sources through the `node` export condition, and the battery imports some legs
+  late. An edit to the sources during a run changes the legs that have yet to load. Let the run finish before editing.
+- `mwdev_*` tools run the main checkout's code, so they grade main rather than a worktree.
 
 ## Read the result
 

@@ -34,6 +34,13 @@ test("matchCountry: resolves Romania's current alpha-3 and the one ISO retired i
 	expect(matchCountry("Romania")?.iso2).toBe("RO")
 })
 
+test("matchCountry: resolves the Virgin Islands' own abbreviation to VI rather than the United States", () => {
+	// `Bordeaux, St John 00830, USVI` resolved outside the territory once a model read `USVI` as the country (#3520).
+	expect(matchCountry("USVI")?.iso2).toBe("VI")
+	expect(matchCountry("U.S.V.I.")?.iso2).toBe("VI")
+	expect(matchCountry("usvi")?.iso2).toBe("VI")
+})
+
 test("every alpha-3 code resolves to an alpha-2 this repository names", () => {
 	// A code filed under a name the alpha-2 table spells differently answers `null`,
 	// which is how the Romania entry stayed wrong.

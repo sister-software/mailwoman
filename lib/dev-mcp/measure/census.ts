@@ -26,6 +26,7 @@
  */
 
 import { SOFT_CHANNEL_NAMES, type SoftChannelName } from "@mailwoman/core/pipeline"
+import { countProgress, ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
 
 import { evidenceCensus, priorSignals, type EvidenceCensus } from "#dev-mcp/diagnose/evidence"
@@ -224,15 +225,22 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 /**
  * Run the census: one traced parse per input, aggregated.
  */
-export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
+export async function runCensus(
+	registry: EngineRegistryLike,
+	args: Record<string, unknown>,
+	progress: ReportProgress = ignoreProgress
+): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | null) ?? { kind: "board" })
 	const config = (args["config"] as Record<string, unknown> | null) ?? {}
+
+	progress({ stage: "Starting a tracing engine" })
 	// The census uses a traced parse as its full input.
 	// The engine enables tracing regardless of caller configuration.
 	using engine = await registry.acquire({ ...config, trace: true })
 
 	const traced: Array<{ id: string; input: string; parse: NeuralParseTrace }> = []
 	const untraced: string[] = []
+	const parsed = countProgress(progress, "Tracing parses", set.inputs.length)
 
 	for (const item of set.inputs) {
 		const run = await engine.session.geocode(item.input)
@@ -244,6 +252,8 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 			// mechanism fired" would manufacture inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}
+
+		parsed()
 	}
 
 	const { aggregate, rows } = aggregateCensus(traced)

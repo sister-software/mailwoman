@@ -139,6 +139,8 @@ pub struct WriteOptions {
 	pub without_spans: bool,
 	/// A `source_id` per row; the column is written when set.
 	pub source_ids: Option<Vec<Option<String>>>,
+	/// A `draw_weight` per row; the column is written when set.
+	pub draw_weights: Option<Vec<Option<f64>>>,
 }
 
 /// Writes `rows` to `path` in row groups of `row_group_size` rows, with the record beside it.
@@ -158,6 +160,12 @@ pub fn write_corpus_parquet(rows: &[Row], path: &Path, row_group_size: usize, op
 	}
 	if let Some(ids) = &options.source_ids {
 		columns.push(("source_id", strings(ids.iter().cloned())));
+	}
+	if let Some(weights) = &options.draw_weights {
+		columns.push((
+			"draw_weight",
+			Arc::new(arrow_array::Float64Array::from(weights.clone())) as ArrayRef,
+		));
 	}
 	let batch = RecordBatch::try_from_iter(columns).expect("a consistent batch");
 	std::fs::create_dir_all(path.parent().expect("a parent")).expect("mkdir");

@@ -10,7 +10,7 @@ import { z } from "zod"
 
 import { runCensus } from "#dev-mcp/measure/census"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, WITHOUT_PROGRESS } from "#dev-mcp/result/tool-kit"
 
 export const censusTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_census",
@@ -24,5 +24,5 @@ export const censusTool = ({ registry }: DevToolDeps): DevTool => ({
 		inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the full board."),
 		config: ENGINE_CONFIG_SCHEMA.optional(),
 	}),
-	handler: async (args) => runCensus(registry, args),
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => runCensus(registry, args, progress),
 })

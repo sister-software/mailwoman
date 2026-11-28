@@ -81,7 +81,7 @@ export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<Landmark
 
 	const { LandmarkSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite/landmark")
 
-	return new LandmarkSqliteLookup(path)
+	return new LandmarkSqliteLookup(path, "openstreetmap")
 }
 
 /**

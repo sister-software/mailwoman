@@ -70,6 +70,20 @@ pub struct EncoderSpec {
 	pub use_locale_hint: bool,
 	pub locale_hint_drop_prob: f64,
 	pub locale_hint_noise_prob: f64,
+	/// The `outcome_hint` input: an embedding over `outcome_hint_classes` and a last "no hint" row.
+	pub use_outcome_hint: bool,
+	/// The share of training rows with a reading that see that reading as their hint.
+	pub outcome_hint_prob: f64,
+	/// The query-level outcome head over `outcome_head_classes`.
+	pub use_outcome_head: bool,
+	pub outcome_loss_weight: f64,
+	/// The outcome ids the hint embedding's rows stand for, in row order.
+	pub outcome_hint_classes: Vec<String>,
+	/// The outcome ids the head's classes stand for, in class order.
+	pub outcome_head_classes: Vec<String>,
+	/// The outcome definitions the classes were read under: `{"revision", "sha256"}` of `mailwoman/whosonfirst-outcomes`,
+	/// which the card's `outcomes` block pins.
+	pub outcome_definitions: Value,
 	/// The conventions loss mask's table: for each locale-head class in order, the tags its address system forbids.
 	/// The label schema's `conventions_forbidden_tags` supplies it, and `config.json` does not record it, as
 	/// `to_config_dict` does not.
@@ -136,6 +150,22 @@ fn str_or(obj: &Map<String, Value>, key: &str, default: &str) -> Result<String> 
 			.as_str()
 			.map(str::to_owned)
 			.ok_or_else(|| fail!("config {key} is not a string: {v}")),
+	}
+}
+
+fn strings(obj: &Map<String, Value>, key: &str) -> Result<Vec<String>> {
+	match get(obj, key) {
+		None => Ok(Vec::new()),
+		Some(v) => v
+			.as_array()
+			.ok_or_else(|| fail!("config {key} is not a list"))?
+			.iter()
+			.map(|s| {
+				s.as_str()
+					.map(str::to_owned)
+					.ok_or_else(|| fail!("config {key} holds {s}"))
+			})
+			.collect(),
 	}
 }
 
@@ -252,6 +282,13 @@ impl EncoderSpec {
 			use_locale_hint: bool_or(obj, "use_locale_hint", false)?,
 			locale_hint_drop_prob: f64_or(obj, "locale_hint_drop_prob", 0.5)?,
 			locale_hint_noise_prob: f64_or(obj, "locale_hint_noise_prob", 0.05)?,
+			use_outcome_hint: bool_or(obj, "use_outcome_hint", false)?,
+			outcome_hint_prob: f64_or(obj, "outcome_hint_prob", 0.0)?,
+			use_outcome_head: bool_or(obj, "use_outcome_head", false)?,
+			outcome_loss_weight: f64_or(obj, "outcome_loss_weight", 0.0)?,
+			outcome_hint_classes: strings(obj, "outcome_hint_classes")?,
+			outcome_head_classes: strings(obj, "outcome_head_classes")?,
+			outcome_definitions: get(obj, "outcome_definitions").cloned().unwrap_or(Value::Null),
 			conventions: defaults.conventions.to_vec(),
 			id_to_label,
 		})
@@ -343,9 +380,28 @@ impl EncoderSpec {
 			use_locale_hint: locale_hint,
 			locale_hint_drop_prob: f64_or(model, "locale_hint_drop_prob", 0.5)?,
 			locale_hint_noise_prob: f64_or(model, "locale_hint_noise_prob", 0.05)?,
+			use_outcome_hint: bool_or(model, "use_outcome_hint", false)?,
+			outcome_hint_prob: f64_or(model, "outcome_hint_prob", 0.0)?,
+			use_outcome_head: bool_or(model, "use_outcome_head", false)?,
+			outcome_loss_weight: f64_or(model, "outcome_loss_weight", 0.0)?,
+			outcome_hint_classes: Vec::new(),
+			outcome_head_classes: Vec::new(),
+			outcome_definitions: Value::Null,
 			conventions: conventions.to_vec(),
 		})
 		.and_then(Self::checked)
+	}
+
+	/// Sets the outcome classes a run's reading table orders, which `build_model` reads from the table rather than
+	/// the config, as it reads the address-system count from the registry. A model without the hint or the head
+	/// keeps neither list.
+	pub fn with_outcome_classes(mut self, hint: &[String], head: &[String], definitions: &Value) -> Result<Self> {
+		if self.use_outcome_hint || self.use_outcome_head {
+			self.outcome_hint_classes = hint.to_vec();
+			self.outcome_head_classes = head.to_vec();
+			self.outcome_definitions = definitions.clone();
+		}
+		self.checked()
 	}
 
 	fn checked(self) -> Result<Self> {
@@ -369,6 +425,24 @@ impl EncoderSpec {
 			return Err(fail!(
 				"the address-system head and the locale hint need a registry with at least one system"
 			));
+		}
+		if !(0.0..=1.0).contains(&self.outcome_hint_prob) {
+			return Err(fail!(
+				"outcome_hint_prob must lie in [0, 1], got {}",
+				self.outcome_hint_prob
+			));
+		}
+		for (on, classes, name) in [
+			(self.use_outcome_hint, &self.outcome_hint_classes, "hint"),
+			(self.use_outcome_head, &self.outcome_head_classes, "head"),
+		] {
+			if on && classes.is_empty() {
+				// A spec read from a model section has no classes until `with_outcome_classes` sets them.
+				continue;
+			}
+			if !on && !classes.is_empty() {
+				return Err(fail!("outcome_{name}_classes is set without use_outcome_{name}"));
+			}
 		}
 		if let Some(w) = &self.class_weights {
 			if w.len() != self.id_to_label.len() {
@@ -428,7 +502,7 @@ impl EncoderSpec {
 			.enumerate()
 			.map(|(i, l)| (l.clone(), json!(i)))
 			.collect();
-		json!({
+		let mut config = json!({
 			"model_type": "mailwoman-coarse-encoder",
 			"vocab_size": self.vocab_size,
 			"hidden_size": self.hidden_size,
@@ -481,6 +555,18 @@ impl EncoderSpec {
 			"locale_hint_noise_prob": self.locale_hint_noise_prob,
 			"id2label": id2label,
 			"label2id": label2id,
-		})
+		});
+		// A model without the outcome hint or head writes the config it wrote before either existed.
+		if self.use_outcome_hint || self.use_outcome_head {
+			let map = config.as_object_mut().expect("an object");
+			map.insert("use_outcome_hint".into(), json!(self.use_outcome_hint));
+			map.insert("outcome_hint_prob".into(), json!(self.outcome_hint_prob));
+			map.insert("use_outcome_head".into(), json!(self.use_outcome_head));
+			map.insert("outcome_loss_weight".into(), json!(self.outcome_loss_weight));
+			map.insert("outcome_hint_classes".into(), json!(self.outcome_hint_classes));
+			map.insert("outcome_head_classes".into(), json!(self.outcome_head_classes));
+			map.insert("outcome_definitions".into(), self.outcome_definitions.clone());
+		}
+		config
 	}
 }

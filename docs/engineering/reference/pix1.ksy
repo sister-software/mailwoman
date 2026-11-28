@@ -33,8 +33,9 @@
 #    `probeArtifact`); readers ignore keys they do not consult.
 #
 # 2. Records are sorted ascending by the (child, parent) tuple, compared as UTF-16 code units —
-#    child first, parent as tiebreak. Sorting makes builds byte-deterministic, so the artifact md5
-#    recorded in a model card identifies the build.
+#    child first, parent as tiebreak. Sorting makes the record section byte-deterministic. The header's
+#    `buildDate` differs on every build, so the file's md5 changes on a rebuild from identical sources.
+#    To compare two builds, compare their pair counts and header fields other than `buildDate`.
 #
 # 3. Duplicate (child, parent) pairs are forbidden. Serializers must refuse them rather than
 #    last-write-win — a duplicate is an extract-build bug, not a merge decision.

@@ -107,6 +107,7 @@ impl LambdaLr {
 		for (group, &lr) in optim.groups.iter_mut().zip(&self.last_lr) {
 			group.lr = lr;
 		}
+		optim.write_learning_rates();
 	}
 
 	pub fn get_last_lr(&self) -> &[f64] {
@@ -150,6 +151,7 @@ pub fn restamp_resume_lrs(optim: &mut AdamW, scheduler: &mut LambdaLr, live_lrs:
 		group.lr = current;
 		group.initial_lr = live;
 	}
+	optim.write_learning_rates();
 	scheduler.base_lrs = live_lrs.to_vec();
 	Ok(lines)
 }

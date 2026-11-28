@@ -19,6 +19,7 @@ import {
 	rerootBaseFilePath,
 } from "#tools/overlay/manifest"
 import { splitOverlaySlice } from "#tools/overlay/split/overlay"
+import { type EvaluationGroupPolicy, evaluationGroupPolicyIdentity } from "#utils/validation-groups"
 
 /**
  * The `memory_limit` and `threads` each DuckDB connection reports back as it opens.
@@ -143,6 +144,113 @@ describe("assembleOverlayManifest", () => {
 			val: split.counts.val,
 			test: split.counts.test,
 		})
+	})
+
+	it("keeps the base's evaluation-group record only while every row is split by the lists it names", async () => {
+		const derivation = { extractHash: "fixture", codeHash: "fixture", config: {} }
+		const baseInput = scratch.path("base-gb.parquet")
+
+		const policyOver = (frozenSHA256: string): EvaluationGroupPolicy => ({
+			frozen: {
+				path: "groups.json",
+				sha256: frozenSHA256,
+				datasets: [],
+				groups: new Set(["gb-frozen"]),
+				addressKeys: new Set(),
+			},
+			validation: {
+				path: "validation.json",
+				sha256: "validation",
+				quota: { margin: 2, minimumRows: 200, capRows: 20_000 },
+				evaluationGroupsSHA256: frozenSHA256,
+				groups: new Set(),
+			},
+		})
+
+		const policy = policyOver("frozen")
+
+		await writeParquetFile([gbRow("gb-e", "Baker Street", "London", "NW1 6XE")], baseInput, derivation)
+
+		const baseSplit = await splitOverlaySlice({ input: baseInput, outputDir: scratch.path, evaluationGroups: policy })
+
+		const record = {
+			paths: { evaluationGroups: "groups.json", validationGroups: "validation.json" },
+			...evaluationGroupPolicyIdentity(policy),
+		}
+
+		const base = scratch.path("BASE_MANIFEST.json").toString()
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "0.1.0-retention-overlay",
+				schema: {},
+				row_group_size: 50_000,
+				rows_per_file: 1_000_000,
+				counts: baseSplit.counts,
+				total_rows: baseSplit.rows,
+				split_decided_by: { file: 0, attribute: "split", policy_hashes: [baseSplit.policyHash] },
+				evaluation_groups: record,
+				files: [
+					{
+						path: baseInput.toString(),
+						source: "rendered-gb-os-open",
+						split_attribute: {
+							path: baseSplit.attribute.toString(),
+							sha256: "fixture",
+							policy_hash: baseSplit.policyHash,
+							counts: baseSplit.counts,
+						},
+					},
+				],
+			},
+			base
+		)
+
+		const input = scratch.path("part-gb-carried.parquet")
+
+		await writeParquetFile([gbRow("gb-f", "Hope Street", "Liverpool", "L1 9BP")], input, derivation)
+
+		const read = () => readLocalJSONFile<{ evaluation_groups?: unknown }>(scratch.path("MANIFEST.json").toString())
+
+		const assembleUnder = async (filePolicy: EvaluationGroupPolicy) => {
+			const split = await splitOverlaySlice({ input, outputDir: scratch.path, evaluationGroups: filePolicy })
+
+			await assembleOverlayManifest({
+				...overlay("part-gb-carried.parquet"),
+				base,
+				files: [
+					{
+						parquet: "part-gb-carried.parquet",
+						source: "rendered-gb-os-open",
+						splitAttribute: basename(split.attribute),
+					},
+				],
+			})
+		}
+
+		await assembleUnder(policy)
+
+		expect((await read()).evaluation_groups).toEqual(record)
+
+		await assembleUnder(policyOver("another frozen list"))
+
+		expect((await read()).evaluation_groups).toBeUndefined()
+
+		await makeDirectories(scratch.path("train"))
+
+		await writeParquetFile(
+			[gbRow("gb-g", "Hope Street", "Liverpool", "L1 9BP")],
+			scratch.path("train", "t.parquet"),
+			derivation
+		)
+
+		await assembleOverlayManifest({
+			...overlay("t.parquet"),
+			base,
+			files: [{ parquet: "t.parquet", source: "rendered-gb-os-open" }],
+		})
+
+		expect((await read()).evaluation_groups).toBeUndefined()
 	})
 
 	it("refuses an attribute that describes other bytes than the file beside it", async () => {

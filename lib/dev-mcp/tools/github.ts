@@ -1,10 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { currentBranch } from "@mailwoman/core/repo/git"
-import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import { readPullRequestStatus, renderPullRequestStatus } from "#check-kit/pull-request/status"
@@ -17,13 +14,9 @@ import {
 	replaceTaskBlock,
 	resolveCheckout,
 	runGitHub,
-	taskBlockIsComplete,
-	TODO_SYNC_BEGIN,
-	TODO_SYNC_END,
 	type RunGitHub,
 } from "#dev-mcp/github"
-import { mergePullRequest, recordPullRequestCompletion } from "#dev-mcp/github/merge"
-import { assertCIComplete, trackedCIMarkerPaths, type TrackedCI } from "#dev-mcp/hooks/ci-completion"
+import { mergePullRequest } from "#dev-mcp/github/merge"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
 
 const REPO = "sister-software/mailwoman"
@@ -96,10 +89,14 @@ function featureBody(args: Record<string, unknown>): string {
 	].join("\n")
 }
 
-function pullRequestBody(issueNumber: number, summary: string, evidence: string, assertions: Task[]): string {
+function pullRequestBody(
+	issueNumber: number | undefined,
+	summary: string,
+	evidence: string,
+	assertions: Task[] | undefined
+): string {
 	return [
-		`Closes #${issueNumber}.`,
-		"",
+		...(issueNumber ? [`Closes #${issueNumber}.`, ""] : []),
 		"## Summary",
 		"",
 		summary,
@@ -107,10 +104,7 @@ function pullRequestBody(issueNumber: number, summary: string, evidence: string,
 		"## Evidence",
 		"",
 		evidence,
-		"",
-		"## Completion assertions",
-		"",
-		renderTasks(assertions),
+		...(assertions ? ["", "## Completion assertions", "", renderTasks(assertions)] : []),
 	].join("\n")
 }
 
@@ -162,21 +156,14 @@ const ISSUE_INPUT_SCHEMA = z.object({
 
 const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 	z.object({
-		action: z.literal("complete"),
-		issue_number: z.number().int().positive(),
-		pull_request_number: z.number().int().positive(),
-	}),
-	z.object({
 		action: z.literal("create"),
-		issue_number: z.number().int().positive(),
+		issue_number: z.number().int().positive().optional(),
 		title: z.string().min(1),
 		summary: z.string().min(1),
 		evidence: z.string().min(1),
-		completion_assertions: z.array(TASK_SCHEMA).min(1),
+		completion_assertions: z.array(TASK_SCHEMA).min(1).optional(),
 		base: z.string().min(1).default("main"),
 	}),
-	// A view, an edit and a comment read and write the pull request and never its issue,
-	// so a pull request that closes no issue, such as one Dependabot opened, takes them too.
 	z.object({
 		action: z.literal("view"),
 		pull_request_number: z.number().int().positive(),
@@ -203,13 +190,13 @@ const PULL_REQUEST_SCHEMA = z.discriminatedUnion("action", [
 ])
 
 const PULL_REQUEST_INPUT_SCHEMA = z.object({
-	action: z.enum(["create", "view", "edit", "append_comment", "complete", "status", "merge"]),
+	action: z.enum(["create", "view", "edit", "append_comment", "status", "merge"]),
 	issue_number: z
 		.number()
 		.int()
 		.positive()
 		.optional()
-		.describe("The issue this pull request closes. `create` and `complete` require it; the other actions ignore it."),
+		.describe("The issue this pull request closes, when there is one. Only `create` reads it."),
 	checkout: CHECKOUT_FIELD,
 	pull_request_number: z.number().int().positive().optional(),
 	title: z.string().min(1).optional(),
@@ -336,55 +323,16 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 	const pullRequestTool: DevTool = {
 		name: "mwdev_pull_request",
 		description:
-			"Create and maintain the pull request that closes an implementation issue. Creation requires a completed " +
-			"marker-owned issue task list, Vale-checks the PR body, creates the PR from the current branch of `checkout` " +
-			"(default: the server's checkout), and starts a " +
-			"tracked `gh pr checks --watch --fail-fast` job. Wait for the checks with `mwops pr wait <number>` rather than polling that job. " +
-			"Creation leaves CI review incomplete. After reviewing CI, call `complete`; it verifies the current head before handoff " +
-			"and records that head. `status` returns each check, the head commit, the mergeable state and the failing tests of each " +
-			"failed job, as `mwops pr status` does. `merge` squash-merges and keeps the branch, and refuses unless the pull request " +
-			"is open, `complete` succeeded for the current head, zero checks are pending or failed, and the merge state is CLEAN. " +
-			"`view`, `edit`, `append_comment`, `status` and `merge` take a pull request number alone, so they also serve a pull request that closes no issue.",
+			"Create and maintain a pull request. Creation Vale-checks the PR body and creates the PR from the current branch " +
+			"of `checkout` (default: the server's checkout); `issue_number` is optional and adds a `Closes` line. " +
+			"Nothing waits for CI: run the checks locally, then merge. `status` returns each check, the head commit, the " +
+			"mergeable state and the failing tests of each failed job, as `mwops pr status` does. `merge` squash-merges at " +
+			"the head it read and keeps the branch. It refuses a closed pull request or one that conflicts with its base, " +
+			"merges while checks are pending or failing, and reports the CI state it merged under in `checksAtMerge`.",
 		inputSchema: PULL_REQUEST_INPUT_SCHEMA,
 		handler: async (raw) => {
 			const cwd = await resolveCheckout(deps.registry.repoRoot, CHECKOUT_SCHEMA.parse(raw).checkout)
 			const request = PULL_REQUEST_SCHEMA.parse(raw)
-
-			if (request.action === "complete") {
-				const head = await assertCIComplete(REPO, request.pull_request_number, async (args) => ({
-					stdout: await run(args, { cwd }),
-					stderr: "",
-				}))
-
-				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
-				const task = `Review successful CI for PR #${request.pull_request_number} on its current head.`
-
-				if (!issue.body.includes(task)) {
-					throw new Error(`Issue #${request.issue_number} has no CI review task for this PR.`)
-				}
-
-				const body = issue.body.replace(`- [ ] ${task}`, `- [x] ${task}`)
-
-				if (!taskBlockIsComplete(body)) throw new Error(`Issue #${request.issue_number} still has incomplete tasks.`)
-				await run(["issue", "edit", String(request.issue_number), "--repo", REPO, "--body", body], { cwd })
-				await removePathIfPresent(resolvePath(cwd, ".claude", "state", "linked-issue"))
-
-				// `assertCIComplete` returns a head for an open pull request whose checks passed.
-				const completion = head
-					? await recordPullRequestCompletion(deps.registry.repoRoot, {
-							pullRequestNumber: request.pull_request_number,
-							issueNumber: request.issue_number,
-							head,
-						})
-					: null
-
-				return {
-					action: request.action,
-					pull_request_number: request.pull_request_number,
-					handoff_ready: true,
-					completed_head: completion?.head ?? null,
-				}
-			}
 
 			if (request.action === "status") {
 				const status = await readPullRequestStatus(request.pull_request_number, { run })
@@ -395,17 +343,15 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 			if (request.action === "merge") {
 				return {
 					action: request.action,
-					...(await mergePullRequest(request.pull_request_number, { repoRoot: deps.registry.repoRoot, run, cwd })),
+					...(await mergePullRequest(request.pull_request_number, { run, cwd })),
 				}
 			}
 
 			if (request.action === "create") {
-				const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
+				if (request.issue_number) {
+					const issue = await fetchGitHubIssue(REPO, request.issue_number, run)
 
-				if (issue.state !== "OPEN") throw new Error(`Issue #${request.issue_number} is ${issue.state.toLowerCase()}.`)
-
-				if (!taskBlockIsComplete(issue.body)) {
-					throw new Error(`Issue #${request.issue_number} has an absent, empty, or incomplete todo-sync task list.`)
+					if (issue.state !== "OPEN") throw new Error(`Issue #${request.issue_number} is ${issue.state.toLowerCase()}.`)
 				}
 
 				const head = await branch(cwd)
@@ -449,49 +395,9 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					throw new TypeError(`GitHub returned an unrecognized pull-request URL: ${url}`)
 				}
 
-				// The server cannot see the calling session.
-				// The ci-completion PostToolUse hook records it as owner.
-				const marker: TrackedCI = { repo: REPO, pullRequestNumber, sessionID: null }
-
-				for (const path of trackedCIMarkerPaths(deps.registry.repoRoot, cwd)) {
-					await writeLocalJSONFile(marker, path)
-				}
-
-				const task = `Review successful CI for PR #${pullRequestNumber} on its current head.`
-				await lint(task)
-				const tasks = issue.body.split(TODO_SYNC_BEGIN)[1]!.split(TODO_SYNC_END)[0]!.trim()
-
-				await run(
-					[
-						"issue",
-						"edit",
-						String(request.issue_number),
-						"--repo",
-						REPO,
-						"--body",
-						replaceTaskBlock(issue.body, `${tasks}\n- [ ] ${task}`),
-					],
-					{ cwd }
-				)
-
-				const monitor = deps.jobs.start(
-					`CI for pull request #${pullRequestNumber}`,
-					process.execPath,
-					[
-						fileURLToPath(import.meta.resolve("#dev-mcp/github/ci-monitor")),
-						"--repo",
-						REPO,
-						"--pull-request",
-						String(pullRequestNumber),
-					],
-					cwd
-				)
-
 				return {
 					action: request.action,
 					pull_request: await fetchGitHubPullRequest(REPO, pullRequestNumber, run),
-					ci_monitor: deps.jobs.summarize(monitor),
-					handoff_ready: false,
 				}
 			}
 

@@ -60,7 +60,9 @@ export const LIBTORCH_ARCHIVE_SHA256: Readonly<Record<TrainerVariant, string>> =
  * The interpreter only installs the wheels, and the image runs no repository Python.
  */
 export const CUDA_RUNTIME_WHEELS = [
-	"cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3",
+	// `crt` ships `crt/host_config.h`, which `cuda_runtime.h` includes, so `csrc/graph.cpp`
+	// compiles against libtorch's `ATen/cuda/CUDAGraph.h`.
+	"cuda-toolkit[cublas,crt,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3",
 	"nvidia-cudnn-cu13==9.20.0.48",
 	"nvidia-cusparselt-cu13==0.8.1",
 	"nvidia-nccl-cu13==2.29.7",
@@ -197,11 +199,22 @@ export function trainerBuildScript(variant: TrainerVariant, license: TrainerLice
 	// The build compiles two packages, so the feature is written with its package's prefix.
 	const features = license === TrainerLicense.Commercial ? " --features trainer-cli/commercial" : ""
 
+	// `trainer-model`'s CUDA graph shim compiles against the CUDA headers.
+	// The CUDA wheels put them under `site-packages/nvidia/.../include`,
+	// and the build script refuses a CUDA libtorch without them.
+	const cudaHeaders =
+		variant === TrainerVariant.CUDA
+			? [
+					`export TRAINER_CUDA_INCLUDE="$(find "$(python -c 'import site; print(site.getsitepackages()[0])')/nvidia" -type d -name include | sort | paste -sd: -)"`,
+				]
+			: []
+
 	return [
 		"set -euo pipefail",
 		`mkdir -p ${TRAINER_REPO_ROOT}`,
 		`base64 -d | tar -xz -C ${TRAINER_REPO_ROOT}`,
 		`cd ${TRAINER_REPO_ROOT}`,
+		...cudaHeaders,
 		`cargo build --profile trainer --locked -p trainer-cli -p trainer-export${features}`,
 		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer /usr/local/bin/trainer`,
 		// A commercial run exports and signs its model inside the sandbox, where the provenance key is.

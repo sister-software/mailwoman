@@ -7247,7 +7247,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/mcp@workspace:packages/mcp":
+"@mailwoman/mcp@workspace:*, @mailwoman/mcp@workspace:packages/mcp":
   version: 0.0.0-use.local
   resolution: "@mailwoman/mcp@workspace:packages/mcp"
   dependencies:
@@ -7976,10 +7976,12 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
+    "@mailwoman/gazetteer": "workspace:*"
     "@mailwoman/geocode-oracle": "workspace:*"
     "@mailwoman/libpostal": "workspace:*"
     "@mailwoman/license": "workspace:*"
     "@mailwoman/license-worker": "workspace:*"
+    "@mailwoman/mcp": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/postcode": "workspace:*"

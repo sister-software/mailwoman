@@ -8,7 +8,7 @@
 
 use crate::error::{Error, Result};
 use arrow_array::cast::AsArray;
-use arrow_array::types::{Int32Type, Int64Type};
+use arrow_array::types::{Float32Type, Float64Type, Int32Type, Int64Type};
 use arrow_array::{Array, ArrayRef, RecordBatch};
 use arrow_schema::DataType;
 
@@ -181,6 +181,44 @@ impl IntListColumn {
 			})
 			.collect::<Result<Vec<_>>>()
 			.map(Some)
+	}
+}
+
+/// A floating-point column, stored as `Float64` or `Float32`.
+#[derive(Clone)]
+pub enum F64Column {
+	F64(arrow_array::Float64Array),
+	F32(arrow_array::Float32Array),
+}
+
+impl F64Column {
+	pub fn new(array: &ArrayRef, name: &str) -> Result<Self> {
+		match array.data_type() {
+			DataType::Float64 => Ok(Self::F64(array.as_primitive::<Float64Type>().clone())),
+			DataType::Float32 => Ok(Self::F32(array.as_primitive::<Float32Type>().clone())),
+			other => Err(Error::Input(format!(
+				"column {name:?} is {other}, expected a 32- or 64-bit float column"
+			))),
+		}
+	}
+
+	pub fn len(&self) -> usize {
+		match self {
+			Self::F64(a) => a.len(),
+			Self::F32(a) => a.len(),
+		}
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
+
+	/// The value at `i`, or `None` for a null.
+	pub fn get(&self, i: usize) -> Option<f64> {
+		match self {
+			Self::F64(a) => a.is_valid(i).then(|| a.value(i)),
+			Self::F32(a) => a.is_valid(i).then(|| f64::from(a.value(i))),
+		}
 	}
 }
 

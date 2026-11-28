@@ -7,7 +7,7 @@
  *   Usage:
  *     node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> [--device <Modal GPU> | --cpu] \
  *       [--fresh] [--branch-from <checkpoint>] [--threads <n>] [--retries <n>] [--timeout-seconds <s>] \
- *       [--fail-at-step <n>] [--dry-run] [--commercial]
+ *       [--fail-at-step <n>] [--dry-run] (--commercial | --open-source)
  *     node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>
  *     node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines <n>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
@@ -20,7 +20,16 @@
  *   and starts one detached sandbox.
  *
  *   `--dry-run` runs everything up to the sandbox and prints what it would start, without contacting Modal.
+ *   `start` takes exactly one of `--commercial` and `--open-source`.
+ *
  *   `--commercial` runs the commercial trainer image.
+ *   Its sandbox exports and signs the final checkpoint.
+ *
+ *   `--open-source` runs the AGPL trainer, and its run leaves only checkpoints.
+ *   `stage-weights-cache` can't stage a model from them.
+ *
+ *   The choice has no default, because a run launched without the export trains
+ *   for hours and leaves no gradable model.
  *
  *   That trainer refuses unless the training grant in the
  *   `MAILWOMAN_MODAL_TRAINING_SECRET` secret admits the run.
@@ -87,6 +96,7 @@ const { values, positionals } = parseArguments({
 		"fail-at-step": { type: "string", default: "0" },
 		"dry-run": { type: "boolean", default: false },
 		commercial: { type: "boolean", default: false },
+		"open-source": { type: "boolean", default: false },
 		lines: { type: "string", default: "100" },
 		corpus: { type: "string" },
 		out: { type: "string" },
@@ -202,6 +212,13 @@ function requireRunKey(): string {
 switch (command) {
 	case "start": {
 		if (!values.config) throw new Error("start needs --config <yaml>")
+
+		if (values.commercial === values["open-source"]) {
+			throw new Error(
+				"start takes exactly one of --commercial and --open-source. --commercial exports and signs the final " +
+					"checkpoint, which `stage-weights-cache` needs to grade the run; --open-source trains without an export"
+			)
+		}
 
 		// A bare name reads the committed config of that name, with or without its `.yaml` extension.
 		const configPath = (await isFile(values.config))

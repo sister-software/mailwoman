@@ -1,6 +1,6 @@
 ---
 name: mailwoman-release
-description: Codifies the mailwoman npm release — a coordinated version bump across every @mailwoman/* workspace (the model included), published only through CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag first — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and md5 verification of the published tarball. The demo repoint is a separate follow-up. Use when promoting a trained model to npm or publishing any npm release ("publish", "release", "ship v…", "promote the model").
+description: Codifies the mailwoman npm release — a coordinated version bump across every @mailwoman/* workspace (the model included), published only through CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag first — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the prepare-then-publish CI dispatch, and md5 verification of the published tarball. The demo repoint is a separate follow-up. Use when promoting a trained model to npm or publishing any npm release ("publish", "release", "ship v…", "promote the model").
 ---
 
 # Mailwoman Release Skill
@@ -37,8 +37,8 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 4. **The CI workflow FETCHES weights from HF** at `en-us/v<cardVersion>/`. A model release has a hard
    prerequisite: stage the weights to HF FIRST (Step 2). A code-only release skips this (the card
    version is unchanged → CI re-fetches the existing model).
-5. **Dry-run before real**, and **verify the published tarball's md5** rather than the workspace file (the
-   materialized `model.onnx` can be a stale post-dry-run leftover).
+5. **Verify the published tarball's md5** rather than the workspace file (the materialized
+   `model.onnx` can be a stale leftover).
 
 ---
 
@@ -105,9 +105,8 @@ For a **model release**, on a branch off current `main`:
 8. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
    en-us model into fr-fr) — leave it unless the operator instructs otherwise.
 9. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, then open
-   the PR with `mwdev_pull_request` (the Bash hook refuses `gh pr create`); it requires an issue whose
-   task list is complete, created with `mwdev_issue`. Let CI (`test`) go green, then **merge to main**
-   (the publish runs off `main`).
+   the PR with `mwdev_pull_request` (the Bash hook refuses `gh pr create`). Run the checks locally, then
+   **merge to main** with `mwdev_pull_request` `merge` without waiting for CI (the publish runs off `main`).
 
 For a **code-only release**: skip the card/release.config/HF work entirely and merge the code PRs.
 The version bump happens in the publish dispatch.
@@ -194,16 +193,13 @@ Run `yarn mwops release verify-metadata` locally before dispatching. The check k
 version, so a code-only release passes it with no ledger edit. Update the release matrix for a
 code-only release afterwards, from the published tarball.
 
-## Step 3 — dispatch the CI publish (two-phase, PR-based, dry-run first)
+## Step 3 — dispatch the CI publish (two-phase, PR-based)
 
 The "Production Integrity" ruleset requires the release commit to land via a PR with a green
 `test` check, so the ship is two dispatches around an auto-merging release PR (the direct
 release-it push is retired — the GH013 failure mode below states why):
 
 ```sh
-# Optional preview — shows the bump diff without pushing anything:
-gh workflow run publish.yml --ref main -f mode=prepare -f version=<target> -f dry_run=true
-
 # Phase 1 — bump on release/v<target>, open the PR, dispatch Test at the branch, enable auto-merge:
 gh workflow run publish.yml --ref main -f mode=prepare -f version=<target>
 RID=$(gh run list --workflow=publish.yml --limit 1 --json databaseId -q '.[0].databaseId')
@@ -211,12 +207,8 @@ gh run watch $RID --exit-status --interval 15      # must be: completed / succes
 # Wait for the auto-merge (test green → the PR merges itself; no human click needed):
 gh pr view "release/v<target>" --json state -q .state   # until MERGED
 
-# Audit the complete publish tree after the release PR merges:
-gh workflow run publish.yml --ref main -f mode=publish -f dry_run=true
-gh run watch <dry-run-id> --exit-status --interval 15
-# Require success, including every tarball audit. Repeat after any correction.
-
-# Phase 2 — preflight + tag + GitHub release + npm publish of the merged commit on main:
+# Phase 2 — preflight + tag + GitHub release + npm publish of the merged commit on main. The preflight
+# audits every tarball before the tag, so a failed audit stops the run before anything is published:
 gh workflow run publish.yml --ref main -f mode=publish
 gh run watch <rid> --exit-status --interval 15
 ```
@@ -229,9 +221,10 @@ gh run watch <rid> --exit-status --interval 15
   workspace publishes pass `--tolerate-republish`). Re-dispatch it.
 - The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
   before that dispatch. Phase 1 needs no binaries.
-- A prepare dry run doesn't audit tarballs. Both dry and real publish runs must complete the full
-  preflight before tagging or publication. Follow `RELEASING.md` for accepted uploads that still
-  return 404. Registry visibility isn't enough evidence to infer an upload failure.
+- Dispatch the real publish directly after the release PR merges. A `dry_run=true` publish runs the
+  same preflight the real run runs before its tag, so it adds about 15 minutes and catches zero
+  failures the real run misses. Follow `RELEASING.md` for accepted uploads that still return 404.
+  Registry visibility isn't enough evidence to infer an upload failure.
 
 ## Step 4 — verify the ship (the published tarball rather than the workspace)
 
