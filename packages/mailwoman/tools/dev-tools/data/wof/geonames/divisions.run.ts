@@ -4,11 +4,11 @@
 /**
  *   Completes a country's first- and second-level divisions in its `mailwoman` WOF fork from GeoNames.
  *
- *   The library is `@mailwoman/gazetteer/tools/pipeline/wof/geonames-divisions`.
+ *   The library is `@mailwoman/gazetteer/tools/pipeline/wof/geonames/divisions`.
  *
  *   The specification is a JSON file such as `packages/gazetteer/tools/pipeline/mw/division-backfill.json`.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/data/wof-geonames-divisions.run.ts
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/wof/geonames/divisions.run.ts
  *   --spec <file> [--dry-run]
  */
 
@@ -19,7 +19,7 @@ import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/argu
 import {
 	backfillGeoNamesDivisions,
 	type GeoNamesDivisionSpec,
-} from "@mailwoman/gazetteer/tools/pipeline/wof/geonames-divisions"
+} from "@mailwoman/gazetteer/tools/pipeline/wof/geonames/divisions"
 
 const { values } = parseArguments({
 	options: {

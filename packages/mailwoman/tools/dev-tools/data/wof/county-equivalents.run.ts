@@ -7,7 +7,7 @@
  *
  *   The library is `@mailwoman/gazetteer/tools/pipeline/us/county-equivalents`.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/data/wof-county-equivalents.run.ts
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/wof/county-equivalents.run.ts
  *   --state 09 --counties <tl_2024_us_county.shp> [--dry-run]
  */
 

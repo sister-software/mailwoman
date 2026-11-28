@@ -5,14 +5,14 @@
  *   Writes a locality record into a country's `mailwoman` WOF fork for each GeoNames
  *   populated place the fork holds no record of.
  *
- *   The library is `@mailwoman/gazetteer/tools/pipeline/wof/geonames-backfill`.
+ *   The library is `@mailwoman/gazetteer/tools/pipeline/wof/geonames/backfill`.
  *
  *   The places come from `--geonames-id`, given once per place, or from `--candidates`,
  *   the list of unmatched GeoNames places the admin build writes beside its
  *   output (`<admin database>.wof-candidates.jsonl`).
  *   `--min-population` keeps the candidates GeoNames gives at least that population.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/data/wof-geonames-backfill.run.ts
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/wof/geonames/backfill.run.ts
  *   --country BW --geonames-id 933773 [--dry-run]
  */
 
@@ -20,7 +20,7 @@ import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { stringifyJSON } from "@mailwoman/core/values/json"
-import { backfillGeoNamesPlaces, readGeoNamesPlaces } from "@mailwoman/gazetteer/tools/pipeline/wof/geonames-backfill"
+import { backfillGeoNamesPlaces, readGeoNamesPlaces } from "@mailwoman/gazetteer/tools/pipeline/wof/geonames/backfill"
 import { JSONSpliterator } from "spliterator"
 
 const { values } = parseArguments({

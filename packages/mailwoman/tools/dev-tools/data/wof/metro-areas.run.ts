@@ -10,7 +10,7 @@
  *   The areas come from the Census gazetteer file of core based statistical areas, downloaded
  *   when absent, and each area's counties from the TIGER/Line national county shapefile.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/data/wof-metro-areas.run.ts
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/wof/metro-areas.run.ts
  *   --country US --counties <tl_2024_us_county.shp> [--dry-run]
  */
 

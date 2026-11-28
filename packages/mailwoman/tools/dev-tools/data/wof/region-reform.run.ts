@@ -9,7 +9,7 @@
  *   regions they replace, such as `packages/gazetteer/tools/pipeline/ke/region-reform.json`.
  *   The run prints a summary and, with `--report`, writes the whole result as JSON.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/data/wof-region-reform.run.ts --spec <file> [--dry-run]
+ *   Usage: node packages/mailwoman/tools/dev-tools/data/wof/region-reform.run.ts --spec <file> [--dry-run]
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"

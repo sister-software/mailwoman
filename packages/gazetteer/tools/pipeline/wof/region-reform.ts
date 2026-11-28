@@ -307,7 +307,7 @@ const RECORD_FILE = /(?:^|\/)\d+\.geojson$/u
  *
  * The read and parse of Norway's records took 3.6 s one at a time, 2.1 s at 2
  * to 8 at once, 2.8 s at 32 and 3.3 s at 64.
- * The parse runs on one thread, so more reads in flight add queueing and no throughput.
+ * The parse runs on one thread, so more reads in flight add queuing and no throughput.
  */
 const RECORD_READ_CONCURRENCY = 3
 
