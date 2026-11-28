@@ -8,10 +8,17 @@
  * to put the attribution in front of the distance.
  */
 
+import { countProgress } from "@mailwoman/mcp/progress/notifier"
 import { diffGeocode, type GeocodeArm, type GeocodeRun, renderGeocodeDiff } from "mailwoman/geocode"
 import { z } from "zod"
 
-import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/result/tool-kit"
+import {
+	acquireTwoArms,
+	type DevTool,
+	type DevToolDeps,
+	RENDERED_DIFF_LIMIT,
+	WITHOUT_PROGRESS,
+} from "#dev-mcp/result/tool-kit"
 
 /**
  * One arm of the comparison, read off a run; `tree` hangs off the run rather than the result
@@ -58,24 +65,27 @@ export const diffGeocodeTool = (deps: DevToolDeps): DevTool => ({
 			.optional()
 			.describe("Omit inputs whose arms agree. Default true — an identical row is not a finding."),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const inputs = args["inputs"] as string[]
 		const weightsCache = args["weights_cache"] as string | undefined
 		const locale = args["locale"] as string | undefined
 		const changesOnly = args["changes_only"] !== false
 
+		progress({ stage: "Starting the base and candidate engines" })
 		using arms = await acquireTwoArms(deps.registry, { locale, weightsCache })
 
 		if (arms.error) return arms.error
 
 		const { base, candidate } = arms
 		const diffs = []
+		const diffed = countProgress(progress, "Geocoding both arms", inputs.length)
 
 		for (const input of inputs) {
 			const a = await base.session.geocode(input)
 			const b = await candidate.session.geocode(input)
 
 			diffs.push(diffGeocode(input, arm(a), arm(b)))
+			diffed()
 		}
 
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs

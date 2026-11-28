@@ -11,7 +11,7 @@ import { z } from "zod"
 import { ARM_SPEC_SCHEMA } from "#dev-mcp/arms"
 import { runCompare } from "#dev-mcp/compare"
 import type { DevTool, DevToolDeps } from "#dev-mcp/result/tool-kit"
-import { INPUT_SET_SCHEMA } from "#dev-mcp/result/tool-kit"
+import { INPUT_SET_SCHEMA, WITHOUT_PROGRESS } from "#dev-mcp/result/tool-kit"
 
 export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_compare",
@@ -59,5 +59,5 @@ export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> =
 			),
 		stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]).optional(),
 	}),
-	handler: async (args) => runCompare(registry, args),
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => runCompare(registry, args, { progress }),
 })

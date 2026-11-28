@@ -124,6 +124,7 @@
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/license": "workspace:*",
 		"@mailwoman/license-worker": "workspace:*",
+		"@mailwoman/mcp": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",

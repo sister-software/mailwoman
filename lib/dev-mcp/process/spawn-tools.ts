@@ -26,7 +26,7 @@ import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { resolveCheckout } from "#dev-mcp/github"
 import { assertCompiledFresh } from "#dev-mcp/process/compiled-tree"
 import type { JobRegistry } from "#dev-mcp/process/jobs"
-import { summarizeJob, type DevTool } from "#dev-mcp/result/tool-kit"
+import { summarizeJob, WITHOUT_PROGRESS, type DevTool } from "#dev-mcp/result/tool-kit"
 import { missingWeightsCacheArtifacts, readEvalReport } from "#dev-mcp/runs/eval-report"
 import { parseGauntletReport } from "#dev-mcp/runs/gauntlet-report"
 
@@ -456,7 +456,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				args: z.array(z.string()).describe('Argument vector, e.g. ["geocode", "350 5th Ave", "--json"]. No shell.'),
 				timeout_s: z.number().int().positive().max(600).default(120),
 			}),
-			handler: async (args) => {
+			handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 				const argv = args["args"] as string[]
 				const verdict = checkCLIAllowlist(argv)
 
@@ -474,8 +474,17 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const timeoutMs = ((args["timeout_s"] as number | null) ?? 120) * 1000
 				const startedAt = Date.now()
+				let reportedSecond = -1
 
 				while (jobs.get(job.jobID)!.state === "running" && Date.now() - startedAt < timeoutMs) {
+					const second = Math.floor((Date.now() - startedAt) / 1000)
+
+					// Elapsed time against the timeout, once a second: a CLI run states no count of its own.
+					if (second !== reportedSecond) {
+						reportedSecond = second
+						progress({ stage: `Running \`mailwoman ${verb}\`, ${second}s of ${timeoutMs / 1000}s` })
+					}
+
 					await new Promise((resolve) => {
 						setTimeout(resolve, 100)
 					})

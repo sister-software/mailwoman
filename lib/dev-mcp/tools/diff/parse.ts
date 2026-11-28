@@ -7,9 +7,16 @@
  */
 
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
+import { countProgress } from "@mailwoman/mcp/progress/notifier"
 import { z } from "zod"
 
-import { acquireTwoArms, type DevTool, type DevToolDeps, RENDERED_DIFF_LIMIT } from "#dev-mcp/result/tool-kit"
+import {
+	acquireTwoArms,
+	type DevTool,
+	type DevToolDeps,
+	RENDERED_DIFF_LIMIT,
+	WITHOUT_PROGRESS,
+} from "#dev-mcp/result/tool-kit"
 
 export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 	name: "mwdev_diff_parse",
@@ -37,18 +44,20 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			.optional()
 			.describe("Omit inputs whose arms agree. Default true — an identical row is not a finding."),
 	}),
-	handler: async (args) => {
+	handler: async (args, { progress } = WITHOUT_PROGRESS) => {
 		const inputs = args["inputs"] as string[]
 		const weightsCache = args["weights_cache"] as string | undefined
 		const locale = args["locale"] as string | undefined
 		const changesOnly = args["changes_only"] !== false
 
+		progress({ stage: "Starting the base and candidate engines" })
 		using arms = await acquireTwoArms(deps.registry, { locale, weightsCache })
 
 		if (arms.error) return arms.error
 
 		const { base, candidate } = arms
 		const diffs = []
+		const diffed = countProgress(progress, "Parsing both arms", inputs.length)
 
 		for (const input of inputs) {
 			const a = await base.session.geocode(input)
@@ -64,6 +73,8 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 					...(b.tree?.localeCountry ? { after: b.tree.localeCountry } : {}),
 				})
 			)
+
+			diffed()
 		}
 
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs

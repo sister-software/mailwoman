@@ -8,6 +8,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { ProcessProgress } from "@mailwoman/core/scripting/process"
 import { tryParsingJSON } from "@mailwoman/core/values/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/repo/release-config"
@@ -674,6 +675,12 @@ export interface CensusCoverageOptions {
 	 * @defaultValue true
 	 */
 	countWhenUncached?: boolean
+	/**
+	 * Receives each stage, including every corpus count and why its cache couldn't serve.
+	 *
+	 * @defaultValue a reporter that drops every step
+	 */
+	progress?: (step: ProcessProgress) => void
 }
 
 /**
@@ -709,7 +716,13 @@ export function graphCorpusCensusPath(family: string): PathBuilder {
 async function readOrCountCensus(
 	cachePath: PathBuilder,
 	manifestPath: string,
-	options: { refresh: boolean; countWhenUncached: boolean; matchManifest: boolean }
+	options: {
+		refresh: boolean
+		countWhenUncached: boolean
+		matchManifest: boolean
+		label: string
+		progress: (step: ProcessProgress) => void
+	}
 ): Promise<{ census: CorpusCensus; takenAt: string | null }> {
 	const cached = !options.refresh && (await pathExists(cachePath)) ? await readLocalJSONFile<CorpusCensus>(cachePath) : null
 
@@ -730,6 +743,10 @@ async function readOrCountCensus(
 		)
 	}
 
+	options.progress({
+		stage: `Counting ${options.label} (${options.refresh ? "refresh requested" : `cached census is ${stale}`})`,
+	})
+
 	const census = await buildCorpusCensus(manifestPath)
 
 	await writeLocalJSONFile(census, cachePath)
@@ -741,11 +758,20 @@ async function readOrCountCensus(
  * Combines the coverage sources into one per-country report and lists where they disagree.
  */
 export async function censusCoverage(options: CensusCoverageOptions): Promise<CoverageReport> {
-	const counting = { refresh: options.refresh ?? false, countWhenUncached: options.countWhenUncached ?? true }
+	const progress = options.progress ?? (() => {})
+
+	const counting = {
+		refresh: options.refresh ?? false,
+		countWhenUncached: options.countWhenUncached ?? true,
+		progress,
+	}
+
+	progress({ stage: "Reading the corpus census" })
 
 	const { census, takenAt } = await readOrCountCensus(corpusCensusPath(), options.manifestPath, {
 		...counting,
 		matchManifest: false,
+		label: "the training corpus",
 	})
 
 	const graphCorpora: GraphCorpusReading[] = []
@@ -761,6 +787,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		const counted = await readOrCountCensus(graphCorpusCensusPath(graph.family), manifest, {
 			...counting,
 			matchManifest: true,
+			label: `the ${graph.family} graph corpus`,
 		})
 
 		graphCorpora.push({
@@ -775,6 +802,8 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			addressFormRows.set(country, (addressFormRows.get(country) ?? 0) + rows)
 		}
 	}
+
+	progress({ stage: "Reading the board, gazetteer and weights coverage" })
 
 	const admitted = await readAdmittedCountries(options.configPath)
 	const board = await readBoardCoverage(options.casesRoot)

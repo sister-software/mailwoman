@@ -10,6 +10,7 @@ import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { prettyJSON } from "@mailwoman/core/values/json"
+import { progressNotifier } from "@mailwoman/mcp/progress/notifier"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js"
@@ -73,7 +74,7 @@ server.setRequestHandler(ListToolsRequestSchema, () => ({
 	tools: [...host.tools, RESTART_TOOL],
 }))
 
-server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
+server.setRequestHandler(CallToolRequestSchema, async (request, extra): Promise<CallToolResult> => {
 	const name = request.params.name
 	const args = (request.params.arguments as Record<string, unknown> | null) ?? {}
 
@@ -99,7 +100,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
 	}
 
 	try {
-		return asResult(await host.call(name, args))
+		// Null without a progress token.
+		// The worker then sends no progress messages for this call.
+		const report = progressNotifier(extra)
+
+		return asResult(await host.call(name, args, report ?? undefined))
 	} catch (error) {
 		return asError(error)
 	}

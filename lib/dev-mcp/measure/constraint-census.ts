@@ -25,6 +25,7 @@
  * A `toLowerCase()` approximation silently moves rows from the reachability column into the coverage one.
  */
 
+import { countProgress, ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/labels/street"
 import { conventionCandidateDBPath } from "mailwoman/engine/resolver-backend"
 
@@ -184,9 +185,12 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 export async function runConstraintCensus(
 	registry: EngineRegistryLike,
 	args: { inputs?: InputSetRef; config?: EngineConfig },
-	dependencies: { openArtifact?: OpenCensusArtifact } = {}
+	dependencies: { openArtifact?: OpenCensusArtifact; progress?: ReportProgress } = {}
 ): Promise<ConstraintCensusResult> {
+	const progress = dependencies.progress ?? ignoreProgress
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
+
+	progress({ stage: "Starting a tracing engine" })
 	// The census always enables tracing and the band probe because it needs both
 	// inputs do without and neither can change an answer.
 	using engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
@@ -208,6 +212,7 @@ export async function runConstraintCensus(
 	const pickedUnder = new Set<string>()
 
 	let lookups = 0
+	const traced = countProgress(progress, "Tracing resolver lookups", set.inputs.length)
 
 	try {
 		for (const item of set.inputs) {
@@ -216,6 +221,8 @@ export async function runConstraintCensus(
 			try {
 				run = await engine.session.geocode(item.input)
 			} catch {
+				traced()
+
 				continue
 			}
 
@@ -252,6 +259,8 @@ export async function runConstraintCensus(
 					had_candidates: rec.candidates.length > 0,
 				})
 			}
+
+			traced()
 		}
 	} finally {
 		await db.destroy()

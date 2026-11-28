@@ -14,6 +14,7 @@
 import { formatPercent } from "@mailwoman/core/math/stats"
 import { isIdentical } from "@mailwoman/core/values/identical"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { countProgress, ignoreProgress, type ReportProgress } from "@mailwoman/mcp/progress/notifier"
 import { checkCase } from "mailwoman/tools/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
@@ -140,6 +141,11 @@ export interface CompareDeps {
 	runStoreDir?: PathBuilderLike
 	now?: () => Date
 	newRunID?: () => string
+	/**
+	 * Receives each stage and the row count as both arms answer.
+	 * Default: `ignoreProgress`, which drops every step.
+	 */
+	progress?: ReportProgress
 }
 
 function now(deps: CompareDeps): Date {
@@ -168,6 +174,9 @@ export async function runCompare(
 	const armA = normalizeArmSpec(options.armA, "a")
 	const armB = normalizeArmSpec(options.armB, "b")
 	const set = await resolveInputSet(options.inputs ?? { kind: "board" })
+
+	// Both paths start their arms before the first row.
+	deps.progress?.({ stage: "Starting both arms" })
 
 	if (armA.kind === "mailwoman" && armB.kind === "mailwoman") {
 		return compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
@@ -216,9 +225,14 @@ async function compareMailwomanArms(
 	// Keep recorded answers in parallel with rows to avoid unsafe casting later.
 	const recorded: Record<"a" | "b", RecordedAnswer[]> = { a: [], b: [] }
 
-	for (const item of set.inputs) {
+	const compared = countProgress(deps.progress ?? ignoreProgress, "Comparing both arms", set.inputs.length)
+
+	// Reported at the top of each row, so every `continue` below still advances the count.
+	for (const [done, item] of set.inputs.entries()) {
 		let a
 		let b
+
+		compared(done)
 
 		try {
 			a = await geocodeA(item)
@@ -257,6 +271,8 @@ async function compareMailwomanArms(
 			issues_b: issuesB,
 		})
 	}
+
+	compared(set.inputs.length)
 
 	const gradeable = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
@@ -637,6 +653,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	// Oracle comparisons are always ungradeable.
 	const hasOracle = armA.kind === "oracle" || armB.kind === "oracle"
+	const scored = countProgress(deps.progress ?? ignoreProgress, "Scoring both arms", set.inputs.length)
 
 	for (const item of set.inputs) {
 		const a = await ask(runnerA, "a", item)
@@ -669,6 +686,8 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			distance_km_a: distanceA,
 			distance_km_b: distanceB,
 		})
+
+		scored()
 	}
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
