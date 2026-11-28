@@ -394,6 +394,7 @@ export function pathMargins(emissions: ReadonlyArray<readonly number[]>, path: r
  * the runner-up, and neither is `O`.
  * Returns `null` when the row holds no other tag above the masked floor.
  */
+// repo-health-ignore export-name-affix -- earth's `runnerUp` admits `O` and the decoded tag's own labels.
 export function emissionRunnerUp(
 	row: readonly number[],
 	decoded: number,
