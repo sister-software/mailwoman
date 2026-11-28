@@ -100,6 +100,14 @@ function wordFuzzySimilarity(a: string, b: string): number {
 	return Math.max(jaroWinkler(a, b), levenshteinSimilarity(a, b))
 }
 
+/**
+ * The number of words in a folded name key.
+ * A folded key separates its words with single spaces.
+ */
+function wordCount(key: string): number {
+	return key ? key.split(" ").length : 0
+}
+
 const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
 
 function ftsTrigramQuery(s: string): string {
@@ -413,15 +421,21 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		injectFrom(opts.nameKey, false)
 
-		// Also inject contained neighborhood-band namesakes (primary-keyed only).
+		// Also inject contained neighborhood-band namesakes keyed by the primary name
+		// or by an `abbr` alias whose word count equals the primary name's.
+		// Such an alias respells the name, as `Mount Tabor` does `Mt. Tabor`.
+		// An alias with fewer words drops one, as `Camden` does `Camden Town`, and is the
+		// exact name of a larger place, the borough of Camden, so it stays out.
 		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
 			.map((placetype) => this.#placetypeToID.get(placetype))
 			.filter((id) => typeof id === "number")
 
 		if (bandIDs.length) {
+			const bandNames = this.#hasNameRole ? "(is_primary = 1 OR name_role = 'abbr')" : "is_primary = 1"
+
 			const bandSQL =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
-				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND is_primary = 1 ` +
+				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND ${bandNames} ` +
 				`${opts.outcomeFilter ? `AND ${opts.outcomeFilter.sql} ` : ""}ORDER BY neg_rank ASC LIMIT ?`
 
 			const fetched = allRows<CandidateRow>(
@@ -432,10 +446,14 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				RERANK_FETCH
 			)
 
+			const queryWords = wordCount(opts.nameKey)
+
 			for (const row of fetched) {
 				const sprID = Number(row.spr_id)
 
 				if (present.has(sprID) || !contained(sprID)) continue
+
+				if (!row.is_primary && (!row.name || wordCount(normalizeLocalityForKey(row.name)) !== queryWords)) continue
 				present.add(sprID)
 
 				injected.push({ ...row, effectiveNegRank: row.neg_rank, demoted: false, containedByQualifier: true })

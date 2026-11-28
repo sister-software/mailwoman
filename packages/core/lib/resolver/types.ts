@@ -501,7 +501,7 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	countyDesignatorFallback: false,
 	formerDivisions: false,
 	scopeCountryRetrieval: false,
-	siblingLocalityContainment: false,
+	siblingLocalityContainment: true,
 	diagnoseUnreachable: false,
 }
 

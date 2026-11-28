@@ -76,7 +76,7 @@ const treeOf = (...values: string[]): AddressTree => {
 describe("sibling-locality containment", () => {
 	it("resolves the inner locality inside the outer one, and leaves it apart when off", async () => {
 		const resolver = createWOFResolver(backend)
-		const off = await resolver.resolveTree(treeOf("Kensington", "London"))
+		const off = await resolver.resolveTree(treeOf("Kensington", "London"), { siblingLocalityContainment: false })
 		const on = await resolver.resolveTree(treeOf("Kensington", "London"), { siblingLocalityContainment: true })
 
 		expect(off.roots[0]?.placeID).toBe(`wof:${KENSINGTON_US_ID}`)
