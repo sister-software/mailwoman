@@ -613,6 +613,39 @@ export async function applyRegionRenames(
 }
 
 /**
+ * The fork records a reform reads, by WOF id.
+ *
+ * A grouping under macroregions changes every record of the country, so it reads the whole fork.
+ *
+ * Another reform reads the replaced and divided regions, the units and their members.
+ * It also reads each record below a replaced or divided region.
+ *
+ * The fork is read one record at a time and only those are kept.
+ * The largest forks then fit in memory.
+ */
+async function loadReformRecords(repoDir: PathBuilder, spec: RegionReformSpec): Promise<Map<number, LoadedRecord>> {
+	if (spec.unitPlacetype === "macroregion") return loadForkRecords(repoDir)
+
+	const records = new Map<number, LoadedRecord>()
+	const changing = new Set([...spec.ceased, ...(spec.split ?? [])])
+
+	const listed = new Set([
+		...changing,
+		...spec.units.flatMap((unit) => [...unit.members, ...(isPresent(unit.existing) ? [unit.existing] : [])]),
+	])
+
+	for await (const record of streamForkRecords(repoDir)) {
+		const below = hierarchyOf(record).some((branch) => changing.has(branch.region_id ?? -1))
+
+		if (listed.has(record.feature.id) || below) {
+			records.set(record.feature.id, record)
+		}
+	}
+
+	return records
+}
+
+/**
  * Applies `spec` to the country's admin fork under `options.reposRoot`.
  *
  * @throws When a member, an existing unit record or a replaced region has no record
@@ -625,7 +658,7 @@ export async function applyRegionReform(
 	const reposRoot = PathBuilder.from(options.reposRoot)
 	const repoName = wofRepoName("admin", spec.country)
 	const repoDir = reposRoot(repoName)
-	const records = await loadForkRecords(repoDir)
+	const records = await loadReformRecords(repoDir, spec)
 
 	const required = (id: number, role: string): LoadedRecord => {
 		const record = records.get(id)
@@ -889,9 +922,12 @@ export async function applyRegionReform(
 			const kept = membersOfUnit.get(reformUnitKey(unit)) ?? []
 			const total = (key: string) => kept.reduce((all, member) => all + Number(properties(member)[key] ?? 0), 0)
 
-			// The replaced regions merged into this kept record.
-			// The record supersedes each of them.
-			const absorbed = unit.members.filter((member) => ceased.has(member))
+			// The record supersedes each replaced region merged into it.
+			// It also supersedes each replaced region its members stated as their region.
+			const absorbed = [
+				...unit.members,
+				...kept.flatMap((member) => hierarchyOf(member).map((branch) => branch.region_id)).filter(isPresent),
+			].filter((region) => ceased.has(region))
 
 			// A kept record with its code already set and no new boundary keeps its file unchanged.
 			if (!remaining && concordancesOf(record)["iso:code"] === unit.iso) continue
@@ -925,6 +961,7 @@ export async function applyRegionReform(
 									"geom:bbox": remaining.bbox.join(","),
 									"geom:latitude": remaining.centroid[1],
 									"geom:longitude": remaining.centroid[0],
+									"src:geom": "whosonfirst",
 									"wof:geomhash": wofGeometryHash(remaining.geometry),
 								}
 							: {}),

@@ -1,0 +1,69 @@
+{
+	"country": "CF",
+	"memberPlacetype": "county",
+	"designator": "",
+	"inception": "uuuu",
+	"cessation": "uuuu",
+	"ceased": [],
+	"split": [85669671, 85669701, 85669685],
+	"sources": {
+		"law": {
+			"citation": "GeoNames holds Mambéré, Ouham-Fafa and Lim-Pendé as first-level divisions of the Central African Republic, beside Mambéré-Kadéï, Ouham and Ouham-Pendé, the prefectures they were formed from.",
+			"url": "https://www.geonames.org/countries/CF/"
+		},
+		"units": {
+			"citation": "Wikidata, this prefecture's item, read on 2026-11-28: English label and item id, and the ISO 3166-2 code where the item holds one. The GeoNames id is the prefecture's row in the GeoNames country file.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "Each sub-prefecture record is assigned to the prefecture that GeoNames files the populated places inside its boundary under, counted on 2026-11-28. For each of the 20 records, at least 96 percent of those places are under one prefecture."
+		}
+	},
+	"units": [
+		{
+			"iso": "CF-HS",
+			"name": "Mambéré-Kadéï",
+			"wikidata": "Q848567",
+			"geonames": 2386161,
+			"existing": 85669671,
+			"members": [1108759593, 1108759603, 1108759625, 1108759683]
+		},
+		{
+			"name": "Mambéré",
+			"wikidata": "Q113896904",
+			"geonames": 12902745,
+			"existing": 9895094830,
+			"members": [1108759637, 1108759681, 1108759717]
+		},
+		{
+			"iso": "CF-AC",
+			"name": "Ouham",
+			"wikidata": "Q726620",
+			"geonames": 2383653,
+			"existing": 85669701,
+			"members": [1108759673, 1108759677, 1108759697, 1108759699]
+		},
+		{
+			"name": "Ouham-Fafa",
+			"wikidata": "Q113897006",
+			"geonames": 12902746,
+			"existing": 9895094831,
+			"members": [1108759675, 1108759693, 1108759695]
+		},
+		{
+			"iso": "CF-OP",
+			"name": "Ouham-Pendé",
+			"wikidata": "Q848591",
+			"geonames": 2383650,
+			"existing": 85669685,
+			"members": [1108759667, 1108759691, 1108759709, 1108759721]
+		},
+		{
+			"name": "Lim-Pendé",
+			"wikidata": "Q113895415",
+			"geonames": 12902747,
+			"existing": 9895094832,
+			"members": [1108759597, 1108759601]
+		}
+	]
+}

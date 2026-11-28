@@ -1,0 +1,37 @@
+{
+	"country": "MG",
+	"memberPlacetype": "county",
+	"designator": "",
+	"inception": "2021",
+	"cessation": "2021",
+	"ceased": [85674045],
+	"sources": {
+		"law": {
+			"citation": "Wikidata states that Vatovavy-Fitovinany (Q1462671), a former region of Madagascar, was dissolved on 2021-01-01. GeoNames holds Vatovavy and Fitovinany as first-level divisions in its place.",
+			"url": "https://www.wikidata.org/wiki/Q1462671"
+		},
+		"units": {
+			"citation": "Wikidata, this region's item, read on 2026-11-28: English label and item id. The GeoNames id is the region's row in the GeoNames country file.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "Each district record is assigned to the region that GeoNames files the populated places inside its boundary under, counted on 2026-11-28. For each of the 6 records, at least 98 percent of those places are under one region."
+		}
+	},
+	"units": [
+		{
+			"name": "Fitovinany",
+			"wikidata": "Q109313604",
+			"geonames": 12494965,
+			"existing": 9895094839,
+			"members": [421184623, 421198091, 1108801175]
+		},
+		{
+			"name": "Vatovavy",
+			"wikidata": "Q107377358",
+			"geonames": 12494968,
+			"existing": 9895094840,
+			"members": [421197047, 1108801181, 1108801199]
+		}
+	]
+}

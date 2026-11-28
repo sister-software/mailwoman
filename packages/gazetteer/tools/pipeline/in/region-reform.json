@@ -1,0 +1,31 @@
+{
+	"country": "IN",
+	"memberPlacetype": "county",
+	"designator": "",
+	"inception": "2020-01-26",
+	"cessation": "2020-01-26",
+	"ceased": [85672271, 85672163],
+	"sources": {
+		"law": {
+			"citation": "Wikidata states that the union territory of Dadra and Nagar Haveli and Daman and Diu (Q77997266, ISO 3166-2 IN-DH) was formed on 2020-01-26, and that Daman and Diu (Q66710) was dissolved on that date.",
+			"url": "https://www.wikidata.org/wiki/Q77997266"
+		},
+		"units": {
+			"citation": "Wikidata, the union territory's item, read on 2026-11-28: English label, item id and ISO 3166-2 code. The GeoNames id is the territory's row in the GeoNames country file.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "The members are the three district records of the two former union territories: Daman and Diu, whose parent was Daman and Diu, and Dadra & Nagar Haveli, whose parent was Dadra and Nagar Haveli."
+		}
+	},
+	"units": [
+		{
+			"iso": "IN-DH",
+			"name": "Dadra and Nagar Haveli and Daman and Diu",
+			"wikidata": "Q77997266",
+			"geonames": 12165662,
+			"existing": 9895094846,
+			"members": [890507645, 1108696285, 1108696287]
+		}
+	]
+}
