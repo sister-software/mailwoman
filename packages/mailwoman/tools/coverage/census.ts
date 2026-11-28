@@ -247,7 +247,10 @@ export const ADDRESS_FORM_TAG = /^street($|_)|^house_number$|^block$|^sub_block$
  * Also if a train file is absent, or the total differs from the manifest's `counts.train`.
  */
 // repo-health-ignore export-name-affix -- counts rows in a built corpus. @mailwoman/corpus's buildCorpus creates it
-export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
+export async function buildCorpusCensus(
+	manifestPath: PathBuilderLike,
+	progress?: (step: ProcessProgress) => void
+): Promise<CorpusCensus> {
 	const manifest = await readLocalJSONFile<{ corpus_version?: string; files?: unknown } & Record<string, unknown>>(
 		manifestPath
 	)
@@ -269,6 +272,8 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 
 	const unreadableFiles: string[] = []
 
+	progress?.({ stage: `Checking ${parquetFiles.length} train file(s)` })
+
 	for (const path of parquetFiles) {
 		if (!(await pathExists(path))) {
 			unreadableFiles.push(path)
@@ -288,7 +293,11 @@ export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<
 	const addressFormRows: Record<string, number> = {}
 	let total = 0
 
-	for (const shape of parquetFiles.length ? await countTrainShapes(manifestPath.toString()) : []) {
+	const shapes = parquetFiles.length
+		? await countTrainShapes(manifestPath.toString(), progress ? { progress } : {})
+		: []
+
+	for (const shape of shapes) {
 		const country = (shape.country ?? "").toUpperCase() || "??"
 
 		total += shape.rows
@@ -747,7 +756,10 @@ async function readOrCountCensus(
 		stage: `Counting ${options.label} (${options.refresh ? "refresh requested" : `cached census is ${stale}`})`,
 	})
 
-	const census = await buildCorpusCensus(manifestPath)
+	// The census can count several corpora in turn, so each count's stages start with its label.
+	const census = await buildCorpusCensus(manifestPath, (step) =>
+		options.progress({ ...step, stage: `${options.label}: ${step.stage}` })
+	)
 
 	await writeLocalJSONFile(census, cachePath)
 

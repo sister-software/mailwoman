@@ -17,6 +17,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import type { ProcessProgress } from "@mailwoman/core/scripting/process"
 import { stringifyJSON } from "@mailwoman/core/values/json"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
@@ -43,7 +44,19 @@ interface ManifestFile {
 export interface TrainShapeOptions {
 	memoryLimitBytes?: number
 	threads?: number
+	/**
+	 * Receives the grouping query's completion as a percent, read from DuckDB while the query runs.
+	 *
+	 * DuckDB estimates the percent from the rows its scan has read.
+	 * A reading DuckDB can't estimate is skipped.
+	 */
+	progress?: (step: ProcessProgress) => void
 }
+
+/**
+ * The milliseconds between reads of DuckDB's query progress, for a count with a `progress` reporter.
+ */
+const PROGRESS_POLL_MS = 500
 
 /**
  * Counts the train rows of the corpus whose `MANIFEST.json` is at `manifestPath`.
@@ -121,11 +134,44 @@ export async function countTrainShapes(
 			AND (p.source_id IS NOT NULL OR p.filename NOT IN (SELECT file FROM attributed))`
 		: ""
 
-	const reader = await db.runAndReadAll(`
+	const { progress } = options
+
+	if (progress) {
+		// DuckDB tracks a query's progress only with the progress bar on.
+		// The bar's own output stays off, so DuckDB writes no bar to the terminal.
+		await db.run("SET enable_progress_bar = true")
+		await db.run("SET enable_progress_bar_print = false")
+	}
+
+	const stage = `Counting train rows in ${files.length} Parquet file(s)`
+
+	progress?.({ stage, percent: 0 })
+
+	const poll = progress
+		? setInterval(() => {
+				const { percentage } = db.progress
+
+				if (percentage >= 0) {
+					progress({ stage, percent: Math.floor(percentage) })
+				}
+			}, PROGRESS_POLL_MS)
+		: null
+
+	const reader = await db
+		.runAndReadAll(
+			`
 		SELECT p.source AS source, p.country AS country, p.span_tags AS span_tags, count(*)::BIGINT AS rows
 		FROM read_parquet([${paths}], union_by_name = true, filename = true) p
 		${heldOut}
-		GROUP BY ALL`)
+		GROUP BY ALL`
+		)
+		.finally(() => {
+			if (poll) {
+				clearInterval(poll)
+			}
+		})
+
+	progress?.({ stage, percent: 100 })
 
 	return (reader.getRowObjectsJson() as Array<Record<string, unknown>>).map((row) => ({
 		source: (row.source as string | null) ?? null,
