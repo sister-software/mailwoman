@@ -22,6 +22,8 @@ extend-exclude = [
 	"packages/codex/lib/address/layouts/citations/",
 	"packages/codex/lib/address/layouts/description-records.ts",
 	"packages/poi-taxonomy/data/",
+	# Wikidata's labels of each former country in twenty languages: `Nowe Hebrydy`, `huoltohallintoalue`.
+	"packages/gazetteer/tools/pipeline/xy/former-countries.json",
 	"THIRD_PARTY_NOTICES.md",
 	# Address datasets, frozen evaluations, and published provenance retain source spelling.
 	"data/",
