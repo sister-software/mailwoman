@@ -72,6 +72,20 @@ scripts keep concluding that no output changed.
 `mwdev_run` with no arguments grades the full regression board in about a minute. That's the right
 first command, and it is cheaper than the script you were about to write.
 
+## Run the battery
+
+- The battery's first leg reads `data/eval/golden/`. A session whose settings deny `data/eval/` also denies the
+  tools it starts, and that covers shell reads of the golden files too. Grade on suites outside it
+  (`/mnt/mw/corpus/heldout/osm-suites/`) and leave the promotion read to the operator, saying so in the PR. A fact
+  about the golden rows comes from a script that prints only the counts or fields the question needs, never rows.
+- An output file outlives the run that wrote it. `mwdev_promotion_eval` keeps the previous `verdict.json` in
+  `/tmp/lab/mailwoman/mwdev-check-0` until the new one lands, and a runner whose worker throws leaves its earlier
+  `--out` file in place. Before reading a result, read the log's `EXIT=` line and compare the file's mtime with the
+  run's start.
+- The compiled CLI still loads `.ts` sources through the `node` export condition, and the battery imports some legs
+  late. An edit to the sources during a run changes the legs that have yet to load. Let the run finish before editing.
+- `mwdev_*` tools run the main checkout's code, so they grade main rather than a worktree.
+
 ## Read the result
 
 An aggregate is a summary of visible rows, never a replacement for them. `net -13` doesn't

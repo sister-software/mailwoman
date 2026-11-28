@@ -94,6 +94,20 @@ shapes are a from-scratch base or an explicitly-scoped additive fine-tune with t
 from-scratch recipe is `packages/corpus/data/training-configs/v4.4.0-suffix-boundary-v2-base-60k.yaml` — 60k steps, no `init_from`, no EWC,
 ~4.3 h and ~$9 on an A100-40GB.
 
+### The corpus a run trains on
+
+- **Land every pending corpus fix and new source first, then spend one run on the combined corpus.** Do the
+  GPU-free work first: fixes, sources, test sets, baseline scores on the published model. Two single-fix runs in
+  2026-11 (v8.5.0 on corpus v0.8.13, then v8.5.1) each surfaced the next defect only after the GPU was spent.
+- **The step count follows the rows.** Compute `max_steps` from the rows the run must train: the gazetteer's full
+  row count for the deterministic stage, and each source's intended absolute draws for the weighted stage. Every
+  corpus change states the arithmetic in the same change (rows per source, intended draws, the resulting
+  `max_steps`) and flags any source whose absolute draws fall. Runs held 90,000–126,000 steps at batch 128 while
+  sources were added, and v8.13.0 left 43.6% of WOF rows never drawn.
+- **Hold out only what grading needs.** Borderline rows go to training. Get evaluation coverage from new sources
+  rather than from rows taken out of training. A 2026-10-22 perturbation test moved 10.7.0's exact rate by at most
+  0.021, so treat a claim that a loss is memorization as a hypothesis to test before acting on it.
+
 ## Step 4 — grade with the ADDRESS in view
 
 An aggregate is a summary of visible rows, never a replacement for them. `net −13` hides the difference

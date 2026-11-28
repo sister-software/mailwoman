@@ -17,6 +17,12 @@ import { Globerator } from "spliterator/node/fs"
 
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "#tools/eval-harness/gauntlet/cases/seed-case"
 
+/**
+ * The board reads the rows directly under each two-letter country directory.
+ *
+ * A recursive glob over `cases/` also reads `cases/generalization/*.jsonl` and inflates every denominator.
+ * Count board rows through this loader or `mwdev_compare`.
+ */
 const COUNTRY_DIR = /^[a-z]{2}$/
 
 const MALFORMED_EXCERPT_CHARS = 60
