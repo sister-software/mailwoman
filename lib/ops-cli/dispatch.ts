@@ -839,7 +839,7 @@ const CHECK_OPTIONS = {
  * `mwops check <name> [paths…]` runs one registered check in this checkout and exits with its status.
  *
  * `mwops check preflight` runs the direct-push set and exits non-zero if any of it failed.
- * A heavy check waits for the host lock, and an exclusive check for CI first, within `--max-wait-minutes`.
+ * A heavy check waits for the host lock within `--max-wait-minutes`.
  */
 async function runCheckVerb(args: readonly string[], io: DispatchIO): Promise<number> {
 	let parsed: ReturnType<typeof parseFlags>

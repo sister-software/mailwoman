@@ -13,14 +13,7 @@
 import { OperationEffect } from "@mailwoman/core/scripting"
 
 import { type CheckResult, HOST_BUSY_EXIT, type RegisteredCheckOptions, runRegisteredCheck } from "#check-kit/check"
-import {
-	acquireHost,
-	describeHolder,
-	heaviestHostLoad,
-	type HostAcquisition,
-	HostLoad,
-	type HostServices,
-} from "#check-kit/host"
+import { acquireHost, describeHolder, type HostAcquisition, HostLoad, type HostServices } from "#check-kit/host"
 import { parseWeightsCopyOutput, parseYarnInstallOutput } from "#check-kit/parsers/prepare-steps"
 import { type CheckCommand, CheckReader, findCheckCommand } from "#check-kit/registry"
 import {
@@ -308,7 +301,6 @@ export async function runPrepare(path: string, options: PrepareOptions): Promise
 
 	const acquired = await acquireHost(
 		{ check: "worktree-prepare", checkout: tree, steps: selected },
-		heaviestHostLoad(selected.map((step) => PREPARE_STEP_COMMANDS[step].hostLoad)),
 		options.maxWaitMs,
 		options.noWait,
 		options.host

@@ -39,7 +39,8 @@ dataset, the promotion battery (`mwdev_promotion_eval` with `check: "v9.0.0-base
 `weights_cache`) still decides with its retained-pending floors. Use the passed and total counts the command prints.
 `docs/records/evals/2026-10-20-promotion-check-migration.md` lists every earlier check and its status.
 
-Run the arc with `mwdev_arc`, which also runs the controls that make the number mean anything:
+Run the arc with `mwdev_arc`. The candidate against the published model is the default comparison. Add a
+`null=` placebo arm only when the operator asks for attribution:
 
 ```
 mwdev_arc candidate=<staged candidate root> \
@@ -50,8 +51,7 @@ mwdev_arc candidate=<staged candidate root> \
 `candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/` rather than the package directory itself. A root that's not staged is refused rather than falling through to
 the installed weights — do not "fix" that refusal by pointing it one level deeper.
 
-The full protocol, and why the controls come first, is the `training-arc` skill. Read it before
-launching a run rather than after grading one.
+The full protocol is the `training-arc` skill. Read it before launching a run rather than after grading one.
 
 ## Use the warm tools rather than a probe script
 

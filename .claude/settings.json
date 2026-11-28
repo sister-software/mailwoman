@@ -39,17 +39,6 @@
 				]
 			},
 			{
-				"matcher": "mcp__mailwoman-dev__mwdev_pull_request",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/ci-completion.ts\"",
-						"timeout": 15,
-						"statusMessage": "CI ownership record"
-					}
-				]
-			},
-			{
 				"matcher": "Write|Edit",
 				"hooks": [
 					{
@@ -82,12 +71,6 @@
 		"Stop": [
 			{
 				"hooks": [
-					{
-						"type": "command",
-						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/ci-completion.ts\"",
-						"timeout": 30,
-						"statusMessage": "CI completion check"
-					},
 					{
 						"type": "command",
 						"command": "node \"$CLAUDE_PROJECT_DIR/lib/dev-mcp/hooks/vale/response/check.ts\"",

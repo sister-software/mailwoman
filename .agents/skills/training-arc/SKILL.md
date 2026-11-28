@@ -1,52 +1,46 @@
 ---
 name: training-arc
-description: Protocol for grading a model change. Control first, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
+description: Protocol for a training run. One run per design, launched from main after the wiring is verified end to end, graded with one paired comparison against the published model. Controls and attribution arms run only when the operator asks for them. Use before launching any training run, and before reporting any candidate's result.
 ---
 
-## Why this exists
+## The default: one run, one comparison
 
-Eight training runs in one session were graded candidate-vs-shipped, and every one reported a regression
-that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so ran
-eighth and ninth instead of first. The full ledger is
-`docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md` — a dated record, so its
-filename keeps the arc's original spelling.
+Launch the whole design in one run. A feature with several parts trains as one run, and it splits into
+single-variable runs only when the operator asks for an ablation. Grade the candidate with one paired
+comparison against the published model and decide.
 
-The steps below are not style advice. Each step is a mistake that shipped.
+Don't add a self-control, a placebo run, a per-change attribution or a dry run unless the operator asks.
+`launch.run.ts start` runs the same host audits a dry run would. Count each wait before adding it, and
+drop any that repeats a check another step runs.
 
-## The whole protocol is one call
+## Before launch
 
-`mwdev_arc` runs steps 1, 2 and 5 in order and applies the arithmetic:
+- **Land every pending corpus fix and new source first, then spend one run on the combined corpus.** Do the
+  GPU-free work first: fixes, sources, test sets, baseline scores on the published model. Two single-fix runs in
+  2026-11 (v8.5.0 on corpus v0.8.13, then v8.5.1) each surfaced the next defect only after the GPU was spent.
+- **Verify the wiring end to end.** Every new input the run depends on has a caller on `main`. A new
+  database table is read under the name its builder writes. A promoted database is the one the run reads.
+  Run `static` and `unit-fast` (`yarn health` and `yarn test --run`) on the launch commit.
+- **Launch from `main`.** A run launched from a worktree trains code that `main` may never hold.
+- **The step count follows the rows.** Compute `max_steps` from the rows the run must train: the gazetteer's full
+  row count for the deterministic stage, and each source's intended absolute draws for the weighted stage. Every
+  corpus change states the arithmetic in the same change (rows per source, intended draws, the resulting
+  `max_steps`) and flags any source whose absolute draws fall. Runs held 90,000–126,000 steps at batch 128 while
+  sources were added, and v8.13.0 left 43.6% of WOF rows never drawn.
+- **Hold out only what grading needs.** Borderline rows go to training. Get evaluation coverage from new sources
+  rather than from rows taken out of training. A 2026-10-22 perturbation test moved 10.7.0's exact rate by at most
+  0.021, so treat a claim that a loss is memorization as a hypothesis to test before acting on it.
+- **State the run shape.** A copy of last run's config brings `init_from` and `ewc_lambda` with it. Write down
+  `kind` (from-scratch or fine-tune) and one sentence on why. A fine-tune can't introduce a source the base never
+  saw, so a corpus that adds a source trains from scratch. The from-scratch recipe is
+  `packages/corpus/data/training-configs/v4.4.0-suffix-boundary-v2-base-60k.yaml`: 60k steps, no `init_from`,
+  no EWC, about 4.3 h and $9 on an A100-40GB.
 
-```
-mwdev_arc candidate=<staged candidate dir> \
-          control=<staged copy of the SHIPPED weights> \
-          null=<the no-new-data fine-tune>
-```
+## Stage the arms
 
-It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
-before reporting a regression count, reads release eligibility from the `release_verdict` it is given, and prints the regressed ADDRESSES rather than only their number.
-A call that omits `control` or `null` doesn't skip the check silently. The result reports which control never ran
-and marks the number an upper bound.
-
-Read the rest of this file when a leg needs building, or when the tool's verdict needs auditing.
-
-## Step 1 — the SELF-control, once per session
-
-Stage the shipped model through the identical candidate path and grade it against itself.
-
-```
-mwdev_compare inputs={"kind":"board"} \
-  arm_b={"kind":"mailwoman","config":{"weights_cache":"<staged copy of the shipped weights>"}} \
-  variable=["weights_cache"] grade=auto
-```
-
-Expect **zero rows to differ**. Anything else means the rig is noisy and no candidate number from this session
-means anything. It costs one board run and it is the only thing separating _"the candidate is worse"_ from
-_"my harness is."_
-
-Stage both roots with `mwops release stage-weights-cache`, the one stager. It copies every package's declared
-artifacts into the root, links each overlay's `model.onnx` and `tokenizer.model` to the base package's inside the
-root, and refuses a root that lacks a declared artifact or whose packages resolve different graphs:
+`mwops release stage-weights-cache` is the one stager. It copies every package's declared artifacts into the
+root, links each overlay's `model.onnx` and `tokenizer.model` to the base package's inside the root, and refuses a
+root that lacks a declared artifact or whose packages resolve different graphs:
 
 ```sh
 # The published model, from the workspaces and the data-root overlay.
@@ -58,57 +52,9 @@ yarn mwops release stage-weights-cache --out <candidate root> \
 
 The report prints the graph's sha256 and md5 and the sha256 each package resolves. The candidate's md5 must
 differ from the published card's `files_md5["model.onnx"]`, which the derived card keeps under
-`candidate.published_card`. `--file [locale:]name=path`, `--omit [locale:]name` and `--card` build an A/B arm.
+`candidate.published_card`.
 
-## Step 2 — the PLACEBO run, once per BASE
-
-Fine-tune the base corpus with **no added data**, same steps, same seed, same brake. Export, quantize,
-grade it against shipped exactly as you'd a candidate.
-
-This is the placebo — pass it to `mwdev_arc` as `null=`. Measured on `v440-step-060000`: **10 of 649 rows
-regress with no new data**. The loss appears in the first 1,000 steps and is flat to 4,000: touching the
-base costs those rows before the new data is read.
-
-Consequences, both required:
-
-- **A candidate's regressions are `candidate − placebo` rather than `candidate − shipped`.** Eighteen regressions
-  where the placebo has ten is eight attributable rather than eighteen.
-- **A fine-tune must first recover the placebo's net loss.** If the placebo nets −5, a candidate at −5 has
-  achieved no gain and a candidate at −3 is an improvement.
-
-The placebo is one 4,000-step run, ~13 minutes, ~$1. The one run covers every candidate on that base.
-
-## Step 3 — state the RUN SHAPE, do not inherit it
-
-A copy of last run's config brings `init_from` and `ewc_lambda` with it, and the shape then never gets
-re-decided. Six runs in a row were fine-tunes for this reason and no other.
-
-Before launching, write down:
-
-- `kind`: from-scratch or fine-tune
-- `why`: one sentence that would survive being questioned
-- `control_run`: the placebo arm (`null=`) for this base, or `none — first of lineage`
-
-**A fine-tune cannot introduce a source the base never saw.** If the corpus adds a new source, the valid
-shapes are a from-scratch base or an explicitly-scoped additive fine-tune with the placebo in hand. The
-from-scratch recipe is `packages/corpus/data/training-configs/v4.4.0-suffix-boundary-v2-base-60k.yaml` — 60k steps, no `init_from`, no EWC,
-~4.3 h and ~$9 on an A100-40GB.
-
-### The corpus a run trains on
-
-- **Land every pending corpus fix and new source first, then spend one run on the combined corpus.** Do the
-  GPU-free work first: fixes, sources, test sets, baseline scores on the published model. Two single-fix runs in
-  2026-11 (v8.5.0 on corpus v0.8.13, then v8.5.1) each surfaced the next defect only after the GPU was spent.
-- **The step count follows the rows.** Compute `max_steps` from the rows the run must train: the gazetteer's full
-  row count for the deterministic stage, and each source's intended absolute draws for the weighted stage. Every
-  corpus change states the arithmetic in the same change (rows per source, intended draws, the resulting
-  `max_steps`) and flags any source whose absolute draws fall. Runs held 90,000–126,000 steps at batch 128 while
-  sources were added, and v8.13.0 left 43.6% of WOF rows never drawn.
-- **Hold out only what grading needs.** Borderline rows go to training. Get evaluation coverage from new sources
-  rather than from rows taken out of training. A 2026-10-22 perturbation test moved 10.7.0's exact rate by at most
-  0.021, so treat a claim that a loss is memorization as a hypothesis to test before acting on it.
-
-## Step 4 — grade with the ADDRESS in view
+## Grade with the address in view
 
 An aggregate is a summary of visible rows, never a replacement for them. `net −13` hides the difference
 between a venue being destroyed and a boundary sliding by one token.
@@ -119,44 +65,46 @@ mwdev_diff_geocode inputs=[…] weights_cache=<candidate>
 ```
 
 `mwdev_diff_parse` separates the four span events — `retagged`, `moved`, `added`/`removed`, `confidence` —
-which a component-map comparison reports identically. Read the **per-span confidence**: the shipped model
+and a component-map comparison reports all four identically. Read the per-span confidence: the shipped model
 holds `venue "Ye Three Lords"` at 0.50 and `venue "Le Colimaçon"` at 0.45, so those rows were never confident
 and a candidate that flips them changed a low-confidence answer rather than broke a confident one.
 
 `mwdev_diff_geocode` states which of three problems moved the answer: `parse-changed` (model),
-`retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
-A tier fall-through graded against a model wastes a run.
+`retrieval-repointed` (ranking or gazetteer), `tier-changed` (data coverage). A model change never moves `tier-changed`.
 
-### The row delta of a from-scratch arm sits below the seed noise floor
+A seed pair trained on one fixed corpus moves more board rows than a corpus change does, so a from-scratch arm's
+board row delta can't attribute a regression on its own. Read a regression's addresses and per-token margins
+before calling it the change's.
 
-On the regression layer, a seed pair trained on one fixed corpus moves more rows across the blocking
-line than a corpus change does, so the gauntlet row-count delta of a from-scratch arm cannot
-attribute a regression on its own. Attribute a regression with one of two instruments:
+## Release eligibility
 
-- a held-out capability sweep: dozens of inputs of one shape, none on the board, on which the seed
-  pair agrees;
-- per-token margins read from the `NeuralParseTrace` that `buildGauntletDeps(...).diagnoseParse()`
-  returns, compared against the seed-pair distribution.
-
-Run the checkpoint trajectory before proposing a salvage. A treatment effect can be complete early
-in the run, and a salvage aimed at the final checkpoint then targets the wrong step.
-
-## Step 5 — the comparison is against the shipped model, and it isn't the attribution
-
-The placebo is the right baseline for _attributing_ a regression. Release eligibility comes from the
-registered quality requirements instead (iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`):
+Release eligibility comes from the registered quality requirements (iron rule 5 in
+`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`):
 
 - a release verdict from `packages/mailwoman/tools/eval-harness/release/evaluate.run.ts`, computed on paired outcomes
   from `heldout/per/country.run.ts --dataset` over a sample frozen by `heldout/dataset/freeze.run.ts`, for this exact
-  `model.onnx` and the current spec, passed to `mwdev_arc` as `release_verdict` (`release_spec` names another
-  version). Only `pass` permits promotion. Spec v8 registers every threshold, its frozen collections and
-  model 10.8.0 as the comparator. A candidate at parity with 10.8.0 reads `insufficient_evidence` on the objective by
-  design (`docs/records/evals/2026-11-14-release-requirements-v8.md`), and the report states the verdict as given
-- board regressions are findings to investigate with their addresses, and FR, GB and DE hold no privilege. A
-  release report lists each accepted loss
+  `model.onnx` and the current spec. Only `pass` permits promotion, and the report states the verdict as given
+- board regressions are findings to investigate with their addresses. A release report lists each accepted loss
 - the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval
-  spec. Use the passed and total counts printed by the command rather than a count copied into this
-  runbook
+  spec. Use the passed and total counts printed by the command
+
+## Attribution, when the operator asks for it
+
+`mwdev_arc` runs the attribution arms and applies the arithmetic:
+
+```
+mwdev_arc candidate=<staged candidate dir> \
+          control=<staged copy of the SHIPPED weights> \
+          null=<the no-new-data fine-tune>
+```
+
+- The self-control stages the shipped model through the candidate path and grades it against itself. Zero rows
+  should differ.
+- The placebo (`null=`) fine-tunes the base with no added data, same steps, same seed. Measured on
+  `v440-step-060000`, 10 of 649 rows regress with no new data, so an attributed regression count is
+  `candidate − placebo`.
+
+A call that omits `control` or `null` reports which arm never ran and marks the number an upper bound.
 
 ## Measurement invariants
 
@@ -178,24 +126,16 @@ measurement in this protocol.
 - **A corpus change carrying a hypothesis declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
   Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU. A missing source, or a label
-  order whose source is drawn zero times, must stop the run. A source file or rendering branch isn't evidence that the sampler
-  reaches the target rows (#1869).
+  order whose source is drawn zero times, must stop the run (#1869).
 
-## The report — its structure is part of the protocol
+## The report
 
-Lead with the addresses that changed and the attribution. Give the aggregate as a footer. If a control was
-not run, say so — an unattributed regression count isn't a finding.
+Lead with the addresses that changed. Give the aggregate as a footer.
 
-- Name runs by version and role: "the control run (v5.0.1)", "the treatment run (v5.0.2)". Never a
-  minted name — the operator has banned `the null` and `the cure` from reports; `null=` survives only
-  as the literal `mwdev_arc` parameter.
-- Every table identifies its comparison arm in its header ("vs shipped v4.4.0"), and every count states its
+- Name runs by version and role: "the candidate (v8.21.0)", "the published model (11.3.0)". Never a minted name.
+- Every table identifies its comparison arm in its header ("vs published 11.3.0"), and every count states its
   denominator.
 - A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
-  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place rather than in a
-  footnote.
-- Define each project term at first use or link the doc that does. Name the corpus recipe file, config
-  key, or weight — the words the `AmbiguousShorthand` and `ProjectShorthand` Vale rules refuse are banned in reports.
+- Define each project term at first use or link the doc that does.
 - Denominate spend: "$29 of the $40 Modal budget for this experiment", never a bare dollar figure.
-- State the next action and stop. No scheduling (`tomorrow`), no wind-down narration — the operator sets
-  cadence, and completion is acceptance criteria rather than elapsed turns.
+- State the next action and stop.

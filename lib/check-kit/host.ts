@@ -38,47 +38,22 @@ export const HostLoad = {
 	 */
 	Light: "light",
 	/**
-	 * Takes the host lock and starts beside CI runs.
+	 * Takes the host lock, so heavy checks run one at a time, and starts beside CI runs.
 	 *
-	 * A compile, a lint or a health script fits beside a CI job in memory.
+	 * A check never waits for CI.
+	 * The host runs heavy jobs side by side, and each Node heap is capped at 8 GB.
 	 */
 	Heavy: "heavy",
-	/**
-	 * Waits for the host's CI runs to finish, then takes the host lock.
-	 *
-	 * A test suite's workers and a CI test job's workers exceed memory together.
-	 */
-	Exclusive: "exclusive",
 } as const
 
 export type HostLoad = (typeof HostLoad)[keyof typeof HostLoad]
 
 /**
- * A load that takes the host lock.
- */
-type LockingHostLoad = Exclude<HostLoad, typeof HostLoad.Light>
-
-/**
- * The load of a sequence of jobs run under one host acquisition.
+ * How long a heavy check waits for the host lock, and `mwops host wait` for an idle host,
+ * before the bound expires: 20 minutes.
  *
- * The acquisition takes the lock, so the load is at least heavy, and exclusive when any job's is.
- */
-export function heaviestHostLoad(loads: Iterable<HostLoad>): LockingHostLoad {
-	for (const load of loads) {
-		if (load === HostLoad.Exclusive) return HostLoad.Exclusive
-	}
-
-	return HostLoad.Heavy
-}
-
-/**
- * How long a heavy check waits for the host lock and for CI before the bound expires: 20 minutes.
- *
- * The longest wait a check meets is a CI test job on this host's runners.
- * The slow suite's Vitest run took 842.77 s in the failed CI log of 2026-11-20 for #3142, and the
- * root fast suite took 409.70 s locally, so 20 minutes covers one full slow-suite job with margin.
- *
- * It is also the bound the repository instructions set for a hand-written CI wait.
+ * The slow suite's Vitest run took 842.77 s in the CI log of 2026-11-20 for #3142,
+ * so 20 minutes covers a slow-suite check that holds the lock, with margin.
  */
 export const DEFAULT_MAX_WAIT_MINUTES = 20
 
@@ -213,43 +188,18 @@ export interface HostAcquisition {
 		 */
 		staleReleased: string[]
 	}
-	/**
-	 * The wait for CI, or `null` for a job whose load starts beside CI runs.
-	 */
-	ciWait: {
-		waitedMs: number
-		/**
-		 * Whether the bound expired with CI still busy, so the check started beside a CI job.
-		 */
-		expired: boolean
-		/**
-		 * The last CI reading before the check started.
-		 */
-		reading: CIRunsReading | null
-	} | null
 }
 
 /**
- * Take the host lock, after waiting for CI to finish when the load is exclusive, within one shared bound.
+ * Take the host lock within `maxWaitMs`, making at least one attempt.
  *
- * A heavy load reads no CI state and waits only for the lock.
+ * The lock serializes heavy checks.
+ * A check starts beside the host's CI runs without reading them.
  *
- * The CI wait holds no lock, so a check waiting on CI blocks no other check.
- * The lock serializes heavy checks: two checks that see CI finish together take it one after the other.
- *
- * When the CI wait expires, the check still attempts to take the lock.
- * The acquisition records the timeout.
- *
- * The lock wait uses the time left after the CI wait and makes at least one attempt.
- *
- * A CI read error stops the wait because another read will likely fail the same way.
- * The reading records the error.
- *
- * @param noWait Read CI once and try the lock once, without waiting on either.
+ * @param noWait Try the lock once, without waiting.
  */
 export async function acquireHost(
 	detail: Record<string, unknown>,
-	load: LockingHostLoad,
 	maxWaitMs: number,
 	noWait: boolean,
 	services: HostServices = {}
@@ -257,23 +207,14 @@ export async function acquireHost(
 	const clock = services.clock ?? systemClock
 	const log = services.log ?? (() => {})
 	const staleReleased: string[] = []
-	const startedAt = clock.now()
 	let lastHolder: string | null = null
 	const lockDir = services.lockDir ?? hostLockPath()
-
-	// Under --no-wait the bound is zero, so the first reading is the one recorded.
-	const boundMs = noWait ? 0 : maxWaitMs
-
-	const ciWait =
-		load === HostLoad.Exclusive
-			? await waitForCI(boundMs, startedAt, clock, services.readCI ?? readActiveCIRuns, log)
-			: null
 
 	// The lock is a non-recursive `mkdir`, so its parent must exist first.
 	await makeDirectories(dirname(lockDir))
 
 	const waited = await waitForDirectoryLock(lockDir, {
-		maxWaitMs: Math.max(0, boundMs - (clock.now() - startedAt)),
+		maxWaitMs: noWait ? 0 : maxWaitMs,
 		pollMs: LOCK_POLL_MS,
 		clock,
 		detail,
@@ -300,37 +241,7 @@ export async function acquireHost(
 		staleReleased,
 	}
 
-	return { lock: waited.lock ?? null, lockWait, ciWait }
-}
-
-/**
- * Poll CI until no run is active or the bound, counted from `startedAt`, expires.
- */
-async function waitForCI(
-	boundMs: number,
-	startedAt: number,
-	clock: ClockLike,
-	readCI: () => Promise<CIRunsReading>,
-	log: (line: string) => void
-): Promise<NonNullable<HostAcquisition["ciWait"]>> {
-	const ciStartedAt = clock.now()
-	let reading = await readCI()
-
-	while (reading.read && reading.runs.length) {
-		const remaining = boundMs - (clock.now() - startedAt)
-
-		if (remaining <= 0) break
-
-		log(`waiting for ${reading.runs.length} CI run(s): ${reading.runs.map((run) => run.workflow).join(", ")}`)
-		await clock.sleep(Math.min(CI_POLL_MS, remaining))
-		reading = await readCI()
-	}
-
-	return {
-		waitedMs: clock.now() - ciStartedAt,
-		expired: reading.read && reading.runs.length > 0,
-		reading,
-	}
+	return { lock: waited.lock ?? null, lockWait }
 }
 
 /**

@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { git, workingTreeRoot } from "@mailwoman/core/repo/git"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/values/json"
+import { git } from "@mailwoman/core/repo/git"
+import { stringifyJSON } from "@mailwoman/core/values/json"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -13,12 +13,10 @@ import {
 	assertValeCleanDiff,
 	replaceTaskBlock,
 	resolveCheckout,
-	taskBlockIsComplete,
 	type GitHubIssue,
 	type RunGitHub,
 } from "#dev-mcp/github"
-import { trackedCIMarkerPath } from "#dev-mcp/hooks/ci-completion"
-import { JobRegistry, type Job } from "#dev-mcp/process/jobs"
+import { JobRegistry } from "#dev-mcp/process/jobs"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { githubTools } from "#dev-mcp/tools"
 
@@ -117,34 +115,10 @@ describe("GitHub prose and task blocks", () => {
 		expect(next).toBe(
 			"Before\n## Task list\n\n<!-- todo-sync:begin -->\n- [ ] Replacement.\n<!-- todo-sync:end -->\nAfter"
 		)
-
-		expect(taskBlockIsComplete(next)).toBe(false)
-		expect(taskBlockIsComplete(body)).toBe(true)
 	})
 })
 
 describe("GitHub MCP tools", () => {
-	it("refuses completion while CI is pending and leaves the issue unchanged", async () => {
-		const cwd = fixtures.use(await temporaryDirectory("mw-pr-pending-")).path
-
-		const run: RunGitHub = vi.fn(async (args) => {
-			if (args[1] === "view") return stringifyJSON({ state: "OPEN", headRefOid: "head-a" })
-
-			return stringifyJSON([{ name: "test", bucket: "pending" }])
-		})
-
-		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
-			{ run }
-		)
-
-		await expect(tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })).rejects.toThrow(
-			"unresolved"
-		)
-
-		expect(run).not.toHaveBeenCalledWith(expect.arrayContaining(["edit"]), expect.anything())
-	})
-
 	it("comments on a pull request that closes no issue", async () => {
 		const cwd = fixtures.use(await temporaryDirectory("mw-pr-comment-")).path
 		const run: RunGitHub = vi.fn(async () => "https://github.com/sister-software/mailwoman/pull/2727#issuecomment-1\n")
@@ -172,62 +146,33 @@ describe("GitHub MCP tools", () => {
 		})
 	})
 
-	it("still requires the closing issue to create a pull request", async () => {
-		const cwd = fixtures.use(await temporaryDirectory("mw-pr-create-")).path
-		const run: RunGitHub = vi.fn(async () => "")
-
-		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
-			{ run }
-		)
-
-		await expect(
-			tool.handler({
-				action: "create",
-				title: "Title",
-				summary: "Summary.",
-				evidence: "Evidence.",
-				completion_assertions: [{ text: "CI passes.", completed: false }],
-			})
-		).rejects.toThrow(/issue_number/)
-
-		expect(run).not.toHaveBeenCalled()
-	})
-
-	it("completes the CI review task only after current-head checks pass", async () => {
-		const cwd = fixtures.use(await temporaryDirectory("mw-pr-complete-")).path
-		const task = "Review successful CI for PR #2400 on its current head."
-		const body = COMPLETE_BODY.replace("<!-- todo-sync:end -->", `- [ ] ${task}\n<!-- todo-sync:end -->`)
+	it("creates a pull request that closes no issue, and reads no issue", async () => {
+		const calls: string[][] = []
 
 		const run: RunGitHub = vi.fn(async (args) => {
-			if (args[0] === "issue") return rawIssue(body)
+			calls.push(args)
 
-			if (args[1] === "view") return stringifyJSON({ state: "OPEN", headRefOid: "head-a" })
+			if (args[1] === "create") return "https://github.com/sister-software/mailwoman/pull/2402\n"
 
-			return stringifyJSON([{ name: "test", bucket: "pass" }])
+			return stringifyJSON({ number: 2402, headRefName: "feature/test", baseRefName: "main", state: "OPEN" })
 		})
 
 		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs: new JobRegistry(), startedAt: Date.now() },
-			{ run }
+			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
+			{ run, lint: async () => undefined, branch: async () => "feature/test" }
 		)
 
-		await expect(
-			tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })
-		).resolves.toMatchObject({
-			handoff_ready: true,
-			completed_head: "head-a",
+		await tool.handler({
+			action: "create",
+			title: "Title",
+			summary: "Summary.",
+			evidence: "Evidence.",
 		})
 
-		// `merge` reads this record to require a completion for the current head.
-		expect(
-			await readLocalJSONFile<Record<string, unknown>>(cwd(".claude", "state", "completed-pull-requests.json"))
-		).toMatchObject({ "2400": { head: "head-a", issueNumber: 2365 } })
+		const createArgs = calls.find((args) => args[0] === "pr" && args[1] === "create")!
 
-		expect(run).toHaveBeenCalledWith(
-			expect.arrayContaining(["edit", "--body", body.replace(`- [ ] ${task}`, `- [x] ${task}`)]),
-			{ cwd: cwd.toString() }
-		)
+		expect(createArgs[createArgs.indexOf("--body") + 1]).not.toContain("Closes")
+		expect(calls.some((args) => args[0] === "issue")).toBe(false)
 	})
 
 	it("creates a checked issue and links the checkout", async () => {
@@ -269,34 +214,13 @@ describe("GitHub MCP tools", () => {
 		await expect(readLocalTextFile(cwd(".claude", "state", "linked-issue"))).resolves.toBe("2365\n")
 	})
 
-	it("refuses PR creation while the linked issue has an incomplete task", async () => {
-		const run: RunGitHub = vi.fn(async () => rawIssue(replaceTaskBlock(COMPLETE_BODY, "- [ ] Pending.")))
-
-		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
-			{ run, lint: async () => undefined, branch: async () => "feature/test" }
-		)
-
-		await expect(
-			tool.handler({
-				action: "create",
-				issue_number: 2365,
-				title: "Add GitHub tools",
-				summary: "The development MCP creates pull requests.",
-				evidence: "The unit test covers creation.",
-				completion_assertions: [{ text: "CI passes.", completed: true }],
-			})
-		).rejects.toThrow(/incomplete todo-sync task list/)
-	})
-
-	it("creates a PR and starts its CI monitor", async () => {
-		const cwd = fixtures.use(await temporaryDirectory("mw-pr-ci-")).path
+	it("creates a PR that closes its issue while the issue has unchecked tasks", async () => {
 		const calls: string[][] = []
 
 		const run: RunGitHub = vi.fn(async (args) => {
 			calls.push(args)
 
-			if (args[0] === "issue") return rawIssue(COMPLETE_BODY)
+			if (args[0] === "issue") return rawIssue(replaceTaskBlock(COMPLETE_BODY, "- [ ] Pending."))
 
 			if (args[1] === "create") return "https://github.com/sister-software/mailwoman/pull/2400\n"
 
@@ -311,24 +235,8 @@ describe("GitHub MCP tools", () => {
 			})
 		})
 
-		const jobs = new JobRegistry()
-
-		const start = vi.spyOn(jobs, "start").mockReturnValue({
-			jobID: "job-1",
-			label: "CI for pull request #2400",
-			command: "gh",
-			args: [],
-			state: "running",
-			startedAt: Date.now(),
-			endedAt: null,
-			exitCode: null,
-			stdout: "",
-			stderr: "",
-			child: null,
-		} satisfies Job)
-
 		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: cwd.toString() }), jobs, startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: process.cwd() }), jobs: new JobRegistry(), startedAt: Date.now() },
 			{ run, lint: async () => undefined, branch: async () => "feature/test" }
 		)
 
@@ -345,19 +253,7 @@ describe("GitHub MCP tools", () => {
 		const body = createArgs[createArgs.indexOf("--body") + 1]!
 
 		expect(body).toContain("Closes #2365.")
-
-		expect(start).toHaveBeenCalledWith(
-			"CI for pull request #2400",
-			process.execPath,
-			expect.arrayContaining([expect.stringContaining("github/ci-monitor.ts"), "--pull-request", "2400"]),
-			cwd.toString()
-		)
-
-		expect(parseJSONStrict(await readLocalTextFile(cwd(".claude", "state", "tracked-ci.json")))).toEqual({
-			repo: "sister-software/mailwoman",
-			pullRequestNumber: 2400,
-			sessionID: null,
-		})
+		expect(calls.some((args) => args[0] === "issue" && args[1] === "edit")).toBe(false)
 	})
 
 	it("creates a PR from the branch of a named worktree checkout", async () => {
@@ -374,24 +270,8 @@ describe("GitHub MCP tools", () => {
 			return stringifyJSON({ number: 2401, headRefName: "feature/worktree", baseRefName: "main", state: "OPEN" })
 		})
 
-		const jobs = new JobRegistry()
-
-		const start = vi.spyOn(jobs, "start").mockReturnValue({
-			jobID: "job-2",
-			label: "CI for pull request #2401",
-			command: "gh",
-			args: [],
-			state: "running",
-			startedAt: Date.now(),
-			endedAt: null,
-			exitCode: null,
-			stdout: "",
-			stderr: "",
-			child: null,
-		} satisfies Job)
-
 		const [, tool] = githubTools(
-			{ registry: stubEngineRegistry({ repoRoot: repo }), jobs, startedAt: Date.now() },
+			{ registry: stubEngineRegistry({ repoRoot: repo }), jobs: new JobRegistry(), startedAt: Date.now() },
 			{ run, lint: async () => undefined }
 		)
 
@@ -408,13 +288,6 @@ describe("GitHub MCP tools", () => {
 		const createArgs = calls.find((args) => args[0] === "pr" && args[1] === "create")!
 
 		expect(createArgs[createArgs.indexOf("--head") + 1]).toBe("feature/worktree")
-		expect(start.mock.calls[0]![3]).toBe(await workingTreeRoot(worktree))
-
-		const unowned = { repo: "sister-software/mailwoman", pullRequestNumber: 2401, sessionID: null }
-
-		for (const checkout of [await workingTreeRoot(worktree), repo]) {
-			await expect(readLocalJSONFile(trackedCIMarkerPath(checkout))).resolves.toEqual(unowned)
-		}
 	})
 
 	it("refuses a checkout that belongs to another repository", async () => {

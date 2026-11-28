@@ -47,7 +47,7 @@ Use repository skills for procedures rather than copying their steps into this f
 - `eval-model` before deciding whether a model may ship.
 - `mailwoman-release` for every npm publish or model promotion.
 - `wof-build` for rebuilding WOF SQLite and FST artifacts.
-- `task-intake` for implementation or training work expected to produce a PR or handoff.
+- `task-intake` when the operator asks for a tracking issue, or for work a later session must resume.
 - `five-whys` when a failure's cause isn't directly established.
 
 ## Read before changing behavior
@@ -226,8 +226,8 @@ out. A pipeline's exit status is its last command's, so `audit | grep … && lau
 failed audit and `tsc | tail` reports green on nine errors. Run only a command whose exit code decides
 the next step. Run a repository check with `mwops check <name>`: it exits with the check's status, writes
 the output to a log outside the checkout, and prints the counts, failing tests and log path, or with
-`--json` the whole result. A heavy check waits for the host lock and for CI within
-`--max-wait-minutes`. `mwops host status` names what holds the host, and `mwops check preflight` runs
+`--json` the whole result. A heavy check waits for the host lock within `--max-wait-minutes` and
+starts beside CI runs. `mwops host status` names what holds the host, and `mwops check preflight` runs
 the direct-push set below. `yarn health` runs the whole check registry through `health:checks`, which calls `mwops health all`, beside the
 dependency, manifest and duplication checks. A check runs once `lib/repo-health/registry.ts`
 registers it. `mwops health all --except <id,id>` leaves a check out while a decision recorded in its
@@ -429,6 +429,14 @@ the `mailwoman` CLI, the root Vitest config and the pre-commit hook refuse to st
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing
 shell writes inside the repository. Do not use destructive Git commands to discard operator work.
+
+One feature lands as one branch and one pull request. Split it only when the operator asks for an ablation
+or a separate review. Merge once the local checks on the final head exit 0, without waiting for CI, and
+state the CI state at merge in the report. Parallel lanes that share an interface not yet on `main`, such
+as a type, a table name or a function signature, wait for a commit on `main` that defines it, and each
+lane imports it from there. Before launching a training run or promoting a built database into the data
+root, verify the wiring end to end: every new input has a caller, a table is read under the name its
+builder writes, and `yarn health` and `yarn test --run` pass on that commit.
 
 `main` has no branch protection, so a direct push lands before the `test` workflow reports. Before a direct push to `main`,
 run the fast suite (`yarn test --run`), `yarn lint:prose:code`, `yarn lint:prose:vocab`, `yarn health` and the integration

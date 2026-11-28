@@ -6,15 +6,7 @@
  * when the check is heavy, and run the direct-push preflight set.
  */
 
-import { describeCIRun } from "#check-kit/ci-runs"
-import {
-	acquireHost,
-	describeHolder,
-	heaviestHostLoad,
-	type HostAcquisition,
-	HostLoad,
-	type HostServices,
-} from "#check-kit/host"
+import { acquireHost, describeHolder, type HostAcquisition, HostLoad, type HostServices } from "#check-kit/host"
 import { type CheckCommand, findCheckCommand, PREFLIGHT_CHECKS } from "#check-kit/registry"
 import { type CheckRun, runCheck, type RunCheckOptions } from "#check-kit/runner"
 
@@ -91,7 +83,7 @@ function exitCodeOf(run: CheckRun): number {
 }
 
 /**
- * Run a check, waiting for the host lock when it is heavy, and for CI first when its load is exclusive.
+ * Run a check, waiting for the host lock when it is heavy.
  */
 export async function runRegisteredCheck(
 	check: CheckCommand,
@@ -106,7 +98,6 @@ export async function runRegisteredCheck(
 
 	const acquired = await acquireHost(
 		{ check: check.name, checkout: options.checkout, paths },
-		check.hostLoad,
 		options.maxWaitMs,
 		options.noWait,
 		options.host
@@ -134,16 +125,8 @@ export async function runRegisteredCheck(
 	await using _lock = lock
 
 	const run = await runCheck(check, { ...options, paths })
-	let summary = summarizeRun(run)
-	const reading = host.ciWait?.reading
 
-	if (host.ciWait?.expired && reading?.read) {
-		summary += `; started beside ${reading.runs.length} CI run(s) after the wait bound expired`
-	} else if (reading && !reading.read) {
-		summary += "; the CI state was unread when the check started"
-	}
-
-	return { check: check.name, ran: true, host, run, exitCode: exitCodeOf(run), summary }
+	return { check: check.name, ran: true, host, run, exitCode: exitCodeOf(run), summary: summarizeRun(run) }
 }
 
 /**
@@ -154,12 +137,6 @@ export function renderCheckResult(result: CheckResult): string[] {
 
 	for (const message of result.host?.lockWait.staleReleased ?? []) {
 		lines.push(`  ${message}`)
-	}
-
-	if (result.host?.ciWait?.expired && result.host.ciWait.reading?.read) {
-		for (const run of result.host.ciWait.reading.runs) {
-			lines.push(`  CI still running: ${describeCIRun(run)}`)
-		}
 	}
 
 	const run = result.run
@@ -222,7 +199,6 @@ export async function runPreflight(
 
 	const acquired = await acquireHost(
 		{ check: "preflight", checkout: options.checkout },
-		heaviestHostLoad(PREFLIGHT_CHECKS.map((name) => findCheckCommand(name)!.hostLoad)),
 		options.maxWaitMs,
 		options.noWait,
 		options.host

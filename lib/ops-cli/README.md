@@ -32,10 +32,8 @@ policies.
 without a shell and exits with the check's status. The output goes to a log under the cache root, or under
 `--log-dir`. The command prints one summary line, the failing tests or checks, and the log path. Use `--json` to print
 the result object. Each check's `hostLoad` in the registry decides what it waits for. A `light` check starts at once.
-A `heavy` check, such as `compile`, `lint` or `health`, takes the lock under the shared cache root and starts beside
-CI runs. An `exclusive` check, a test suite, waits for queued or in-progress CI runs before taking the lock. Both waits
-use one `--max-wait-minutes` bound (default 20). The check holds no lock while it waits for CI, so a check waiting on
-CI blocks no other check. `--no-wait` refuses at once
+A `heavy` check, such as `compile`, `lint`, `health` or a test suite, takes the lock under the shared cache root within
+`--max-wait-minutes` (default 20) and starts beside CI runs without reading them. `--no-wait` refuses at once
 when the lock is held. A lock whose holder process is gone, or whose pid now belongs to a process with another start time,
 is released with a message. `mwops check preflight` runs the direct-push set from `AGENTS.md`, followed by
 `health-tree`. `mwops host status` reports the lock holder and the CI runs, and `mwops host wait-idle --max-minutes N`

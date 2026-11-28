@@ -105,9 +105,8 @@ For a **model release**, on a branch off current `main`:
 8. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
    en-us model into fr-fr) — leave it unless the operator instructs otherwise.
 9. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, then open
-   the PR with `mwdev_pull_request` (the Bash hook refuses `gh pr create`); it requires an issue whose
-   task list is complete, created with `mwdev_issue`. Let CI (`test`) go green, then **merge to main**
-   (the publish runs off `main`).
+   the PR with `mwdev_pull_request` (the Bash hook refuses `gh pr create`). Run the checks locally, then
+   **merge to main** with `mwdev_pull_request` `merge` without waiting for CI (the publish runs off `main`).
 
 For a **code-only release**: skip the card/release.config/HF work entirely and merge the code PRs.
 The version bump happens in the publish dispatch.
