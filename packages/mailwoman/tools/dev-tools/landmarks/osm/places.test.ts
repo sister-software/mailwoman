@@ -3,9 +3,54 @@
 
 import { landmarkPlaceID } from "@mailwoman/core/resolver"
 import { stringifyJSON } from "@mailwoman/core/values/json"
+import { createOutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
+import type { CompiledOutcomeSpec, OutcomeDefinition } from "@mailwoman/gazetteer/whosonfirst/outcomes/spec"
 import { describe, expect, it } from "vitest"
 
-import { osmPlaceQuery, osmPlaceRows } from "./places.ts"
+import { osmPlaceAssertions, osmPlaceQuery, osmPlaceRows } from "./places.ts"
+
+describe("osmPlaceAssertions", () => {
+	const names = ["venue", "venue.park", "natural", "natural.island"]
+
+	const spec: CompiledOutcomeSpec = {
+		definitions: names.map((name, index) => ({
+			"mw:id": index + 1,
+			"mw:name": name,
+			"mw:parent": name.includes(".") ? name.split(".")[0]! : null,
+			"mw:facet": "identity",
+		})) as OutcomeDefinition[],
+		registry: names.map((name, index) => ({ "mw:id": index + 1, "mw:name": name })),
+		defaults: {},
+		exemptions: {},
+		evidence: {
+			geonames: {},
+			osm: { "leisure=park": ["venue.park"], "place=island": ["natural.island"] },
+			wikidata: {},
+		},
+		counter_evidence: { geonames: {}, osm: {}, wikidata: {} },
+	}
+
+	const table = createOutcomeEvidenceTable(spec)
+	const identity = new Set(names)
+
+	const outcomesOf = (key: string, value: string) =>
+		osmPlaceAssertions({ osm_type: "W", osm_id: 1, osm_key: key, osm_value: value }, table, identity).map(
+			(assertion) => assertion.outcome
+		)
+
+	it("asserts the members the evidence maps the place's tag to", () => {
+		expect(outcomesOf("leisure", "park")).toEqual(["venue.park"])
+		expect(outcomesOf("place", "island")).toEqual(["natural.island"])
+	})
+
+	it("asserts venue for a selected class the evidence leaves unmapped", () => {
+		expect(outcomesOf("man_made", "lighthouse")).toEqual(["venue"])
+	})
+
+	it("refuses a document without its tag", () => {
+		expect(() => osmPlaceAssertions({ osm_type: "W", osm_id: 1 }, table, identity)).toThrow(/osm:W1 has no osm_key/)
+	})
+})
 
 describe("osmPlaceRows", () => {
 	const park = {

@@ -28,6 +28,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { hasOutcomeOptions, type OutcomeOptions } from "@mailwoman/core/resolver/outcome"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { OUTCOME_VOCABULARY } from "@mailwoman/gazetteer/whosonfirst/outcomes/vocabulary"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/postcode/recognizer/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -358,7 +359,7 @@ export function createGeocodeProcessScope(
  */
 function outcomeDepsOf(
 	request: OutcomeOptions,
-	options: Pick<GeocodeSessionOptions, "outcomeVocabulary" | "outcomeHeadOrdering">
+	options: Pick<GeocodeSessionOptions, "outcomeHeadOrdering">
 ): Pick<GeocodeDeps, "outcome" | "outcomeVocabulary" | "outcomeHeadOrdering"> {
 	const requested = hasOutcomeOptions(request)
 
@@ -373,7 +374,7 @@ function outcomeDepsOf(
 					},
 				}
 			: {}),
-		...(options.outcomeVocabulary ? { outcomeVocabulary: options.outcomeVocabulary } : {}),
+		outcomeVocabulary: OUTCOME_VOCABULARY,
 		outcomeHeadOrdering: options.outcomeHeadOrdering,
 	}
 }

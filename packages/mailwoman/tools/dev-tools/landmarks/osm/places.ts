@@ -10,6 +10,7 @@
  */
 
 import { OSM_LANDMARK_PREFIX } from "@mailwoman/core/resolver"
+import type { OutcomeAssertion, OutcomeEvidenceTable } from "@mailwoman/gazetteer/whosonfirst/outcomes/evidence"
 import { landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark/rows"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { latLngToCell } from "@sister.software/h3"
@@ -54,10 +55,53 @@ export function osmPlaceQuery(): object {
 export interface PhotonPlaceDocument {
 	osm_type?: string
 	osm_id?: number
+	/**
+	 * The OpenStreetMap tag key the place was indexed under, such as `leisure`.
+	 */
+	osm_key?: string
+	/**
+	 * The tag's value, such as `park`.
+	 */
+	osm_value?: string
 	name?: Record<string, string>
 	coordinate?: { lat?: number; lon?: number }
 	countrycode?: string
 	importance?: number
+}
+
+/**
+ * The `qid` column value of a document's rows, or `null` for a document without an OSM type and ID.
+ */
+export function osmPlaceKey(document: PhotonPlaceDocument): string | null {
+	return document.osm_type && document.osm_id ? `${OSM_LANDMARK_PREFIX}${document.osm_type}${document.osm_id}` : null
+}
+
+/**
+ * A place's outcome assertions: each member the definitions' OSM evidence maps its tag to.
+ *
+ * A tag whose evidence implies zero identity members takes `venue`.
+ * Every class in {@link OSM_PLACE_CLASSES} outside `place` names a site a visitor enters,
+ * and the spec maps both `place` values the layer selects.
+ *
+ * @throws When the document lacks its tag, the type field the evidence is keyed by.
+ */
+export function osmPlaceAssertions(
+	document: PhotonPlaceDocument,
+	table: OutcomeEvidenceTable,
+	identityKinds: ReadonlySet<string>
+): OutcomeAssertion[] {
+	if (!document.osm_key || !document.osm_value) {
+		throw new TypeError(`${osmPlaceKey(document) ?? "a document"} has no osm_key or osm_value to map to an outcome.`)
+	}
+
+	const tag = `${document.osm_key}=${document.osm_value}`
+	const assertions = table.assertionsFor("osm", tag)
+
+	if (!assertions.some((assertion) => assertion.stance === "asserts" && identityKinds.has(assertion.outcome))) {
+		assertions.push({ outcome: "venue", stance: "asserts", src: `osm-places:class=${tag}` })
+	}
+
+	return assertions
 }
 
 /**
@@ -67,10 +111,11 @@ export interface PhotonPlaceDocument {
  * A document with no name, ID or coordinate contributes no row.
  */
 export function osmPlaceRows(document: PhotonPlaceDocument): LandmarkNameTable[] {
-	const { name: names, coordinate, osm_type: type, osm_id: id } = document
+	const { name: names, coordinate } = document
 	const name = names?.["en"] ?? names?.["default"]
+	const qid = osmPlaceKey(document)
 
-	if (!names || !name || !type || !id || typeof coordinate?.lat !== "number" || typeof coordinate.lon !== "number") {
+	if (!names || !name || !qid || typeof coordinate?.lat !== "number" || typeof coordinate.lon !== "number") {
 		return []
 	}
 
@@ -83,7 +128,7 @@ export function osmPlaceRows(document: PhotonPlaceDocument): LandmarkNameTable[]
 
 		rows.set(key, {
 			name_key: key,
-			qid: `${OSM_LANDMARK_PREFIX}${type}${id}`,
+			qid,
 			name,
 			kind: "venue",
 			country: document.countrycode ?? null,

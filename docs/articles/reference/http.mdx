@@ -1,9 +1,9 @@
 ---
 title: HTTP interfaces
-description: Versioned 11.0.0 HTTP schemas and one published 11.3.0 libpostal response.
+description: Versioned HTTP schemas, current native geocode fields, and a published libpostal response.
 role: reference
-source-of-truth: published 11.0.0 OpenAPI documents and packages/api/lib/routes.ts, packages/nominatim/lib/routes.ts, packages/photon/lib/routes.ts, packages/libpostal/lib/routes.ts
-verified-with: published 11.0.0 OpenAPI snapshots and @mailwoman/libpostal v11.3.0 on Node.js v24.22.3 and Linux x64, checked 2026-11-26
+source-of-truth: published 11.0.0 OpenAPI documents, published 11.5.0 packages/api/lib/operations/geocode and packages/api/lib/routes.ts, and the published 11.3.0 @mailwoman/libpostal response
+verified-with: published 11.0.0 OpenAPI snapshots, published 11.5.0 native API source inspected 2026-11-28, and @mailwoman/libpostal v11.3.0 on Node.js v24.22.3 and Linux x64 checked 2026-11-26
 ---
 
 # HTTP interfaces
@@ -38,6 +38,23 @@ The native schema declares these operations. A response name refers to a schema 
 The parse response schema contains `input`, `components`, `tree`, and `debug`. The `GeocodeResponse` schema defines `lat`, `lon`, `resolution_tier`, and other coordinate and evidence fields. [Result schema](./schema.mdx) explains the fields at their owning interfaces. `GET /health` declares `status` and `uptime_s`. A successful health response reports that the HTTP app answered. It doesn't verify the presence of geocoding data.
 
 The native `APIError` schema requires `error` as a string and `detail` as either a string or `null`. The OpenAPI document assigns 400 to invalid native inputs, 413 to a batch over its configured cap, 501 when the app has no parse method configured, and 503 to unavailable geocoding or resolution methods where the relevant route declares it. The schema lists no 500 response for the native operations in the table. Runtime failures may have additional status codes.
+
+### Published 11.5.0 native geocode fields
+
+The table above describes the fixed 11.0.0 schema. The published 11.5.0 [geocode request](https://github.com/sister-software/mailwoman/blob/v11.5.0/packages/api/lib/operations/geocode/address.ts) adds these fields to `POST /v1/geocode`. The current server's `GET /openapi.json` supplies the complete schema for its installed version.
+
+| Field            | Type and default                                                                                                                        | Effect                                                                                                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parent`         | `{ id: positive Who's On First integer, scope?: "hard" \| "soft" }` or `null`. The default is `null`, and the scope defaults to `hard`. | A hard scope admits the parent, its descendants, and its ancestors. A soft scope prefers places inside the parent and its country. An unknown parent ID fails the request.                  |
+| `outcome_hint`   | Optional outcome-kind string.                                                                                                           | Ranks candidates that satisfy the hint first without removing the others. If the text selects another outcome, the response includes `outcome_hint_unsatisfied` in its advisories.          |
+| `outcome_filter` | Optional array of outcome-kind strings.                                                                                                 | Admits places that satisfy at least one listed kind. A filter with no matching place can return `outcome_filter_empty`. An unknown kind or a hint excluded by the filter fails the request. |
+| `include_tree`   | Boolean with a default of `false`.                                                                                                      | Includes the decoded address tree when `true`. Otherwise, `tree` is `null`.                                                                                                                 |
+
+The existing `address` field accepts at most 1,024 characters, `input_mode` defaults to `auto`, and `bias` accepts at most eight points. Each bias point has a latitude, longitude, and optional positive weight up to 1. The default bias list is empty. The [11.5.0 request declaration](https://github.com/sister-software/mailwoman/blob/v11.5.0/packages/api/lib/operations/geocode/address.ts) owns these limits and defaults.
+
+The 11.5.0 geocode response adds `support`, the [support promise](./support.mdx) matching the resolved country and the input script. It is `null` when no promise covers the query. `POST /v1/batch` adds the same field to each successful geocoded row. An error row retains its `input` and `error` fields. The [batch declaration](https://github.com/sister-software/mailwoman/blob/v11.5.0/packages/api/lib/operations/geocode/batch.ts) keeps results in input order. Its `input_mode` defaults to `formatted`. The standalone API's default cap is 500 addresses. `mailwoman serve` supplies its own `MAILWOMAN_BATCH_MAX` setting. That setting defaults to 1,000. A request above the configured cap returns 413.
+
+The route returns 400 with `error: "unknown_outcome"`, `"hint_outside_filter"`, `"missing_outcome_tables"`, or `"outcome_vocabulary_unavailable"` when the corresponding outcome request cannot be used. These are the [declared refusal codes](https://github.com/sister-software/mailwoman/blob/v11.5.0/packages/core/lib/resolver/outcome.ts). The error's `detail` gives the specific reason. A data generation built before the outcome tables can reject an outcome request while ordinary geocoding remains available. This section describes the published source. It doesn't claim a response was executed against a published 11.5.0 geographic data installation.
 
 One complete error pair was observed through `createMailwomanAPI({})` from published `@mailwoman/api@11.0.0`. The in-process app had no geocoding method. This check used neither a network server nor a geographic database.
 

@@ -14,8 +14,8 @@
 /**
  * One member of the outcome vocabulary, as the compiled definitions state it.
  *
- * The generated table in `@mailwoman/core` is the vocabulary's home, and this
- * shape is the part of each row the resolver reads.
+ * `OUTCOME_VOCABULARY` in `@mailwoman/gazetteer/whosonfirst/outcomes/vocabulary` is the
+ * vocabulary's home, and this shape is the part of each row the resolver reads.
  */
 export interface OutcomeVocabularyLike {
 	/**
