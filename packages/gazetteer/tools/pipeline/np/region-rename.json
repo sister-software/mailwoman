@@ -1,0 +1,57 @@
+{
+	"country": "NP",
+	"source": {
+		"citation": "Wikidata, the item of this province: English and Nepali labels and item id, read on 2026-11-26. Each provincial assembly adopted its province's name between 2018 and 2023."
+	},
+	"renames": [
+		{
+			"id": 1108807139,
+			"name": "Koshi",
+			"longName": "Koshi Province",
+			"wikidata": "Q25104008",
+			"names": { "name:nep_x_preferred": ["कोशी प्रदेश"], "name:nep_x_variant": ["प्रदेश नं. १"] }
+		},
+		{
+			"id": 1108807141,
+			"name": "Madhesh",
+			"longName": "Madhesh Province",
+			"wikidata": "Q25104009",
+			"names": { "name:nep_x_preferred": ["मधेश प्रदेश"], "name:nep_x_variant": ["प्रदेश नं. २"] }
+		},
+		{
+			"id": 1108807143,
+			"name": "Bagmati",
+			"longName": "Bagmati Province",
+			"wikidata": "Q25104015",
+			"names": { "name:nep_x_preferred": ["बागमती प्रदेश"], "name:nep_x_variant": ["प्रदेश नं. ३"] }
+		},
+		{
+			"id": 1108807129,
+			"name": "Gandaki",
+			"longName": "Gandaki Province",
+			"wikidata": "Q25104016",
+			"names": { "name:nep_x_preferred": ["गण्डकी प्रदेश"] }
+		},
+		{
+			"id": 1108807131,
+			"name": "Lumbini",
+			"longName": "Lumbini Province",
+			"wikidata": "Q25104014",
+			"names": { "name:nep_x_preferred": ["लुम्बिनी प्रदेश"], "name:nep_x_variant": ["प्रदेश नं. ५"] }
+		},
+		{
+			"id": 1108807133,
+			"name": "Karnali",
+			"longName": "Karnali Province",
+			"wikidata": "Q25104017",
+			"names": { "name:nep_x_preferred": ["कर्णाली प्रदेश"] }
+		},
+		{
+			"id": 1108807135,
+			"name": "Sudurpashchim",
+			"longName": "Sudurpashchim Province",
+			"wikidata": "Q25104019",
+			"names": { "name:nep_x_preferred": ["सुदूरपश्चिम प्रदेश"] }
+		}
+	]
+}

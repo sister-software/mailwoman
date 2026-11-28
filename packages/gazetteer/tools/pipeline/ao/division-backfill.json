@@ -1,0 +1,6 @@
+{
+	"country": "AO",
+	"placetypes": { "1": "region" },
+	"nameSuffixes": [" Province"],
+	"only": [13645449, 13645451, 13645452]
+}

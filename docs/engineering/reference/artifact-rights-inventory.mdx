@@ -338,6 +338,61 @@ part is a reading this document doesn't make.
 **Scope.** Only the US and FR bundles are in the local data root. GB and DE, the two locales whose
 corpus rows are most `wof-*`, are not measured here.
 
+### Records the `mailwoman` forks add to Who's On First
+
+The `mailwoman/whosonfirst-data-admin-*` forks add records that upstream Who's On First lacks. Each
+new record has an id from 9,895,000,000 to 9,895,999,999 and cites its sources in `mailwoman:sources`.
+A fork record may take data from a public-domain, CC0 or CC BY source. OpenStreetMap and Overture
+Divisions data is ODbL and stays out of the forks.
+
+Counted on 2026-11-28 across the 176 fork clones that hold such a record, by reading every record file
+of that id range: 94,179 records.
+
+| `wof:placetype` | records |
+| --------------- | ------: |
+| `locality`      |  87,530 |
+| `neighbourhood` |   5,547 |
+| `metroarea`     |     935 |
+| `region`        |     115 |
+| `macroregion`   |      35 |
+| `county`        |      15 |
+| `localadmin`    |       2 |
+
+| `src:geom`      | records | what the geometry is                                           | terms                           |
+| --------------- | ------: | -------------------------------------------------------------- | ------------------------------- |
+| `geonames`      |  84,831 | The point GeoNames publishes for the place                     | CC BY 4.0                       |
+| `gnis`          |   8,285 | The point the US Geographic Names Information System publishes | no copyright, 17 U.S.C. § 105   |
+| `whosonfirst`   |     953 | The union of records the fork already holds                    | the terms of the member records |
+| `meso`          |      89 | The boundary of an existing record the new record takes over   | the terms of that record        |
+| `quattroshapes` |       7 | The boundary of an existing record the new record takes over   | the terms of that record        |
+| `wikidata`      |       2 | The point Wikidata states                                      | CC0                             |
+| `no-geonorge`   |       7 | A boundary Geonorge publishes                                  | as `whosonfirst-sources` states |
+| `ie-gov`        |       4 | A boundary the Irish government publishes                      | as `whosonfirst-sources` states |
+| `wikidata`      |       2 | The point Wikidata states                                      | CC0                             |
+| `uscensus`      |       1 | A US Census Bureau boundary                                    | no copyright, 17 U.S.C. § 105   |
+
+The nine rows sum to 94,179.
+
+**One source is unregistered upstream.** `sources-spec-latest.json` in `whosonfirst/whosonfirst-sources`,
+read on 2026-11-28, lists eight of the nine values. It has no `gnis` source, and zero records of the US
+fork outside the fork's own id range state `gnis`. The 8,285 `gnis` records are in zero open upstream
+pull requests, so the gap affects only the fork today. A pull request that offers them upstream needs a
+`gnis` source definition first.
+
+The citations in `mailwoman:sources` name GeoNames, the US Geological Survey, the US Census Bureau,
+Wikidata, ISO 3166-2 and four national publications of statute or statistics.
+
+**Attribution.** GeoNames requires attribution under CC BY 4.0, and 84,831 of the 94,179 records take
+their point from it. `THIRD_PARTY_NOTICES.md` attributes GeoNames, under the heading for sources used
+only when developing in this repository and for "postal and centroid data". That placement predates
+these records. A database built from the forks ships GeoNames-derived locality records, so its
+attribution output must list GeoNames. Whether `mailwoman license attribution` does so for the admin
+database is unmeasured on this page.
+
+**Not measured.** This count reads the fork clones. Which of these records a published
+`admin-global-priority.db` contains depends on the build that made it, and no published database has
+been built from the forks as they stand on 2026-11-28.
+
 ## Publication control
 
 The module header of `packages/license/lib/policy.ts` (lines 9–12) states the posture. The build includes

@@ -1,0 +1,14 @@
+{
+	"country": "GQ",
+	"source": {
+		"citation": "Wikidata, the item of this city: English and Spanish labels and item id, read on 2026-11-26. Oyala was renamed Ciudad de la Paz in 2017."
+	},
+	"renames": [
+		{
+			"id": 1326720333,
+			"name": "Ciudad de la Paz",
+			"wikidata": "Q1140136",
+			"names": { "name:spa_x_preferred": ["Ciudad de la Paz"], "name:spa_x_variant": ["Oyala"] }
+		}
+	]
+}

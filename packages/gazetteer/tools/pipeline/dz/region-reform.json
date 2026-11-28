@@ -1,0 +1,183 @@
+{
+	"country": "DZ",
+	"memberPlacetype": "county",
+	"designator": "Province",
+	"inception": "2019-11-26",
+	"cessation": "2019-11-26",
+	"ceased": [],
+	"split": [85670677, 85670699, 85670731, 85670735, 85670745, 85670749, 85670759, 85670827],
+	"sources": {
+		"law": {
+			"citation": "Algeria raised ten delegated wilayas of the south to full wilayas in 2019, for a total of 58. ISO 3166-2:DZ lists them as DZ-49 to DZ-58.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:DZ"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: English and Arabic labels, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "This repository holds no boundary below the wilaya, so a record moves to a new wilaya only when GeoNames files its gn:id there."
+		}
+	},
+	"units": [
+		{
+			"iso": "DZ-01",
+			"name": "Adrar",
+			"wikidata": "Q188166",
+			"geonames": 2508807,
+			"existing": 85670677,
+			"members": []
+		},
+		{
+			"iso": "DZ-08",
+			"name": "Béchar",
+			"wikidata": "Q215467",
+			"geonames": 2505525,
+			"existing": 85670699,
+			"members": []
+		},
+		{
+			"iso": "DZ-33",
+			"name": "Illizi",
+			"wikidata": "Q233659",
+			"geonames": 2493455,
+			"existing": 85670731,
+			"members": []
+		},
+		{
+			"iso": "DZ-11",
+			"name": "Tamanghasset",
+			"wikidata": "Q229467",
+			"geonames": 2478217,
+			"existing": 85670735,
+			"members": []
+		},
+		{
+			"iso": "DZ-39",
+			"name": "El Oued",
+			"wikidata": "Q233651",
+			"geonames": 2497406,
+			"existing": 85670745,
+			"members": []
+		},
+		{
+			"iso": "DZ-47",
+			"name": "Ghardaia",
+			"wikidata": "Q17601",
+			"geonames": 2496045,
+			"existing": 85670749,
+			"members": []
+		},
+		{
+			"iso": "DZ-30",
+			"name": "Ouargla",
+			"wikidata": "Q235709",
+			"geonames": 2485794,
+			"existing": 85670759,
+			"members": []
+		},
+		{
+			"iso": "DZ-07",
+			"name": "Biskra",
+			"wikidata": "Q458402",
+			"geonames": 2503822,
+			"existing": 85670827,
+			"members": []
+		},
+		{
+			"iso": "DZ-49",
+			"name": "Timimoun",
+			"names": { "name:ara_x_preferred": ["ولاية تيميمون"] },
+			"wikidata": "Q21606903",
+			"geonames": 12226384,
+			"point": [0.86559, 29.72288],
+			"members": []
+		},
+		{
+			"iso": "DZ-50",
+			"name": "Bordj Badji Mokhtar",
+			"variants": ["Bordj Baji Mokhtar"],
+			"names": { "name:ara_x_preferred": ["ولاية برج باجي مختار"] },
+			"wikidata": "Q76592938",
+			"geonames": 12226383,
+			"point": [-0.61869, 23.25092],
+			"members": []
+		},
+		{
+			"iso": "DZ-51",
+			"name": "Ouled Djellal",
+			"names": { "name:ara_x_preferred": ["ولاية أولاد جلال"] },
+			"wikidata": "Q77105251",
+			"geonames": 12226392,
+			"point": [4.81345, 34.21429],
+			"members": []
+		},
+		{
+			"iso": "DZ-52",
+			"name": "Béni Abbès",
+			"variants": ["Beni Abbes"],
+			"names": { "name:ara_x_preferred": ["ولاية بني عباس"] },
+			"wikidata": "Q21606902",
+			"geonames": 12226385,
+			"point": [-2.72001, 29.47559],
+			"members": []
+		},
+		{
+			"iso": "DZ-53",
+			"name": "In Salah",
+			"names": { "name:ara_x_preferred": ["ولاية عين صالح"] },
+			"wikidata": "Q76593022",
+			"geonames": 12226387,
+			"point": [3.42239, 27.3357],
+			"members": []
+		},
+		{
+			"iso": "DZ-54",
+			"name": "In Guezzam",
+			"inception": "2019-12-18",
+			"names": { "name:ara_x_preferred": ["ولاية عين قزام"] },
+			"wikidata": "Q77102475",
+			"geonames": 12226386,
+			"point": [4.50798, 20.43821],
+			"members": []
+		},
+		{
+			"iso": "DZ-55",
+			"name": "Touggourt",
+			"names": { "name:ara_x_preferred": ["ولاية تقرت"] },
+			"wikidata": "Q77103880",
+			"geonames": 12226390,
+			"point": [6.34115, 32.93315],
+			"members": []
+		},
+		{
+			"iso": "DZ-56",
+			"name": "Djanet",
+			"names": { "name:ara_x_preferred": ["ولاية جانت"] },
+			"wikidata": "Q77101547",
+			"geonames": 12226388,
+			"point": [9.32725, 24.16724],
+			"members": []
+		},
+		{
+			"iso": "DZ-57",
+			"name": "El M'Ghair",
+			"variants": ["El Mghair", "El Meghaier"],
+			"names": { "name:ara_x_preferred": ["ولاية المغير"] },
+			"wikidata": "Q77103173",
+			"geonames": 12226391,
+			"point": [5.65989, 33.91588],
+			"members": []
+		},
+		{
+			"iso": "DZ-58",
+			"name": "El Meniaa",
+			"variants": ["El Menia"],
+			"names": { "name:ara_x_preferred": ["ولاية المنيعة"] },
+			"wikidata": "Q76520264",
+			"geonames": 12226389,
+			"point": [3.00376, 30.71909],
+			"members": []
+		}
+	]
+}

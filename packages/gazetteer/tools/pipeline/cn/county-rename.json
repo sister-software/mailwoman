@@ -1,0 +1,14 @@
+{
+	"country": "CN",
+	"source": {
+		"citation": "Wikidata, the item of this prefecture-level city: English label and item id, read on 2026-11-26. Bayannur is the city's official romanization, from Mongolian, and Bayannao'er is the pinyin of its Chinese name."
+	},
+	"renames": [
+		{
+			"id": 1108732415,
+			"name": "Bayannur",
+			"variants": ["Bayan Nur", "Bayannaoer"],
+			"wikidata": "Q571126"
+		}
+	]
+}

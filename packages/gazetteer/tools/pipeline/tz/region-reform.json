@@ -1,0 +1,40 @@
+{
+	"country": "TZ",
+	"memberPlacetype": "county",
+	"designator": "Region",
+	"inception": "2016",
+	"cessation": "2016",
+	"ceased": [],
+	"split": [85679641],
+	"sources": {
+		"law": {
+			"citation": "Songwe Region was formed in 2016 from the western districts of Mbeya Region. ISO 3166-2:TZ lists it as TZ-31.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:TZ"
+		},
+		"units": {
+			"citation": "Wikidata, the item whose ISO 3166-2 code (P300) is this unit's: English label, item id and code. The GeoNames id is the unit's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the region that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26."
+		}
+	},
+	"units": [
+		{
+			"iso": "TZ-14",
+			"name": "Mbeya",
+			"wikidata": "Q458382",
+			"geonames": 154375,
+			"existing": 85679641,
+			"members": [421170113, 421192909, 1108693005, 1108693007, 1108693009, 1108693015],
+			"note": "The Chunya record's boundary predates the creation of Songwe District from part of it: GeoNames files 61% of the populated places inside it under Mbeya Region and the rest under Songwe Region."
+		},
+		{
+			"iso": "TZ-31",
+			"name": "Songwe",
+			"wikidata": "Q25618976",
+			"geonames": 11124984,
+			"members": [1108693011, 1108693013, 1108693019, 1108693021]
+		}
+	]
+}

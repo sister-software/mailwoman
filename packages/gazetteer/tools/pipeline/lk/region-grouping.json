@@ -1,0 +1,87 @@
+{
+	"country": "LK",
+	"unitPlacetype": "macroregion",
+	"memberPlacetype": "region",
+	"designator": "",
+	"inception": "uuuu",
+	"cessation": "uuuu",
+	"ceased": [],
+	"sources": {
+		"law": {
+			"citation": "ISO 3166-2:LK lists 9 provinces, and GeoNames holds each as a first-level division with the districts below it.",
+			"url": "https://www.iso.org/obp/ui/#iso:code:3166:LK"
+		},
+		"units": {
+			"citation": "Wikidata, this division's item, read on 2026-11-27: English label, item id, ISO 3166-2 code and GeoNames id.",
+			"url": "https://www.wikidata.org/"
+		},
+		"membership": {
+			"citation": "A record is assigned to the first-level division GeoNames files the populated places inside its boundary under. For each of the 25 records, at least 89 percent of those places are under one division."
+		}
+	},
+	"units": [
+		{
+			"iso": "LK-1",
+			"name": "Western Province",
+			"wikidata": "Q856686",
+			"geonames": 1223421,
+			"members": [85673811, 85673815, 85673819]
+		},
+		{
+			"iso": "LK-2",
+			"name": "Central Province",
+			"wikidata": "Q190716",
+			"geonames": 1249296,
+			"members": [85673719, 85673723, 85673731]
+		},
+		{
+			"iso": "LK-3",
+			"name": "Southern Province",
+			"wikidata": "Q876308",
+			"geonames": 1227618,
+			"members": [85673789, 85673791, 85673795]
+		},
+		{
+			"iso": "LK-4",
+			"name": "Northern Province",
+			"wikidata": "Q598745",
+			"geonames": 7671049,
+			"members": [85673757, 85673761, 85673765, 85673769, 85673773]
+		},
+		{
+			"iso": "LK-5",
+			"name": "Eastern Province",
+			"wikidata": "Q1046126",
+			"geonames": 8133521,
+			"members": [85673733, 85673737, 85673747]
+		},
+		{
+			"iso": "LK-6",
+			"name": "North Western Province",
+			"wikidata": "Q876339",
+			"geonames": 1232860,
+			"members": [85673777, 85673779]
+		},
+		{
+			"iso": "LK-7",
+			"name": "North Central Province",
+			"wikidata": "Q1057124",
+			"geonames": 1232870,
+			"members": [85673743, 85673751]
+		},
+		{
+			"iso": "LK-8",
+			"name": "Uva Province",
+			"wikidata": "Q876293",
+			"geonames": 1225265,
+			"members": [85673801, 85673803]
+		},
+		{
+			"iso": "LK-9",
+			"name": "Sabaragamuwa Province",
+			"wikidata": "Q853272",
+			"geonames": 1228435,
+			"members": [85673785, 85673807]
+		}
+	]
+}

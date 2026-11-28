@@ -1,0 +1,56 @@
+{
+	"country": "ET",
+	"memberPlacetype": "county",
+	"designator": "Region",
+	"inception": "2023-08",
+	"cessation": "2023-08",
+	"ceased": [85671133],
+	"sources": {
+		"law": {
+			"citation": "The Southern Nations, Nationalities and Peoples' Region was divided by referendum under Article 47 of the Constitution of Ethiopia: Sidama became a region in June 2020, South West Ethiopia Peoples' Region in November 2021, and South Ethiopia and Central Ethiopia in August 2023, when the former region ceased.",
+			"url": "https://www.wikidata.org/wiki/Q203193"
+		},
+		"units": {
+			"citation": "Wikidata, this region's item: English label and item id, and its ISO 3166-2 code (P300) where ISO has assigned one. The GeoNames id is the region's row in GeoNames admin1CodesASCII.txt.",
+			"url": "https://www.wikidata.org/wiki/Property:P300"
+		},
+		"membership": {
+			"citation": "Each member is assigned to the region that GeoNames files most of the populated places inside its boundary under, counted on 2026-11-26. Every zone has at least 85% of those places in one region."
+		}
+	},
+	"units": [
+		{
+			"iso": "ET-SI",
+			"name": "Sidama",
+			"inception": "2020-06",
+			"wikidata": "Q1070673",
+			"geonames": 8299784,
+			"members": [421204421]
+		},
+		{
+			"iso": "ET-SW",
+			"name": "South West Ethiopia Peoples'",
+			"variants": ["South West Ethiopia", "Southwest Ethiopia Regional State"],
+			"inception": "2021-11",
+			"wikidata": "Q109788993",
+			"geonames": 12902784,
+			"members": [890450041, 1108695147, 1108695181, 1108695217]
+		},
+		{
+			"name": "South Ethiopia",
+			"variants": ["South Ethiopia Regional State"],
+			"wikidata": "Q122148951",
+			"geonames": 12902766,
+			"members": [
+				421204107, 1108695129, 1108695139, 1108695143, 1108695151, 1108695167, 1108695183, 1108695219, 1108695237
+			]
+		},
+		{
+			"name": "Central Ethiopia",
+			"variants": ["Central Ethiopia Regional State"],
+			"wikidata": "Q122415622",
+			"geonames": 12902749,
+			"members": [421182273, 890421359, 1108695127, 1108695175, 1108695215, 1108695241]
+		}
+	]
+}

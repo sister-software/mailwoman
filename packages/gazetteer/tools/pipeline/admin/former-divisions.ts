@@ -118,6 +118,16 @@ interface CurrentDivisionRow {
 }
 
 /**
+ * One current division of a country's dump, with what its row states beside its codes.
+ */
+export interface GeonamesCurrentDivision extends CurrentDivisionRow {
+	name: string
+	latitude: number
+	longitude: number
+	population: number
+}
+
+/**
  * How a division's admin code at its own level stands against the country's current divisions.
  */
 export const AdminCodeState = {
@@ -159,10 +169,10 @@ function codePath(codes: readonly string[], level: number): string | null {
  */
 export async function readGeonamesDivisions(path: PathBuilderLike): Promise<{
 	historical: GeonamesHistoricalDivision[]
-	current: CurrentDivisionRow[]
+	current: GeonamesCurrentDivision[]
 }> {
 	const historical: GeonamesHistoricalDivision[] = []
-	const current: CurrentDivisionRow[] = []
+	const current: GeonamesCurrentDivision[] = []
 
 	for await (const f of readUnquotedTSV(path)) {
 		if (f[6] !== "A") continue
@@ -190,7 +200,15 @@ export async function readGeonamesDivisions(path: PathBuilderLike): Promise<{
 		const currentLevel = CURRENT_DIVISION_LEVELS.get(code)
 
 		if (currentLevel != null) {
-			current.push({ geonamesID: Number(f[0]), level: currentLevel, codes })
+			current.push({
+				geonamesID: Number(f[0]),
+				level: currentLevel,
+				codes,
+				name: (f[1] ?? "").trim(),
+				latitude: Number(f[4]),
+				longitude: Number(f[5]),
+				population: Number(f[14] ?? 0),
+			})
 		}
 	}
 
